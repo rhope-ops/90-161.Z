@@ -23,13 +23,13 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R20-round-r1.ps1",
-      "round": "R20",
-      "title": "Round R20: slice 1 on the test site. Import the 90-161.Z flows (F05 routing and F03 reminders), then one fake publication goes from step 6 through Formal Coordination to Legal and step 7, and is removed at the end",
+      "out": "scripts/gov/paste/90161Z-R21-round-r1.ps1",
+      "round": "R21",
+      "title": "Round R21: slice 1 on the test site. Import the 90-161.Z flows (F05 routing r2 and F03 reminders r3) in test mode, then three fake publications prove routing, hold, a failed run and its Resubmit, a missing row, the 20-working-day suspense and the move to Legal; all are removed at the end",
       "files": [
         {
           "dir": "T18",
-          "src": "flow/solution/90161Z-T18-slice1-flows-r1.zip"
+          "src": "flow/solution/90161Z-T18-slice1-flows-r2.zip"
         },
         {
           "dir": "T17",
@@ -37,16 +37,16 @@
         },
         {
           "dir": "T18",
-          "src": "scripts/gov/90161Z-T18-slice1-test-r1.ps1"
+          "src": "scripts/gov/90161Z-T18-slice1-test-r2.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T18 Import the slice 1 flows r1",
+          "name": "T18 Import the slice 1 flows r2",
           "kind": "guide",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-flows-r1.zip",
-          "note": "You import the 90-161.Z flows solution (F05 routing, F03 reminders) and turn F05 on. About 8 minutes (estimate).",
+          "file": "90161Z-T18-slice1-flows-r2.zip",
+          "note": "You import the 90-161.Z flows solution (F05 routing r2, F03 reminders r3) in test mode and turn F05 on. About 8 minutes (estimate).",
           "marker": "90161Z-T18-slice1-imported.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
@@ -56,9 +56,9 @@
             "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
             "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
             "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
-            "5. Environment variables: in Site URL, paste the test site address. In Shared mailbox, enter the shared mailbox address you have Send As rights to, or leave it empty to send from your own mailbox. Keep the other values as shown (list names, 5 and 3).",
+            "5. Environment variables: in Site URL, paste the test site address. In Alert e-mail, enter your own work e-mail address (failure notices and test e-mails go there). In Test mode, enter Yes. In Shared mailbox, enter the shared mailbox you have Send As rights to, or leave it empty. Keep the other values as shown (list names, 5, 3, 20 and Flows paused No).",
             "6. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "7. Open the solution \"90-161.Z flows\". Turn on \"90161Z F05 Endorsement Routing r1\". Leave F03 off: you run it once by hand later in this round.",
+            "7. Open the solution \"90-161.Z flows\". Turn on \"90161Z F05 Endorsement Routing r2\" and check that its status reads On (in R20, F05 made no rows; it was likely off after the failed import). Leave F03 off: you run it once by hand later in this round.",
             "8. Return to RADE and select \"Done: imported, F05 is on\".",
             "If the import fails: select \"Download log file\" (any folder; the next step finds it), type the first line of the red error message (no names or site address) in the box below, then select \"It failed\"."
           ],
@@ -78,35 +78,60 @@
           "estimate": 1
         },
         {
-          "name": "T18 Slice 1 test, part 1 r1",
+          "name": "T18 Slice 1 test, part 1 r2",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r1.ps1",
+          "file": "90161Z-T18-slice1-test-r2.ps1",
           "args": "-Part 1",
-          "minutes": 20,
-          "note": "1. Signs in (CAC) and reads the steps and offices. 2. Creates one fake publication at step 6. 3. Waits up to 10 minutes for F05 to create the Formal Coordination rows.",
+          "minutes": 30,
+          "note": "1. Signs in (CAC) and reads the steps and offices. 2. Creates three fake publications at step 6: A (On Track), H (On Hold) and F (a title that makes F05 fail in test mode). 3. Checks that F05 makes rows for A only. 4. Fixes F's title and checks its rows. 5. Removes one of A's rows and checks that F05 adds back only that one. 6. Sets two rows past due for the F03 check.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 6
+          "estimate": 12
         },
         {
-          "name": "T18 Run F03 once r1",
+          "name": "T18 Failure e-mail and Resubmit r1",
           "kind": "guide",
           "dir": "T18",
           "file": "",
-          "note": "You run F03 once by hand, so it sets the default suspense on the test rows. The test rows get no e-mail. About 3 minutes (estimate).",
+          "note": "You check that F05 e-mailed you about the forced failure, then select Resubmit on that failed run. About 4 minutes (estimate).",
+          "marker": "90161Z-T18-resubmitted.txt",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt",
+          "guide": [
+            "1. In Outlook, find the e-mail \"90-161.Z flow failed: F05\" (it arrived during part 1). It names the failed step \"Test hook forced failure\". You do not need to reply.",
+            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\" > \"90161Z F05 Endorsement Routing r2\".",
+            "3. Under 28-day run history, select the run marked Failed (the time in the e-mail).",
+            "4. Select Resubmit at the top of the run. Wait until the new run shows Succeeded (under 1 minute, estimate).",
+            "5. Return to RADE and select \"Done: resubmitted\".",
+            "If no failure e-mail arrived, or there is no failed run: type what you see (no names or site address) in the box below, then select \"It failed\"."
+          ],
+          "doneText": "Done: resubmitted",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 4
+        },
+        {
+          "name": "T18 Run F03 once r2",
+          "kind": "guide",
+          "dir": "T18",
+          "file": "",
+          "note": "You run F03 once by hand. In test mode its e-mails go only to you: expect one \"[TEST] Escalation\" e-mail for the test row. About 3 minutes (estimate).",
           "marker": "90161Z-T18-f03-ran.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
           "guide": [
-            "1. Check part 1 in the RADE log: if \"other open rows due within 7 days or past\" is above 0, select \"Skip\". Those rows would get a real reminder.",
+            "1. Safety check: if you did not enter exactly Yes in Test mode at import, select \"Skip\": F03 would e-mail real endorsers.",
             "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
-            "3. Open \"90161Z F03 Suspense Reminders r2\" and select Test > Manually > Test, then Run flow.",
+            "3. Open \"90161Z F03 Suspense Reminders r3\" and select Test > Manually > Test, then Run flow.",
             "4. Wait until the run shows \"Your flow ran successfully\" (under 1 minute, estimate). F03 stays off after the test.",
-            "5. Return to RADE and select \"Done: F03 ran\".",
+            "5. In Outlook, check for one e-mail whose subject starts \"[TEST] Escalation\". It may take 1 to 2 minutes.",
+            "6. Return to RADE and select \"Done: F03 ran\".",
             "If the run fails: type the first line of the error (no names or site address) in the box below, then select \"It failed\"."
           ],
           "doneText": "Done: F03 ran",
@@ -116,30 +141,30 @@
           "estimate": 3
         },
         {
-          "name": "T18 Slice 1 test, part 2 r1",
+          "name": "T18 Slice 1 test, part 2 r2",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r1.ps1",
+          "file": "90161Z-T18-slice1-test-r2.ps1",
           "args": "-Part 2",
-          "minutes": 20,
-          "note": "4. Checks the F03 suspense dates. 5. Answers the rows Concur and marks the comments adjudicated. 6. Waits for the Legal rows and step 7. 7. Moves every test row to the site Recycle Bin.",
+          "minutes": 25,
+          "note": "7. Checks that Resubmit made no duplicate rows. 8. Checks F03: the 20-working-day suspense, one escalation for A's past-due row, nothing for the On Hold row. 9. Answers A's rows Concur, marks the comments adjudicated and waits for the Legal rows and step 7. 10. Moves every test row to the site Recycle Bin.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 6
+          "estimate": 7
         }
       ],
       "collect": [
         {
           "dir": "T18",
-          "name": "90161Z-T18-slice1-part1-r1.txt",
-          "step": "T18 Slice 1 test, part 1 r1"
+          "name": "90161Z-T18-slice1-part1-r2.txt",
+          "step": "T18 Slice 1 test, part 1 r2"
         },
         {
           "dir": "T18",
-          "name": "90161Z-T18-slice1-part2-r1.txt",
-          "step": "T18 Slice 1 test, part 2 r1"
+          "name": "90161Z-T18-slice1-part2-r2.txt",
+          "step": "T18 Slice 1 test, part 2 r2"
         },
         {
           "dir": "T17",
@@ -483,19 +508,52 @@
         {
           "path": "Rounds\\R18",
           "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R19",
+          "kind": "dir"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publication.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-imported.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-f03-ran.txt",
+          "kind": "glob"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R20. Imports the slice 1 flows (F05 routing, F03 reminders), then moves one fake publication from Formal Coordination to Legal on the test site and removes it.",
+          "summary": "Test round R21. Imports the slice 1 flows (F05 routing r2, F03 reminders r3) in test mode, then proves routing, hold, a failed run with Resubmit, a missing row, the suspense and the move to Legal with three fake publications, and removes them.",
           "steps": [
-            "T18 Import the slice 1 flows r1",
+            "T18 Import the slice 1 flows r2",
             "T17 Import log reader r2",
-            "T18 Slice 1 test, part 1 r1",
-            "T18 Run F03 once r1",
-            "T18 Slice 1 test, part 2 r1"
+            "T18 Slice 1 test, part 1 r2",
+            "T18 Failure e-mail and Resubmit r1",
+            "T18 Run F03 once r2",
+            "T18 Slice 1 test, part 2 r2"
           ]
         }
       ]

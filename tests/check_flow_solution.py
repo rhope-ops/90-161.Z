@@ -19,6 +19,9 @@ schemas = {}
 for f in (ROOT / "schemas" / "lists").glob("*.json"):
     d = json.loads(f.read_text(encoding="utf-8"))
     schemas[d["title"]] = {x["internalName"] for x in d["fields"]}
+# Run properties of workflow() and result('Try') that the failure e-mail reads (slice r2, 14 Nov 26); not list columns.
+RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName"}
+RUNTIME_ACTIONS = {"Failed_actions", "Failure_lines", "E-mail_the_failure"}   # only these may read them (review, 14 Nov 26)
 all_cols = set().union(*schemas.values()) | BUILTIN
 env_list = {B.ENV_KEY[s]: default for s, _, default in B.ENV if s.startswith("pfm_List")}
 for key, title in env_list.items():
@@ -76,7 +79,7 @@ for src in sorted(B.DEFS.glob("*.json")):
     hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
     hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
     if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
-    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.guid("workflow", src.stem))[1:]]
+    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.flow_guid(src.stem))[1:]]
     if len(wfs) != 1: bad(f"{src.name}: expected one workflow file in the zip, found {len(wfs)}"); continue
     wf = json.loads(zf.read(wfs[0]))["properties"]
     for c, ref in wf["connectionReferences"].items():
@@ -88,8 +91,11 @@ for src in sorted(B.DEFS.glob("*.json")):
         if name != "trigger": counts["actions"] += 1
         if name != "trigger" and re.search(r"""\[\s*'body/""", json.dumps(a)): bad(f"{src.name} {name}: body/ path expression; use body('Action')?['key']")
         for m in re.findall(r"\?\['(\w+)'\]", json.dumps(a)):
-            if m not in all_cols: bad(f"{src.name} {name}: unknown column or property '{m}'")
+            if m not in all_cols and not (name in RUNTIME_ACTIONS and m in RUNTIME): bad(f"{src.name} {name}: unknown column or property '{m}'")
         p = a.get("inputs", {}).get("parameters", {}) if isinstance(a.get("inputs"), dict) else {}
+        # R20 finding 1: "Update item" (PatchItem) fails flow activation without item/Title (a required column).
+        if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in p:
+            bad(f"{src.name} {name}: PatchItem without item/Title (activation fails: R20 finding 1)")
         if "table" in p:
             m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
             title = env_list.get(m.group(1)) if m else None

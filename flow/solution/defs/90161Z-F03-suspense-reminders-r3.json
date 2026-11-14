@@ -1,0 +1,525 @@
+{
+  "displayName": "90161Z F03 Suspense Reminders r3",
+  "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one (20 working days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365"
+  ],
+  "triggers": {
+    "Recurrence_weekdays_0700_Central": {
+      "type": "Recurrence",
+      "recurrence": {
+        "frequency": "Week",
+        "interval": 1,
+        "timeZone": "Central Standard Time",
+        "schedule": {
+          "weekDays": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+          ],
+          "hours": [
+            "7"
+          ],
+          "minutes": [
+            0
+          ]
+        },
+        "startTime": "2026-11-16T07:00:00"
+      }
+    }
+  },
+  "actions": {
+    "Try": {
+      "runAfter": {},
+      "type": "Scope",
+      "actions": {
+        "If_flows_paused": {
+          "runAfter": {},
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@toLower(trim(coalesce(parameters('Flows paused (pfm_FlowsPaused)'), '')))",
+              "yes"
+            ]
+          },
+          "actions": {
+            "Stop_flows_are_paused": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Test_mode": {
+          "runAfter": {
+            "If_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(parameters('Test mode (pfm_TestMode)'), ''))), 'yes')"
+        },
+        "Today": {
+          "runAfter": {
+            "Test_mode": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd')"
+        },
+        "Get_endorsements_without_suspense": {
+          "runAfter": {
+            "Today": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
+              "$filter": "EndorsementStatus eq 'Not Started' and DueDate eq null and CoordinationStage ne 'Legal' and (CoordinationRole ne 'Legal' or CoordinationRole eq null)",
+              "$top": 5000
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "paginationPolicy": {
+              "minimumItemCount": 5000
+            }
+          }
+        },
+        "For_each_endorsement_without_suspense": {
+          "runAfter": {
+            "Get_endorsements_without_suspense": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@body('Get_endorsements_without_suspense')?['value']",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          },
+          "actions": {
+            "Working_day_suspense": {
+              "runAfter": {},
+              "type": "Compose",
+              "inputs": "@addDays(outputs('Today'), add(mul(7, div(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), add(mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5), if(greater(add(dayOfWeek(outputs('Today')), mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+            },
+            "Calendar_30_suspense": {
+              "runAfter": {
+                "Working_day_suspense": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@addDays(outputs('Today'), add(30, if(equals(dayOfWeek(addDays(outputs('Today'), 30)), 6), 2, if(equals(dayOfWeek(addDays(outputs('Today'), 30)), 0), 1, 0))), 'yyyy-MM-dd')"
+            },
+            "Set_default_suspense": {
+              "runAfter": {
+                "Calendar_30_suspense": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
+                  "id": "@items('For_each_endorsement_without_suspense')?['ID']",
+                  "item/Title": "@items('For_each_endorsement_without_suspense')?['Title']",
+                  "item/DueDate": "@if(and(or(equals(items('For_each_endorsement_without_suspense')?['CoordinationRole']?['Value'], 'Guard Applicability'), equals(items('For_each_endorsement_without_suspense')?['CoordinationRole']?['Value'], 'Reserve Applicability')), greater(ticks(outputs('Calendar_30_suspense')), ticks(outputs('Working_day_suspense')))), outputs('Calendar_30_suspense'), outputs('Working_day_suspense'))"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          }
+        },
+        "Get_open_endorsements": {
+          "runAfter": {
+            "For_each_endorsement_without_suspense": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
+              "$filter": "EndorsementStatus eq 'Not Started' and DueDate ne null",
+              "$top": 5000
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "paginationPolicy": {
+              "minimumItemCount": 5000
+            }
+          }
+        },
+        "For_each_open_endorsement": {
+          "runAfter": {
+            "Get_open_endorsements": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@body('Get_open_endorsements')?['value']",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          },
+          "actions": {
+            "Due": {
+              "runAfter": {},
+              "type": "Compose",
+              "inputs": "@if(empty(items('For_each_open_endorsement')?['ExtensionDate']), substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), if(greater(ticks(substring(items('For_each_open_endorsement')?['ExtensionDate'], 0, 10)), ticks(substring(items('For_each_open_endorsement')?['DueDate'], 0, 10))), substring(items('For_each_open_endorsement')?['ExtensionDate'], 0, 10), substring(items('For_each_open_endorsement')?['DueDate'], 0, 10)))"
+            },
+            "Days_past": {
+              "runAfter": {
+                "Due": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@div(sub(ticks(outputs('Today')), ticks(outputs('Due'))), 864000000000)"
+            },
+            "Reminder_date": {
+              "runAfter": {
+                "Days_past": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@addDays(outputs('Due'), mul(-1, add(mul(7, div(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5)), add(mod(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5), if(greaterOrEquals(mod(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5), dayOfWeek(outputs('Due'))), 2, 0)))), 'yyyy-MM-dd')"
+            },
+            "Escalation_date": {
+              "runAfter": {
+                "Reminder_date": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@addDays(outputs('Due'), add(mul(7, div(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5)), add(mod(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5), if(greater(add(dayOfWeek(outputs('Due')), mod(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+            },
+            "Tier": {
+              "runAfter": {
+                "Escalation_date": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(greaterOrEquals(ticks(outputs('Today')), ticks(outputs('Escalation_date'))), 'Escalation', if(greaterOrEquals(ticks(outputs('Today')), ticks(outputs('Due'))), 'Warning', if(greaterOrEquals(ticks(outputs('Today')), ticks(outputs('Reminder_date'))), 'Reminder', 'None')))"
+            },
+            "If_tier_and_endorser_e-mail": {
+              "runAfter": {
+                "Tier": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@outputs('Tier')",
+                        "None"
+                      ]
+                    }
+                  },
+                  {
+                    "or": [
+                      {
+                        "not": {
+                          "equals": [
+                            "@coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')",
+                            ""
+                          ]
+                        }
+                      },
+                      {
+                        "equals": [
+                          "@outputs('Test_mode')",
+                          true
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Get_prior_reminder": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "GetItems"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                      "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                      "$filter": "@concat('Title eq ''', concat(if(outputs('Test_mode'), '[TEST] ', ''), 'Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier')), '''')",
+                      "$top": 1
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "If_not_yet_sent": {
+                  "runAfter": {
+                    "Get_prior_reminder": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "If",
+                  "expression": {
+                    "equals": [
+                      "@length(body('Get_prior_reminder')?['value'])",
+                      0
+                    ]
+                  },
+                  "actions": {
+                    "Get_publication": {
+                      "runAfter": {},
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                          "connectionName": "shared_sharepointonline",
+                          "operationId": "GetItem"
+                        },
+                        "parameters": {
+                          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                          "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+                          "id": "@items('For_each_open_endorsement')?['Publication']?['Id']"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    },
+                    "If_action_open": {
+                      "runAfter": {
+                        "Get_publication": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "If",
+                      "expression": {
+                        "equals": [
+                          "@contains(createArray('On Hold', 'Cancelled', 'Complete'), coalesce(body('Get_publication')?['ActionStatus']?['Value'], ''))",
+                          false
+                        ]
+                      },
+                      "actions": {
+                        "Select_AO_emails": {
+                          "runAfter": {},
+                          "type": "Select",
+                          "inputs": {
+                            "from": "@coalesce(body('Get_publication')?['AO'], json('[]'))",
+                            "select": "@item()?['Email']"
+                          }
+                        },
+                        "Filter_AO_emails": {
+                          "runAfter": {
+                            "Select_AO_emails": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Query",
+                          "inputs": {
+                            "from": "@body('Select_AO_emails')",
+                            "where": "@not(empty(item()))"
+                          }
+                        },
+                        "Copy_to": {
+                          "runAfter": {
+                            "Filter_AO_emails": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Compose",
+                          "inputs": "@if(equals(outputs('Tier'), 'Escalation'), concat(join(body('Filter_AO_emails'), ';'), if(and(greater(length(body('Filter_AO_emails')), 0), not(empty(body('Get_publication')?['Requester']?['Email']))), ';', ''), coalesce(body('Get_publication')?['Requester']?['Email'], '')), '')"
+                        },
+                        "If_shared_mailbox": {
+                          "runAfter": {
+                            "Copy_to": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "If",
+                          "expression": {
+                            "and": [
+                              {
+                                "equals": [
+                                  "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                                  true
+                                ]
+                              }
+                            ]
+                          },
+                          "actions": {
+                            "Send_an_email_(V2)": {
+                              "runAfter": {},
+                              "type": "OpenApiConnection",
+                              "inputs": {
+                                "host": {
+                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                  "connectionName": "shared_office365",
+                                  "operationId": "SendEmailV2"
+                                },
+                                "authentication": "@parameters('$authentication')",
+                                "parameters": {
+                                  "emailMessage/To": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), items('For_each_open_endorsement')?['Endorser']?['Email'])",
+                                  "emailMessage/Cc": "@if(outputs('Test_mode'), '', outputs('Copy_to'))",
+                                  "emailMessage/Subject": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), outputs('Tier'), ': coordination response due ', outputs('Due'), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
+                                  "emailMessage/Body": "@concat(if(outputs('Test_mode'), concat('<p><b>Test mode.</b> Without test mode this e-mail goes to ', if(empty(coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), '(no endorser on the row)', coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), if(empty(outputs('Copy_to')), '', concat(', copy to ', outputs('Copy_to'))), '.</p>'), ''), '<p>Coordination of ', coalesce(items('For_each_open_endorsement')?['Title'], 'a publication action'), ' is waiting for your response (DAFMAN 90-161, 5.2).</p>', '<p>Your suspense is ', outputs('Due'), if(equals(outputs('Tier'), 'Reminder'), '. This is an advance reminder.', if(equals(outputs('Tier'), 'Warning'), '. The suspense is today or has passed.', concat('. The suspense passed ', string(outputs('Days_past')), ' days ago.'))), '</p>', '<p>Please respond with Concur, Concur With Comment, Nonconcur or No Comment, or ask for an extension before the suspense with your rationale and estimated completion date (5.2.1).</p>', if(equals(outputs('Tier'), 'Escalation'), if(or(equals(items('For_each_open_endorsement')?['CoordinationRole']?['Value'], 'Legal'), equals(items('For_each_open_endorsement')?['CoordinationStage']?['Value'], 'Legal')), '<p>The action officer and requester are copied. Legal coordination cannot be closed as Concur - No Response (5.4.3).</p>', '<p>The action officer and requester are copied. The action officer may record Concur - No Response with an explanation in the staff package (5.4.3.2).</p>'), ''), '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+                                  "emailMessage/Importance": "@if(equals(outputs('Tier'), 'Escalation'), 'High', 'Normal')"
+                                }
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {
+                              "Send_from_the_shared_mailbox_(V2)": {
+                                "runAfter": {},
+                                "type": "OpenApiConnection",
+                                "inputs": {
+                                  "host": {
+                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                    "connectionName": "shared_office365",
+                                    "operationId": "SharedMailboxSendEmailV2"
+                                  },
+                                  "authentication": "@parameters('$authentication')",
+                                  "parameters": {
+                                    "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                                    "emailMessage/To": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), items('For_each_open_endorsement')?['Endorser']?['Email'])",
+                                    "emailMessage/Cc": "@if(outputs('Test_mode'), '', outputs('Copy_to'))",
+                                    "emailMessage/Subject": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), outputs('Tier'), ': coordination response due ', outputs('Due'), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
+                                    "emailMessage/Body": "@concat(if(outputs('Test_mode'), concat('<p><b>Test mode.</b> Without test mode this e-mail goes to ', if(empty(coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), '(no endorser on the row)', coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), if(empty(outputs('Copy_to')), '', concat(', copy to ', outputs('Copy_to'))), '.</p>'), ''), '<p>Coordination of ', coalesce(items('For_each_open_endorsement')?['Title'], 'a publication action'), ' is waiting for your response (DAFMAN 90-161, 5.2).</p>', '<p>Your suspense is ', outputs('Due'), if(equals(outputs('Tier'), 'Reminder'), '. This is an advance reminder.', if(equals(outputs('Tier'), 'Warning'), '. The suspense is today or has passed.', concat('. The suspense passed ', string(outputs('Days_past')), ' days ago.'))), '</p>', '<p>Please respond with Concur, Concur With Comment, Nonconcur or No Comment, or ask for an extension before the suspense with your rationale and estimated completion date (5.2.1).</p>', if(equals(outputs('Tier'), 'Escalation'), if(or(equals(items('For_each_open_endorsement')?['CoordinationRole']?['Value'], 'Legal'), equals(items('For_each_open_endorsement')?['CoordinationStage']?['Value'], 'Legal')), '<p>The action officer and requester are copied. Legal coordination cannot be closed as Concur - No Response (5.4.3).</p>', '<p>The action officer and requester are copied. The action officer may record Concur - No Response with an explanation in the staff package (5.4.3.2).</p>'), ''), '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+                                    "emailMessage/Importance": "@if(equals(outputs('Tier'), 'Escalation'), 'High', 'Normal')"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "Log_reminder_sent": {
+                          "runAfter": {
+                            "If_shared_mailbox": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PostItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                              "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                              "item/Title": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), 'Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'))",
+                              "item/Publication/Id": "@items('For_each_open_endorsement')?['Publication']?['Id']",
+                              "item/EventType/Value": "Reminder Sent",
+                              "item/EventDetails": "@concat(outputs('Tier'), ' e-mail sent for endorsement row ', string(items('For_each_open_endorsement')?['ID']), '; suspense ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10))"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "Failed_actions": {
+      "runAfter": {
+        "Try": [
+          "Failed",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@result('Try')",
+        "where": "@or(equals(item()?['status'], 'Failed'), equals(item()?['status'], 'TimedOut'))"
+      }
+    },
+    "Failure_lines": {
+      "runAfter": {
+        "Failed_actions": [
+          "Succeeded"
+        ]
+      },
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Failed_actions')",
+        "select": "@concat('<li><b>', replace(coalesce(item()?['name'], 'step'), '_', ' '), '</b>: ', coalesce(item()?['error']?['message'], item()?['error']?['code'], 'no error text'), '</li>')"
+      }
+    },
+    "E-mail_the_failure": {
+      "runAfter": {
+        "Failure_lines": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "authentication": "@parameters('$authentication')",
+        "parameters": {
+          "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "emailMessage/Subject": "@concat('90-161.Z flow failed: F03 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
+          "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F03'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '', '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. In Power Automate, open this flow and its 28-day run history; the failed run has the start time above. 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and adds only what is missing.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+          "emailMessage/Importance": "High"
+        }
+      }
+    }
+  }
+}
