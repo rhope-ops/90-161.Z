@@ -23,7 +23,7 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R18-round-r1.ps1",
+      "out": "scripts/gov/paste/90161Z-R18-round-r2.ps1",
       "round": "R18",
       "title": "Round R18: solution import test A r4 (lowercase workflow GUID; R17 A and B both failed: workflow not declared as a root component), a working solution export as the fallback, site setup r9 collects the A result; step bar fills left to right; It failed button",
       "files": [
