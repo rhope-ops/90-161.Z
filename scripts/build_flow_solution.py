@@ -71,7 +71,7 @@ ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r2.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 hold and resume joins R21
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r3.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 hold and resume joins R21
 
 
 def dumps(o):

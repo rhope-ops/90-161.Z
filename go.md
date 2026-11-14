@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (Round R21 r1: slice 1 flows in test mode, with the flow controls and the new RADE window).
+Updated: 14 Nov 26 (Round R21 r2, adds a run link to the failure e-mail: slice 1 flows in test mode, with the flow controls and the new RADE window).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,7 +24,7 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R21 r1: slice 1 flows on the test site, in test mode (open, 14 Nov 26)
+## Round R21 r2: slice 1 flows on the test site, in test mode (open, 14 Nov 26)
 
 **For:** R20 imported the flows, but F03 did not turn on (its update step lacked the Title field) and F05 made no rows (likely off after the failed import). R21 imports the fixed slice 1 flows, F05 (endorsement routing r2) and F03 (suspense reminders r3), with test mode on, and proves end to end: routing to Legal and step 7, an action on hold is skipped, a failed run e-mails me and resumes with Resubmit, a missing row comes back alone, and the suspense is 20 working days. It also adds the new list columns (T19) and tests F06, the new hold and resume flow: a held action's suspense dates move out by the weekdays it was on hold, and a cancel is logged once. The repository check has a new fix. The RADE window has the new P1 layout; please check that it displays correctly.
 **Time:** about 50 minutes (estimate): list columns 2, import 8, test part 1 12, failure e-mail and Resubmit 4, run F03 3, test part 2 12, plus sign-ins.
@@ -38,7 +38,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R21-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R21-round-r2.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
 3. In the RADE window, choose the application, run the checks, then select Deploy.
 4. Step 1 (list columns) signs in with my CAC and adds the columns. Keep RADE open.
