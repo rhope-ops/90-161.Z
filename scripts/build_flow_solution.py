@@ -18,6 +18,11 @@ r3 (R17, PFM 14 Nov 26: r2 failed with the same XML node error): environmentvari
 (agent finding, Confidence medium: the import inserts that file into a larger XML document, where a declaration node is the
 wrong type; real exports start the file with the element). Two test solutions isolate the cause: A has no environment
 variable (the site address is a run input), B has the environment variable without the declaration.
+r4 (R18, PFM 14 Nov 26: in R17 A and B both passed the XML stage and both failed with "component {guid} of type 29 is not
+declared in the solution file as a root component", so the variable is not the cause): the workflow GUID is lowercase in
+customizations.xml (WorkflowId) and in solution.xml (RootComponent), as Dataverse exports write it and as the error prints
+it; the JSON file name keeps the uppercase GUID, as exports do (agent finding, Confidence medium). Only test A goes to R18;
+if it fails, the PFM exports a working solution in the same round so the next build copies the real layout.
 Strings that start with "@" are expressions on purpose here (build_flow_package.literal() is for static data only).
 """
 import argparse, io, json, pathlib, re, sys, uuid, zipfile
@@ -112,7 +117,7 @@ def build(test=None) -> bytes:
         fname = f"/Workflows/{src.stem}-{wid}.json"
         files[fname[1:]] = dumps(workflow_json(d, used))
         wf_xml.append(
-            f"    <Workflow WorkflowId=\"{{{wid}}}\" Name={quoteattr(d['displayName'])}>\n"
+            f"    <Workflow WorkflowId=\"{{{wid.lower()}}}\" Name={quoteattr(d['displayName'])}>\n"
             f"      <JsonFileName>{fname}</JsonFileName>\n"
             "      <Type>1</Type>\n      <Subprocess>0</Subprocess>\n      <Category>5</Category>\n      <Mode>0</Mode>\n"
             "      <Scope>4</Scope>\n      <OnDemand>0</OnDemand>\n      <TriggerOnCreate>0</TriggerOnCreate>\n"
@@ -124,7 +129,7 @@ def build(test=None) -> bytes:
             "      <ModernFlowType>0</ModernFlowType>\n      <PrimaryEntity>none</PrimaryEntity>\n"
             f"      <LocalizedNames>\n        <LocalizedName languagecode=\"1033\" description={quoteattr(d['displayName'])} />\n      </LocalizedNames>\n"
             "    </Workflow>")
-        root_components.append(f'      <RootComponent type="29" id="{{{wid}}}" behavior="0" />')
+        root_components.append(f'      <RootComponent type="29" id="{{{wid.lower()}}}" behavior="0" />')   # lowercase (r4)
     used_conns = sorted({c for _, d, _ in flows for c in d["connections"]})
     cr_xml = []
     for c in used_conns:

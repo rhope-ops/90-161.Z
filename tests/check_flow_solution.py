@@ -106,6 +106,19 @@ for src in sorted(B.DEFS.glob("*.json")):
                 counts["columns"] += 1
                 if u not in cols and u not in {"ID", "Id"}: bad(f"{src.name} {name}: column '{u}' not in {title}")
 
+# R17: the import failed with "component {guid} of type 29 is not declared in the solution file as a root component".
+# Every zip (flow solution and test solutions): each WorkflowId is a lowercase GUID and has a RootComponent type 29 with the same id.
+for z in [cz] + sorted((ROOT / "flow" / "solution").glob("90161Z-T17-*.zip")):
+    with zipfile.ZipFile(z) as zz:
+        c, sol = zz.read("customizations.xml").decode("utf-8"), zz.read("solution.xml").decode("utf-8")
+    wids = re.findall(r'WorkflowId="\{([^}]+)\}"', c)
+    roots = set(re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', sol))
+    if not wids: bad(f"{z.name}: no workflow")
+    for w in wids:
+        if w != w.lower(): bad(f"{z.name}: WorkflowId {w} is not lowercase")
+        if w not in roots: bad(f"{z.name}: workflow {w} has no RootComponent type 29 with the same id")
+    if roots - set(wids): bad(f"{z.name}: RootComponent type 29 without a workflow: {sorted(roots - set(wids))}")
+
 if errs:
     print("\n".join(errs)); sys.exit(1)
 print(f"PASS flow solution: defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")

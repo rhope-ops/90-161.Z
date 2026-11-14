@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (Round R17 r3: RADE, solution import tests A and B, new logo K and thumbnail by hand).
+Updated: 14 Nov 26 (Round R18 r1: solution import test A r4, a working export if it fails).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,24 +24,26 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R17 r3: RADE, solution import tests A and B, new logo K and thumbnail by hand (open, 14 Nov 26)
+## Round R18 r1: solution import test A r4, a working export if it fails (open, 14 Nov 26)
 
-**For:** (1) finds the cause of the solution import error (R15 and R16): test A has no environment variable, test B has it without the XML first line that is the likely cause. (2) The site logo and thumbnail are set by hand to the new official logo K (blue mark on white in a blue ring with a thin yellow edge; one file for both); the script calls do not work on this site; site setup checks the header logo. r3 only makes the logo's yellow edge thicker: if I already ran r1 or r2, I run r3 anyway. (3) First round of RADE, the renamed Deployer: saved checks, steady two-line rows, smooth bars, an Exit button.
-**Time:** about 25 minutes (estimate): two imports and runs in Power Automate 10, logo 2, site setup 8 plus waiting for the two flows.
-**Changes:** on my computer: moves my OneDrive folder 90-161.Z into OneDrive\RADE (once; every file keeps its place); writes into T14, T16, T17, Rounds\R17 and RADE\Config; moves the R15 results, the R16 test, probe and setup files and the old logo files to the Recycle Bin. In Power Automate: imports two test solutions, "90-161.Z solution import test A" and "... test B" (one flow and one SharePoint connection reference each; B also has one "Site URL" variable); I run each flow once. On the new site: each test flow reads the PFM Settings row count and writes one result file; I set the header logo and the thumbnail in Change the look; site setup only reads (no logo changes) and copies both result files (site address masked). No e-mail is sent by either flow. Saves one Outlook draft (never sent).
+**For:** (1) R17 showed the real import error: A and B both failed with "workflow ... is not declared in the solution file as a root component", so the variable was not the cause. A r4 writes the flow ID in lowercase, as real exports do. (2) If A fails again, I export one working solution in the same round; RADE reads only its two XML files so the next build copies the real layout. (3) RADE gets its new look (layout B): a navy-to-blue rail on the left with logo K, the word RADE and the three screens; blue Next and Run buttons; a blue top bar and a yellow step bar. The step bar now fills left to right like the top bar, and a by-hand step has an "It failed" button with a box for the error text, so the e-mail says FAILED with the message. The logo is no longer a round step: Claude e-mailed logo K and I set it by hand (Change the look > Header) when I have time.
+**Time:** about 15 minutes (estimate): import and run 5, export 5 (only if A fails), site setup 8 plus waiting for the flow.
+**Changes:** on my computer: writes into T16, T17 and Rounds\R18; moves the R17 test files, site setup r8 files, the T14 folder and Rounds\R16 to the Recycle Bin. In Power Automate: imports "90-161.Z solution import test A" again (one flow, one SharePoint connection reference); I run its flow once. Only if A fails: I make one solution "90161ZExportSample" with one working flow and export it (a zip in Downloads; RADE copies only solution.xml and customizations.xml, addresses masked). On the new site: the test flow reads the PFM Settings row count and writes one result file; site setup only reads and copies that file (site address masked). Saves one Outlook draft (never sent).
 Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R17-round-r3.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R18-round-r1.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. File > New, click in the white pane, press Ctrl+V, then F5.
-3. In the RADE window: choose the application, run the checks (checks that passed in the last 7 days show "Saved result"), then Deploy. Before Run, the list shows the folder move.
-4. Three step windows open at the right edge of the screen, one after the other: test A, test B, then the logo. Follow each, then select its Done button.
-5. Site setup asks for the site address (filled in from last time) and opens a CAC sign-in. It waits for both flows; keep RADE open.
-6. Open the SharePoint start page and look at the site's card (the thumbnail). The Outlook draft opens: add "thumbnail OK" or what looks wrong, then Send.
-**Report:** the draft itself. If an import fails, its error text (no names or site address) in the e-mail. Claude watches the inbox for the subject "90161Z R17".
-**If it fails:** read the "What to do" line in the window. If an import shows an error, copy the error text into the e-mail and select Skip in that step window; do the other test anyway. If the folder move fails, the log says why and the round uses the old folder. A FAIL line in site setup names the item and the by-hand fallback.
+3. In the RADE window: choose the application, run the checks, then Deploy.
+4. The test A window opens at the right edge of the screen. Follow it. If the import works, select "Done: the run has started"; if it fails, paste the error into the box and select "It failed".
+5. The export window opens next. If A imported, select Skip. If A failed, follow it and select "Done: exported".
+6. Site setup asks for the site address (filled in from last time) and opens a CAC sign-in. It waits for the flow; keep RADE open. Then Send the Outlook draft. If the new window looks wrong (overlap, cut-off text, logo missing), clear the box "This window looked right" and write what you saw.
+**Report:** the draft itself (it holds the error text and, if A failed, the two export files). Claude watches the inbox for the subject "90161Z R18".
+**If it fails:** read the "What to do" line in the window. If the export cannot be made, paste its error and select It failed; the round goes on. A FAIL line in site setup names the item and the by-hand fallback.
 
 ## Done
 
+- Round R17 (14 Nov 26): needs review. RADE moved the folder and the window worked (Window: OK); both solution imports failed with "workflow not declared as a root component" (the variable is not the cause), logged as skipped because the window had no failed answer; site setup r7 passed (6 of 6). R18 fixes the import (lowercase ID) and adds the It failed button. Details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r17-results.md
 - Round R16 (14 Nov 26): needs review. The solution import failed again with the same XML error (skipped); the probe gave the coworker's own user Contribute on a test list and it worked (list-level rights for app users are possible); the logo calls failed again, so the logo is set by hand from R17. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r16-results.md
 - Round R15 (14 Nov 26): needs review. Probe r4 and site setup r4 ran; the solution import stopped with an XML error (skipped); the header logo was not set and the thumbnail got the header file; the Contribute test found no group to test. All three go into R16. Details:

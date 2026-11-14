@@ -12,7 +12,8 @@ $a = '{0:N2} {1:N2} {2}' -f $g.Step, $g.All, [int][math]::Round($g.Left / 10)
 # No report and no earlier run: the step fraction is unknown (-1); the overall bar still moves with time.
 $script:prog = @{ Total = 400.0; Done = 100.0; Cur = 100.0; CurKnown = $false; Known = $false; Start = $now.AddSeconds(-50); Frac = -1.0 }
 $h = Get-Progress
-'{0} | {1:N0} {2:N3} | {3} {4} {5}' -f $a, $h.Step, $h.All, ('  PROGRESS 3/10' -match $re), ('PROGRESS 3 of 10' -match $re), ('PROGRESS done' -match $re)
+# R18 (PFM 14 Nov 26): the step bar fills left to right with time when the fraction is unknown (StepShown 50/100 s = 0.50).
+'{0} | {1:N0} {2:N3} {6:N2} | {3} {4} {5}' -f $a, $h.Step, $h.All, ('  PROGRESS 3/10' -match $re), ('PROGRESS 3 of 10' -match $re), ('PROGRESS done' -match $re), $h.StepShown
 # The gate (PFM 14 Nov 26): WARNING passes; FAILED, NOT RUN or a missing result blocks.
 $script:appChecks = @('a', 'b')
 $ok = @{ a = @{ State = 'PASSED' }; b = @{ State = 'WARNING' } }
