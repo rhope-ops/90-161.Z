@@ -2,9 +2,9 @@
   "_doc": "Source for scripts/build_paste_bundles.py. Each bundle is one round: a self-contained PowerShell text the PFM copies from its raw page and pastes into Windows PowerShell ISE (F5). It writes the files, then opens RADE, the Redacted Application Deployment Engine (a window; text prompts if no window can open): steps run one by one with a live log and PASS/FAIL counts, then one results folder (Rounds\\\\<round>: a report file plus copies of the PDFs, to attach to one e-mail; zips do not cross the boundary) and a summary for the clipboard. It runs only the steps inside it (PFM 3A). A step's \"default\" may be {passed, paths}: the step is ticked only when those files changed since the round that passed it; after a round passes it, set passed to the new hash (PFM 14 Nov 26). Never hand-edit scripts/gov/paste/*.ps1: change this file or the sources and rebuild. A step may list \"needs\" (check ids in the engine's $checkDefs) and \"estimate\" (minutes, used until a real run time exists). \"apps\" is the embedded catalog the Choose screen lists (name, plain-English summary, step names); without it, one application has every step. A guide step may set \"doneText\" (its Done button) and \"doneLog\" (the log line on Done).",
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R17-round-r2.ps1",
+      "out": "scripts/gov/paste/90161Z-R17-round-r3.ps1",
       "round": "R17",
-      "title": "Round R17: RADE (the window is renamed and moves its folder into OneDrive\\RADE), solution import tests A and B r3 (finds the XML error), logo K and thumbnail by hand (r2: logo K, PFM 14 Nov 26), site setup r7 checks them",
+      "title": "Round R17: RADE (the window is renamed and moves its folder into OneDrive\\RADE), solution import tests A and B r3 (finds the XML error), logo K and thumbnail by hand (r2: logo K; r3: thicker yellow edge, PFM 14 Nov 26), site setup r8 checks them",
       "files": [
         {
           "dir": "T17",
@@ -16,11 +16,11 @@
         },
         {
           "dir": "T14",
-          "src": "assets/logo/90161Z-T14-site-logo-r3.png"
+          "src": "assets/logo/90161Z-T14-site-logo-r4.png"
         },
         {
           "dir": "T16",
-          "src": "scripts/gov/90161Z-T16-site-setup-r7.ps1"
+          "src": "scripts/gov/90161Z-T16-site-setup-r8.ps1"
         }
       ],
       "steps": [
@@ -79,7 +79,7 @@
           "name": "T14 Site logo and thumbnail (by hand)",
           "kind": "guide",
           "dir": "T14",
-          "file": "90161Z-T14-site-logo-r3.png",
+          "file": "90161Z-T14-site-logo-r4.png",
           "note": "You set the header logo and the thumbnail on the site (about 2 minutes, an estimate). The script calls failed in R15 and R16 on this site; site setup checks the header logo after this step.",
           "url": "https://usaf.dps.mil/sites/",
           "url_source": "The site address you typed on the Check screen (Config\\90161Z-site.txt)",
@@ -101,9 +101,9 @@
           "estimate": 2
         },
         {
-          "name": "T16 Site setup r7",
+          "name": "T16 Site setup r8",
           "dir": "T16",
-          "file": "90161Z-T16-site-setup-r7.ps1",
+          "file": "90161Z-T16-site-setup-r8.ps1",
           "args": "-Logo",
           "minutes": 45,
           "note": "Asks for the site address and a CAC sign-in, checks the site settings and the header logo (no logo changes), and collects the results of tests A and B (waits up to 15 minutes for each).",
@@ -118,18 +118,18 @@
       "collect": [
         {
           "dir": "T16",
-          "name": "90161Z-T16-setup-r7.txt",
-          "step": "T16 Site setup r7"
+          "name": "90161Z-T16-setup-r8.txt",
+          "step": "T16 Site setup r8"
         },
         {
           "dir": "T17",
           "name": "90161Z-T17-solution-result-a-r3.txt",
-          "step": "T16 Site setup r7"
+          "step": "T16 Site setup r8"
         },
         {
           "dir": "T17",
           "name": "90161Z-T17-solution-result-b-r3.txt",
-          "step": "T16 Site setup r7"
+          "step": "T16 Site setup r8"
         }
       ],
       "cleanup": [
@@ -278,6 +278,18 @@
           "kind": "glob"
         },
         {
+          "path": "T14\\90161Z-T14-site-logo-r3.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r7.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r7.txt",
+          "kind": "glob"
+        },
+        {
           "path": "T14\\90161Z-T14-site-logo-thumb-r2.png",
           "kind": "glob"
         },
@@ -375,7 +387,7 @@
             "T17 Solution import test A r3 (no variable)",
             "T17 Solution import test B r3 (with the variable)",
             "T14 Site logo and thumbnail (by hand)",
-            "T16 Site setup r7"
+            "T16 Site setup r8"
           ]
         }
       ]
