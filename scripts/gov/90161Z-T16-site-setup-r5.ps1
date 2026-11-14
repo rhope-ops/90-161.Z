@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 16 site setup, r5 (R16: header logo and thumbnail set apart and each checked; collects the probe r5 result, masked). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 16 site setup, r5 (R16: header logo and thumbnail set apart and each checked; collects the probe r5 and solution test r2 results, masked). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: sets up the new SharePoint site in one run, so the PFM does not click it by hand (DECISIONS 14 Nov 26:
   optional Deployer PnP write steps, allowed because the read-only PnP test passed). About 5 minutes (an estimate).
@@ -20,8 +20,9 @@
        permissions); uploads the images from T07\Seals and T07\Seals\Prepared. An image already there is replaced.
        r2 (R12 FAIL "File Not Found"): the folder paths come from the library's own root folder (its address can differ
        from its title), and Resolve-PnPFolder makes missing folders; a FAIL line names the stage that failed.
-    e. Flow result: copies "90161Z-T11-rights-result-r5.json" (probe, to T11) from the site's default Documents library,
-       and masks the site address, host and path in the copy (r4). When the round's guide step for that flow was confirmed in the last 2 hours (its marker
+    e. Flow results: copies "90161Z-T11-rights-result-r5.json" (probe, to T11) and "90161Z-T17-solution-result-r2.txt"
+       (solution import test, to T17) from the site's default Documents library, and masks the site address, host and
+       path in each copy (r4). When the round's guide step for that flow was confirmed in the last 2 hours (its marker
        file), it waits for the file, checking every 30 seconds for up to 15 minutes.
     f. Task 2 check: counts the PFM lists and their rows (read-only).
   Each item is checked on its own and prints PASS (already right), SET (changed and read back), SKIP (nothing to do) or
@@ -343,6 +344,7 @@ try {
     }
     # e. Probe result file.
     Add-Item 'e-probe-result' $FetchResult @('e-probe-result', 'T11', '90161Z-T11-rights-result-r5.json', '90161Z-T11-probe-started.txt', '90161Z T11 Rights Probe r5')
+    Add-Item 'e2-solution-result' $FetchResult @('e2-solution-result', 'T17', '90161Z-T17-solution-result-r2.txt', '90161Z-T17-solution-started.txt', '90161Z T17 Solution Import Test r2')
     # f. Task 2 check.
     Add-Item 'f-task2-lists' {
       $pl = @(Get-PnPList -ErrorAction Stop | Where-Object { $_.Title -like 'PFM *' })

@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z T17 Solution Import Test r1",
-  "description": "R15 test (PFM 14 Nov 26): proves a solution import works in this environment. Reads the row count of PFM Settings through the solution's SharePoint connection reference and Site URL environment variable, then writes one result file 90161Z-T17-solution-result-r1.txt to the site's default document library. Changes nothing else.",
+  "displayName": "90161Z T17 Solution Import Test r2",
+  "description": "R16 test r2 (PFM 14 Nov 26: values from the T05 real export; r1 failed in R15 with an XML node error): proves a solution import works in this environment. Reads the row count of PFM Settings through the solution's SharePoint connection reference and Site URL environment variable, then writes one result file 90161Z-T17-solution-result-r2.txt to the site's default document library. Changes nothing else.",
   "connections": ["shared_sharepointonline"],
   "triggers": {
     "manual": {"type": "Request", "kind": "Button", "inputs": {"schema": {"type": "object", "properties": {}, "required": []}}}
@@ -28,7 +28,7 @@
         "parameters": {
           "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
           "parameters/method": "POST",
-          "parameters/uri": "_api/web/DefaultDocumentLibrary/RootFolder/Files/add(url='90161Z-T17-solution-result-r1.txt',overwrite=true)",
+          "parameters/uri": "_api/web/DefaultDocumentLibrary/RootFolder/Files/add(url='90161Z-T17-solution-result-r2.txt',overwrite=true)",
           "parameters/headers": {"Accept": "application/json;odata=nometadata"},
           "parameters/body": "@{concat('SOLUTION import=OK connection-reference=OK environment-variable=OK settings-read-status=', string(outputs('Read_settings_count')?['statusCode']), ' settings-rows=', string(coalesce(body('Read_settings_count')?['ItemCount'], 'none')), ' run-utc=', utcNow())}"
         },

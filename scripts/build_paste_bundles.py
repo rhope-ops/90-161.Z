@@ -397,11 +397,10 @@ function Show-GuideDialog($Step, [string]$File, [string]$Url, [string]$UrlFile) 
   $doneB.DialogResult = 'OK'; $skipB.DialogResult = 'Cancel'
   # A check (no file) has a third answer, No: what the PFM saw shows a problem.
   if ($File) { $btns.Controls.AddRange(@($openB, $copyB, $showB, $doneB, $skipB)) }
-  elseif (-not $Step.NoText) { $btns.Controls.AddRange(@($openB, $doneB, $skipB)) }   # R16: a step that needs no file
   else { $noB = & $mk $Step.NoText; $noB.DialogResult = 'No'; $btns.Controls.AddRange(@($openB, $doneB, $noB, $skipB)) }
   $note = New-Object System.Windows.Forms.Label
   $note.AutoSize = $true; $note.MaximumSize = $wrap
-  if (-not $File) { $note.Text = $(if ($Step.NoText) { 'No file is needed for this check.' } else { 'No file is needed for this step.' }) }
+  if (-not $File) { $note.Text = 'No file is needed for this check.' }
   else { $note.Text = $(if (Copy-TextToClipboard $File) { 'The full path of ' + $Step.File + ' is on the clipboard.' } else { 'Select Copy file path to put the path of ' + $Step.File + ' on the clipboard.' }) }
   $row = 0; foreach ($c in @($head, $body, $urlPanel, $note, $btns)) { $g.Controls.Add($c, 0, $row); $row++ }
   $d.Controls.Add($g)
@@ -424,7 +423,7 @@ function Show-GuideDialog($Step, [string]$File, [string]$Url, [string]$UrlFile) 
 function Invoke-GuideStep([string]$Base, $Step, [scriptblock]$Say) {
   $r = @{ Pass = 0; Fail = 0; Exit = 0; Skipped = $false }
   $dir = Join-Path $Base $Step.Dir
-  $file = $(if ($Step.File) { Join-Path $dir $Step.File } else { '' })   # R16: a guide step can need no file (an export)
+  $file = Join-Path $dir $Step.File
   $url = $Step.Url
   $urlFile = ''
   if ($Step.UrlConfig) {
@@ -433,21 +432,19 @@ function Invoke-GuideStep([string]$Base, $Step, [scriptblock]$Say) {
   }
   # An old marker from an earlier run would make site setup wait for a result that is not coming (review R13 #2).
   if ($Step.Marker) { $old = Join-Path $dir $Step.Marker; if (Test-Path -LiteralPath $old -PathType Leaf) { try { Remove-Item -LiteralPath $old -Force } catch { $null = $_ } } }
-  if ($file) { & $Say ('    File ready: ' + $Step.Dir + '\' + $Step.File) }
+  & $Say ('    File ready: ' + $Step.Dir + '\' + $Step.File)
   if ($script:textMode) {
     foreach ($l in @($Step.Guide)) { & $Say ('    ' + $l) }
     & $Say ('    Address: ' + $url)
-    if ($file -and (Copy-TextToClipboard $file)) { & $Say '    The full file path is on the clipboard.' }
+    if (Copy-TextToClipboard $file) { & $Say '    The full file path is on the clipboard.' }
     if ($env:OS -eq 'Windows_NT') { try { Start-Process -FilePath $url } catch { $null = $_ } }
-    $ask = 'Press Enter when the flow run has started, or type S and press Enter to skip this step'
-    if ($Step.Confirm) { $ask = 'Press Enter when you have done the steps above, or type S and press Enter to skip this step' }
-    $a = [string](Read-Host $ask); $a = $(if ($a) { $a.Trim() } else { '' })   # no input (closed stdin) gives no value, not ''
+    $a = [string](Read-Host 'Press Enter when the flow run has started, or type S and press Enter to skip this step'); $a = $(if ($a) { $a.Trim() } else { '' })   # no input (closed stdin) gives no value, not ''
     $ok = ($a -notmatch '^[Ss]')
   } else { $ok = ((Show-GuideDialog $Step $file $url $urlFile) -eq 'OK') }
   if ($ok) {
     if ($Step.Marker) { try { Set-Content -LiteralPath (Join-Path $dir $Step.Marker) -Value (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -Encoding UTF8 } catch { $null = $_ } }
     $r.Pass = 1
-    & $Say ('    Confirmed by you: ' + $(if ($Step.Confirm) { $Step.Confirm } else { 'the flow is imported and its run has started.' }))
+    & $Say '    Confirmed by you: the flow is imported and its run has started.'
   } else { $r.Skipped = $true; & $Say '    Skipped by you.' }
   return $r
 }
@@ -1417,12 +1414,12 @@ def build(b):
         parts.append("$files += @{ Dir = %s; Name = %s; Kind = '%s'; Sha = '%s'; Data = %s }"
                      % (q(f['dir']), q(src.name), kind, sha, body))
     # kind "guide": a step the PFM does in another program (guide lines, an address to open, a marker file on Done).
-    steps = ['$steps += @{ Name = %s; Dir = %s; File = %s; Default = $%s; AskParam = %s; AskPrompt = %s; ScreenOnly = %s; Minutes = %d; Args = %s; Note = %s; Kind = %s; Guide = @(%s); Url = %s; UrlConfig = %s; Marker = %s; Estimate = %d; DoneText = %s; Confirm = %s }'
+    steps = ['$steps += @{ Name = %s; Dir = %s; File = %s; Default = $%s; AskParam = %s; AskPrompt = %s; ScreenOnly = %s; Minutes = %d; Args = %s; Note = %s; Kind = %s; Guide = @(%s); Url = %s; UrlConfig = %s; Marker = %s; Estimate = %d }'
              % (q(s['name']), q(s['dir']), q(s['file']), 'true' if step_default(s) else 'false',
                 q(s.get('ask', {}).get('param', '')), q(s.get('ask', {}).get('prompt', '')), q(s.get('screenOnly', '')),
                 int(s.get('minutes', 30)), q(s.get('args', '')), q(s.get('note', '')), q(s.get('kind', 'script')),
                 ', '.join(q(g) for g in s.get('guide', [])), q(s.get('url', '')), q(s.get('urlConfig', '')), q(s.get('marker', '')),
-                int(s.get('estimate', 0)) * 60, q(s.get('done', '')), q(s.get('confirm', '')))
+                int(s.get('estimate', 0)) * 60)
              for s in b['steps']]
     apps = app_lines(b)
     # Data files the round downloads (not code, PFM 3A): repo files from raw main, checked by SHA-256; public pages as they are.
@@ -1436,7 +1433,7 @@ def build(b):
             fetch.append((f['dir'], f['name'], f['url'], ''))
     fetchs = ['$fetch += @{ Dir = %s; Name = %s; Url = %s; Sha = %s }' % tuple(q(x) for x in t) for t in fetch]
     for s in b['steps']:
-        assert (s.get('kind') == 'guide' and not s['file']) or any(f['dir'] == s['dir'] and Path(f['src']).name == s['file'] for f in b['files']), s
+        assert any(f['dir'] == s['dir'] and Path(f['src']).name == s['file'] for f in b['files']), s
     collect = ['$collect += @{ Dir = %s; Name = %s; Step = %s }' % (q(c['dir']), q(c['name']), q(c.get('step', ''))) for c in b['collect']]
     cleanup = ['$cleanup += @{ Path = %s; Kind = %s }' % (q(c['path']), q(c['kind'])) for c in b.get('cleanup', [])]
     # Support scripts that keep their names (they load each other) and samples: made by 90-161.Z, so cleanup may recycle them.

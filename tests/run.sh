@@ -103,15 +103,19 @@ python3 scripts/build_flow_package.py --check && ok "flow packages up to date" |
 python3 tests/check_flow_package.py && ok "flow packages match real export shape" || bad "flow package shape"
 python3 tests/check_flow_defs.py && ok "flow def names and expressions" || bad "flow def names or expressions"
 python3 scripts/build_flow_solution.py --check >/dev/null && python3 tests/check_flow_solution.py >/dev/null && ok "flow solution up to date and valid" || bad "flow solution stale or invalid"
-# R15 (PFM 14 Nov 26): the solution import test is its own solution (PFM90161ZTEST), one flow, only the Site URL variable, XML valid.
+# R15/R16 (PFM 14 Nov 26): the solution import test is its own solution (PFM90161ZTEST), one flow, only the Site URL variable, XML valid; r2 uses the T05 export values.
 python3 - <<'PYEOF' && ok "solution import test zip valid (PFM90161ZTEST, 1 flow, 1 variable)" || bad "solution import test zip"
 import zipfile, xml.dom.minidom as md
-z = zipfile.ZipFile('flow/solution/90161Z-T17-solution-test-r1.zip'); n = z.namelist()
+z = zipfile.ZipFile('flow/solution/90161Z-T17-solution-test-r2.zip'); n = z.namelist()
 for f in n:
     if f.endswith('.xml'): md.parseString(z.read(f))
 s = z.read('solution.xml').decode()
 assert '<UniqueName>PFM90161ZTEST</UniqueName>' in s
 assert sum(f.startswith('Workflows/') for f in n) == 1 and sum(f.startswith('environmentvariabledefinitions/') for f in n) == 1
+c = z.read('customizations.xml').decode()
+assert 'OrganizationVersion="9.2.26094.172"' in s and '<UniqueName>PFM</UniqueName>' in s
+assert '<StateCode>1</StateCode>' in c and '<StatusCode>2</StatusCode>' in c and '<ModernFlowType>0</ModernFlowType>' in c
+assert '"runtimeSource": "invoker"' in z.read([f for f in n if f.startswith('Workflows/')][0]).decode()
 PYEOF
 python3 tests/check_names.py && ok "naming rules (PFM 2026-11-11)" || bad "naming rules"
 for f in flow/defs/*.json; do python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" && ok "json $f" || bad "json $f"; done
@@ -336,35 +340,6 @@ done
 # R15 review: site setup r5 masks a URL-encoded address (%40) in a fetched result.
 hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r5.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
 ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r5 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r5 %40 masking"; }
-# R16 (PFM 14 Nov 26): the export capture reads a fake export zip and leaves no name, address or value in its text file.
-tx=$(mktemp -d); mkdir -p "$tx/u/test1234/Downloads"
-python3 - "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_1.zip" <<'PYEOF'
-import zipfile, sys
-z = zipfile.ZipFile(sys.argv[1], 'w')
-z.writestr('solution.xml', '\ufeff<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SolutionManifest><Publisher><UniqueName>jdoe</UniqueName><LocalizedNames><LocalizedName description="Jane Doe" languagecode="1033" /></LocalizedNames><EMailAddress>jane.doe@fakeco.example</EMailAddress><PrimaryContactName>Jane Roe</PrimaryContactName><Addresses><Address><City>Faketown</City></Address></Addresses><CustomizationPrefix>pfm</CustomizationPrefix></Publisher></SolutionManifest></ImportExportXml>'.encode())
-import json
-z.writestr('Workflows/90161ZExportSample-1A2B3C4D-0000-4000-8000-00000000AAAA.json', json.dumps({"schema": "https://schema.management.azure.com/x.json#",
-  "dataset": "https://fakeco.example/sites/Wing123", "c": "user9@fakeco.example", "e": "https:\\/\\/fakeco2.sharepoint.us\\/sites\\/Wing456",
-  "p": "https%3A%2F%2Ffakeco3.sharepoint.us%2Fsites%2FWing789", "h": "fakeco4.sharepoint.us", "api": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-  "d": "%252Fsites%252FWingAlpha", "t": "/teams/WingBravo/x", "ip": "10.20.30.40", "unc": "\\\\fileserver01\\share", "defaultValue": "Jane Echo",
-  "j": json.dumps({"owner": "Jane Delta"}), "ds": "@parameters('Site URL (pfm_SiteURL)')", "op": "GetItems", "n": 3, "actions": {"Send_an_HTTP_request_to_SharePoint": {"runAfter": {}}}}))
-z.writestr('Workflows/SendtoJaneFoxtrot-1A2B3C4D-0000-4000-8000-00000000BBBB.json', '{"a":1}')
-z.writestr('customizations.xml', '<!-- Jane Doe --><ImportExportXml SolutionPackageVersion="9.2" version="9.2.26094.172"><Workflows><Workflow><JsonFileName>/Workflows/SendtoJaneFoxtrot-1A2B3C4D-0000-4000-8000-00000000BBBB.json</JsonFileName><JsonFileName>/Workflows/90161ZExportSample-1A2B3C4D-0000-4000-8000-00000000AAAA.json</JsonFileName></Workflow></Workflows><connectionreferences><connectionreference connectionreferencelogicalname="pfm_sharedsharepointonline_a1b2c"><connectionreferencedisplayname>SharePoint PFM90161ZExportSample-a1b2c</connectionreferencedisplayname><connectorid>/providers/Microsoft.PowerApps/apis/shared_sharepointonline</connectorid></connectionreference></connectionreferences><Publisher><SupportingWebsiteUrl a="1">WingHotel</SupportingWebsiteUrl></Publisher></ImportExportXml>')
-z.writestr('environmentvariablevalues.json', '{"value":"secretvalue"}')
-z.close()
-PYEOF
-sed -e "s#Join-Path 'C:\\\\Users'#Join-Path '$tx/u'#" scripts/gov/90161Z-T17-export-capture-r1.ps1 > "$tx/c.ps1"
-USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out.txt" 2>&1
-cf="$tx/u/test1234/OneDrive - United States Air Force/90-161.Z/T17/90161Z-T17-export-capture-r1.txt"
-[ -f "$cf" ] && grep -q "^CAPTURE PASS text-files=5" "$cf" && grep -q "GetItems" "$cf" && grep -q "pfm_SiteURL" "$cf" && grep -q "GUID-1" "$cf" && grep -q "9.2.26094.172" "$cf" && grep -q "Workflows/90161ZExportSample-&lt;GUID-1&gt;.json</JsonFileName>" "$cf" && grep -q "Send_an_HTTP_request_to_SharePoint" "$cf" && grep -q "bom=yes" "$cf" && grep -q "schema.management.azure.com" "$cf" \
-  && grep -q "shared_sharepointonline" "$cf" && grep -q "<CustomizationPrefix>pfm<" "$cf" \
-  && ! grep -qiE "jdoe|jane|roe<|fakeco|faketown|wing[0-9a-z]|secretvalue|test1234|10\.20\.30|fileserver|1a2b3c4d" "$cf" && ok "T17 export capture masks names, addresses (plain, escaped, encoded, bare host) and values (fake export)" || { cat "$tx/out.txt"; cat "$cf"; bad "T17 export capture masking"; }
-# A leak the value masking cannot remove (an address as a JSON key): no file is written (review R16 MAJOR).
-python3 -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w'); z.writestr('a.json','{\"jane.doe@fakeco.example\":1}'); z.close()" "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_2.zip"
-touch -d '+1 minute' "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_2.zip"
-USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out2.txt" 2>&1
-grep -q "^CAPTURE FAIL" "$tx/out2.txt" && [ ! -e "$cf" ] && ok "T17 export capture: a leak writes no file" || { cat "$tx/out2.txt"; bad "T17 export capture leak path"; }
-rm -rf "$tx"
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "
 import json; a = json.load(open('flow/defs/90161Z-T11-rights-probe-r5.json'))['actions']

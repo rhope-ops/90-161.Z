@@ -4,11 +4,11 @@
     {
       "out": "scripts/gov/paste/90161Z-R16-round-r1.ps1",
       "round": "R16",
-      "title": "Round R16: real solution export captured and masked (T17), probe r5 (Contribute to the coworker's own user), site setup r5 (header logo and thumbnail set apart, each checked)",
+      "title": "Round R16: solution import test r2 (T17, values from the T05 export), probe r5 (Contribute to the coworker's own user), site setup r5 (header logo and thumbnail set apart, each checked)",
       "files": [
         {
           "dir": "T17",
-          "src": "scripts/gov/90161Z-T17-export-capture-r1.ps1"
+          "src": "flow/solution/90161Z-T17-solution-test-r2.zip"
         },
         {
           "dir": "T11",
@@ -29,46 +29,30 @@
       ],
       "steps": [
         {
-          "name": "T17 Export a sample solution",
+          "name": "T17 Solution import test r2",
           "kind": "guide",
           "dir": "T17",
-          "file": "",
-          "note": "You make one small solution in Power Automate and export it (about 8 minutes, an estimate). Its files show the exact layout this environment uses, so the next import test can match it.",
-          "marker": "90161Z-T17-export-started.txt",
+          "file": "90161Z-T17-solution-test-r2.zip",
+          "note": "You import one small test solution in Power Automate and run its flow (about 5 minutes, an estimate). r2 uses the values of your T05 export; r1 failed with an XML error in R15.",
+          "marker": "90161Z-T17-solution-started.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
-          "done": "Done: the zip is exported",
-          "confirm": "the sample solution is exported.",
           "guide": [
-            "Type no names in any box. Do not make a new publisher.",
-            "1. Select Open in browser. In Power Automate select Solutions (under More if you do not see it), then New solution.",
-            "2. Display name: PFM 90161Z Export Sample. Name: check it reads PFM90161ZExportSample. Publisher: keep the default one shown. Select Create.",
-            "3. In the solution select New > More > Environment variable. Display name: Site URL. Data type: Text.",
-            "   Leave Default value and Current value empty. Select Save.",
-            "4. Select New > Automation > Cloud flow > Instant. Flow name: 90161Z Export Sample.",
-            "   Trigger: Manually trigger a flow. Select Create.",
-            "5. Add the action SharePoint \"Get items\". Site Address: Enter custom value, then pick \"Site URL\"",
-            "   from the dynamic content (Environment variables). List Name: Enter custom value: PFM Settings.",
-            "   Select Save. Do not run the flow.",
-            "6. Go back to the solution. Select Export solution. If it asks to publish, select Publish, then Next.",
-            "   Select Unmanaged, then Export. Wait until the browser saves the zip to Downloads (1-2 minutes, an estimate).",
-            "7. Come back here and select \"Done: the zip is exported\". The next step reads the zip; nothing is sent by itself.",
-            "If a step fails: write down the error text (no names or site address) for the e-mail, then select Skip this step."
+            "1. Select Open in browser. Power Automate opens; sign in with your CAC if asked.",
+            "2. In the left menu select Solutions (under More if you do not see it), then Import solution > Browse.",
+            "3. In the File name box press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
+            "4. Connections: for SharePoint pick your existing connection. Environment variable \"Site URL\": paste the new site address. Select Import.",
+            "5. Wait for \"Successfully imported\" (1-3 minutes, an estimate). Open the solution \"90-161.Z solution import test\",",
+            "   open the flow \"90161Z T17 Solution Import Test r2\", select Run, then Run flow.",
+            "6. Come back here and select \"Done: the run has started\".",
+            "If the import fails: copy its error message (no names or site address) into the results e-mail, then select Skip this step."
           ],
           "needs": [
             "net-flow",
             "flow-guide"
           ],
-          "estimate": 8
-        },
-        {
-          "name": "T17 Export capture",
-          "dir": "T17",
-          "file": "90161Z-T17-export-capture-r1.ps1",
-          "minutes": 5,
-          "note": "Reads the exported zip from Downloads, masks names, addresses and values, and writes one text file to send. It changes nothing.",
-          "estimate": 1
+          "estimate": 5
         },
         {
           "name": "T11 Rights probe r5: import and run the flow",
@@ -102,7 +86,7 @@
           "file": "90161Z-T16-site-setup-r5.ps1",
           "args": "-Logo",
           "minutes": 45,
-          "note": "Asks for the site address and a CAC sign-in, sets the header logo and the thumbnail (each by its own call), checks the site settings, and collects the probe result (waits up to 15 minutes).",
+          "note": "Asks for the site address and a CAC sign-in, sets the header logo and the thumbnail (each by its own call), checks the site settings, and collects both flow results (waits up to 15 minutes for each).",
           "needs": [
             "pnp",
             "net-site",
@@ -113,11 +97,6 @@
       ],
       "collect": [
         {
-          "dir": "T17",
-          "name": "90161Z-T17-export-capture-r1.txt",
-          "step": "T17 Export capture"
-        },
-        {
           "dir": "T16",
           "name": "90161Z-T16-setup-r5.txt",
           "step": "T16 Site setup"
@@ -125,6 +104,11 @@
         {
           "dir": "T11",
           "name": "90161Z-T11-rights-result-r5.json",
+          "step": "T16 Site setup"
+        },
+        {
+          "dir": "T17",
+          "name": "90161Z-T17-solution-result-r2.txt",
           "step": "T16 Site setup"
         }
       ],
@@ -310,10 +294,6 @@
           "kind": "glob"
         },
         {
-          "path": "T17\\90161Z-T17-solution-started.txt",
-          "kind": "glob"
-        },
-        {
           "path": "T11\\90161Z-T11-rights-probe-r4.zip",
           "kind": "glob"
         },
@@ -334,10 +314,9 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R16. Captures a sample flow export, tests app-user rights, and sets the site logo and thumbnail.",
+          "summary": "Test round R16. Tests the solution import again (r2), tests app-user rights, and sets the site logo and thumbnail.",
           "steps": [
-            "T17 Export a sample solution",
-            "T17 Export capture",
+            "T17 Solution import test r2",
             "T11 Rights probe r5: import and run the flow",
             "T16 Site setup"
           ]
