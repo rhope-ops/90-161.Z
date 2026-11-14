@@ -153,9 +153,9 @@ try {
     Write-Output ('ITEM import-log PASS rows=' + $rows + ' kept=' + $kept + ' copied to T17\90161Z-T17-import-log-r1.txt (addresses masked)')
   }
 } catch {
-  $msg = [string]$_.Exception.Message; if ($msg.Length -gt 160) { $msg = $msg.Substring(0, 160) }
   $sec = @(); if ($who -and $who.Secret) { $sec = $who.Secret }
-  Write-Output ('ITEM import-log FAIL ' + (Hide-Export $msg $sec))
+  $msg = Hide-Export ([string]$_.Exception.Message) $sec; if ($msg.Length -gt 160) { $msg = $msg.Substring(0, 160) }   # mask first, then cut
+  Write-Output ('ITEM import-log FAIL ' + $msg)
   $code = 1
 }
 if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
