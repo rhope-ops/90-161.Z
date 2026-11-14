@@ -1,6 +1,6 @@
 # Flow controls: hold, cancel, delete, re-coordination, test mode (14 Nov 26)
 
-Status: design approved by the PFM (14 Nov 26, "yes to all"). Built in R20 r2 (14 Nov 26): F05 r2, F03 r3, test mode, kill switch, failure e-mail, T18 test r2. Moved to R21 (they need new list columns, which RADE Install adds): Status Reason, Held Since, the date shift on Resume, the Round number and Restart coordination, the Pause/Resume/Cancel e-mails, the stage 6 target 25 (T02 r12). Sources: flow/solution/README.md, flow/solution/defs/*.json, schemas/lists/*.json, docs/app/screen-map.md.
+Status: design approved by the PFM (14 Nov 26, "yes to all"). Built for R21 (was R20 r2; PFM 14 Nov 26): F05 r2, F03 r3, test mode, kill switch, failure e-mail, T18 test r2. Moved to R22 (they need new list columns, which RADE Install adds): Status Reason, Held Since, the date shift on Resume, the Round number and Restart coordination, the Pause/Resume/Cancel e-mails, the stage 6 target 25 (T02 r12). Sources: flow/solution/README.md, flow/solution/defs/*.json, schemas/lists/*.json, docs/app/screen-map.md.
 
 ## Finding
 
@@ -30,12 +30,12 @@ No flow reads Action Status, so On Hold changes nothing. There is no Cancelled o
 - D3 Cancel keeps the row and its records. Hard delete: PFM Office only, only an empty draft (no endorsement rows), to the Recycle Bin (93 days; P15 restores).
 - D4 Coordination round: a Round number on PFM Endorsements. "Restart coordination" closes the old round (kept as record) and makes fresh rows. "Re-run routing" adds only the missing offices' rows.
 - D5 Who: PFM Office pauses, resumes and cancels on P02; the AO requests a hold or cancel in the app, the PFM approves.
-- D6 Test mode: environment variable pfm_TestMode (Yes/No); Yes sends every flow e-mail to the PFM only, with the intended recipients named in the body. Added to the slice 1 build (R20 r2).
+- D6 Test mode: environment variable pfm_TestMode (Yes/No); Yes sends every flow e-mail to the PFM only, with the intended recipients named in the body. Added to the slice 1 build (R21).
 - QOL (approved with the set): global kill switch variable (all flows stop), P13 Health shows failed runs and orphan rows, e-mails link to the item (open choice 13), held actions grey with the reason in My Work, endorser "Request extension" and "Not me, reassign", daily digest (later).
 
 ## Open (agent REC, not approved)
 
-- Troubleshooting (PFM 14 Nov 26, lean first): each flow e-mails the PFM on a failed step (flow, step, item ID, error); Resubmit from run history resumes; F05 adds only missing rows. R20 r2 tests: forced failure e-mail, Resubmit with no duplicates, one deleted row comes back, Repair round restores a removed column.
+- Troubleshooting (PFM 14 Nov 26, lean first): each flow e-mails the PFM on a failed step (flow, step, item ID, error); Resubmit from run history resumes; F05 adds only missing rows. R21 tests: forced failure e-mail, Resubmit with no duplicates, one deleted row comes back, Repair round restores a removed column.
 - RADE maintenance modes (PFM 14 Nov 26): Install, Diagnose, Restore, Uninstall. Install is safe to run again: on an empty site it installs; on an existing one it adds what is missing and updates flows and app, data kept (covers Repair and Reinstall). Diagnose is read-only and names the mode that fixes each problem. Restore puts data back from a chosen backup (flows stopped, ID map). Uninstall is the nuclear option: final backup to OneDrive, then removes all RADE added. Backups: JSON + CSV copy. Open (agent REC): Uninstall keeps Record Sets and Legal Hold items (RDS T 33-38 R 07); path without PnP via a maintenance flow and synced library files.
 - Flow owner continuity: decided 11 Nov 26 (every flow and the Power App get a co-owner). Diagnose should check that a co-owner exists.
 - Date-only columns (open choice 7), E9. Holidays: closed (PFM 14 Nov 26: 20 working days, no holiday list).
