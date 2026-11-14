@@ -5,6 +5,11 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Deployer renamed RADE (Redacted Application Deployment Engine). Folder OneDrive\RADE\90-161.Z (R17 moves the old one in); RADE\Config holds engine settings. | PFM | scripts/build_paste_bundles.py |
+| 2026-11-14 | RADE saves PASSED checks in RADE\Config\rade-checks.json (other apps may read it); reused for 7 days, then the PFM runs them again. Failed or warned checks always rerun. | PFM | scripts/build_paste_bundles.py |
+| 2026-11-14 | RADE window: every row two lines high (no movement while checks run), smoother bar animation, an Exit button. | PFM | scripts/build_paste_bundles.py |
+| 2026-11-14 | Site logo and thumbnail: by hand (Change the look > Header) in a guide step; site setup checks the header logo. No more logo scripts. | PFM | docs/reviews/2026-11-14-r16-results.md |
+| 2026-11-14 | SharePoint admin app (drag and drop membership, bulk select, permission trees, rights pass/fail): a RADE window app (WPF/PnP) if built. Now: collect what is possible only. | PFM | https://claude.ai/artifact/5KPZmF6FbJBB41wqG22C9w |
 | 2026-11-14 | R16: no new export; T17 r2 uses the T05 export values (Claude's miss: T05 was not applied). Any future capture file is shown to the PFM before it is attached. | PFM | docs/reviews/2026-11-14-r15-results.md |
 | 2026-11-14 | Sprawl: targeted cuts in the R17 build, not a full audit: mask once per probe run, one shared masking function, clean-up by revision rule, drop logo fallbacks R16 shows unneeded; report before/after. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-14 | App name: 90-161.Z: Publications and Forms Management (short name 90-161.Z). The Word-open check blocks a deploy (1B); other warnings do not. | PFM | scripts/build_paste_bundles.py |

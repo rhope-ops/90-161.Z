@@ -4,7 +4,7 @@ Updated: 2026-11-14 by Claude. Keep this file at 40 lines or fewer and state onl
 
 ## Open now
 
-- Deployer window rework approved and merged (PFM 14 Nov; PR https://github.com/rhope-ops/90-161.Z/pull/26, preview https://claude.ai/artifact/RY4rWNuBP3rwAai9v3uWD8): R16 uses it. Open: plain-English sweep of go.md and step notes in R16; flows at next revision.
+- RADE (PFM 14 Nov): the Deployer is now RADE, the Redacted Application Deployment Engine (scripts/build_paste_bundles.py): OneDrive\RADE\90-161.Z (R17 moves the old folder in), RADE\Config (rade-mail-to.txt, rade-checks.json: PASSED checks reused 7 days), two-line rows, drawn bars, Exit. The window code is lint-clean but runs only on the gov device: R17's "Window: OK" line is its test. SharePoint admin app (PFM 14 Nov): information only, no build yet; capability report in the private doc linked from DECISIONS 14 Nov.
 - Bloat audit 2 done (docs/reviews/2026-11-13-bloat-audit-2.md); P1-P4 approved and made: tests 21 s -> 12.7 s, baseline bc233b9, task-common block (scripts/build_task_scripts.py), 3 short DECISIONS lines. Next audit by 27 Nov 26.
 - History clean done 13 Nov 26: names gone from all of main and gh-pages (fresh-clone scan 0 in 1,053 file versions); old branches deleted; GitHub Support purge requested by the PFM. Delivery is now by pull request (AGENTS.md); Auto-merge and auto-delete on; no main ruleset (not available; PFM 13 Nov). Kit baseline 7f2965c; projects no longer sync (2026-11-13). Pre-push check gate on.
 - 14 Nov: new site exists and is CUI-approved; T02 r11 builds the 12 lists there and sets edit-own-rows (old Task 8); Tasks 11 and 14 use the new site. Hold any step that needs a PnP check (PFM). New site = separate site collection. Second-look F1-F5 wait for the PFM's go; S8-S11 open (sweep page).
@@ -21,11 +21,11 @@ Updated: 2026-11-14 by Claude. Keep this file at 40 lines or fewer and state onl
 
 ## Waiting on the PFM (go.md)
 
-1. R16 r1 on go.md (14 Nov): T17 r2 solution import (T05 export values; scripts/build_flow_solution.py), probe r5 (C01 user ID, W11 to the user, G05/G06 group counts), site setup r5 (thumbnail then header, header read back by file; collects both results). R15 results: docs/reviews/2026-11-14-r15-results.md. Next: on the R16 e-mail, the R17 build with the sprawl cuts (DECISIONS 14 Nov: probe 182 KB, 106 KB is one mask copied 51 times; masking in 4 places; clean-up list 50 entries), then the flow build, T09 reader, T12 colors. Open: S2, S3, S5 3-15, S6, S7, S8-S11, F1-F4 (sweep page).
+1. R17 r1 on go.md (14 Nov): T17 r3 tests A (no variable) and B (variable, no XML declaration), logo and thumbnail by hand, site setup r6 (reads the header logo; collects A and B). R16 results: docs/reviews/2026-11-14-r16-results.md. Next on the R17 e-mail: A/B tell the import cause; then the sprawl cuts not yet made (DECISIONS 14 Nov: probe mask once, one masking function, clean-up by revision rule; the logo fallbacks are gone), the flow build, T09 reader, T12 colors. Open: S2, S3, S5 3-15, S6, S7, S8-S11, F1-F4 (sweep page).
 2. Task 6 prompt r2 follow-up: list AFI (validator F-032/F-039 fixed 13 Nov).
 3. Seals: Claude corrected 17 unit seals (1,200 px, glow removed, 2 px feather; tool in the session scratchpad, not in the repo) and mailed them in 6 parts; R13 prepared and uploaded all 17 (library 90-161.Z, Seals and Seals/Prepared).
-4. Logo r2 (PFM 14 Nov): variant A bold white on the header, bold navy thumbnail (assets/logo, scripts/build_logo.py, stroke 8); R14 sets it. After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
-5. App writes (PFM 14 Nov: wing users Read on the site, data entry through the app): Power Apps writes with the user's own rights, so choose list-level Contribute on the app's lists (site stays Read) or a flow that writes with the PFM's connection. Agent REC: list-level rights on the intake lists only (probe W04/W05: breaking inheritance works).
+4. Logo r2 (PFM 14 Nov): variant A bold white on the header, bold navy thumbnail (assets/logo, scripts/build_logo.py, stroke 8); set by hand in R17 (scripts cannot set it on this site). After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
+5. App writes (PFM 14 Nov: wing users Read on the site, data entry through the app): Power Apps writes with the user's own rights, so choose list-level Contribute on the app's lists (site stays Read) or a flow that writes with the PFM's connection. Agent REC: list-level Contribute on the intake lists only; R16 W11 proved a Read-only user gets Contribute on such a list.
 6. Result e-mails: delete only after the PFM confirms (AGENTS.md Project rules).
 
 ## Next design (after Task 5)
