@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Action Status adds Cancelled and Complete, with Status Reason and Held Since; every flow skips On Hold, Cancelled, Complete. Cancel keeps the row; hard delete only an empty draft (PFM). | PFM | docs/reviews/2026-11-14-flow-controls.md |
+| 2026-11-14 | Hold: reminders stop; on Resume open due dates move out by the weekdays held, logged as an extension. Pause, Resume, Cancel: PFM Office; the AO requests in the app. | PFM | docs/reviews/2026-11-14-flow-controls.md |
+| 2026-11-14 | Coordination round number on PFM Endorsements: Restart coordination makes fresh rows (old kept); Re-run routing adds only missing offices. Test mode (pfm_TestMode) goes into R20 r2. | PFM | docs/reviews/2026-11-14-flow-controls.md |
 | 2026-11-14 | R20 = slice 1: import the solution (F05 + F03, environment variables; log reader if it fails), then an end-to-end test with 1 fake publication from step 6 to Legal and step 7. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-14 | F03: reminder 5 weekdays before the suspense; escalation 3 working days after it, copied to the AO and Requester; sent from the PFM's shared mailbox (Send As; address in an environment variable, empty = flow owner's mailbox). | PFM | flow/solution/README.md (open choice 6) |
 | 2026-11-14 | Rounds hold only steps that test something not yet verified. T16 site setup (verified R17-R19) leaves routine rounds; a short step collects flow results; seals upload only when new or changed. | PFM | docs/reviews/2026-11-14-r19-results.md |
