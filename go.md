@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (Round R17: RADE, solution import tests A and B, logo and thumbnail by hand).
+Updated: 14 Nov 26 (Round R17 r2: RADE, solution import tests A and B, new logo K and thumbnail by hand).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,14 +24,14 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R17 r1: RADE, solution import tests A and B, logo and thumbnail by hand (open, 14 Nov 26)
+## Round R17 r2: RADE, solution import tests A and B, new logo K and thumbnail by hand (open, 14 Nov 26)
 
-**For:** (1) finds the cause of the solution import error (R15 and R16): test A has no environment variable, test B has it without the XML first line that is the likely cause. (2) The site logo and thumbnail are set by hand (the script calls do not work on this site); site setup checks the header logo. (3) First round of RADE, the renamed Deployer: saved checks, steady two-line rows, smooth bars, an Exit button.
+**For:** (1) finds the cause of the solution import error (R15 and R16): test A has no environment variable, test B has it without the XML first line that is the likely cause. (2) The site logo and thumbnail are set by hand to the new official logo K (blue mark on white in a blue ring with a thin yellow edge; one file for both); the script calls do not work on this site; site setup checks the header logo. r2 only changes the logo: if I already ran r1, I run r2 anyway. (3) First round of RADE, the renamed Deployer: saved checks, steady two-line rows, smooth bars, an Exit button.
 **Time:** about 25 minutes (estimate): two imports and runs in Power Automate 10, logo 2, site setup 8 plus waiting for the two flows.
-**Changes:** on my computer: moves my OneDrive folder 90-161.Z into OneDrive\RADE (once; every file keeps its place); writes into T14, T16, T17, Rounds\R17 and RADE\Config; moves the R15 results and the R16 test, probe and setup files to the Recycle Bin. In Power Automate: imports two test solutions, "90-161.Z solution import test A" and "... test B" (one flow and one SharePoint connection reference each; B also has one "Site URL" variable); I run each flow once. On the new site: each test flow reads the PFM Settings row count and writes one result file; I set the header logo and the thumbnail in Change the look; site setup only reads (no logo changes) and copies both result files (site address masked). No e-mail is sent by either flow. Saves one Outlook draft (never sent).
+**Changes:** on my computer: moves my OneDrive folder 90-161.Z into OneDrive\RADE (once; every file keeps its place); writes into T14, T16, T17, Rounds\R17 and RADE\Config; moves the R15 results, the R16 test, probe and setup files and the old r2 logo files to the Recycle Bin. In Power Automate: imports two test solutions, "90-161.Z solution import test A" and "... test B" (one flow and one SharePoint connection reference each; B also has one "Site URL" variable); I run each flow once. On the new site: each test flow reads the PFM Settings row count and writes one result file; I set the header logo and the thumbnail in Change the look; site setup only reads (no logo changes) and copies both result files (site address masked). No e-mail is sent by either flow. Saves one Outlook draft (never sent).
 Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R17-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R17-round-r2.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. File > New, click in the white pane, press Ctrl+V, then F5.
 3. In the RADE window: choose the application, run the checks (checks that passed in the last 7 days show "Saved result"), then Deploy. Before Run, the list shows the folder move.
 4. Three step windows open at the right edge of the screen, one after the other: test A, test B, then the logo. Follow each, then select its Done button.
