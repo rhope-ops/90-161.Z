@@ -332,7 +332,7 @@ for b in scripts/gov/paste/*.ps1; do
   grep -q "^  PASSED: Your OneDrive folder is set up" "$te/out.txt" && grep -q "^  PASSED: Files can be saved in OneDrive" "$te/out.txt" || { echo "fresh install: OneDrive checks"; grep "OneDrive" "$te/out.txt"; tw=$((tw+1)); }
   # Saved checks (R17, PFM 14 Nov 26): a second run uses the PASSED results saved by the first, and still runs the others.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out2.txt" 2>&1
-  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Saved result from today" "$te/out2.txt" && grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt" || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
+  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(date +%d-%m-%y)" "$te/out2.txt" && grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt" || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
 done; rm -rf "$te"
 [ "$ab" -eq 0 ] && [ "$tw" -eq 0 ] && ok "Enter starts the run (bundles without Enter=Run: $ab; writes after N: $tw; Enter path = round bundle test)" || bad "Enter starts the run (bundles without Enter=Run: $ab; writes after N: $tw)"
 
