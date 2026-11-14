@@ -19,7 +19,9 @@ schemas = {}
 for f in (ROOT / "schemas" / "lists").glob("*.json"):
     d = json.loads(f.read_text(encoding="utf-8"))
     schemas[d["title"]] = {x["internalName"] for x in d["fields"]}
-all_cols = set().union(*schemas.values()) | BUILTIN
+# Run properties of workflow() and result('Try') that the failure e-mail reads (slice r2, 14 Nov 26); not list columns.
+RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName"}
+all_cols = set().union(*schemas.values()) | BUILTIN | RUNTIME
 env_list = {B.ENV_KEY[s]: default for s, _, default in B.ENV if s.startswith("pfm_List")}
 for key, title in env_list.items():
     if title not in schemas: bad(f"environment variable {key}: default '{title}' is not a list title in schemas/lists")
@@ -76,7 +78,7 @@ for src in sorted(B.DEFS.glob("*.json")):
     hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
     hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
     if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
-    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.guid("workflow", src.stem))[1:]]
+    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.flow_guid(src.stem))[1:]]
     if len(wfs) != 1: bad(f"{src.name}: expected one workflow file in the zip, found {len(wfs)}"); continue
     wf = json.loads(zf.read(wfs[0]))["properties"]
     for c, ref in wf["connectionReferences"].items():

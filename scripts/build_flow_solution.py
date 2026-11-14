@@ -61,12 +61,17 @@ ENV = [  # (schema name, display name, default value)
     ("pfm_ReminderLeadDays", "Reminder lead days", "5"),   # weekdays before the suspense (PFM, 2026-11-14)
     ("pfm_EscalationLagDays", "Escalation lag days", "3"),   # working days after the suspense (PFM, 2026-11-14)
     ("pfm_SharedMailbox", "Shared mailbox", ""),   # optional: F03 sends from it (Send As); empty = the flow owner's mailbox
+    ("pfm_SuspenseWorkdays", "Suspense working days", "20"),   # F03 default suspense (PFM, 2026-11-14: 20 working days)
+    ("pfm_AlertEmail", "Alert e-mail", ""),   # failure e-mails and test-mode e-mails go here (PFM, 2026-11-14)
+    ("pfm_TestMode", "Test mode", "No"),   # Yes: every flow e-mail goes to the alert address only
+    ("pfm_FlowsPaused", "Flows paused", "No"),   # Yes: every flow stops at its first step (kill switch)
 ]
 OPTIONAL = {"pfm_SharedMailbox"}   # isrequired 0: a wing without a shared mailbox leaves it empty
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
+# Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r1.zip", ("90161Z-F03-", "90161Z-F05-"))
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r2.zip", ("90161Z-F03-", "90161Z-F05-"))
 
 
 def dumps(o):
@@ -79,6 +84,11 @@ def conn_logical(c):
 
 def guid(kind, name):
     return str(uuid.uuid5(NS, f"{kind}:{name}")).upper()
+
+
+def flow_guid(stem, test=False):
+    """A solution flow keeps its ID across revisions (slice r2, 14 Nov 26), so a later import upgrades it instead of adding a copy."""
+    return guid("workflow", stem if test else re.sub(r"-r\d+$", "", stem))
 
 
 def load(defs=DEFS):
@@ -154,9 +164,11 @@ def build(test=None, only=None) -> bytes:
     env = ENV if test is None and not only else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test or slice carries only what it uses
     files, wf_xml, root_components = {}, [], []
     for src, d, used in flows:
-        wid = guid("workflow", src.stem)
+        wid = flow_guid(src.stem, test is not None)
         fname = json_name(d["displayName"], wid)
-        files[fname[1:]] = dumps(workflow_json(d, used))
+        # Flow solutions carry the flow JSON without indents (slice r2, 14 Nov 26: keeps the R20 round under the 300 KB paste limit;
+        # JSON whitespace has no meaning). The test solutions keep the indented form that R19 imported.
+        files[fname[1:]] = dumps(workflow_json(d, used)) if test is not None else json.dumps(workflow_json(d, used), separators=(",", ":"), ensure_ascii=False)
         wf_xml.append(
             f"    <Workflow WorkflowId=\"{{{wid.lower()}}}\" Name={quoteattr(d['displayName'])}>\n"
             f"      <JsonFileName>{fname}</JsonFileName>\n"
