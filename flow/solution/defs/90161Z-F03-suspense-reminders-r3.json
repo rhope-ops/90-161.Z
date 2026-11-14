@@ -232,7 +232,7 @@
                     "Due": {
                       "runAfter": {},
                       "type": "Compose",
-                      "inputs": "@if(and(not(empty(items('For_each_open_endorsement')?['ExtensionDate'])), greater(ticks(substring(items('For_each_open_endorsement')?['ExtensionDate'], 0, 10)), ticks(substring(items('For_each_open_endorsement')?['DueDate'], 0, 10)))), substring(items('For_each_open_endorsement')?['ExtensionDate'], 0, 10), substring(items('For_each_open_endorsement')?['DueDate'], 0, 10))"
+                      "inputs": "@if(and(not(empty(items('For_each_open_endorsement')?['ExtensionDate'])), greater(ticks(substring(coalesce(items('For_each_open_endorsement')?['ExtensionDate'], '0001-01-01'), 0, 10)), ticks(substring(items('For_each_open_endorsement')?['DueDate'], 0, 10)))), substring(coalesce(items('For_each_open_endorsement')?['ExtensionDate'], '0001-01-01'), 0, 10), substring(items('For_each_open_endorsement')?['DueDate'], 0, 10))"
                     },
                     "Days_past": {
                       "runAfter": {
@@ -310,7 +310,7 @@
                             "parameters": {
                               "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                               "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                              "$filter": "@concat('Title eq ''', concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier')), '''')",
+                              "$filter": "@concat('Title eq ''', concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'), ' ', outputs('Due'), if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), ' (test)', '')), '''')",
                               "$top": 1
                             },
                             "authentication": "@parameters('$authentication')"
@@ -372,7 +372,7 @@
                                 "parameters": {
                                   "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                                   "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                                  "item/Title": "@concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'))",
+                                  "item/Title": "@concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'), ' ', outputs('Due'), if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), ' (test)', ''))",
                                   "item/Publication/Id": "@items('For_each_open_endorsement')?['Publication']?['Id']",
                                   "item/EventType/Value": "Reminder Sent",
                                   "item/EventDetails": "@concat(outputs('Tier'), ' e-mail sent for endorsement row ', string(items('For_each_open_endorsement')?['ID']), '; suspense ', outputs('Due'), if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), ' (test mode: sent to the PFM only)', ''))"
@@ -559,7 +559,7 @@
                 "parameters": {
                   "emailMessage/To": "@parameters('PFM e-mail (pfm_PfmEmail)')",
                   "emailMessage/Subject": "@concat('90161Z flow failed: F03 Suspense Reminders r3', '')",
-                  "emailMessage/Body": "@concat('<p>The flow F03 Suspense Reminders r3 stopped on a failed step.</p><p>Run: ', workflow()?['run']?['name'], '</p><ul>', join(body('Failed_text'), ''), '</ul><p>Fix the cause, then open the run in the run history and select Resubmit. A resubmitted run adds only what is missing.</p>')",
+                  "emailMessage/Body": "@concat('<p>The flow F03 Suspense Reminders r3 stopped on a failed step.</p><p>Run: ', workflow()?['run']?['name'], '</p><ul>', join(body('Failed_text'), ''), '</ul><p>Fix the cause, then open the run in the run history and select Resubmit. A resubmitted run does not repeat what the failed run already did.</p>')",
                   "emailMessage/Importance": "High"
                 }
               }

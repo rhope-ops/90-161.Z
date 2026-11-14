@@ -281,7 +281,8 @@ try {
         $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ HeldSince = $today.AddDays(-7) } -ErrorAction Stop
         Start-Sleep -Seconds 90   # let F06 see the back-dated Held Since while still On Hold (it changes nothing then)
         $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ ActionStatus = 'On Track'; StatusReason = 'R21 test: resume' } -ErrorAction Stop
-        $ok = Wait-Until { -not (Get-PnPListItem -List 'PFM Publications' -Id $pubId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to clear Held Since'
+        # F06 clears Held Since last, after it has moved every suspense and logged the resume (review R21 MAJOR).
+        $ok = Wait-Until { -not (Get-PnPListItem -List 'PFM Publications' -Id $pubId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to move the suspense dates and clear Held Since'
         $moved = 0
         foreach ($r in @(Get-RowsFor 'PFM Endorsements' $pubId | Where-Object { $before.ContainsKey($_.Id) })) { if ((Get-Suspense $r) -eq (Add-Weekday $before[$r.Id] 5)) { $moved++ } }
         Add-Line 'l2-f06-resume' $(if ($ok -and $moved -eq $dated.Count -and (Get-LogCount $pubId 'Action Resumed') -ge 1) { 'PASS' } else { 'FAIL' }) ('suspense moved out 5 weekdays=' + $moved + ' of ' + $dated.Count + $(if ($ok) { '' } else { '; Held Since not cleared' }))

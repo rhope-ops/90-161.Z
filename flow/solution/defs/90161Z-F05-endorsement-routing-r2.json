@@ -634,7 +634,7 @@
                 "parameters": {
                   "emailMessage/To": "@parameters('PFM e-mail (pfm_PfmEmail)')",
                   "emailMessage/Subject": "@concat('90161Z flow failed: F05 Endorsement Routing r2', concat(', item ', string(triggerBody()?['ID'])))",
-                  "emailMessage/Body": "@concat('<p>The flow F05 Endorsement Routing r2 stopped on a failed step.</p><p>Run: ', workflow()?['run']?['name'], '</p><ul>', join(body('Failed_text'), ''), '</ul><p>Fix the cause, then open the run in the run history and select Resubmit. A resubmitted run adds only what is missing.</p>')",
+                  "emailMessage/Body": "@concat('<p>The flow F05 Endorsement Routing r2 stopped on a failed step.</p><p>Run: ', workflow()?['run']?['name'], '</p><ul>', join(body('Failed_text'), ''), '</ul><p>Fix the cause, then open the run in the run history and select Resubmit. A resubmitted run does not repeat what the failed run already did.</p>')",
                   "emailMessage/Importance": "High"
                 }
               }
