@@ -5,6 +5,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Solution import: if R17 tests A and B both fail, run one more A/B round (zip compression, connection reference) before any fallback. | PFM | docs/reviews/2026-11-14-r16-results.md |
+| 2026-11-14 | Slice 1 first: hold new scope until PFM Publications + Endorsements + F05 routing + F03 reminders, list views only, take one fake publication from Coordination to Legal on the test site. | PFM | docs/phases.md |
+| 2026-11-14 | Endorsers answer by Power Automate Approvals in Outlook (DAFMAN 5.4 answers); the flow writes PFM Endorsements. Test in one round first. Replaces the planned endorser-answer app flow. | PFM | docs/ARCHITECTURE.md |
+| 2026-11-14 | RADE: 300 KB bundle size test now (tests/run.sh); size in the summary, hash-pinned engine and JSON results block after R17 (timing: agent REC). Schema in RADE. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/DECISIONS.md |
 | 2026-11-14 | AGENTS.md "Verification" points to the ui-verify and data-change skills; the 375/1440 px UI rule stays. | PFM | AGENTS.md |
 | 2026-11-14 | Add the kit files 90-161.Z never had: MIT LICENSE (holder rhope-ops), docs/WORKING_WITH_AGENTS.md, .claude/skills (data-change, ui-verify), same as RADE. | PFM | LICENSE |
 | 2026-11-14 | Deployer renamed RADE (Redacted Application Deployment Engine). Folder OneDrive\RADE\90-161.Z (R17 moves the old one in); RADE\Config holds engine settings. | PFM | scripts/build_paste_bundles.py |
