@@ -39,7 +39,7 @@ Status: draft (Agent, 2026-11-10). Items marked **Rec:** are not decisions until
 1. The AO submits the request in the app. Mandatory coordinators come from PFM Offices (JAG last, CIO, PFM, FOIA, Records; PFM 2026-11-12, Q6 and Q13); the AO adds offices with functional interest (5.1.3) and names the OPR's certifying and approving officials (5.6.3, 5.7).
 2. Flow creates one `Endorsements` row per endorser, status `Not Started`.
 3. Flow sends the request to every endorser in the open Coordination Stage at the same time (Privacy Review, then Formal Coordination, then Legal; DAFMAN 3.4, 5.1.8.1, Table A3.1 note 2; PFM 2026-11-11), with the draft link and due date. Legal opens when every other row is final or Not Applicable and every comment is adjudicated (5.1.8.1, 2.8.13); an open nonconcur may go on to Legal and Certification, and approval needs it resolved or an impasse memo (5.5.1, 5.5.2; PFM 1A, 2026-11-12).
-4. Endorser responds with one of the DAFMAN 5.4 responses in PFM Endorsements: Concur, Concur With Comment, Concur—No Response, Nonconcur, No Comment. Comments go to the CRM.
+4. Endorser responds by Power Automate Approvals in Outlook (PFM, 2026-11-14; the flow writes the answer to PFM Endorsements) with one of the DAFMAN 5.4 responses: Concur, Concur With Comment, Concur—No Response, Nonconcur, No Comment. Comments go to the CRM.
 5. Reminder at due date minus 2 workdays; escalation to customer and PFM when overdue.
 6. A Nonconcur notifies the customer and the PFM and raises Open Nonconcurs; the OPR resolves it or elevates it (5.5).
 7. When all required endorsements are complete, flow moves the publication to the next stage and notifies the customer.

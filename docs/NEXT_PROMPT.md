@@ -29,9 +29,9 @@ Updated: 2026-11-14 by Claude. Keep this file at 40 lines or fewer and state onl
 6. Result e-mails: delete only after the PFM confirms (AGENTS.md Project rules).
 
 ## Next design (after Task 5)
-
+0. Slice 1 first (DECISIONS 14 Nov): hold new scope until Publications + Endorsements + F05 + F03, list views only, take one fake publication from Coordination to Legal on the test site. If R17 A and B both fail: one more A/B round. After R17: RADE size in the summary, hash-pinned engine, JSON results block.
 1. Flows as solution-aware flows with connection references (match the real export), not legacy packages.
-2. Draft flows F01-F05 in flow/solution (F05 = routing, S5A; open points in its README). Not built: the endorser-answer app flow (10A).
+2. Draft flows F01-F05 in flow/solution (F05 = routing, S5A; open points in its README). Not built: endorser answers by Approvals in Outlook (DECISIONS 14 Nov).
 3. Then the Power Apps canvas app (docs/app/screen-map.md); Accessibility Checker 0 errors.
 
 ## Do not
