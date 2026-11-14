@@ -7,13 +7,17 @@ environmentvariabledefinitions/<schema>/environmentvariabledefinition.xml. Publi
 A def holds displayName, description, connections (connector names), triggers, actions; "@parameters('<display> (<schema>)')" reads a
 solution environment variable (type Text), so no site address is in the repo. Deterministic (uuid5 IDs, fixed zip timestamps, stored),
 so --check can compare the committed zip with a fresh build. Never hand-edit the zip. Not imported until the PFM reviews it.
-TEST (R15, PFM 14 Nov 26: test a solution import before the flow build): the same builder also writes
-flow/solution/90161Z-T17-solution-test-r2.zip from flow/solution/test-defs/*.json: unique name PFM90161ZTEST, only the
-environment variables its flows use; one harmless manual flow that reads one list count and writes one result file.
+TEST (R15, PFM 14 Nov 26: test a solution import before the flow build): the same builder also writes one test solution
+flow/solution/<stem>.zip for each flow/solution/test-defs/<stem>.json: unique name PFM90161ZTEST + the def's "variant",
+only the environment variables its flow uses; one harmless manual flow that reads one list count and writes one result file.
 r2 (R16, PFM 14 Nov 26): r1 failed to import (XML node error). Values now follow the T05 real export of this environment
 (docs/reviews/2026-11-12-gov-results-t01-t02-t05.md): platform version 9.2.26094.172, publisher unique name PFM, flow
 StateCode 1 / StatusCode 2 / ModernFlowType 0, runtimeSource invoker for a manual flow. The connection reference and
 environment variable XML are still not seen in a real export (T05 had neither).
+r3 (R17, PFM 14 Nov 26: r2 failed with the same XML node error): environmentvariabledefinition.xml has no XML declaration
+(agent finding, Confidence medium: the import inserts that file into a larger XML document, where a declaration node is the
+wrong type; real exports start the file with the element). Two test solutions isolate the cause: A has no environment
+variable (the site address is a run input), B has the environment variable without the declaration.
 Strings that start with "@" are expressions on purpose here (build_flow_package.literal() is for static data only).
 """
 import argparse, io, json, pathlib, re, sys, uuid, zipfile
@@ -21,7 +25,7 @@ from xml.sax.saxutils import escape, quoteattr
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-flows-solution-r1.zip"
-TEST_DEFS, TEST_OUT = ROOT / "flow" / "solution" / "test-defs", ROOT / "flow" / "solution" / "90161Z-T17-solution-test-r2.zip"
+TEST_DEFS = ROOT / "flow" / "solution" / "test-defs"
 NS = uuid.UUID("6f1c2b4e-9d0a-4c5e-8b7a-90161a000001")
 SCHEMA = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
 STAMP = (2026, 1, 1, 0, 0, 0)
@@ -92,11 +96,16 @@ def workflow_json(d, used):
         "templateName": None}, "schemaVersion": "1.0.0.0"}
 
 
-def build(test=False) -> bytes:
-    flows = load(TEST_DEFS if test else DEFS)
-    unique, title = (UNIQUE + "TEST", "90-161.Z solution import test") if test else (UNIQUE, "90-161.Z flows")
+def build(test=None) -> bytes:
+    """test: None for the flow solution, else one test def path (its own solution)."""
+    flows = load(DEFS) if test is None else [f for f in load(TEST_DEFS) if f[0] == test]
+    if test is None:
+        unique, title = UNIQUE, "90-161.Z flows"
+    else:
+        v = flows[0][1]["variant"]
+        unique, title = UNIQUE + "TEST" + v, "90-161.Z solution import test " + v
     used_env = {k for _, _, u in flows for k in u}
-    env = [e for e in ENV if ENV_KEY[e[0]] in used_env] if test else ENV   # the test solution carries only what it uses
+    env = ENV if test is None else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test solution carries only what it uses
     files, wf_xml, root_components = {}, [], []
     for src, d, used in flows:
         wid = guid("workflow", src.stem)
@@ -128,10 +137,8 @@ def build(test=False) -> bytes:
         root_components.append(f'      <RootComponent type="10018" schemaName="{conn_logical(c)}" behavior="0" />')
     for s, disp, default in env:
         files[f"environmentvariabledefinitions/{s}/environmentvariabledefinition.xml"] = (
-            '<?xml version="1.0" encoding="utf-8"?>\n'
             f'<environmentvariabledefinition schemaname="{s}">\n'
-            + (f"  <defaultvalue>{escape(default)}</defaultvalue>\n" if default else "") +   # no empty element
-            
+            + (f"  <defaultvalue>{escape(default)}</defaultvalue>\n" if default else "") +   # no empty element; no XML declaration (r3)
             f'  <displayname default={quoteattr(disp)}>\n    <label description={quoteattr(disp)} languagecode="1033" />\n  </displayname>\n'
             "  <introducedversion>1.0</introducedversion>\n  <iscustomizable>1</iscustomizable>\n  <isrequired>1</isrequired>\n"
             "  <secretstore>0</secretstore>\n  <type>100000000</type>\n</environmentvariabledefinition>\n")
@@ -175,7 +182,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="exit 1 if the committed zip differs from a fresh build")
     a = ap.parse_args()
-    for test, out in ((False, OUT), (True, TEST_OUT)):
+    jobs = [(None, OUT)] + [(d, d.parent.parent / (d.stem + ".zip")) for d in sorted(TEST_DEFS.glob("*.json"))]
+    for test, out in jobs:
         data = build(test)
         if a.check:
             if not out.exists() or out.read_bytes() != data:

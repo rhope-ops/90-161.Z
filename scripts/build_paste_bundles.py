@@ -1,31 +1,40 @@
 #!/usr/bin/env python3
 """Build the round bundles in scripts/gov/paste from scripts/paste_bundles.json.
 
-A bundle is one PowerShell text (the "90-161.Z Deployer", PFM 13 Nov; formerly "runner") (Windows PowerShell 5.1) that the PFM copies from its raw page, pastes into
+A bundle is one PowerShell text (RADE, the Redacted Application Deployment Engine, PFM 14 Nov 26; formerly the
+"90-161.Z Deployer" and the "runner") (Windows PowerShell 5.1) that the PFM copies from its raw page, pastes into
 Windows PowerShell ISE and runs with F5 (ISSM approved paste and run in writing, PFM 2026-11-12). It is a
 bootstrapper for fast test rounds (PFM 1A, 6A: function over form):
   1. uses the Windows profile folder as the DODID (no question: PFM 13 Nov, the empty-box default worked) and shows
      the real path on screen (reports and e-mails still mask it);
   1b. recycles finished files (cleanup list in the JSON; only files 90-161.Z made; to the Recycle Bin) and reports
      what it recycled and what is left (folder counts, no file names) in the summary (R06, PFM 13 Nov);
-  2. makes each task folder under C:\\Users\\<DODID>\\OneDrive - United States Air Force\\90-161.Z if missing and
+  1c. RADE folder (PFM 14 Nov 26, R17): the app folder is OneDrive\\RADE\\90-161.Z; RADE\\Config holds the engine's own
+     settings (rade-mail-to.txt, rade-checks.json); the app's Config stays in 90-161.Z\\Config. On Run, an old
+     OneDrive\\90-161.Z folder is moved into RADE as one folder move (if the move fails, the round uses the old folder);
+  1d. saved checks (PFM 14 Nov 26): a PASSED check is kept in RADE\\Config\\rade-checks.json for 7 days and is not run
+     again (other apps can read the file; its "about" field says how); a new PowerShell or PnP version, another site,
+     an older result or "Run checks again" runs it again; a check that did not pass always runs again;
+  2. makes each task folder under C:\\Users\\<DODID>\\OneDrive - United States Air Force\\RADE\\90-161.Z if missing and
      writes every file (text: same content as UTF-8 with BOM and CRLF; binary: byte-exact from base64);
   3. runs the steps one by one (each a runner file, as a child powershell.exe with -Id and -NoPause), with a live
-     log, DODID masked, and PASS/FAIL counts per step. A step of kind "guide" (R13, PFM 14 Nov 26: the Deployer
-     delivers every file, no separate downloads) is work the PFM does in another program, such as a flow import: the
-     Deployer writes its file, opens the address, puts the file path on the clipboard and waits for Done or Skip.
+     log, DODID masked, and PASS/FAIL counts per step. A step of kind "guide" (R13, PFM 14 Nov 26: RADE
+     delivers every file, no separate downloads) is work the PFM does in another program, such as a flow import:
+     RADE writes its file, opens the address, puts the file path on the clipboard and waits for Done or Skip.
      Log text (R13, PFM 14 Nov 26): one heading per step ("Step k of n: name"), the step's output indented under it,
      one result line (PASSED, NEEDS REVIEW or SKIPPED); the e-mail subject ends in PASSED or NEEDS REVIEW;
   4. writes a results folder Rounds\\<round> with one report file (summary + full masked log) and copies of the
      collect files (PDFs), ready to attach to one e-mail (no zip: zips do not cross the boundary, PFM 13 Nov);
   5. makes an Outlook draft (classic Outlook, COM): subject = summary line 1, body = the rest, every results file
-     attached, never sent (R05); To from the window box, saved in Config\\90161Z-mail-to.txt (R06). If no draft can be made, it opens the results folder and puts
+     attached, never sent (R05); To from the window box, saved in RADE\\Config\\rade-mail-to.txt (R06, R17). If no draft can be made, it opens the results folder and puts
      the summary on the clipboard instead (R04 behavior).
 The window has three screens (PFM 14 Nov 26, the base of the application deployment engine): 1 Choose the
 application (the catalog embedded in the paste, "apps" in the JSON), 2 Check (this computer, network, site rights by CAC
 sign-in, Power Automate by a look-and-answer window; each step's "needs" adds its checks), 3 Deploy with two bars
 (overall, weighted by expected seconds, with time left; this step, from "PROGRESS n/m" lines or elapsed time). All text
-the PFM sees is plain, simple English (PFM 14 Nov 26).
+the PFM sees is plain, simple English (PFM 14 Nov 26). R17 (PFM 14 Nov 26): every check and step row is two lines high
+(the screen does not move while checks run), the bars are drawn by RADE (smooth, still when Windows animations are off),
+and an Exit button closes the window (it asks first only while a step runs).
 It runs only the steps embedded in it and never fetches code (PFM 3A). If no window can open (no Windows Forms),
 it runs the same steps as text.
 Text files are embedded as readable single-quoted here-strings, so the PFM and the ISSM can read the code.
@@ -72,7 +81,7 @@ def q(s):
 
 
 ENGINE = r'''
-# ---------------- 90-161.Z Deployer (generated; same engine in every round bundle) ----------------
+# ---------------- RADE, the Redacted Application Deployment Engine (generated; same engine in every round bundle) ----------------
 function Get-Secret([string]$Id, [string]$Leaf) {
   @($Id, $Leaf, $env:USERNAME) | Where-Object { $_ -and $_.Length -ge 4 } | Sort-Object -Unique | Sort-Object Length -Descending
 }
@@ -81,11 +90,40 @@ function ConvertTo-Masked([string]$Text) {
   return $Text
 }
 function Get-ProfileLeaf { if ($env:USERPROFILE) { return (Split-Path -Leaf $env:USERPROFILE) }; return '' }
-function Get-BasePath {
-  # The real path (shown on screen, PFM 13 Nov: no placeholder). Reports and e-mails show <DODID> instead.
+function Get-OneDrivePath {
   $leaf = Get-ProfileLeaf
   if (-not $leaf) { $leaf = 'no-profile-folder' }
-  return (Join-Path (Join-Path (Join-Path $usersRoot $leaf) 'OneDrive - United States Air Force') '90-161.Z')
+  return (Join-Path (Join-Path $usersRoot $leaf) 'OneDrive - United States Air Force')
+}
+function Get-RadePath { return (Join-Path (Get-OneDrivePath) 'RADE') }
+function Get-OldBasePath { return (Join-Path (Get-OneDrivePath) $appFolder) }
+function Get-BasePath {
+  # The real path (shown on screen, PFM 13 Nov: no placeholder). Reports and e-mails show <DODID> instead.
+  # PFM 14 Nov 26: OneDrive\RADE\<app>. Until RADE has moved it (on Run), an old OneDrive\<app> folder is used.
+  $new = Join-Path (Get-RadePath) $appFolder
+  if (-not (Test-Path -LiteralPath $new -PathType Container) -and (Test-Path -LiteralPath (Get-OldBasePath) -PathType Container)) { return (Get-OldBasePath) }
+  return $new
+}
+function Get-RadeMove {
+  # The one-time move of OneDrive\<app> into OneDrive\RADE (PFM 14 Nov 26). Both there: nothing moves, the RADE copy is used.
+  $old = Get-OldBasePath; $new = Join-Path (Get-RadePath) $appFolder
+  $o = Test-Path -LiteralPath $old -PathType Container; $n = Test-Path -LiteralPath $new -PathType Container
+  return @{ Needed = ($o -and -not $n); Both = ($o -and $n); From = $old; To = $new }
+}
+function Move-ToRade([scriptblock]$Say) {
+  # One folder move inside OneDrive (every file keeps its place). On failure the round keeps the old folder and says why.
+  $m = Get-RadeMove
+  if ($m.Both) { & $Say ('Note: both ' + $appFolder + ' and RADE\' + $appFolder + ' are in your OneDrive. RADE uses RADE\' + $appFolder + '; move anything you still need from the old ' + $appFolder + ' folder by hand.') }
+  if (-not $m.Needed) { return (Get-BasePath) }
+  try {
+    $rade = Get-RadePath
+    if (-not (Test-Path -LiteralPath $rade -PathType Container)) { [void](New-Item -ItemType Directory -Path $rade -Force) }
+    [System.IO.Directory]::Move($m.From, $m.To)
+    & $Say ('Moved the folder ' + $appFolder + ' into RADE (RADE\' + $appFolder + '). Every file kept its place.')
+  } catch {
+    & $Say ('Folder move could not run: ' + (ConvertTo-Masked $_.Exception.Message) + ' This round uses the old ' + $appFolder + ' folder; the next round tries again.')
+  }
+  return (Get-BasePath)
 }
 function Resolve-Base {
   # No DODID question (PFM 13 Nov): the Windows profile folder name is the DODID.
@@ -93,7 +131,7 @@ function Resolve-Base {
   $script:secret = Get-Secret $leaf $leaf
   if ($leaf -notmatch '^[A-Za-z0-9._-]{4,}$') { throw 'PROFILE folder name not usable (Windows profile not found). Sign in to Windows with your own account, then run again.' }
   $base = Get-BasePath
-  $oneDrive = Split-Path -Parent $base
+  $oneDrive = Get-OneDrivePath
   if (-not (Test-Path -LiteralPath $oneDrive -PathType Container)) { throw ('FOLDER not found: ' + $oneDrive + '. OneDrive is not set up in this Windows profile.') }
   $script:dodid = $leaf
   return $base
@@ -108,14 +146,18 @@ function Test-MailTo([string]$To) {
   return ($To -match ('^\s*' + $one + '(\s*;\s*' + $one + ')*\s*;?\s*$'))
 }
 function Get-ConfigFile([string]$Base, [string]$Name) { return (Join-Path (Join-Path $Base 'Config') $Name) }
+function Get-RadeConfigFile([string]$Name) { return (Join-Path (Join-Path (Get-RadePath) 'Config') $Name) }   # the engine's own settings (R17)
 function Get-MailTo([string]$Base) {
-  # Config\90161Z-mail-to.txt: the address the results e-mail goes to (PFM 13 Nov). The window box saves it.
-  $p = Get-ConfigFile $Base '90161Z-mail-to.txt'
-  if (Test-Path -LiteralPath $p -PathType Leaf) { try { return ([string](Get-Content -LiteralPath $p -TotalCount 1)).Trim() } catch { return '' } }
+  # RADE\Config\rade-mail-to.txt: the address the results e-mail goes to (PFM 13 Nov; RADE R17). The window box saves it.
+  # Until it exists, the app's old Config\90161Z-mail-to.txt is read.
+  foreach ($p in @((Get-RadeConfigFile 'rade-mail-to.txt'), (Get-ConfigFile $Base '90161Z-mail-to.txt'))) {
+    if (Test-Path -LiteralPath $p -PathType Leaf) { try { return ([string](Get-Content -LiteralPath $p -TotalCount 1)).Trim() } catch { return '' } }
+  }
   return ''
 }
 function Save-MailTo([string]$Base, [string]$To) {
-  $p = Get-ConfigFile $Base '90161Z-mail-to.txt'
+  $null = $Base
+  $p = Get-RadeConfigFile 'rade-mail-to.txt'
   $dir = Split-Path -Parent $p
   if (-not (Test-Path -LiteralPath $dir -PathType Container)) { [void](New-Item -ItemType Directory -Path $dir -Force) }
   [System.IO.File]::WriteAllText($p, ($To.Trim() + "`r`n"), (New-Object System.Text.UTF8Encoding $true))
@@ -166,11 +208,11 @@ function Get-StepEstimate($Hist, [string]$Name) {
 }
 $helpRules = @(
   @{ Re = 'FOLDER not found|PROFILE folder'; Text = 'OneDrive is not set up in this Windows profile. Open OneDrive from the Start menu, sign in, wait until it says it is up to date, then run again.' },
-  @{ Re = 'being used by another process|cannot access the file'; Text = 'A file is open in another program. Close Word and any file from the 90-161.Z folder, then press Run again.' },
+  @{ Re = 'being used by another process|cannot access the file'; Text = 'A file is open in another program. Close Word and any file or Explorer window from the RADE folder, then press Run again.' },
   @{ Re = 'RPC_E_CALL_REJECTED|0x80010001|0x8001010A|server busy'; Text = 'Word was busy. Close every Word window, wait 10 seconds, then press Run again.' },
   @{ Re = 'ran longer than'; Text = 'A step ran too long. Close Word (check the taskbar), then press Run again. If it happens twice, send the results as they are.' },
   @{ Re = 'LABEL (FAIL|not set)'; Text = 'The sensitivity label was not set. Keep the Config folder; see "Sensitivity label" in the repository (go.md).' },
-  @{ Re = 'denied|UnauthorizedAccess'; Text = 'Windows blocked a file. Check that the 90-161.Z folder is in your own OneDrive and not read-only, then run again.' },
+  @{ Re = 'denied|UnauthorizedAccess'; Text = 'Windows blocked a file. Check that the RADE folder is in your own OneDrive and not read-only, then run again.' },
   @{ Re = 'Outlook draft could not be created'; Text = 'Open Outlook (classic), then press Make e-mail draft. Or send by hand: the results folder is open and the summary is on the clipboard.' },
   @{ Re = 'FORMAT-FAIL'; Text = 'The renderer found a format problem. Send the results as they are; Claude fixes it.' },
   @{ Re = 'NO IMAGES'; Text = 'The seal images are not on this computer yet. Send the results; Claude checks how the seal e-mails were delivered.' },
@@ -316,7 +358,7 @@ function Invoke-RoundStep([string]$Base, $Step, [scriptblock]$Say, [scriptblock]
   $errTask = $p.StandardError.ReadToEndAsync()
   $lineTask = $p.StandardOutput.ReadLineAsync()
   while ($true) {
-    while (-not $lineTask.Wait(150)) {
+    while (-not $lineTask.Wait(30)) {   # 30 ms: the window's bars move smoothly (R17)
       & $Tick
       if ((Get-Date) -gt $deadline) { try { $p.Kill() } catch { $null = $_ }; $r.Fail++; & $Say ('    STOPPED: the step ran longer than ' + $limit + ' minutes and was ended.'); break }
     }
@@ -363,7 +405,7 @@ function Show-GuideDialog($Step, [string]$File, [string]$Url, [string]$UrlFile) 
   # A step done by the PFM in another program (for example a flow import): numbered instructions, the address to open
   # (editable, remembered in Config), the file path on the clipboard. Done = the PFM confirms; Skip = the step is skipped.
   $d = New-Object System.Windows.Forms.Form
-  $d.Text = '90-161.Z Deployer - ' + $Step.Name
+  $d.Text = 'RADE - ' + $Step.Name
   $d.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96); $d.AutoScaleMode = 'Dpi'
   $d.Font = New-Object System.Drawing.Font('Segoe UI', 10)
   # R14 (PFM 14 Nov 26: the R13 window could not be minimized and covered the browser): a normal window that can be
@@ -444,7 +486,7 @@ function Invoke-GuideStep([string]$Base, $Step, [scriptblock]$Say) {
   if ($ok) {
     if ($Step.Marker) { try { Set-Content -LiteralPath (Join-Path $dir $Step.Marker) -Value (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -Encoding UTF8 } catch { $null = $_ } }
     $r.Pass = 1
-    & $Say '    Confirmed by you: the flow is imported and its run has started.'
+    & $Say ('    ' + $(if ($Step.DoneLog) { $Step.DoneLog } else { 'Confirmed by you: the flow is imported and its run has started.' }))
   } else { $r.Skipped = $true; & $Say '    Skipped by you.' }
   return $r
 }
@@ -483,8 +525,12 @@ function Export-RoundResult([string]$Base, [string[]]$Summary) {
 function Get-RoundPlan {
   # What this round writes and recycles, before it runs (PFM 13 Nov: show the impact; show the real path).
   $base = Get-BasePath
-  $found = Test-Path -LiteralPath (Split-Path -Parent $base) -PathType Container
-  $lines = @(('Working folder: ' + $base + $(if ($found) { '' } else { '   (NOT found: OneDrive is not set up in this Windows profile)' })), '', 'Files this round saves:')
+  $found = Test-Path -LiteralPath (Get-OneDrivePath) -PathType Container
+  $mv = Get-RadeMove
+  $shown = $(if ($mv.Needed) { $mv.To } else { $base })
+  $lines = @(('Working folder: ' + $shown + $(if ($found) { '' } else { '   (NOT found: OneDrive is not set up in this Windows profile)' })), '')
+  if ($mv.Needed) { $lines += @(('Folder move (runs first): OneDrive\' + $appFolder + '  ->  OneDrive\RADE\' + $appFolder), '  One move inside your OneDrive; every file keeps its place. If it cannot run, this round uses the old folder.', '') }
+  $lines += 'Files this round saves:'
   foreach ($f in $files) {
     $p = Join-Path (Join-Path $base $f.Dir) $f.Name
     $lines += ($(if (Test-Path -LiteralPath $p -PathType Leaf) { '  Replace   ' } else { '  New       ' }) + $f.Dir + '\' + $f.Name)
@@ -502,7 +548,7 @@ function Get-RoundPlan {
   }
   $lines += ''
   $lines += 'Missing folders are created and files of the same name are replaced. Nothing else is changed, moved or deleted.'
-  return @{ Shown = $base; Found = $found; Lines = $lines }
+  return @{ Shown = $shown; Found = $found; Lines = $lines }
 }
 function Save-RoundDraft([string]$Dir, [string[]]$Summary, [string]$To, [string]$WindowLine) {
   # One Outlook draft with subject, body and every results file (R05, PFM 13 Nov); To from the window box (R06).
@@ -547,7 +593,8 @@ function Invoke-Round([bool]$Clean, [bool[]]$Selected, [string]$To, [scriptblock
   $script:prog.Count = $units
   $n = 0; $k1 = 0
   try {
-  & $speak ('90-161.Z Deployer, round ' + $round + ' (build ' + $buildId + '), started ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+  & $speak ('RADE (Redacted Application Deployment Engine), round ' + $round + ' (build ' + $buildId + '), started ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+  $base = Move-ToRade $speak
   & $speak ('Working folder: ' + (ConvertTo-Masked $base))
   if ($script:noWindowWhy) { & $speak ('Note: no window could open, so the round runs in text mode. Reason: ' + (ConvertTo-Masked $script:noWindowWhy)) }
   if (Test-WordOpen) { & $speak 'Note: Word is open. Renders use Word: save your documents and close Word if a step stops.' }
@@ -556,7 +603,7 @@ function Invoke-Round([bool]$Clean, [bool[]]$Selected, [string]$To, [scriptblock
   $fl = Save-RoundDownload $base $speak
   if ($fl) { $summary += $fl }
   # An empty box clears the saved address (review R06 #5).
-  try { if ($To -or (Test-Path -LiteralPath (Get-ConfigFile $base '90161Z-mail-to.txt') -PathType Leaf)) { Save-MailTo $base $To } } catch { & $speak ('NOTE: could not save the e-mail address: ' + (ConvertTo-Masked $_.Exception.Message)) }
+  try { if ($To -or (Get-MailTo $base)) { Save-MailTo $base $To } } catch { & $speak ('NOTE: could not save the e-mail address: ' + (ConvertTo-Masked $_.Exception.Message)) }
   if ($cleanup.Count) {
     if ($Clean) {
       $n++; $script:prog.Index = $n; $script:prog.Cur = 10; $script:prog.CurKnown = $false; $script:prog.Frac = -1; $script:prog.Start = Get-Date
@@ -566,6 +613,7 @@ function Invoke-Round([bool]$Clean, [bool[]]$Selected, [string]$To, [scriptblock
     else { $summary += 'Clean-up: SKIPPED by you' }
   }
   for ($k = 0; $k -lt $steps.Count; $k++) {
+    if ($script:closing) { throw 'the window was closed (Exit) while the round ran; the steps after it did not run' }
     if (-not $Selected[$k]) { if ($script:appSteps -contains $k) { $summary += ($steps[$k].Name + ': not selected') }; continue }
     $est = Get-StepEstimate $hist $steps[$k].Name
     $w = Get-StepWeight $hist $steps[$k]
@@ -626,7 +674,7 @@ function Invoke-Round([bool]$Clean, [bool[]]$Selected, [string]$To, [scriptblock
   return ,$summary
 }
 
-# ---- Checks (PFM 14 Nov 26: the Deployer checks, from its window, that this computer can install the chosen app and
+# ---- Checks (PFM 14 Nov 26: RADE checks, from its window, that this computer can install the chosen app and
 # that the PFM has the rights to see it done end to end). Read-only except: one test file in the OneDrive folder and one
 # temporary script in the Windows temp folder, each deleted at once, and the site address in Config when the PFM enters it.
 # Kind: auto = runs on its own when the Check screen opens; signin = needs a CAC sign-in (button); guide = the PFM looks
@@ -637,7 +685,7 @@ $checkDefs = @(
   @{ Id = 'onedrive'; Group = 'Local'; Name = 'Your OneDrive folder is set up'; Kind = 'auto' },
   @{ Id = 'disk'; Group = 'Local'; Name = 'There is enough free disk space'; Kind = 'auto' },
   @{ Id = 'write'; Group = 'Local'; Name = 'Files can be saved in OneDrive'; Kind = 'auto' },
-  @{ Id = 'child'; Group = 'Local'; Name = 'The Deployer can run its scripts'; Kind = 'auto' },
+  @{ Id = 'child'; Group = 'Local'; Name = 'RADE can run its scripts'; Kind = 'auto' },
   @{ Id = 'outlook'; Group = 'Local'; Name = 'Outlook can make the results e-mail'; Kind = 'auto'; Advisory = $true },
   @{ Id = 'word'; Group = 'Local'; Name = 'Word is installed'; Kind = 'auto' },
   @{ Id = 'pnp'; Group = 'Local'; Name = 'The SharePoint tool (PnP.PowerShell 1.12.0) is installed'; Kind = 'auto' },
@@ -720,7 +768,7 @@ function Invoke-ChildScript([string]$Text, [string]$ArgText, [int]$Seconds, [scr
     $p = [System.Diagnostics.Process]::Start($psi)
     $outTask = $p.StandardOutput.ReadToEndAsync(); $errTask = $p.StandardError.ReadToEndAsync()
     $deadline = (Get-Date).AddSeconds($Seconds)
-    while (-not $p.WaitForExit(150)) {
+    while (-not $p.WaitForExit(30)) {
       if ($Tick) { & $Tick }
       if ((Get-Date) -gt $deadline) { try { $p.Kill() } catch { $null = $_ }; $res.Why = 'it ran longer than ' + $Seconds + ' seconds'; break }
     }
@@ -734,7 +782,7 @@ function Invoke-ChildScript([string]$Text, [string]$ArgText, [int]$Seconds, [scr
 }
 $rightsScript = @'
 param([string]$Site)
-# 90-161.Z Deployer check (read-only): signs in with the CAC (web login, as T16 does) and prints your rights on the site.
+# RADE check (read-only): signs in with the CAC (web login, as T16 does) and prints your rights on the site.
 # Prints only right names and True/False, never the site, your name or an error message.
 try {
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
@@ -770,12 +818,12 @@ function Invoke-Check($Def, [string]$Base, [string]$Site, [scriptblock]$Tick) {
       'ps' {
         $v = $PSVersionTable.PSVersion
         if ($v -ge [version]'5.1') { $one = Format-CheckResult 'PASSED' ('version [' + $v + ']') '' }
-        else { $one = Format-CheckResult 'FAILED' ('version [' + $v + ']') 'Open Windows PowerShell ISE from the Start menu and paste the Deployer again.' }
+        else { $one = Format-CheckResult 'FAILED' ('version [' + $v + ']') 'Open Windows PowerShell ISE from the Start menu and paste the round again.' }
       }
       'lang' {
         $m = [string]$ExecutionContext.SessionState.LanguageMode
         if ($m -eq 'FullLanguage') { $one = Format-CheckResult 'PASSED' 'not limited' '' }
-        else { $one = Format-CheckResult 'FAILED' ('limited [' + $m + ']') 'Your computer limits PowerShell, so the Deployer cannot save files or open Word. Ask your security officer (ISSM). Send the results e-mail as it is.' }
+        else { $one = Format-CheckResult 'FAILED' ('limited [' + $m + ']') 'Your computer limits PowerShell, so RADE cannot save files or open Word. Ask your security officer (ISSM). Send the results e-mail as it is.' }
       }
       'onedrive' {
         $od = Split-Path -Parent (Get-BasePath)
@@ -807,12 +855,12 @@ function Invoke-Check($Def, [string]$Base, [string]$Site, [scriptblock]$Tick) {
         $pol = ''
         try { $pol = (@(Get-ExecutionPolicy -List | Where-Object { $_.Scope -match 'Policy$' -and [string]$_.ExecutionPolicy -ne 'Undefined' } | ForEach-Object { [string]$_.Scope + '=' + [string]$_.ExecutionPolicy }) -join ', ') } catch { $null = $_ }
         if ($r.Exit -eq 7) { $one = Format-CheckResult 'PASSED' ('a test script ran' + $(if ($pol) { '. Computer rule: [' + $pol + ']' } else { '' })) '' }
-        else { $one = Format-CheckResult 'FAILED' ('a test script did not run. Exit code [' + $r.Exit + ']' + $(if ($r.Why) { ', ' + $r.Why } else { '' }) + $(if ($pol) { '. Computer rule: [' + $pol + ']' } else { '' })) 'Your computer blocks the Deployer''s scripts, so the steps cannot run. Ask your security officer (ISSM). Send the results e-mail as it is.' }
+        else { $one = Format-CheckResult 'FAILED' ('a test script did not run. Exit code [' + $r.Exit + ']' + $(if ($r.Why) { ', ' + $r.Why } else { '' }) + $(if ($pol) { '. Computer rule: [' + $pol + ']' } else { '' })) 'Your computer blocks the RADE scripts, so the steps cannot run. Ask your security officer (ISSM). Send the results e-mail as it is.' }
       }
       'outlook' {
-        if ($env:OS -ne 'Windows_NT') { $one = Format-CheckResult 'WARNING' 'not Windows' 'You will make the e-mail yourself; the Deployer opens the results folder and copies the summary.' }
+        if ($env:OS -ne 'Windows_NT') { $one = Format-CheckResult 'WARNING' 'not Windows' 'You will make the e-mail yourself; RADE opens the results folder and copies the summary.' }
         elseif ([type]::GetTypeFromProgID('Outlook.Application')) { $one = Format-CheckResult 'PASSED' 'installed' '' }
-        else { $one = Format-CheckResult 'WARNING' 'not found. The new Outlook cannot make drafts' 'You will make the e-mail yourself; the Deployer opens the results folder and copies the summary.' }
+        else { $one = Format-CheckResult 'WARNING' 'not found. The new Outlook cannot make drafts' 'You will make the e-mail yourself; RADE opens the results folder and copies the summary.' }
       }
       'word' {
         if ($env:OS -eq 'Windows_NT' -and [type]::GetTypeFromProgID('Word.Application')) {
@@ -898,20 +946,111 @@ function Invoke-Check($Def, [string]$Base, [string]$Site, [scriptblock]$Tick) {
 function Get-CheckSummary($Results) {
   # For the summary and the e-mail: one count line, then one line for each check that did not pass.
   $c = @{ PASSED = 0; WARNING = 0; FAILED = 0; 'NOT RUN' = 0 }
-  $rest = @()
+  $rest = @(); $saved = 0
   foreach ($id in $script:appChecks) {
     $r = $Results[$id]; $d = Get-CheckDef $id
     if (-not $r) { $r = Format-CheckResult 'NOT RUN' 'not run' '' }
     $c[$r.State]++
+    if ($r.Saved) { $saved++ }
     if ($r.State -ne 'PASSED') { $rest += ('  ' + $r.State + ': ' + $d.Name + '. ' + $r.Detail) }
   }
-  return @(@(('Checks. Passed: ' + $c.PASSED + '. Warnings: ' + $c.WARNING + '. Failed: ' + $c.FAILED + '. Not run: ' + $c['NOT RUN'] + '.')) + $rest) | ForEach-Object { ConvertTo-Masked $_ }
+  $savedText = $(if ($saved) { ' (' + $saved + ' from saved results)' } else { '' })
+  return @(@(('Checks. Passed: ' + $c.PASSED + $savedText + '. Warnings: ' + $c.WARNING + '. Failed: ' + $c.FAILED + '. Not run: ' + $c['NOT RUN'] + '.')) + $rest) | ForEach-Object { ConvertTo-Masked $_ }
 }
 function Get-CheckBlock($Results) {
   # PFM 14 Nov 26: no deploy unless every check passes (a half-done deploy is hard to undo). FAILED or NOT RUN blocks;
   # a WARNING (an advisory check, or a problem the deploy can live with) does not. No "deploy anyway".
   foreach ($id in $script:appChecks) { $r = $Results[$id]; if (-not $r -or $r.State -in 'FAILED', 'NOT RUN', 'RUNNING') { return $true } }
   return $false
+}
+# ---- Saved checks (PFM 14 Nov 26, R17): RADE\Config\rade-checks.json keeps each check that PASSED, so a later run (of
+# any app on this computer) can skip it. A saved result is used only when it is at most $checkMaxDays days old, the
+# PowerShell and PnP versions and the computer are the same, and its scope (the site or the Power Automate address, as a
+# hash) matches. A check that did not pass is never saved. No DODID, name or address is in the file (details are masked).
+$checkMaxDays = 7
+function Get-ShortHash([string]$Text) {
+  if (-not $Text) { return '' }
+  $sha = [System.Security.Cryptography.SHA256]::Create()
+  try { return (-join ($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Text.ToLowerInvariant().TrimEnd('/'))) | Select-Object -First 6 | ForEach-Object { $_.ToString('x2') })) } finally { $sha.Dispose() }
+}
+function Get-CheckHost {
+  # What makes a saved result stale when it changes: PowerShell, the PnP module, the computer (hashed).
+  if ($script:checkHost) { return $script:checkHost }
+  $pnp = ''; try { $m = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending); if ($m.Count) { $pnp = [string]$m[0].Version } } catch { $null = $_ }
+  $script:checkHost = @{ powershell = [string]$PSVersionTable.PSVersion; pnp = $pnp; computer = (Get-ShortHash ([string]$env:COMPUTERNAME)) }
+  return $script:checkHost
+}
+function Get-CheckScope([string]$Id, [string]$Base, [string]$Site) {
+  # A result about one site or one address is good only for that site or address.
+  if ($Id -in 'net-site', 'site-rights') { return ('site:' + (Get-ShortHash $Site)) }
+  if ($Id -in 'net-flow', 'flow-guide') { return ('flow:' + (Get-ShortHash (Get-FlowPortal $Base).Url)) }
+  return ''
+}
+function Read-CheckCache {
+  $p = Get-RadeConfigFile 'rade-checks.json'
+  $res = @{}
+  if (-not (Test-Path -LiteralPath $p -PathType Leaf)) { return $res }
+  try {
+    $j = [System.IO.File]::ReadAllText($p) | ConvertFrom-Json
+    $h = Get-CheckHost
+    if ([string]$j.host.powershell -ne $h.powershell -or [string]$j.host.pnp -ne $h.pnp -or [string]$j.host.computer -ne $h.computer) { return $res }
+    foreach ($c in @($j.checks.PSObject.Properties)) {
+      $v = $c.Value
+      $at = $v.at; if ($at -is [datetime]) { $at = $at.ToString('yyyy-MM-ddTHH:mm:ss', [System.Globalization.CultureInfo]::InvariantCulture) }   # PowerShell 7 reads it as a date
+      $res[$c.Name] = @{ State = [string]$v.state; Detail = [string]$v.detail; Fix = ''; At = [string]$at; Scope = [string]$v.scope }
+    }
+  } catch { $null = $_ }   # a damaged file is ignored: every check runs
+  return $res
+}
+function Get-CheckAge([string]$At) {
+  # Days since a saved result (fractional); -1 when the date cannot be read.
+  $d = [datetime]::MinValue
+  if ([datetime]::TryParseExact($At, 'yyyy-MM-ddTHH:mm:ss', [System.Globalization.CultureInfo]::InvariantCulture, 'None', [ref]$d)) { return ((Get-Date) - $d).TotalDays }
+  return -1
+}
+function Get-SavedCheck($Cache, [string]$Id, [string]$Scope) {
+  # The saved result to use, or $null (with the reason in $script:savedWhy[$Id] when one was found but is too old).
+  $c = $Cache[$Id]
+  if (-not $c -or $c.State -ne 'PASSED' -or $c.Scope -ne $Scope) { return $null }
+  $age = Get-CheckAge $c.At
+  if ($age -lt 0 -or $age -gt $checkMaxDays) { $script:savedWhy[$Id] = ('The saved result is ' + [int][math]::Floor([math]::Max(0, $age)) + ' days old (older than ' + $checkMaxDays + ' days).'); return $null }
+  $days = [int][math]::Floor($age)
+  $when = $(if ($days -lt 1) { 'today' } elseif ($days -eq 1) { '1 day ago' } else { [string]$days + ' days ago' })
+  return @{ State = 'PASSED'; Detail = ('Saved result from ' + $when + ' (' + $c.At.Substring(0, 10) + '; checked again after ' + $checkMaxDays + ' days): ' + $c.Detail); Fix = ''; Saved = $true }
+}
+function Save-CheckCache($Results, [string]$Base, [string]$Site) {
+  # Keeps the old file's other entries (other apps' checks), replaces this run's: PASSED is saved, anything else removed.
+  try {
+    $p = Get-RadeConfigFile 'rade-checks.json'
+    $keep = @{}
+    if (Test-Path -LiteralPath $p -PathType Leaf) {
+      try { $j = [System.IO.File]::ReadAllText($p) | ConvertFrom-Json; foreach ($c in @($j.checks.PSObject.Properties)) { $keep[$c.Name] = $c.Value } } catch { $null = $_ }
+      try { $h0 = Get-CheckHost; if ([string]$j.host.powershell -ne $h0.powershell -or [string]$j.host.pnp -ne $h0.pnp -or [string]$j.host.computer -ne $h0.computer) { $keep = @{} } } catch { $null = $_ }
+    }
+    foreach ($id in @($Results.Keys)) {
+      $r = $Results[$id]
+      if ($r.Saved) { continue }   # a saved result keeps its first date
+      if ($r.State -eq 'PASSED') {
+        $keep[$id] = [ordered]@{ state = 'PASSED'; detail = (ConvertTo-Masked ([string]$r.Detail)); at = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss'); scope = (Get-CheckScope $id $Base $Site) }
+      } elseif ($keep.ContainsKey($id) -and $r.State -ne 'RUNNING') { $keep.Remove($id) }
+    }
+    $sorted = [ordered]@{}; foreach ($k in @($keep.Keys | Sort-Object)) { $sorted[$k] = $keep[$k] }
+    $doc = [ordered]@{
+      schema = 'rade-checks/1'
+      about = ('Saved RADE checks. Any app may read this file: use an entry only when its state is PASSED, its "at" is at most ' + $checkMaxDays + ' days old, "host" equals this computer (PowerShell, PnP and the hashed computer name), and "scope" matches (site: or flow: plus the first 12 hex of the SHA-256 of the lower-case address). Write only PASSED results; remove an entry when the check does not pass.')
+      maxAgeDays = $checkMaxDays
+      host = (Get-CheckHost)
+      checks = $sorted
+    }
+    $dir = Split-Path -Parent $p
+    if (-not (Test-Path -LiteralPath $dir -PathType Container)) { [void](New-Item -ItemType Directory -Path $dir -Force) }
+    [System.IO.File]::WriteAllText($p, ($doc | ConvertTo-Json -Depth 5), (New-Object System.Text.UTF8Encoding $false))
+  } catch { $null = $_ }   # saving is a convenience: never stop for it
+}
+function Get-CheckToRun($Def, $Cache, [string]$Base, [string]$Site, [bool]$Force) {
+  # $null = run it now; else the saved result to show.
+  if ($Force) { return $null }
+  return (Get-SavedCheck $Cache $Def.Id (Get-CheckScope $Def.Id $Base $Site))
 }
 # ---- Progress (PFM 14 Nov 26: two bars, overall and this step, so the finish time can be estimated). Weights are seconds:
 # the last successful run on this computer, else the step's estimate from the round, else 2 minutes. Inside a step the bar
@@ -950,6 +1089,7 @@ function Get-ProgressText($G, [string]$Name) {
 $script:secret = @(); $script:dodid = ''; $script:child = $null; $script:runLog = $null; $script:resultsDir = ''; $script:draftMade = $false; $script:textMode = $false; $script:helped = @{}; $stepMinutes = 30
 $script:statusBase = ''; $script:stepStart = $null; $script:stepEst = 0; $script:noWindowWhy = ''; $script:ranSteps = @(); $script:prog = $null; $script:roundStart = Get-Date
 $script:checkResults = @{}; $script:closing = $false; $checkGate = $true   # tests turn the gate off to run steps
+$script:checkHost = $null; $script:savedWhy = @{}
 function Select-App([int]$I) {
   # The chosen application: its steps and the checks they need (the embedded catalog; PFM 14 Nov 26: no fetch, 3A).
   $script:app = $apps[$I]; $script:appSteps = @($script:app.Steps); $script:appChecks = @($script:app.Checks); $script:checkResults = @{}
@@ -990,13 +1130,115 @@ if ($gui) {
       foreach ($h in $Heights) { [void]$t.RowStyles.Add((New-Object System.Windows.Forms.RowStyle($h, 100))) }
       $t }
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = '90-161.Z Deployer - ' + $round + ' - build ' + $buildId
+    $form.Text = 'RADE (Redacted Application Deployment Engine) - ' + $round + ' - build ' + $buildId
     $form.SuspendLayout()
     $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96); $form.AutoScaleMode = 'Dpi'   # sizes below are at 100 % scaling
     $form.Font = New-Object System.Drawing.Font('Segoe UI', 10)
     $form.ClientSize = New-Object System.Drawing.Size(1020, 760)   # PFM 14 Nov 26: wide enough for little wrapping, not wider; $form.MinimumSize = New-Object System.Drawing.Size(680, 540)
     $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true
     $wrap = New-Object System.Drawing.Size(960, 0)
+    $script:secret = Get-Secret (Get-ProfileLeaf) (Get-ProfileLeaf)   # saved checks are masked before they are written
+    # R17 (PFM 14 Nov 26): rows and status lines have a fixed height (two lines), so nothing moves while checks and steps run.
+    # $lineH is in screen pixels (grid rows, added after layout). Controls sized before layout are scaled by Windows for the
+    # screen (AutoScaleMode Dpi), so they use $lineH96, the same height at 100 % (96 DPI).
+    $lineH = [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $form.Font).Height
+    $dpi = 96.0; try { $gx = [System.Drawing.Graphics]::FromHwnd([IntPtr]::Zero); $dpi = [double]$gx.DpiX; $gx.Dispose() } catch { $null = $_ }
+    $at96 = { param([double]$Px) [int][math]::Ceiling($Px * 96.0 / $dpi) }
+    $lineH96 = & $at96 $lineH
+    $mkFixed = { param([string]$text, [int]$Lines)
+      $l = New-Object System.Windows.Forms.Label; $l.AutoSize = $false; $l.AutoEllipsis = $true; $l.Anchor = 'Left, Right'
+      $l.Height = $Lines * $lineH96 + 6; $l.Text = $text; $l }
+    $fitText = { param([string]$Text, $Font, [int]$Width)
+      # One line that fits $Width pixels: whole words, then " ..." (the full text is in the tooltip and the log).
+      $Text = ([string]$Text -replace '\s+', ' ').Trim()
+      if (-not $Text -or $Width -lt 40) { return $Text }
+      if ([System.Windows.Forms.TextRenderer]::MeasureText($Text, $Font).Width -le $Width) { return $Text }
+      $words = @($Text -split ' '); $lo = 1; $hi = $words.Count - 1; $best = $words[0] + ' ...'
+      while ($lo -le $hi) {
+        $mid = [int][math]::Floor(($lo + $hi) / 2); $s = (($words[0..($mid - 1)]) -join ' ') + ' ...'
+        if ([System.Windows.Forms.TextRenderer]::MeasureText($s, $Font).Width -le $Width) { $best = $s; $lo = $mid + 1 } else { $hi = $mid - 1 }
+      }
+      return $best }
+    $setCell = { param($Cell, [string]$A, [string]$B)
+      # A two-line cell: line 1 and line 2 each cut to the column width; the full text is the tooltip.
+      $Cell.Tag = @($A, $B)
+      $w = $Cell.OwningColumn.Width - 12; $f = $Cell.DataGridView.Font
+      $Cell.Value = (& $fitText $A $f $w) + "`r`n" + (& $fitText $B $f $w)
+      $Cell.ToolTipText = ((@($A, $B) | Where-Object { $_ }) -join "`r`n") }
+    $refit = { param($View, [int]$Col)
+      foreach ($r in $View.Rows) { $c = $r.Cells[$Col]; if ($c.Tag -is [array]) { & $setCell $c $c.Tag[0] $c.Tag[1] } } }
+    $mkGrid = { param([string]$Name)
+      $v = New-Object System.Windows.Forms.DataGridView
+      $v.ReadOnly = $true; $v.AllowUserToAddRows = $false; $v.AllowUserToDeleteRows = $false; $v.AllowUserToResizeRows = $false
+      $v.RowHeadersVisible = $false; $v.SelectionMode = 'FullRowSelect'; $v.MultiSelect = $false; $v.BorderStyle = 'FixedSingle'
+      $v.AutoSizeRowsMode = 'None'; $v.ColumnHeadersHeightSizeMode = 'AutoSize'; $v.AccessibleName = $Name
+      $v.RowTemplate.Height = 2 * $lineH + 10
+      try { $v.BackgroundColor = [System.Drawing.SystemColors]::Window; $v.DefaultCellStyle.WrapMode = 'True'; $v.DefaultCellStyle.Alignment = 'MiddleLeft'
+        $v.DefaultCellStyle.Padding = New-Object System.Windows.Forms.Padding(4, 2, 4, 2)
+        $v.DefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::Window; $v.DefaultCellStyle.SelectionForeColor = [System.Drawing.SystemColors]::WindowText } catch { $null = $_ }
+      $v.Add_ColumnWidthChanged({ & $refit $this $_.Column.Index })
+      $v }
+    # R17 (PFM 14 Nov 26: the light-green sweep of the Windows bar was not smooth): RADE draws its own bars. A 30 ms timer
+    # eases the fill to its new value and moves one soft light band across it; an unknown step shows a block that glides
+    # back and forth. With Windows animations off ($calm) the fill jumps and nothing moves.
+    $script:bars = @{}
+    $calm = $false; try { $calm = -not [System.Windows.Forms.SystemInformation]::UIEffectsEnabled } catch { $null = $_ }
+    $trackColor = [System.Drawing.Color]::FromArgb(230, 230, 230); $fillColor = [System.Drawing.Color]::FromArgb(30, 125, 50)
+    $edgePen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(118, 118, 118)); $fillBrush = New-Object System.Drawing.SolidBrush($fillColor)
+    $twoPi = 2 * [math]::PI
+    $drawBar = { param($P, $G)
+      $b = $script:bars[[string]$P.Tag]; if (-not $b) { return }
+      $w = $P.ClientSize.Width; $h = $P.ClientSize.Height; if ($w -lt 4 -or $h -lt 4) { return }
+      $G.Clear($trackColor)
+      if ($b.Busy) {
+        $seg = [int]($w * 0.3); $x = [int](($w - $seg) * (0.5 - 0.5 * [math]::Cos($b.Phase)))
+        $G.FillRectangle($fillBrush, $x, 0, $seg, $h)
+      } else {
+        $fw = [int][math]::Round($w * $b.Shown)
+        if ($fw -gt 0) {
+          $G.FillRectangle($fillBrush, 0, 0, $fw, $h)
+          if ($b.Sheen -and -not $calm -and $fw -gt 12) {
+            $bw = [math]::Max(24, [int]($w * 0.08)); $x = [int](($b.Phase / $twoPi) * ($fw + $bw)) - $bw
+            $rect = New-Object System.Drawing.Rectangle($x, 0, $bw, $h)
+            $lg = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $fillColor, $fillColor, [single]0)
+            $cb = New-Object System.Drawing.Drawing2D.ColorBlend(3)
+            $cb.Colors = [System.Drawing.Color[]]@([System.Drawing.Color]::FromArgb(0, 255, 255, 255), [System.Drawing.Color]::FromArgb(110, 200, 255, 200), [System.Drawing.Color]::FromArgb(0, 255, 255, 255))
+            $cb.Positions = [single[]]@(0, 0.5, 1); $lg.InterpolationColors = $cb
+            $G.SetClip((New-Object System.Drawing.Rectangle(0, 0, $fw, $h))); $G.FillRectangle($lg, $rect); $G.ResetClip(); $lg.Dispose()
+          }
+        }
+      }
+      $G.DrawRectangle($edgePen, 0, 0, $w - 1, $h - 1) }
+    $mkBar = { param([string]$Name, [int]$H, [string]$Label)
+      $p = New-Object System.Windows.Forms.Panel
+      $p.Anchor = 'Left, Right'; $p.Height = $H; $p.Margin = New-Object System.Windows.Forms.Padding(3, 3, 3, 3); $p.Tag = $Name
+      $p.AccessibleRole = 'ProgressBar'; $p.AccessibleName = $Label; $p.AccessibleDescription = '0 %'
+      try { [System.Windows.Forms.Control].GetProperty('DoubleBuffered', [System.Reflection.BindingFlags]'NonPublic, Instance').SetValue($p, $true, $null) } catch { $null = $_ }
+      $script:bars[$Name] = @{ Panel = $p; Target = 0.0; Shown = 0.0; Busy = $false; Sheen = $false; Phase = 0.0 }
+      $p.Add_Paint({ & $drawBar $this $_.Graphics })
+      $p }
+    $setBar = { param([string]$Name, [double]$Value, [bool]$Busy, [bool]$Sheen)
+      $b = $script:bars[$Name]; if (-not $b) { return }
+      $v = [math]::Max(0.0, [math]::Min(1.0, $Value))
+      if ($v -lt $b.Target - 0.001) { $b.Shown = $v }   # never slide backwards (a new step starts at 0)
+      $b.Target = $v; $b.Sheen = $Sheen
+      if ($b.Busy -ne $Busy) { $b.Busy = $Busy; $b.Phase = 0.0 }
+      $b.Panel.AccessibleDescription = $(if ($Busy) { 'working' } else { [string][int]($v * 100) + ' %' })
+      $b.Panel.Invalidate() }
+    $anim = New-Object System.Windows.Forms.Timer
+    $anim.Interval = 30
+    $anim.Add_Tick({
+      foreach ($b in @($script:bars.Values)) {
+        $dirty = $false
+        if ($b.Busy) { if (-not $calm) { $b.Phase += 0.08; $dirty = $true } }
+        else {
+          $d = $b.Target - $b.Shown
+          if ([math]::Abs($d) -gt 0.0005) { $b.Shown = $(if ($calm) { $b.Target } else { $b.Shown + $d * 0.18 }); $dirty = $true }
+          elseif ($b.Shown -ne $b.Target) { $b.Shown = $b.Target; $dirty = $true }
+          if ($b.Sheen -and -not $calm) { $b.Phase += 0.05; if ($b.Phase -gt $twoPi) { $b.Phase -= $twoPi }; $dirty = $true }
+        }
+        if ($dirty) { $b.Panel.Invalidate() }
+      } })
     $grid = & $mkRows @('AutoSize', 'AutoSize', 'Percent', 'AutoSize')
     $grid.Padding = New-Object System.Windows.Forms.Padding(10)
     # Header on every screen: where you are (screen k of 3), last round, newer round.
@@ -1013,7 +1255,8 @@ if ($gui) {
     $nav.AutoSize = $true; $nav.WrapContents = $false; $nav.Dock = 'Fill'; $nav.FlowDirection = 'RightToLeft'
     $next = & $mkButton 'Next'
     $back = & $mkButton 'Back'
-    $nav.Controls.AddRange(@($next, $back))
+    $exitB = & $mkButton 'E&xit'; $exitB.AccessibleName = 'Exit RADE'   # PFM 14 Nov 26 (R17); Alt+X
+    $nav.Controls.AddRange(@($next, $back, $exitB))
 
     # ---- Screen 1: choose the application
     # Minimal (PFM 14 Nov 26): one plain heading, a roomy list, one summary line and one gray line of facts.
@@ -1036,7 +1279,7 @@ if ($gui) {
     $pCheck = & $mkRows @('AutoSize', 'AutoSize', 'AutoSize', 'Percent', 'AutoSize', 'AutoSize', 'AutoSize')
     $checkHead = & $mkLabel ''
     try { $checkHead.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]11, $bold) } catch { $null = $_ }
-    $checkWhat = & $mkLabel ('The checks do not change anything; they make one test file and one short script, then delete them at once.' + "`r`n" + 'If you type the site address, it is saved on this computer only (Config\90161Z-site.txt).')
+    $checkWhat = & $mkLabel ('The checks do not change anything; they make one test file and one short script, then delete them at once.' + "`r`n" + 'Checks that pass are saved for ' + $checkMaxDays + ' days in RADE\Config\rade-checks.json, so the next run skips them; "Run checks again" checks everything now.' + "`r`n" + 'If you type the site address, it is saved on this computer only (Config\90161Z-site.txt).')
     $sitePanel = New-Object System.Windows.Forms.FlowLayoutPanel
     $sitePanel.AutoSize = $true; $sitePanel.WrapContents = $true; $sitePanel.Dock = 'Fill'
     $siteLabel = & $mkLabel 'Site address:'
@@ -1045,15 +1288,11 @@ if ($gui) {
     $siteBox.Width = 520; $siteBox.Text = Get-SiteUrl $basePath; if (-not $siteBox.Text) { $siteBox.Text = $sitePrefix }   # PFM 14 Nov 26: start the box with the DAF SharePoint address
     $siteBox.Add_GotFocus({ $siteBox.SelectionStart = $siteBox.Text.Length; $siteBox.SelectionLength = 0 }); $siteBox.AccessibleName = 'Site address, starts with https://'
     $sitePanel.Controls.AddRange(@($siteLabel, $siteBox))
-    # A grid, not a list view: rows grow so each sentence of the details sits on its own line (PFM 14 Nov 26). The Result
-    # column has a fixed width, so it does not move while checks run.
-    $checkView = New-Object System.Windows.Forms.DataGridView
-    $checkView.Dock = 'Fill'; $checkView.ReadOnly = $true; $checkView.AllowUserToAddRows = $false; $checkView.AllowUserToDeleteRows = $false
-    $checkView.AllowUserToResizeRows = $false; $checkView.RowHeadersVisible = $false; $checkView.SelectionMode = 'FullRowSelect'; $checkView.MultiSelect = $false
-    $checkView.AutoSizeRowsMode = 'AllCells'; $checkView.ColumnHeadersHeightSizeMode = 'AutoSize'; $checkView.BorderStyle = 'FixedSingle'
-    $checkView.AccessibleName = 'Check results'
-    try { $checkView.BackgroundColor = [System.Drawing.SystemColors]::Window; $checkView.DefaultCellStyle.WrapMode = 'True'
-      $checkView.DefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::Window; $checkView.DefaultCellStyle.SelectionForeColor = [System.Drawing.SystemColors]::WindowText } catch { $null = $_ }
+    # A grid of two-line rows (R17, PFM 14 Nov 26: rows never grow, so the screen does not move while checks run). Check:
+    # name / group. Details: what was found / what to do; each line is cut to fit, the full text is the tooltip and in the
+    # e-mail. The Result column has a fixed width.
+    $checkView = & $mkGrid 'Check results'
+    $checkView.Dock = 'Fill'
     foreach ($h in @(@('Check', 36), @('Result', 0), @('Details', 64))) {
       $ci = $checkView.Columns.Add($h[0], $h[0]); $col = $checkView.Columns[$ci]; $col.SortMode = 'NotSortable'
       if ($h[1]) { $col.AutoSizeMode = 'Fill'; $col.FillWeight = $h[1] } else { $col.AutoSizeMode = 'None'; $col.Width = 96 }
@@ -1071,9 +1310,11 @@ if ($gui) {
     foreach ($st in 'PASSED', 'WARNING', 'FAILED', 'NOT RUN') {
       $l = & $mkLabel ''; $l.Margin = New-Object System.Windows.Forms.Padding(3, 3, 14, 0)
       try { $l.ForeColor = Get-CheckColor $st; $l.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]10, $bold) } catch { $null = $_ }
+      # A fixed width (the widest count text), so a count going from 9 to 10 does not push the others (R17).
+      try { $l.AutoSize = $false; $l.Width = (& $at96 ([System.Windows.Forms.TextRenderer]::MeasureText('Warnings: 99.', $l.Font).Width)) + 8; $l.Height = $lineH96 + 4 } catch { $null = $_ }
       $countLabels[$st] = $l; [void]$countPanel.Controls.Add($l)
     }
-    $checkStatus = & $mkLabel ''
+    $checkStatus = & $mkFixed '' 2
     $row = 0; foreach ($c in @($checkHead, $checkWhat, $sitePanel, $checkView, $checkBtns, $countPanel, $checkStatus)) { $pCheck.Controls.Add($c, 0, $row); $row++ }
 
     # ---- Screen 3: deploy (the R06-R14 round screen, now with two bars)
@@ -1085,18 +1326,30 @@ if ($gui) {
     try { $where.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]10, $bold) } catch { $null = $_ }
     $warn = & $mkLabel ''
     try { $warn.ForeColor = Get-CheckColor 'FAILED' } catch { $null = $_ }
-    $list = New-Object System.Windows.Forms.CheckedListBox
-    $list.Anchor = 'Left, Right'; $list.CheckOnClick = $true; $list.IntegralHeight = $false; $list.AccessibleName = 'Steps to run'
-    $allLabel = & $mkLabel 'Overall: not started'
+    # Steps: a grid of two-line rows (R17): a check box to run it, then the step name / its note, "Running now" or its result.
+    # Click the box or press Space to tick or clear a step; Enter runs.
+    $stepView = & $mkGrid 'Steps to run'
+    $stepView.Anchor = 'Left, Right'; $stepView.TabStop = $true
+    $runCol = New-Object System.Windows.Forms.DataGridViewCheckBoxColumn
+    $runCol.HeaderText = 'Run'; $runCol.Width = 52; $runCol.AutoSizeMode = 'None'; $runCol.SortMode = 'NotSortable'
+    [void]$stepView.Columns.Add($runCol)
+    $ci = $stepView.Columns.Add('Step', 'Step'); $stepView.Columns[$ci].AutoSizeMode = 'Fill'; $stepView.Columns[$ci].SortMode = 'NotSortable'
+    $stepAdd = { param([string]$Name, [string]$Status, [bool]$On)
+      $i = $stepView.Rows.Add(); $stepView.Rows[$i].Cells[0].Value = $On; & $setCell $stepView.Rows[$i].Cells[1] $Name $Status; $i }
+    $stepOn = { param([int]$I) [bool]$stepView.Rows[$I].Cells[0].Value }
+    $stepSay = { param([int]$I, [string]$Status) $c = $stepView.Rows[$I].Cells[1]; & $setCell $c ([string]$c.Tag[0]) $Status }
+    $stepToggle = { param([int]$I) if (-not $script:running -and $I -ge 0) { $c = $stepView.Rows[$I].Cells[0]; $c.Value = -not [bool]$c.Value } }
+    $stepView.Add_CellClick({ if ($_.ColumnIndex -eq 0) { & $stepToggle $_.RowIndex } })
+    $stepView.Add_PreviewKeyDown({ if ($_.KeyCode -eq 'Return') { $_.IsInputKey = $true } })   # Enter reaches KeyDown (runs), not the grid's next-row move
+    $stepView.Add_KeyDown({
+      if ($_.KeyCode -eq 'Space') { $_.SuppressKeyPress = $true; if ($stepView.CurrentRow) { & $stepToggle $stepView.CurrentRow.Index } }
+      elseif ($_.KeyCode -eq 'Return') { $_.SuppressKeyPress = $true; if ($run.Enabled) { $run.PerformClick() } } })
+    $allLabel = & $mkFixed 'Overall: not started' 2
     $allLabel.Margin = New-Object System.Windows.Forms.Padding(3, 8, 3, 0)
-    $bar = New-Object System.Windows.Forms.ProgressBar
-    $bar.Dock = 'Fill'; $bar.Height = 18; $bar.Minimum = 0; $bar.Maximum = 1000; $bar.Value = 0; $bar.AccessibleName = 'Overall progress'
-    $stepLabel = & $mkLabel 'This step: none running'
+    $bar = & $mkBar 'all' 20 'Overall progress'
+    $stepLabel = & $mkFixed 'This step: none running' 2
     $stepLabel.Margin = New-Object System.Windows.Forms.Padding(3, 6, 3, 0)
-    $stepBar = New-Object System.Windows.Forms.ProgressBar
-    $stepBar.Dock = 'Fill'; $stepBar.Height = 12; $stepBar.Minimum = 0; $stepBar.Maximum = 1000; $stepBar.Value = 0; $stepBar.AccessibleName = 'Progress of this step'
-    # Reduced motion: no moving "working" bar when Windows animations are off.
-    $calm = $false; try { $calm = -not [System.Windows.Forms.SystemInformation]::UIEffectsEnabled } catch { $null = $_ }
+    $stepBar = & $mkBar 'step' 14 'Progress of this step'
     $log = New-Object System.Windows.Forms.TextBox
     $log.Dock = 'Fill'; $log.Multiline = $true; $log.ScrollBars = 'Both'; $log.WordWrap = $false; $log.ReadOnly = $true; $log.AccessibleName = 'Log'
     $log.Font = New-Object System.Drawing.Font('Consolas', 9)
@@ -1117,7 +1370,7 @@ if ($gui) {
     $copy = & $mkButton 'Copy summary'; $copy.Enabled = $false
     $open = & $mkButton 'Open results folder'; $open.Enabled = $false
     $buttons.Controls.AddRange(@($run, $draft, $copy, $open))
-    $row = 0; foreach ($c in @($where, $warn, $list, $allLabel, $bar, $stepLabel, $stepBar, $log, $toPanel, $okBox, $buttons)) { $pDeploy.Controls.Add($c, 0, $row); $row++ }
+    $row = 0; foreach ($c in @($where, $warn, $stepView, $allLabel, $bar, $stepLabel, $stepBar, $log, $toPanel, $okBox, $buttons)) { $pDeploy.Controls.Add($c, 0, $row); $row++ }
 
     foreach ($pnl in @($pChoose, $pCheck, $pDeploy)) { $pnl.Visible = $false; $body.Controls.Add($pnl) }
     $row = 0; foreach ($c in @($crumb, $banner, $body, $nav)) { $grid.Controls.Add($c, 0, $row); $row++ }
@@ -1127,14 +1380,15 @@ if ($gui) {
     $script:screen = 0; $script:running = $false; $script:off = 0
     $fillDeploy = {
       # The chosen app's steps only. $script:listIndex maps a step to its row in the list.
-      $list.Items.Clear(); $script:off = 0; $script:listIndex = @{}
-      if ($cleanup.Count) { [void]$list.Items.Add('Clean-up: move finished files to the Recycle Bin', $true); $script:off = 1 }
+      $stepView.Rows.Clear(); $script:off = 0; $script:listIndex = @{}
+      if ($cleanup.Count) { [void](& $stepAdd 'Clean-up: move finished files to the Recycle Bin' 'Runs first. Clear its box to skip it.' $true); $script:off = 1 }
       foreach ($k in $script:appSteps) {
         $s = $steps[$k]
-        $script:listIndex[$k] = $list.Items.Count
-        [void]$list.Items.Add($s.Name + $(if ($s.AskParam) { '  (asks for a folder)' } elseif ($s.Kind -eq 'guide') { '  (needs you)' } else { '' }), [bool]$s.Default)
+        $script:listIndex[$k] = $stepView.Rows.Count
+        [void](& $stepAdd ($s.Name + $(if ($s.AskParam) { '  (asks for a folder)' } elseif ($s.Kind -eq 'guide') { '  (needs you)' } else { '' })) $(if ($s.Note) { $s.Note } else { 'Waiting.' }) ([bool]$s.Default))
       }
-      $list.Height = ($list.ItemHeight * [math]::Max(3, $list.Items.Count + 1)) + 6
+      $stepView.Height = $stepView.ColumnHeadersHeight + $stepView.RowTemplate.Height * [math]::Max(2, $stepView.Rows.Count) + 4
+      $stepView.ClearSelection()
       $first = Get-RoundPlan
       $where.Text = 'Writes to: ' + $first.Shown + $(if ($first.Found) { '' } else { '   (NOT found)' })
       $warnings = @()
@@ -1155,7 +1409,7 @@ if ($gui) {
     $setRow = { param([int]$I, $R)
       $row = $checkView.Rows[$I]
       $row.Cells[1].Value = $R.State
-      $row.Cells[2].Value = Split-Sentence ($R.Detail + $(if ($R.Fix) { ' ' + $R.Fix } else { '' }))
+      & $setCell $row.Cells[2] $R.Detail $R.Fix
       try { $k = Get-CheckColor $R.State; $row.Cells[1].Style.ForeColor = $k; $row.Cells[1].Style.SelectionForeColor = $k } catch { $null = $_ }
       [System.Windows.Forms.Application]::DoEvents() }
     $showCheckState = {
@@ -1164,19 +1418,35 @@ if ($gui) {
       $block = Get-CheckBlock $script:checkResults
       $countLabels['PASSED'].Text = 'Passed: ' + $c.PASSED + '.'; $countLabels['WARNING'].Text = 'Warnings: ' + $c.WARNING + '.'
       $countLabels['FAILED'].Text = 'Failed: ' + $c.FAILED + '.'; $countLabels['NOT RUN'].Text = 'Not run: ' + $c['NOT RUN'] + '.'
-      $checkStatus.Text = $(if ($c.FAILED) { 'You cannot deploy yet; fix each check marked FAILED, then select "Run checks again".' } elseif ($block) { 'You cannot deploy yet; run the checks marked NOT RUN (use the buttons above).' } else { 'All checks passed; press Enter or select "Next: deploy".' })
+      $sv = @($script:appChecks | Where-Object { $script:checkResults[$_].Saved }).Count
+      $checkStatus.Text = $(if ($c.FAILED) { 'You cannot deploy yet; fix each check marked FAILED, then select "Run checks again".' } elseif ($block) { 'You cannot deploy yet; run the checks marked NOT RUN (use the buttons above).' } else { 'All checks passed; press Enter or select "Next: deploy".' }) +
+        "`r`n" + $(if ($sv) { [string]$sv + ' of ' + $script:appChecks.Count + ' checks use saved results (good for ' + $checkMaxDays + ' days). Select "Run checks again" to check everything now.' } else { 'No saved results were used.' })
       try { $checkStatus.ForeColor = Get-CheckColor $(if ($block) { 'FAILED' } elseif ($c.WARNING) { 'WARNING' } else { 'PASSED' }) } catch { $null = $_ }
       $next.Enabled = (-not $block) }
-    $runChecks = { param([string[]]$Kinds, [string[]]$Only)
+    $runChecks = { param([string[]]$Kinds, [string[]]$Only, [bool]$Force)
+      # Saved results (R17): a check with a good saved result is not run again unless $Force ("Run checks again" or a button).
       $site = $siteBox.Text.Trim()
       if (Test-SiteUrl $site) { try { if ($site -ne (Get-SiteUrl $basePath)) { Save-SiteUrl $basePath $site } } catch { $null = $_ } }
       $againB.Enabled = $false; $rightsB.Enabled = $false; $flowB.Enabled = $false; $next.Enabled = $false; $back.Enabled = $false
+      $cache = Read-CheckCache; $script:savedWhy = @{}
       try {
       for ($i = 0; $i -lt $script:appChecks.Count; $i++) {
         $id = $script:appChecks[$i]; $d = Get-CheckDef $id
         if ($form.IsDisposed -or $script:closing) { return }   # the window was closed during a check
-        if ($Kinds -notcontains $d.Kind) { continue }
+        if ($Kinds -notcontains $d.Kind) {
+          # A sign-in or look-and-answer check that was not asked for now: use its saved result, or say it is too old.
+          $have = $script:checkResults[$id]
+          if ($have) { & $setRow $i $have }
+          else {
+            $sv = Get-CheckToRun $d $cache $basePath $site $false
+            if ($sv) { $script:checkResults[$id] = $sv; & $setRow $i $sv }
+            elseif ($script:savedWhy[$id]) { & $setRow $i (Format-CheckResult 'NOT RUN' $script:savedWhy[$id] $(if ($d.Kind -eq 'signin') { 'Select "Sign in and check site rights" to check again.' } else { 'Select "Check Power Automate" to check again.' })) }
+          }
+          continue
+        }
         if ($Only -and $Only -notcontains $id) { continue }
+        $sv = Get-CheckToRun $d $cache $basePath $site $Force
+        if ($sv) { $script:checkResults[$id] = $sv; & $setRow $i $sv; continue }
         & $setRow $i (Format-CheckResult 'RUNNING' 'checking now' '')
         $checkStatus.Text = 'Checking: ' + $d.Name + ' ...'
         $r = Invoke-Check $d $basePath $site { [System.Windows.Forms.Application]::DoEvents() }
@@ -1184,6 +1454,7 @@ if ($gui) {
         & $setRow $i $r
       }
       } finally {
+        Save-CheckCache $script:checkResults $basePath $site
         if (-not ($form.IsDisposed -or $script:closing)) { $againB.Enabled = $true; $rightsB.Enabled = $true; $flowB.Enabled = $true; $back.Enabled = $true; & $showCheckState }
       } }
     $fillChecks = {
@@ -1191,8 +1462,9 @@ if ($gui) {
       $checkView.Rows.Clear()
       for ($i = 0; $i -lt $script:appChecks.Count; $i++) {
         $d = Get-CheckDef $script:appChecks[$i]
-        $wait = $(if ($d.Kind -eq 'signin') { 'Select "Sign in and check site rights"; you sign in with your CAC and nothing is changed.' } elseif ($d.Kind -eq 'guide') { 'Select "Check Power Automate"; you look and answer.' } else { 'Waiting.' })
-        [void]$checkView.Rows.Add([object[]]@(($d.Group + ': ' + $d.Name), 'NOT RUN', (Split-Sentence $wait)))
+        $wait = $(if ($d.Kind -eq 'signin') { @('Select "Sign in and check site rights".', 'You sign in with your CAC; nothing is changed.') } elseif ($d.Kind -eq 'guide') { @('Select "Check Power Automate".', 'You look and answer.') } else { @('Waiting.', '') })
+        [void]$checkView.Rows.Add([object[]]@('', 'NOT RUN', ''))
+        & $setCell $checkView.Rows[$i].Cells[0] $d.Name ($d.Group + ' check'); & $setCell $checkView.Rows[$i].Cells[2] $wait[0] $wait[1]
         try { $k = Get-CheckColor 'NOT RUN'; $checkView.Rows[$i].Cells[1].Style.ForeColor = $k; $checkView.Rows[$i].Cells[1].Style.SelectionForeColor = $k } catch { $null = $_ }
       }
       $checkView.ClearSelection()
@@ -1219,13 +1491,13 @@ if ($gui) {
     $appList.Add_SelectedIndexChanged({ if ($appList.SelectedIndex -ge 0) { Select-App $appList.SelectedIndex; $t = Get-AppText $script:app $hist0; $appInfo.Text = Split-Sentence $t.Summary; $appMeta.Text = $t.Meta } })
     $appList.Add_DoubleClick({ $next.PerformClick() })
     $next.Add_Click({
-      if ($script:screen -eq 0) { & $fillChecks; & $showScreen 1; & $runChecks @('auto') @(); & $showScreen 1; return }
+      if ($script:screen -eq 0) { & $fillChecks; & $showScreen 1; & $runChecks @('auto') @() $false; & $showScreen 1; return }
       if ($script:screen -eq 1 -and -not (Get-CheckBlock $script:checkResults)) { & $fillDeploy; & $showScreen 2 } })
     $back.Add_Click({ if (-not $script:running -and $script:screen -gt 0) { & $showScreen ($script:screen - 1) } })
     $form.Add_KeyDown({ if ($_.KeyCode -eq 'Escape' -and $back.Visible -and -not $script:running) { $_.SuppressKeyPress = $true; $back.PerformClick() } })
-    $againB.Add_Click({ & $runChecks @('auto') @() })
-    $rightsB.Add_Click({ & $runChecks @('signin') @('site-rights') })
-    $flowB.Add_Click({ & $runChecks @('guide') @('flow-guide') })
+    $againB.Add_Click({ & $runChecks @('auto') @() $true })
+    $rightsB.Add_Click({ & $runChecks @('signin') @('site-rights') $true })
+    $flowB.Add_Click({ & $runChecks @('guide') @('flow-guide') $true })
     # The grid is read-only and never keeps the focus: it would take Enter for itself (moving to the next row) before the
     # form's Next button sees it (review PR 26). Focus goes back to Next, so Enter still moves on.
     $checkView.TabStop = $false
@@ -1233,7 +1505,7 @@ if ($gui) {
     # Enter in a box moves on instead of acting (review R06 #3: a stray Enter must not start a cleanup).
     $siteBox.Add_Enter({ $form.AcceptButton = $null })
     $siteBox.Add_Leave({ $form.AcceptButton = $next })
-    $siteBox.Add_KeyDown({ if ($_.KeyCode -eq 'Return') { $_.SuppressKeyPress = $true; & $runChecks @('auto') @('net-site'); $next.Focus() | Out-Null } })
+    $siteBox.Add_KeyDown({ if ($_.KeyCode -eq 'Return') { $_.SuppressKeyPress = $true; & $runChecks @('auto') @('net-site') $true; $next.Focus() | Out-Null } })
     $toBox.Add_Enter({ $form.AcceptButton = $null })
     $toBox.Add_Leave({ $form.AcceptButton = $run })
     $toBox.Add_KeyDown({ if ($_.KeyCode -eq 'Return') { $_.SuppressKeyPress = $true; $run.Focus() | Out-Null } })
@@ -1243,24 +1515,32 @@ if ($gui) {
       $form.Width = [Math]::Min($form.Width, [int]($wa.Width * 0.95)); $form.Height = [Math]::Min($form.Height, [int]($wa.Height * 0.95))
       $form.Left = $wa.Left + [int](($wa.Width - $form.Width) / 2); $form.Top = $wa.Top + [int](($wa.Height - $form.Height) / 2)
       $appList.SelectedIndex = 0
+      $anim.Start()
       & $showScreen 0 })
 
     $script:lastSummary = @()
     $say = { param($t) Add-RunLog $t; try { $log.AppendText($t + "`r`n"); [System.Windows.Forms.Application]::DoEvents() } catch { Write-Host $t } }
     $paint = {
-      # Both bars from Get-Progress. Unknown step progress: a moving bar (a still bar at 0 when animations are off).
+      # Both bars from Get-Progress (the timer draws them). Unknown step progress: a gliding block (still when animations are off).
       if (-not $script:prog -or -not $script:stepStart) { return }
       $g = Get-Progress; $t = Get-ProgressText $g $script:statusBase
-      $bar.Value = [int]([math]::Max(0.0, [math]::Min(1000.0, $g.All * 1000)))
-      if ($g.Step -lt 0 -and -not $calm) { if ([string]$stepBar.Style -ne 'Marquee') { $stepBar.Style = 'Marquee'; $stepBar.MarqueeAnimationSpeed = 40 } }
-      else { if ([string]$stepBar.Style -ne 'Continuous') { $stepBar.Style = 'Continuous' }; $stepBar.Value = [int]([math]::Max(0.0, [math]::Min(1000.0, $g.Step * 1000))) }
-      $allLabel.Text = $t.All; $stepLabel.Text = $t.Step }
+      & $setBar 'all' $g.All $false $true
+      if ($g.Step -lt 0) { & $setBar 'step' 0 (-not $calm) $false } else { & $setBar 'step' $g.Step $false $true }
+      if ($allLabel.Text -ne $t.All) { $allLabel.Text = $t.All }; if ($stepLabel.Text -ne $t.Step) { $stepLabel.Text = $t.Step } }
     $tick = { & $paint; [System.Windows.Forms.Application]::DoEvents() }
-    $onStep = { param($k, $line) $i = $script:listIndex[$k]; if ($null -ne $i) { $list.Items[$i] = $line; $list.SetItemChecked($i, $true) }; & $paint }
+    $onStep = { param($k, $line)
+      $i = $script:listIndex[$k]
+      if ($null -ne $i) { $nm = $steps[$k].Name + ': '; & $stepSay $i $(if ($line.StartsWith($nm)) { $line.Substring($nm.Length) } else { $line }) }
+      & $paint }
     $onStatus = { param($i, $count, $name, $estimate)
       $null = $i; $null = $count   # the labels read $script:prog
       $script:statusBase = $name; $script:stepStart = Get-Date; $script:stepEst = $estimate
-      if ([string]$stepBar.Style -ne 'Continuous') { $stepBar.Style = 'Continuous' }; $stepBar.Value = 0
+      # The step row says it is running; the clean-up row (row 0) says done once the next step starts.
+      if ($script:off -eq 1 -and $name -ne 'Clean-up' -and [string]$stepView.Rows[0].Cells[1].Tag[1] -like 'Running now*') { & $stepSay 0 'Done. The log above the bars lists what moved to the Recycle Bin.' }
+      $now = 'Running now. Started ' + (Get-Date -Format 'HH:mm') + '.'
+      if ($name -eq 'Clean-up' -and $script:off -eq 1) { & $stepSay 0 $now }
+      else { foreach ($kk in @($script:listIndex.Keys)) { if ($steps[$kk].Name -eq $name) { & $stepSay $script:listIndex[$kk] $now } } }
+      & $setBar 'step' 0 $false $false
       & $paint; [System.Windows.Forms.Application]::DoEvents() }
     $windowLine = { if ($okBox.Checked) { 'Window: OK' } else { 'Window: NOT OK - write here what overlapped or was cut off' } }
     $toFront = { $form.TopMost = $true; $form.Activate(); $form.TopMost = $false }
@@ -1271,8 +1551,8 @@ if ($gui) {
         $script:helped = @{}; & $say 'The e-mail address does not look right.'; & $say (Get-WhatToDo 'e-mail address does not look right')
         $run.Enabled = $true; $back.Enabled = $true; $script:running = $false; $toBox.Focus() | Out-Null; return
       }
-      $clean = ($script:off -eq 1 -and $list.GetItemChecked(0))
-      $sel = @(); for ($k = 0; $k -lt $steps.Count; $k++) { $i = $script:listIndex[$k]; $sel += ($null -ne $i -and $list.GetItemChecked($i)) }
+      $clean = ($script:off -eq 1 -and (& $stepOn 0))
+      $sel = @(); for ($k = 0; $k -lt $steps.Count; $k++) { $i = $script:listIndex[$k]; $sel += ($null -ne $i -and (& $stepOn $i)) }
       # A checked step that needs a folder asks for it now; Cancel skips that step.
       $answers = @(); for ($k = 0; $k -lt $steps.Count; $k++) {
         $a = ''
@@ -1288,7 +1568,8 @@ if ($gui) {
       $script:roundStart = Get-Date
       try {
         $script:lastSummary = Invoke-Round $clean $sel $to $say $tick $onStep $onStatus $windowLine $answers $checkLines
-        $script:stepStart = $null; $bar.Value = $bar.Maximum; $stepBar.Style = 'Continuous'; $stepBar.Value = $stepBar.Maximum
+        $script:basePath = Get-BasePath   # RADE may have moved the app folder (R17)
+        $script:stepStart = $null; & $setBar 'all' 1 $false $false; & $setBar 'step' 1 $false $false
         $allLabel.Text = 'Overall: DONE in ' + (Format-Duration ((Get-Date) - $script:roundStart).TotalSeconds) + '. ' + $script:lastSummary[0]
         $stepLabel.Text = $(if ($script:draftMade) { 'The Outlook draft is open.' } else { 'The results folder is open and the summary is copied.' })
         $copy.Enabled = $true; $open.Enabled = $true; $draft.Enabled = $true
@@ -1297,9 +1578,12 @@ if ($gui) {
       }
       catch {
         $script:stepStart = $null
+        if ($script:closing -or $form.IsDisposed) { return }   # Exit during a step: the report on disk says STOPPED
+        $script:basePath = Get-BasePath
         $msg = 'STOPPED: ' + (ConvertTo-Masked ([string]$_)); & $say $msg
         $w = Get-WhatToDo $msg; if ($w) { & $say $w }
-        $stepBar.Style = 'Continuous'; $allLabel.Text = 'Overall: STOPPED. See the last lines of the log.'; & $toFront
+        & $setBar 'step' $script:bars['step'].Target $false $false; & $setBar 'all' $script:bars['all'].Target $false $false
+        $allLabel.Text = 'Overall: STOPPED. See the last lines of the log.'; & $toFront
       }
       $run.Enabled = $true; $back.Enabled = $true; $script:running = $false
     })
@@ -1312,7 +1596,15 @@ if ($gui) {
       catch { & $say ('The clipboard is busy. Select Copy summary again. (' + $_.Exception.Message + ')') }
     })
     $open.Add_Click({ if ($script:resultsDir) { Start-Process -FilePath 'explorer.exe' -ArgumentList ('"' + $script:resultsDir + '"') } })
-    $form.Add_FormClosing({ $script:closing = $true; if ($script:child -and -not $script:child.HasExited) { try { $script:child.Kill() } catch { $null = $_ } } })
+    $exitB.Add_Click({ $form.Close() })
+    $form.Add_FormClosing({
+      # Exit (or the X): ask first only while a step runs, because closing stops it (R17, PFM 14 Nov 26).
+      if ($script:running -and -not $script:closing) {
+        $a = [System.Windows.Forms.MessageBox]::Show($form, 'A step is running. If you exit now, RADE stops it and the round ends as STOPPED (the report in the results folder says so). Exit now?', 'RADE - Exit', [System.Windows.Forms.MessageBoxButtons]::YesNo, [System.Windows.Forms.MessageBoxIcon]::Warning, [System.Windows.Forms.MessageBoxDefaultButton]::Button2)
+        if ([string]$a -ne 'Yes') { $_.Cancel = $true; return }
+      }
+      $script:closing = $true; try { $anim.Stop() } catch { $null = $_ }
+      if ($script:child -and -not $script:child.HasExited) { try { $script:child.Kill() } catch { $null = $_ } } })
     [void]$form.ShowDialog()
     return
   } catch {
@@ -1326,7 +1618,7 @@ if ($gui) {
 try {
   $script:textMode = $true
   $say = { param($t) Add-RunLog $t; Write-Host $t }
-  Write-Host ('90-161.Z Deployer - ' + $round + ' - build ' + $buildId)
+  Write-Host ('RADE (Redacted Application Deployment Engine) - ' + $round + ' - build ' + $buildId)
   Write-Host (Get-LastRoundText (Read-RoundHistory (Get-BasePath)))
   $newer = Get-NewerRound
   if ($newer) { Write-Host ('A newer round, ' + $newer + ', is in the repository. Type N and press Enter to stop, then run ' + $newer + '.') }
@@ -1342,17 +1634,21 @@ try {
     $v = ([string](Read-Host 'Type the site address (it starts with https://usaf.dps.mil/sites/), then press Enter')).Trim()
     if (Test-SiteUrl $v) { $site0 = $v }
   }
+  $script:secret = Get-Secret (Get-ProfileLeaf) (Get-ProfileLeaf)
+  $cache = Read-CheckCache
   foreach ($id in $script:appChecks) {
     $d = Get-CheckDef $id
-    $r = Invoke-Check $d (Get-BasePath) $site0 $null
+    $r = Get-CheckToRun $d $cache (Get-BasePath) $site0 $false
+    if (-not $r) { $r = Invoke-Check $d (Get-BasePath) $site0 $null }
     $script:checkResults[$id] = $r
     Write-Host ('  ' + $r.State + ': ' + $d.Name + '. ' + $r.Detail + $(if ($r.Fix -and $r.State -ne 'PASSED') { ' ' + $r.Fix } else { '' }))
   }
+  Save-CheckCache $script:checkResults (Get-BasePath) $site0
   if ($checkGate -and (Get-CheckBlock $script:checkResults)) {
     # PFM 14 Nov 26: no deploy unless every check passes. Nothing has been written.
     Write-Host ''
     Write-Host 'You cannot deploy yet: a check is FAILED or NOT RUN (see above). Nothing was changed.'
-    Write-Host 'Fix each one, then paste the Deployer again.'
+    Write-Host 'Fix each one, then paste the round again.'
     return
   }
   foreach ($l in (Get-RoundPlan).Lines) { Write-Host $l }
@@ -1414,12 +1710,12 @@ def build(b):
         parts.append("$files += @{ Dir = %s; Name = %s; Kind = '%s'; Sha = '%s'; Data = %s }"
                      % (q(f['dir']), q(src.name), kind, sha, body))
     # kind "guide": a step the PFM does in another program (guide lines, an address to open, a marker file on Done).
-    steps = ['$steps += @{ Name = %s; Dir = %s; File = %s; Default = $%s; AskParam = %s; AskPrompt = %s; ScreenOnly = %s; Minutes = %d; Args = %s; Note = %s; Kind = %s; Guide = @(%s); Url = %s; UrlConfig = %s; Marker = %s; Estimate = %d }'
+    steps = ['$steps += @{ Name = %s; Dir = %s; File = %s; Default = $%s; AskParam = %s; AskPrompt = %s; ScreenOnly = %s; Minutes = %d; Args = %s; Note = %s; Kind = %s; Guide = @(%s); Url = %s; UrlConfig = %s; Marker = %s; Estimate = %d; DoneText = %s; DoneLog = %s }'
              % (q(s['name']), q(s['dir']), q(s['file']), 'true' if step_default(s) else 'false',
                 q(s.get('ask', {}).get('param', '')), q(s.get('ask', {}).get('prompt', '')), q(s.get('screenOnly', '')),
                 int(s.get('minutes', 30)), q(s.get('args', '')), q(s.get('note', '')), q(s.get('kind', 'script')),
                 ', '.join(q(g) for g in s.get('guide', [])), q(s.get('url', '')), q(s.get('urlConfig', '')), q(s.get('marker', '')),
-                int(s.get('estimate', 0)) * 60)
+                int(s.get('estimate', 0)) * 60, q(s.get('doneText', '')), q(s.get('doneLog', '')))
              for s in b['steps']]
     apps = app_lines(b)
     # Data files the round downloads (not code, PFM 3A): repo files from raw main, checked by SHA-256; public pages as they are.
@@ -1438,14 +1734,14 @@ def build(b):
     cleanup = ['$cleanup += @{ Path = %s; Kind = %s }' % (q(c['path']), q(c['kind'])) for c in b.get('cleanup', [])]
     # Support scripts that keep their names (they load each other) and samples: made by 90-161.Z, so cleanup may recycle them.
     known = sorted({f.name for f in (ROOT / 'scripts/gov').glob('*.ps1')} | {f.name for f in (ROOT / 'samples').glob('*')})
-    body = ('$goUrl = \'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md\'\n$round = %s\n$usersRoot = \'C:\\Users\'\n$files = @()\n%s\n$fetch = @()\n%s\n$steps = @()\n%s\n$collect = @()\n%s\n$cleanup = @()\n%s\n$known = @(%s)\n$apps = @()\n%s\n%s'
+    body = ('$goUrl = \'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md\'\n$round = %s\n$appFolder = \'90-161.Z\'\n$usersRoot = \'C:\\Users\'\n$files = @()\n%s\n$fetch = @()\n%s\n$steps = @()\n%s\n$collect = @()\n%s\n$cleanup = @()\n%s\n$known = @(%s)\n$apps = @()\n%s\n%s'
             % (q(b['round']), '\n'.join(parts), '\n'.join(fetchs), '\n'.join(steps), '\n'.join(collect), '\n'.join(cleanup), ', '.join(q(k) for k in known), '\n'.join(apps), ENGINE))
     build_id = hashlib.sha256(body.encode('ascii')).hexdigest()[:8]
-    head = ('<#\n  90-161.Z Deployer, round bundle: %s.\n'
+    head = ('<#\n  RADE (Redacted Application Deployment Engine), round bundle: %s.\n'
             '  GENERATED by scripts/build_paste_bundles.py from scripts/paste_bundles.json; do not edit.\n'
             '  How to run: open Windows PowerShell ISE, File > New, paste all of this text into the script pane, press F5.\n'
-            '  The 90-161.Z Deployer window opens: press Enter (or Run); it uses your Windows profile folder. It writes the files below into the task folders under\n'
-            '  C:\\Users\\<DODID>\\OneDrive - United States Air Force\\90-161.Z (replacing older copies), runs the steps,\n'
+            '  The RADE window opens: press Enter (or Run); it uses your Windows profile folder. It writes the files below into the task folders under\n'
+            '  C:\\Users\\<DODID>\\OneDrive - United States Air Force\\RADE\\90-161.Z (replacing older copies), runs the steps,\n'
             '  and saves its results in Rounds\\%s, then opens an Outlook draft with them (never sent). No download, no admin rights.\n'
             '#>\n$buildId = \'%s\'\n' % (b['title'], b['round'], build_id))
     return head + body

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 16 site setup, r5 (R16: header logo and thumbnail set apart and each checked; collects the probe r5 and solution test r2 results, masked). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 16 site setup, r6 (R17: no logo calls, the PFM sets the logo by hand and this script checks it; collects the solution test A and B r3 results, masked; RADE folder). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: sets up the new SharePoint site in one run, so the PFM does not click it by hand (DECISIONS 14 Nov 26:
   optional Deployer PnP write steps, allowed because the read-only PnP test passed). About 5 minutes (an estimate).
@@ -10,18 +10,17 @@
     a. Lists "PFM Publications" and "PFM Endorsements": item-level permissions. Sets read = all items (1) and edit =
        only the person's own items (2) when they are not already so.
     b. Site time zone: sets (UTC-06:00) Central Time (US and Canada), id 11, when it is another.
-    c. Site logo (only with -Logo, which the round passes): uploads T14\90161Z-T14-site-logo-r2.png (no fill, for the blue
-       header) and T14\90161Z-T14-site-logo-thumb-r2.png (navy, for white cards) to the Site Assets library. r5 (R15: the
-       header was not set and the thumbnail got the header file): the thumbnail is set first from the navy file, then the
-       header from the white file, each by its own call (SharePoint's site icon manager; older routes as fallbacks), and
-       the header is read back by its file name. The thumbnail cannot be read back by file: the PFM checks a site card.
-       Fallback if it reports FAIL: site Settings > Change the look > Header (Site logo and Site logo thumbnail).
+    c. Site logo check (only with -Logo, which the round passes; read-only). r6 (R17, PFM 14 Nov 26): the logo calls failed in
+       R15 and R16 (not supported on this group-connected site), so the PFM sets the header logo by hand (Change the look >
+       Header) in the round's guide step, and this item reads the header logo back: PASS when it shows a logo file that
+       Change the look saved (__sitelogo__) or the white file; else FAIL with the by-hand steps. The thumbnail cannot be
+       read back by file: the PFM checks a site card.
     d. Seals: creates the document library "90-161.Z" and its folders "Seals" and "Seals/Prepared" when missing (no unique
        permissions); uploads the images from T07\Seals and T07\Seals\Prepared. An image already there is replaced.
        r2 (R12 FAIL "File Not Found"): the folder paths come from the library's own root folder (its address can differ
        from its title), and Resolve-PnPFolder makes missing folders; a FAIL line names the stage that failed.
-    e. Flow results: copies "90161Z-T11-rights-result-r5.json" (probe, to T11) and "90161Z-T17-solution-result-r2.txt"
-       (solution import test, to T17) from the site's default Documents library, and masks the site address, host and
+    e. Flow results: copies "90161Z-T11-rights-result-r5.json" (probe, to T11) and "90161Z-T17-solution-result-a-r3.txt"
+       and "-b-r3.txt" (solution import tests A and B, to T17) from the site's default Documents library, and masks the site address, host and
        path in each copy (r4). When the round's guide step for that flow was confirmed in the last 2 hours (its marker
        file), it waits for the file, checking every 30 seconds for up to 15 minutes.
     f. Task 2 check: counts the PFM lists and their rows (read-only).
@@ -29,13 +28,12 @@
   FAIL; one item never stops the others. Counts only: no list, seal or file names are written (seal names are unit names).
   The site address is kept only on this computer in Config\90161Z-site.txt; every output line shows it as <SITE> and the DODID
   as <DODID>. Error text is cut to 160 characters.
-  Output: 90161Z-T16-setup-r5.txt in the T16 folder (send this).
-  Parameters (used by the 90-161.Z Deployer): -Id, -Logo, -ProbeWaitMinutes (default 15), -NoPause.
+  Output: 90161Z-T16-setup-r6.txt in the T16 folder (send this).
+  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Logo, -ProbeWaitMinutes (default 15), -NoPause.
 #>
 param([string]$Id, [switch]$Logo, [int]$ProbeWaitMinutes = 15, [switch]$NoPause)
 $task = 'T16'
 $LogoName = '90161Z-T14-site-logo-r2.png'
-$ThumbName = '90161Z-T14-site-logo-thumb-r2.png'
 $Images = @('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tif', '.tiff')
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -58,8 +56,12 @@ function Get-TaskId([string]$Id) {
 }
 
 function Get-TaskDir([string]$Id, [string]$Task, [string]$Label, [switch]$Create) {
-  # The task folder C:\Users\<DODID>\OneDrive - United States Air Force\90-161.Z\<Task>. -Create makes it when missing.
-  $tail = 'OneDrive - United States Air Force\90-161.Z\' + $Task
+  # The task folder C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z\<Task> (PFM 14 Nov 26: RADE holds
+  # the app folder). Until RADE has moved the old folder ...\90-161.Z, that one is used. -Create makes it when missing.
+  $od = Join-Path (Join-Path 'C:\Users' $Id) 'OneDrive - United States Air Force'
+  $app = 'RADE\90-161.Z'
+  if (-not (Test-Path -LiteralPath (Join-Path $od $app) -PathType Container) -and (Test-Path -LiteralPath (Join-Path $od '90-161.Z') -PathType Container)) { $app = '90-161.Z' }
+  $tail = 'OneDrive - United States Air Force\' + $app + '\' + $Task
   $dir = Join-Path (Join-Path 'C:\Users' $Id) $tail
   if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
     if ($Create) { New-Item -ItemType Directory -Path $dir | Out-Null }
@@ -220,7 +222,7 @@ try {
   $root = Split-Path -Parent $dir
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
-  $lines.Add('TASK T16 site setup r5, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', probe-wait-minutes=' + $ProbeWaitMinutes)
+  $lines.Add('TASK T16 site setup r6, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', probe-wait-minutes=' + $ProbeWaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
@@ -258,61 +260,16 @@ try {
       if ([int]$w2.RegionalSettings.TimeZone.Id -eq 11) { Add-Line 'b-time-zone' 'SET' ('was id=' + $id0 + ', now id=11 (read back)') }
       else { Add-Line 'b-time-zone' 'FAIL' ('now id=' + $w2.RegionalSettings.TimeZone.Id + '. Fallback: Site settings > Regional settings > Time zone') }
     }
-    # c. Site logo.
+    # c. Site logo check (read-only, r6).
     if (-not $Logo) { Add-Line 'c-logo' 'SKIP' 'switch -Logo not given' }
     else {
       Add-Item 'c-logo' {
-        $logoFile = Join-Path $root ('T14\' + $LogoName)
-        $thumbFile = Join-Path $root ('T14\' + $ThumbName)
-        $missing = @(@($logoFile, $thumbFile) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
-        if ($missing.Count -gt 0) { Add-Line 'c-logo' 'FAIL' ('logo files missing in the T14 folder: ' + (($missing | ForEach-Object { Split-Path -Leaf $_ }) -join ', ')); return }
-        $assets = @(Get-PnPList -Includes RootFolder -ErrorAction Stop | Where-Object { $_.Title -eq 'Site Assets' })[0]
-        if (-not $assets) { Add-Line 'c-logo' 'FAIL' 'Site Assets library not found. Fallback: Change the look > Header'; return }
-        $url = (Add-PnPFile -Path $logoFile -Folder $assets.RootFolder.ServerRelativeUrl -ErrorAction Stop).ServerRelativeUrl
-        $thumbUrl = (Add-PnPFile -Path $thumbFile -Folder $assets.RootFolder.ServerRelativeUrl -ErrorAction Stop).ServerRelativeUrl
-        $webAbs = (Get-PnPWeb -Includes Url -ErrorAction Stop).Url.TrimEnd('/')
-        $tried = New-Object System.Collections.Generic.List[string]
-        $short = { param($e) $m = ConvertTo-Masked (Hide-Site (([string]$e) -replace '\s+', ' ') $script:site) $script:secret; $m.Substring(0, [Math]::Min(120, $m.Length)) }
-        # One call of SharePoint's site icon manager: type 1 = thumbnail (aspect 0, square), type 0 = header logo (aspect 1).
-        $setIcon = {
-          param([string]$Rel, [int]$Type, [int]$Aspect)
-          $body = @{ relativeLogoUrl = $Rel; type = $Type; aspect = $Aspect }   # a hashtable: PnP serializes it (review R16)
-          $rest = Get-Command Invoke-PnPSPRestMethod -ErrorAction SilentlyContinue
-          if (-not $rest) { throw 'Invoke-PnPSPRestMethod not in this PnP version' }
-          $u = $webAbs + '/_api/siteiconmanager/setsitelogo'
-          # Unverified on PnP 1.12.0 whether it serializes a hashtable (review R16): try it, then the same body as a JSON string.
-          try { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content $body -ContentType 'application/json' -ErrorAction Stop; return 'hashtable' }
-          catch { $tried.Add('icon manager as hashtable: ' + (& $short $_)) }
-          $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content ($body | ConvertTo-Json -Compress) -ContentType 'application/json' -ErrorAction Stop
-          return 'JSON string'
-        }
-        # Thumbnail first (navy file), so a later header call cannot be undone by it.
-        $thumbHow = ''
-        try { $f = & $setIcon $thumbUrl 1 0; $thumbHow = 'site icon manager type 1 (' + $f + ')' } catch { $tried.Add('thumbnail icon manager: ' + (& $short $_)) }
-        if (-not $thumbHow) {
-          try { Set-PnPSite -LogoFilePath $thumbFile -ErrorAction Stop; $thumbHow = 'Set-PnPSite -LogoFilePath (navy file)' } catch { $tried.Add('thumbnail Set-PnPSite: ' + (& $short $_)) }
-        }
-        # Header logo (white file).
-        $headHow = ''
-        try { $f = & $setIcon $url 0 1; $headHow = 'site icon manager type 0 (' + $f + ')' } catch { $tried.Add('header icon manager: ' + (& $short $_)) }
-        if (-not $headHow) {
-          $cmd = Get-Command Set-PnPWebHeader -ErrorAction SilentlyContinue
-          if ($cmd -and $cmd.Parameters.ContainsKey('SiteLogoUrl')) {
-            try { Set-PnPWebHeader -SiteLogoUrl $url -ErrorAction Stop; $headHow = 'Set-PnPWebHeader -SiteLogoUrl' } catch { $tried.Add('header Set-PnPWebHeader: ' + (& $short $_)) }
-          } else { $tried.Add('header Set-PnPWebHeader: no -SiteLogoUrl in this PnP version') }
-        }
-        if (-not $headHow) {
-          try { $ctx = Get-PnPContext; $w = $ctx.Web; $w.SiteLogoUrl = $url; $w.Update(); $ctx.ExecuteQuery(); $headHow = 'CSOM Web.SiteLogoUrl' } catch { $tried.Add('header CSOM: ' + (& $short $_)) }
-        }
-        # Read back the header by its own file name (R15: a group image URL is not proof).
-        $w3 = Get-PnPWeb -Includes SiteLogoUrl -ErrorAction Stop
-        $logoNow = [string]$w3.SiteLogoUrl
-        $headOk = $logoNow -like ('*' + [IO.Path]::GetFileNameWithoutExtension($LogoName) + '*')
-        $seen = if (-not $logoNow) { 'empty' } elseif ($headOk) { 'the white logo file' } elseif ($logoNow -match 'GroupService|GetGroupImage') { 'the group image' } else { 'another file' }
-        $detail = 'header=' + $(if ($headHow) { $headHow } else { 'not set' }) + ', reads back ' + $seen + '; thumbnail=' + $(if ($thumbHow) { $thumbHow + ' (not read back: look at a site card)' } else { 'not set' })
-        if ($tried.Count -gt 0) { $detail += '; tried: ' + ($tried -join ' | ') }
-        if ($headOk -and $thumbHow) { Add-Line 'c-logo' 'SET' ('uploaded to Site Assets; ' + $detail) }
-        else { Add-Line 'c-logo' 'FAIL' ($detail + '. Fallback: site Settings > Change the look > Header: Site logo = the white file, Site logo thumbnail = the navy file (both in Site Assets)') }
+        $logoNow = [string](Get-PnPWeb -Includes SiteLogoUrl -ErrorAction Stop).SiteLogoUrl
+        $leaf = ''; if ($logoNow) { $leaf = [IO.Path]::GetFileName(($logoNow -split '\?')[0]) }
+        $stem = [IO.Path]::GetFileNameWithoutExtension($LogoName)
+        $seen = if (-not $logoNow) { 'empty' } elseif ($leaf -like '__sitelogo__*') { 'a logo saved by Change the look' } elseif ($leaf -like ('*' + $stem + '*')) { 'the white logo file' } elseif ($logoNow -match 'GroupService|GetGroupImage') { 'the group image' } else { 'another file' }
+        if ($seen -in 'a logo saved by Change the look', 'the white logo file') { Add-Line 'c-logo' 'PASS' ('header logo reads back ' + $seen + '; thumbnail not read back: look at a site card') }
+        else { Add-Line 'c-logo' 'FAIL' ('header logo reads back ' + $seen + '. By hand: site Settings > Change the look > Header > Site logo > Change, pick T14\' + $LogoName + ', Save') }
       }
     }
     # d. Seals library, folders and uploads.
@@ -344,7 +301,8 @@ try {
     }
     # e. Probe result file.
     Add-Item 'e-probe-result' $FetchResult @('e-probe-result', 'T11', '90161Z-T11-rights-result-r5.json', '90161Z-T11-probe-started.txt', '90161Z T11 Rights Probe r5')
-    Add-Item 'e2-solution-result' $FetchResult @('e2-solution-result', 'T17', '90161Z-T17-solution-result-r2.txt', '90161Z-T17-solution-started.txt', '90161Z T17 Solution Import Test r2')
+    Add-Item 'e2-solution-result-a' $FetchResult @('e2-solution-result-a', 'T17', '90161Z-T17-solution-result-a-r3.txt', '90161Z-T17-solution-a-started.txt', '90161Z T17 Solution Import Test A r3')
+    Add-Item 'e3-solution-result-b' $FetchResult @('e3-solution-result-b', 'T17', '90161Z-T17-solution-result-b-r3.txt', '90161Z-T17-solution-b-started.txt', '90161Z T17 Solution Import Test B r3')
     # f. Task 2 check.
     Add-Item 'f-task2-lists' {
       $pl = @(Get-PnPList -ErrorAction Stop | Where-Object { $_.Title -like 'PFM *' })
@@ -361,7 +319,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-setup-r5.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
+  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-setup-r6.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }

@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (Round R16: solution import test r2, rights for app users, logo and thumbnail).
+Updated: 14 Nov 26 (Round R17: RADE, solution import tests A and B, logo and thumbnail by hand).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -11,37 +11,39 @@ Never send real publication content, names, site addresses or group names. Reply
 
 ## How a paste task (round) works
 
-**For:** a round is one block of text I paste into PowerShell ISE. It opens the 90-161.Z Deployer window, saves its own files, runs the tests and makes the results e-mail. The ISSM allows this for scripts that use no elevated credentials (13 Nov 26).
-**Changes:** it writes only into my own OneDrive folder 90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\<round>. It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.
+**For:** a round is one block of text I paste into PowerShell ISE. It opens the RADE window (Redacted Application Deployment Engine, formerly the 90-161.Z Deployer), saves its own files, runs the tests and makes the results e-mail. The ISSM allows this for scripts that use no elevated credentials (13 Nov 26).
+**Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.
 Steps:
 1. Press Copy script next to the round's link in its task below. If it says blocked: open the link, press Ctrl+A, then Ctrl+C.
 2. Start menu: type ISE and open Windows PowerShell ISE as myself (not "Run as administrator").
 3. File > New. Click in the white script pane. Press Ctrl+V, then F5.
-4. The 90-161.Z Deployer window opens. Check the bold "Writes to" line: it shows my OneDrive 90-161.Z folder, or says NOT found. The first time, type the e-mail address the results go to in "Send results to" (it is remembered).
-5. Press Enter (or Run). Word steps take a few minutes each. Keep the window open until the log says DONE.
+4. The RADE window opens. Check the bold "Writes to" line: it shows my OneDrive RADE\90-161.Z folder, or says NOT found. The first time, type the e-mail address the results go to in "Send results to" (it is remembered).
+5. Press Enter (or Run). Word steps take a few minutes each. Keep the window open until the log says DONE. Exit closes the window (it asks first while a step runs).
 6. At DONE an Outlook draft opens with the address, the subject (PASSED or NEEDS REVIEW), the summary and all result files. Send it. If no draft opens, the results folder opens and the e-mail text is on the clipboard: new e-mail, Ctrl+V in the body, cut the first line into the subject, drag in all files from the folder. No zip: zips do not cross the boundary.
 **If it fails:** the window shows a line that starts with "What to do" under the problem: do that. Otherwise send the line that starts with STOPPED. The report file in Rounds\<round> also holds it. Do not work around it. If no window opens, the same steps run as text in ISE and the results folder opens by itself.
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R16 r1: solution import test r2, rights for app users, logo and thumbnail (open, 14 Nov 26)
+## Round R17 r1: RADE, solution import tests A and B, logo and thumbnail by hand (open, 14 Nov 26)
 
-**For:** fixes R15's three open points. (1) The solution import failed in R15: the test solution r2 now uses the values from my T05 export. (2) The probe gives the coworker's own user Contribute on a test list (R15 found no group to test). (3) Site setup sets the header logo (white) and the thumbnail (navy) separately and checks each one.
-**Time:** about 25 minutes (estimate): two imports and runs in Power Automate 10, site setup 10 plus waiting for the two flows.
-**Changes:** on my computer: writes into T11, T14, T16, T17 and Rounds\R16; moves the R15 probe, setup and test files to the Recycle Bin. In Power Automate: imports the test solution "90-161.Z solution import test" r2 (one flow, one SharePoint connection reference, one "Site URL" variable; it replaces r1 if r1 is there) and the flow "90161Z T11 Rights Probe r5"; I run each once. On the new site: the test flow reads the PFM Settings row count and writes one result file; the probe creates a TEST list, library and group, gives the coworker's own user Contribute on the TEST list, reads the rights, then deletes all three; site setup uploads both logo files to Site Assets, sets the thumbnail and the header logo, and copies both result files (site address masked). No e-mail is sent by either flow. Saves one Outlook draft (never sent).
+**For:** (1) finds the cause of the solution import error (R15 and R16): test A has no environment variable, test B has it without the XML first line that is the likely cause. (2) The site logo and thumbnail are set by hand (the script calls do not work on this site); site setup checks the header logo. (3) First round of RADE, the renamed Deployer: saved checks, steady two-line rows, smooth bars, an Exit button.
+**Time:** about 25 minutes (estimate): two imports and runs in Power Automate 10, logo 2, site setup 8 plus waiting for the two flows.
+**Changes:** on my computer: moves my OneDrive folder 90-161.Z into OneDrive\RADE (once; every file keeps its place); writes into T14, T16, T17, Rounds\R17 and RADE\Config; moves the R15 results and the R16 test, probe and setup files to the Recycle Bin. In Power Automate: imports two test solutions, "90-161.Z solution import test A" and "... test B" (one flow and one SharePoint connection reference each; B also has one "Site URL" variable); I run each flow once. On the new site: each test flow reads the PFM Settings row count and writes one result file; I set the header logo and the thumbnail in Change the look; site setup only reads (no logo changes) and copies both result files (site address masked). No e-mail is sent by either flow. Saves one Outlook draft (never sent).
 Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R16-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R17-round-r1.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. File > New, click in the white pane, press Ctrl+V, then F5.
-3. In the Deployer window: choose the application, run the checks, then Deploy.
-4. Two step windows open at the right edge of the screen, one after the other: the solution import, then the probe import. Follow each, then select "Done: the run has started".
-5. Site setup asks for the site address (filled in from last time) and opens a CAC sign-in. It waits for both flows; keep the Deployer open.
-6. Open the site (Ctrl+F5) and look at the header logo; then open the SharePoint start page and look at the site's card (the thumbnail). The Outlook draft opens: add "header OK, thumbnail OK" or what looks wrong, then Send.
-**Report:** the draft itself. Claude watches the inbox for the subject "90161Z R16".
-**If it fails:** read the "What to do" line in the window. If the solution import shows an error, copy the error text (no names or site address) into the e-mail and select Skip in that step window. A FAIL line in site setup names the stage and the by-hand fallback (Change the look > Header).
+3. In the RADE window: choose the application, run the checks (checks that passed in the last 7 days show "Saved result"), then Deploy. Before Run, the list shows the folder move.
+4. Three step windows open at the right edge of the screen, one after the other: test A, test B, then the logo. Follow each, then select its Done button.
+5. Site setup asks for the site address (filled in from last time) and opens a CAC sign-in. It waits for both flows; keep RADE open.
+6. Open the SharePoint start page and look at the site's card (the thumbnail). The Outlook draft opens: add "thumbnail OK" or what looks wrong, then Send.
+**Report:** the draft itself. If an import fails, its error text (no names or site address) in the e-mail. Claude watches the inbox for the subject "90161Z R17".
+**If it fails:** read the "What to do" line in the window. If an import shows an error, copy the error text into the e-mail and select Skip in that step window; do the other test anyway. If the folder move fails, the log says why and the round uses the old folder. A FAIL line in site setup names the item and the by-hand fallback.
 
 ## Done
 
+- Round R16 (14 Nov 26): needs review. The solution import failed again with the same XML error (skipped); the probe gave the coworker's own user Contribute on a test list and it worked (list-level rights for app users are possible); the logo calls failed again, so the logo is set by hand from R17. Details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r16-results.md
 - Round R15 (14 Nov 26): needs review. Probe r4 and site setup r4 ran; the solution import stopped with an XML error (skipped); the header logo was not set and the thumbnail got the header file; the Contribute test found no group to test. All three go into R16. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r15-results.md
 - Round R13 (14 Nov 26): passed. Probe flow r3 imported and run from the Deployer window (no separate download); 17 of 17 seals prepared and uploaded with the prepared copies (34 files); site setup 0 problems. Task 11 is complete (Part A in R13, Part B in R12). The logo still needs work (only a thin white border shows). Details:

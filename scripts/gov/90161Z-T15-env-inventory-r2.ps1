@@ -40,8 +40,12 @@ function Get-TaskId([string]$Id) {
 }
 
 function Get-TaskDir([string]$Id, [string]$Task, [string]$Label, [switch]$Create) {
-  # The task folder C:\Users\<DODID>\OneDrive - United States Air Force\90-161.Z\<Task>. -Create makes it when missing.
-  $tail = 'OneDrive - United States Air Force\90-161.Z\' + $Task
+  # The task folder C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z\<Task> (PFM 14 Nov 26: RADE holds
+  # the app folder). Until RADE has moved the old folder ...\90-161.Z, that one is used. -Create makes it when missing.
+  $od = Join-Path (Join-Path 'C:\Users' $Id) 'OneDrive - United States Air Force'
+  $app = 'RADE\90-161.Z'
+  if (-not (Test-Path -LiteralPath (Join-Path $od $app) -PathType Container) -and (Test-Path -LiteralPath (Join-Path $od '90-161.Z') -PathType Container)) { $app = '90-161.Z' }
+  $tail = 'OneDrive - United States Air Force\' + $app + '\' + $Task
   $dir = Join-Path (Join-Path 'C:\Users' $Id) $tail
   if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
     if ($Create) { New-Item -ItemType Directory -Path $dir | Out-Null }

@@ -1,0 +1,79 @@
+{
+  "displayName": "90161Z T17 Solution Import Test A r3",
+  "description": "R17 test A r3 (PFM 14 Nov 26; r2 failed in R16 with the same XML node error as r1): a solution with one flow and one SharePoint connection reference and NO environment variable. The site address is a run input. Reads the row count of PFM Settings and writes one result file 90161Z-T17-solution-result-a-r3.txt to the site's default document library. Changes nothing else.",
+  "connections": [
+    "shared_sharepointonline"
+  ],
+  "triggers": {
+    "manual": {
+      "type": "Request",
+      "kind": "Button",
+      "inputs": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "title": "Site address",
+              "type": "string",
+              "x-ms-dynamically-added": true,
+              "description": "The new site address",
+              "x-ms-content-hint": "TEXT"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    }
+  },
+  "actions": {
+    "Read_settings_count": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "dataset": "@triggerBody()?['text']",
+          "parameters/method": "GET",
+          "parameters/uri": "_api/web/lists/getbytitle('PFM Settings')?$select=ItemCount",
+          "parameters/headers": {
+            "Accept": "application/json;odata=nometadata"
+          }
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "Write_result_file": {
+      "runAfter": {
+        "Read_settings_count": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "dataset": "@triggerBody()?['text']",
+          "parameters/method": "POST",
+          "parameters/uri": "_api/web/DefaultDocumentLibrary/RootFolder/Files/add(url='90161Z-T17-solution-result-a-r3.txt',overwrite=true)",
+          "parameters/headers": {
+            "Accept": "application/json;odata=nometadata"
+          },
+          "parameters/body": "@{concat('SOLUTION A import=OK connection-reference=OK environment-variable=none settings-read-status=', string(outputs('Read_settings_count')?['statusCode']), ' settings-rows=', string(coalesce(body('Read_settings_count')?['ItemCount'], 'none')), ' run-utc=', utcNow())}"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "variant": "A"
+}
