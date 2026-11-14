@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Logo K is the official logo for every app (blue woven mark and rho on white, blue ring, thin yellow edge); master copy and build in rhope-ops/RADE assets/logo. Swapped into R17 now (R17 r2): one file (90161Z-T14-site-logo-r3.png) for the site logo and the thumbnail; site setup r7. 90-161.Z build_logo.py and render_logo.js removed. | PFM | Site logo = variant A, bold white (row 2026-11-14) |
 | 2026-11-14 | RADE engine: fast checks run fresh, only slow checks keep the 7-day reuse; modes, check stages, fallback result. Replaces the 7-day-for-all row. Built with the engine move. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Solution import: if R17 tests A and B both fail, run one more A/B round (zip compression, connection reference) before any fallback. | PFM | docs/reviews/2026-11-14-r16-results.md |
 | 2026-11-14 | Slice 1 first: hold new scope until PFM Publications + Endorsements + F05 routing + F03 reminders, list views only, take one fake publication from Coordination to Legal on the test site. | PFM | docs/phases.md |
