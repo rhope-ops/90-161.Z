@@ -90,6 +90,7 @@ function Hide-Export([string]$Text, [string[]]$Secret) {
   $t = ConvertTo-Masked $Text $Secret
   $t = $t -replace 'https?://[^\s"''<>]+', '<SITE>'
   $t = $t -replace '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '<EMAIL>'
+  $t = $t -replace '\b[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.(sharepoint|dynamics|crm|powerapps|appsplatform)[A-Za-z0-9.-]*', '<HOST>'   # bare host names
   return $t
 }
 
@@ -129,17 +130,18 @@ try {
     $doc.Load($log.FullName)
     $out = New-Object System.Collections.Generic.List[string]
     $out.Add('IMPORT LOG ' + (Hide-Export $log.Name $who.Secret) + ', saved ' + $log.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))
-    $kept = 0; $rows = 0
+    $kept = 0; $rows = 0; $full = $false
     foreach ($ws in @($doc.SelectNodes("//*[local-name()='Worksheet']"))) {
       $wsName = ''; foreach ($a in $ws.Attributes) { if ($a.LocalName -eq 'Name') { $wsName = $a.Value } }
       $out.Add('SHEET ' + (Hide-Export $wsName $who.Secret))
+      if ($full) { break }   # at most 80 rows in all
       $first = $true
       foreach ($row in @($ws.SelectNodes(".//*[local-name()='Row']"))) {
         $rows++
         $cells = @($row.SelectNodes("./*[local-name()='Cell']") | ForEach-Object { ([string]$_.InnerText).Trim() -replace '\s+', ' ' })
         $text = ($cells -join ' | ')
         if ($first -or $text -match '(?i)fail|error|0x8') {
-          if ($kept -ge 80) { break }
+          if ($kept -ge 80) { $full = $true; break }
           if ($text.Length -gt 600) { $text = $text.Substring(0, 600) + ' ...' }
           $out.Add((Hide-Export $text $who.Secret)); $kept++
         }
@@ -152,7 +154,8 @@ try {
   }
 } catch {
   $msg = [string]$_.Exception.Message; if ($msg.Length -gt 160) { $msg = $msg.Substring(0, 160) }
-  Write-Output ('ITEM import-log FAIL ' + (ConvertTo-Masked $msg @()))
+  $sec = @(); if ($who -and $who.Secret) { $sec = $who.Secret }
+  Write-Output ('ITEM import-log FAIL ' + (Hide-Export $msg $sec))
   $code = 1
 }
 if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }

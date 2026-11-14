@@ -130,8 +130,9 @@ def layout(xml_bytes):
     out = []
     def walk(e, path):
         tag = e.tag.split("}")[-1]; p = path + "/" + tag
-        attrs = tuple((k, "*" if k in FREE_ATTR else v) for k, v in e.attrib.items())
-        out.append((p, attrs, "*" if tag in FREE_TEXT else (e.text or "").strip()))
+        pub = "/Publisher/" in p + "/"   # the publisher must match the export exactly, apart from its masked display name
+        attrs = tuple((k, "*" if k in FREE_ATTR and not (pub and k != "description") else v) for k, v in e.attrib.items())
+        out.append((p, attrs, "*" if tag in FREE_TEXT and not pub else (e.text or "").strip()))
         for c in e: walk(c, p)
     walk(ET.fromstring(xml_bytes), ""); return out
 
