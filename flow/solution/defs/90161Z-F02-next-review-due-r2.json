@@ -1,5 +1,5 @@
 {
-  "displayName": "90161Z F02 Next Review Due r1",
+  "displayName": "90161Z F02 Next Review Due r2",
   "description": "Weekdays 07:00 Central. Sets PFM Product Index Next Review Due = 4 years after the later of Effective Date and Certified Current Date (DAFMAN 90-161 7.4.2); opens a periodic PFM Reviews row 6 months before it (7.4.4) if none is open.",
   "connections": [
     "shared_sharepointonline"
@@ -159,6 +159,7 @@
                   "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                   "table": "@parameters('List PFM Product Index (pfm_ListProductIndex)')",
                   "id": "@items('For_each_active_product')?['ID']",
+                  "item/Title": "@items('For_each_active_product')?['Title']",
                   "item/NextReviewDue": "@outputs('Next_review_due')"
                 },
                 "authentication": "@parameters('$authentication')"

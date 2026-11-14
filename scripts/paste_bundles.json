@@ -23,9 +23,9 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R20-round-r2.ps1",
-      "round": "R20",
-      "title": "Round R20 r2: slice 1 on the test site. Import the 90-161.Z flows (F05 routing r2 and F03 reminders r3) in test mode, then three fake publications prove routing, hold, a failed run and its Resubmit, a missing row, the 20-working-day suspense and the move to Legal; all are removed at the end",
+      "out": "scripts/gov/paste/90161Z-R21-round-r1.ps1",
+      "round": "R21",
+      "title": "Round R21: slice 1 on the test site. Import the 90-161.Z flows (F05 routing r2 and F03 reminders r3) in test mode, then three fake publications prove routing, hold, a failed run and its Resubmit, a missing row, the 20-working-day suspense and the move to Legal; all are removed at the end",
       "files": [
         {
           "dir": "T18",
@@ -58,7 +58,7 @@
             "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
             "5. Environment variables: in Site URL, paste the test site address. In Alert e-mail, enter your own work e-mail address (failure notices and test e-mails go there). In Test mode, enter Yes. In Shared mailbox, enter the shared mailbox you have Send As rights to, or leave it empty. Keep the other values as shown (list names, 5, 3, 20 and Flows paused No).",
             "6. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "7. Open the solution \"90-161.Z flows\". Turn on \"90161Z F05 Endorsement Routing r2\". Leave F03 off: you run it once by hand later in this round.",
+            "7. Open the solution \"90-161.Z flows\". Turn on \"90161Z F05 Endorsement Routing r2\" and check that its status reads On (in R20, F05 made no rows; it was likely off after the failed import). Leave F03 off: you run it once by hand later in this round.",
             "8. Return to RADE and select \"Done: imported, F05 is on\".",
             "If the import fails: select \"Download log file\" (any folder; the next step finds it), type the first line of the red error message (no names or site address) in the box below, then select \"It failed\"."
           ],
@@ -508,13 +508,45 @@
         {
           "path": "Rounds\\R18",
           "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R19",
+          "kind": "dir"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publication.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-imported.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-f03-ran.txt",
+          "kind": "glob"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R20 r2. Imports the slice 1 flows (F05 routing r2, F03 reminders r3) in test mode, then proves routing, hold, a failed run with Resubmit, a missing row, the suspense and the move to Legal with three fake publications, and removes them.",
+          "summary": "Test round R21. Imports the slice 1 flows (F05 routing r2, F03 reminders r3) in test mode, then proves routing, hold, a failed run with Resubmit, a missing row, the suspense and the move to Legal with three fake publications, and removes them.",
           "steps": [
             "T18 Import the slice 1 flows r2",
             "T17 Import log reader r2",

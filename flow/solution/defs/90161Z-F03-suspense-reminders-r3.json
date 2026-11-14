@@ -148,6 +148,7 @@
                   "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                   "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
                   "id": "@items('For_each_endorsement_without_suspense')?['ID']",
+                  "item/Title": "@items('For_each_endorsement_without_suspense')?['Title']",
                   "item/DueDate": "@if(and(or(equals(items('For_each_endorsement_without_suspense')?['CoordinationRole']?['Value'], 'Guard Applicability'), equals(items('For_each_endorsement_without_suspense')?['CoordinationRole']?['Value'], 'Reserve Applicability')), greater(ticks(outputs('Calendar_30_suspense')), ticks(outputs('Working_day_suspense')))), outputs('Calendar_30_suspense'), outputs('Working_day_suspense'))"
                 },
                 "authentication": "@parameters('$authentication')"

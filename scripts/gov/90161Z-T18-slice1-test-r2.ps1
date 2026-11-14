@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 18 slice 1 end-to-end test, r2 (R20 r2, PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
+  90-161.Z Task 18 slice 1 end-to-end test, r2 (R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
   troubleshooting). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: proves on the test site that the slice-1 flows (F05 r2 routing, F03 r3 reminders) work end to end, and
@@ -8,10 +8,10 @@
   flow e-mail goes to the alert address only.
   Part 1 (about 10 minutes, an estimate):
     1. Signs in to the site (CAC), reads process steps 6 and 7 and the offices (rows F05 should make).
-    2. Creates three fake publications at step 6: A "90161Z TEST R20 A (delete me)" (On Track), H "90161Z TEST R20 H
-       (delete me)" (On Hold) and F "90161Z TEST FAIL R20 (delete me)" (test mode makes F05 fail on this title).
+    2. Creates three fake publications at step 6: A "90161Z TEST R21 A (delete me)" (On Track), H "90161Z TEST R21 H
+       (delete me)" (On Hold) and F "90161Z TEST FAIL R21 (delete me)" (test mode makes F05 fail on this title).
     3. Waits for F05 to make A's Formal Coordination rows; checks that H and F have none (hold skipped, F failed).
-    4. Renames F to "90161Z TEST R20 F (delete me)" and waits for its rows (a new run after the cause is fixed).
+    4. Renames F to "90161Z TEST R21 F (delete me)" and waits for its rows (a new run after the cause is fixed).
     5. Moves one of A's rows to the Recycle Bin, edits A, and waits until F05 adds back only that row.
     6. Prepares the F03 check: sets one of A's rows to a suspense 10 weekdays ago (escalation tier) and adds one row to H
        with a past suspense (H is On Hold, so F03 must skip it).
@@ -32,10 +32,10 @@
 #>
 param([string]$Id, [ValidateSet(1, 2)][int]$Part = 1, [int]$WaitMinutes = 10, [switch]$NoPause)
 $task = 'T18'
-$TitleA = '90161Z TEST R20 A (delete me)'
-$TitleH = '90161Z TEST R20 H (delete me)'
-$TitleFail = '90161Z TEST FAIL R20 (delete me)'
-$TitleF = '90161Z TEST R20 F (delete me)'
+$TitleA = '90161Z TEST R21 A (delete me)'
+$TitleH = '90161Z TEST R21 H (delete me)'
+$TitleFail = '90161Z TEST FAIL R21 (delete me)'
+$TitleF = '90161Z TEST R21 F (delete me)'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -155,10 +155,19 @@ function Get-RowsFor([string]$List, [int]$PubId) {
 }
 function Get-Formal([int]$PubId) { return @(Get-RowsFor 'PFM Endorsements' $PubId | Where-Object { [string]$_['CoordinationStage'] -eq 'Formal Coordination' }) }
 function Wait-Until([scriptblock]$Done, [string]$What) {
-  # Checks every 30 seconds for up to $WaitMinutes. Returns $true when $Done returns $true.
+  # Checks every 30 seconds for up to $WaitMinutes. Returns $true when $Done returns $true. A failed check (for example a
+  # network drop: R20 part 1 lost the site name) is retried; 3 failures in a row stop the test (R20 finding 3).
   $end = (Get-Date).AddMinutes($WaitMinutes)
+  $misses = 0
   while ($true) {
-    if (& $Done) { return $true }
+    $isDone = $false
+    try { $isDone = [bool](& $Done); $misses = 0 }
+    catch {
+      $misses++
+      if ($misses -ge 3) { throw }
+      Write-Host ('  A check failed (' + $misses + ' of 3 allowed in a row); trying again in 30 seconds ...')
+    }
+    if ($isDone) { return $true }
     if ((Get-Date) -ge $end) { return $false }
     Write-Host ('  Waiting for ' + $What + ' (checks every 30 seconds, up to ' + $WaitMinutes + ' minutes) ...')
     Start-Sleep -Seconds 30
@@ -226,7 +235,7 @@ try {
 
     # 3. F05 makes A's rows; H (On Hold) and F (forced failure) get none.
     $ok = Wait-Until { $script:got = (Get-Formal $a.Id).Count; $script:got -ge $wantFormal } 'the F05 rows for A'
-    Add-Line 'd-f05-formal' $(if ($ok -and $script:got -eq $wantFormal) { 'PASS' } else { 'FAIL' }) ('A formal rows=' + $script:got + ' expected=' + $wantFormal + $(if ($ok) { '' } else { '. If 0: check that F05 is on and that Test mode and Flows paused are set as the import step says' }))
+    Add-Line 'd-f05-formal' $(if ($ok -and $script:got -eq $wantFormal) { 'PASS' } else { 'FAIL' }) ('A formal rows=' + $script:got + ' expected=' + $wantFormal + $(if ($ok) { '' } else { '. If 0: open F05 in Power Automate, check that it is On and read its run history (R20: F05 made no rows), and check Flows paused = No' }))
     Write-Host '  Waiting 2 minutes so F05 has handled H and F too ...'
     Start-Sleep -Seconds 120
     $hRows = (Get-Formal $h.Id).Count; $fRows = (Get-Formal $f.Id).Count

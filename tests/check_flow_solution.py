@@ -93,6 +93,9 @@ for src in sorted(B.DEFS.glob("*.json")):
         for m in re.findall(r"\?\['(\w+)'\]", json.dumps(a)):
             if m not in all_cols and not (name in RUNTIME_ACTIONS and m in RUNTIME): bad(f"{src.name} {name}: unknown column or property '{m}'")
         p = a.get("inputs", {}).get("parameters", {}) if isinstance(a.get("inputs"), dict) else {}
+        # R20 finding 1: "Update item" (PatchItem) fails flow activation without item/Title (a required column).
+        if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in p:
+            bad(f"{src.name} {name}: PatchItem without item/Title (activation fails: R20 finding 1)")
         if "table" in p:
             m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
             title = env_list.get(m.group(1)) if m else None
