@@ -14,6 +14,8 @@ def bad(m): errs.append(m)
 # Hosts allowed in any string: Logic Apps schema (as in build_flow_package.py) and the XML/OPC namespaces the solution format needs.
 ALLOWED_HOSTS = {"schema.management.azure.com", "www.w3.org", "schemas.openxmlformats.org"}
 BUILTIN = {"ID", "Id", "Value", "value", "Email", "Claims", "Title", "Editor", "Author", "Created", "Modified", "text"}
+# R21: properties of result('Try') items and workflow() that the failure e-mail reads (not list columns).
+BUILTIN |= {"status", "name", "error", "message", "outputs", "run"}
 
 schemas = {}
 for f in (ROOT / "schemas" / "lists").glob("*.json"):
@@ -76,7 +78,10 @@ for src in sorted(B.DEFS.glob("*.json")):
     hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
     hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
     if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
-    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.guid("workflow", src.stem))[1:]]
+    key = d.get("workflowKey", src.stem)   # R21: the revision whose workflow ID this def keeps (same flow, earlier revision)
+    if key != src.stem and not (re.sub(r"-r\d+$", "", key) == re.sub(r"-r\d+$", "", src.stem) and int(key.rsplit("-r", 1)[1]) < int(src.stem.rsplit("-r", 1)[1])):
+        bad(f"{src.name}: workflowKey {key} is not an earlier revision of the same flow")
+    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.guid("workflow", key))[1:]]
     if len(wfs) != 1: bad(f"{src.name}: expected one workflow file in the zip, found {len(wfs)}"); continue
     wf = json.loads(zf.read(wfs[0]))["properties"]
     for c, ref in wf["connectionReferences"].items():
@@ -176,7 +181,17 @@ for z in SLICES:
             bad(f"{z.name}: F03 defaults are not 5 and 3 (PFM, 2026-11-14)")
         if b"<isrequired>0</isrequired>" not in zz.read("environmentvariabledefinitions/pfm_SharedMailbox/environmentvariabledefinition.xml"):
             bad(f"{z.name}: the shared mailbox variable must be optional")
-        if len(re.findall(r'<RootComponent type="29"', sol)) != 2: bad(f"{z.name}: slice 1 must hold exactly F03 and F05")
+        if len(re.findall(r'<RootComponent type="29"', sol)) != 3: bad(f"{z.name}: slice 1 must hold exactly F03, F05 and F06 (r2, R21)")
+        for e, want in (("pfm_TestMode", "Yes"), ("pfm_FlowsOff", "No")):   # safe defaults: no live e-mail, flows run
+            if (defaults.get(e) or [None, None])[1] != want: bad(f"{z.name}: {e} default must be {want}")
+
+# R20: F03 r2 failed to turn on: "The API operation 'PatchItem' is missing required property 'item/Title'". Every PatchItem
+# sends item/Title (Title is required on every list).
+for src in sorted(B.DEFS.glob("*.json")):
+    for name, a in walk_actions(json.loads(src.read_text(encoding="utf-8"))["actions"]):
+        inp = a.get("inputs") if isinstance(a.get("inputs"), dict) else {}
+        if inp.get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in inp.get("parameters", {}):
+            bad(f"{src.name} {name}: PatchItem without item/Title (R20 import error)")
 
 if errs:
     print("\n".join(errs)); sys.exit(1)

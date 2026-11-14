@@ -23,13 +23,17 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R20-round-r1.ps1",
-      "round": "R20",
-      "title": "Round R20: slice 1 on the test site. Import the 90-161.Z flows (F05 routing and F03 reminders), then one fake publication goes from step 6 through Formal Coordination to Legal and step 7, and is removed at the end",
+      "out": "scripts/gov/paste/90161Z-R21-round-r1.ps1",
+      "round": "R21",
+      "title": "Round R21: slice 1 with flow controls on the test site. Add the new list columns, import the 90-161.Z flows r2 (F05 routing r2, F03 reminders r3, F06 hold and resume r1, test mode on), then one fake publication goes from step 6 through a missing-row check, a hold and resume, Formal Coordination, Legal and step 7, is cancelled, and is removed at the end",
       "files": [
         {
+          "dir": "T19",
+          "src": "scripts/gov/90161Z-T19-list-update-r1.ps1"
+        },
+        {
           "dir": "T18",
-          "src": "flow/solution/90161Z-T18-slice1-flows-r1.zip"
+          "src": "flow/solution/90161Z-T18-slice1-flows-r2.zip"
         },
         {
           "dir": "T17",
@@ -37,17 +41,30 @@
         },
         {
           "dir": "T18",
-          "src": "scripts/gov/90161Z-T18-slice1-test-r1.ps1"
+          "src": "scripts/gov/90161Z-T18-slice1-test-r2.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T18 Import the slice 1 flows r1",
+          "name": "T19 Add the R21 list columns r1",
+          "dir": "T19",
+          "file": "90161Z-T19-list-update-r1.ps1",
+          "minutes": 10,
+          "note": "Signs in (CAC) and adds to the test site: Status Reason and Held Since on PFM Publications, the choices Cancelled and Complete on Action Status, Coordination Round on PFM Endorsements; sets the suspense setting to 20 working days. Adds only; a second run changes nothing.",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "estimate": 2
+        },
+        {
+          "name": "T18 Import the slice 1 flows r2",
           "kind": "guide",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-flows-r1.zip",
-          "note": "You import the 90-161.Z flows solution (F05 routing, F03 reminders) and turn F05 on. About 8 minutes (estimate).",
-          "marker": "90161Z-T18-slice1-imported.txt",
+          "file": "90161Z-T18-slice1-flows-r2.zip",
+          "note": "You import the 90-161.Z flows solution r2 over the R20 one (F05 r2 and F03 r3 replace F05 r1 and F03 r2; F06 is new), then turn on F05 and F06. About 8 minutes (estimate).",
+          "marker": "90161Z-T18-slice1-r2-imported.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
@@ -56,13 +73,13 @@
             "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
             "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
             "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
-            "5. Environment variables: in Site URL, paste the test site address. In Shared mailbox, enter the shared mailbox address you have Send As rights to, or leave it empty to send from your own mailbox. Keep the other values as shown (list names, 5 and 3).",
+            "5. Environment variables: Site URL and Shared mailbox keep the values from R20 (check them). In PFM e-mail, enter your own work e-mail address: failure notices and test-mode e-mails go there. Keep Test mode = Yes and Flows off = No. Keep the other values as shown.",
             "6. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "7. Open the solution \"90-161.Z flows\". Turn on \"90161Z F05 Endorsement Routing r1\". Leave F03 off: you run it once by hand later in this round.",
-            "8. Return to RADE and select \"Done: imported, F05 is on\".",
+            "7. Open the solution \"90-161.Z flows\". It lists 3 flows: F03 Suspense Reminders r3, F05 Endorsement Routing r2, F06 Hold and Resume r1. Turn on F05 and F06. Leave F03 off: you run it once by hand later in this round.",
+            "8. Return to RADE and select \"Done: imported, F05 and F06 are on\".",
             "If the import fails: select \"Download log file\" (any folder; the next step finds it), type the first line of the red error message (no names or site address) in the box below, then select \"It failed\"."
           ],
-          "doneText": "Done: imported, F05 is on",
+          "doneText": "Done: imported, F05 and F06 are on",
           "needs": [
             "net-flow",
             "flow-guide"
@@ -78,12 +95,12 @@
           "estimate": 1
         },
         {
-          "name": "T18 Slice 1 test, part 1 r1",
+          "name": "T18 Slice 1 test, part 1 r2",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r1.ps1",
+          "file": "90161Z-T18-slice1-test-r2.ps1",
           "args": "-Part 1",
           "minutes": 20,
-          "note": "1. Signs in (CAC) and reads the steps and offices. 2. Creates one fake publication at step 6. 3. Waits up to 10 minutes for F05 to create the Formal Coordination rows.",
+          "note": "1. Signs in (CAC) and reads the steps and offices. 2. Creates one fake publication at step 6. 3. Waits up to 10 minutes for F05 to create the Formal Coordination rows (round 1).",
           "needs": [
             "pnp",
             "net-site",
@@ -92,19 +109,42 @@
           "estimate": 6
         },
         {
-          "name": "T18 Run F03 once r1",
+          "name": "T18 Read the F05 run history r1",
           "kind": "guide",
           "dir": "T18",
           "file": "",
-          "note": "You run F03 once by hand, so it sets the default suspense on the test rows. The test rows get no e-mail. About 3 minutes (estimate).",
-          "marker": "90161Z-T18-f03-ran.txt",
+          "note": "Only when part 1 shows d-f05-formal FAIL: you read the newest F05 run, so Claude can see why it made no rows. Otherwise select Skip. About 3 minutes (estimate).",
+          "marker": "90161Z-T18-f05-runs-read.txt",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt",
+          "guide": [
+            "1. Check part 1 in the RADE log: if d-f05-formal shows PASS, select \"Skip\".",
+            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\" > \"90161Z F05 Endorsement Routing r2\".",
+            "3. Under 28-day run history: if no run is listed, type \"no runs\" in the box below and select \"It failed\".",
+            "4. Otherwise open the newest run. Type its status (Succeeded, Failed or Cancelled) and, if a step shows a red mark, the step name and the first line of its error (no names or site address) in the box below.",
+            "5. Select \"It failed\" if the run failed or made no rows; select \"Done: run history read\" only if the newest run succeeded and shows rows created."
+          ],
+          "doneText": "Done: run history read",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 3
+        },
+        {
+          "name": "T18 Run F03 once r2",
+          "kind": "guide",
+          "dir": "T18",
+          "file": "",
+          "note": "You run F03 r3 once by hand, so it sets the default suspense (20 working days) on the test rows. Test mode is on: any e-mail goes to you only. About 3 minutes (estimate).",
+          "marker": "90161Z-T18-f03-r3-ran.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
           "guide": [
             "1. Check part 1 in the RADE log: if \"other open rows due within 7 days or past\" is above 0, select \"Skip\". Those rows would get a real reminder.",
             "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
-            "3. Open \"90161Z F03 Suspense Reminders r2\" and select Test > Manually > Test, then Run flow.",
+            "3. Open \"90161Z F03 Suspense Reminders r3\" and select Test > Manually > Test, then Run flow.",
             "4. Wait until the run shows \"Your flow ran successfully\" (under 1 minute, estimate). F03 stays off after the test.",
             "5. Return to RADE and select \"Done: F03 ran\".",
             "If the run fails: type the first line of the error (no names or site address) in the box below, then select \"It failed\"."
@@ -116,30 +156,35 @@
           "estimate": 3
         },
         {
-          "name": "T18 Slice 1 test, part 2 r1",
+          "name": "T18 Slice 1 test, part 2 r2",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r1.ps1",
+          "file": "90161Z-T18-slice1-test-r2.ps1",
           "args": "-Part 2",
-          "minutes": 20,
-          "note": "4. Checks the F03 suspense dates. 5. Answers the rows Concur and marks the comments adjudicated. 6. Waits for the Legal rows and step 7. 7. Moves every test row to the site Recycle Bin.",
+          "minutes": 40,
+          "note": "4. Checks the F03 suspense dates. 5. Removes one row and checks that F05 adds it back. 6. Hold and resume: checks that F06 moves each suspense out by the weekdays held. 7. Answers the rows Concur and marks the comments adjudicated. 8. Waits for the Legal rows and step 7. 9. Cancels the action and checks the cancel log. 10. Moves every test row to the site Recycle Bin.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 6
+          "estimate": 15
         }
       ],
       "collect": [
         {
-          "dir": "T18",
-          "name": "90161Z-T18-slice1-part1-r1.txt",
-          "step": "T18 Slice 1 test, part 1 r1"
+          "dir": "T19",
+          "name": "90161Z-T19-list-update-r1.txt",
+          "step": "T19 Add the R21 list columns r1"
         },
         {
           "dir": "T18",
-          "name": "90161Z-T18-slice1-part2-r1.txt",
-          "step": "T18 Slice 1 test, part 2 r1"
+          "name": "90161Z-T18-slice1-part1-r2.txt",
+          "step": "T18 Slice 1 test, part 1 r2"
+        },
+        {
+          "dir": "T18",
+          "name": "90161Z-T18-slice1-part2-r2.txt",
+          "step": "T18 Slice 1 test, part 2 r2"
         },
         {
           "dir": "T17",
@@ -483,19 +528,49 @@
         {
           "path": "Rounds\\R18",
           "kind": "dir"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-imported.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-f03-ran.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R19",
+          "kind": "dir"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R20. Imports the slice 1 flows (F05 routing, F03 reminders), then moves one fake publication from Formal Coordination to Legal on the test site and removes it.",
+          "summary": "Test round R21. Adds the new list columns, imports the slice 1 flows r2 (F05 routing, F03 reminders, F06 hold and resume; test mode on), then takes one fake publication through a missing-row check, a hold and resume, Formal Coordination, Legal and a cancel on the test site, and removes it.",
           "steps": [
-            "T18 Import the slice 1 flows r1",
+            "T19 Add the R21 list columns r1",
+            "T18 Import the slice 1 flows r2",
             "T17 Import log reader r2",
-            "T18 Slice 1 test, part 1 r1",
-            "T18 Run F03 once r1",
-            "T18 Slice 1 test, part 2 r1"
+            "T18 Slice 1 test, part 1 r2",
+            "T18 Read the F05 run history r1",
+            "T18 Run F03 once r2",
+            "T18 Slice 1 test, part 2 r2"
           ]
         }
       ]

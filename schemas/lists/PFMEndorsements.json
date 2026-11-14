@@ -43,6 +43,13 @@
       "ref": "DAFMAN 90-161 Table A3.1 note 2 (privacy monitor before formal coordination), 3.4 and 5.1.8.1 (legal after all other coordination is documented and adjudicated); stages run in order, everyone in a stage at the same time. Replaces Sequential or Parallel (PFM 2026-11-11, 1A)"
     },
     {
+      "internalName": "CoordinationRound",
+      "displayName": "Coordination Round",
+      "type": "Number",
+      "required": false,
+      "ref": "PFM D4 (2026-11-14): coordination round; F05 writes the current round (1 when none is set) and counts only rows of the highest round"
+    },
+    {
       "internalName": "EndorserOrder",
       "displayName": "Endorser Order",
       "type": "Number",
