@@ -126,11 +126,12 @@
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
           "guide": [
-            "1. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
-            "2. Open \"90161Z F03 Suspense Reminders r3\" and select Test > Manually > Test, then Run flow.",
-            "3. Wait until the run shows \"Your flow ran successfully\" (under 1 minute, estimate). F03 stays off after the test.",
-            "4. In Outlook, check for one e-mail whose subject starts \"[TEST] Escalation\". It may take 1 to 2 minutes.",
-            "5. Return to RADE and select \"Done: F03 ran\".",
+            "1. Safety check: if you did not enter exactly Yes in Test mode at import, select \"Skip\": F03 would e-mail real endorsers.",
+            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
+            "3. Open \"90161Z F03 Suspense Reminders r3\" and select Test > Manually > Test, then Run flow.",
+            "4. Wait until the run shows \"Your flow ran successfully\" (under 1 minute, estimate). F03 stays off after the test.",
+            "5. In Outlook, check for one e-mail whose subject starts \"[TEST] Escalation\". It may take 1 to 2 minutes.",
+            "6. Return to RADE and select \"Done: F03 ran\".",
             "If the run fails: type the first line of the error (no names or site address) in the box below, then select \"It failed\"."
           ],
           "doneText": "Done: F03 ran",

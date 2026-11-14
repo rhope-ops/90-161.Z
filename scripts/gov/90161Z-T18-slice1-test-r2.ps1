@@ -278,9 +278,11 @@ try {
       if ($r['DueDate'] -and ([datetime]$r['DueDate']).ToLocalTime().Date -eq $want) { $right++ }
     }
     Add-Line 'i-f03-suspense' $(if ($checked -and $right -eq $checked) { 'PASS' } else { 'FAIL' }) ('rows with the 20-working-day suspense (' + $work.ToString('dd MMM yy') + ')=' + $right + ' of ' + $checked + $(if ($right -lt $checked) { '. F03 must run the same day as part 2; check its run history' } else { '' }))
-    $logA = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('Reminder Sent: E' + $pastRow + ' Escalation') }).Count
-    Add-Line 'j-f03-escalation' $(if ($logA -eq 1) { 'PASS' } else { 'FAIL' }) ('escalation logged for the past-due A row=' + $logA + ' expected=1 (Test mode: the e-mail went to the alert address)')
-    $logH = @(Get-RowsFor 'PFM Activity Log' $hId | Where-Object { ([string]$_['Title']).StartsWith('Reminder Sent: E' + $hRowId + ' ') }).Count
+    $logA = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('[TEST] Reminder Sent: E' + $pastRow + ' Escalation') }).Count
+    Add-Line 'j-f03-escalation' $(if ($logA -eq 1) { 'PASS' } else { 'FAIL' }) ('test-mode escalation logged for the past-due A row=' + $logA + ' expected=1 (0 = Test mode was not Yes, or F03 did not run)')
+    $logH = @(Get-RowsFor 'PFM Activity Log' $hId | Where-Object { ([string]$_['Title']) -match ('Reminder Sent: E' + $hRowId + ' ') }).Count
+    $hFormal = @(Get-Formal $hId | Where-Object { $_.Id -ne $hRowId }).Count
+    Add-Line 'k2-hold-still-skipped' $(if ($hFormal -eq 0) { 'PASS' } else { 'FAIL' }) ('F05 rows for H (On Hold) at part 2=' + $hFormal + ' expected=0')
     Add-Line 'k-f03-hold' $(if ($logH -eq 0) { 'PASS' } else { 'FAIL' }) ('reminders logged for the On Hold row=' + $logH + ' expected=0')
 
     # 9. Answer A's rows, mark comments adjudicated; F05 makes the Legal rows and moves A to step 7.

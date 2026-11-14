@@ -287,7 +287,7 @@
                     "parameters": {
                       "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                       "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                      "$filter": "@concat('Title eq ''', concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier')), '''')",
+                      "$filter": "@concat('Title eq ''', concat(if(outputs('Test_mode'), '[TEST] ', ''), 'Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier')), '''')",
                       "$top": 1
                     },
                     "authentication": "@parameters('$authentication')"
@@ -446,7 +446,7 @@
                             "parameters": {
                               "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                               "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                              "item/Title": "@concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'))",
+                              "item/Title": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), 'Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'))",
                               "item/Publication/Id": "@items('For_each_open_endorsement')?['Publication']?['Id']",
                               "item/EventType/Value": "Reminder Sent",
                               "item/EventDetails": "@concat(outputs('Tier'), ' e-mail sent for endorsement row ', string(items('For_each_open_endorsement')?['ID']), '; suspense ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10))"

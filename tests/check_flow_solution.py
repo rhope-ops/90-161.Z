@@ -21,7 +21,8 @@ for f in (ROOT / "schemas" / "lists").glob("*.json"):
     schemas[d["title"]] = {x["internalName"] for x in d["fields"]}
 # Run properties of workflow() and result('Try') that the failure e-mail reads (slice r2, 14 Nov 26); not list columns.
 RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName"}
-all_cols = set().union(*schemas.values()) | BUILTIN | RUNTIME
+RUNTIME_ACTIONS = {"Failed_actions", "Failure_lines", "E-mail_the_failure"}   # only these may read them (review, 14 Nov 26)
+all_cols = set().union(*schemas.values()) | BUILTIN
 env_list = {B.ENV_KEY[s]: default for s, _, default in B.ENV if s.startswith("pfm_List")}
 for key, title in env_list.items():
     if title not in schemas: bad(f"environment variable {key}: default '{title}' is not a list title in schemas/lists")
@@ -90,7 +91,7 @@ for src in sorted(B.DEFS.glob("*.json")):
         if name != "trigger": counts["actions"] += 1
         if name != "trigger" and re.search(r"""\[\s*'body/""", json.dumps(a)): bad(f"{src.name} {name}: body/ path expression; use body('Action')?['key']")
         for m in re.findall(r"\?\['(\w+)'\]", json.dumps(a)):
-            if m not in all_cols: bad(f"{src.name} {name}: unknown column or property '{m}'")
+            if m not in all_cols and not (name in RUNTIME_ACTIONS and m in RUNTIME): bad(f"{src.name} {name}: unknown column or property '{m}'")
         p = a.get("inputs", {}).get("parameters", {}) if isinstance(a.get("inputs"), dict) else {}
         if "table" in p:
             m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
