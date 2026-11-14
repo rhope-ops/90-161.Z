@@ -5,6 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Rounds hold only steps that test something not yet verified. T16 site setup (verified R17-R19) leaves routine rounds; a short step collects flow results; seals upload only when new or changed. | PFM | docs/reviews/2026-11-14-r19-results.md |
+| 2026-11-14 | All text the PFM sees is professional and polished: window, guides, step notes, import instructions and flow run inputs; formatted where possible. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/window-design.md |
 | 2026-11-14 | Start using rhope-ops/RADE: the engine moved there (engine/rade_build.py); this repo keeps its manifest and files, pinned by scripts/rade.lock.json. | PFM | https://github.com/rhope-ops/RADE/blob/main/engine/rade_build.py |
 | 2026-11-14 | R18: solution import test A r4 only (lowercase workflow GUID; B dropped) plus, if A fails, a working solution export in the same round. Replaces the one-more-A/B-round row. | PFM | docs/reviews/2026-11-14-r17-results.md |
 | 2026-11-14 | Logo leaves the rounds: Claude e-mails logo K, the PFM sets the site logo and thumbnail by hand; site setup still reads the header logo. Replaces the R17 T14 guide step. | PFM | docs/reviews/2026-11-14-r17-results.md |
