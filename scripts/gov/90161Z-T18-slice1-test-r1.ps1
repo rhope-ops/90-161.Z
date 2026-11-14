@@ -17,7 +17,9 @@
     7. Clean-up: moves every row tied to the fake publication (Activity Log, Endorsements, the publication) to the site
        Recycle Bin (restorable for 93 days). Nothing else on the site is changed.
   WHAT IT CHANGES ON THE SITE: only the fake publication and the rows the flows make for it, all removed in step 7.
-  No e-mail is sent: the test rows have no endorser, and a suspense 21 days ahead is outside every F03 tier.
+  The test rows get no e-mail: a suspense 21 days ahead is outside every F03 tier. F03 also checks every other open
+  coordination row on the site, so part 1 counts those that could get a reminder now (due within 7 days or past); if
+  that count is above 0, skip the F03 run.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this
   computer; every output line shows it as <SITE> and the DODID as <DODID>.
   Output: 90161Z-T18-slice1-part1-r1.txt or 90161Z-T18-slice1-part2-r1.txt in the T18 folder (send both).
@@ -196,6 +198,10 @@ try {
       foreach ($l in 'PFM Activity Log', 'PFM Endorsements') { foreach ($r in (Get-RowsFor $l $o.Id)) { $null = Remove-PnPListItem -List $l -Identity $r.Id -Recycle -Force -ErrorAction Stop } }
       $null = Remove-PnPListItem -List 'PFM Publications' -Identity $o.Id -Recycle -Force -ErrorAction Stop
     }
+    # Other open rows F03 would e-mail if run now (suspense within 7 days or past): a count only.
+    $soon = (Get-Date).Date.AddDays(7)
+    $others = @(Get-PnPListItem -List 'PFM Endorsements' -Fields 'EndorsementStatus', 'DueDate' -ErrorAction Stop | Where-Object { [string]$_['EndorsementStatus'] -eq 'Not Started' -and $_['DueDate'] -and ([datetime]$_['DueDate']).ToLocalTime().Date -le $soon }).Count
+    Add-Line 'b2-other-rows' $(if ($others) { 'FAIL' } else { 'PASS' }) ('other open rows due within 7 days or past=' + $others + $(if ($others) { '. Skip the F03 run: those rows would get a real reminder' } else { '' }))
     if ($old.Count) { Add-Line 'b-leftovers' 'SET' ('moved ' + $old.Count + ' earlier test publication(s) and their rows to the Recycle Bin') }
     $pub = Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $TestTitle; ActionType = 'New'; ProductType = 'Publication'; ProcessStep = $step6.Id; ActionStatus = 'On Track' } -ErrorAction Stop
     Set-Content -LiteralPath $pubFile -Value ([string]$pub.Id) -Encoding UTF8
@@ -228,12 +234,16 @@ try {
     Add-Line 'h-f05-step7' $(if ($script:atStep -eq $step7.Id) { 'PASS' } else { 'FAIL' }) $(if ($script:atStep -eq $step7.Id) { 'publication moved to step 7' } else { 'publication not at step 7' })
     $logRows = @(Get-RowsFor 'PFM Activity Log' $pubId).Count
     Add-Line 'i-activity-log' 'PASS' ('activity log rows for the test publication=' + $logRows)
-    # 7. Clean-up: everything tied to the fake publication goes to the site Recycle Bin.
+    # 7. Clean-up: everything tied to the fake publication goes to the site Recycle Bin. On a FAIL the rows stay for review;
+    # part 1 of the next run removes them (it finds the fake publication by its title).
+    if (@($lines | Where-Object { $_ -match '^ITEM .* FAIL' }).Count) { Add-Line 'j-clean-up' 'SKIP' 'kept for review because a check failed; part 1 of the next run removes them' }
+    else {
     $n = 0
     foreach ($l in 'PFM Activity Log', 'PFM Endorsements') { foreach ($r in (Get-RowsFor $l $pubId)) { $null = Remove-PnPListItem -List $l -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ } }
     $null = Remove-PnPListItem -List 'PFM Publications' -Identity $pubId -Recycle -Force -ErrorAction Stop; $n++
     Remove-Item -LiteralPath $pubFile -Force
     Add-Line 'j-clean-up' 'SET' ('rows moved to the site Recycle Bin=' + $n)
+    }
   }
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
   $nf = @($lines | Where-Object { $_ -match '^ITEM .* FAIL' }).Count

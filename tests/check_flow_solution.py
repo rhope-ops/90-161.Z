@@ -108,7 +108,8 @@ for src in sorted(B.DEFS.glob("*.json")):
 
 # R17: the import failed with "component {guid} of type 29 is not declared in the solution file as a root component".
 # Every zip (flow solution and test solutions): each WorkflowId is a lowercase GUID and has a RootComponent type 29 with the same id.
-for z in [cz] + sorted((ROOT / "flow" / "solution").glob("90161Z-T17-*.zip")):
+SLICES = sorted((ROOT / "flow" / "solution").glob("90161Z-T18-*.zip"))
+for z in [cz] + sorted((ROOT / "flow" / "solution").glob("90161Z-T17-*.zip")) + SLICES:
     with zipfile.ZipFile(z) as zz:
         c, sol = zz.read("customizations.xml").decode("utf-8"), zz.read("solution.xml").decode("utf-8")
     wids = re.findall(r'WorkflowId="\{([^}]+)\}"', c)
@@ -154,6 +155,28 @@ for z in sorted((ROOT / "flow" / "solution").glob("90161Z-T17-*.zip")):
                 wf = json.loads(zz.read(n).decode("utf-8"))["properties"]["definition"]
                 if "outputs" in wf: bad(f"{z.name} {n}: definition has 'outputs'; the export has none")
                 if "@parameters('$authentication')" in json.dumps(wf): bad(f"{z.name} {n}: manual flow uses @parameters('$authentication'); the export uses the run token")
+
+# R20 (slice 1, task T18): several flows, two connection references and environment variables, so the element-by-element
+# comparison above does not apply. Each slice keeps the export's file rules and has one RootComponent type 380 per
+# environment variable file, none with an XML declaration, and the F03 settings decided by the PFM (2026-11-14).
+for z in SLICES:
+    with zipfile.ZipFile(z) as zz:
+        for f in ("solution.xml", "customizations.xml"):
+            got = zz.read(f)
+            if got.startswith(b"<?xml") or got.startswith(b"\xef\xbb\xbf"): bad(f"{z.name} {f}: starts with an XML declaration or BOM")
+            if b"\r\n" not in got or got.endswith(b"\n"): bad(f"{z.name} {f}: line ends differ from the export")
+        sol = zz.read("solution.xml").decode("utf-8")
+        envs = [n.split("/")[1] for n in zz.namelist() if n.startswith("environmentvariabledefinitions/")]
+        roots380 = set(re.findall(r'<RootComponent type="380" schemaName="([^"]+)"', sol))
+        if set(envs) != roots380: bad(f"{z.name}: environment variable files {sorted(envs)} differ from type 380 roots {sorted(roots380)}")
+        for n in zz.namelist():
+            if n.startswith("environmentvariabledefinitions/") and zz.read(n).startswith(b"<?xml"): bad(f"{z.name} {n}: XML declaration")
+        defaults = {e: re.search(r"<defaultvalue>([^<]*)</defaultvalue>", zz.read(f"environmentvariabledefinitions/{e}/environmentvariabledefinition.xml").decode()) for e in envs}
+        if (defaults.get("pfm_ReminderLeadDays") or [None, None])[1] != "5" or (defaults.get("pfm_EscalationLagDays") or [None, None])[1] != "3":
+            bad(f"{z.name}: F03 defaults are not 5 and 3 (PFM, 2026-11-14)")
+        if b"<isrequired>0</isrequired>" not in zz.read("environmentvariabledefinitions/pfm_SharedMailbox/environmentvariabledefinition.xml"):
+            bad(f"{z.name}: the shared mailbox variable must be optional")
+        if len(re.findall(r'<RootComponent type="29"', sol)) != 2: bad(f"{z.name}: slice 1 must hold exactly F03 and F05")
 
 if errs:
     print("\n".join(errs)); sys.exit(1)

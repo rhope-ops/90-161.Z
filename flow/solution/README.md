@@ -4,14 +4,17 @@ DRAFT. Not imported until the PFM reviews it (PFM 5.6A: solution-aware flows). S
 
 Solution: unmanaged, unique name `PFM90161Z`, version 1.0.0.1, publisher `PFM` with prefix `pfm` (as in the T05 export). Connection references: SharePoint and Office 365 Outlook (pick your own connections at import). Operation IDs (`GetOnUpdatedItems`, `GetItems`, `GetItem`, `PostItem`, `PatchItem`, `SendEmailV2`) and the solution XML layout are written from memory of Microsoft's formats. The first import (T17 r1, R15) failed with an XML node error; r2 (R16) took the values from the T05 real export (docs/reviews/2026-11-12-gov-results-t01-t02-t05.md) and failed the same way. r3 (R17): environmentvariabledefinition.xml has no XML declaration (likely cause, docs/reviews/2026-11-14-r16-results.md), and two test solutions find the cause: `90161Z-T17-solution-test-a-r3.zip` (no environment variable; site address as a run input) and `90161Z-T17-solution-test-b-r3.zip` (Site URL variable), one per `flow/solution/test-defs/*.json` (its `variant` names the solution `PFM90161ZTEST<variant>`). r4 (R18) wrote the workflow GUID lowercase and failed again. r5 (R19, `90161Z-T17-solution-test-a-r5.zip`) copies the layout of the PFM's R18 export "90161ZExportSample" (masked copy in `export-sample/`; the connection reference XML is now seen in a real export: it is in customizations.xml and is not a root component); `tests/check_flow_solution.py` compares each test zip with it. The environment variable XML is still not seen in a real export.
 
+Slice 1 (R20, PFM 14 Nov 26): `90161Z-T18-slice1-flows-r1.zip` holds only F03 (r2) and F05, with the same unique name `PFM90161Z`, so the full solution later upgrades it. It carries only the environment variables those two flows use.
+
 ## Environment variables (type Text, so no site address is in the repo)
 
 | Schema name | Meaning | Default in the zip |
 |---|---|---|
 | pfm_SiteUrl | SharePoint site address | empty: set at import |
 | pfm_ListPublications, pfm_ListActivityLog, pfm_ListReviews, pfm_ListEndorsements, pfm_ListProductIndex, pfm_ListProcessSteps, pfm_ListOffices | List names | the list titles in schemas/lists (for example `PFM Publications`) |
-| pfm_ReminderLeadDays | F03: days before the suspense for the advance reminder | empty: the PFM sets it |
-| pfm_EscalationLagDays | F03: days after the suspense for the escalation | empty: the PFM sets it |
+| pfm_ReminderLeadDays | F03: weekdays before the suspense for the advance reminder | 5 (PFM, 2026-11-14) |
+| pfm_EscalationLagDays | F03: working days after the suspense for the escalation | 3 (PFM, 2026-11-14) |
+| pfm_SharedMailbox | F03: shared mailbox to send from (Send As); optional | empty: F03 sends from the flow owner's mailbox |
 
 ## Flows
 
@@ -23,7 +26,7 @@ Solution: unmanaged, unique name `PFM90161Z`, version 1.0.0.1, publisher `PFM` w
 | F04 Status report | E-mails an HTML table of PFM Publications actions, one table per Process Step in step order | 2.6.8; DECISIONS 2026-11-11 | Manual button; asks for the recipient e-mail | Publications; Process Steps | Activity Log: EventType Status Report E-Mailed; e-mail |
 | F05 Endorsement routing | At process step 6 (Formal coordination): creates one Formal Coordination row per active mandatory office that is not CoordinateLast, once. When every other row has an answer (not Not Started) and All Comments Adjudicated is Yes, creates the Legal rows (CoordinateLast offices) and moves the step to 7. An open Nonconcur does not block Legal (PFM 1A). Endorser copied from the office when set | 3.4, 5.1, 5.1.8.2; PFM S5A (2026-11-14) | SharePoint "When an item is created or modified" on PFM Publications, one at a time | Publications: ProcessStep, AllCommentsAdjudicated, Title; Process Steps: StepNumber; Offices: MandatoryCoordinator, IsActive, CoordinateLast, CoordinationRole, Endorser; Endorsements: CoordinationStage, EndorsementStatus, CoordinationRole | Endorsements: Title, Publication, CoordinationStage, CoordinationRole, IsRequired, EndorsementStatus, Endorser; Publications: ProcessStep; Activity Log: Endorsement Requested |
 
-Tiers in F03 (days relative to the suspense): Escalation at or after pfm_EscalationLagDays past; Warning from the suspense day; Reminder from pfm_ReminderLeadDays before. Each tier is sent once per row (a Reminder Sent row in the Activity Log is the memory). The flow never changes an Endorsement Status.
+Tiers in F03 (r2, weekdays relative to the suspense, PFM 2026-11-14): Escalation from pfm_EscalationLagDays working days after; Warning from the suspense day; Reminder from pfm_ReminderLeadDays weekdays before. Weekday arithmetic assumes the suspense falls on a weekday (the default suspense always does). Each tier is sent once per row (a Reminder Sent row in the Activity Log is the memory). The flow never changes an Endorsement Status.
 
 Why F02 uses a recurrence: the 6-month review task opens on a date, not on an edit, so a daily check serves both the date calculation and the task. An item trigger on Product Index would also need a timer. The same weekday 07:00 schedule as F03 is reused (open choice 7).
 
@@ -43,7 +46,7 @@ Why F02 uses a recurrence: the 6-month review task opens on a date, not on an ed
 3. Suspense: no business-day calendar or holiday list exists in the repo, so 15 business days = 21 calendar days (weekends only). Options: keep; add a holiday list in PFM Settings; the PFM sets every DueDate by hand.
 4. Suspense start: the draft starts it on the first weekday run after the row exists. Options: start when the step moves to Formal Coordination (needs routing); use the row's Created date. Legal rows get no default suspense yet (F05 creates them; their start could be the row's Created date). Privacy Review rows do get one.
 5. 5.2.2 (30 calendar days) is applied to the Guard Applicability and Reserve Applicability roles only; the process model says whether it covers wing-to-unit coordination is open (gap check).
-6. Reminder thresholds (pfm_ReminderLeadDays, pfm_EscalationLagDays) have no value in the repo; calendar days vs weekdays; who is copied on escalation (draft: AO and Requester; the PFM is not copied); sending from the running user's mailbox vs a shared mailbox (Outlook "Send an email from a shared mailbox (V2)" needs Send As rights; DECISIONS: fallback required for wings without it).
+6. Decided (PFM, 2026-11-14): reminder 5 weekdays before, escalation 3 working days after, copied to the AO and Requester; sent from the shared mailbox in pfm_SharedMailbox (Send As), else from the flow owner's mailbox (the fallback for wings without Send As).
 7. Run time of F02 (draft: same as F03) and whether Date columns are date-only (the flows read the first 10 characters; a date-time column in Central could shift a day).
 8. An approved extension (5.2.1): F03 ignores ExtensionDate. Options: use the later of DueDate and ExtensionDate; add an "extension approved" flag.
 9. "Open action" for F04 and for stage counts: PFM Publications has no closed flag, so F04 lists every row. Options: exclude rows at the last step; add a closed status or date.
