@@ -501,7 +501,8 @@ function Invoke-GuideStep([string]$Base, $Step, [scriptblock]$Say) {
   $ok = ($res -eq 'OK')
   if ($res -eq 'Abort') {
     $t = ((ConvertTo-Masked ([string]$script:guideError)) -replace '\s+', ' ').Trim()
-    $t = $t -replace 'https://\S+', '<SITE>'   # an address in the pasted text never reaches the e-mail
+    $t = $t -replace 'https?://\S+', '<SITE>' -replace '[A-Za-z0-9.-]+\.(sharepoint|sharepoint-mil|onmicrosoft)\.[A-Za-z.]+\S*', '<SITE>'   # no address reaches the e-mail
+    $t = $t -replace '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '<EMAIL>'
     if ($t.Length -gt 600) { $t = $t.Substring(0, 600) + ' ...' }
     if (-not $t) { $t = 'no error text given' }
     $r.Fail = 1; $r.FailText = $t
@@ -1155,7 +1156,6 @@ if ($gui) {
     $basePath = Get-BasePath
     $hist0 = Read-RoundHistory $basePath
     $bold = $null; try { $bold = [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Bold') } catch { $null = $_ }
-    $regular = $null; try { $regular = [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Regular') } catch { $null = $_ }
     $mkLabel = { param($text) $l = New-Object System.Windows.Forms.Label; $l.AutoSize = $true; $l.MaximumSize = $wrap; $l.Text = $text; $l }
     $mkButton = { param($text) $b = New-Object System.Windows.Forms.Button; $b.Text = $text; $b.AutoSize = $true; $b.MinimumSize = New-Object System.Drawing.Size(110, 32); $b }
     $mkRows = { param([string[]]$Heights)
@@ -1441,6 +1441,7 @@ if ($gui) {
       $rule.Height = 1; $rule.Width = 178; $rule.BackColor = [System.Drawing.Color]::FromArgb(70, 105, 150); $rule.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 14)
       $stepBox = New-Object System.Windows.Forms.FlowLayoutPanel
       $stepBox.AutoSize = $true; $stepBox.FlowDirection = 'TopDown'; $stepBox.WrapContents = $false; $stepBox.BackColor = [System.Drawing.Color]::Transparent; $stepBox.Margin = New-Object System.Windows.Forms.Padding(0)
+      $railFonts = @((New-Object System.Drawing.Font($form.Font.FontFamily, [single]11)), (New-Object System.Drawing.Font($form.Font.FontFamily, [single]11, $bold)))   # made once, reused
       foreach ($t in @('1   Choose', '2   Check', '3   Deploy')) {
         $l = New-Object System.Windows.Forms.Label
         $l.AutoSize = $true; $l.Text = $t; $l.ForeColor = $mist; $l.BackColor = [System.Drawing.Color]::Transparent; $l.Margin = New-Object System.Windows.Forms.Padding(0, 4, 0, 4)
@@ -1459,7 +1460,8 @@ if ($gui) {
       try {
         $B.FlatStyle = 'Flat'; $B.FlatAppearance.BorderColor = $afBlue; $B.ForeColor = [System.Drawing.Color]::White; $B.BackColor = $afBlue
         try { $B.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]10, $bold) } catch { $null = $_ }
-        $B.Add_EnabledChanged({ if ($this.Enabled) { $this.BackColor = $afBlue; $this.FlatAppearance.BorderColor = $afBlue } else { $this.BackColor = [System.Drawing.Color]::FromArgb(221, 226, 232); $this.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(201, 210, 220) } })
+        $paintState = { param($X) if ($X.Enabled) { $X.BackColor = $afBlue; $X.ForeColor = [System.Drawing.Color]::White; $X.FlatAppearance.BorderColor = $afBlue } else { $X.BackColor = [System.Drawing.Color]::FromArgb(221, 226, 232); $X.ForeColor = [System.Drawing.Color]::FromArgb(85, 85, 85); $X.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(201, 210, 220) } }
+        $B.Add_EnabledChanged({ & $paintState $this }); & $paintState $B   # gray text on gray when disabled (5.9:1); styled from the start
         $B.Add_MouseEnter({ if ($this.Enabled) { $this.BackColor = $navy } }); $B.Add_MouseLeave({ if ($this.Enabled) { $this.BackColor = $afBlue } })
       } catch { $null = $_ } }
     & $stylePrimary $next; & $stylePrimary $run
@@ -1570,7 +1572,7 @@ if ($gui) {
       for ($j = 0; $j -lt $railSteps.Count; $j++) {   # the rail: this screen in AF yellow and bold, done screens white, later ones mist
         try {
           $railSteps[$j].ForeColor = $(if ($j -eq $I) { $gold } elseif ($j -lt $I) { [System.Drawing.Color]::White } else { $mist })
-          $railSteps[$j].Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]11, $(if ($j -eq $I) { $bold } else { $regular }))
+          $railSteps[$j].Font = $railFonts[[int]($j -eq $I)]
         } catch { $null = $_ } }
       $back.Visible = ($I -gt 0); $next.Visible = ($I -lt 2)
       $next.Text = $(if ($I -eq 0) { 'Next: check' } else { 'Next: deploy' })

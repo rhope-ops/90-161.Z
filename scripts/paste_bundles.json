@@ -110,12 +110,12 @@
         {
           "dir": "T17",
           "name": "90161Z-T17-export-solution-r1.txt",
-          "step": "T17 Export a working solution (only if A failed)"
+          "step": "T17 Export reader r1"
         },
         {
           "dir": "T17",
           "name": "90161Z-T17-export-customizations-r1.txt",
-          "step": "T17 Export a working solution (only if A failed)"
+          "step": "T17 Export reader r1"
         }
       ],
       "cleanup": [
