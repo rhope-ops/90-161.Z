@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Sprawl: targeted cuts in the R17 build, not a full audit: mask once per probe run, one shared masking function, clean-up by revision rule, drop logo fallbacks R16 shows unneeded; report before/after. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-14 | App name: 90-161.Z: Publications and Forms Management (short name 90-161.Z). The Word-open check blocks a deploy (1B); other warnings do not. | PFM | scripts/build_paste_bundles.py |
 | 2026-11-14 | No deploy unless every check passes (FAILED or NOT RUN blocks; WARNING does not; no "deploy anyway"). Check text: sentence case, screen names in "quotes", reported values in [brackets]. | PFM | https://claude.ai/artifact/RY4rWNuBP3rwAai9v3uWD8 |
 | 2026-11-14 | Plain-English sweep: go.md and Deployer step notes in R16; each flow, package and solution at its next revision. Deployer first screen stays minimal. | PFM | scripts/build_paste_bundles.py |
