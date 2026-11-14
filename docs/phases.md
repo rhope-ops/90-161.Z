@@ -34,7 +34,7 @@ Status: the PFM's phase order (12 Nov, in chat) plus agent recommendations marke
 | Q | Question | Options | REC |
 |---|---|---|---|
 | Q4 | Role model for PFM away | A: PFM, Alternate PFM, Acting PFM (+ Acting Until) as PFM Settings rows; PFM screens open to the PFM Office group; flows address the role. B: Person columns, edited by hand | A |
-| Q5 | Whose connections run the flows | A: the PFM's, connection references, the alternate re-binds by runbook. B: the alternate keeps disabled backup copies. C: ask the communications squadron for a non-person service account | A now; ask about C |
+| Q5 | Whose connections run the flows | A: the PFM's, connection references, the alternate re-binds by runbook. B: the alternate keeps disabled backup copies. C: ask the communications squadron for a non-person service account | A (C closed: no service account, PFM 12 Nov and 14 Nov) |
 | Q6 | Rights of the Acting PFM | A: full PFM rights, logged, reminder before Acting Until. B: no Settings changes | A |
 | Q7 | Permission groups | A: setup makes one SharePoint group "PFM Office" (edit all PFM lists and the library; config lists edit only for it); wing access group read/contribute per P2A and 10A; existing AD groups nested where they exist. B: only the site's existing Owners/Members groups | A |
 | Q8 | Intake sources in setup | A: existing site groups (as choices), scan of a library of posted publications into PFM Product Index (view "PFM - Imported, Not Confirmed"), products CSV (3A), e-Publishing index cross-check. B: CSV only | A |
