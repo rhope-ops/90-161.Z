@@ -33,33 +33,597 @@
     }
   },
   "actions": {
-    "If_flows_on": {
+    "Try": {
       "runAfter": {},
-      "type": "If",
-      "expression": {
-        "not": {
-          "equals": [
-            "@equals(toLower(trim(parameters('Flows off (pfm_FlowsOff)'))), 'yes')",
-            true
-          ]
-        }
-      },
+      "type": "Scope",
       "actions": {
-        "Try": {
+        "If_flows_paused": {
           "runAfter": {},
-          "type": "Scope",
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@toLower(trim(coalesce(parameters('Flows paused (pfm_FlowsPaused)'), '')))",
+              "yes"
+            ]
+          },
           "actions": {
-            "Today": {
+            "Stop_flows_are_paused": {
               "runAfter": {},
-              "type": "Compose",
-              "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd')"
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Today": {
+          "runAfter": {
+            "If_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd')"
+        },
+        "Get_open_rows": {
+          "runAfter": {
+            "Today": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
             },
-            "Get_open_rows": {
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
+              "$filter": "@concat('Publication/Id eq ', string(triggerBody()?['ID']), ' and EndorsementStatus eq ''Not Started''')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Open_rows_with_endorser": {
+          "runAfter": {
+            "Get_open_rows": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_open_rows')?['value']",
+            "where": "@not(empty(item()?['Endorser']?['Email']))"
+          }
+        },
+        "Open_rows_with_due": {
+          "runAfter": {
+            "Open_rows_with_endorser": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_open_rows')?['value']",
+            "where": "@not(empty(item()?['DueDate']))"
+          }
+        },
+        "If_hold_started": {
+          "runAfter": {
+            "Open_rows_with_due": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')",
+                  "On Hold"
+                ]
+              },
+              {
+                "equals": [
+                  "@empty(triggerBody()?['HeldSince'])",
+                  true
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Set_held_since": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+                  "id": "@triggerBody()?['ID']",
+                  "item/Title": "@triggerBody()?['Title']",
+                  "item/HeldSince": "@outputs('Today')"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Log_hold": {
               "runAfter": {
-                "Today": [
+                "Set_held_since": [
                   "Succeeded"
                 ]
               },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PostItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                  "item/Title": "@concat('Action Held: P', string(triggerBody()?['ID']))",
+                  "item/Publication/Id": "@triggerBody()?['ID']",
+                  "item/EventType/Value": "Status Changed",
+                  "item/EventBy/Claims": "@triggerBody()?['Editor']?['Claims']",
+                  "item/EventDetails": "@concat('On hold from ', outputs('Today'), '. Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '. Reminders stop until the action resumes.')"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Tell_endorsers_paused": {
+              "runAfter": {
+                "Log_hold": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach",
+              "foreach": "@body('Open_rows_with_endorser')",
+              "actions": {
+                "Mail_to_paused": {
+                  "runAfter": {},
+                  "type": "Compose",
+                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('Alert e-mail (pfm_AlertEmail)'), items('Tell_endorsers_paused')?['Endorser']?['Email'])"
+                },
+                "Mail_cc_paused": {
+                  "runAfter": {
+                    "Mail_to_paused": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
+                },
+                "Mail_note_paused": {
+                  "runAfter": {
+                    "Mail_cc_paused": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Compose",
+                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('Tell_endorsers_paused')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
+                },
+                "If_shared_mailbox_paused": {
+                  "runAfter": {
+                    "Mail_note_paused": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                          true
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Send_from_the_owner_paused": {
+                      "runAfter": {},
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                          "connectionName": "shared_office365",
+                          "operationId": "SendEmailV2"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "parameters": {
+                          "emailMessage/To": "@outputs('Mail_to_paused')",
+                          "emailMessage/Cc": "@outputs('Mail_cc_paused')",
+                          "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                          "emailMessage/Body": "@concat(outputs('Mail_note_paused'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is on hold from ', outputs('Today'), '. You get no reminders while it is on hold. When it resumes, your suspense moves out by the weekdays it was on hold.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
+                          "emailMessage/Importance": "@'Normal'"
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Send_from_the_shared_mailbox_paused": {
+                        "runAfter": {},
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                            "connectionName": "shared_office365",
+                            "operationId": "SharedMailboxSendEmailV2"
+                          },
+                          "authentication": "@parameters('$authentication')",
+                          "parameters": {
+                            "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                            "emailMessage/To": "@outputs('Mail_to_paused')",
+                            "emailMessage/Cc": "@outputs('Mail_cc_paused')",
+                            "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                            "emailMessage/Body": "@concat(outputs('Mail_note_paused'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is on hold from ', outputs('Today'), '. You get no reminders while it is on hold. When it resumes, your suspense moves out by the weekdays it was on hold.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
+                            "emailMessage/Importance": "@'Normal'"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "If_hold_ended": {
+          "runAfter": {
+            "If_hold_started": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "not": {
+                  "equals": [
+                    "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')",
+                    "On Hold"
+                  ]
+                }
+              },
+              {
+                "equals": [
+                  "@empty(triggerBody()?['HeldSince'])",
+                  false
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Held_from": {
+              "runAfter": {},
+              "type": "Compose",
+              "inputs": "@substring(triggerBody()?['HeldSince'], 0, 10)"
+            },
+            "Held_days": {
+              "runAfter": {
+                "Held_from": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@max(div(sub(ticks(outputs('Today')), ticks(outputs('Held_from'))), 864000000000), 0)"
+            },
+            "Held_weekdays": {
+              "runAfter": {
+                "Held_days": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@range(0, add(outputs('Held_days'), 1))",
+                "where": "@and(greater(item(), 0), not(equals(dayOfWeek(addDays(outputs('Held_from'), item())), 0)), not(equals(dayOfWeek(addDays(outputs('Held_from'), item())), 6)))"
+              }
+            },
+            "If_resumed_with_days": {
+              "runAfter": {
+                "Held_weekdays": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "contains": [
+                        "@createArray('On Hold', 'Cancelled', 'Complete')",
+                        "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')"
+                      ]
+                    }
+                  },
+                  {
+                    "greater": [
+                      "@length(body('Held_weekdays'))",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "For_each_open_row": {
+                  "runAfter": {},
+                  "type": "Foreach",
+                  "foreach": "@body('Open_rows_with_due')",
+                  "actions": {
+                    "If_not_moved_yet": {
+                      "runAfter": {},
+                      "type": "If",
+                      "expression": {
+                        "not": {
+                          "contains": [
+                            "@coalesce(items('For_each_open_row')?['ExtensionRationale'], '')",
+                            "@concat('Hold ', outputs('Held_from'), ' to ')"
+                          ]
+                        }
+                      },
+                      "actions": {
+                        "Base_due": {
+                          "runAfter": {},
+                          "type": "Compose",
+                          "inputs": "@if(and(not(empty(items('For_each_open_row')?['ExtensionDate'])), greater(ticks(substring(coalesce(items('For_each_open_row')?['ExtensionDate'], '0001-01-01'), 0, 10)), ticks(substring(items('For_each_open_row')?['DueDate'], 0, 10)))), substring(coalesce(items('For_each_open_row')?['ExtensionDate'], '0001-01-01'), 0, 10), substring(items('For_each_open_row')?['DueDate'], 0, 10))"
+                        },
+                        "Base_weekday": {
+                          "runAfter": {
+                            "Base_due": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Compose",
+                          "inputs": "@addDays(outputs('Base_due'), if(equals(dayOfWeek(outputs('Base_due')), 6), -1, if(equals(dayOfWeek(outputs('Base_due')), 0), -2, 0)), 'yyyy-MM-dd')"
+                        },
+                        "New_due": {
+                          "runAfter": {
+                            "Base_weekday": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "Compose",
+                          "inputs": "@addDays(outputs('Base_weekday'), add(mul(7, div(length(body('Held_weekdays')), 5)), add(mod(length(body('Held_weekdays')), 5), if(greater(add(dayOfWeek(outputs('Base_weekday')), mod(length(body('Held_weekdays')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+                        },
+                        "Move_suspense": {
+                          "runAfter": {
+                            "New_due": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "OpenApiConnection",
+                          "inputs": {
+                            "host": {
+                              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                              "connectionName": "shared_sharepointonline",
+                              "operationId": "PatchItem"
+                            },
+                            "parameters": {
+                              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                              "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
+                              "id": "@items('For_each_open_row')?['ID']",
+                              "item/Title": "@items('For_each_open_row')?['Title']",
+                              "item/DueDate": "@outputs('New_due')",
+                              "item/ExtensionRationale": "@concat(coalesce(items('For_each_open_row')?['ExtensionRationale'], ''), if(empty(items('For_each_open_row')?['ExtensionRationale']), '', ' '), 'Hold ', outputs('Held_from'), ' to ', outputs('Today'), ': suspense moved out ', string(length(body('Held_weekdays'))), ' weekday(s), from ', outputs('Base_due'), ' to ', outputs('New_due'), ' (PFM hold, logged as an extension; DAFMAN 90-161 5.2.1).')"
+                            },
+                            "authentication": "@parameters('$authentication')"
+                          }
+                        },
+                        "If_endorser_resumed": {
+                          "runAfter": {
+                            "Move_suspense": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "If",
+                          "expression": {
+                            "not": {
+                              "equals": [
+                                "@coalesce(items('For_each_open_row')?['Endorser']?['Email'], '')",
+                                ""
+                              ]
+                            }
+                          },
+                          "actions": {
+                            "Mail_to_resumed": {
+                              "runAfter": {},
+                              "type": "Compose",
+                              "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('Alert e-mail (pfm_AlertEmail)'), items('For_each_open_row')?['Endorser']?['Email'])"
+                            },
+                            "Mail_cc_resumed": {
+                              "runAfter": {
+                                "Mail_to_resumed": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "type": "Compose",
+                              "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
+                            },
+                            "Mail_note_resumed": {
+                              "runAfter": {
+                                "Mail_cc_resumed": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "type": "Compose",
+                              "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('For_each_open_row')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
+                            },
+                            "If_shared_mailbox_resumed": {
+                              "runAfter": {
+                                "Mail_note_resumed": [
+                                  "Succeeded"
+                                ]
+                              },
+                              "type": "If",
+                              "expression": {
+                                "and": [
+                                  {
+                                    "equals": [
+                                      "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                                      true
+                                    ]
+                                  }
+                                ]
+                              },
+                              "actions": {
+                                "Send_from_the_owner_resumed": {
+                                  "runAfter": {},
+                                  "type": "OpenApiConnection",
+                                  "inputs": {
+                                    "host": {
+                                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                      "connectionName": "shared_office365",
+                                      "operationId": "SendEmailV2"
+                                    },
+                                    "authentication": "@parameters('$authentication')",
+                                    "parameters": {
+                                      "emailMessage/To": "@outputs('Mail_to_resumed')",
+                                      "emailMessage/Cc": "@outputs('Mail_cc_resumed')",
+                                      "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                                      "emailMessage/Body": "@concat(outputs('Mail_note_resumed'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' has resumed. Your new suspense is ', outputs('New_due'), '.</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
+                                      "emailMessage/Importance": "@'Normal'"
+                                    }
+                                  }
+                                }
+                              },
+                              "else": {
+                                "actions": {
+                                  "Send_from_the_shared_mailbox_resumed": {
+                                    "runAfter": {},
+                                    "type": "OpenApiConnection",
+                                    "inputs": {
+                                      "host": {
+                                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                                        "connectionName": "shared_office365",
+                                        "operationId": "SharedMailboxSendEmailV2"
+                                      },
+                                      "authentication": "@parameters('$authentication')",
+                                      "parameters": {
+                                        "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                                        "emailMessage/To": "@outputs('Mail_to_resumed')",
+                                        "emailMessage/Cc": "@outputs('Mail_cc_resumed')",
+                                        "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                                        "emailMessage/Body": "@concat(outputs('Mail_note_resumed'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' has resumed. Your new suspense is ', outputs('New_due'), '.</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
+                                        "emailMessage/Importance": "@'Normal'"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "else": {
+                            "actions": {}
+                          }
+                        }
+                      },
+                      "else": {
+                        "actions": {}
+                      }
+                    }
+                  },
+                  "runtimeConfiguration": {
+                    "concurrency": {
+                      "repetitions": 1
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            },
+            "Log_resume": {
+              "runAfter": {
+                "If_resumed_with_days": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PostItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                  "item/Title": "@concat('Action Resumed: P', string(triggerBody()?['ID']))",
+                  "item/Publication/Id": "@triggerBody()?['ID']",
+                  "item/EventType/Value": "Status Changed",
+                  "item/EventBy/Claims": "@triggerBody()?['Editor']?['Claims']",
+                  "item/EventDetails": "@concat('Hold ended (', coalesce(triggerBody()?['ActionStatus']?['Value'], ''), ') after ', string(length(body('Held_weekdays'))), ' weekday(s) on hold, from ', outputs('Held_from'), ' to ', outputs('Today'), if(contains(createArray('Cancelled', 'Complete'), coalesce(triggerBody()?['ActionStatus']?['Value'], '')), '. No suspense moved.', concat('. Suspense moved on ', string(length(body('Open_rows_with_due'))), ' open row(s).')))"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Clear_held_since": {
+              "runAfter": {
+                "Log_resume": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+                  "id": "@triggerBody()?['ID']",
+                  "item/Title": "@triggerBody()?['Title']",
+                  "item/HeldSince": "@null"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "If_cancelled": {
+          "runAfter": {
+            "If_hold_ended": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')",
+              "Cancelled"
+            ]
+          },
+          "actions": {
+            "Get_cancel_log": {
+              "runAfter": {},
               "type": "OpenApiConnection",
               "inputs": {
                 "host": {
@@ -69,86 +633,29 @@
                 },
                 "parameters": {
                   "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-                  "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                  "$filter": "@concat('Publication/Id eq ', string(triggerBody()?['ID']), ' and EndorsementStatus eq ''Not Started''')",
-                  "$top": 500
+                  "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                  "$filter": "@concat('Title eq ''Action Cancelled: P', string(triggerBody()?['ID']), '''')",
+                  "$top": 1
                 },
                 "authentication": "@parameters('$authentication')"
               }
             },
-            "Open_rows_with_endorser": {
+            "If_not_logged_yet": {
               "runAfter": {
-                "Get_open_rows": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Query",
-              "inputs": {
-                "from": "@body('Get_open_rows')?['value']",
-                "where": "@not(empty(item()?['Endorser']?['Email']))"
-              }
-            },
-            "Open_rows_with_due": {
-              "runAfter": {
-                "Open_rows_with_endorser": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Query",
-              "inputs": {
-                "from": "@body('Get_open_rows')?['value']",
-                "where": "@not(empty(item()?['DueDate']))"
-              }
-            },
-            "If_hold_started": {
-              "runAfter": {
-                "Open_rows_with_due": [
+                "Get_cancel_log": [
                   "Succeeded"
                 ]
               },
               "type": "If",
               "expression": {
-                "and": [
-                  {
-                    "equals": [
-                      "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')",
-                      "On Hold"
-                    ]
-                  },
-                  {
-                    "equals": [
-                      "@empty(triggerBody()?['HeldSince'])",
-                      true
-                    ]
-                  }
+                "equals": [
+                  "@length(body('Get_cancel_log')?['value'])",
+                  0
                 ]
               },
               "actions": {
-                "Set_held_since": {
+                "Log_cancel": {
                   "runAfter": {},
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PatchItem"
-                    },
-                    "parameters": {
-                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-                      "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
-                      "id": "@triggerBody()?['ID']",
-                      "item/Title": "@triggerBody()?['Title']",
-                      "item/HeldSince": "@outputs('Today')"
-                    },
-                    "authentication": "@parameters('$authentication')"
-                  }
-                },
-                "Log_hold": {
-                  "runAfter": {
-                    "Set_held_since": [
-                      "Succeeded"
-                    ]
-                  },
                   "type": "OpenApiConnection",
                   "inputs": {
                     "host": {
@@ -159,50 +666,50 @@
                     "parameters": {
                       "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                       "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                      "item/Title": "@concat('Action Held: P', string(triggerBody()?['ID']))",
+                      "item/Title": "@concat('Action Cancelled: P', string(triggerBody()?['ID']))",
                       "item/Publication/Id": "@triggerBody()?['ID']",
                       "item/EventType/Value": "Status Changed",
                       "item/EventBy/Claims": "@triggerBody()?['Editor']?['Claims']",
-                      "item/EventDetails": "@concat('On hold from ', outputs('Today'), '. Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '. Reminders stop until the action resumes.')"
+                      "item/EventDetails": "@concat('Action cancelled on ', outputs('Today'), '. Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '. The rows stay as the record.')"
                     },
                     "authentication": "@parameters('$authentication')"
                   }
                 },
-                "Tell_endorsers_paused": {
+                "Tell_endorsers_cancelled": {
                   "runAfter": {
-                    "Log_hold": [
+                    "Log_cancel": [
                       "Succeeded"
                     ]
                   },
                   "type": "Foreach",
                   "foreach": "@body('Open_rows_with_endorser')",
                   "actions": {
-                    "Mail_to_paused": {
+                    "Mail_to_cancelled": {
                       "runAfter": {},
                       "type": "Compose",
-                      "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('PFM e-mail (pfm_PfmEmail)'), items('Tell_endorsers_paused')?['Endorser']?['Email'])"
+                      "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('Alert e-mail (pfm_AlertEmail)'), items('Tell_endorsers_cancelled')?['Endorser']?['Email'])"
                     },
-                    "Mail_cc_paused": {
+                    "Mail_cc_cancelled": {
                       "runAfter": {
-                        "Mail_to_paused": [
+                        "Mail_to_cancelled": [
                           "Succeeded"
                         ]
                       },
                       "type": "Compose",
                       "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
                     },
-                    "Mail_note_paused": {
+                    "Mail_note_cancelled": {
                       "runAfter": {
-                        "Mail_cc_paused": [
+                        "Mail_cc_cancelled": [
                           "Succeeded"
                         ]
                       },
                       "type": "Compose",
-                      "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the PFM only. Intended To: ', items('Tell_endorsers_paused')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
+                      "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('Tell_endorsers_cancelled')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
                     },
-                    "If_shared_mailbox_paused": {
+                    "If_shared_mailbox_cancelled": {
                       "runAfter": {
-                        "Mail_note_paused": [
+                        "Mail_note_cancelled": [
                           "Succeeded"
                         ]
                       },
@@ -218,7 +725,7 @@
                         ]
                       },
                       "actions": {
-                        "Send_from_the_owner_paused": {
+                        "Send_from_the_owner_cancelled": {
                           "runAfter": {},
                           "type": "OpenApiConnection",
                           "inputs": {
@@ -229,10 +736,10 @@
                             },
                             "authentication": "@parameters('$authentication')",
                             "parameters": {
-                              "emailMessage/To": "@outputs('Mail_to_paused')",
-                              "emailMessage/Cc": "@outputs('Mail_cc_paused')",
-                              "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), 'TEST: ', ''), concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
-                              "emailMessage/Body": "@concat(outputs('Mail_note_paused'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is on hold from ', outputs('Today'), '. You get no reminders while it is on hold. When it resumes, your suspense moves out by the weekdays it was on hold.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
+                              "emailMessage/To": "@outputs('Mail_to_cancelled')",
+                              "emailMessage/Cc": "@outputs('Mail_cc_cancelled')",
+                              "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                              "emailMessage/Body": "@concat(outputs('Mail_note_cancelled'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is cancelled. No response is needed.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                               "emailMessage/Importance": "@'Normal'"
                             }
                           }
@@ -240,7 +747,7 @@
                       },
                       "else": {
                         "actions": {
-                          "Send_from_the_shared_mailbox_paused": {
+                          "Send_from_the_shared_mailbox_cancelled": {
                             "runAfter": {},
                             "type": "OpenApiConnection",
                             "inputs": {
@@ -252,10 +759,10 @@
                               "authentication": "@parameters('$authentication')",
                               "parameters": {
                                 "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
-                                "emailMessage/To": "@outputs('Mail_to_paused')",
-                                "emailMessage/Cc": "@outputs('Mail_cc_paused')",
-                                "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), 'TEST: ', ''), concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
-                                "emailMessage/Body": "@concat(outputs('Mail_note_paused'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is on hold from ', outputs('Today'), '. You get no reminders while it is on hold. When it resumes, your suspense moves out by the weekdays it was on hold.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
+                                "emailMessage/To": "@outputs('Mail_to_cancelled')",
+                                "emailMessage/Cc": "@outputs('Mail_cc_cancelled')",
+                                "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                                "emailMessage/Body": "@concat(outputs('Mail_note_cancelled'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is cancelled. No response is needed.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                                 "emailMessage/Importance": "@'Normal'"
                               }
                             }
@@ -274,579 +781,75 @@
               "else": {
                 "actions": {}
               }
-            },
-            "If_hold_ended": {
-              "runAfter": {
-                "If_hold_started": [
-                  "Succeeded"
-                ]
-              },
-              "type": "If",
-              "expression": {
-                "and": [
-                  {
-                    "not": {
-                      "equals": [
-                        "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')",
-                        "On Hold"
-                      ]
-                    }
-                  },
-                  {
-                    "equals": [
-                      "@empty(triggerBody()?['HeldSince'])",
-                      false
-                    ]
-                  }
-                ]
-              },
-              "actions": {
-                "Held_from": {
-                  "runAfter": {},
-                  "type": "Compose",
-                  "inputs": "@substring(triggerBody()?['HeldSince'], 0, 10)"
-                },
-                "Held_days": {
-                  "runAfter": {
-                    "Held_from": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "Compose",
-                  "inputs": "@max(div(sub(ticks(outputs('Today')), ticks(outputs('Held_from'))), 864000000000), 0)"
-                },
-                "Held_weekdays": {
-                  "runAfter": {
-                    "Held_days": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "Query",
-                  "inputs": {
-                    "from": "@range(0, add(outputs('Held_days'), 1))",
-                    "where": "@and(greater(item(), 0), not(equals(dayOfWeek(addDays(outputs('Held_from'), item())), 0)), not(equals(dayOfWeek(addDays(outputs('Held_from'), item())), 6)))"
-                  }
-                },
-                "If_resumed_with_days": {
-                  "runAfter": {
-                    "Held_weekdays": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "If",
-                  "expression": {
-                    "and": [
-                      {
-                        "not": {
-                          "contains": [
-                            "@createArray('On Hold', 'Cancelled', 'Complete')",
-                            "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')"
-                          ]
-                        }
-                      },
-                      {
-                        "greater": [
-                          "@length(body('Held_weekdays'))",
-                          0
-                        ]
-                      }
-                    ]
-                  },
-                  "actions": {
-                    "For_each_open_row": {
-                      "runAfter": {},
-                      "type": "Foreach",
-                      "foreach": "@body('Open_rows_with_due')",
-                      "actions": {
-                        "If_not_moved_yet": {
-                          "runAfter": {},
-                          "type": "If",
-                          "expression": {
-                            "not": {
-                              "contains": [
-                                "@coalesce(items('For_each_open_row')?['ExtensionRationale'], '')",
-                                "@concat('Hold ', outputs('Held_from'), ' to ')"
-                              ]
-                            }
-                          },
-                          "actions": {
-                            "Base_due": {
-                              "runAfter": {},
-                              "type": "Compose",
-                              "inputs": "@if(and(not(empty(items('For_each_open_row')?['ExtensionDate'])), greater(ticks(substring(coalesce(items('For_each_open_row')?['ExtensionDate'], '0001-01-01'), 0, 10)), ticks(substring(items('For_each_open_row')?['DueDate'], 0, 10)))), substring(coalesce(items('For_each_open_row')?['ExtensionDate'], '0001-01-01'), 0, 10), substring(items('For_each_open_row')?['DueDate'], 0, 10))"
-                            },
-                            "Base_weekday": {
-                              "runAfter": {
-                                "Base_due": [
-                                  "Succeeded"
-                                ]
-                              },
-                              "type": "Compose",
-                              "inputs": "@addDays(outputs('Base_due'), if(equals(dayOfWeek(outputs('Base_due')), 6), -1, if(equals(dayOfWeek(outputs('Base_due')), 0), -2, 0)), 'yyyy-MM-dd')"
-                            },
-                            "New_due": {
-                              "runAfter": {
-                                "Base_weekday": [
-                                  "Succeeded"
-                                ]
-                              },
-                              "type": "Compose",
-                              "inputs": "@addDays(outputs('Base_weekday'), add(mul(7, div(length(body('Held_weekdays')), 5)), add(mod(length(body('Held_weekdays')), 5), if(greater(add(dayOfWeek(outputs('Base_weekday')), mod(length(body('Held_weekdays')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
-                            },
-                            "Move_suspense": {
-                              "runAfter": {
-                                "New_due": [
-                                  "Succeeded"
-                                ]
-                              },
-                              "type": "OpenApiConnection",
-                              "inputs": {
-                                "host": {
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-                                  "connectionName": "shared_sharepointonline",
-                                  "operationId": "PatchItem"
-                                },
-                                "parameters": {
-                                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-                                  "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                                  "id": "@items('For_each_open_row')?['ID']",
-                                  "item/Title": "@items('For_each_open_row')?['Title']",
-                                  "item/DueDate": "@outputs('New_due')",
-                                  "item/ExtensionRationale": "@concat(coalesce(items('For_each_open_row')?['ExtensionRationale'], ''), if(empty(items('For_each_open_row')?['ExtensionRationale']), '', ' '), 'Hold ', outputs('Held_from'), ' to ', outputs('Today'), ': suspense moved out ', string(length(body('Held_weekdays'))), ' weekday(s), from ', outputs('Base_due'), ' to ', outputs('New_due'), ' (PFM hold, logged as an extension; DAFMAN 90-161 5.2.1).')"
-                                },
-                                "authentication": "@parameters('$authentication')"
-                              }
-                            },
-                            "If_endorser_resumed": {
-                              "runAfter": {
-                                "Move_suspense": [
-                                  "Succeeded"
-                                ]
-                              },
-                              "type": "If",
-                              "expression": {
-                                "not": {
-                                  "equals": [
-                                    "@coalesce(items('For_each_open_row')?['Endorser']?['Email'], '')",
-                                    ""
-                                  ]
-                                }
-                              },
-                              "actions": {
-                                "Mail_to_resumed": {
-                                  "runAfter": {},
-                                  "type": "Compose",
-                                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('PFM e-mail (pfm_PfmEmail)'), items('For_each_open_row')?['Endorser']?['Email'])"
-                                },
-                                "Mail_cc_resumed": {
-                                  "runAfter": {
-                                    "Mail_to_resumed": [
-                                      "Succeeded"
-                                    ]
-                                  },
-                                  "type": "Compose",
-                                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
-                                },
-                                "Mail_note_resumed": {
-                                  "runAfter": {
-                                    "Mail_cc_resumed": [
-                                      "Succeeded"
-                                    ]
-                                  },
-                                  "type": "Compose",
-                                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the PFM only. Intended To: ', items('For_each_open_row')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
-                                },
-                                "If_shared_mailbox_resumed": {
-                                  "runAfter": {
-                                    "Mail_note_resumed": [
-                                      "Succeeded"
-                                    ]
-                                  },
-                                  "type": "If",
-                                  "expression": {
-                                    "and": [
-                                      {
-                                        "equals": [
-                                          "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
-                                          true
-                                        ]
-                                      }
-                                    ]
-                                  },
-                                  "actions": {
-                                    "Send_from_the_owner_resumed": {
-                                      "runAfter": {},
-                                      "type": "OpenApiConnection",
-                                      "inputs": {
-                                        "host": {
-                                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
-                                          "connectionName": "shared_office365",
-                                          "operationId": "SendEmailV2"
-                                        },
-                                        "authentication": "@parameters('$authentication')",
-                                        "parameters": {
-                                          "emailMessage/To": "@outputs('Mail_to_resumed')",
-                                          "emailMessage/Cc": "@outputs('Mail_cc_resumed')",
-                                          "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), 'TEST: ', ''), concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
-                                          "emailMessage/Body": "@concat(outputs('Mail_note_resumed'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' has resumed. Your new suspense is ', outputs('New_due'), '.</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
-                                          "emailMessage/Importance": "@'Normal'"
-                                        }
-                                      }
-                                    }
-                                  },
-                                  "else": {
-                                    "actions": {
-                                      "Send_from_the_shared_mailbox_resumed": {
-                                        "runAfter": {},
-                                        "type": "OpenApiConnection",
-                                        "inputs": {
-                                          "host": {
-                                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
-                                            "connectionName": "shared_office365",
-                                            "operationId": "SharedMailboxSendEmailV2"
-                                          },
-                                          "authentication": "@parameters('$authentication')",
-                                          "parameters": {
-                                            "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
-                                            "emailMessage/To": "@outputs('Mail_to_resumed')",
-                                            "emailMessage/Cc": "@outputs('Mail_cc_resumed')",
-                                            "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), 'TEST: ', ''), concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
-                                            "emailMessage/Body": "@concat(outputs('Mail_note_resumed'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' has resumed. Your new suspense is ', outputs('New_due'), '.</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
-                                            "emailMessage/Importance": "@'Normal'"
-                                          }
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              },
-                              "else": {
-                                "actions": {}
-                              }
-                            }
-                          },
-                          "else": {
-                            "actions": {}
-                          }
-                        }
-                      },
-                      "runtimeConfiguration": {
-                        "concurrency": {
-                          "repetitions": 1
-                        }
-                      }
-                    }
-                  },
-                  "else": {
-                    "actions": {}
-                  }
-                },
-                "Log_resume": {
-                  "runAfter": {
-                    "If_resumed_with_days": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PostItem"
-                    },
-                    "parameters": {
-                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-                      "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                      "item/Title": "@concat('Action Resumed: P', string(triggerBody()?['ID']))",
-                      "item/Publication/Id": "@triggerBody()?['ID']",
-                      "item/EventType/Value": "Status Changed",
-                      "item/EventBy/Claims": "@triggerBody()?['Editor']?['Claims']",
-                      "item/EventDetails": "@concat('Hold ended (', coalesce(triggerBody()?['ActionStatus']?['Value'], ''), ') after ', string(length(body('Held_weekdays'))), ' weekday(s) on hold, from ', outputs('Held_from'), ' to ', outputs('Today'), if(contains(createArray('Cancelled', 'Complete'), coalesce(triggerBody()?['ActionStatus']?['Value'], '')), '. No suspense moved.', concat('. Suspense moved on ', string(length(body('Open_rows_with_due'))), ' open row(s).')))"
-                    },
-                    "authentication": "@parameters('$authentication')"
-                  }
-                },
-                "Clear_held_since": {
-                  "runAfter": {
-                    "Log_resume": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "PatchItem"
-                    },
-                    "parameters": {
-                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-                      "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
-                      "id": "@triggerBody()?['ID']",
-                      "item/Title": "@triggerBody()?['Title']",
-                      "item/HeldSince": "@null"
-                    },
-                    "authentication": "@parameters('$authentication')"
-                  }
-                }
-              },
-              "else": {
-                "actions": {}
-              }
-            },
-            "If_cancelled": {
-              "runAfter": {
-                "If_hold_ended": [
-                  "Succeeded"
-                ]
-              },
-              "type": "If",
-              "expression": {
-                "equals": [
-                  "@coalesce(triggerBody()?['ActionStatus']?['Value'], '')",
-                  "Cancelled"
-                ]
-              },
-              "actions": {
-                "Get_cancel_log": {
-                  "runAfter": {},
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-                      "connectionName": "shared_sharepointonline",
-                      "operationId": "GetItems"
-                    },
-                    "parameters": {
-                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-                      "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                      "$filter": "@concat('Title eq ''Action Cancelled: P', string(triggerBody()?['ID']), '''')",
-                      "$top": 1
-                    },
-                    "authentication": "@parameters('$authentication')"
-                  }
-                },
-                "If_not_logged_yet": {
-                  "runAfter": {
-                    "Get_cancel_log": [
-                      "Succeeded"
-                    ]
-                  },
-                  "type": "If",
-                  "expression": {
-                    "equals": [
-                      "@length(body('Get_cancel_log')?['value'])",
-                      0
-                    ]
-                  },
-                  "actions": {
-                    "Log_cancel": {
-                      "runAfter": {},
-                      "type": "OpenApiConnection",
-                      "inputs": {
-                        "host": {
-                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-                          "connectionName": "shared_sharepointonline",
-                          "operationId": "PostItem"
-                        },
-                        "parameters": {
-                          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-                          "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                          "item/Title": "@concat('Action Cancelled: P', string(triggerBody()?['ID']))",
-                          "item/Publication/Id": "@triggerBody()?['ID']",
-                          "item/EventType/Value": "Status Changed",
-                          "item/EventBy/Claims": "@triggerBody()?['Editor']?['Claims']",
-                          "item/EventDetails": "@concat('Action cancelled on ', outputs('Today'), '. Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '. The rows stay as the record.')"
-                        },
-                        "authentication": "@parameters('$authentication')"
-                      }
-                    },
-                    "Tell_endorsers_cancelled": {
-                      "runAfter": {
-                        "Log_cancel": [
-                          "Succeeded"
-                        ]
-                      },
-                      "type": "Foreach",
-                      "foreach": "@body('Open_rows_with_endorser')",
-                      "actions": {
-                        "Mail_to_cancelled": {
-                          "runAfter": {},
-                          "type": "Compose",
-                          "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('PFM e-mail (pfm_PfmEmail)'), items('Tell_endorsers_cancelled')?['Endorser']?['Email'])"
-                        },
-                        "Mail_cc_cancelled": {
-                          "runAfter": {
-                            "Mail_to_cancelled": [
-                              "Succeeded"
-                            ]
-                          },
-                          "type": "Compose",
-                          "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
-                        },
-                        "Mail_note_cancelled": {
-                          "runAfter": {
-                            "Mail_cc_cancelled": [
-                              "Succeeded"
-                            ]
-                          },
-                          "type": "Compose",
-                          "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the PFM only. Intended To: ', items('Tell_endorsers_cancelled')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
-                        },
-                        "If_shared_mailbox_cancelled": {
-                          "runAfter": {
-                            "Mail_note_cancelled": [
-                              "Succeeded"
-                            ]
-                          },
-                          "type": "If",
-                          "expression": {
-                            "and": [
-                              {
-                                "equals": [
-                                  "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
-                                  true
-                                ]
-                              }
-                            ]
-                          },
-                          "actions": {
-                            "Send_from_the_owner_cancelled": {
-                              "runAfter": {},
-                              "type": "OpenApiConnection",
-                              "inputs": {
-                                "host": {
-                                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
-                                  "connectionName": "shared_office365",
-                                  "operationId": "SendEmailV2"
-                                },
-                                "authentication": "@parameters('$authentication')",
-                                "parameters": {
-                                  "emailMessage/To": "@outputs('Mail_to_cancelled')",
-                                  "emailMessage/Cc": "@outputs('Mail_cc_cancelled')",
-                                  "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), 'TEST: ', ''), concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
-                                  "emailMessage/Body": "@concat(outputs('Mail_note_cancelled'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is cancelled. No response is needed.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
-                                  "emailMessage/Importance": "@'Normal'"
-                                }
-                              }
-                            }
-                          },
-                          "else": {
-                            "actions": {
-                              "Send_from_the_shared_mailbox_cancelled": {
-                                "runAfter": {},
-                                "type": "OpenApiConnection",
-                                "inputs": {
-                                  "host": {
-                                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
-                                    "connectionName": "shared_office365",
-                                    "operationId": "SharedMailboxSendEmailV2"
-                                  },
-                                  "authentication": "@parameters('$authentication')",
-                                  "parameters": {
-                                    "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
-                                    "emailMessage/To": "@outputs('Mail_to_cancelled')",
-                                    "emailMessage/Cc": "@outputs('Mail_cc_cancelled')",
-                                    "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), 'TEST: ', ''), concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
-                                    "emailMessage/Body": "@concat(outputs('Mail_note_cancelled'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is cancelled. No response is needed.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
-                                    "emailMessage/Importance": "@'Normal'"
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      },
-                      "runtimeConfiguration": {
-                        "concurrency": {
-                          "repetitions": 1
-                        }
-                      }
-                    }
-                  },
-                  "else": {
-                    "actions": {}
-                  }
-                }
-              },
-              "else": {
-                "actions": {}
-              }
             }
-          }
-        },
-        "Catch": {
-          "runAfter": {
-            "Try": [
-              "Failed",
-              "TimedOut"
-            ]
           },
-          "type": "Scope",
-          "actions": {
-            "Failed_steps": {
-              "runAfter": {},
-              "type": "Query",
-              "inputs": {
-                "from": "@result('Try')",
-                "where": "@equals(item()?['status'], 'Failed')"
-              }
-            },
-            "Failed_text": {
-              "runAfter": {
-                "Failed_steps": [
-                  "Succeeded"
-                ]
-              },
-              "type": "Select",
-              "inputs": {
-                "from": "@body('Failed_steps')",
-                "select": "@concat('<li>', item()?['name'], ': ', take(coalesce(item()?['error']?['message'], string(item()?['outputs']), 'no message'), 600), '</li>')"
-              }
-            },
-            "Send_failure_e-mail": {
-              "runAfter": {
-                "Failed_text": [
-                  "Succeeded"
-                ]
-              },
-              "type": "OpenApiConnection",
-              "inputs": {
-                "host": {
-                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
-                  "connectionName": "shared_office365",
-                  "operationId": "SendEmailV2"
-                },
-                "authentication": "@parameters('$authentication')",
-                "parameters": {
-                  "emailMessage/To": "@parameters('PFM e-mail (pfm_PfmEmail)')",
-                  "emailMessage/Subject": "@concat('90161Z flow failed: F06 Hold and Resume r1', concat(', item ', string(triggerBody()?['ID'])))",
-                  "emailMessage/Body": "@concat('<p>The flow F06 Hold and Resume r1 stopped on a failed step.</p><p>Run: ', workflow()?['run']?['name'], '</p><ul>', join(body('Failed_text'), ''), '</ul><p>Fix the cause, then open the run in the run history and select Resubmit. A resubmitted run does not repeat what the failed run already did.</p>')",
-                  "emailMessage/Importance": "High"
-                }
-              }
-            },
-            "End_as_failed": {
-              "runAfter": {
-                "Send_failure_e-mail": [
-                  "Succeeded",
-                  "Failed"
-                ]
-              },
-              "type": "Terminate",
-              "inputs": {
-                "runStatus": "Failed",
-                "runError": {
-                  "code": "StepFailed",
-                  "message": "A step failed; the PFM was e-mailed."
-                }
-              }
-            }
+          "else": {
+            "actions": {}
           }
         }
+      }
+    },
+    "Failed_actions": {
+      "runAfter": {
+        "Try": [
+          "Failed",
+          "TimedOut"
+        ]
       },
-      "else": {
-        "actions": {}
+      "type": "Query",
+      "inputs": {
+        "from": "@result('Try')",
+        "where": "@or(equals(item()?['status'], 'Failed'), equals(item()?['status'], 'TimedOut'))"
+      }
+    },
+    "Failure_lines": {
+      "runAfter": {
+        "Failed_actions": [
+          "Succeeded"
+        ]
+      },
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Failed_actions')",
+        "select": "@concat('<li><b>', replace(coalesce(item()?['name'], 'step'), '_', ' '), '</b>: ', coalesce(item()?['error']?['message'], item()?['error']?['code'], 'no error text'), '</li>')"
+      }
+    },
+    "E-mail_the_failure": {
+      "runAfter": {
+        "Failure_lines": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "authentication": "@parameters('$authentication')",
+        "parameters": {
+          "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "emailMessage/Subject": "@concat('90-161.Z flow failed: F06 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
+          "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F06'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '<br><b>Publication row:</b> ', string(triggerBody()?['ID']), '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. In Power Automate, open this flow and its 28-day run history; the failed run has the start time above. 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and does not repeat what the failed run already did.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+          "emailMessage/Importance": "High"
+        }
+      }
+    },
+    "End_as_failed": {
+      "runAfter": {
+        "E-mail_the_failure": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "Terminate",
+      "inputs": {
+        "runStatus": "Failed",
+        "runError": {
+          "code": "StepFailed",
+          "message": "A step failed; the alert address was e-mailed. Fix the cause, then Resubmit this run."
+        }
       }
     }
   }

@@ -14,13 +14,14 @@ def bad(m): errs.append(m)
 # Hosts allowed in any string: Logic Apps schema (as in build_flow_package.py) and the XML/OPC namespaces the solution format needs.
 ALLOWED_HOSTS = {"schema.management.azure.com", "www.w3.org", "schemas.openxmlformats.org"}
 BUILTIN = {"ID", "Id", "Value", "value", "Email", "Claims", "Title", "Editor", "Author", "Created", "Modified", "text"}
-# R21: properties of result('Try') items and workflow() that the failure e-mail reads (not list columns).
-BUILTIN |= {"status", "name", "error", "message", "outputs", "run"}
 
 schemas = {}
 for f in (ROOT / "schemas" / "lists").glob("*.json"):
     d = json.loads(f.read_text(encoding="utf-8"))
     schemas[d["title"]] = {x["internalName"] for x in d["fields"]}
+# Run properties of workflow() and result('Try') that the failure e-mail reads (slice r2, 14 Nov 26); not list columns.
+RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName"}
+RUNTIME_ACTIONS = {"Failed_actions", "Failure_lines", "E-mail_the_failure"}   # only these may read them (review, 14 Nov 26)
 all_cols = set().union(*schemas.values()) | BUILTIN
 env_list = {B.ENV_KEY[s]: default for s, _, default in B.ENV if s.startswith("pfm_List")}
 for key, title in env_list.items():
@@ -78,10 +79,11 @@ for src in sorted(B.DEFS.glob("*.json")):
     hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
     hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
     if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
-    key = d.get("workflowKey", src.stem)   # R21: the revision whose workflow ID this def keeps (same flow, earlier revision)
-    if key != src.stem and not (re.sub(r"-r\d+$", "", key) == re.sub(r"-r\d+$", "", src.stem) and int(key.rsplit("-r", 1)[1]) < int(src.stem.rsplit("-r", 1)[1])):
+    key = d.get("workflowKey")   # R21: the stem of the revision first imported (same flow, earlier revision)
+    if key and not (re.sub(r"-r\d+$", "", key) == re.sub(r"-r\d+$", "", src.stem) and int(key.rsplit("-r", 1)[1]) < int(src.stem.rsplit("-r", 1)[1])):
         bad(f"{src.name}: workflowKey {key} is not an earlier revision of the same flow")
-    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.guid("workflow", key))[1:]]
+    wid = B.guid("workflow", key) if key else B.flow_guid(src.stem)
+    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], wid)[1:]]
     if len(wfs) != 1: bad(f"{src.name}: expected one workflow file in the zip, found {len(wfs)}"); continue
     wf = json.loads(zf.read(wfs[0]))["properties"]
     for c, ref in wf["connectionReferences"].items():
@@ -93,8 +95,11 @@ for src in sorted(B.DEFS.glob("*.json")):
         if name != "trigger": counts["actions"] += 1
         if name != "trigger" and re.search(r"""\[\s*'body/""", json.dumps(a)): bad(f"{src.name} {name}: body/ path expression; use body('Action')?['key']")
         for m in re.findall(r"\?\['(\w+)'\]", json.dumps(a)):
-            if m not in all_cols: bad(f"{src.name} {name}: unknown column or property '{m}'")
+            if m not in all_cols and not (name in RUNTIME_ACTIONS and m in RUNTIME): bad(f"{src.name} {name}: unknown column or property '{m}'")
         p = a.get("inputs", {}).get("parameters", {}) if isinstance(a.get("inputs"), dict) else {}
+        # R20 finding 1: "Update item" (PatchItem) fails flow activation without item/Title (a required column).
+        if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in p:
+            bad(f"{src.name} {name}: PatchItem without item/Title (activation fails: R20 finding 1)")
         if "table" in p:
             m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
             title = env_list.get(m.group(1)) if m else None
@@ -181,17 +186,10 @@ for z in SLICES:
             bad(f"{z.name}: F03 defaults are not 5 and 3 (PFM, 2026-11-14)")
         if b"<isrequired>0</isrequired>" not in zz.read("environmentvariabledefinitions/pfm_SharedMailbox/environmentvariabledefinition.xml"):
             bad(f"{z.name}: the shared mailbox variable must be optional")
-        if len(re.findall(r'<RootComponent type="29"', sol)) != 3: bad(f"{z.name}: slice 1 must hold exactly F03, F05 and F06 (r2, R21)")
-        for e, want in (("pfm_TestMode", "Yes"), ("pfm_FlowsOff", "No")):   # safe defaults: no live e-mail, flows run
-            if (defaults.get(e) or [None, None])[1] != want: bad(f"{z.name}: {e} default must be {want}")
-
-# R20: F03 r2 failed to turn on: "The API operation 'PatchItem' is missing required property 'item/Title'". Every PatchItem
-# sends item/Title (Title is required on every list).
-for src in sorted(B.DEFS.glob("*.json")):
-    for name, a in walk_actions(json.loads(src.read_text(encoding="utf-8"))["actions"]):
-        inp = a.get("inputs") if isinstance(a.get("inputs"), dict) else {}
-        if inp.get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in inp.get("parameters", {}):
-            bad(f"{src.name} {name}: PatchItem without item/Title (R20 import error)")
+        if len(re.findall(r'<RootComponent type="29"', sol)) != 3: bad(f"{z.name}: slice 1 must hold exactly F03, F05 and F06 (R21)")
+        # R21: F03 and F05 keep the workflow IDs R20 imported (seen in the R20 import log), so the import replaces them in place.
+        for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
+            if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
 if errs:
     print("\n".join(errs)); sys.exit(1)

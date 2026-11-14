@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (Round R21 r1: flow controls, hold and resume, and the R20 fixes).
+Updated: 14 Nov 26 (Round R21 r1: slice 1 flows in test mode, with the flow controls and the new RADE window).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,16 +24,16 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R21 r1: flow controls and the R20 fixes on the test site (open, 14 Nov 26)
+## Round R21 r1: slice 1 flows on the test site, in test mode (open, 14 Nov 26)
 
-**For:** R20 found two faults: F03 did not turn on (a required field was missing) and F05 made no rows. R21 fixes F03, adds the flow controls I approved (hold, resume, cancel, test mode, an off switch, failure e-mails, missing rows added back) and tests them end to end with one fake publication. The repository check also gets a new fix.
-**Time:** about 45 minutes (estimate): list update 2, import 8, test part 1 6, run history 3 (only if part 1 fails), run F03 3, test part 2 15, plus sign-ins.
+**For:** R20 imported the flows, but F03 did not turn on (its update step lacked the Title field) and F05 made no rows (likely off after the failed import). R21 imports the fixed slice 1 flows, F05 (endorsement routing r2) and F03 (suspense reminders r3), with test mode on, and proves end to end: routing to Legal and step 7, an action on hold is skipped, a failed run e-mails me and resumes with Resubmit, a missing row comes back alone, and the suspense is 20 working days. It also adds the new list columns (T19) and tests F06, the new hold and resume flow: a held action's suspense dates move out by the weekdays it was on hold, and a cancel is logged once. The repository check has a new fix. The RADE window has the new P1 layout; please check that it displays correctly.
+**Time:** about 50 minutes (estimate): list columns 2, import 8, test part 1 12, failure e-mail and Resubmit 4, run F03 3, test part 2 12, plus sign-ins.
 **Changes:**
 - On my computer: RADE writes into T17, T18, T19 and Rounds\R21, and moves the R20 test files and Rounds\R19 to the Recycle Bin.
-- On the test site, step 1 (T19) adds list columns only: Status Reason and Held Since on PFM Publications, the choices Cancelled and Complete on Action Status, Coordination Round on PFM Endorsements, and it sets the suspense setting to 20 working days. Nothing is removed.
-- In Power Automate: I import the solution "90-161.Z flows" r2 over the R20 one. F03 r3 and F05 r2 replace F03 r2 and F05 r1 (no second copy); F06 Hold and Resume is new. I enter my own work e-mail in "PFM e-mail" and keep Test mode = Yes, so every flow e-mail goes to me only. I turn on F05 and F06; F03 stays off and I run it once by hand.
-- On the test site: RADE creates one fake publication "90161Z TEST R21 (delete me)". F05 adds its rows, F03 sets their suspense, RADE removes one row (F05 must add it back), puts the action on hold and resumes it (F06 must move the suspense dates), answers the rows "Concur", waits for Legal and step 7, and cancels the action. At the end, RADE moves every test row to the site Recycle Bin (restorable for 93 days); if a check fails, they stay for review. Nothing else on the site changes.
-- E-mail: test mode sends any hold, resume or cancel notice to me only (only for offices with an endorser). A failed flow step also e-mails me.
+- On the test site, first (T19): RADE adds list columns only: Status Reason and Held Since on PFM Publications, the choices Cancelled and Complete on Action Status, Coordination Round on PFM Endorsements, and it sets the suspense setting to 20 working days. Nothing is removed.
+- In Power Automate: RADE imports the solution "90-161.Z flows" (3 flows, 2 connection references, environment variables). F03 r3 and F05 r2 replace the R20 flows F03 r2 and F05 r1 (no second copy); F06 Hold and Resume is new. I turn on F05 and F06. F03 stays off; I run it once by hand. Test mode = Yes: every flow e-mail goes to my own address only.
+- On the test site: RADE first removes the fake publication R20 left, then creates three fake publications ("90161Z TEST R21 A", "H" and "F", each ending "(delete me)"), removes one of A's rows once, sets two test rows past due, puts F on hold, resumes it and cancels it, and answers A's rows "Concur". At the end, RADE moves every one of these rows to the site Recycle Bin (restorable for 93 days); if a check fails, they stay for review. Nothing else on the site changes.
+- E-mail to me only: one "90-161.Z flow failed: F05" notice (forced on purpose), one "[TEST] Escalation" e-mail, and F06 hold, resume and cancel notices for offices that have an endorser.
 - RADE saves one Outlook draft (never sent).
 
 Steps:
@@ -41,20 +41,21 @@ Steps:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R21-round-r1.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
 3. In the RADE window, choose the application, run the checks, then select Deploy.
-4. Step 1 (list update) signs in with my CAC and adds the columns. Keep RADE open.
-5. The import window opens at the right edge of the screen. Follow its steps: import, check Site URL and Shared mailbox, enter my work e-mail in "PFM e-mail", keep Test mode = Yes, turn on F05 and F06, then select "Done: imported, F05 and F06 are on".
-6. Test part 1 signs in and waits for F05 (up to 10 minutes).
-7. The run-history window opens. If part 1 shows d-f05-formal PASS, select Skip. Otherwise open the newest F05 run and type its status and the failed step, then select "It failed".
-8. The F03 window opens. Run F03 once (Test > Manually), then select "Done: F03 ran".
-9. Test part 2 runs the missing-row, hold, resume, Legal and cancel checks (about 15 minutes) and removes the test rows. Then I send the Outlook draft. If the window looked wrong, I clear "The window displayed correctly" and write what I saw.
+4. Step 1 (list columns) signs in with my CAC and adds the columns. Keep RADE open.
+5. The import window opens at the right edge of the screen. Follow its steps: import, enter the site address, my e-mail as Alert e-mail, Test mode Yes (and the shared mailbox, if I use one), turn on F05 and F06, then select "Done: imported, F05 and F06 are on".
+6. Test part 1 signs in with my CAC and waits for F05 (up to 10 minutes per check). Keep RADE open.
+7. The Resubmit window opens. Check the failure e-mail, select Resubmit on the failed F05 run, then select "Done: resubmitted".
+8. The F03 window opens. Run F03 once (Test > Manually), check the "[TEST] Escalation" e-mail, then select "Done: F03 ran".
+9. Test part 2 checks the results, tests hold, resume and cancel on F, waits for the Legal rows and step 7, and removes the test rows. Then I send the Outlook draft. If the window looked wrong, I clear "The window displayed correctly" and write what I saw.
 
 **Report:** the draft itself (it holds the list update result, both test result files, or the import log rows). Claude watches the inbox for the subject "90161Z R21".
-**If it fails:** read the "What to do" line in the window. If the import fails, I download the log file; the import log reader collects the error rows and the draft still goes (I can also attach the log file myself). If a test item shows FAIL, the line says which count was wrong; I send the draft as it is.
+**If it fails:** read the "What to do" line in the window. If the import fails, the import log reader collects the error and the round stops there; the draft still goes. If a test item shows FAIL, the line says which count was wrong; I send the draft as it is.
 
 ## Done
 
-- Round R20 (14 Nov 26): needs review. The flows imported, but F03 did not turn on (a required field was missing in one step) and F05 made no rows in 10 minutes; one site check lost the network once; the repository warning stayed. R21 fixes these. Details:
+- Round R20 (14 Nov 26): needs review. The window worked (Window: OK). The solution imported, but F03 did not turn on ("Update item" needs Title) and F05 made no Formal Coordination rows; the repository warning stays. R21 fixes F03 and checks that F05 is on. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r20-results.md
+
 - Round R19 (14 Nov 26): passed. Test solution A r5 imported and its flow ran (connection reference OK, 7 settings rows read): solution-aware flows work here. Site setup passed for the third time and leaves routine rounds. The repository warning has a fix in R20. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r19-results.md
 - Round R18 (14 Nov 26): needs review. Import test A r4 failed again (the pasted error held only the start of the log); I exported a working solution and attached its files by hand, because the export reader looked only in Downloads; site setup r9 passed (6 of 6); the window worked after the Next fix. R19 copies the export's layout. Details:

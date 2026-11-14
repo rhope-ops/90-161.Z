@@ -1,6 +1,8 @@
 # Flow controls: hold, cancel, delete, re-coordination, test mode (14 Nov 26)
 
-Status: design approved by the PFM (14 Nov 26, "yes to all"); the flow parts are built for R21 (D1 skip, D2 hold and resume in F06, D3 cancel log, D4 round number, D6 test mode, kill switch, failure e-mails), not yet run on the gov device; the app parts (P02 buttons, hard delete, Restart coordination, P13 Health) are not built. Build: F03 r3, F05 r2, F06 r1, list schema change (T02 r12, T19 r1), R21 (built 14 Nov 26; the plan said R20 r2: renamed, PFM 14 Nov 26). Sources: flow/solution/README.md, flow/solution/defs/*.json, schemas/lists/*.json, docs/app/screen-map.md.
+Status: design approved by the PFM (14 Nov 26, "yes to all"). Built for R21 (was R20 r2; PFM 14 Nov 26): F05 r2, F03 r3, test mode, kill switch, failure e-mail, T18 test r2. Moved to R22 (they need new list columns, which RADE Install adds): Status Reason, Held Since, the date shift on Resume, the Round number and Restart coordination, the Pause/Resume/Cancel e-mails, the stage 6 target 25 (T02 r12). Sources: flow/solution/README.md, flow/solution/defs/*.json, schemas/lists/*.json, docs/app/screen-map.md.
+
+R21 (combined build, PFM 14 Nov 26): F06 r1 (hold, resume, cancel log) and T19 (Status Reason, Held Since, Coordination Round, Cancelled/Complete) are built into R21 as well; the app parts (P02 buttons, hard delete, Restart coordination, P13 Health) are not built.
 
 ## Finding
 
@@ -36,6 +38,6 @@ No flow reads Action Status, so On Hold changes nothing. There is no Cancelled o
 ## Open (agent REC, not approved)
 
 - Troubleshooting (PFM 14 Nov 26, lean first): each flow e-mails the PFM on a failed step (flow, step, item ID, error); Resubmit from run history resumes; F05 adds only missing rows. R21 tests: forced failure e-mail, Resubmit with no duplicates, one deleted row comes back, Repair round restores a removed column.
-- RADE maintenance modes (PFM goal 14 Nov 26: set and forget; agent REC, not approved): Diagnose, Repair, Restore, Reinstall, Fresh Install, Delete everything. Open: meaning of Reset, backup format (JSON + CSV), path without PnP, Record Sets excluded from delete.
+- RADE maintenance modes (PFM 14 Nov 26): Install, Diagnose, Restore, Uninstall. Install is safe to run again: on an empty site it installs; on an existing one it adds what is missing and updates flows and app, data kept (covers Repair and Reinstall). Diagnose is read-only and names the mode that fixes each problem. Restore puts data back from a chosen backup (flows stopped, ID map). Uninstall is the nuclear option: final backup to OneDrive, then removes all RADE added. Backups: JSON + CSV copy. Open (agent REC): Uninstall keeps Record Sets and Legal Hold items (RDS T 33-38 R 07); path without PnP via a maintenance flow and synced library files.
 - Flow owner continuity: decided 11 Nov 26 (every flow and the Power App get a co-owner). Diagnose should check that a co-owner exists.
 - Date-only columns (open choice 7), E9. Holidays: closed (PFM 14 Nov 26: 20 working days, no holiday list).

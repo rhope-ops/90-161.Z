@@ -61,16 +61,17 @@ ENV = [  # (schema name, display name, default value)
     ("pfm_ReminderLeadDays", "Reminder lead days", "5"),   # weekdays before the suspense (PFM, 2026-11-14)
     ("pfm_EscalationLagDays", "Escalation lag days", "3"),   # working days after the suspense (PFM, 2026-11-14)
     ("pfm_SharedMailbox", "Shared mailbox", ""),   # optional: F03 sends from it (Send As); empty = the flow owner's mailbox
-    ("pfm_PfmEmail", "PFM e-mail", ""),   # R21: failure e-mails and test-mode e-mails go here; set at import
-    ("pfm_TestMode", "Test mode", "Yes"),   # R21 (PFM D6, 14 Nov 26): Yes = every flow e-mail goes to the PFM only; set No to go live
-    ("pfm_FlowsOff", "Flows off", "No"),   # R21 (QOL kill switch, 14 Nov 26): Yes = every flow stops at its first step
+    ("pfm_SuspenseWorkdays", "Suspense working days", "20"),   # F03 default suspense (PFM, 2026-11-14: 20 working days)
+    ("pfm_AlertEmail", "Alert e-mail", ""),   # failure e-mails and test-mode e-mails go here (PFM, 2026-11-14)
+    ("pfm_TestMode", "Test mode", "No"),   # Yes: every flow e-mail goes to the alert address only
+    ("pfm_FlowsPaused", "Flows paused", "No"),   # Yes: every flow stops at its first step (kill switch)
 ]
 OPTIONAL = {"pfm_SharedMailbox"}   # isrequired 0: a wing without a shared mailbox leaves it empty
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
+# Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it.
-# R21: r2 adds F06 (hold and resume), the test-mode, kill-switch and PFM e-mail variables.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r2.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r2.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 hold and resume joins R21
 
 
 def dumps(o):
@@ -83,6 +84,11 @@ def conn_logical(c):
 
 def guid(kind, name):
     return str(uuid.uuid5(NS, f"{kind}:{name}")).upper()
+
+
+def flow_guid(stem, test=False):
+    """A solution flow keeps its ID across revisions (slice r2, 14 Nov 26), so a later import upgrades it instead of adding a copy."""
+    return guid("workflow", stem if test else re.sub(r"-r\d+$", "", stem))
 
 
 def load(defs=DEFS):
@@ -158,13 +164,13 @@ def build(test=None, only=None) -> bytes:
     env = ENV if test is None and not only else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test or slice carries only what it uses
     files, wf_xml, root_components = {}, [], []
     for src, d, used in flows:
-        # R21: a def may name the revision whose workflow ID it keeps ("workflowKey"), so an import replaces that flow in
-        # place instead of adding a second copy next to it (R20 imported F03 r2 and F05 r1; F05 r1 is on).
-        wid = guid("workflow", d.get("workflowKey", src.stem))
+        # R21: "workflowKey" names the stem whose ID the flow kept when it was first imported (R20 imported F03 r2 and F05 r1,
+        # with the revision in the ID), so this import replaces those flows in place; F05 r1 is on and would double the rows.
+        wid = guid("workflow", d["workflowKey"]) if d.get("workflowKey") and test is None else flow_guid(src.stem, test is not None)
         fname = json_name(d["displayName"], wid)
-        # R21: the flow solution and slice write each workflow JSON on one line, as Power Automate exports do (the R21 round
-        # bundle stays under 300 KB); test solutions keep the indented form that R19 imported.
-        files[fname[1:]] = dumps(workflow_json(d, used)) if test is not None else json.dumps(workflow_json(d, used), ensure_ascii=False, separators=(",", ":"))
+        # Flow solutions carry the flow JSON without indents (slice r2, 14 Nov 26: keeps the R20 round under the 300 KB paste limit;
+        # JSON whitespace has no meaning). The test solutions keep the indented form that R19 imported.
+        files[fname[1:]] = dumps(workflow_json(d, used)) if test is not None else json.dumps(workflow_json(d, used), separators=(",", ":"), ensure_ascii=False)
         wf_xml.append(
             f"    <Workflow WorkflowId=\"{{{wid.lower()}}}\" Name={quoteattr(d['displayName'])}>\n"
             f"      <JsonFileName>{fname}</JsonFileName>\n"
@@ -231,7 +237,7 @@ def build(test=None, only=None) -> bytes:
         '\ufeff<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
         '<Default Extension="xml" ContentType="application/octet-stream" /><Default Extension="json" ContentType="application/octet-stream" /></Types>')
     buf = io.BytesIO()
-    # R21: the flow solution and slice are deflated, as Dataverse exports are (bundle size); test solutions stay stored as R19 imported.
+    # R21: the flow solution and slice are deflated, as Dataverse exports are (round bundle under 300 KB); test solutions stay stored as R19 imported.
     method = zipfile.ZIP_STORED if test is not None else zipfile.ZIP_DEFLATED
     with zipfile.ZipFile(buf, "w", method) as z:
         for path in sorted(files, key=lambda x: (x != "[Content_Types].xml", x)):

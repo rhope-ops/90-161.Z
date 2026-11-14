@@ -1,34 +1,33 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 18 slice 1 end-to-end test, r2 (R21; r1 was R20. PFM 14 Nov 26: slice 1 = PFM Publications + PFM
-  Endorsements + F05 routing + F03 reminders, and in R21 F06 hold and resume). Windows PowerShell 5.1, the installed
-  PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 18 slice 1 end-to-end test, r2 (R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
+  troubleshooting). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  What it is for: proves on the test site that the imported slice-1 flows work end to end, with one fake publication.
-  Part 1 (about 5 minutes, an estimate):
-    1. Signs in to the site (CAC) and reads the process steps (6 and 7) and the offices: how many Formal Coordination
-       rows and Legal rows F05 should create (active mandatory offices; Legal = CoordinateLast).
-    2. Creates one fake publication "90161Z TEST R21 (delete me)" at step 6 (Formal coordination).
-    3. Waits up to 10 minutes for F05 to create the Formal Coordination rows, counts them, and checks that each is in
-       coordination round 1.
-  Then the PFM runs F03 once by hand (the round's guide step).
-  Part 2 (about 15 minutes, an estimate):
-    4. Checks that F03 set the default suspense on each Formal Coordination row: 20 working days ahead (at least 30
-       calendar days for Guard or Reserve Applicability).
-    5. Missing row: moves one Formal Coordination row to the Recycle Bin, edits the publication, and waits for F05 to add
-       that one row back (and no more).
-    6. Hold: sets the publication On Hold and waits for F06 to record Held Since; sets Held Since 7 days back (5 weekdays);
-       sets it On Track and checks that F06 moved each open suspense out by 5 weekdays and cleared Held Since.
-    7. Answers each Formal Coordination row "Concur", then sets "All Comments Adjudicated" on the publication.
-    8. Waits up to 10 minutes for F05 to create the Legal rows and move the publication to step 7, and counts them.
-    9. Cancel: sets the publication Cancelled and waits for F06 to log the cancel once.
-   10. Clean-up: moves every row tied to the fake publication (Activity Log, Endorsements, the publication) to the site
-       Recycle Bin (restorable for 93 days). Nothing else on the site is changed.
-  WHAT IT CHANGES ON THE SITE: only the fake publication and the rows the flows make for it, all removed in step 7.
-  The test rows get no reminder: a suspense 20 working days ahead is outside every F03 tier. Test mode (pfm_TestMode =
-  Yes) sends any hold, resume or cancel notice to the PFM only. F03 also checks every other open
-  coordination row on the site, so part 1 counts those that could get a reminder now (due within 7 days or past); if
-  that count is above 0, skip the F03 run.
+  What it is for: proves on the test site that the slice-1 flows (F05 r2 routing, F03 r3 reminders) work end to end, and
+  that a failed run can be found and resumed. Needs Test mode = Yes in the solution (the import step sets it), so every
+  flow e-mail goes to the alert address only.
+  Part 1 (about 10 minutes, an estimate):
+    1. Signs in to the site (CAC), reads process steps 6 and 7 and the offices (rows F05 should make).
+    2. Creates three fake publications at step 6: A "90161Z TEST R21 A (delete me)" (On Track), H "90161Z TEST R21 H
+       (delete me)" (On Hold) and F "90161Z TEST FAIL R21 (delete me)" (test mode makes F05 fail on this title).
+    3. Waits for F05 to make A's Formal Coordination rows; checks that H and F have none (hold skipped, F failed).
+    4. Renames F to "90161Z TEST R21 F (delete me)" and waits for its rows (a new run after the cause is fixed).
+    5. Moves one of A's rows to the Recycle Bin, edits A, and waits until F05 adds back only that row.
+    6. Prepares the F03 check: sets one of A's rows to a suspense 10 weekdays ago (escalation tier) and adds one row to H
+       with a past suspense (H is On Hold, so F03 must skip it).
+  Then the PFM checks the failure e-mail, selects Resubmit on the failed F05 run, and runs F03 once (round guide steps).
+  Part 2 (about 12 minutes, an estimate):
+    7. Checks that Resubmit made no duplicate rows for F.
+    8. Checks F03: default suspense 20 working days (Guard or Reserve Applicability at least 30 calendar days) on the rows
+       without one; an escalation logged for A's past-due row; nothing logged for H's row.
+   8b. F06 on F (R21): sets F On Hold and waits for Held Since; sets Held Since 7 days back (5 weekdays); sets F On Track
+       and checks that each open suspense moved out by 5 weekdays; sets F Cancelled and checks one cancel log row.
+    9. Answers A's rows "Concur", marks A's comments adjudicated, and waits for the Legal rows and step 7.
+   10. Clean-up: moves every row tied to the three fake publications to the site Recycle Bin (restorable for 93 days).
+       On a FAIL they stay for review; part 1 of the next run removes them.
+  WHAT IT CHANGES ON THE SITE: only the three fake publications and the rows the flows and this script make for them.
+  E-mail: with Test mode = Yes, F03's escalation for A's row, F05's failure notice and F06's hold, resume and cancel
+  notices (offices with an endorser only) go to the alert address only.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this
   computer; every output line shows it as <SITE> and the DODID as <DODID>.
   Output: 90161Z-T18-slice1-part1-r2.txt or 90161Z-T18-slice1-part2-r2.txt in the T18 folder (send both).
@@ -36,7 +35,10 @@
 #>
 param([string]$Id, [ValidateSet(1, 2)][int]$Part = 1, [int]$WaitMinutes = 10, [switch]$NoPause)
 $task = 'T18'
-$TestTitle = '90161Z TEST R21 (delete me)'
+$TitleA = '90161Z TEST R21 A (delete me)'
+$TitleH = '90161Z TEST R21 H (delete me)'
+$TitleFail = '90161Z TEST FAIL R21 (delete me)'
+$TitleF = '90161Z TEST R21 F (delete me)'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -146,27 +148,42 @@ function Hide-Site([string]$Text, [string]$Site) {
   return $Text
 }
 
-
-
 function Add-Line([string]$Name, [string]$Status, [string]$Text) {
   $script:lines.Add('ITEM ' + $Name + ' ' + $Status + $(if ($Text) { ' ' + $Text } else { '' }))
 }
 function Get-RowsFor([string]$List, [int]$PubId) {
-  # Rows of a list whose Publication lookup points at the fake publication (CAML by lookup ID).
+  # Rows of a list whose Publication lookup points at a fake publication (CAML by lookup ID).
   $q = "<View><Query><Where><Eq><FieldRef Name='Publication' LookupId='TRUE'/><Value Type='Lookup'>" + $PubId + "</Value></Eq></Where></Query></View>"
   return @(Get-PnPListItem -List $List -Query $q -ErrorAction Stop)
 }
-function Get-Stage($Item) { return [string]$Item['CoordinationStage'] }
-function Add-Weekday([datetime]$Day, [int]$Count) {
-  # As F03 and F06: a Saturday or Sunday counts as the Friday before, then $Count weekdays are added.
-  $d = $Day.Date
-  if ($d.DayOfWeek -eq 'Saturday') { $d = $d.AddDays(-1) } elseif ($d.DayOfWeek -eq 'Sunday') { $d = $d.AddDays(-2) }
-  $left = $Count
+function Get-Formal([int]$PubId) { return @(Get-RowsFor 'PFM Endorsements' $PubId | Where-Object { [string]$_['CoordinationStage'] -eq 'Formal Coordination' }) }
+function Wait-Until([scriptblock]$Done, [string]$What) {
+  # Checks every 30 seconds for up to $WaitMinutes. Returns $true when $Done returns $true. A failed check (for example a
+  # network drop: R20 part 1 lost the site name) is retried; 3 failures in a row stop the test (R20 finding 3).
+  $end = (Get-Date).AddMinutes($WaitMinutes)
+  $misses = 0
+  while ($true) {
+    $isDone = $false
+    try { $isDone = [bool](& $Done); $misses = 0 }
+    catch {
+      $misses++
+      if ($misses -ge 3) { throw }
+      Write-Host ('  A check failed (' + $misses + ' of 3 allowed in a row); trying again in 30 seconds ...')
+    }
+    if ($isDone) { return $true }
+    if ((Get-Date) -ge $end) { return $false }
+    Write-Host ('  Waiting for ' + $What + ' (checks every 30 seconds, up to ' + $WaitMinutes + ' minutes) ...')
+    Start-Sleep -Seconds 30
+  }
+}
+function Add-WorkingDay([datetime]$Day, [int]$N) {
+  # Same arithmetic as F03 r3 (weekends only, no holiday list; PFM 14 Nov 26).
+  $d = $Day.Date; $left = $N
   while ($left -gt 0) { $d = $d.AddDays(1); if ($d.DayOfWeek -ne 'Saturday' -and $d.DayOfWeek -ne 'Sunday') { $left-- } }
   return $d
 }
 function Get-Suspense($Item) {
-  # The later of Due Date and Extension Estimated Completion (F03 r3, F06 r1), as a local date, or $null.
+  # The later of Due Date and Extension Estimated Completion (F06 r1), as a local date, or $null.
   $due = $null; $ext = $null
   if ($Item['DueDate']) { $due = ([datetime]$Item['DueDate']).ToLocalTime().Date }
   if ($Item['ExtensionDate']) { $ext = ([datetime]$Item['ExtensionDate']).ToLocalTime().Date }
@@ -174,22 +191,14 @@ function Get-Suspense($Item) {
   return $due
 }
 function Get-LogCount([int]$PubId, [string]$Prefix) {
+  # F06 log rows are titled "<Prefix>: P<ID>".
   return @(Get-RowsFor 'PFM Activity Log' $PubId | Where-Object { [string]$_['Title'] -eq ($Prefix + ': P' + $PubId) }).Count
 }
-function Wait-Until([scriptblock]$Done, [string]$What) {
-  # Checks every 30 seconds for up to $WaitMinutes. Returns $true when $Done returns $true. R21: a failed check (R20: the
-  # site name could not be resolved once) is tried again; 3 failures in a row stop the test.
-  $end = (Get-Date).AddMinutes($WaitMinutes)
-  $errors = 0
-  while ($true) {
-    $isDone = $false
-    try { $isDone = [bool](& $Done); $errors = 0 }
-    catch { $errors++; if ($errors -ge 3) { throw }; Write-Host ('  A check failed (' + $errors + ' of 3); trying again in 30 seconds ...') }
-    if ($isDone) { return $true }
-    if ((Get-Date) -ge $end) { return $false }
-    Write-Host ('  Waiting for ' + $What + ' (checks every 30 seconds, up to ' + $WaitMinutes + ' minutes) ...')
-    Start-Sleep -Seconds 30
-  }
+function Clear-TestPublication([int]$PubId) {
+  $n = 0
+  foreach ($l in 'PFM Activity Log', 'PFM Endorsements') { foreach ($r in (Get-RowsFor $l $PubId)) { $null = Remove-PnPListItem -List $l -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ } }
+  $null = Remove-PnPListItem -List 'PFM Publications' -Identity $PubId -Recycle -Force -ErrorAction Stop
+  return $n + 1
 }
 
 $secret = @()
@@ -206,7 +215,7 @@ try {
   $root = Split-Path -Parent $dir
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
-  $pubFile = Join-Path $dir '90161Z-T18-test-publication.txt'   # the fake publication's item ID (a number), for part 2
+  $pubFile = Join-Path $dir '90161Z-T18-test-publications-r2.txt'   # item IDs of A, H, F and the two F03 test rows, for part 2
   $lines.Add('TASK T18 slice 1 end-to-end r2, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
@@ -215,109 +224,139 @@ try {
   $null = & { Connect-PnPOnline -Url $site -UseWebLogin -ErrorAction Stop } *>&1
   $lines.Add('ROUTE web-login PASS')
 
-  # 1. What F05 should create: one Formal row per active mandatory office that is not CoordinateLast; Legal rows for CoordinateLast.
+  # 1. What F05 should make: one Formal row per active mandatory office that is not CoordinateLast; Legal rows for CoordinateLast.
   $steps = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'StepNumber' -ErrorAction Stop)
   $step6 = @($steps | Where-Object { [int]$_['StepNumber'] -eq 6 })[0]; $step7 = @($steps | Where-Object { [int]$_['StepNumber'] -eq 7 })[0]
   if (-not $step6 -or -not $step7) { throw 'PROCESS STEPS 6 and 7 not found in PFM Process Steps.' }
   $offices = @(Get-PnPListItem -List 'PFM Offices' -Fields 'MandatoryCoordinator', 'IsActive', 'CoordinateLast' -ErrorAction Stop | Where-Object { $_['IsActive'] -and $_['MandatoryCoordinator'] })
   $wantFormal = @($offices | Where-Object { -not $_['CoordinateLast'] }).Count
   $wantLegal = @($offices | Where-Object { $_['CoordinateLast'] }).Count
-  Add-Line 'a-setup' $(if ($wantFormal -gt 0 -and $wantLegal -gt 0) { 'PASS' } else { 'FAIL' }) ('expected formal=' + $wantFormal + ' legal=' + $wantLegal + ' (active mandatory offices)')
+  Add-Line 'a-setup' $(if ($wantFormal -gt 1 -and $wantLegal -gt 0) { 'PASS' } else { 'FAIL' }) ('expected formal=' + $wantFormal + ' legal=' + $wantLegal + ' (active mandatory offices; the missing-row check needs 2 or more formal)')
 
   if ($Part -eq 1) {
-    # 2. Remove a fake publication left by an earlier run, then create a new one at step 6.
-    $old = @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -ErrorAction Stop | Where-Object { [string]$_['Title'] -eq $TestTitle })
-    foreach ($o in $old) {
-      foreach ($l in 'PFM Activity Log', 'PFM Endorsements') { foreach ($r in (Get-RowsFor $l $o.Id)) { $null = Remove-PnPListItem -List $l -Identity $r.Id -Recycle -Force -ErrorAction Stop } }
-      $null = Remove-PnPListItem -List 'PFM Publications' -Identity $o.Id -Recycle -Force -ErrorAction Stop
-    }
-    # Other open rows F03 would e-mail if run now (suspense within 7 days or past): a count only.
+    # 2. Remove fake publications left by an earlier run (r1 or r2 titles), then create A, H and F at step 6.
+    $old = @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -ErrorAction Stop | Where-Object { ([string]$_['Title']).StartsWith('90161Z TEST') -and ([string]$_['Title']).EndsWith('(delete me)') })
+    $moved = 0
+    foreach ($o in $old) { $moved += Clear-TestPublication $o.Id }
+    if ($old.Count) { Add-Line 'b-leftovers' 'SET' ('moved ' + $old.Count + ' earlier test publication(s) and their rows to the Recycle Bin, rows=' + $moved) }
     $soon = (Get-Date).Date.AddDays(7)
     $others = @(Get-PnPListItem -List 'PFM Endorsements' -Fields 'EndorsementStatus', 'DueDate' -ErrorAction Stop | Where-Object { [string]$_['EndorsementStatus'] -eq 'Not Started' -and $_['DueDate'] -and ([datetime]$_['DueDate']).ToLocalTime().Date -le $soon }).Count
-    Add-Line 'b2-other-rows' $(if ($others) { 'FAIL' } else { 'PASS' }) ('other open rows due within 7 days or past=' + $others + $(if ($others) { '. Skip the F03 run: those rows would get a real reminder' } else { '' }))
-    if ($old.Count) { Add-Line 'b-leftovers' 'SET' ('moved ' + $old.Count + ' earlier test publication(s) and their rows to the Recycle Bin') }
-    $pub = Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $TestTitle; ActionType = 'New'; ProductType = 'Publication'; ProcessStep = $step6.Id; ActionStatus = 'On Track' } -ErrorAction Stop
-    Set-Content -LiteralPath $pubFile -Value ([string]$pub.Id) -Encoding UTF8
-    Add-Line 'c-create' 'SET' ('fake publication created at step 6, item ' + $pub.Id)
-    # 3. F05 creates the Formal Coordination rows.
+    Add-Line 'b2-other-rows' 'INFO' ('other open rows due within 7 days or past=' + $others + '. With Test mode = Yes their F03 e-mails go to the alert address only')
+    $base = @{ ActionType = 'New'; ProductType = 'Publication'; ProcessStep = $step6.Id }
+    $a = Add-PnPListItem -List 'PFM Publications' -Values ($base + @{ Title = $TitleA; ActionStatus = 'On Track' }) -ErrorAction Stop
+    $h = Add-PnPListItem -List 'PFM Publications' -Values ($base + @{ Title = $TitleH; ActionStatus = 'On Hold' }) -ErrorAction Stop
+    $f = Add-PnPListItem -List 'PFM Publications' -Values ($base + @{ Title = $TitleFail; ActionStatus = 'On Track' }) -ErrorAction Stop
+    Add-Line 'c-create' 'SET' ('fake publications at step 6: A=' + $a.Id + ' H (On Hold)=' + $h.Id + ' F (fail title)=' + $f.Id)
 
-    $ok = Wait-Until { $script:got = @(Get-RowsFor 'PFM Endorsements' $pub.Id | Where-Object { (Get-Stage $_) -eq 'Formal Coordination' }).Count; $script:got -ge $wantFormal } 'the F05 Formal Coordination rows'
-    $got = $script:got
-    Add-Line 'd-f05-formal' $(if ($ok -and $got -eq $wantFormal) { 'PASS' } else { 'FAIL' }) ('formal rows=' + $got + ' expected=' + $wantFormal + $(if ($ok) { '' } else { '. If 0: the next step reads the F05 run history' }))
-    $rounds = @(Get-RowsFor 'PFM Endorsements' $pub.Id | Where-Object { (Get-Stage $_) -eq 'Formal Coordination' } | Where-Object { [int]$_['CoordinationRound'] -ne 1 }).Count
-    if ($got) { Add-Line 'd2-f05-round' $(if ($rounds) { 'FAIL' } else { 'PASS' }) ('rows not in coordination round 1=' + $rounds) }
+    # 3. F05 makes A's rows; H (On Hold) and F (forced failure) get none.
+    $ok = Wait-Until { $script:got = (Get-Formal $a.Id).Count; $script:got -ge $wantFormal } 'the F05 rows for A'
+    Add-Line 'd-f05-formal' $(if ($ok -and $script:got -eq $wantFormal) { 'PASS' } else { 'FAIL' }) ('A formal rows=' + $script:got + ' expected=' + $wantFormal + $(if ($ok) { '' } else { '. If 0: open F05 in Power Automate, check that it is On and read its run history (R20: F05 made no rows), and check Flows paused = No' }))
+    Write-Host '  Waiting 2 minutes so F05 has handled H and F too ...'
+    Start-Sleep -Seconds 120
+    $hRows = (Get-Formal $h.Id).Count; $fRows = (Get-Formal $f.Id).Count
+    Add-Line 'd2-hold-skipped' $(if ($hRows -eq 0) { 'PASS' } else { 'FAIL' }) ('H (On Hold) formal rows=' + $hRows + ' expected=0')
+    Add-Line 'd3-forced-failure' $(if ($fRows -eq 0) { 'PASS' } else { 'FAIL' }) ('F (fail title) formal rows=' + $fRows + ' expected=0; F05 should have e-mailed the failure')
+
+    # 4. Fix the cause (the title) and let a new run make F's rows.
+    $null = Set-PnPListItem -List 'PFM Publications' -Identity $f.Id -Values @{ Title = $TitleF } -ErrorAction Stop
+    $ok = Wait-Until { $script:got = (Get-Formal $f.Id).Count; $script:got -ge $wantFormal } 'the F05 rows for F after the fix'
+    Add-Line 'e-after-fix' $(if ($ok -and $script:got -eq $wantFormal) { 'PASS' } else { 'FAIL' }) ('F formal rows after the fix=' + $script:got + ' expected=' + $wantFormal)
+
+    # 5. One missing row: F05 adds back only that one.
+    $rowsA = Get-Formal $a.Id
+    $gone = $rowsA[0]
+    $null = Remove-PnPListItem -List 'PFM Endorsements' -Identity $gone.Id -Recycle -Force -ErrorAction Stop
+    $null = Set-PnPListItem -List 'PFM Publications' -Identity $a.Id -Values @{ ActionStatus = 'On Track' } -ErrorAction Stop
+    $ok = Wait-Until { $script:got = (Get-Formal $a.Id).Count; $script:got -ge $wantFormal } 'F05 to add back the missing row'
+    Start-Sleep -Seconds 60
+    $after = (Get-Formal $a.Id).Count
+    Add-Line 'f-missing-row' $(if ($ok -and $after -eq $wantFormal) { 'PASS' } else { 'FAIL' }) ('A formal rows after one was removed=' + $after + ' expected=' + $wantFormal + ' (more = duplicates)')
+
+    # 6. Prepare the F03 check: one A row past due (10 weekdays ago), one H row past due (H is On Hold).
+    $rowsA = Get-Formal $a.Id
+    $past = (Get-Date).Date
+    $back = 0; while ($back -lt 10) { $past = $past.AddDays(-1); if ($past.DayOfWeek -ne 'Saturday' -and $past.DayOfWeek -ne 'Sunday') { $back++ } }
+    $null = Set-PnPListItem -List 'PFM Endorsements' -Identity $rowsA[0].Id -Values @{ DueDate = $past } -ErrorAction Stop
+    $hRow = Add-PnPListItem -List 'PFM Endorsements' -Values @{ Title = ($TitleH + ' - test row'); Publication = $h.Id; CoordinationStage = 'Formal Coordination'; CoordinationRole = 'Other'; EndorsementStatus = 'Not Started'; DueDate = $past } -ErrorAction Stop
+    Set-Content -LiteralPath $pubFile -Value @([string]$a.Id, [string]$h.Id, [string]$f.Id, [string]$rowsA[0].Id, [string]$hRow.Id) -Encoding UTF8
+    Add-Line 'g-f03-prepared' 'SET' ('A row ' + $rowsA[0].Id + ' and H row ' + $hRow.Id + ' set to a suspense 10 weekdays ago')
   } else {
-    if (-not (Test-Path -LiteralPath $pubFile -PathType Leaf)) { throw 'NO TEST PUBLICATION: run part 1 first.' }
-    $pubId = [int]([string](Get-Content -LiteralPath $pubFile -TotalCount 1)).Trim()
-    $formal = @(Get-RowsFor 'PFM Endorsements' $pubId | Where-Object { (Get-Stage $_) -eq 'Formal Coordination' })
-    # 4. F03 set the default suspense: 20 working days (PFM 14 Nov 26); Guard or Reserve Applicability at least 30 calendar days.
-    $today = (Get-Date).Date; $withDue = 0
-    $work = Add-Weekday $today 20
-    foreach ($r in $formal) {
-      $want = $work
-      if (@('Guard Applicability', 'Reserve Applicability') -contains [string]$r['CoordinationRole'] -and $today.AddDays(30) -gt $work) { $want = $today.AddDays(30) }
-      if ($r['DueDate'] -and ([datetime]$r['DueDate']).ToLocalTime().Date -eq $want) { $withDue++ }
+    if (-not (Test-Path -LiteralPath $pubFile -PathType Leaf)) { throw 'NO TEST PUBLICATIONS: run part 1 first.' }
+    $ids = @(Get-Content -LiteralPath $pubFile | ForEach-Object { [int]([string]$_).Trim() })
+    $aId, $hId, $fId, $pastRow, $hRowId = $ids[0], $ids[1], $ids[2], $ids[3], $ids[4]
+
+    # 7. Resubmit of the failed run made no duplicates.
+    $fRows = (Get-Formal $fId).Count
+    Add-Line 'h-resubmit' $(if ($fRows -eq $wantFormal) { 'PASS' } else { 'FAIL' }) ('F formal rows after Resubmit=' + $fRows + ' expected=' + $wantFormal + ' (more = duplicates)')
+
+    # 8. F03: default suspense, escalation for A's past-due row, nothing for H's row.
+    $today = (Get-Date).Date
+    $work = Add-WorkingDay $today 20
+    $cal = $today.AddDays(30); if ($cal.DayOfWeek -eq 'Saturday') { $cal = $cal.AddDays(2) } elseif ($cal.DayOfWeek -eq 'Sunday') { $cal = $cal.AddDays(1) }
+    $checked = 0; $right = 0
+    foreach ($r in @(Get-Formal $aId) + @(Get-Formal $fId)) {
+      if ($r.Id -eq $pastRow) { continue }
+      $checked++
+      $role = [string]$r['CoordinationRole']
+      $want = $(if (($role -eq 'Guard Applicability' -or $role -eq 'Reserve Applicability') -and $cal -gt $work) { $cal } else { $work })
+      if ($r['DueDate'] -and ([datetime]$r['DueDate']).ToLocalTime().Date -eq $want) { $right++ }
     }
-    Add-Line 'e-f03-suspense' $(if ($formal.Count -and $withDue -eq $formal.Count) { 'PASS' } else { 'FAIL' }) ('rows with the default suspense=' + $withDue + ' of ' + $formal.Count + $(if ($withDue -lt $formal.Count) { '. Check that F03 ran today (its run history)' } else { '' }))
-    # 5. Missing row: F05 adds back only the row that is missing (troubleshooting, PFM 14 Nov 26).
-    if ($formal.Count -ge 2) {
-      $gone = $formal[-1]
-      $null = Remove-PnPListItem -List 'PFM Endorsements' -Identity $gone.Id -Recycle -Force -ErrorAction Stop
-      $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ StatusReason = 'R21 test: missing-row check' } -ErrorAction Stop
-      $ok = Wait-Until { @(Get-RowsFor 'PFM Endorsements' $pubId | Where-Object { (Get-Stage $_) -eq 'Formal Coordination' }).Count -ge $formal.Count } 'F05 to add the missing row'
-      Start-Sleep -Seconds 60   # a second F05 run in this minute would show as a duplicate
-      $now = @(Get-RowsFor 'PFM Endorsements' $pubId | Where-Object { (Get-Stage $_) -eq 'Formal Coordination' }).Count
-      Add-Line 'k-f05-missing-row' $(if ($ok -and $now -eq $formal.Count) { 'PASS' } else { 'FAIL' }) ('formal rows after one was removed=' + $now + ' expected=' + $formal.Count)
-    } else { Add-Line 'k-f05-missing-row' 'SKIP' 'needs 2 or more formal rows' }
-    $formal = @(Get-RowsFor 'PFM Endorsements' $pubId | Where-Object { (Get-Stage $_) -eq 'Formal Coordination' })
-    # 6. Hold and resume (F06): 5 weekdays on hold move each open suspense out by 5 weekdays.
-    $dated = @($formal | Where-Object { [string]$_['EndorsementStatus'] -eq 'Not Started' -and (Get-Suspense $_) })
+    Add-Line 'i-f03-suspense' $(if ($checked -and $right -eq $checked) { 'PASS' } else { 'FAIL' }) ('rows with the 20-working-day suspense (' + $work.ToString('dd MMM yy') + ')=' + $right + ' of ' + $checked + $(if ($right -lt $checked) { '. F03 must run the same day as part 2; check its run history' } else { '' }))
+    $logA = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('[TEST] Reminder Sent: E' + $pastRow + ' Escalation') }).Count
+    Add-Line 'j-f03-escalation' $(if ($logA -eq 1) { 'PASS' } else { 'FAIL' }) ('test-mode escalation logged for the past-due A row=' + $logA + ' expected=1 (0 = Test mode was not Yes, or F03 did not run)')
+    $logH = @(Get-RowsFor 'PFM Activity Log' $hId | Where-Object { ([string]$_['Title']) -match ('Reminder Sent: E' + $hRowId + ' ') }).Count
+    $hFormal = @(Get-Formal $hId | Where-Object { $_.Id -ne $hRowId }).Count
+    Add-Line 'k2-hold-still-skipped' $(if ($hFormal -eq 0) { 'PASS' } else { 'FAIL' }) ('F05 rows for H (On Hold) at part 2=' + $hFormal + ' expected=0')
+    Add-Line 'k-f03-hold' $(if ($logH -eq 0) { 'PASS' } else { 'FAIL' }) ('reminders logged for the On Hold row=' + $logH + ' expected=0')
+
+    # 8b. F06 hold and resume on F (R21, PFM 14 Nov 26): 5 weekdays on hold move each open suspense out by 5 weekdays.
+    $dated = @(Get-Formal $fId | Where-Object { [string]$_['EndorsementStatus'] -eq 'Not Started' -and (Get-Suspense $_) })
     if ($dated.Count) {
       $before = @{}; foreach ($r in $dated) { $before[$r.Id] = Get-Suspense $r }
-      $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ ActionStatus = 'On Hold'; StatusReason = 'R21 test: hold' } -ErrorAction Stop
-      $ok = Wait-Until { [bool](Get-PnPListItem -List 'PFM Publications' -Id $pubId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to record Held Since'
-      Add-Line 'l1-f06-hold' $(if ($ok -and (Get-LogCount $pubId 'Action Held') -ge 1) { 'PASS' } else { 'FAIL' }) $(if ($ok) { 'Held Since recorded and logged' } else { 'Held Since not recorded. Check that F06 is on (its run history)' })
+      $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ ActionStatus = 'On Hold'; StatusReason = 'R21 test: hold' } -ErrorAction Stop
+      $ok = Wait-Until { [bool](Get-PnPListItem -List 'PFM Publications' -Id $fId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to record Held Since on F'
+      Add-Line 'k3-f06-hold' $(if ($ok -and (Get-LogCount $fId 'Action Held') -ge 1) { 'PASS' } else { 'FAIL' }) $(if ($ok) { 'Held Since recorded and logged for F' } else { 'Held Since not recorded. Check that F06 is on (its run history)' })
       if ($ok) {
-        $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ HeldSince = $today.AddDays(-7) } -ErrorAction Stop
-        Start-Sleep -Seconds 90   # let F06 see the back-dated Held Since while still On Hold (it changes nothing then)
-        $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ ActionStatus = 'On Track'; StatusReason = 'R21 test: resume' } -ErrorAction Stop
-        # F06 clears Held Since last, after it has moved every suspense and logged the resume (review R21 MAJOR).
-        $ok = Wait-Until { -not (Get-PnPListItem -List 'PFM Publications' -Id $pubId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to move the suspense dates and clear Held Since'
+        $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ HeldSince = $today.AddDays(-7) } -ErrorAction Stop
+        Start-Sleep -Seconds 90   # F06 sees the back-dated Held Since while still On Hold and changes nothing
+        $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ ActionStatus = 'On Track'; StatusReason = 'R21 test: resume' } -ErrorAction Stop
+        # F06 clears Held Since last, after it has moved every suspense and logged the resume.
+        $ok = Wait-Until { -not (Get-PnPListItem -List 'PFM Publications' -Id $fId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to move the suspense dates and clear Held Since'
         $moved = 0
-        foreach ($r in @(Get-RowsFor 'PFM Endorsements' $pubId | Where-Object { $before.ContainsKey($_.Id) })) { if ((Get-Suspense $r) -eq (Add-Weekday $before[$r.Id] 5)) { $moved++ } }
-        Add-Line 'l2-f06-resume' $(if ($ok -and $moved -eq $dated.Count -and (Get-LogCount $pubId 'Action Resumed') -ge 1) { 'PASS' } else { 'FAIL' }) ('suspense moved out 5 weekdays=' + $moved + ' of ' + $dated.Count + $(if ($ok) { '' } else { '; Held Since not cleared' }))
+        foreach ($r in @(Get-Formal $fId | Where-Object { $before.ContainsKey($_.Id) })) { if ((Get-Suspense $r) -eq (Add-WorkingDay $before[$r.Id] 5)) { $moved++ } }
+        Add-Line 'k4-f06-resume' $(if ($ok -and $moved -eq $dated.Count -and (Get-LogCount $fId 'Action Resumed') -ge 1) { 'PASS' } else { 'FAIL' }) ('F suspense moved out 5 weekdays=' + $moved + ' of ' + $dated.Count + $(if ($ok) { '' } else { '; Held Since not cleared' }))
       }
-    } else { Add-Line 'l1-f06-hold' 'SKIP' 'no open row with a suspense (F03 did not run)' }
-    # 7. Answer the Formal rows, then mark the comments adjudicated (this edit starts F05's gate).
+      # Cancel (F06): logged once.
+      $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ ActionStatus = 'Cancelled'; StatusReason = 'R21 test: cancel' } -ErrorAction Stop
+      $ok = Wait-Until { (Get-LogCount $fId 'Action Cancelled') -ge 1 } 'F06 to log the cancel of F'
+      Start-Sleep -Seconds 60
+      $nc = Get-LogCount $fId 'Action Cancelled'
+      Add-Line 'k5-f06-cancel' $(if ($ok -and $nc -eq 1) { 'PASS' } else { 'FAIL' }) ('F cancel log rows=' + $nc + ' expected=1')
+    } else { Add-Line 'k3-f06-hold' 'SKIP' 'F has no open row with a suspense (F03 did not run)' }
+
+    # 9. Answer A's rows, mark comments adjudicated; F05 makes the Legal rows and moves A to step 7.
+    $formal = Get-Formal $aId
     foreach ($r in $formal) { $null = Set-PnPListItem -List 'PFM Endorsements' -Identity $r.Id -Values @{ EndorsementStatus = 'Concur' } -ErrorAction Stop }
-    $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ AllCommentsAdjudicated = $true } -ErrorAction Stop
-    Add-Line 'f-answers' 'SET' ('formal rows answered Concur=' + $formal.Count + ', All Comments Adjudicated=Yes')
-    # 8. F05 creates the Legal rows and moves the publication to step 7.
+    $null = Set-PnPListItem -List 'PFM Publications' -Identity $aId -Values @{ AllCommentsAdjudicated = $true } -ErrorAction Stop
+    Add-Line 'l-answers' 'SET' ('A formal rows answered Concur=' + $formal.Count + ', All Comments Adjudicated=Yes')
     $script:legal = 0; $script:atStep = 0
     $ok = Wait-Until {
-      $script:legal = @(Get-RowsFor 'PFM Endorsements' $pubId | Where-Object { (Get-Stage $_) -eq 'Legal' }).Count
-      $p = Get-PnPListItem -List 'PFM Publications' -Id $pubId -Fields 'ProcessStep' -ErrorAction Stop
+      $script:legal = @(Get-RowsFor 'PFM Endorsements' $aId | Where-Object { [string]$_['CoordinationStage'] -eq 'Legal' }).Count
+      $p = Get-PnPListItem -List 'PFM Publications' -Id $aId -Fields 'ProcessStep' -ErrorAction Stop
       $script:atStep = $(if ($p['ProcessStep']) { [int]$p['ProcessStep'].LookupId } else { 0 })
       ($script:legal -ge $wantLegal) -and ($script:atStep -eq $step7.Id) } 'the F05 Legal rows and step 7'
-    Add-Line 'g-f05-legal' $(if ($ok -and $script:legal -eq $wantLegal) { 'PASS' } else { 'FAIL' }) ('legal rows=' + $script:legal + ' expected=' + $wantLegal)
-    Add-Line 'h-f05-step7' $(if ($script:atStep -eq $step7.Id) { 'PASS' } else { 'FAIL' }) $(if ($script:atStep -eq $step7.Id) { 'publication moved to step 7' } else { 'publication not at step 7' })
-    # 9. Cancel (F06): logged once.
-    $null = Set-PnPListItem -List 'PFM Publications' -Identity $pubId -Values @{ ActionStatus = 'Cancelled'; StatusReason = 'R21 test: cancel' } -ErrorAction Stop
-    $ok = Wait-Until { (Get-LogCount $pubId 'Action Cancelled') -ge 1 } 'F06 to log the cancel'
     Start-Sleep -Seconds 60
-    $nc = Get-LogCount $pubId 'Action Cancelled'
-    Add-Line 'm-f06-cancel' $(if ($ok -and $nc -eq 1) { 'PASS' } else { 'FAIL' }) ('cancel log rows=' + $nc + ' expected=1')
-    $logRows = @(Get-RowsFor 'PFM Activity Log' $pubId).Count
-    Add-Line 'i-activity-log' 'PASS' ('activity log rows for the test publication=' + $logRows)
-    # 10. Clean-up: everything tied to the fake publication goes to the site Recycle Bin. On a FAIL the rows stay for review;
-    # part 1 of the next run removes them (it finds the fake publication by its title).
-    if (@($lines | Where-Object { $_ -match '^ITEM .* FAIL' }).Count) { Add-Line 'j-clean-up' 'SKIP' 'kept for review because a check failed; part 1 of the next run removes them' }
+    $script:legal = @(Get-RowsFor 'PFM Endorsements' $aId | Where-Object { [string]$_['CoordinationStage'] -eq 'Legal' }).Count
+    Add-Line 'm-f05-legal' $(if ($ok -and $script:legal -eq $wantLegal) { 'PASS' } else { 'FAIL' }) ('legal rows=' + $script:legal + ' expected=' + $wantLegal + ' (more = duplicates)')
+    Add-Line 'n-f05-step7' $(if ($script:atStep -eq $step7.Id) { 'PASS' } else { 'FAIL' }) $(if ($script:atStep -eq $step7.Id) { 'publication A moved to step 7' } else { 'publication A not at step 7' })
+
+    # 10. Clean-up. On a FAIL the rows stay for review; part 1 of the next run removes them (it finds them by title).
+    if (@($lines | Where-Object { $_ -match '^ITEM .* FAIL' }).Count) { Add-Line 'o-clean-up' 'SKIP' 'kept for review because a check failed; part 1 of the next run removes them' }
     else {
-    $n = 0
-    foreach ($l in 'PFM Activity Log', 'PFM Endorsements') { foreach ($r in (Get-RowsFor $l $pubId)) { $null = Remove-PnPListItem -List $l -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ } }
-    $null = Remove-PnPListItem -List 'PFM Publications' -Identity $pubId -Recycle -Force -ErrorAction Stop; $n++
-    Remove-Item -LiteralPath $pubFile -Force
-    Add-Line 'j-clean-up' 'SET' ('rows moved to the site Recycle Bin=' + $n)
+      $n = 0
+      foreach ($p in $aId, $hId, $fId) { $n += Clear-TestPublication $p }
+      Remove-Item -LiteralPath $pubFile -Force
+      Add-Line 'o-clean-up' 'SET' ('rows moved to the site Recycle Bin=' + $n)
     }
   }
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
