@@ -89,6 +89,7 @@ Chat history, Project files and remembered copies are not authority. If you cann
 
 - Before you report "verified", run the checks in Commands and report the results.
 - For UI work, verify by measuring, not by looking: screenshots at 375 px and 1440 px width, light and dark, measured spacing, and contrast against WCAG AA (4.5:1 text, 3:1 large text and UI parts). Report the numbers.
+- Skills: `.claude/skills/ui-verify/SKILL.md` (how to measure UI) and, before a data write or a query that can scan a large SharePoint list, `.claude/skills/data-change/SKILL.md`.
 
 ## Checks
 
