@@ -7,7 +7,7 @@ For people. Agents read AGENTS.md; this page is for you. It covers the habits th
 1. **Explore.** Ask the agent to read the relevant files and explain what is there before it changes anything. Correct its understanding early: a wrong start costs more than a slow one.
 2. **Plan.** For anything bigger than a small fix, ask for a plan first (in Claude Code: plan mode, Shift+Tab). Read it. Change it. Approve it.
 3. **Build in small steps.** One change, one check, one commit. Small steps are easy to review and easy to undo.
-4. **Verify.** Give the agent something it can run that comes back pass or fail: a test, a script or an expected output. This is the most useful thing you can do ([Claude Code best practices](https://code.claude.com/docs/en/best-practices)). In this kit, the command is `scripts/check.sh`; put your project's own tests in `scripts/check.local.sh`.
+4. **Verify.** Give the agent something it can run that comes back pass or fail: a test, a script or an expected output. This is the most useful thing you can do ([Claude Code best practices](https://code.claude.com/docs/en/best-practices)). In this repo, the test command is `tests/run.sh` (pass = `TESTS pass=N fail=0`) and the lint command is `scripts/lint.sh` (AGENTS.md "Commands").
 5. **Review.** Read the diff. For a larger change, ask for a review in a fresh session that sees only the diff (this kit's `reviewer` agent does that). A review by the same session that wrote the code misses more.
 
 ## Keep the context clean
