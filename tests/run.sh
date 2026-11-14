@@ -277,7 +277,7 @@ for b in scripts/gov/paste/*.ps1; do
   [ -d "$base/T13" ] && [ ! -e "$ob" ] && grep -q "^Moved the folder 90-161.Z into RADE" "$tp/out.txt" || { echo "RADE folder move"; ls "$tp/u/test1234/OneDrive - United States Air Force"; pf=$((pf+1)); }
   # Saved checks (R17): the run wrote RADE/Config/rade-checks.json with PASSED entries only and no DODID.
   ck="$tp/u/test1234/OneDrive - United States Air Force/RADE/Config/rade-checks.json"
-  [ -f "$ck" ] && ! grep -q test1234 "$ck" && python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert d['schema']=='rade-checks/1' and d['maxAgeDays']==7 and d['checks'] and all(v['state']=='PASSED' for v in d['checks'].values())" "$ck" || { echo "rade-checks.json"; cat "$ck"; pf=$((pf+1)); }
+  [ -f "$ck" ] && ! grep -q test1234 "$ck" && python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert d['schema']=='rade-checks/1' and d['maxAgeDays']==7 and d['checks'] and all(v['state']=='PASSED' for v in d['checks'].values()) and not ({'word','disk','write'} & set(d['checks']))" "$ck" || { echo "rade-checks.json"; cat "$ck"; pf=$((pf+1)); }
   st=$(grep -c '^Step [0-9]* of [0-9]*: ' "$tp/out.txt"); sm=$(grep -c '^  Result: \(PASSED\|NEEDS REVIEW\) (' "$tp/out.txt")
   [ "$st" -eq "$n" ] && [ "$sm" -eq "$n" ] && [ -f "$base/Rounds/$r/90161Z-$r-report-r1.txt" ] && grep -q "^Results folder: Rounds" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && grep -q "full log" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && pr=$((pr+1)) || { cat "$tp/out.txt" | tail -20; }
   # The screen shows the real path (PFM 13 Nov); everything else, and the report, masks it.
@@ -322,6 +322,8 @@ for b in scripts/gov/paste/*.ps1; do
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out.txt" 2>&1; [ -e "$te/u/test1234/OneDrive - United States Air Force/90-161.Z" ] && tw=$((tw+1))
   [ "$(cd "$te/u/test1234/OneDrive - United States Air Force" && find . -type f | sort | tr '\n' ' ')" = "./RADE/Config/rade-checks.json " ] || { echo "files after N:"; find "$te/u" -type f; tw=$((tw+1)); }
   grep -q "^You cannot deploy yet: a check is FAILED or NOT RUN" "$te/out.txt" || { echo "check gate did not stop the deploy"; tw=$((tw+1)); }
+  # Review R17 MAJOR 1: a fresh install (no 90-161.Z folder anywhere) finds OneDrive and can write there.
+  grep -q "^  PASSED: Your OneDrive folder is set up" "$te/out.txt" && grep -q "^  PASSED: Files can be saved in OneDrive" "$te/out.txt" || { echo "fresh install: OneDrive checks"; grep "OneDrive" "$te/out.txt"; tw=$((tw+1)); }
   # Saved checks (R17, PFM 14 Nov 26): a second run uses the PASSED results saved by the first, and still runs the others.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out2.txt" 2>&1
   grep -q "^  PASSED: PowerShell is version 5.1 or newer. Saved result from today" "$te/out2.txt" && grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt" || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }

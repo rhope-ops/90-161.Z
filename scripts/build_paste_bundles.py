@@ -547,6 +547,8 @@ function Get-RoundPlan {
     else { $lines += ''; $lines += 'Clean-up: nothing to recycle.' }
   }
   $lines += ''
+  $lines += 'Settings   RADE\Config (the e-mail address and the saved checks) and Config\90161Z-site.txt (the site address).'
+  $lines += ''
   $lines += 'Missing folders are created and files of the same name are replaced. Nothing else is changed, moved or deleted.'
   return @{ Shown = $shown; Found = $found; Lines = $lines }
 }
@@ -600,6 +602,7 @@ function Invoke-Round([bool]$Clean, [bool[]]$Selected, [string]$To, [scriptblock
   if (Test-WordOpen) { & $speak 'Note: Word is open. Renders use Word: save your documents and close Word if a step stops.' }
   & $speak ''
   Write-BundleFile $base $speak
+  if ($script:closing) { throw 'the window was closed (Exit) while the round ran; no step ran' }
   $fl = Save-RoundDownload $base $speak
   if ($fl) { $summary += $fl }
   # An empty box clears the saved address (review R06 #5).
@@ -640,6 +643,7 @@ function Invoke-Round([bool]$Clean, [bool[]]$Selected, [string]$To, [scriptblock
     Add-RoundHistory $base $steps[$k].Name $(if ($state -eq 'PASSED') { 'OK' } else { 'CHECK' }) ([int]$secs)
   }
   & $speak ''
+  if ($script:closing) { throw 'the window was closed (Exit) while the round ran' }
   $summary += (Get-FolderInventory $base)
   } catch {
     # A run that stops midway still leaves a report to send (summary so far + the log up to the stop).
@@ -766,6 +770,7 @@ function Invoke-ChildScript([string]$Text, [string]$ArgText, [int]$Seconds, [scr
     $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
     $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
     $p = [System.Diagnostics.Process]::Start($psi)
+    $script:child = $p   # Exit stops a check too (review R17)
     $outTask = $p.StandardOutput.ReadToEndAsync(); $errTask = $p.StandardError.ReadToEndAsync()
     $deadline = (Get-Date).AddSeconds($Seconds)
     while (-not $p.WaitForExit(30)) {
@@ -777,7 +782,7 @@ function Invoke-ChildScript([string]$Text, [string]$ArgText, [int]$Seconds, [scr
     $res.Lines = @(([string]$outTask.Result) -split "`r?`n" | Where-Object { $_ })
     if (-not $res.Why -and ([string]$errTask.Result).Trim()) { $res.Why = 'it wrote error output' }
   } catch { $res.Why = $_.Exception.GetType().Name }
-  finally { try { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force } } catch { $null = $_ } }
+  finally { $script:child = $null; try { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force } } catch { $null = $_ } }
   return $res
 }
 $rightsScript = @'
@@ -826,12 +831,12 @@ function Invoke-Check($Def, [string]$Base, [string]$Site, [scriptblock]$Tick) {
         else { $one = Format-CheckResult 'FAILED' ('limited [' + $m + ']') 'Your computer limits PowerShell, so RADE cannot save files or open Word. Ask your security officer (ISSM). Send the results e-mail as it is.' }
       }
       'onedrive' {
-        $od = Split-Path -Parent (Get-BasePath)
+        $od = Get-OneDrivePath
         if (Test-Path -LiteralPath $od -PathType Container) { $one = Format-CheckResult 'PASSED' 'found' '' }
         else { $one = Format-CheckResult 'FAILED' 'not found' 'Open OneDrive from the Start menu and sign in; wait until it says it is up to date, then select "Run checks again".' }
       }
       'disk' {
-        $od = Split-Path -Parent (Get-BasePath)
+        $od = Get-OneDrivePath
         $root = [System.IO.Path]::GetPathRoot($od); if (-not $root) { $root = [System.IO.Path]::GetPathRoot([System.IO.Path]::GetTempPath()) }
         $free = (New-Object System.IO.DriveInfo($root)).AvailableFreeSpace
         $need = 200MB; foreach ($f in $files) { $need += 2 * $f.Data.Length }
@@ -841,7 +846,7 @@ function Invoke-Check($Def, [string]$Base, [string]$Site, [scriptblock]$Tick) {
         else { $one = Format-CheckResult 'PASSED' ('{0:N0} MB free' -f $mb) '' }
       }
       'write' {
-        $od = Split-Path -Parent (Get-BasePath)
+        $od = Get-OneDrivePath
         if (-not (Test-Path -LiteralPath $od -PathType Container)) { $one = Format-CheckResult 'NOT RUN' 'no OneDrive folder' 'Fix the OneDrive problem first.' }
         else {
           $t = Join-Path $od ('90161Z-write-test-' + [guid]::NewGuid().ToString('N').Substring(0, 8) + '.tmp')
@@ -968,6 +973,9 @@ function Get-CheckBlock($Results) {
 # PowerShell and PnP versions and the computer are the same, and its scope (the site or the Power Automate address, as a
 # hash) matches. A check that did not pass is never saved. No DODID, name or address is in the file (details are masked).
 $checkMaxDays = 7
+# Checks whose answer can change between two runs on the same day always run (review R17 MAJOR 2: "Word is open" blocks a
+# deploy, PFM 14 Nov 26 1B; free space; a test file in OneDrive).
+$checkNoSave = @('word', 'disk', 'write')
 function Get-ShortHash([string]$Text) {
   if (-not $Text) { return '' }
   $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -1006,14 +1014,16 @@ function Get-CheckAge([string]$At) {
   # Days since a saved result (fractional); -1 when the date cannot be read.
   $d = [datetime]::MinValue
   if ([datetime]::TryParseExact($At, 'yyyy-MM-ddTHH:mm:ss', [System.Globalization.CultureInfo]::InvariantCulture, 'None', [ref]$d)) { return ((Get-Date) - $d).TotalDays }
-  return -1
+  return 99999   # unreadable: too old
 }
 function Get-SavedCheck($Cache, [string]$Id, [string]$Scope) {
   # The saved result to use, or $null (with the reason in $script:savedWhy[$Id] when one was found but is too old).
+  if ($checkNoSave -contains $Id) { return $null }
   $c = $Cache[$Id]
   if (-not $c -or $c.State -ne 'PASSED' -or $c.Scope -ne $Scope) { return $null }
   $age = Get-CheckAge $c.At
-  if ($age -lt 0 -or $age -gt $checkMaxDays) { $script:savedWhy[$Id] = ('The saved result is ' + [int][math]::Floor([math]::Max(0, $age)) + ' days old (older than ' + $checkMaxDays + ' days).'); return $null }
+  if ($age -lt -0.01) { $script:savedWhy[$Id] = 'The saved result has a date in the future (the computer clock changed).'; return $null }
+  if ($age -gt $checkMaxDays) { $script:savedWhy[$Id] = ('The saved result is ' + [int][math]::Floor([math]::Max(0, $age)) + ' days old (older than ' + $checkMaxDays + ' days).'); return $null }
   $days = [int][math]::Floor($age)
   $when = $(if ($days -lt 1) { 'today' } elseif ($days -eq 1) { '1 day ago' } else { [string]$days + ' days ago' })
   return @{ State = 'PASSED'; Detail = ('Saved result from ' + $when + ' (' + $c.At.Substring(0, 10) + '; checked again after ' + $checkMaxDays + ' days): ' + $c.Detail); Fix = ''; Saved = $true }
@@ -1030,8 +1040,9 @@ function Save-CheckCache($Results, [string]$Base, [string]$Site) {
     foreach ($id in @($Results.Keys)) {
       $r = $Results[$id]
       if ($r.Saved) { continue }   # a saved result keeps its first date
+      if ($checkNoSave -contains $id) { if ($keep.ContainsKey($id)) { $keep.Remove($id) }; continue }
       if ($r.State -eq 'PASSED') {
-        $keep[$id] = [ordered]@{ state = 'PASSED'; detail = (ConvertTo-Masked ([string]$r.Detail)); at = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss'); scope = (Get-CheckScope $id $Base $Site) }
+        $keep[$id] = [ordered]@{ state = 'PASSED'; detail = (ConvertTo-Masked ([string]$r.Detail)); at = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ss', [System.Globalization.CultureInfo]::InvariantCulture); scope = (Get-CheckScope $id $Base $Site) }
       } elseif ($keep.ContainsKey($id) -and $r.State -ne 'RUNNING') { $keep.Remove($id) }
     }
     $sorted = [ordered]@{}; foreach ($k in @($keep.Keys | Sort-Object)) { $sorted[$k] = $keep[$k] }
@@ -1177,6 +1188,9 @@ if ($gui) {
         $v.DefaultCellStyle.Padding = New-Object System.Windows.Forms.Padding(4, 2, 4, 2)
         $v.DefaultCellStyle.SelectionBackColor = [System.Drawing.SystemColors]::Window; $v.DefaultCellStyle.SelectionForeColor = [System.Drawing.SystemColors]::WindowText } catch { $null = $_ }
       $v.Add_ColumnWidthChanged({ & $refit $this $_.Column.Index })
+      # A Fill column may get its real width only when the screen shows (review R17): refit every column then.
+      $v.Add_VisibleChanged({ if ($this.Visible) { for ($c = 0; $c -lt $this.Columns.Count; $c++) { & $refit $this $c } } })
+      $v.Add_SizeChanged({ for ($c = 0; $c -lt $this.Columns.Count; $c++) { & $refit $this $c } })
       $v }
     # R17 (PFM 14 Nov 26: the light-green sweep of the Windows bar was not smooth): RADE draws its own bars. A 30 ms timer
     # eases the fill to its new value and moves one soft light band across it; an unknown step shows a block that glides
@@ -1524,7 +1538,7 @@ if ($gui) {
       # Both bars from Get-Progress (the timer draws them). Unknown step progress: a gliding block (still when animations are off).
       if (-not $script:prog -or -not $script:stepStart) { return }
       $g = Get-Progress; $t = Get-ProgressText $g $script:statusBase
-      & $setBar 'all' $g.All $false $true
+      & $setBar 'all' ([math]::Max($g.All, $script:bars['all'].Target)) $false $true   # the overall bar never moves back in a run
       if ($g.Step -lt 0) { & $setBar 'step' 0 (-not $calm) $false } else { & $setBar 'step' $g.Step $false $true }
       if ($allLabel.Text -ne $t.All) { $allLabel.Text = $t.All }; if ($stepLabel.Text -ne $t.Step) { $stepLabel.Text = $t.Step } }
     $tick = { & $paint; [System.Windows.Forms.Application]::DoEvents() }
@@ -1535,6 +1549,7 @@ if ($gui) {
     $onStatus = { param($i, $count, $name, $estimate)
       $null = $i; $null = $count   # the labels read $script:prog
       $script:statusBase = $name; $script:stepStart = Get-Date; $script:stepEst = $estimate
+      if ($i -le 1) { & $setBar 'all' 0 $false $false }   # a new run starts the overall bar at 0
       # The step row says it is running; the clean-up row (row 0) says done once the next step starts.
       if ($script:off -eq 1 -and $name -ne 'Clean-up' -and [string]$stepView.Rows[0].Cells[1].Tag[1] -like 'Running now*') { & $stepSay 0 'Done. The log above the bars lists what moved to the Recycle Bin.' }
       $now = 'Running now. Started ' + (Get-Date -Format 'HH:mm') + '.'
@@ -1647,7 +1662,7 @@ try {
   if ($checkGate -and (Get-CheckBlock $script:checkResults)) {
     # PFM 14 Nov 26: no deploy unless every check passes. Nothing has been written.
     Write-Host ''
-    Write-Host 'You cannot deploy yet: a check is FAILED or NOT RUN (see above). Nothing was changed.'
+    Write-Host 'You cannot deploy yet: a check is FAILED or NOT RUN (see above). Only the saved checks (RADE\Config\rade-checks.json) were written.'
     Write-Host 'Fix each one, then paste the round again.'
     return
   }
@@ -1656,7 +1671,7 @@ try {
   $to = Get-MailTo (Get-BasePath)
   # The plan above shows first; Enter starts the run (PFM 13 Nov), N stops before anything is written.
   $go = ([string](Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes')).Trim()
-  if ($go -match '^[Nn]') { Write-Host 'Stopped. Nothing was written.'; return }
+  if ($go -match '^[Nn]') { Write-Host 'Stopped. Only the saved checks (RADE\Config\rade-checks.json) were written.'; return }
   $sel = @(); for ($k = 0; $k -lt $steps.Count; $k++) { $sel += ($script:appSteps -contains $k -and [bool]$steps[$k].Default -and -not $steps[$k].AskParam) }   # text mode: steps that need a folder are skipped
   $onStatusText = { param($i, $count, $name, $estimate) $null = $name; $null = $estimate; $g = Get-Progress; Write-Host ('  Overall: step ' + $i + ' of ' + $count + ', ' + [int]($g.All * 100) + ' % done, about ' + (Format-Duration $g.Left) + ' left (a guess)') }
   $checkLines = Get-CheckSummary $script:checkResults
