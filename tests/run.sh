@@ -342,18 +342,25 @@ python3 - "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_1.zip" <<'PYEOF'
 import zipfile, sys
 z = zipfile.ZipFile(sys.argv[1], 'w')
 z.writestr('solution.xml', '\ufeff<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SolutionManifest><Publisher><UniqueName>jdoe</UniqueName><LocalizedNames><LocalizedName description="Jane Doe" languagecode="1033" /></LocalizedNames><EMailAddress>jane.doe@fakeco.example</EMailAddress><PrimaryContactName>Jane Roe</PrimaryContactName><Addresses><Address><City>Faketown</City></Address></Addresses><CustomizationPrefix>pfm</CustomizationPrefix></Publisher></SolutionManifest></ImportExportXml>'.encode())
-z.writestr('Workflows/F-1.json', '{"schema":"https://schema.management.azure.com/x.json#","dataset":"https://fakeco.example/sites/Wing123","c":"user9@fakeco.example","e":"https:\\/\\/fakeco2.sharepoint.us\\/sites\\/Wing456","p":"https%3A%2F%2Ffakeco3.sharepoint.us%2Fsites%2FWing789","h":"fakeco4.sharepoint.us","api":"/providers/Microsoft.PowerApps/apis/shared_sharepointonline"}')
+import json
+z.writestr('Workflows/90161ZExportSample-1A2B3C4D-0000-4000-8000-00000000AAAA.json', json.dumps({"schema": "https://schema.management.azure.com/x.json#",
+  "dataset": "https://fakeco.example/sites/Wing123", "c": "user9@fakeco.example", "e": "https:\\/\\/fakeco2.sharepoint.us\\/sites\\/Wing456",
+  "p": "https%3A%2F%2Ffakeco3.sharepoint.us%2Fsites%2FWing789", "h": "fakeco4.sharepoint.us", "api": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+  "d": "%252Fsites%252FWingAlpha", "t": "/teams/WingBravo/x", "ip": "10.20.30.40", "unc": "\\\\fileserver01\\share", "defaultValue": "Jane Echo",
+  "j": json.dumps({"owner": "Jane Delta"}), "ds": "@parameters('Site URL (pfm_SiteURL)')", "op": "GetItems", "n": 3}))
+z.writestr('Workflows/SendtoJaneFoxtrot-1A2B3C4D-0000-4000-8000-00000000BBBB.json', '{"a":1}')
+z.writestr('customizations.xml', '<ImportExportXml><connectionreferences><connectionreference connectionreferencelogicalname="pfm_sharedsharepointonline_a1b2c"><connectionreferencedisplayname>SharePoint PFM90161ZExportSample-a1b2c</connectionreferencedisplayname><connectorid>/providers/Microsoft.PowerApps/apis/shared_sharepointonline</connectorid></connectionreference></connectionreferences><Publisher><SupportingWebsiteUrl a="1">WingHotel</SupportingWebsiteUrl></Publisher></ImportExportXml>')
 z.writestr('environmentvariablevalues.json', '{"value":"secretvalue"}')
 z.close()
 PYEOF
 sed -e "s#Join-Path 'C:\\\\Users'#Join-Path '$tx/u'#" scripts/gov/90161Z-T17-export-capture-r1.ps1 > "$tx/c.ps1"
 USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out.txt" 2>&1
 cf="$tx/u/test1234/OneDrive - United States Air Force/90-161.Z/T17/90161Z-T17-export-capture-r1.txt"
-[ -f "$cf" ] && grep -q "^CAPTURE PASS text-files=3" "$cf" && grep -q "bom=yes" "$cf" && grep -q "schema.management.azure.com" "$cf" \
+[ -f "$cf" ] && grep -q "^CAPTURE PASS text-files=5" "$cf" && grep -q "GetItems" "$cf" && grep -q "pfm_SiteURL" "$cf" && grep -q "GUID-1" "$cf" && grep -q "bom=yes" "$cf" && grep -q "schema.management.azure.com" "$cf" \
   && grep -q "shared_sharepointonline" "$cf" && grep -q "<CustomizationPrefix>pfm<" "$cf" \
-  && ! grep -qiE "jdoe|jane|roe<|fakeco|faketown|wing[0-9]|secretvalue|test1234" "$cf" && ok "T17 export capture masks names, addresses (plain, escaped, encoded, bare host) and values (fake export)" || { cat "$tx/out.txt"; cat "$cf"; bad "T17 export capture masking"; }
-# A leak the masking misses: no file is written (review R16 MAJOR). A host with an unknown ending is still caught by "sharepoint".
-python3 -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w'); z.writestr('a.json','{\"x\":\"fakeco.sharepoint.zz\"}'); z.close()" "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_2.zip"
+  && ! grep -qiE "jdoe|jane|roe<|fakeco|faketown|wing[0-9a-z]|secretvalue|test1234|10\.20\.30|fileserver|1a2b3c4d" "$cf" && ok "T17 export capture masks names, addresses (plain, escaped, encoded, bare host) and values (fake export)" || { cat "$tx/out.txt"; cat "$cf"; bad "T17 export capture masking"; }
+# A leak the value masking cannot remove (an address as a JSON key): no file is written (review R16 MAJOR).
+python3 -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w'); z.writestr('a.json','{\"jane.doe@fakeco.example\":1}'); z.close()" "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_2.zip"
 touch -d '+1 minute' "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_2.zip"
 USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out2.txt" 2>&1
 grep -q "^CAPTURE FAIL" "$tx/out2.txt" && [ ! -e "$cf" ] && ok "T17 export capture: a leak writes no file" || { cat "$tx/out2.txt"; bad "T17 export capture leak path"; }

@@ -5,11 +5,13 @@
   What it is for: R15's solution import stopped with an XML error, because the test solution's layout was written from
   memory (PFM 14 Nov 26: copy a real export). This reads the small solution the PFM exported by hand in the step before,
   so the next test solution can match a real export from this environment exactly. About 1 minute (an estimate).
-  It changes nothing. It reads the newest "90161ZExportSample*.zip" from the last 4 hours in the Downloads folder or the
-  T17 folder, and writes one plain text file with every text file in the zip (XML and JSON), masked:
-  e-mail addresses, web addresses (except the public schema addresses the format itself uses), /sites/ paths, the
-  publisher's names, e-mail, website and postal fields, every environment variable value, and the DODID. Other files are
-  listed by name and size only. A separate check looks for anything address-like that is left; if it finds one, no file
+  It changes nothing. It reads the newest "*90161ZExportSample*.zip" from the last 4 hours in the Downloads folder or the
+  T17 folder, and writes one plain text file with the structure of every XML and JSON file in the zip. Values are kept
+  only by an allow list (see Protect-Value): numbers, true/false, GUIDs as <GUID-n>, one-token codes and flow
+  expressions; every other value, the publisher block and all variable values become <text:N>. A value that the leak
+  check (Find-Leak: e-mail, web address except public schema hosts, host name, /sites/ or /teams/ path, IP, UNC path,
+  double encoding, the DODID) flags is replaced too. Zip entry names are kept only when the export format or the guide
+  gives them. Other files are listed by size only. The leak check then reads the whole output; if it finds anything, no file
   is written (review R16). It also records whether each file starts with a byte-order mark (R15's error can come
   from one) and how the file names in the zip are written.
   Output: 90161Z-T17-export-capture-r1.txt in the T17 folder (send this). The zip itself stays on this computer.
@@ -88,37 +90,81 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
 }
 # <<< task-common
 
-function Hide-Export([string]$Text, [string]$Name) {
-  # Returns @{ Text; Count }: the masked text and how many values were replaced. $Name is the file's path in the zip.
-  # Order: whole values first (variable values, publisher fields), then addresses in every encoding, then bare hosts.
-  $script:hidden = 0
-  $sub = { param([string]$T, [string]$Pattern, [string]$With) $script:hidden += [regex]::Matches($T, $Pattern).Count; [regex]::Replace($T, $Pattern, $With) }
-  if ($Name -match '(?i)environmentvariablevalue') {
-    $Text = & $sub $Text '(?i)("value"\s*:\s*")[^"]*' '$1<VALUE>'
-    $Text = & $sub $Text '(?i)(<value>)[^<]+(</value>)' '$1<VALUE>$2'
+# Review R16 (second pass): blocking patterns kept missing forms, so values are kept only by an allow list. The structure
+# (element, attribute and key names) stays; a value stays only when it is empty, a number, true/false, a GUID (shown as
+# <GUID-n>, the same n for the same GUID), one token with no spaces (codes, IDs, paths) or a flow expression (starts with
+# "@"), and the leak check finds nothing in it. Every other value becomes <text:N> (N = its length). The publisher block,
+# default values and every value in a variable-value file are always replaced.
+$script:guids = @{}
+$GuidRx = '(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'
+$Always = @('defaultvalue', 'value', 'description', 'displayname', 'connectionreferencedisplayname', 'name')   # key or attribute names whose value is always replaced
+
+function Protect-Guid([string]$T) {
+  return [regex]::Replace($T, $GuidRx, { param($m) $k = $m.Value.ToLowerInvariant(); if (-not $script:guids.ContainsKey($k)) { $script:guids[$k] = '<GUID-' + ($script:guids.Count + 1) + '>' }; $script:guids[$k] })
+}
+
+function Protect-Value([string]$V, [string]$Key, [bool]$Force) {
+  if ($null -eq $V -or $V -eq '') { return $V }
+  $script:values++
+  $hide = { $script:hidden++; '<text:' + $V.Length + '>' }
+  if ($Force -or ($Always -contains $Key.ToLowerInvariant())) { return (& $hide) }
+  if ($V -match '^-?\d+(\.\d+)?$' -or $V -match '^(?i)(true|false)$') { return $V }
+  $g = Protect-Guid $V
+  if ((Find-Leak $g) -gt 0) { return (& $hide) }
+  if ($g -match '^[\w.$/:\[\]()''{},?=+#<>-]{1,120}$') { return $g }
+  if ($g.StartsWith('@') -and $g.Length -le 400) { return $g }
+  return (& $hide)
+}
+
+function Protect-Xml([string]$T, [string]$Name) {
+  $d = New-Object System.Xml.XmlDocument
+  $d.XmlResolver = $null; $d.PreserveWhitespace = $false
+  $d.LoadXml($T)
+  $all = $Name -match '(?i)environmentvariablevalue'
+  foreach ($n in @($d.SelectNodes('//*'))) {
+    $inPub = $all -or [bool]$n.SelectSingleNode('ancestor-or-self::*[local-name()="Publisher"]')
+    $keepPrefix = @('CustomizationPrefix', 'CustomizationOptionValuePrefix') -contains $n.LocalName
+    foreach ($at in @($n.Attributes)) { if ($at.Prefix -ne 'xmlns' -and $at.LocalName -ne 'xmlns') { $at.Value = Protect-Value $at.Value $at.LocalName $inPub } }
+    foreach ($c in @($n.ChildNodes)) {
+      if ($c.NodeType -eq 'Text' -or $c.NodeType -eq 'CDATA') { $c.Value = Protect-Value $c.Value $n.LocalName ($inPub -and -not $keepPrefix) }
+      elseif ($c.NodeType -eq 'Comment') { $c.Value = 'text:' + $c.Value.Length }
+    }
   }
-  $Text = & $sub $Text '(?i)(<defaultvalue>)[^<]+(</defaultvalue>)' '$1<VALUE>$2'
-  # The publisher block (solution.xml): every attribute value and element text except the two prefixes (review R16 MAJOR:
-  # an allow list, so a field this list does not know, such as PrimaryContactName, is masked too).
-  $Text = [regex]::Replace($Text, '(?is)<Publisher>.*?</Publisher>', {
-    param($m)
-    $p = $m.Value
-    $p = & $sub $p '(?i)(\bdescription=")[^"]+' '$1<MASKED>'
-    $p = & $sub $p '(?i)(<(?!CustomizationPrefix>|CustomizationOptionValuePrefix>)(\w+)>)[^<]+(</\2>)' '$1<MASKED>$3'
-    return $p
-  })
-  $Text = & $sub $Text '[\w.+-]+(@|%40|\\u0040)[\w-]+(\.[\w-]+)+' '<EMAIL>'
-  # Web addresses in plain, JSON-escaped (\/) and percent-encoded (%3A%2F%2F) form: keep the public schema hosts only.
-  $Text = [regex]::Replace($Text, '(?i)https?(://|:\\/\\/|%3A%2F%2F)[^\s"''<>]+', {
-    param($m)
-    $u = $m.Value -replace '\\/', '/' -replace '(?i)%3A', ':' -replace '(?i)%2F', '/'
-    $h = ''; try { $h = ([uri]$u).Host.ToLowerInvariant() } catch { $h = '' }
-    if ($h -and $KeepHosts -contains $h) { return $m.Value }
-    $script:hidden++; return '<URL>'
-  })
-  $Text = & $sub $Text '(?i)(/|\\/|%2F)sites(/|\\/|%2F)[^\s"''<>/\\?&%]+' '$1sites$2<SITE-NAME>'
-  $Text = [regex]::Replace($Text, $HostRx, { param($m) if ($KeepHosts -contains $m.Value.ToLowerInvariant()) { return $m.Value }; $script:hidden++; '<HOST>' })
-  return @{ Text = $Text; Count = $script:hidden }
+  $sw = New-Object System.IO.StringWriter
+  $xs = New-Object System.Xml.XmlWriterSettings; $xs.Indent = $true; $xs.OmitXmlDeclaration = $true
+  $w = [System.Xml.XmlWriter]::Create($sw, $xs); $d.Save($w); $w.Close()
+  return $sw.ToString()
+}
+
+function Protect-JsonNode($O, [string]$Key, [bool]$Force) {
+  if ($null -eq $O) { return $null }
+  if ($O -is [string]) { return (Protect-Value $O $Key $Force) }
+  if ($O -is [System.Management.Automation.PSCustomObject]) {
+    foreach ($p in @($O.PSObject.Properties)) { $p.Value = Protect-JsonNode $p.Value $p.Name $Force }
+    return $O
+  }
+  if ($O -is [System.Collections.IEnumerable]) { return ,@(foreach ($x in $O) { Protect-JsonNode $x $Key $Force }) }
+  return $O   # number or boolean
+}
+
+function Protect-Json([string]$T, [string]$Name) {
+  $o = $T | ConvertFrom-Json
+  $o = Protect-JsonNode $o '' ($Name -match '(?i)environmentvariablevalue')
+  # JSON keys are structure, but a key could still hold a name: the leak check reads the whole output.
+  return (Protect-Guid ($o | ConvertTo-Json -Depth 100))
+}
+
+function Protect-EntryName([string]$P) {
+  # Entry names by allow list: the names a solution export uses, and the names the guide gives (review R16: a name
+  # inside one token cannot be found by a pattern).
+  $known = @('solution.xml', 'customizations.xml', '[Content_Types].xml', 'Workflows', 'environmentvariabledefinitions',
+    'environmentvariabledefinition.xml', 'environmentvariablevalues.json', 'Other', 'Relationships.xml')
+  $parts = foreach ($x in ($P -split '/')) {
+    $g = Protect-Guid $x
+    if ($known -contains $g -or $g -match '(?i)^\w*90161Z\w*ExportSample[\w-]*?(<GUID-\d+>)?\.json$' -or $g -match '^[a-z0-9]{2,8}_SiteU[Rr][Ll]$' -or $g -match '^<GUID-\d+>$') { $g }
+    else { '<name:' + $x.Length + '>' }
+  }
+  return ($parts -join '/')
 }
 
 function Find-Leak([string]$Text) {
@@ -133,6 +179,7 @@ function Find-Leak([string]$Text) {
     if (-not ($KeepHosts -contains $h)) { $n++ }
   }
   foreach ($m in [regex]::Matches($Text, $HostRx)) { if (-not ($KeepHosts -contains $m.Value.ToLowerInvariant())) { $n++ } }
+  $n += [regex]::Matches($Text, '(?i)(%25[0-9a-f]{2}|\\\\[\w-]+\\|\b\d{1,3}(\.\d{1,3}){3}\b|/teams/)').Count   # double-encoded, UNC, IPv4, /teams/
   foreach ($x in $secret) { if ($x -and $Text -match [regex]::Escape($x)) { $n++ } }
   return $n
 }
@@ -160,6 +207,8 @@ try {
   Set-Location -LiteralPath $dir
   $lines = New-Object System.Collections.Generic.List[string]
   $lines.Add('TASK T17 solution export capture r1, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+  $outFile = Join-Path $dir '90161Z-T17-export-capture-r1.txt'
+  if (Test-Path -LiteralPath $outFile -PathType Leaf) { Remove-Item -LiteralPath $outFile -Force }   # never send an older copy
   $z = $(if ($Zip) { Get-Item -LiteralPath $Zip } else { Find-ExportZip $dir })
   if (-not $z) {
     throw ('NO EXPORT: no ' + $Pattern + ' from the last ' + $MaxAgeHours + ' hours in Downloads or the T17 folder. What to do: export the solution again (step before), or save the zip into the T17 folder, then run this round again.')
@@ -167,32 +216,33 @@ try {
   $lines.Add('ZIP ' + $z.Name + ' bytes=' + $z.Length + ' saved=' + $z.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   $archive = [System.IO.Compression.ZipFile]::OpenRead($z.FullName)
-  $masked = 0; $text = 0; $other = 0
+  $script:values = 0; $script:hidden = 0; $text = 0; $other = 0
   $body = New-Object System.Collections.Generic.List[string]
   try {
     $entries = @($archive.Entries | Where-Object { $_.FullName -notmatch '/$' })
     $lines.Add('ENTRIES ' + $entries.Count + ' names-with-backslash=' + @($entries | Where-Object { $_.FullName -like '*\*' }).Count)
     foreach ($e in $entries) {
       $ext = [IO.Path]::GetExtension($e.Name).ToLowerInvariant()
-      $lines.Add('ENTRY ' + $e.FullName + ' bytes=' + $e.Length + ' compressed=' + $e.CompressedLength)
-      if (@('.xml', '.json', '.txt', '.yaml', '.yml', '.html', '.csv') -notcontains $ext) { $other++; continue }
+      $en = Protect-EntryName $e.FullName
+      $lines.Add('ENTRY ' + $en + ' bytes=' + $e.Length + ' compressed=' + $e.CompressedLength)
+      if (@('.xml', '.json') -notcontains $ext) { $other++; continue }
       $s = $e.Open(); $ms = New-Object System.IO.MemoryStream
       try { $s.CopyTo($ms) } finally { $s.Dispose() }
       $bytes = $ms.ToArray()
       $bom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
       $t = (New-Object System.Text.UTF8Encoding $false).GetString($bytes)
       if ($bom) { $t = $t.Substring(1) }
-      $h = Hide-Export $t $e.FullName
-      $masked += $h.Count; $text++
+      $decl = $(if ($t -match '^\s*(<\?xml[^>]{0,120}\?>)') { $Matches[1] } else { 'none' })
+      try { $safe = $(if ($ext -eq '.xml') { Protect-Xml $t $e.FullName } else { Protect-Json $t $e.FullName }) }
+      catch { $safe = '(not shown: it did not parse, ' + $_.Exception.GetType().Name + ')' }
+      $text++
       $body.Add('')
-      $body.Add('==== FILE ' + $e.FullName + ' bytes=' + $bytes.Length + ' bom=' + $(if ($bom) { 'yes' } else { 'no' }) + ' line-ends=' + $(if ($t -match "`r`n") { 'CRLF' } elseif ($t -match "`n") { 'LF' } else { 'none' }) + ' ====')
-      $body.Add((ConvertTo-Masked $h.Text $secret))
+      $body.Add('==== FILE ' + $en + ' bytes=' + $bytes.Length + ' bom=' + $(if ($bom) { 'yes' } else { 'no' }) + ' line-ends=' + $(if ($t -match "`r`n") { 'CRLF' } elseif ($t -match "`n") { 'LF' } else { 'none' }) + ' declaration=' + $decl + ' ====')
+      $body.Add((ConvertTo-Masked $safe $secret))
     }
   } finally { $archive.Dispose() }
   $left = 0; foreach ($l in @($body)) { $left += Find-Leak $l }
-  $lines.Add('CAPTURE ' + $(if ($left -eq 0) { 'PASS' } else { 'FAIL' }) + ' text-files=' + $text + ' other-files=' + $other + ' values-masked=' + $masked + ' values-left=' + $left)
-  $outFile = Join-Path $dir '90161Z-T17-export-capture-r1.txt'
-  if (Test-Path -LiteralPath $outFile -PathType Leaf) { Remove-Item -LiteralPath $outFile -Force }   # never send an older copy
+  $lines.Add('CAPTURE ' + $(if ($left -eq 0) { 'PASS' } else { 'FAIL' }) + ' text-files=' + $text + ' other-files=' + $other + ' values=' + $script:values + ' replaced=' + $script:hidden + ' leaks-found=' + $left)
   $lines | ForEach-Object { Write-Host (ConvertTo-Masked $_ $secret) }
   Write-Host ''
   if ($left -gt 0) {

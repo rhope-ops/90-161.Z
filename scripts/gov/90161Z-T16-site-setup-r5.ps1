@@ -278,7 +278,10 @@ try {
           $body = @{ relativeLogoUrl = $Rel; type = $Type; aspect = $Aspect }   # a hashtable: PnP serializes it (review R16)
           $rest = Get-Command Invoke-PnPSPRestMethod -ErrorAction SilentlyContinue
           if (-not $rest) { throw 'Invoke-PnPSPRestMethod not in this PnP version' }
-          $null = Invoke-PnPSPRestMethod -Method Post -Url ($webAbs + '/_api/siteiconmanager/setsitelogo') -Content $body -ContentType 'application/json' -ErrorAction Stop
+          $u = $webAbs + '/_api/siteiconmanager/setsitelogo'
+          # Unverified on PnP 1.12.0 whether it serializes a hashtable (review R16): try it, then the same body as a JSON string.
+          try { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content $body -ContentType 'application/json' -ErrorAction Stop }
+          catch { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content ($body | ConvertTo-Json -Compress) -ContentType 'application/json' -ErrorAction Stop }
         }
         # Thumbnail first (navy file), so a later header call cannot be undone by it.
         $thumbHow = ''
