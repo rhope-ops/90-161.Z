@@ -109,7 +109,10 @@ function Protect-Value([string]$V, [string]$Key, [bool]$Force) {
   $hide = { $script:hidden++; '<text:' + $V.Length + '>' }
   if ($Force -or ($Always -contains $Key.ToLowerInvariant())) { return (& $hide) }
   if ($V -match '^-?\d+(\.\d+)?$' -or $V -match '^(?i)(true|false)$') { return $V }
+  if ($Key -match '(?i)version$' -and $V -match '^\d+(\.\d+){1,3}$') { return $V }   # 1.0.0.1, 9.2.26094.172: layout facts, not IPs
   $g = Protect-Guid $V
+  # A path (JsonFileName, file references) gets the entry-name allow list (review R16 3: a flow's file name holds its name).
+  if ($g -match '(?i)\.(json|xml)$') { return (Protect-EntryName $g) }
   if ((Find-Leak $g) -gt 0) { return (& $hide) }
   if ($g -match '^[\w.$/:\[\]()''{},?=+#<>-]{1,120}$') { return $g }
   if ($g.StartsWith('@') -and $g.Length -le 400) { return $g }
@@ -119,7 +122,10 @@ function Protect-Value([string]$V, [string]$Key, [bool]$Force) {
 function Protect-Xml([string]$T, [string]$Name) {
   $d = New-Object System.Xml.XmlDocument
   $d.XmlResolver = $null; $d.PreserveWhitespace = $false
-  $d.LoadXml($T)
+  $rs = New-Object System.Xml.XmlReaderSettings; $rs.DtdProcessing = 'Prohibit'; $rs.XmlResolver = $null   # a DTD or entity: not shown
+  $rd = [System.Xml.XmlReader]::Create((New-Object System.IO.StringReader $T), $rs)
+  try { $d.Load($rd) } finally { $rd.Close() }
+  foreach ($c in @($d.SelectNodes('//comment() | //processing-instruction()'))) { $null = $c.ParentNode.RemoveChild($c) }
   $all = $Name -match '(?i)environmentvariablevalue'
   foreach ($n in @($d.SelectNodes('//*'))) {
     $inPub = $all -or [bool]$n.SelectSingleNode('ancestor-or-self::*[local-name()="Publisher"]')
@@ -127,7 +133,6 @@ function Protect-Xml([string]$T, [string]$Name) {
     foreach ($at in @($n.Attributes)) { if ($at.Prefix -ne 'xmlns' -and $at.LocalName -ne 'xmlns') { $at.Value = Protect-Value $at.Value $at.LocalName $inPub } }
     foreach ($c in @($n.ChildNodes)) {
       if ($c.NodeType -eq 'Text' -or $c.NodeType -eq 'CDATA') { $c.Value = Protect-Value $c.Value $n.LocalName ($inPub -and -not $keepPrefix) }
-      elseif ($c.NodeType -eq 'Comment') { $c.Value = 'text:' + $c.Value.Length }
     }
   }
   $sw = New-Object System.IO.StringWriter
@@ -161,7 +166,7 @@ function Protect-EntryName([string]$P) {
     'environmentvariabledefinition.xml', 'environmentvariablevalues.json', 'Other', 'Relationships.xml')
   $parts = foreach ($x in ($P -split '/')) {
     $g = Protect-Guid $x
-    if ($known -contains $g -or $g -match '(?i)^\w*90161Z\w*ExportSample[\w-]*?(<GUID-\d+>)?\.json$' -or $g -match '^[a-z0-9]{2,8}_SiteU[Rr][Ll]$' -or $g -match '^<GUID-\d+>$') { $g }
+    if ($g -eq '' -or $known -contains $g -or $g -match '(?i)^\w*90161Z\w*ExportSample[\w-]*?(<GUID-\d+>)?\.json$' -or $g -match '^[a-z0-9]{2,8}_SiteU[Rr][Ll]$' -or $g -match '^<GUID-\d+>$') { $g }
     else { '<name:' + $x.Length + '>' }
   }
   return ($parts -join '/')
@@ -171,7 +176,7 @@ function Find-Leak([string]$Text) {
   # An independent check (review R16 MAJOR): patterns the masking must have removed. Returns the number of hits.
   $n = 0
   $n += [regex]::Matches($Text, '[\w.+-]+(@|%40|\\u0040)[\w-]+\.[\w-]+').Count
-  $n += [regex]::Matches($Text, '(?i)(sharepoint(?!online)|\.mil\b|onmicrosoft|appsplatform)').Count
+  $n += [regex]::Matches($Text, '(?i)(sharepoint\.[a-z]|\.mil\b|onmicrosoft|appsplatform)').Count
   $n += [regex]::Matches($Text, '(?i)sites(/|\\/|%2F)(?!<SITE-NAME>)[\w-]').Count
   foreach ($m in [regex]::Matches($Text, '(?i)https?(://|:\\/\\/|%3A%2F%2F)[^\s"''<>]+')) {
     $u = $m.Value -replace '\\/', '/' -replace '(?i)%3A', ':' -replace '(?i)%2F', '/'

@@ -6,12 +6,12 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R16, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = '2601366d'
+$buildId = 'aa95ecae'
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $round = 'R16'
 $usersRoot = 'C:\Users'
 $files = @()
-$files += @{ Dir = 'T17'; Name = '90161Z-T17-export-capture-r1.ps1'; Kind = 'text'; Sha = '59e791ad52b3'; Data = @'
+$files += @{ Dir = 'T17'; Name = '90161Z-T17-export-capture-r1.ps1'; Kind = 'text'; Sha = 'b79852998ad3'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 17 solution export capture, r1 (R16). Read-only. Windows PowerShell 5.1, no modules.
@@ -123,7 +123,10 @@ function Protect-Value([string]$V, [string]$Key, [bool]$Force) {
   $hide = { $script:hidden++; '<text:' + $V.Length + '>' }
   if ($Force -or ($Always -contains $Key.ToLowerInvariant())) { return (& $hide) }
   if ($V -match '^-?\d+(\.\d+)?$' -or $V -match '^(?i)(true|false)$') { return $V }
+  if ($Key -match '(?i)version$' -and $V -match '^\d+(\.\d+){1,3}$') { return $V }   # 1.0.0.1, 9.2.26094.172: layout facts, not IPs
   $g = Protect-Guid $V
+  # A path (JsonFileName, file references) gets the entry-name allow list (review R16 3: a flow's file name holds its name).
+  if ($g -match '(?i)\.(json|xml)$') { return (Protect-EntryName $g) }
   if ((Find-Leak $g) -gt 0) { return (& $hide) }
   if ($g -match '^[\w.$/:\[\]()''{},?=+#<>-]{1,120}$') { return $g }
   if ($g.StartsWith('@') -and $g.Length -le 400) { return $g }
@@ -133,7 +136,10 @@ function Protect-Value([string]$V, [string]$Key, [bool]$Force) {
 function Protect-Xml([string]$T, [string]$Name) {
   $d = New-Object System.Xml.XmlDocument
   $d.XmlResolver = $null; $d.PreserveWhitespace = $false
-  $d.LoadXml($T)
+  $rs = New-Object System.Xml.XmlReaderSettings; $rs.DtdProcessing = 'Prohibit'; $rs.XmlResolver = $null   # a DTD or entity: not shown
+  $rd = [System.Xml.XmlReader]::Create((New-Object System.IO.StringReader $T), $rs)
+  try { $d.Load($rd) } finally { $rd.Close() }
+  foreach ($c in @($d.SelectNodes('//comment() | //processing-instruction()'))) { $null = $c.ParentNode.RemoveChild($c) }
   $all = $Name -match '(?i)environmentvariablevalue'
   foreach ($n in @($d.SelectNodes('//*'))) {
     $inPub = $all -or [bool]$n.SelectSingleNode('ancestor-or-self::*[local-name()="Publisher"]')
@@ -141,7 +147,6 @@ function Protect-Xml([string]$T, [string]$Name) {
     foreach ($at in @($n.Attributes)) { if ($at.Prefix -ne 'xmlns' -and $at.LocalName -ne 'xmlns') { $at.Value = Protect-Value $at.Value $at.LocalName $inPub } }
     foreach ($c in @($n.ChildNodes)) {
       if ($c.NodeType -eq 'Text' -or $c.NodeType -eq 'CDATA') { $c.Value = Protect-Value $c.Value $n.LocalName ($inPub -and -not $keepPrefix) }
-      elseif ($c.NodeType -eq 'Comment') { $c.Value = 'text:' + $c.Value.Length }
     }
   }
   $sw = New-Object System.IO.StringWriter
@@ -175,7 +180,7 @@ function Protect-EntryName([string]$P) {
     'environmentvariabledefinition.xml', 'environmentvariablevalues.json', 'Other', 'Relationships.xml')
   $parts = foreach ($x in ($P -split '/')) {
     $g = Protect-Guid $x
-    if ($known -contains $g -or $g -match '(?i)^\w*90161Z\w*ExportSample[\w-]*?(<GUID-\d+>)?\.json$' -or $g -match '^[a-z0-9]{2,8}_SiteU[Rr][Ll]$' -or $g -match '^<GUID-\d+>$') { $g }
+    if ($g -eq '' -or $known -contains $g -or $g -match '(?i)^\w*90161Z\w*ExportSample[\w-]*?(<GUID-\d+>)?\.json$' -or $g -match '^[a-z0-9]{2,8}_SiteU[Rr][Ll]$' -or $g -match '^<GUID-\d+>$') { $g }
     else { '<name:' + $x.Length + '>' }
   }
   return ($parts -join '/')
@@ -185,7 +190,7 @@ function Find-Leak([string]$Text) {
   # An independent check (review R16 MAJOR): patterns the masking must have removed. Returns the number of hits.
   $n = 0
   $n += [regex]::Matches($Text, '[\w.+-]+(@|%40|\\u0040)[\w-]+\.[\w-]+').Count
-  $n += [regex]::Matches($Text, '(?i)(sharepoint(?!online)|\.mil\b|onmicrosoft|appsplatform)').Count
+  $n += [regex]::Matches($Text, '(?i)(sharepoint\.[a-z]|\.mil\b|onmicrosoft|appsplatform)').Count
   $n += [regex]::Matches($Text, '(?i)sites(/|\\/|%2F)(?!<SITE-NAME>)[\w-]').Count
   foreach ($m in [regex]::Matches($Text, '(?i)https?(://|:\\/\\/|%3A%2F%2F)[^\s"''<>]+')) {
     $u = $m.Value -replace '\\/', '/' -replace '(?i)%3A', ':' -replace '(?i)%2F', '/'
@@ -3055,7 +3060,7 @@ EQBA4OqIAMYfCB8BAESgyghg/IE4EABAJKqIAMYfiAcBAESkzAhg/IG4EABAZMqIAMYfiA8BAETIZQQw
 ABHrJAIYfyBuBAAQuSIRwPgD8SMAgATYRADjD6SBAAAS0U4EMP5AOggAICHLRQDjD6SFAAASs1gEMP5AeggAIEF7RwDjD6SJAAAS
 tXHrbcOis66bLxu4SAAkhwAAACBBmQAAgOT8KwAAAP//CY10MwAAAAZJREFUAwAuRIgqqf1N6gAAAABJRU5ErkJggg==
 '@ }
-$files += @{ Dir = 'T16'; Name = '90161Z-T16-site-setup-r5.ps1'; Kind = 'text'; Sha = '2744c2d645d4'; Data = @'
+$files += @{ Dir = 'T16'; Name = '90161Z-T16-site-setup-r5.ps1'; Kind = 'text'; Sha = 'a436626c871e'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 16 site setup, r5 (R16: header logo and thumbnail set apart and each checked; collects the probe r5 result, masked). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
@@ -3338,18 +3343,20 @@ try {
           if (-not $rest) { throw 'Invoke-PnPSPRestMethod not in this PnP version' }
           $u = $webAbs + '/_api/siteiconmanager/setsitelogo'
           # Unverified on PnP 1.12.0 whether it serializes a hashtable (review R16): try it, then the same body as a JSON string.
-          try { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content $body -ContentType 'application/json' -ErrorAction Stop }
-          catch { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content ($body | ConvertTo-Json -Compress) -ContentType 'application/json' -ErrorAction Stop }
+          try { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content $body -ContentType 'application/json' -ErrorAction Stop; return 'hashtable' }
+          catch { $tried.Add('icon manager as hashtable: ' + (& $short $_)) }
+          $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content ($body | ConvertTo-Json -Compress) -ContentType 'application/json' -ErrorAction Stop
+          return 'JSON string'
         }
         # Thumbnail first (navy file), so a later header call cannot be undone by it.
         $thumbHow = ''
-        try { & $setIcon $thumbUrl 1 0; $thumbHow = 'site icon manager type 1' } catch { $tried.Add('thumbnail icon manager: ' + (& $short $_)) }
+        try { $f = & $setIcon $thumbUrl 1 0; $thumbHow = 'site icon manager type 1 (' + $f + ')' } catch { $tried.Add('thumbnail icon manager: ' + (& $short $_)) }
         if (-not $thumbHow) {
           try { Set-PnPSite -LogoFilePath $thumbFile -ErrorAction Stop; $thumbHow = 'Set-PnPSite -LogoFilePath (navy file)' } catch { $tried.Add('thumbnail Set-PnPSite: ' + (& $short $_)) }
         }
         # Header logo (white file).
         $headHow = ''
-        try { & $setIcon $url 0 1; $headHow = 'site icon manager type 0' } catch { $tried.Add('header icon manager: ' + (& $short $_)) }
+        try { $f = & $setIcon $url 0 1; $headHow = 'site icon manager type 0 (' + $f + ')' } catch { $tried.Add('header icon manager: ' + (& $short $_)) }
         if (-not $headHow) {
           $cmd = Get-Command Set-PnPWebHeader -ErrorAction SilentlyContinue
           if ($cmd -and $cmd.Parameters.ContainsKey('SiteLogoUrl')) {

@@ -347,16 +347,16 @@ z.writestr('Workflows/90161ZExportSample-1A2B3C4D-0000-4000-8000-00000000AAAA.js
   "dataset": "https://fakeco.example/sites/Wing123", "c": "user9@fakeco.example", "e": "https:\\/\\/fakeco2.sharepoint.us\\/sites\\/Wing456",
   "p": "https%3A%2F%2Ffakeco3.sharepoint.us%2Fsites%2FWing789", "h": "fakeco4.sharepoint.us", "api": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
   "d": "%252Fsites%252FWingAlpha", "t": "/teams/WingBravo/x", "ip": "10.20.30.40", "unc": "\\\\fileserver01\\share", "defaultValue": "Jane Echo",
-  "j": json.dumps({"owner": "Jane Delta"}), "ds": "@parameters('Site URL (pfm_SiteURL)')", "op": "GetItems", "n": 3}))
+  "j": json.dumps({"owner": "Jane Delta"}), "ds": "@parameters('Site URL (pfm_SiteURL)')", "op": "GetItems", "n": 3, "actions": {"Send_an_HTTP_request_to_SharePoint": {"runAfter": {}}}}))
 z.writestr('Workflows/SendtoJaneFoxtrot-1A2B3C4D-0000-4000-8000-00000000BBBB.json', '{"a":1}')
-z.writestr('customizations.xml', '<ImportExportXml><connectionreferences><connectionreference connectionreferencelogicalname="pfm_sharedsharepointonline_a1b2c"><connectionreferencedisplayname>SharePoint PFM90161ZExportSample-a1b2c</connectionreferencedisplayname><connectorid>/providers/Microsoft.PowerApps/apis/shared_sharepointonline</connectorid></connectionreference></connectionreferences><Publisher><SupportingWebsiteUrl a="1">WingHotel</SupportingWebsiteUrl></Publisher></ImportExportXml>')
+z.writestr('customizations.xml', '<!-- Jane Doe --><ImportExportXml SolutionPackageVersion="9.2" version="9.2.26094.172"><Workflows><Workflow><JsonFileName>/Workflows/SendtoJaneFoxtrot-1A2B3C4D-0000-4000-8000-00000000BBBB.json</JsonFileName><JsonFileName>/Workflows/90161ZExportSample-1A2B3C4D-0000-4000-8000-00000000AAAA.json</JsonFileName></Workflow></Workflows><connectionreferences><connectionreference connectionreferencelogicalname="pfm_sharedsharepointonline_a1b2c"><connectionreferencedisplayname>SharePoint PFM90161ZExportSample-a1b2c</connectionreferencedisplayname><connectorid>/providers/Microsoft.PowerApps/apis/shared_sharepointonline</connectorid></connectionreference></connectionreferences><Publisher><SupportingWebsiteUrl a="1">WingHotel</SupportingWebsiteUrl></Publisher></ImportExportXml>')
 z.writestr('environmentvariablevalues.json', '{"value":"secretvalue"}')
 z.close()
 PYEOF
 sed -e "s#Join-Path 'C:\\\\Users'#Join-Path '$tx/u'#" scripts/gov/90161Z-T17-export-capture-r1.ps1 > "$tx/c.ps1"
 USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out.txt" 2>&1
 cf="$tx/u/test1234/OneDrive - United States Air Force/90-161.Z/T17/90161Z-T17-export-capture-r1.txt"
-[ -f "$cf" ] && grep -q "^CAPTURE PASS text-files=5" "$cf" && grep -q "GetItems" "$cf" && grep -q "pfm_SiteURL" "$cf" && grep -q "GUID-1" "$cf" && grep -q "bom=yes" "$cf" && grep -q "schema.management.azure.com" "$cf" \
+[ -f "$cf" ] && grep -q "^CAPTURE PASS text-files=5" "$cf" && grep -q "GetItems" "$cf" && grep -q "pfm_SiteURL" "$cf" && grep -q "GUID-1" "$cf" && grep -q "9.2.26094.172" "$cf" && grep -q "Workflows/90161ZExportSample-&lt;GUID-1&gt;.json</JsonFileName>" "$cf" && grep -q "Send_an_HTTP_request_to_SharePoint" "$cf" && grep -q "bom=yes" "$cf" && grep -q "schema.management.azure.com" "$cf" \
   && grep -q "shared_sharepointonline" "$cf" && grep -q "<CustomizationPrefix>pfm<" "$cf" \
   && ! grep -qiE "jdoe|jane|roe<|fakeco|faketown|wing[0-9a-z]|secretvalue|test1234|10\.20\.30|fileserver|1a2b3c4d" "$cf" && ok "T17 export capture masks names, addresses (plain, escaped, encoded, bare host) and values (fake export)" || { cat "$tx/out.txt"; cat "$cf"; bad "T17 export capture masking"; }
 # A leak the value masking cannot remove (an address as a JSON key): no file is written (review R16 MAJOR).

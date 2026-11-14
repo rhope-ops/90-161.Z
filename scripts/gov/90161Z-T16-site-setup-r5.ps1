@@ -280,18 +280,20 @@ try {
           if (-not $rest) { throw 'Invoke-PnPSPRestMethod not in this PnP version' }
           $u = $webAbs + '/_api/siteiconmanager/setsitelogo'
           # Unverified on PnP 1.12.0 whether it serializes a hashtable (review R16): try it, then the same body as a JSON string.
-          try { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content $body -ContentType 'application/json' -ErrorAction Stop }
-          catch { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content ($body | ConvertTo-Json -Compress) -ContentType 'application/json' -ErrorAction Stop }
+          try { $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content $body -ContentType 'application/json' -ErrorAction Stop; return 'hashtable' }
+          catch { $tried.Add('icon manager as hashtable: ' + (& $short $_)) }
+          $null = Invoke-PnPSPRestMethod -Method Post -Url $u -Content ($body | ConvertTo-Json -Compress) -ContentType 'application/json' -ErrorAction Stop
+          return 'JSON string'
         }
         # Thumbnail first (navy file), so a later header call cannot be undone by it.
         $thumbHow = ''
-        try { & $setIcon $thumbUrl 1 0; $thumbHow = 'site icon manager type 1' } catch { $tried.Add('thumbnail icon manager: ' + (& $short $_)) }
+        try { $f = & $setIcon $thumbUrl 1 0; $thumbHow = 'site icon manager type 1 (' + $f + ')' } catch { $tried.Add('thumbnail icon manager: ' + (& $short $_)) }
         if (-not $thumbHow) {
           try { Set-PnPSite -LogoFilePath $thumbFile -ErrorAction Stop; $thumbHow = 'Set-PnPSite -LogoFilePath (navy file)' } catch { $tried.Add('thumbnail Set-PnPSite: ' + (& $short $_)) }
         }
         # Header logo (white file).
         $headHow = ''
-        try { & $setIcon $url 0 1; $headHow = 'site icon manager type 0' } catch { $tried.Add('header icon manager: ' + (& $short $_)) }
+        try { $f = & $setIcon $url 0 1; $headHow = 'site icon manager type 0 (' + $f + ')' } catch { $tried.Add('header icon manager: ' + (& $short $_)) }
         if (-not $headHow) {
           $cmd = Get-Command Set-PnPWebHeader -ErrorAction SilentlyContinue
           if ($cmd -and $cmd.Parameters.ContainsKey('SiteLogoUrl')) {
