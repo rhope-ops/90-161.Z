@@ -12,7 +12,8 @@ errs = []
 def bad(m): errs.append(m)
 
 # Hosts allowed in any string: Logic Apps schema (as in build_flow_package.py) and the XML/OPC namespaces the solution format needs.
-ALLOWED_HOSTS = {"schema.management.azure.com", "www.w3.org", "schemas.openxmlformats.org"}
+# make.powerautomate.appsplatform.us: the public DoD Power Automate portal, for the run link in the failure e-mail (PFM 1A, 14 Nov 26).
+ALLOWED_HOSTS = {"schema.management.azure.com", "www.w3.org", "schemas.openxmlformats.org", "make.powerautomate.appsplatform.us"}
 BUILTIN = {"ID", "Id", "Value", "value", "Email", "Claims", "Title", "Editor", "Author", "Created", "Modified", "text"}
 
 schemas = {}
@@ -20,7 +21,7 @@ for f in (ROOT / "schemas" / "lists").glob("*.json"):
     d = json.loads(f.read_text(encoding="utf-8"))
     schemas[d["title"]] = {x["internalName"] for x in d["fields"]}
 # Run properties of workflow() and result('Try') that the failure e-mail reads (slice r2, 14 Nov 26); not list columns.
-RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName"}
+RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName", "environmentName", "run"}
 RUNTIME_ACTIONS = {"Failed_actions", "Failure_lines", "E-mail_the_failure"}   # only these may read them (review, 14 Nov 26)
 all_cols = set().union(*schemas.values()) | BUILTIN
 env_list = {B.ENV_KEY[s]: default for s, _, default in B.ENV if s.startswith("pfm_List")}
