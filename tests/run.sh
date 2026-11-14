@@ -104,11 +104,11 @@ python3 tests/check_flow_package.py && ok "flow packages match real export shape
 python3 tests/check_flow_defs.py && ok "flow def names and expressions" || bad "flow def names or expressions"
 python3 scripts/build_flow_solution.py --check >/dev/null && python3 tests/check_flow_solution.py >/dev/null && ok "flow solution up to date and valid" || bad "flow solution stale or invalid"
 # R15-R18 (PFM 14 Nov 26): each solution import test is its own solution (PFM90161ZTEST + variant), one flow, XML valid, T05
-# export values; no environmentvariabledefinition.xml has an XML declaration. R18: only A r4 (no variable, lowercase GUIDs).
-python3 - <<'PYEOF' && ok "solution import test zip valid (A r4: no variable, lowercase workflow GUID)" || bad "solution import test zips"
+# export values; no environmentvariabledefinition.xml has an XML declaration. R19: only A r5 (no variable, layout of the R18 export).
+python3 - <<'PYEOF' && ok "solution import test zip valid (A r5: no variable, R18 export layout)" || bad "solution import test zips"
 import zipfile, glob, xml.dom.minidom as md
 zips = sorted(glob.glob('flow/solution/90161Z-T17-solution-test-*.zip')) + ['flow/solution/90161Z-flows-solution-r1.zip']
-assert len(zips) == 2 and zips[0].endswith('-test-a-r4.zip'), zips
+assert len(zips) == 2 and zips[0].endswith('-test-a-r5.zip'), zips
 for path in zips:
     z = zipfile.ZipFile(path); n = z.namelist()
     for f in n:
@@ -116,11 +116,12 @@ for path in zips:
         if f.startswith('environmentvariabledefinitions/'): assert not z.read(f).startswith(b'<?xml'), f
     if 'T17' not in path: continue
     v = path.split('-test-')[1][0].upper(); s = z.read('solution.xml').decode(); c = z.read('customizations.xml').decode()
-    assert f'<UniqueName>PFM90161ZTEST{v}</UniqueName>' in s and 'OrganizationVersion="9.2.26094.172"' in s and '<UniqueName>PFM</UniqueName>' in s
+    assert f'<UniqueName>PFM90161ZTEST{v}</UniqueName>' in s and 'OrganizationVersion="9.2.26101.188"' in s and '<UniqueName>PFM</UniqueName>' in s
     assert sum(f.startswith('Workflows/') for f in n) == 1
     assert sum(f.startswith('environmentvariabledefinitions/') for f in n) == {'A': 0, 'B': 1}[v]
     assert '<StateCode>1</StateCode>' in c and '<StatusCode>2</StatusCode>' in c and '<ModernFlowType>0</ModernFlowType>' in c
     assert '"runtimeSource": "invoker"' in z.read([f for f in n if f.startswith('Workflows/')][0]).decode()
+    assert 'type="10018"' not in s, 'connection reference is not a root component in the R18 export'
 PYEOF
 python3 tests/check_names.py && ok "naming rules (PFM 2026-11-11)" || bad "naming rules"
 for f in flow/defs/*.json; do python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" && ok "json $f" || bad "json $f"; done
@@ -314,7 +315,7 @@ rm -rf "$tp"
 [ $pc -eq 1 ] && ok "Deployer cleanup: only 90-161.Z files recycled, other files and their folder kept, summary has the clean-up line, files left, subject NEEDS REVIEW, history row" || bad "Deployer cleanup and summary (see output above)"
 
 # Two bars (PFM 14 Nov 26): progress math and the PROGRESS line rule, from the bundle's own functions (review PR 26).
-pg=$(pwsh -NoProfile -File tests/ps/Test-DeployerProgress.ps1 -Bundle scripts/gov/paste/90161Z-R18-round-r2.ps1 2>&1)
+pg=$(pwsh -NoProfile -File tests/ps/Test-DeployerProgress.ps1 -Bundle scripts/gov/paste/90161Z-R19-round-r1.ps1 2>&1)
 [ "$(echo $pg)" = "0.10 0.28 101 | -1 0.375 0.50 | True True False gate False True True True" ] && ok "Deployer progress math, PROGRESS lines and the check gate ($(echo $pg))" || bad "Deployer progress math: got '$pg'"
 
 # Enter starts the run (PFM 2026-11-13): the window's AcceptButton is Run; text mode shows the plan, Enter runs, N stops with nothing written.
@@ -355,13 +356,13 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 "$ENGINE" | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "Deployer fonts: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "Deployer fonts: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r9.ps1; do
+for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r10.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
 ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
 done
 # R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
-hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r9.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
+hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r10.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
 ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "

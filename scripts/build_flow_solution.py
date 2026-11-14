@@ -23,6 +23,16 @@ declared in the solution file as a root component", so the variable is not the c
 customizations.xml (WorkflowId) and in solution.xml (RootComponent), as Dataverse exports write it and as the error prints
 it; the JSON file name keeps the uppercase GUID, as exports do (agent finding, Confidence medium). Only test A goes to R18;
 if it fails, the PFM exports a working solution in the same round so the next build copies the real layout.
+r5 (R19, PFM 14 Nov 26: A r4 failed again; the PFM exported a working solution "90161ZExportSample" in R18, masked copy in
+flow/solution/export-sample/): every value the export shows is copied, not guessed. No XML declaration in solution.xml or
+customizations.xml; their ImportExportXml attributes as exported (platform 9.2.26101.188, CRMServerServiceabilityVersion);
+publisher PFM with the environment's option value prefix 89127 (r4 had a random 47423 for the same publisher), nil e-mail and
+web site and two empty addresses; NO connection reference RootComponent (the export lists only the flow; type 10018 is an
+environment-specific type code: agent finding, Confidence medium that it caused "not declared as a root component");
+IntroducedVersion 1.0.0.0; no empty "outputs" in the definition; a manual (invoker) flow authenticates with the run token
+(Raw), as exported; the JSON file name is the display name without spaces or punctuation plus the uppercase GUID;
+[Content_Types].xml on one line with a byte order mark; CRLF line ends and no final line end, as exported.
+tests/check_flow_solution.py compares each zip with the sample.
 Strings that start with "@" are expressions on purpose here (build_flow_package.literal() is for static data only).
 """
 import argparse, io, json, pathlib, re, sys, uuid, zipfile
@@ -35,8 +45,8 @@ NS = uuid.UUID("6f1c2b4e-9d0a-4c5e-8b7a-90161a000001")
 SCHEMA = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
 STAMP = (2026, 1, 1, 0, 0, 0)
 UNIQUE, PUBLISHER, PREFIX, VERSION = "PFM90161Z", "PFM", "pfm", "1.0.0.1"   # publisher PFM as in the T05 export
-PLATFORM = "9.2.26094.172"   # OrganizationVersion of the T05 export
-OPTION_PREFIX = 10000 + uuid.uuid5(NS, "optionprefix").int % 90000  # arbitrary, unique per publisher; see README open choices
+PLATFORM, SERVICEABILITY = "9.2.26101.188", "9.2.26101.00188"   # the R18 export (r5); T05 had 9.2.26094.172
+OPTION_PREFIX = 89127   # the publisher PFM in this environment (R18 export, r5); a new environment creates PFM with it
 CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Office 365 Outlook"}
 # Environment variables (type Text, 100000000). Defaults are list titles from schemas/lists; the site URL and the two day counts stay empty.
 ENV = [  # (schema name, display name, default value)
@@ -97,8 +107,32 @@ def workflow_json(d, used):
     return {"properties": {
         "connectionReferences": refs,
         "definition": {"$schema": SCHEMA, "contentVersion": "1.0.0.0", "parameters": params,
-                       "triggers": d["triggers"], "actions": d["actions"], "outputs": {}},
+                       "triggers": d["triggers"], "actions": run_token(d["actions"]) if src == "invoker" else d["actions"]},
         "templateName": None}, "schemaVersion": "1.0.0.0"}
+
+
+RUN_TOKEN = {"value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']", "type": "Raw"}
+
+
+def run_token(o):
+    """A manual flow in the R18 export authenticates each action with the run token, not @parameters('$authentication')."""
+    if isinstance(o, dict):
+        return {k: (dict(RUN_TOKEN) if k == "authentication" and v == "@parameters('$authentication')" else run_token(v)) for k, v in o.items()}
+    if isinstance(o, list):
+        return [run_token(v) for v in o]
+    return o
+
+
+def json_name(display, wid):
+    """As exported: the display name with only letters and digits, a hyphen, the uppercase GUID."""
+    return f"/Workflows/{re.sub(r'[^A-Za-z0-9]', '', display)}-{wid}.json"
+
+
+def exported_text(path, text):
+    """As in the R18 export (r5): CRLF line ends and no final line end in solution.xml, customizations.xml and the workflow JSON."""
+    if path in ("solution.xml", "customizations.xml") or path.startswith("Workflows/"):
+        return text.rstrip("\n").replace("\n", "\r\n")
+    return text
 
 
 def build(test=None) -> bytes:
@@ -114,7 +148,7 @@ def build(test=None) -> bytes:
     files, wf_xml, root_components = {}, [], []
     for src, d, used in flows:
         wid = guid("workflow", src.stem)
-        fname = f"/Workflows/{src.stem}-{wid}.json"
+        fname = json_name(d["displayName"], wid)
         files[fname[1:]] = dumps(workflow_json(d, used))
         wf_xml.append(
             f"    <Workflow WorkflowId=\"{{{wid.lower()}}}\" Name={quoteattr(d['displayName'])}>\n"
@@ -123,7 +157,7 @@ def build(test=None) -> bytes:
             "      <Scope>4</Scope>\n      <OnDemand>0</OnDemand>\n      <TriggerOnCreate>0</TriggerOnCreate>\n"
             "      <TriggerOnDelete>0</TriggerOnDelete>\n      <AsyncAutodelete>0</AsyncAutodelete>\n"
             "      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>\n      <StateCode>1</StateCode>\n      <StatusCode>2</StatusCode>\n"
-            "      <RunAs>1</RunAs>\n      <IsTransacted>1</IsTransacted>\n      <IntroducedVersion>1.0</IntroducedVersion>\n"
+            "      <RunAs>1</RunAs>\n      <IsTransacted>1</IsTransacted>\n      <IntroducedVersion>1.0.0.0</IntroducedVersion>\n"
             "      <IsCustomizable>1</IsCustomizable>\n      <BusinessProcessType>0</BusinessProcessType>\n"
             "      <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>\n"
             "      <ModernFlowType>0</ModernFlowType>\n      <PrimaryEntity>none</PrimaryEntity>\n"
@@ -139,7 +173,6 @@ def build(test=None) -> bytes:
             f"      <connectorid>/providers/Microsoft.PowerApps/apis/{c}</connectorid>\n"
             "      <iscustomizable>1</iscustomizable>\n      <promptingbehavior>0</promptingbehavior>\n"
             "      <statecode>0</statecode>\n      <statuscode>1</statuscode>\n    </connectionreference>")
-        root_components.append(f'      <RootComponent type="10018" schemaName="{conn_logical(c)}" behavior="0" />')
     for s, disp, default in env:
         files[f"environmentvariabledefinitions/{s}/environmentvariabledefinition.xml"] = (
             f'<environmentvariabledefinition schemaname="{s}">\n'
@@ -149,29 +182,38 @@ def build(test=None) -> bytes:
             "  <secretstore>0</secretstore>\n  <type>100000000</type>\n</environmentvariabledefinition>\n")
         root_components.append(f'      <RootComponent type="380" schemaName="{s}" behavior="0" />')
     XSI = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
-    files["customizations.xml"] = (
-        '<?xml version="1.0" encoding="utf-8"?>\n'
-        f"<ImportExportXml {XSI}>\n  <Entities></Entities>\n  <Roles></Roles>\n  <Workflows>\n" + "\n".join(wf_xml) + "\n  </Workflows>\n"
+    ORG = f'OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}"'
+    files["customizations.xml"] = (   # no XML declaration (r5, as exported)
+        f"<ImportExportXml {XSI} {ORG}>\n  <Entities></Entities>\n  <Roles></Roles>\n  <Workflows>\n" + "\n".join(wf_xml) + "\n  </Workflows>\n"
         "  <FieldSecurityProfiles></FieldSecurityProfiles>\n  <Templates />\n  <EntityMaps />\n  <EntityRelationships />\n"
         "  <OrganizationSettings />\n  <optionsets />\n  <CustomControls />\n  <EntityDataProviders />\n"
         "  <connectionreferences>\n" + "\n".join(cr_xml) + "\n  </connectionreferences>\n  <Languages>\n    <Language>1033</Language>\n  </Languages>\n"
         "</ImportExportXml>\n")
-    files["solution.xml"] = (
-        '<?xml version="1.0" encoding="utf-8"?>\n'
-        f'<ImportExportXml version="{PLATFORM}" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" {XSI}>\n'
+    nil = lambda tag: f'{tag} xsi:nil="true"></{tag[1:]}'   # noqa: E731
+    addr_fields = ["City", "County", "Country", "Fax", "FreightTermsCode", "ImportSequenceNumber", "Latitude", "Line1", "Line2",
+                   "Line3", "Longitude", "Name", "PostalCode", "PostOfficeBox", "PrimaryContactName"]
+    addr_tail = ["StateOrProvince", "Telephone1", "Telephone2", "Telephone3", "TimeZoneRuleVersionNumber", "UPSZone", "UTCOffset",
+                 "UTCConversionTimeZoneCode"]
+    def address(n):
+        return ("        <Address>\n" f"          <AddressNumber>{n}</AddressNumber>\n          <AddressTypeCode>1</AddressTypeCode>\n"
+                + "".join(f"          {nil('<' + t)}>\n" for t in addr_fields) + "          <ShippingMethodCode>1</ShippingMethodCode>\n"
+                + "".join(f"          {nil('<' + t)}>\n" for t in addr_tail) + "        </Address>\n")
+    files["solution.xml"] = (   # no XML declaration; attributes in the exported order (r5)
+        f'<ImportExportXml version="{PLATFORM}" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" {XSI} OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}">\n'
         f"  <SolutionManifest>\n    <UniqueName>{unique}</UniqueName>\n"
         f'    <LocalizedNames>\n      <LocalizedName description="{title}" languagecode="1033" />\n    </LocalizedNames>\n'
         "    <Descriptions />\n"
         f"    <Version>{VERSION}</Version>\n    <Managed>0</Managed>\n    <Publisher>\n      <UniqueName>{PUBLISHER}</UniqueName>\n"
         '      <LocalizedNames>\n        <LocalizedName description="90-161.Z" languagecode="1033" />\n      </LocalizedNames>\n'
         "      <Descriptions />\n"
+        f"      {nil('<EMailAddress')}>\n      {nil('<SupportingWebsiteUrl')}>\n"
         f"      <CustomizationPrefix>{PREFIX}</CustomizationPrefix>\n      <CustomizationOptionValuePrefix>{OPTION_PREFIX}</CustomizationOptionValuePrefix>\n"
+        "      <Addresses>\n" + address(1) + address(2) + "      </Addresses>\n"
         "    </Publisher>\n    <RootComponents>\n" + "\n".join(root_components) + "\n    </RootComponents>\n    <MissingDependencies />\n"
         "  </SolutionManifest>\n</ImportExportXml>\n")
-    files["[Content_Types].xml"] = (
-        '<?xml version="1.0" encoding="utf-8"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">\n'
-        '  <Default Extension="xml" ContentType="application/octet-stream" />\n'
-        '  <Default Extension="json" ContentType="application/octet-stream" />\n</Types>\n')
+    files["[Content_Types].xml"] = (   # one line with a byte order mark, as exported (r5)
+        '\ufeff<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="xml" ContentType="application/octet-stream" /><Default Extension="json" ContentType="application/octet-stream" /></Types>')
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
         for path in sorted(files, key=lambda x: (x != "[Content_Types].xml", x)):
@@ -179,7 +221,7 @@ def build(test=None) -> bytes:
             info.compress_type = zipfile.ZIP_STORED
             info.create_system = 3
             info.external_attr = 0o644 << 16
-            z.writestr(info, files[path])
+            z.writestr(info, exported_text(path, files[path]))
     return buf.getvalue()
 
 
