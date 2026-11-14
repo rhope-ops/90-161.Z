@@ -125,10 +125,26 @@
       "choices": [
         "On Track",
         "On Hold",
-        "Stalled"
+        "Stalled",
+        "Cancelled",
+        "Complete"
       ],
       "default": "On Track",
-      "ref": "PFM 2026-11-11 (flag a stalled action); separate from Process Step and from Endorsement Status (one meaning per label)"
+      "ref": "PFM 2026-11-11 (flag a stalled action); separate from Process Step and from Endorsement Status (one meaning per label); Cancelled and Complete added (PFM D1, 2026-11-14: every flow skips On Hold, Cancelled and Complete)"
+    },
+    {
+      "internalName": "StatusReason",
+      "displayName": "Status Reason",
+      "type": "Note",
+      "required": false,
+      "ref": "PFM D1 (2026-11-14): why the Action Status changed (hold, cancel); the app requires it on a change; F06 copies it into the Activity Log and the endorser e-mail"
+    },
+    {
+      "internalName": "HeldSince",
+      "displayName": "Held Since",
+      "type": "DateTime",
+      "required": false,
+      "ref": "PFM D1/D2 (2026-11-14): set by F06 when the action goes On Hold, cleared when it resumes; on resume F06 moves each open suspense out by the weekdays held"
     },
     {
       "internalName": "StatusNotes",

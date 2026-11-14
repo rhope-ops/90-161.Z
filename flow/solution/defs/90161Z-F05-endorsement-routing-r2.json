@@ -1,6 +1,7 @@
 {
   "displayName": "90161Z F05 Endorsement Routing r2",
   "description": "When a PFM Publications row is at process step 6 (Formal coordination) and its Action Status is not On Hold, Cancelled or Complete: adds a Formal Coordination row for each active mandatory office that has none; when every other coordinator has answered and all comments are adjudicated, adds the missing Legal rows and moves the step to 7. At step 7 it adds missing Legal rows. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 3.4, 5.1, 5.1.8.2; PFM S5A and 14 Nov 26.",
+  "workflowKey": "90161Z-F05-endorsement-routing-r1",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
@@ -360,7 +361,8 @@
                               "item/CoordinationRole/Value": "@items('Create_formal_rows')?['CoordinationRole']?['Value']",
                               "item/IsRequired": true,
                               "item/EndorsementStatus/Value": "Not Started",
-                              "item/Endorser/Claims": "@items('Create_formal_rows')?['Endorser']?['Claims']"
+                              "item/Endorser/Claims": "@items('Create_formal_rows')?['Endorser']?['Claims']",
+                              "item/CoordinationRound": 1
                             },
                             "authentication": "@parameters('$authentication')"
                           }
@@ -385,7 +387,8 @@
                                 "item/CoordinationStage/Value": "Formal Coordination",
                                 "item/CoordinationRole/Value": "@items('Create_formal_rows')?['CoordinationRole']?['Value']",
                                 "item/IsRequired": true,
-                                "item/EndorsementStatus/Value": "Not Started"
+                                "item/EndorsementStatus/Value": "Not Started",
+                                "item/CoordinationRound": 1
                               },
                               "authentication": "@parameters('$authentication')"
                             }
@@ -533,7 +536,8 @@
                                         "item/CoordinationRole/Value": "@items('Create_legal_rows')?['CoordinationRole']?['Value']",
                                         "item/IsRequired": true,
                                         "item/EndorsementStatus/Value": "Not Started",
-                                        "item/Endorser/Claims": "@items('Create_legal_rows')?['Endorser']?['Claims']"
+                                        "item/Endorser/Claims": "@items('Create_legal_rows')?['Endorser']?['Claims']",
+                                        "item/CoordinationRound": 1
                                       },
                                       "authentication": "@parameters('$authentication')"
                                     }
@@ -558,7 +562,8 @@
                                           "item/CoordinationStage/Value": "Legal",
                                           "item/CoordinationRole/Value": "@items('Create_legal_rows')?['CoordinationRole']?['Value']",
                                           "item/IsRequired": true,
-                                          "item/EndorsementStatus/Value": "Not Started"
+                                          "item/EndorsementStatus/Value": "Not Started",
+                                          "item/CoordinationRound": 1
                                         },
                                         "authentication": "@parameters('$authentication')"
                                       }
@@ -740,7 +745,8 @@
                               "item/CoordinationRole/Value": "@items('Create_legal_rows_at_step_7')?['CoordinationRole']?['Value']",
                               "item/IsRequired": true,
                               "item/EndorsementStatus/Value": "Not Started",
-                              "item/Endorser/Claims": "@items('Create_legal_rows_at_step_7')?['Endorser']?['Claims']"
+                              "item/Endorser/Claims": "@items('Create_legal_rows_at_step_7')?['Endorser']?['Claims']",
+                              "item/CoordinationRound": 1
                             },
                             "authentication": "@parameters('$authentication')"
                           }
@@ -765,7 +771,8 @@
                                 "item/CoordinationStage/Value": "Legal",
                                 "item/CoordinationRole/Value": "@items('Create_legal_rows_at_step_7')?['CoordinationRole']?['Value']",
                                 "item/IsRequired": true,
-                                "item/EndorsementStatus/Value": "Not Started"
+                                "item/EndorsementStatus/Value": "Not Started",
+                                "item/CoordinationRound": 1
                               },
                               "authentication": "@parameters('$authentication')"
                             }
@@ -871,6 +878,22 @@
           "emailMessage/Subject": "@concat('90-161.Z flow failed: F05 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
           "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F05'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '<br><b>Publication row:</b> ', string(triggerBody()?['ID']), '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. Open the failed run: <a href=\"https://make.powerautomate.appsplatform.us/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'], '\">run details</a> (or open this flow and its 28-day run history; the failed run has the start time above). 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and adds only what is missing.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
           "emailMessage/Importance": "High"
+        }
+      }
+    },
+    "End_as_failed": {
+      "runAfter": {
+        "E-mail_the_failure": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "Terminate",
+      "inputs": {
+        "runStatus": "Failed",
+        "runError": {
+          "code": "StepFailed",
+          "message": "A step failed; the alert address was e-mailed. Fix the cause, then Resubmit this run."
         }
       }
     }

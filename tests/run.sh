@@ -150,7 +150,7 @@ q = gv[0]['body']['ViewQuery']
 assert q.index('<Where>') < q.index('<GroupBy') < q.index('<OrderBy>'), q
 assert [r['body']['__metadata']['type'] for r in p['rows']].count('SP.Data.PFMSeriesListItem') == 39
 st = {r['body']['Title']: r['body']['SettingValue'] for r in p['rows'] if r['body']['__metadata']['type'] == 'SP.Data.PFMSettingsListItem'}
-assert st == {'CoordinationSuspenseBusinessDays': '15', 'GuardReserveApplicabilityCalendarDays': '30', 'PublicationsSiteName': '', 'PublicationsListUrl': '', 'PFMOfficeMailbox': '', 'EscalationWeekdays': '', 'RecordsFreeze': ''}, st
+assert st == {'CoordinationSuspenseBusinessDays': '20', 'GuardReserveApplicabilityCalendarDays': '30', 'PublicationsSiteName': '', 'PublicationsListUrl': '', 'PFMOfficeMailbox': '', 'EscalationWeekdays': '', 'RecordsFreeze': ''}, st
 nums = [r['body']['SeriesNumber'] for r in p['rows'] if 'SeriesNumber' in r['body']]
 assert len(set(nums)) == 39 and 16 in nums and 17 in nums
 gets = [a for a in d if a.startswith('Get_') and a.endswith('_ID')]
@@ -227,7 +227,7 @@ for r in d['fields']:
 PY
 
 out=$(pwsh -NoProfile -File scripts/gov/Provision-Lists.ps1 -PlanOnly -SchemaPath schemas/lists 2>&1 | tail -1)
-[ "$out" = "PLAN lists=12 fields=196 views=18" ] && ok "lists plan ($out)" || bad "lists plan: $out"
+[ "$out" = "PLAN lists=12 fields=199 views=18" ] && ok "lists plan ($out)" || bad "lists plan: $out"
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
 # Build is deterministic (fixed dates): a rebuild must match the committed file byte for byte.
@@ -356,7 +356,7 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 "$ENGINE" | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "Deployer fonts: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "Deployer fonts: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r10.ps1 scripts/gov/90161Z-T18-slice1-test-r2.ps1; do
+for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r10.ps1 scripts/gov/90161Z-T18-slice1-test-r2.ps1 scripts/gov/90161Z-T19-list-update-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
 ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
@@ -375,6 +375,21 @@ nd=$(grep -L 'ComObject Outlook.Application' scripts/gov/paste/*.ps1 | wc -l); n
 grep -q '\$script:draftMade = (-not \$why)' "$ENGINE" && grep -q "Outlook draft could not be created" "$ENGINE"; fb=$?
 [ "$nd" -eq 0 ] && [ "$ns" -eq 0 ] && [ "$fb" -eq 0 ] && ok "Outlook draft step, never sent (bundles without draft: $nd; Send calls: $ns; fallback present)" || bad "Outlook draft step (without draft: $nd; Send calls: $ns; fallback rc=$fb)"
 
+# R21: T19 adds to an existing site the same column XML T02 r12 builds a new site with (one source: schemas/lists).
+python3 - <<'PYEOF' && ok "T19 list update: column XML and Action Status choices match schemas/lists" || bad "T19 list update differs from schemas/lists"
+import json, re, sys
+sys.path.insert(0, 'scripts'); import build_flow_payload as B
+s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r1.ps1', encoding='utf-8').read()
+rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'; Xml = '([^']+)' \}", t)
+assert len(rows) == 3, rows
+by_title = {v['title']: v for v in s.values()}
+for title, name, xml in rows:
+    f = [x for x in by_title[title]['fields'] if x['internalName'] == name][0]
+    assert B.field_xml(f) == xml, (name, xml)
+want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] == 'ActionStatus'][0]['choices']
+got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
+assert [c.strip().strip("'") for c in got.split(',')] == want, got
+PYEOF
 rm -rf "$vd"
 echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]

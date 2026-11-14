@@ -16,15 +16,18 @@
     6. Prepares the F03 check: sets one of A's rows to a suspense 10 weekdays ago (escalation tier) and adds one row to H
        with a past suspense (H is On Hold, so F03 must skip it).
   Then the PFM checks the failure e-mail, selects Resubmit on the failed F05 run, and runs F03 once (round guide steps).
-  Part 2 (about 5 minutes, an estimate):
+  Part 2 (about 12 minutes, an estimate):
     7. Checks that Resubmit made no duplicate rows for F.
     8. Checks F03: default suspense 20 working days (Guard or Reserve Applicability at least 30 calendar days) on the rows
        without one; an escalation logged for A's past-due row; nothing logged for H's row.
+   8b. F06 on F (R21): sets F On Hold and waits for Held Since; sets Held Since 7 days back (5 weekdays); sets F On Track
+       and checks that each open suspense moved out by 5 weekdays; sets F Cancelled and checks one cancel log row.
     9. Answers A's rows "Concur", marks A's comments adjudicated, and waits for the Legal rows and step 7.
    10. Clean-up: moves every row tied to the three fake publications to the site Recycle Bin (restorable for 93 days).
        On a FAIL they stay for review; part 1 of the next run removes them.
   WHAT IT CHANGES ON THE SITE: only the three fake publications and the rows the flows and this script make for them.
-  E-mail: with Test mode = Yes, F03's escalation for A's row and F05's failure notice go to the alert address only.
+  E-mail: with Test mode = Yes, F03's escalation for A's row, F05's failure notice and F06's hold, resume and cancel
+  notices (offices with an endorser only) go to the alert address only.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this
   computer; every output line shows it as <SITE> and the DODID as <DODID>.
   Output: 90161Z-T18-slice1-part1-r2.txt or 90161Z-T18-slice1-part2-r2.txt in the T18 folder (send both).
@@ -179,6 +182,18 @@ function Add-WorkingDay([datetime]$Day, [int]$N) {
   while ($left -gt 0) { $d = $d.AddDays(1); if ($d.DayOfWeek -ne 'Saturday' -and $d.DayOfWeek -ne 'Sunday') { $left-- } }
   return $d
 }
+function Get-Suspense($Item) {
+  # The later of Due Date and Extension Estimated Completion (F06 r1), as a local date, or $null.
+  $due = $null; $ext = $null
+  if ($Item['DueDate']) { $due = ([datetime]$Item['DueDate']).ToLocalTime().Date }
+  if ($Item['ExtensionDate']) { $ext = ([datetime]$Item['ExtensionDate']).ToLocalTime().Date }
+  if ($due -and $ext -and $ext -gt $due) { return $ext }
+  return $due
+}
+function Get-LogCount([int]$PubId, [string]$Prefix) {
+  # F06 log rows are titled "<Prefix>: P<ID>".
+  return @(Get-RowsFor 'PFM Activity Log' $PubId | Where-Object { [string]$_['Title'] -eq ($Prefix + ': P' + $PubId) }).Count
+}
 function Clear-TestPublication([int]$PubId) {
   $n = 0
   foreach ($l in 'PFM Activity Log', 'PFM Endorsements') { foreach ($r in (Get-RowsFor $l $PubId)) { $null = Remove-PnPListItem -List $l -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ } }
@@ -293,6 +308,31 @@ try {
     $hFormal = @(Get-Formal $hId | Where-Object { $_.Id -ne $hRowId }).Count
     Add-Line 'k2-hold-still-skipped' $(if ($hFormal -eq 0) { 'PASS' } else { 'FAIL' }) ('F05 rows for H (On Hold) at part 2=' + $hFormal + ' expected=0')
     Add-Line 'k-f03-hold' $(if ($logH -eq 0) { 'PASS' } else { 'FAIL' }) ('reminders logged for the On Hold row=' + $logH + ' expected=0')
+
+    # 8b. F06 hold and resume on F (R21, PFM 14 Nov 26): 5 weekdays on hold move each open suspense out by 5 weekdays.
+    $dated = @(Get-Formal $fId | Where-Object { [string]$_['EndorsementStatus'] -eq 'Not Started' -and (Get-Suspense $_) })
+    if ($dated.Count) {
+      $before = @{}; foreach ($r in $dated) { $before[$r.Id] = Get-Suspense $r }
+      $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ ActionStatus = 'On Hold'; StatusReason = 'R21 test: hold' } -ErrorAction Stop
+      $ok = Wait-Until { [bool](Get-PnPListItem -List 'PFM Publications' -Id $fId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to record Held Since on F'
+      Add-Line 'k3-f06-hold' $(if ($ok -and (Get-LogCount $fId 'Action Held') -ge 1) { 'PASS' } else { 'FAIL' }) $(if ($ok) { 'Held Since recorded and logged for F' } else { 'Held Since not recorded. Check that F06 is on (its run history)' })
+      if ($ok) {
+        $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ HeldSince = $today.AddDays(-7) } -ErrorAction Stop
+        Start-Sleep -Seconds 90   # F06 sees the back-dated Held Since while still On Hold and changes nothing
+        $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ ActionStatus = 'On Track'; StatusReason = 'R21 test: resume' } -ErrorAction Stop
+        # F06 clears Held Since last, after it has moved every suspense and logged the resume.
+        $ok = Wait-Until { -not (Get-PnPListItem -List 'PFM Publications' -Id $fId -Fields 'HeldSince' -ErrorAction Stop)['HeldSince'] } 'F06 to move the suspense dates and clear Held Since'
+        $moved = 0
+        foreach ($r in @(Get-Formal $fId | Where-Object { $before.ContainsKey($_.Id) })) { if ((Get-Suspense $r) -eq (Add-WorkingDay $before[$r.Id] 5)) { $moved++ } }
+        Add-Line 'k4-f06-resume' $(if ($ok -and $moved -eq $dated.Count -and (Get-LogCount $fId 'Action Resumed') -ge 1) { 'PASS' } else { 'FAIL' }) ('F suspense moved out 5 weekdays=' + $moved + ' of ' + $dated.Count + $(if ($ok) { '' } else { '; Held Since not cleared' }))
+      }
+      # Cancel (F06): logged once.
+      $null = Set-PnPListItem -List 'PFM Publications' -Identity $fId -Values @{ ActionStatus = 'Cancelled'; StatusReason = 'R21 test: cancel' } -ErrorAction Stop
+      $ok = Wait-Until { (Get-LogCount $fId 'Action Cancelled') -ge 1 } 'F06 to log the cancel of F'
+      Start-Sleep -Seconds 60
+      $nc = Get-LogCount $fId 'Action Cancelled'
+      Add-Line 'k5-f06-cancel' $(if ($ok -and $nc -eq 1) { 'PASS' } else { 'FAIL' }) ('F cancel log rows=' + $nc + ' expected=1')
+    } else { Add-Line 'k3-f06-hold' 'SKIP' 'F has no open row with a suspense (F03 did not run)' }
 
     # 9. Answer A's rows, mark comments adjudicated; F05 makes the Legal rows and moves A to step 7.
     $formal = Get-Formal $aId

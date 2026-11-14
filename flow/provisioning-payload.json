@@ -1530,7 +1530,33 @@
      "__metadata": {
       "type": "SP.XmlSchemaFieldCreationInformation"
      },
-     "SchemaXml": "<Field Name=\"ActionStatus\" StaticName=\"ActionStatus\" DisplayName=\"Action Status\" Required=\"TRUE\" Type=\"Choice\"><CHOICES><CHOICE>On Track</CHOICE><CHOICE>On Hold</CHOICE><CHOICE>Stalled</CHOICE></CHOICES><Default>On Track</Default></Field>",
+     "SchemaXml": "<Field Name=\"ActionStatus\" StaticName=\"ActionStatus\" DisplayName=\"Action Status\" Required=\"TRUE\" Type=\"Choice\"><CHOICES><CHOICE>On Track</CHOICE><CHOICE>On Hold</CHOICE><CHOICE>Stalled</CHOICE><CHOICE>Cancelled</CHOICE><CHOICE>Complete</CHOICE></CHOICES><Default>On Track</Default></Field>",
+     "Options": 24
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "uri": "_api/web/lists/getbytitle('PFMPublications')/fields/createfieldasxml",
+   "body": {
+    "parameters": {
+     "__metadata": {
+      "type": "SP.XmlSchemaFieldCreationInformation"
+     },
+     "SchemaXml": "<Field Name=\"StatusReason\" StaticName=\"StatusReason\" DisplayName=\"Status Reason\" Required=\"FALSE\" Type=\"Note\" NumLines=\"6\"></Field>",
+     "Options": 24
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "uri": "_api/web/lists/getbytitle('PFMPublications')/fields/createfieldasxml",
+   "body": {
+    "parameters": {
+     "__metadata": {
+      "type": "SP.XmlSchemaFieldCreationInformation"
+     },
+     "SchemaXml": "<Field Name=\"HeldSince\" StaticName=\"HeldSince\" DisplayName=\"Held Since\" Required=\"FALSE\" Type=\"DateTime\" Format=\"DateOnly\"></Field>",
      "Options": 24
     }
    }
@@ -2629,6 +2655,19 @@
       "type": "SP.XmlSchemaFieldCreationInformation"
      },
      "SchemaXml": "<Field Name=\"CoordinationStage\" StaticName=\"CoordinationStage\" DisplayName=\"Coordination Stage\" Required=\"TRUE\" Type=\"Choice\"><CHOICES><CHOICE>Privacy Review</CHOICE><CHOICE>Formal Coordination</CHOICE><CHOICE>Legal</CHOICE></CHOICES><Default>Formal Coordination</Default></Field>",
+     "Options": 24
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "uri": "_api/web/lists/getbytitle('PFMEndorsements')/fields/createfieldasxml",
+   "body": {
+    "parameters": {
+     "__metadata": {
+      "type": "SP.XmlSchemaFieldCreationInformation"
+     },
+     "SchemaXml": "<Field Name=\"CoordinationRound\" StaticName=\"CoordinationRound\" DisplayName=\"Coordination Round\" Required=\"FALSE\" Type=\"Number\" Decimals=\"0\"></Field>",
      "Options": 24
     }
    }
@@ -4769,8 +4808,8 @@
      "type": "SP.Data.PFMSettingsListItem"
     },
     "Title": "CoordinationSuspenseBusinessDays",
-    "SettingValue": "15",
-    "SettingNotes": "Business days a coordinator gets to respond (DAFMAN 90-161 5.2). Flows count weekdays only; holidays not excluded."
+    "SettingValue": "20",
+    "SettingNotes": "Working days (weekdays) a coordinator gets to respond (DAFMAN 90-161 5.2; PFM 2026-11-14: 20 working days, no holiday list). F03 sets it; Guard and Reserve Applicability get at least 30 calendar days."
    }
   },
   {

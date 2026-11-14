@@ -2,6 +2,8 @@
 
 Status: design approved by the PFM (14 Nov 26, "yes to all"). Built for R21 (was R20 r2; PFM 14 Nov 26): F05 r2, F03 r3, test mode, kill switch, failure e-mail, T18 test r2. Moved to R22 (they need new list columns, which RADE Install adds): Status Reason, Held Since, the date shift on Resume, the Round number and Restart coordination, the Pause/Resume/Cancel e-mails, the stage 6 target 25 (T02 r12). Sources: flow/solution/README.md, flow/solution/defs/*.json, schemas/lists/*.json, docs/app/screen-map.md.
 
+R21 (combined build, PFM 14 Nov 26): F06 r1 (hold, resume, cancel log) and T19 (Status Reason, Held Since, Coordination Round, Cancelled/Complete) are built into R21 as well; the app parts (P02 buttons, hard delete, Restart coordination, P13 Health) are not built.
+
 ## Finding
 
 No flow reads Action Status, so On Hold changes nothing. There is no Cancelled or closed state; the only exit is deleting the row. Each flow run is short and does not wait (no approvals), so per-action control is data on the row, not control of a flow run. The Power Automate Management connector would work on whole flows and needs owner rights other wings do not have (Deployable package rule), so it is not used.

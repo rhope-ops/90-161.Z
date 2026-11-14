@@ -50,8 +50,8 @@
   "seed": [
     {
       "Title": "CoordinationSuspenseBusinessDays",
-      "SettingValue": "15",
-      "SettingNotes": "Business days a coordinator gets to respond (DAFMAN 90-161 5.2). Flows count weekdays only; holidays not excluded."
+      "SettingValue": "20",
+      "SettingNotes": "Working days (weekdays) a coordinator gets to respond (DAFMAN 90-161 5.2; PFM 2026-11-14: 20 working days, no holiday list). F03 sets it; Guard and Reserve Applicability get at least 30 calendar days."
     },
     {
       "Title": "GuardReserveApplicabilityCalendarDays",

@@ -71,7 +71,7 @@ ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r3.zip", ("90161Z-F03-", "90161Z-F05-"))
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r3.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 hold and resume joins R21
 
 
 def dumps(o):
@@ -164,7 +164,9 @@ def build(test=None, only=None) -> bytes:
     env = ENV if test is None and not only else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test or slice carries only what it uses
     files, wf_xml, root_components = {}, [], []
     for src, d, used in flows:
-        wid = flow_guid(src.stem, test is not None)
+        # R21: "workflowKey" names the stem whose ID the flow kept when it was first imported (R20 imported F03 r2 and F05 r1,
+        # with the revision in the ID), so this import replaces those flows in place; F05 r1 is on and would double the rows.
+        wid = guid("workflow", d["workflowKey"]) if d.get("workflowKey") and test is None else flow_guid(src.stem, test is not None)
         fname = json_name(d["displayName"], wid)
         # Flow solutions carry the flow JSON without indents (slice r2, 14 Nov 26: keeps the R20 round under the 300 KB paste limit;
         # JSON whitespace has no meaning). The test solutions keep the indented form that R19 imported.
@@ -235,10 +237,12 @@ def build(test=None, only=None) -> bytes:
         '\ufeff<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
         '<Default Extension="xml" ContentType="application/octet-stream" /><Default Extension="json" ContentType="application/octet-stream" /></Types>')
     buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
+    # R21: the flow solution and slice are deflated, as Dataverse exports are (round bundle under 300 KB); test solutions stay stored as R19 imported.
+    method = zipfile.ZIP_STORED if test is not None else zipfile.ZIP_DEFLATED
+    with zipfile.ZipFile(buf, "w", method) as z:
         for path in sorted(files, key=lambda x: (x != "[Content_Types].xml", x)):
             info = zipfile.ZipInfo(path, STAMP)
-            info.compress_type = zipfile.ZIP_STORED
+            info.compress_type = method
             info.create_system = 3
             info.external_attr = 0o644 << 16
             z.writestr(info, exported_text(path, files[path]))

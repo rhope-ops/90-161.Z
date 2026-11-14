@@ -80,7 +80,11 @@ for src in sorted(B.DEFS.glob("*.json")):
     hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
     hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
     if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
-    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.flow_guid(src.stem))[1:]]
+    key = d.get("workflowKey")   # R21: the stem of the revision first imported (same flow, earlier revision)
+    if key and not (re.sub(r"-r\d+$", "", key) == re.sub(r"-r\d+$", "", src.stem) and int(key.rsplit("-r", 1)[1]) < int(src.stem.rsplit("-r", 1)[1])):
+        bad(f"{src.name}: workflowKey {key} is not an earlier revision of the same flow")
+    wid = B.guid("workflow", key) if key else B.flow_guid(src.stem)
+    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], wid)[1:]]
     if len(wfs) != 1: bad(f"{src.name}: expected one workflow file in the zip, found {len(wfs)}"); continue
     wf = json.loads(zf.read(wfs[0]))["properties"]
     for c, ref in wf["connectionReferences"].items():
@@ -183,7 +187,10 @@ for z in SLICES:
             bad(f"{z.name}: F03 defaults are not 5 and 3 (PFM, 2026-11-14)")
         if b"<isrequired>0</isrequired>" not in zz.read("environmentvariabledefinitions/pfm_SharedMailbox/environmentvariabledefinition.xml"):
             bad(f"{z.name}: the shared mailbox variable must be optional")
-        if len(re.findall(r'<RootComponent type="29"', sol)) != 2: bad(f"{z.name}: slice 1 must hold exactly F03 and F05")
+        if len(re.findall(r'<RootComponent type="29"', sol)) != 3: bad(f"{z.name}: slice 1 must hold exactly F03, F05 and F06 (R21)")
+        # R21: F03 and F05 keep the workflow IDs R20 imported (seen in the R20 import log), so the import replaces them in place.
+        for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
+            if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
