@@ -58,10 +58,15 @@ ENV = [  # (schema name, display name, default value)
     ("pfm_ListProductIndex", "List PFM Product Index", "PFM Product Index"),
     ("pfm_ListProcessSteps", "List PFM Process Steps", "PFM Process Steps"),
     ("pfm_ListOffices", "List PFM Offices", "PFM Offices"),
-    ("pfm_ReminderLeadDays", "Reminder lead days", ""),
-    ("pfm_EscalationLagDays", "Escalation lag days", ""),
+    ("pfm_ReminderLeadDays", "Reminder lead days", "5"),   # weekdays before the suspense (PFM, 2026-11-14)
+    ("pfm_EscalationLagDays", "Escalation lag days", "3"),   # working days after the suspense (PFM, 2026-11-14)
+    ("pfm_SharedMailbox", "Shared mailbox", ""),   # optional: F03 sends from it (Send As); empty = the flow owner's mailbox
 ]
+OPTIONAL = {"pfm_SharedMailbox"}   # isrequired 0: a wing without a shared mailbox leaves it empty
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
+# Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
+# task T18. Same unique name as the full solution, so a later full import upgrades it.
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r1.zip", ("90161Z-F03-", "90161Z-F05-"))
 
 
 def dumps(o):
@@ -135,16 +140,18 @@ def exported_text(path, text):
     return text
 
 
-def build(test=None) -> bytes:
-    """test: None for the flow solution, else one test def path (its own solution)."""
+def build(test=None, only=None) -> bytes:
+    """test: None for the flow solution, else one test def path (its own solution). only: def name prefixes (a slice)."""
     flows = load(DEFS) if test is None else [f for f in load(TEST_DEFS) if f[0] == test]
+    if only:
+        flows = [f for f in flows if f[0].name.startswith(only)]
     if test is None:
         unique, title = UNIQUE, "90-161.Z flows"
     else:
         v = flows[0][1]["variant"]
         unique, title = UNIQUE + "TEST" + v, "90-161.Z solution import test " + v
     used_env = {k for _, _, u in flows for k in u}
-    env = ENV if test is None else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test solution carries only what it uses
+    env = ENV if test is None and not only else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test or slice carries only what it uses
     files, wf_xml, root_components = {}, [], []
     for src, d, used in flows:
         wid = guid("workflow", src.stem)
@@ -178,7 +185,8 @@ def build(test=None) -> bytes:
             f'<environmentvariabledefinition schemaname="{s}">\n'
             + (f"  <defaultvalue>{escape(default)}</defaultvalue>\n" if default else "") +   # no empty element; no XML declaration (r3)
             f'  <displayname default={quoteattr(disp)}>\n    <label description={quoteattr(disp)} languagecode="1033" />\n  </displayname>\n'
-            "  <introducedversion>1.0</introducedversion>\n  <iscustomizable>1</iscustomizable>\n  <isrequired>1</isrequired>\n"
+            "  <introducedversion>1.0</introducedversion>\n  <iscustomizable>1</iscustomizable>\n"
+            f"  <isrequired>{0 if s in OPTIONAL else 1}</isrequired>\n"
             "  <secretstore>0</secretstore>\n  <type>100000000</type>\n</environmentvariabledefinition>\n")
         root_components.append(f'      <RootComponent type="380" schemaName="{s}" behavior="0" />')
     XSI = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
@@ -229,9 +237,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="exit 1 if the committed zip differs from a fresh build")
     a = ap.parse_args()
-    jobs = [(None, OUT)] + [(d, d.parent.parent / (d.stem + ".zip")) for d in sorted(TEST_DEFS.glob("*.json"))]
-    for test, out in jobs:
-        data = build(test)
+    jobs = [(None, OUT, None), (None, SLICE1[0], SLICE1[1])] + [(d, d.parent.parent / (d.stem + ".zip"), None) for d in sorted(TEST_DEFS.glob("*.json"))]
+    for test, out, only in jobs:
+        data = build(test, only)
         if a.check:
             if not out.exists() or out.read_bytes() != data:
                 print(f"STALE {out.relative_to(ROOT)}"); sys.exit(1)

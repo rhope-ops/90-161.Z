@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 17 import log reader, r1 (R19, PFM 14 Nov 26). Read-only. Windows PowerShell 5.1, no modules.
+  90-161.Z Task 17 import log reader, r2 (R20, PFM 14 Nov 26: r1 in R19 found an old log from an earlier round, so r2 reads only logs saved in the last 3 hours). Read-only. Windows PowerShell 5.1, no modules.
 .DESCRIPTION
   What it is for: when a solution import fails, Power Automate offers "Download log file" (an Excel XML file). In R17 and
   R18 the error had to be pasted by hand and the paste held only the file's first lines. This script finds the newest
   import log and copies its error rows, so the next build sees the real error. About 1 minute (an estimate).
-  It looks for the newest .xml file (changed in the last 3 days) that is an Excel XML spreadsheet, in the T17 folder,
+  It looks for the newest .xml file (changed in the last 3 hours) that is an Excel XML spreadsheet, in the T17 folder,
   Downloads, Desktop and Documents (local and OneDrive) and up to 2 folder levels below each (the browser saves where it
-  saved last). From it, it writes T17\90161Z-T17-import-log-r1.txt (plain text): the column headings and every row that
+  saved last). From it, it writes T17\90161Z-T17-import-log-r2.txt (plain text): the column headings and every row that
   holds "fail", "error" or a 0x8 code, each cell joined with " | " (at most 80 rows). Every https address becomes <SITE>,
   every e-mail address <EMAIL> and the DODID <DODID>. No log found: one SKIP line (the import worked, or no log was
   downloaded). It changes nothing else.
@@ -113,7 +113,7 @@ try {
   $homes += (Join-Path (Join-Path 'C:\Users' $who.Id) 'OneDrive - United States Air Force')
   if ($env:OneDrive) { $homes += $env:OneDrive }
   foreach ($hm in ($homes | Select-Object -Unique)) { foreach ($sub in @('Downloads', 'Desktop', 'Documents')) { $places += (Join-Path $hm $sub) } }
-  $since = (Get-Date).AddDays(-3)
+  $since = (Get-Date).AddHours(-3)   # r2: this round only (R19 found an old log)
   $log = $null
   foreach ($pl in ($places | Select-Object -Unique)) {   # the newest log wins, wherever it is (each folder and 2 levels below it)
     if (-not (Test-Path -LiteralPath $pl -PathType Container)) { continue }
@@ -123,7 +123,7 @@ try {
     }
   }
   if (-not $log) {
-    Write-Output 'ITEM import-log SKIP no Excel XML import log from the last 3 days in T17, Downloads, Desktop or Documents (the import worked, or no log was downloaded)'
+    Write-Output 'ITEM import-log SKIP no Excel XML import log from the last 3 hours in T17, Downloads, Desktop or Documents (the import worked, or no log was downloaded)'
   } else {
     $doc = New-Object System.Xml.XmlDocument
     $doc.XmlResolver = $null
@@ -148,9 +148,9 @@ try {
         $first = $false
       }
     }
-    $file = Join-Path $dir '90161Z-T17-import-log-r1.txt'
+    $file = Join-Path $dir '90161Z-T17-import-log-r2.txt'
     Set-Content -LiteralPath $file -Value $out -Encoding UTF8
-    Write-Output ('ITEM import-log PASS rows=' + $rows + ' kept=' + $kept + ' copied to T17\90161Z-T17-import-log-r1.txt (addresses masked)')
+    Write-Output ('ITEM import-log PASS rows=' + $rows + ' kept=' + $kept + ' copied to T17\90161Z-T17-import-log-r2.txt (addresses masked)')
   }
 } catch {
   $sec = @(); if ($who -and $who.Secret) { $sec = $who.Secret }

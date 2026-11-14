@@ -24,9 +24,28 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## No open round (14 Nov 26)
+## Round R20 r1: slice 1 flows on the test site (open, 14 Nov 26)
 
-Claude is building R20: the real flow solution with the R19 layout. Nothing to run until it is listed here.
+**For:** R19 proved that a solution imports here. R20 imports the real 90-161.Z flows for slice 1, F05 (endorsement routing) and F03 (suspense reminders), and proves they work end to end: one fake publication goes from step 6 (Formal coordination) to Legal and step 7, then RADE removes it. The RADE window also has the new layout, and the repository check should now pass.
+**Time:** about 25 minutes (estimate): import 8, test part 1 6, run F03 3, test part 2 6, plus sign-ins.
+**Changes:**
+- On my computer: RADE writes into T17, T18 and Rounds\R20, and moves the R19 test files and Rounds\R18 to the Recycle Bin.
+- In Power Automate: RADE imports the solution "90-161.Z flows" (2 flows, 2 connection references, environment variables), and I turn on F05. F03 stays off; I run it once by hand.
+- On the test site: RADE creates one fake publication "90161Z TEST R20 (delete me)". F05 adds its coordination rows, F03 sets their suspense dates, and RADE answers them "Concur". At the end, RADE moves every one of these rows to the site Recycle Bin (restorable for 93 days); if a check fails, they stay for review. Nothing else on the site changes. The test rows get no e-mail; part 1 says whether any other open row on the test site would get a reminder from the F03 run (then I skip that run).
+- RADE saves one Outlook draft (never sent).
+
+Steps:
+1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R20-round-r1.ps1
+2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
+3. In the RADE window, choose the application, run the checks, then select Deploy.
+4. The import window opens at the right edge of the screen. Follow its steps: import, enter the site address (and the shared mailbox, if I use one), turn on F05, then select "Done: imported, F05 is on".
+5. Test part 1 signs in with my CAC and waits for F05 (up to 10 minutes). Keep RADE open.
+6. The F03 window opens. Run F03 once (Test > Manually), then select "Done: F03 ran".
+7. Test part 2 answers the rows, waits for the Legal rows and step 7, and removes the test rows. Then I send the Outlook draft. If the window looked wrong, I clear "The window displayed correctly" and write what I saw.
+
+**Report:** the draft itself (it holds both test result files, or the import log rows). Claude watches the inbox for the subject "90161Z R20".
+**If it fails:** read the "What to do" line in the window. If the import fails, the import log reader collects the error and the round stops there; the draft still goes. If a test item shows FAIL, the line says which count was wrong; I send the draft as it is.
 
 ## Done
 

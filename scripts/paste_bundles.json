@@ -23,89 +23,128 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R19-round-r1.ps1",
-      "round": "R19",
-      "title": "Round R19: solution import test A r5 (layout copied from the R18 export: no connection-reference root component, the environment's publisher prefix, no XML declaration); an import log reader collects the error if it fails; site setup r10 collects the A result; green step bar",
+      "out": "scripts/gov/paste/90161Z-R20-round-r1.ps1",
+      "round": "R20",
+      "title": "Round R20: slice 1 on the test site. Import the 90-161.Z flows (F05 routing and F03 reminders), then one fake publication goes from step 6 through Formal Coordination to Legal and step 7, and is removed at the end",
       "files": [
         {
-          "dir": "T17",
-          "src": "flow/solution/90161Z-T17-solution-test-a-r5.zip"
+          "dir": "T18",
+          "src": "flow/solution/90161Z-T18-slice1-flows-r1.zip"
         },
         {
           "dir": "T17",
-          "src": "scripts/gov/90161Z-T17-import-log-r1.ps1"
+          "src": "scripts/gov/90161Z-T17-import-log-r2.ps1"
         },
         {
-          "dir": "T16",
-          "src": "scripts/gov/90161Z-T16-site-setup-r10.ps1"
+          "dir": "T18",
+          "src": "scripts/gov/90161Z-T18-slice1-test-r1.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T17 Solution import test A r5",
+          "name": "T18 Import the slice 1 flows r1",
           "kind": "guide",
-          "dir": "T17",
-          "file": "90161Z-T17-solution-test-a-r5.zip",
-          "note": "You import test solution A r5 and run its flow (about 5 minutes, an estimate). A r4 failed in R18; r5 copies the layout of your R18 export (the connection is no longer a root component, the publisher matches yours).",
-          "marker": "90161Z-T17-solution-a-started.txt",
+          "dir": "T18",
+          "file": "90161Z-T18-slice1-flows-r1.zip",
+          "note": "You import the 90-161.Z flows solution (F05 routing, F03 reminders) and turn F05 on. About 8 minutes (estimate).",
+          "marker": "90161Z-T18-slice1-imported.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
           "guide": [
-            "1. Select Open in browser. Power Automate opens; sign in with your CAC if asked.",
-            "2. Leave older test solutions (\"90-161.Z solution import test A\" or \"... test B\") in Solutions: the import replaces A.",
-            "3. Select Solutions (under More if you do not see it), then Import solution > Browse.",
-            "4. In the File name box press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
-            "5. Connections: for SharePoint pick your existing connection. Select Import.",
-            "6. Wait for \"Successfully imported\" (1-3 minutes, an estimate). Open the solution \"90-161.Z solution import test A\",",
-            "   open the flow \"90161Z T17 Solution Import Test A r5\", select Run, paste the new site address into \"Site address\", then Run flow.",
-            "7. Come back here and select \"Done: the run has started\".",
-            "If the import fails: select Download log file (save it in any folder: the next step finds it), type the first line of the red error message (no names or site address) into the box below, then select It failed."
+            "1. Select \"Open in browser\". Power Automate opens; sign in with your CAC if asked.",
+            "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
+            "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
+            "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
+            "5. Environment variables: in Site URL, paste the test site address. In Shared mailbox, enter the shared mailbox address you have Send As rights to, or leave it empty to send from your own mailbox. Keep the other values as shown (list names, 5 and 3).",
+            "6. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "7. Open the solution \"90-161.Z flows\". Turn on \"90161Z F05 Endorsement Routing r1\". Leave F03 off: you run it once by hand later in this round.",
+            "8. Return to RADE and select \"Done: imported, F05 is on\".",
+            "If the import fails: select \"Download log file\" (any folder; the next step finds it), type the first line of the red error message (no names or site address) in the box below, then select \"It failed\"."
           ],
+          "doneText": "Done: imported, F05 is on",
           "needs": [
             "net-flow",
             "flow-guide"
           ],
-          "estimate": 5
+          "estimate": 8
         },
         {
-          "name": "T17 Import log reader r1",
+          "name": "T17 Import log reader r2",
           "dir": "T17",
-          "file": "90161Z-T17-import-log-r1.ps1",
+          "file": "90161Z-T17-import-log-r2.ps1",
           "minutes": 5,
-          "note": "Only if the import failed: finds the import log you downloaded (newest Excel XML file in T17, Downloads, Desktop or Documents) and copies its error rows to T17, addresses masked. No log: one SKIP line.",
+          "note": "Runs only if the import failed: copies the error rows of an import log saved in the last 3 hours to T17, addresses masked. Otherwise it reports SKIPPED.",
           "estimate": 1
         },
         {
-          "name": "T16 Site setup r10",
-          "dir": "T16",
-          "file": "90161Z-T16-site-setup-r10.ps1",
-          "args": "-Logo",
-          "minutes": 45,
-          "note": "Asks for the site address and a CAC sign-in, checks the site settings and the header logo (read-only), and collects the result of test A r5 (waits up to 15 minutes).",
+          "name": "T18 Slice 1 test, part 1 r1",
+          "dir": "T18",
+          "file": "90161Z-T18-slice1-test-r1.ps1",
+          "args": "-Part 1",
+          "minutes": 20,
+          "note": "1. Signs in (CAC) and reads the steps and offices. 2. Creates one fake publication at step 6. 3. Waits up to 10 minutes for F05 to create the Formal Coordination rows.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 8
+          "estimate": 6
+        },
+        {
+          "name": "T18 Run F03 once r1",
+          "kind": "guide",
+          "dir": "T18",
+          "file": "",
+          "note": "You run F03 once by hand, so it sets the default suspense on the test rows. The test rows get no e-mail. About 3 minutes (estimate).",
+          "marker": "90161Z-T18-f03-ran.txt",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt",
+          "guide": [
+            "1. Check part 1 in the RADE log: if \"other open rows due within 7 days or past\" is above 0, select \"Skip\". Those rows would get a real reminder.",
+            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
+            "3. Open \"90161Z F03 Suspense Reminders r2\" and select Test > Manually > Test, then Run flow.",
+            "4. Wait until the run shows \"Your flow ran successfully\" (under 1 minute, estimate). F03 stays off after the test.",
+            "5. Return to RADE and select \"Done: F03 ran\".",
+            "If the run fails: type the first line of the error (no names or site address) in the box below, then select \"It failed\"."
+          ],
+          "doneText": "Done: F03 ran",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 3
+        },
+        {
+          "name": "T18 Slice 1 test, part 2 r1",
+          "dir": "T18",
+          "file": "90161Z-T18-slice1-test-r1.ps1",
+          "args": "-Part 2",
+          "minutes": 20,
+          "note": "4. Checks the F03 suspense dates. 5. Answers the rows Concur and marks the comments adjudicated. 6. Waits for the Legal rows and step 7. 7. Moves every test row to the site Recycle Bin.",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "estimate": 6
         }
       ],
       "collect": [
         {
-          "dir": "T16",
-          "name": "90161Z-T16-setup-r10.txt",
-          "step": "T16 Site setup r10"
+          "dir": "T18",
+          "name": "90161Z-T18-slice1-part1-r1.txt",
+          "step": "T18 Slice 1 test, part 1 r1"
+        },
+        {
+          "dir": "T18",
+          "name": "90161Z-T18-slice1-part2-r1.txt",
+          "step": "T18 Slice 1 test, part 2 r1"
         },
         {
           "dir": "T17",
-          "name": "90161Z-T17-solution-result-a-r5.txt",
-          "step": "T16 Site setup r10"
-        },
-        {
-          "dir": "T17",
-          "name": "90161Z-T17-import-log-r1.txt",
-          "step": "T17 Import log reader r1"
+          "name": "90161Z-T17-import-log-r2.txt",
+          "step": "T17 Import log reader r2"
         }
       ],
       "cleanup": [
@@ -412,17 +451,51 @@
         {
           "path": "Rounds\\R17",
           "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-import-log-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-import-log-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-a-started.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r10.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r10.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R18",
+          "kind": "dir"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R19. Imports solution test A r5 (layout copied from your R18 export); if it fails, a reader collects the import log. Site setup collects the result.",
+          "summary": "Test round R20. Imports the slice 1 flows (F05 routing, F03 reminders), then moves one fake publication from Formal Coordination to Legal on the test site and removes it.",
           "steps": [
-            "T17 Solution import test A r5",
-            "T17 Import log reader r1",
-            "T16 Site setup r10"
+            "T18 Import the slice 1 flows r1",
+            "T17 Import log reader r2",
+            "T18 Slice 1 test, part 1 r1",
+            "T18 Run F03 once r1",
+            "T18 Slice 1 test, part 2 r1"
           ]
         }
       ]

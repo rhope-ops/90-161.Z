@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F03 Suspense Reminders r1",
-  "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one, then sends one reminder, warning or escalation e-mail per row and tier (DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3).",
+  "displayName": "90161Z F03 Suspense Reminders r2",
+  "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one, then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set (DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3).",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
@@ -139,19 +139,46 @@
         }
       },
       "actions": {
-        "Days_past": {
+        "Due": {
           "runAfter": {},
           "type": "Compose",
-          "inputs": "@div(sub(ticks(outputs('Today')), ticks(substring(items('For_each_open_endorsement')?['DueDate'], 0, 10))), 864000000000)"
+          "inputs": "@substring(items('For_each_open_endorsement')?['DueDate'], 0, 10)"
         },
-        "Tier": {
+        "Days_past": {
+          "runAfter": {
+            "Due": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@div(sub(ticks(outputs('Today')), ticks(outputs('Due'))), 864000000000)"
+        },
+        "Reminder_date": {
           "runAfter": {
             "Days_past": [
               "Succeeded"
             ]
           },
           "type": "Compose",
-          "inputs": "@if(greaterOrEquals(outputs('Days_past'), int(parameters('Escalation lag days (pfm_EscalationLagDays)'))), 'Escalation', if(greaterOrEquals(outputs('Days_past'), 0), 'Warning', if(greaterOrEquals(outputs('Days_past'), mul(-1, int(parameters('Reminder lead days (pfm_ReminderLeadDays)')))), 'Reminder', 'None')))"
+          "inputs": "@addDays(outputs('Due'), mul(-1, add(mul(7, div(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5)), add(mod(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5), if(greaterOrEquals(mod(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5), dayOfWeek(outputs('Due'))), 2, 0)))), 'yyyy-MM-dd')"
+        },
+        "Escalation_date": {
+          "runAfter": {
+            "Reminder_date": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@addDays(outputs('Due'), add(mul(7, div(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5)), add(mod(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5), if(greater(add(dayOfWeek(outputs('Due')), mod(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+        },
+        "Tier": {
+          "runAfter": {
+            "Escalation_date": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(greaterOrEquals(ticks(outputs('Today')), ticks(outputs('Escalation_date'))), 'Escalation', if(greaterOrEquals(ticks(outputs('Today')), ticks(outputs('Due'))), 'Warning', if(greaterOrEquals(ticks(outputs('Today')), ticks(outputs('Reminder_date'))), 'Reminder', 'None')))"
         },
         "If_tier_and_endorser_e-mail": {
           "runAfter": {
@@ -239,32 +266,72 @@
                   "type": "Compose",
                   "inputs": "@if(equals(outputs('Tier'), 'Escalation'), concat(join(body('Filter_AO_emails'), ';'), if(and(greater(length(body('Filter_AO_emails')), 0), not(empty(body('Get_publication')?['Requester']?['Email']))), ';', ''), coalesce(body('Get_publication')?['Requester']?['Email'], '')), '')"
                 },
-                "Send_an_email_(V2)": {
+                "If_shared_mailbox": {
                   "runAfter": {
                     "Copy_to": [
                       "Succeeded"
                     ]
                   },
-                  "type": "OpenApiConnection",
-                  "inputs": {
-                    "host": {
-                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
-                      "connectionName": "shared_office365",
-                      "operationId": "SendEmailV2"
-                    },
-                    "authentication": "@parameters('$authentication')",
-                    "parameters": {
-                      "emailMessage/To": "@items('For_each_open_endorsement')?['Endorser']?['Email']",
-                      "emailMessage/Cc": "@outputs('Copy_to')",
-                      "emailMessage/Subject": "@concat(outputs('Tier'), ': coordination response due ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
-                      "emailMessage/Body": "@concat('<p>Coordination of ', coalesce(items('For_each_open_endorsement')?['Title'], 'a publication action'), ' is waiting for your response (DAFMAN 90-161, 5.2).</p>', '<p>Your suspense is ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), if(equals(outputs('Tier'), 'Reminder'), '. This is an advance reminder.', if(equals(outputs('Tier'), 'Warning'), '. The suspense is today or has passed.', concat('. The suspense passed ', string(outputs('Days_past')), ' days ago.'))), '</p>', '<p>Please respond with Concur, Concur With Comment, Nonconcur or No Comment, or ask for an extension before the suspense with your rationale and estimated completion date (5.2.1).</p>', if(equals(outputs('Tier'), 'Escalation'), if(or(equals(items('For_each_open_endorsement')?['CoordinationRole']?['Value'], 'Legal'), equals(items('For_each_open_endorsement')?['CoordinationStage']?['Value'], 'Legal')), '<p>The action officer and requester are copied. Legal coordination cannot be closed as Concur - No Response (5.4.3).</p>', '<p>The action officer and requester are copied. The action officer may record Concur - No Response with an explanation in the staff package (5.4.3.2).</p>'), ''), '<p>This message is sent by the 90-161.Z publications flow.</p>')",
-                      "emailMessage/Importance": "@if(equals(outputs('Tier'), 'Escalation'), 'High', 'Normal')"
+                  "type": "If",
+                  "expression": {
+                    "and": [
+                      {
+                        "equals": [
+                          "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                          true
+                        ]
+                      }
+                    ]
+                  },
+                  "actions": {
+                    "Send_an_email_(V2)": {
+                      "runAfter": {},
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                          "connectionName": "shared_office365",
+                          "operationId": "SendEmailV2"
+                        },
+                        "authentication": "@parameters('$authentication')",
+                        "parameters": {
+                          "emailMessage/To": "@items('For_each_open_endorsement')?['Endorser']?['Email']",
+                          "emailMessage/Cc": "@outputs('Copy_to')",
+                          "emailMessage/Subject": "@concat(outputs('Tier'), ': coordination response due ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
+                          "emailMessage/Body": "@concat('<p>Coordination of ', coalesce(items('For_each_open_endorsement')?['Title'], 'a publication action'), ' is waiting for your response (DAFMAN 90-161, 5.2).</p>', '<p>Your suspense is ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), if(equals(outputs('Tier'), 'Reminder'), '. This is an advance reminder.', if(equals(outputs('Tier'), 'Warning'), '. The suspense is today or has passed.', concat('. The suspense passed ', string(outputs('Days_past')), ' days ago.'))), '</p>', '<p>Please respond with Concur, Concur With Comment, Nonconcur or No Comment, or ask for an extension before the suspense with your rationale and estimated completion date (5.2.1).</p>', if(equals(outputs('Tier'), 'Escalation'), if(or(equals(items('For_each_open_endorsement')?['CoordinationRole']?['Value'], 'Legal'), equals(items('For_each_open_endorsement')?['CoordinationStage']?['Value'], 'Legal')), '<p>The action officer and requester are copied. Legal coordination cannot be closed as Concur - No Response (5.4.3).</p>', '<p>The action officer and requester are copied. The action officer may record Concur - No Response with an explanation in the staff package (5.4.3.2).</p>'), ''), '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+                          "emailMessage/Importance": "@if(equals(outputs('Tier'), 'Escalation'), 'High', 'Normal')"
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {
+                      "Send_from_the_shared_mailbox_(V2)": {
+                        "runAfter": {},
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                            "connectionName": "shared_office365",
+                            "operationId": "SharedMailboxSendEmailV2"
+                          },
+                          "authentication": "@parameters('$authentication')",
+                          "parameters": {
+                            "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                            "emailMessage/To": "@items('For_each_open_endorsement')?['Endorser']?['Email']",
+                            "emailMessage/Cc": "@outputs('Copy_to')",
+                            "emailMessage/Subject": "@concat(outputs('Tier'), ': coordination response due ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
+                            "emailMessage/Body": "@concat('<p>Coordination of ', coalesce(items('For_each_open_endorsement')?['Title'], 'a publication action'), ' is waiting for your response (DAFMAN 90-161, 5.2).</p>', '<p>Your suspense is ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), if(equals(outputs('Tier'), 'Reminder'), '. This is an advance reminder.', if(equals(outputs('Tier'), 'Warning'), '. The suspense is today or has passed.', concat('. The suspense passed ', string(outputs('Days_past')), ' days ago.'))), '</p>', '<p>Please respond with Concur, Concur With Comment, Nonconcur or No Comment, or ask for an extension before the suspense with your rationale and estimated completion date (5.2.1).</p>', if(equals(outputs('Tier'), 'Escalation'), if(or(equals(items('For_each_open_endorsement')?['CoordinationRole']?['Value'], 'Legal'), equals(items('For_each_open_endorsement')?['CoordinationStage']?['Value'], 'Legal')), '<p>The action officer and requester are copied. Legal coordination cannot be closed as Concur - No Response (5.4.3).</p>', '<p>The action officer and requester are copied. The action officer may record Concur - No Response with an explanation in the staff package (5.4.3.2).</p>'), ''), '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+                            "emailMessage/Importance": "@if(equals(outputs('Tier'), 'Escalation'), 'High', 'Normal')"
+                          }
+                        }
+                      }
                     }
                   }
                 },
                 "Log_reminder_sent": {
                   "runAfter": {
-                    "Send_an_email_(V2)": [
+                    "If_shared_mailbox": [
                       "Succeeded"
                     ]
                   },
