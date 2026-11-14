@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | (1A) Failure e-mails link to the failed run: tests/check_flow_solution.py allows the DoD portal host make.powerautomate.appsplatform.us. (2A) Old round bundles leave when the next round ships. | PFM | flow/solution/README.md |
 | 2026-11-14 | RADE window P1 (RADE PR 15) ships with the flow-controls round, now R21; the RADE lock moves then. R20 leaves the build; its bundle file stays as run. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-14 | RADE modes: Install (also repairs and reinstalls; keeps data), Diagnose (read-only; names the fix), Restore (from backup), Uninstall (purges all RADE added; backup first). | PFM | docs/reviews/2026-11-14-flow-controls.md |
 | 2026-11-14 | Backups: JSON (for Restore) plus a CSV copy (to read). Table A5.2 stage 6 (Formal coordination) target = 25 working days (20 coordination + 5 adjudication). | PFM | docs/reviews/2026-11-14-flow-controls.md |

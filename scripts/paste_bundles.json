@@ -23,13 +23,13 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R21-round-r1.ps1",
+      "out": "scripts/gov/paste/90161Z-R21-round-r2.ps1",
       "round": "R21",
       "title": "Round R21: slice 1 on the test site. Import the 90-161.Z flows (F05 routing r2 and F03 reminders r3) in test mode, then three fake publications prove routing, hold, a failed run and its Resubmit, a missing row, the 20-working-day suspense and the move to Legal; all are removed at the end",
       "files": [
         {
           "dir": "T18",
-          "src": "flow/solution/90161Z-T18-slice1-flows-r2.zip"
+          "src": "flow/solution/90161Z-T18-slice1-flows-r3.zip"
         },
         {
           "dir": "T17",
@@ -45,7 +45,7 @@
           "name": "T18 Import the slice 1 flows r2",
           "kind": "guide",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-flows-r2.zip",
+          "file": "90161Z-T18-slice1-flows-r3.zip",
           "note": "You import the 90-161.Z flows solution (F05 routing r2, F03 reminders r3) in test mode and turn F05 on. About 8 minutes (estimate).",
           "marker": "90161Z-T18-slice1-imported.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
@@ -539,6 +539,10 @@
         },
         {
           "path": "T18\\90161Z-T18-f03-ran.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r2.zip",
           "kind": "glob"
         }
       ],
