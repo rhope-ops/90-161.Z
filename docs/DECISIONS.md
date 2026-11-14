@@ -5,6 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | R20 = slice 1: import the solution (F05 + F03, environment variables; log reader if it fails), then an end-to-end test with 1 fake publication from step 6 to Legal and step 7. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-14 | F03: reminder 5 weekdays before the suspense; escalation 3 working days after it, copied to the AO and Requester; sent from the PFM's shared mailbox (Send As; address in an environment variable, empty = flow owner's mailbox). | PFM | flow/solution/README.md (open choice 6) |
 | 2026-11-14 | Rounds hold only steps that test something not yet verified. T16 site setup (verified R17-R19) leaves routine rounds; a short step collects flow results; seals upload only when new or changed. | PFM | docs/reviews/2026-11-14-r19-results.md |
 | 2026-11-14 | All text the PFM sees is professional and polished: window, guides, step notes, import instructions and flow run inputs; formatted where possible. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/window-design.md |
 | 2026-11-14 | Start using rhope-ops/RADE: the engine moved there (engine/rade_build.py); this repo keeps its manifest and files, pinned by scripts/rade.lock.json. | PFM | https://github.com/rhope-ops/RADE/blob/main/engine/rade_build.py |
