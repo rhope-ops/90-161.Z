@@ -253,6 +253,8 @@ out=$(python3 scripts/build_task_scripts.py --check 2>&1); [ $? -eq 0 ] && ok "t
 
 # Task 11 Part B rows come from docs/rights-test-plan.md section 6 (one source; the Deployer form reads the JSON).
 out=$(python3 scripts/build_rights_rows.py --check 2>&1 | tail -1); [ $? -eq 0 ] && echo "$out" | grep -q "stale=0" && ok "T11 Part B rows match the plan ($out)" || bad "T11 Part B rows stale: $out (run python3 scripts/build_rights_rows.py)"
+# The RADE engine lives in rhope-ops/RADE (pinned by scripts/rade.lock.json); tests read its source through the shim.
+export ENGINE; ENGINE=$(python3 scripts/build_paste_bundles.py --engine-path) || { echo "$ENGINE"; bad "RADE engine not found or not the pinned one"; ENGINE=/dev/null; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 [ "$out" = "PASTE bundles=1 stale=0" ] && ok "paste bundles current ($out)" || bad "paste bundles: $out (run python3 scripts/build_paste_bundles.py)"
 # Bundle size limit (PFM 14 Nov 26): a pasted round stays readable for the ISSM and pastes fast; 300 KB = 307,200 bytes.
@@ -273,7 +275,7 @@ swap() { sed -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" -e "s#Url = 'h
 for b in scripts/gov/paste/*.ps1; do
   swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
   # Text mode runs the default steps that need no folder (the optional steps are skipped).
-  n=$(python3 -c "import json,pathlib;f='scripts/build_paste_bundles.py';ns={'__file__':str(pathlib.Path(f).resolve())};exec(open(f).read().split(chr(10)+'def here')[0],ns);print(sum(1 for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b' for s in b['steps'] if ns['step_default'](s) and 'ask' not in s))")
+  n=$(python3 -c "import json,pathlib;f='$ENGINE';ns={'__file__':str(pathlib.Path(f).resolve())};exec(open(f).read().split(chr(10)+'def here')[0],ns);ns['ROOT']=pathlib.Path('.').resolve();print(sum(1 for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b' for s in b['steps'] if ns['step_default'](s) and 'ask' not in s))")
   r=$(python3 -c "import json;print([b['round'] for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b'][0])")
   # R17 (PFM 14 Nov 26): the run moves the old 90-161.Z folder (the fixture) into OneDrive/RADE.
   base="$tp/u/test1234/OneDrive - United States Air Force/RADE/90-161.Z"; nb="$base"
@@ -336,8 +338,9 @@ done; rm -rf "$te"
 # Step default by file hash (PFM 14 Nov 26): a step with default {passed, paths} is ticked only when those files changed.
 sd=$(python3 - <<'PYEOF'
 import pathlib
-src = pathlib.Path('scripts/build_paste_bundles.py').read_text()
-ns = {'__file__': str(pathlib.Path('scripts/build_paste_bundles.py').resolve())}; exec(src.split('\ndef here')[0], ns)
+import os
+src = pathlib.Path(os.environ['ENGINE']).read_text()
+ns = {'__file__': os.environ['ENGINE']}; exec(src.split('\ndef here')[0], ns); ns['ROOT'] = pathlib.Path('.').resolve()
 p = ['samples/publication.sample.json']; h = ns['files_hash'](p)
 print(ns['step_default']({'default': {'passed': h, 'paths': p}}), ns['step_default']({'default': {'passed': 'x', 'paths': p}}),
       ns['step_default']({}), ns['step_default']({'default': False}))
@@ -349,7 +352,7 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 [ "$dq" -eq 0 ] && ok "rounds ask no DODID (bundles that ask: $dq)" || bad "rounds ask no DODID (bundles that ask: $dq)"
 # R06 lesson: New-Object with a string for an enum argument can match two overloads ("Multiple ambiguous overloads") and
 # drop the Deployer to text mode. Binding check in pwsh for every New-Object System.Drawing.Font call in the bundles.
-fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 scripts/build_paste_bundles.py | wc -l)
+fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 "$ENGINE" | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "Deployer fonts: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "Deployer fonts: string enum in Font() found=$fa (pwsh: $amb)"
 for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r9.ps1; do
@@ -368,7 +371,7 @@ assert 'getuserbyid(@{body(\'C01\')' in a['G04']['inputs']['parameters']['parame
 assert list(a).index('C01') < list(a).index('G04') < list(a).index('W11')" && ok "probe r5: W11 grants the C01 user ID; G04 by user ID; G06 counts" || bad "probe r5 W11/C01/G04/G06"
 # R05 (PFM 2026-11-13): every bundle makes an Outlook draft and never sends it; off Windows it falls back to folder + clipboard.
 nd=$(grep -L 'ComObject Outlook.Application' scripts/gov/paste/*.ps1 | wc -l); ns=$(grep -ciE '\.Send\(|\.Send\b *$' scripts/gov/paste/*.ps1 | awk -F: '{s+=$NF} END{print s+0}')
-grep -q '\$script:draftMade = (-not \$why)' scripts/build_paste_bundles.py && grep -q "Outlook draft could not be created" scripts/build_paste_bundles.py; fb=$?
+grep -q '\$script:draftMade = (-not \$why)' "$ENGINE" && grep -q "Outlook draft could not be created" "$ENGINE"; fb=$?
 [ "$nd" -eq 0 ] && [ "$ns" -eq 0 ] && [ "$fb" -eq 0 ] && ok "Outlook draft step, never sent (bundles without draft: $nd; Send calls: $ns; fallback present)" || bad "Outlook draft step (without draft: $nd; Send calls: $ns; fallback rc=$fb)"
 
 rm -rf "$vd"

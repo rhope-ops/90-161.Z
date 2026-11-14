@@ -1,5 +1,26 @@
 {
-  "_doc": "Source for scripts/build_paste_bundles.py. Each bundle is one round: a self-contained PowerShell text the PFM copies from its raw page and pastes into Windows PowerShell ISE (F5). It writes the files, then opens RADE, the Redacted Application Deployment Engine (a window; text prompts if no window can open): steps run one by one with a live log and PASS/FAIL counts, then one results folder (Rounds\\\\<round>: a report file plus copies of the PDFs, to attach to one e-mail; zips do not cross the boundary) and a summary for the clipboard. It runs only the steps inside it (PFM 3A). A step's \"default\" may be {passed, paths}: the step is ticked only when those files changed since the round that passed it; after a round passes it, set passed to the new hash (PFM 14 Nov 26). Never hand-edit scripts/gov/paste/*.ps1: change this file or the sources and rebuild. A step may list \"needs\" (check ids in the engine's $checkDefs) and \"estimate\" (minutes, used until a real run time exists). \"apps\" is the embedded catalog the Choose screen lists (name, plain-English summary, step names); without it, one application has every step. A guide step may set \"doneText\" (its Done button) and \"doneLog\" (the log line on Done).",
+  "_doc": "RADE manifest (contract: rhope-ops/RADE schemas/rade-manifest.schema.json). Built by the RADE engine through scripts/build_paste_bundles.py (a pinned shim, see scripts/rade.lock.json). Each bundle is one round: a self-contained PowerShell text the PFM copies from its raw page and pastes into Windows PowerShell ISE (F5). It writes the files, then opens RADE, the Redacted Application Deployment Engine (a window; text prompts if no window can open): steps run one by one with a live log and PASS/FAIL counts, then one results folder (Rounds\\\\<round>: a report file plus copies of the PDFs, to attach to one e-mail; zips do not cross the boundary) and a summary for the clipboard. It runs only the steps inside it (PFM 3A). A step's \"default\" may be {passed, paths}: the step is ticked only when those files changed since the round that passed it; after a round passes it, set passed to the new hash (PFM 14 Nov 26). Never hand-edit scripts/gov/paste/*.ps1: change this file or the sources and rebuild. A step may list \"needs\" (check ids in the engine's $checkDefs) and \"estimate\" (minutes, used until a real run time exists). \"apps\" is the embedded catalog the Choose screen lists (name, plain-English summary, step names); without it, one application has every step. A guide step may set \"doneText\" (its Done button) and \"doneLog\" (the log line on Done).",
+  "application": {
+    "name": "90-161.Z: Publications and Forms Management",
+    "folder": "90-161.Z",
+    "prefix": "90161Z",
+    "repo": "rhope-ops/90-161.Z",
+    "home": "https://rhope-ops.github.io/90-161.Z",
+    "own": [
+      "90161Z-*",
+      "SAMPLEWING*"
+    ],
+    "knownDirs": [
+      [
+        "scripts/gov",
+        "*.ps1"
+      ],
+      [
+        "samples",
+        "*"
+      ]
+    ]
+  },
   "bundles": [
     {
       "out": "scripts/gov/paste/90161Z-R18-round-r1.ps1",
