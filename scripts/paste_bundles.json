@@ -43,7 +43,7 @@
           "guide": [
             "Type no names in any box. Do not make a new publisher.",
             "1. Select Open in browser. In Power Automate select Solutions (under More if you do not see it), then New solution.",
-            "2. Display name: 90161Z Export Sample. Publisher: keep the default one shown. Select Create.",
+            "2. Display name: PFM 90161Z Export Sample. Name: check it reads PFM90161ZExportSample. Publisher: keep the default one shown. Select Create.",
             "3. In the solution select New > More > Environment variable. Display name: Site URL. Data type: Text.",
             "   Leave Default value and Current value empty. Select Save.",
             "4. Select New > Automation > Cloud flow > Instant. Flow name: 90161Z Export Sample.",

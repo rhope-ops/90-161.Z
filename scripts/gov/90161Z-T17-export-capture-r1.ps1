@@ -9,17 +9,20 @@
   T17 folder, and writes one plain text file with every text file in the zip (XML and JSON), masked:
   e-mail addresses, web addresses (except the public schema addresses the format itself uses), /sites/ paths, the
   publisher's names, e-mail, website and postal fields, every environment variable value, and the DODID. Other files are
-  listed by name and size only. It also records whether each file starts with a byte-order mark (R15's error can come
+  listed by name and size only. A separate check looks for anything address-like that is left; if it finds one, no file
+  is written (review R16). It also records whether each file starts with a byte-order mark (R15's error can come
   from one) and how the file names in the zip are written.
   Output: 90161Z-T17-export-capture-r1.txt in the T17 folder (send this). The zip itself stays on this computer.
   Parameters (used by the 90-161.Z Deployer): -Id, -NoPause, -Zip (a path, to read another file).
 #>
 param([string]$Id, [switch]$NoPause, [string]$Zip)
 $task = 'T17'
-$Pattern = '90161ZExportSample*.zip'
+$Pattern = '*90161ZExportSample*.zip'   # unique name PFM90161ZExportSample (a unique name cannot start with a digit)
 $MaxAgeHours = 4
 # Public schema hosts the solution format itself uses; every other web address is masked.
 $KeepHosts = @('www.w3.org', 'schema.management.azure.com', 'schemas.microsoft.com', 'schemas.openxmlformats.org', 'json-schema.org')
+# Host names to mask: any dotted name that ends in one of these (bare, in a URL, JSON-escaped or percent-encoded).
+$HostRx = '(?i)\b[a-z0-9-]+(\.[a-z0-9-]+)*\.(mil|gov|us|com|net|org|edu|io|cloud|example)\b'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -87,34 +90,51 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
 
 function Hide-Export([string]$Text, [string]$Name) {
   # Returns @{ Text; Count }: the masked text and how many values were replaced. $Name is the file's path in the zip.
+  # Order: whole values first (variable values, publisher fields), then addresses in every encoding, then bare hosts.
   $script:hidden = 0
   $sub = { param([string]$T, [string]$Pattern, [string]$With) $script:hidden += [regex]::Matches($T, $Pattern).Count; [regex]::Replace($T, $Pattern, $With) }
-  $Text = & $sub $Text '[\w.+-]+@[\w-]+(\.[\w-]+)+' '<EMAIL>'
-  $Text = & $sub $Text '[\w.+-]+%40[\w-]+(\.[\w-]+)+' '<EMAIL>'
-  $Text = & $sub $Text '(?i)/sites/[^\s"''<>/\\?&]+' '/sites/<SITE-NAME>'
-  # The publisher block (solution.xml): its names, descriptions, e-mail, website and every postal or phone field.
-  $Text = [regex]::Replace($Text, '(?is)<Publisher>.*?</Publisher>', {
-    param($m)
-    $p = $m.Value
-    $p = & $sub $p '(?i)(<UniqueName>)[^<]+(</UniqueName>)' '$1<PUBLISHER-UNIQUE-NAME>$2'
-    $p = & $sub $p '(?i)(\bdescription=")[^"]+' '$1<MASKED>'
-    $p = & $sub $p '(?i)(<(EMailAddress|SupportingWebsiteUrl|Name|Line1|Line2|Line3|City|County|Country|StateOrProvince|PostalCode|PostOfficeBox|Telephone1|Telephone2|Telephone3|Fax|UPSZone|Latitude|Longitude)>)[^<]+(</\2>)' '$1<MASKED>$3'
-    return $p
-  })
-  # Environment variable values: every value in a value file, and any default value.
   if ($Name -match '(?i)environmentvariablevalue') {
     $Text = & $sub $Text '(?i)("value"\s*:\s*")[^"]*' '$1<VALUE>'
     $Text = & $sub $Text '(?i)(<value>)[^<]+(</value>)' '$1<VALUE>$2'
   }
   $Text = & $sub $Text '(?i)(<defaultvalue>)[^<]+(</defaultvalue>)' '$1<VALUE>$2'
-  # Web addresses: keep the public schema hosts, mask the rest.
-  $Text = [regex]::Replace($Text, '(?i)https?://[^\s"''<>\\]+', {
+  # The publisher block (solution.xml): every attribute value and element text except the two prefixes (review R16 MAJOR:
+  # an allow list, so a field this list does not know, such as PrimaryContactName, is masked too).
+  $Text = [regex]::Replace($Text, '(?is)<Publisher>.*?</Publisher>', {
     param($m)
-    $h = ''; try { $h = ([uri]$m.Value).Host.ToLowerInvariant() } catch { $h = '' }
-    if ($KeepHosts -contains $h) { return $m.Value }
+    $p = $m.Value
+    $p = & $sub $p '(?i)(\bdescription=")[^"]+' '$1<MASKED>'
+    $p = & $sub $p '(?i)(<(?!CustomizationPrefix>|CustomizationOptionValuePrefix>)(\w+)>)[^<]+(</\2>)' '$1<MASKED>$3'
+    return $p
+  })
+  $Text = & $sub $Text '[\w.+-]+(@|%40|\\u0040)[\w-]+(\.[\w-]+)+' '<EMAIL>'
+  # Web addresses in plain, JSON-escaped (\/) and percent-encoded (%3A%2F%2F) form: keep the public schema hosts only.
+  $Text = [regex]::Replace($Text, '(?i)https?(://|:\\/\\/|%3A%2F%2F)[^\s"''<>]+', {
+    param($m)
+    $u = $m.Value -replace '\\/', '/' -replace '(?i)%3A', ':' -replace '(?i)%2F', '/'
+    $h = ''; try { $h = ([uri]$u).Host.ToLowerInvariant() } catch { $h = '' }
+    if ($h -and $KeepHosts -contains $h) { return $m.Value }
     $script:hidden++; return '<URL>'
   })
+  $Text = & $sub $Text '(?i)(/|\\/|%2F)sites(/|\\/|%2F)[^\s"''<>/\\?&%]+' '$1sites$2<SITE-NAME>'
+  $Text = [regex]::Replace($Text, $HostRx, { param($m) if ($KeepHosts -contains $m.Value.ToLowerInvariant()) { return $m.Value }; $script:hidden++; '<HOST>' })
   return @{ Text = $Text; Count = $script:hidden }
+}
+
+function Find-Leak([string]$Text) {
+  # An independent check (review R16 MAJOR): patterns the masking must have removed. Returns the number of hits.
+  $n = 0
+  $n += [regex]::Matches($Text, '[\w.+-]+(@|%40|\\u0040)[\w-]+\.[\w-]+').Count
+  $n += [regex]::Matches($Text, '(?i)(sharepoint(?!online)|\.mil\b|onmicrosoft|appsplatform)').Count
+  $n += [regex]::Matches($Text, '(?i)sites(/|\\/|%2F)(?!<SITE-NAME>)[\w-]').Count
+  foreach ($m in [regex]::Matches($Text, '(?i)https?(://|:\\/\\/|%3A%2F%2F)[^\s"''<>]+')) {
+    $u = $m.Value -replace '\\/', '/' -replace '(?i)%3A', ':' -replace '(?i)%2F', '/'
+    $h = ''; try { $h = ([uri]$u).Host.ToLowerInvariant() } catch { $h = '' }
+    if (-not ($KeepHosts -contains $h)) { $n++ }
+  }
+  foreach ($m in [regex]::Matches($Text, $HostRx)) { if (-not ($KeepHosts -contains $m.Value.ToLowerInvariant())) { $n++ } }
+  foreach ($x in $secret) { if ($x -and $Text -match [regex]::Escape($x)) { $n++ } }
+  return $n
 }
 
 function Find-ExportZip([string]$TaskDir) {
@@ -169,14 +189,21 @@ try {
       $body.Add((ConvertTo-Masked $h.Text $secret))
     }
   } finally { $archive.Dispose() }
-  $left = @(@($body) | Where-Object { $_ -match '[\w.+-]+@[\w-]+\.[\w-]+' }).Count
-  $lines.Add('CAPTURE ' + $(if ($left -eq 0) { 'PASS' } else { 'FAIL' }) + ' text-files=' + $text + ' other-files=' + $other + ' values-masked=' + $masked + ' lines-with-an-address-left=' + $left)
-  $out = @($lines | ForEach-Object { ConvertTo-Masked $_ $secret }) + @($body)
-  [System.IO.File]::WriteAllText((Join-Path $dir '90161Z-T17-export-capture-r1.txt'), (($out -join "`r`n") + "`r`n"), (New-Object System.Text.UTF8Encoding $false))
+  $left = 0; foreach ($l in @($body)) { $left += Find-Leak $l }
+  $lines.Add('CAPTURE ' + $(if ($left -eq 0) { 'PASS' } else { 'FAIL' }) + ' text-files=' + $text + ' other-files=' + $other + ' values-masked=' + $masked + ' values-left=' + $left)
+  $outFile = Join-Path $dir '90161Z-T17-export-capture-r1.txt'
+  if (Test-Path -LiteralPath $outFile -PathType Leaf) { Remove-Item -LiteralPath $outFile -Force }   # never send an older copy
   $lines | ForEach-Object { Write-Host (ConvertTo-Masked $_ $secret) }
   Write-Host ''
+  if ($left -gt 0) {
+    # Review R16 MAJOR: on a leak no file is written, so the round has nothing to attach.
+    Write-Host 'CAPTURE FAIL: a value the masking should have removed is still there. No file was written.'
+    Write-Host 'What to do: send the e-mail without it; Claude changes the masking and sends a new round.'
+    exit 1
+  }
+  $out = @($lines | ForEach-Object { ConvertTo-Masked $_ $secret }) + @($body)
+  [System.IO.File]::WriteAllText($outFile, (($out -join "`r`n") + "`r`n"), (New-Object System.Text.UTF8Encoding $false))
   Write-Host 'Saved: 90161Z-T17-export-capture-r1.txt in the T17 folder. Nothing was changed. The zip stays on this computer.'
-  if ($left -gt 0) { Write-Host 'What to do: a line still holds an address. Do not send the file; send this window''s CAPTURE line instead.'; exit 1 }
 } catch {
   $msg = [string]$_
   if ($secret) { $msg = ConvertTo-Masked $msg $secret }

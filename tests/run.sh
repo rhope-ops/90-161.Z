@@ -338,11 +338,11 @@ hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r5
 ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r5 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r5 %40 masking"; }
 # R16 (PFM 14 Nov 26): the export capture reads a fake export zip and leaves no name, address or value in its text file.
 tx=$(mktemp -d); mkdir -p "$tx/u/test1234/Downloads"
-python3 - "$tx/u/test1234/Downloads/90161ZExportSample_1_0_0_1.zip" <<'PYEOF'
+python3 - "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_1.zip" <<'PYEOF'
 import zipfile, sys
 z = zipfile.ZipFile(sys.argv[1], 'w')
-z.writestr('solution.xml', '\ufeff<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SolutionManifest><Publisher><UniqueName>jdoe</UniqueName><LocalizedNames><LocalizedName description="Jane Doe" languagecode="1033" /></LocalizedNames><EMailAddress>jane.doe@fakeco.example</EMailAddress><Addresses><Address><City>Faketown</City></Address></Addresses></Publisher></SolutionManifest></ImportExportXml>'.encode())
-z.writestr('Workflows/F-1.json', '{"schema":"https://schema.management.azure.com/x.json#","dataset":"https://fakeco.example/sites/Wing123","c":"user9@fakeco.example"}')
+z.writestr('solution.xml', '\ufeff<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SolutionManifest><Publisher><UniqueName>jdoe</UniqueName><LocalizedNames><LocalizedName description="Jane Doe" languagecode="1033" /></LocalizedNames><EMailAddress>jane.doe@fakeco.example</EMailAddress><PrimaryContactName>Jane Roe</PrimaryContactName><Addresses><Address><City>Faketown</City></Address></Addresses><CustomizationPrefix>pfm</CustomizationPrefix></Publisher></SolutionManifest></ImportExportXml>'.encode())
+z.writestr('Workflows/F-1.json', '{"schema":"https://schema.management.azure.com/x.json#","dataset":"https://fakeco.example/sites/Wing123","c":"user9@fakeco.example","e":"https:\\/\\/fakeco2.sharepoint.us\\/sites\\/Wing456","p":"https%3A%2F%2Ffakeco3.sharepoint.us%2Fsites%2FWing789","h":"fakeco4.sharepoint.us","api":"/providers/Microsoft.PowerApps/apis/shared_sharepointonline"}')
 z.writestr('environmentvariablevalues.json', '{"value":"secretvalue"}')
 z.close()
 PYEOF
@@ -350,7 +350,13 @@ sed -e "s#Join-Path 'C:\\\\Users'#Join-Path '$tx/u'#" scripts/gov/90161Z-T17-exp
 USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out.txt" 2>&1
 cf="$tx/u/test1234/OneDrive - United States Air Force/90-161.Z/T17/90161Z-T17-export-capture-r1.txt"
 [ -f "$cf" ] && grep -q "^CAPTURE PASS text-files=3" "$cf" && grep -q "bom=yes" "$cf" && grep -q "schema.management.azure.com" "$cf" \
-  && ! grep -qiE "jdoe|jane|fakeco|faketown|wing123|secretvalue|test1234" "$cf" && ok "T17 export capture masks names, addresses and values (fake export)" || { cat "$tx/out.txt"; bad "T17 export capture masking"; }
+  && grep -q "shared_sharepointonline" "$cf" && grep -q "<CustomizationPrefix>pfm<" "$cf" \
+  && ! grep -qiE "jdoe|jane|roe<|fakeco|faketown|wing[0-9]|secretvalue|test1234" "$cf" && ok "T17 export capture masks names, addresses (plain, escaped, encoded, bare host) and values (fake export)" || { cat "$tx/out.txt"; cat "$cf"; bad "T17 export capture masking"; }
+# A leak the masking misses: no file is written (review R16 MAJOR). A host with an unknown ending is still caught by "sharepoint".
+python3 -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1],'w'); z.writestr('a.json','{\"x\":\"fakeco.sharepoint.zz\"}'); z.close()" "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_2.zip"
+touch -d '+1 minute' "$tx/u/test1234/Downloads/PFM90161ZExportSample_1_0_0_2.zip"
+USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out2.txt" 2>&1
+grep -q "^CAPTURE FAIL" "$tx/out2.txt" && [ ! -e "$cf" ] && ok "T17 export capture: a leak writes no file" || { cat "$tx/out2.txt"; bad "T17 export capture leak path"; }
 rm -rf "$tx"
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "

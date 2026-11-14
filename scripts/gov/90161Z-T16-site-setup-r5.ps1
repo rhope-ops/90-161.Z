@@ -275,10 +275,10 @@ try {
         # One call of SharePoint's site icon manager: type 1 = thumbnail (aspect 0, square), type 0 = header logo (aspect 1).
         $setIcon = {
           param([string]$Rel, [int]$Type, [int]$Aspect)
-          $body = '{"relativeLogoUrl":"' + $Rel + '","type":' + $Type + ',"aspect":' + $Aspect + '}'
+          $body = @{ relativeLogoUrl = $Rel; type = $Type; aspect = $Aspect }   # a hashtable: PnP serializes it (review R16)
           $rest = Get-Command Invoke-PnPSPRestMethod -ErrorAction SilentlyContinue
           if (-not $rest) { throw 'Invoke-PnPSPRestMethod not in this PnP version' }
-          $null = Invoke-PnPSPRestMethod -Method Post -Url ($webAbs + '/_api/siteiconmanager/setsitelogo') -Content $body -ContentType 'application/json;odata=verbose' -ErrorAction Stop
+          $null = Invoke-PnPSPRestMethod -Method Post -Url ($webAbs + '/_api/siteiconmanager/setsitelogo') -Content $body -ContentType 'application/json' -ErrorAction Stop
         }
         # Thumbnail first (navy file), so a later header call cannot be undone by it.
         $thumbHow = ''
