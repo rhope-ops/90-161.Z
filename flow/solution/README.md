@@ -2,7 +2,7 @@
 
 DRAFT. Not imported until the PFM reviews it (PFM 5.6A: solution-aware flows). Source: `flow/solution/defs/*.json`. Build: `python3 scripts/build_flow_solution.py` writes `90161Z-flows-solution-r1.zip` (never hand-edit it); `--check` compares. Check: `python3 tests/check_flow_solution.py`.
 
-Solution: unmanaged, unique name `PFM90161Z`, version 1.0.0.1, publisher prefix `pfm`. Connection references: SharePoint and Office 365 Outlook (pick your own connections at import). Operation IDs (`GetOnUpdatedItems`, `GetItems`, `GetItem`, `PostItem`, `PatchItem`, `SendEmailV2`) and the solution XML layout are written from memory of Microsoft's formats; no import has been tried. Expect fixes after the first import.
+Solution: unmanaged, unique name `PFM90161Z`, version 1.0.0.1, publisher prefix `pfm`. Connection references: SharePoint and Office 365 Outlook (pick your own connections at import). Operation IDs (`GetOnUpdatedItems`, `GetItems`, `GetItem`, `PostItem`, `PatchItem`, `SendEmailV2`) and the solution XML layout are written from memory of Microsoft's formats. The first import (T17 r1, R15) failed with an XML node error; R16 captures a real export from this environment (masked) so the layout can be matched.
 
 ## Environment variables (type Text, so no site address is in the repo)
 

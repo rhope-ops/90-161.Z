@@ -295,7 +295,7 @@ rm -rf "$tp"
 [ $pc -eq 1 ] && ok "Deployer cleanup: only 90-161.Z files recycled, other files and their folder kept, summary has the clean-up line, files left, subject NEEDS REVIEW, history row" || bad "Deployer cleanup and summary (see output above)"
 
 # Two bars (PFM 14 Nov 26): progress math and the PROGRESS line rule, from the bundle's own functions (review PR 26).
-pg=$(pwsh -NoProfile -File tests/ps/Test-DeployerProgress.ps1 -Bundle scripts/gov/paste/90161Z-R15-round-r1.ps1 2>&1)
+pg=$(pwsh -NoProfile -File tests/ps/Test-DeployerProgress.ps1 -Bundle scripts/gov/paste/90161Z-R16-round-r1.ps1 2>&1)
 [ "$(echo $pg)" = "0.10 0.28 101 | -1 0.375 | True True False gate False True True True" ] && ok "Deployer progress math, PROGRESS lines and the check gate ($(echo $pg))" || bad "Deployer progress math: got '$pg'"
 
 # Enter starts the run (PFM 2026-11-13): the window's AcceptButton is Run; text mode shows the plan, Enter runs, N stops with nothing written.
@@ -328,14 +328,36 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 scripts/build_paste_bundles.py | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "Deployer fonts: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "Deployer fonts: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r4.ps1; do
+for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r5.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
 ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
 done
-# R15 review: site setup r4 masks a URL-encoded address (%40) in a fetched result.
-hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r4.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
-! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r4 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r4 %40 masking"; }
+# R15 review: site setup r5 masks a URL-encoded address (%40) in a fetched result.
+hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r5.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
+! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r5 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r5 %40 masking"; }
+# R16 (PFM 14 Nov 26): the export capture reads a fake export zip and leaves no name, address or value in its text file.
+tx=$(mktemp -d); mkdir -p "$tx/u/test1234/Downloads"
+python3 - "$tx/u/test1234/Downloads/90161ZExportSample_1_0_0_1.zip" <<'PYEOF'
+import zipfile, sys
+z = zipfile.ZipFile(sys.argv[1], 'w')
+z.writestr('solution.xml', '\ufeff<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><SolutionManifest><Publisher><UniqueName>jdoe</UniqueName><LocalizedNames><LocalizedName description="Jane Doe" languagecode="1033" /></LocalizedNames><EMailAddress>jane.doe@fakeco.example</EMailAddress><Addresses><Address><City>Faketown</City></Address></Addresses></Publisher></SolutionManifest></ImportExportXml>'.encode())
+z.writestr('Workflows/F-1.json', '{"schema":"https://schema.management.azure.com/x.json#","dataset":"https://fakeco.example/sites/Wing123","c":"user9@fakeco.example"}')
+z.writestr('environmentvariablevalues.json', '{"value":"secretvalue"}')
+z.close()
+PYEOF
+sed -e "s#Join-Path 'C:\\\\Users'#Join-Path '$tx/u'#" scripts/gov/90161Z-T17-export-capture-r1.ps1 > "$tx/c.ps1"
+USERPROFILE="$tx/u/test1234" pwsh -NoProfile -File "$tx/c.ps1" -NoPause > "$tx/out.txt" 2>&1
+cf="$tx/u/test1234/OneDrive - United States Air Force/90-161.Z/T17/90161Z-T17-export-capture-r1.txt"
+[ -f "$cf" ] && grep -q "^CAPTURE PASS text-files=3" "$cf" && grep -q "bom=yes" "$cf" && grep -q "schema.management.azure.com" "$cf" \
+  && ! grep -qiE "jdoe|jane|fakeco|faketown|wing123|secretvalue|test1234" "$cf" && ok "T17 export capture masks names, addresses and values (fake export)" || { cat "$tx/out.txt"; bad "T17 export capture masking"; }
+rm -rf "$tx"
+# R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
+python3 -c "
+import json; a = json.load(open('flow/defs/90161Z-T11-rights-probe-r5.json'))['actions']
+assert 'principalid=@{body(\'C01\')?[\'Id\']}' in a['W11']['inputs']['parameters']['parameters/uri']
+assert 'getuserbyid(@{body(\'C01\')' in a['G04']['inputs']['parameters']['parameters/uri'] and 'G04_read' not in a and 'G06_counts' in a
+assert list(a).index('C01') < list(a).index('G04') < list(a).index('W11')" && ok "probe r5: W11 grants the C01 user ID; G04 by user ID; G06 counts" || bad "probe r5 W11/C01/G04/G06"
 # R05 (PFM 2026-11-13): every bundle makes an Outlook draft and never sends it; off Windows it falls back to folder + clipboard.
 nd=$(grep -L 'ComObject Outlook.Application' scripts/gov/paste/*.ps1 | wc -l); ns=$(grep -ciE '\.Send\(|\.Send\b *$' scripts/gov/paste/*.ps1 | awk -F: '{s+=$NF} END{print s+0}')
 grep -q '\$script:draftMade = (-not \$why)' scripts/build_paste_bundles.py && grep -q "Outlook draft could not be created" scripts/build_paste_bundles.py; fb=$?

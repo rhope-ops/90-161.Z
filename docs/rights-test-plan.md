@@ -14,12 +14,12 @@ Roles: **U** regular site member · **O** site owner (Full Control) · **A** sit
 | # | Right | Needed for | Expected | Conf | Test | Fallback |
 |---|---|---|---|---|---|---|
 | S1 | Read items | Everyone using the app | U, O, A | H | R11, R12 | - |
-| S2 | Add and edit own items | Requests, coordinator answers; the app (wing users have Read on the site, PFM 14 Nov 26) | U after the list gives its group Contribute, with item-level "own items" | H | R11, R12, W11, R12b (r4) | Changes through a flow on the PFM's connection |
+| S2 | Add and edit own items | Requests, coordinator answers; the app (wing users have Read on the site, PFM 14 Nov 26) | U after the list gives the user (r5) or their group Contribute, with item-level "own items" | H | R11, R12, C01, W11, R12b (r5: W11 grants the user ID from C01; r4 found no group) | Changes through a flow on the PFM's connection |
 | S3 | Create lists, columns, views | Setup part 1, upgrades | O, A; also U when Members have "Edit" (Edit includes Manage Lists) | M | R06, R07b, R11, W01-W02 | A site owner runs setup part 1 |
 | S4 | Give a list its own permissions | Settings and log read-only for members (P2) | O, A | H | W04, W05 | A site owner follows a checklist |
 | S5 | Item-level permissions on a list | Edit own rows (DECISIONS 12 Nov) | O, A (Manage Lists) | H | W03, R09a, R09b | Changes through flows only |
 | S6 | Create a SharePoint group | SharePoint-only group option (P6) | O, A | H | W07 | Use an existing group |
-| S7 | Resolve an AD or Entra group on the site | AD group option (P6) | O, A | M | R13 (r3); G01, G03 (r4: counts by type, the AD group has no e-mail) | Add the group by hand in Site permissions |
+| S7 | Resolve an AD or Entra group on the site | AD group option (P6) | O, A | M | R13 (r3); G01, G03 (r4: counts by type, the AD group has no e-mail); G05, G06 (r5: every site group by type) | Add the group by hand in Site permissions |
 | S8 | Give a folder its own permissions | Per-action Working Files folders | O, A | H | W08-W10 | One shared Working Files folder, PFM-only |
 | S9 | Set version limits | Storage control | O, A | H | W03 | Leave defaults |
 | S10 | Read a coworker's effective rights | Setup checks without a second login | O, A | M | R11, R12 | Ask a coworker to run the probe |
@@ -70,7 +70,7 @@ Roles: **U** regular site member · **O** site owner (Full Control) · **A** sit
 | D1 | Look up people (Office 365 Users) | Person pickers, AO lookup | K, data policy | M | U01 | SharePoint person fields only |
 | D2 | Create an M365 group | M365 group option | Tenant setting | L | M17 (look only) | Use an existing group |
 | D3 | Create or change an AD security group | AD group option | Communications squadron only | H | Not testable | Ask the squadron |
-| D4 | See a group's type when picking it | Setup explanation | K | M | R13, M07; G01-G04 (r4) | Setup asks the PFM |
+| D4 | See a group's type when picking it | Setup explanation | K | M | R13, M07; G01-G06 (r4, r5) | Setup asks the PFM |
 
 ## 5. Gov computer
 
