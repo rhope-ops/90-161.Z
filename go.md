@@ -24,24 +24,14 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R19 r1: solution import test A r5, copied from my R18 export (open, 14 Nov 26)
+## No open round (14 Nov 26)
 
-**For:** (1) A r4 failed again in R18. My R18 export showed what a working solution looks like here, and A r5 now copies it: the SharePoint connection is no longer listed as a root component (the likely cause), the publisher uses my environment's number, and the files have no XML header, as exported. (2) If A r5 fails, I download the import log and RADE reads it, so Claude sees the real error, not the first lines of the log. (3) RADE: the step bar is green, the subtitle says "DoD organization", Next, Back, Exit and Run are one size, and a step that finds nothing to do now says SKIPPED.
-**Time:** about 12 minutes (estimate): import and run 5, log reader 1, site setup 6 plus waiting for the flow.
-**Changes:** on my computer: writes into T16, T17 and Rounds\R19; moves the R18 test files (A r4 zip and result, export reader r1, site setup r9 files) and Rounds\R17 to the Recycle Bin. My 90161ZExportSample zip and the files I took out of it stay (RADE did not make them). In Power Automate: imports "90-161.Z solution import test A" again (one flow, one SharePoint connection reference); I run its flow once. On the new site: the test flow reads the PFM Settings row count and writes one result file; site setup only reads and copies that file (site address masked). Only if the import fails: the log reader copies the error rows of the downloaded import log (addresses masked). Saves one Outlook draft (never sent).
-Steps:
-1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R19-round-r1.ps1
-2. Start menu: type ISE, open Windows PowerShell ISE. File > New, click in the white pane, press Ctrl+V, then F5.
-3. In the RADE window: choose the application, run the checks, then Deploy.
-4. The test A window opens at the right edge of the screen. Follow it. If the import works, select "Done: the run has started". If it fails: select Download log file in Power Automate (any folder), type the first line of the red error into the box, and select "It failed".
-5. The log reader runs by itself (it says SKIPPED if there is no log).
-6. Site setup asks for the site address (filled in from last time) and opens a CAC sign-in. It waits for the flow; keep RADE open. Then Send the Outlook draft. If the window looks wrong, clear the box "This window looked right" and write what you saw.
-**Report:** the draft itself (it holds the result file or the import log rows). Claude watches the inbox for the subject "90161Z R19".
-**If it fails:** read the "What to do" line in the window. If no log can be downloaded, the typed error line is enough; the round goes on. A FAIL line in site setup names the item and the by-hand fallback.
+Claude is building R20: the real flow solution with the R19 layout. Nothing to run until it is listed here.
 
 ## Done
 
+- Round R19 (14 Nov 26): passed. Test solution A r5 imported and its flow ran (connection reference OK, 7 settings rows read): solution-aware flows work here. Site setup passed for the third time and leaves routine rounds. The repository warning has a fix in R20. Details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r19-results.md
 - Round R18 (14 Nov 26): needs review. Import test A r4 failed again (the pasted error held only the start of the log); I exported a working solution and attached its files by hand, because the export reader looked only in Downloads; site setup r9 passed (6 of 6); the window worked after the Next fix. R19 copies the export's layout. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-14-r18-results.md
 - Round R17 (14 Nov 26): needs review. RADE moved the folder and the window worked (Window: OK); both solution imports failed with "workflow not declared as a root component" (the variable is not the cause), logged as skipped because the window had no failed answer; site setup r7 passed (6 of 6). R18 fixes the import (lowercase ID) and adds the It failed button. Details:
