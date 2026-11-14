@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (Round R18 r1: solution import test A r4, a working export if it fails).
+Updated: 14 Nov 26 (Round R18 r2: solution import test A r4, a working export if it fails).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,14 +24,14 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R18 r1: solution import test A r4, a working export if it fails (open, 14 Nov 26)
+## Round R18 r2: solution import test A r4, a working export if it fails (open, 14 Nov 26; r1 window crashed on Next, fixed in the RADE engine)
 
 **For:** (1) R17 showed the real import error: A and B both failed with "workflow ... is not declared in the solution file as a root component", so the variable was not the cause. A r4 writes the flow ID in lowercase, as real exports do. (2) If A fails again, I export one working solution in the same round; RADE reads only its two XML files so the next build copies the real layout. (3) RADE gets its new look (layout B): a navy-to-blue rail on the left with logo K, the word RADE and the three screens; blue Next and Run buttons; a blue top bar and a yellow step bar. The step bar now fills left to right like the top bar, and a by-hand step has an "It failed" button with a box for the error text, so the e-mail says FAILED with the message. The logo is no longer a round step: Claude e-mailed logo K and I set it by hand (Change the look > Header) when I have time.
 **Time:** about 15 minutes (estimate): import and run 5, export 5 (only if A fails), site setup 8 plus waiting for the flow.
 **Changes:** on my computer: writes into T16, T17 and Rounds\R18; moves the R17 test files, site setup r8 files, the T14 folder and Rounds\R16 to the Recycle Bin. In Power Automate: imports "90-161.Z solution import test A" again (one flow, one SharePoint connection reference); I run its flow once. Only if A fails: I make one solution "90161ZExportSample" with one working flow and export it (a zip in Downloads; RADE copies only solution.xml and customizations.xml, addresses masked). On the new site: the test flow reads the PFM Settings row count and writes one result file; site setup only reads and copies that file (site address masked). Saves one Outlook draft (never sent).
 Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R18-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R18-round-r2.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. File > New, click in the white pane, press Ctrl+V, then F5.
 3. In the RADE window: choose the application, run the checks, then Deploy.
 4. The test A window opens at the right edge of the screen. Follow it. If the import works, select "Done: the run has started"; if it fails, paste the error into the box and select "It failed".
