@@ -438,7 +438,7 @@ function Invoke-GuideStep([string]$Base, $Step, [scriptblock]$Say) {
     & $Say ('    Address: ' + $url)
     if (Copy-TextToClipboard $file) { & $Say '    The full file path is on the clipboard.' }
     if ($env:OS -eq 'Windows_NT') { try { Start-Process -FilePath $url } catch { $null = $_ } }
-    $a = ([string](Read-Host 'Press Enter when the flow run has started, or type S and press Enter to skip this step')).Trim()
+    $a = [string](Read-Host 'Press Enter when the flow run has started, or type S and press Enter to skip this step'); $a = $(if ($a) { $a.Trim() } else { '' })   # no input (closed stdin) gives no value, not ''
     $ok = ($a -notmatch '^[Ss]')
   } else { $ok = ((Show-GuideDialog $Step $file $url $urlFile) -eq 'OK') }
   if ($ok) {

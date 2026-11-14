@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z T11 Rights Probe r4",
-  "description": "Tests what the person who runs it, and an optional coworker, can do on a SharePoint site. Counts the Members and Visitors groups by type, gives the coworker's group Contribute on a TEST list and reads the coworker's rights there. Creates TEST objects, then deletes them; sends no e-mail. Records status codes, permission masks and principal types only, no names.",
+  "displayName": "90161Z T11 Rights Probe r5",
+  "description": "Tests what the person who runs it, and an optional coworker, can do on a SharePoint site. Counts site group members by type, gives the coworker's own user Contribute on a TEST list and reads the coworker's rights there. Creates TEST objects, then deletes them; sends no e-mail. Records status codes, permission masks and principal types only, no names.",
   "connections": [
     "shared_sharepointonline"
   ],
@@ -915,9 +915,62 @@
         }
       }
     },
-    "G01": {
+    "C01": {
       "runAfter": {
         "Record_R14": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "parameters": {
+          "dataset": "@triggerBody()['text']",
+          "parameters/method": "POST",
+          "parameters/uri": "_api/web/ensureuser",
+          "parameters/headers": {
+            "Accept": "application/json;odata=nometadata",
+            "Content-Type": "application/json;odata=verbose"
+          },
+          "parameters/body": "{\"logonName\": \"@{trim(coalesce(triggerBody()?['text_1'], ''))}\"}"
+        },
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "HttpRequest"
+        },
+        "authentication": {
+          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']",
+          "type": "Raw"
+        }
+      }
+    },
+    "Record_C01": {
+      "runAfter": {
+        "C01": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "AppendToArrayVariable",
+      "inputs": {
+        "name": "Results",
+        "value": {
+          "id": "C01",
+          "what": "Coworker resolves on the site: principal type and site user ID (no name)",
+          "code": "@{outputs('C01')?['statusCode']}",
+          "out": "type=@{body('C01')?['PrincipalType']} id=@{body('C01')?['Id']}",
+          "err": "@{replace(replace(replace(replace(replace(replace(replace(if(greaterOrEquals(int(coalesce(outputs('C01')?['statusCode'], 0)), 400), take(string(body('C01')), 600), ''), if(empty(trim(triggerBody()?['text'])), '<none>', trim(triggerBody()?['text'])), '<SITE>'), if(or(empty(trim(triggerBody()?['text'])), equals(uriPath(trim(triggerBody()?['text'])), '/')), '<none>', uriPath(trim(triggerBody()?['text']))), '<SITE-PATH>'), if(empty(trim(triggerBody()?['text'])), '<none>', uriHost(trim(triggerBody()?['text']))), '<HOST>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', trim(coalesce(triggerBody()?['text_1'], ''))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', toLower(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(toLower(trim(coalesce(triggerBody()?['text_1'], ''))))), '<COWORKER>')}"
+        }
+      }
+    },
+    "G01": {
+      "runAfter": {
+        "Record_C01": [
           "Succeeded",
           "Failed",
           "Skipped",
@@ -1112,7 +1165,7 @@
         "parameters": {
           "dataset": "@triggerBody()['text']",
           "parameters/method": "GET",
-          "parameters/uri": "_api/web/siteusers/getbyemail(@v)/groups?$select=Id&@v='@{encodeUriComponent(coalesce(triggerBody()?['text_1'], ''))}'",
+          "parameters/uri": "_api/web/getuserbyid(@{body('C01')?['Id']})/groups?$select=Id",
           "parameters/headers": {
             "Accept": "application/json;odata=nometadata"
           }
@@ -1143,24 +1196,9 @@
         ]
       }
     },
-    "G04_read": {
-      "runAfter": {
-        "G04_ids": [
-          "Succeeded",
-          "Failed",
-          "Skipped",
-          "TimedOut"
-        ]
-      },
-      "type": "Query",
-      "inputs": {
-        "from": "@coalesce(body('G04_ids'), json('[]'))",
-        "where": "@and(not(equals(item(), body('R07')?['Id'])), not(equals(item(), body('R14')?['Id'])))"
-      }
-    },
     "Record_G04": {
       "runAfter": {
-        "G04_read": [
+        "G04_ids": [
           "Succeeded",
           "Failed",
           "Skipped",
@@ -1172,16 +1210,133 @@
         "name": "Results",
         "value": {
           "id": "G04",
-          "what": "Coworker's SharePoint group IDs (compare with Owners R14, Members R07, Visitors G02)",
+          "what": "Coworker's SharePoint group IDs, by the C01 user ID (compare with Owners R14, Members R07, Visitors G02)",
           "code": "@{outputs('G04')?['statusCode']}",
           "out": "@{join(coalesce(body('G04_ids'), json('[]')), ',')}",
           "err": "@{replace(replace(replace(replace(replace(replace(replace(if(greaterOrEquals(int(coalesce(outputs('G04')?['statusCode'], 0)), 400), take(string(body('G04')), 600), ''), if(empty(trim(triggerBody()?['text'])), '<none>', trim(triggerBody()?['text'])), '<SITE>'), if(or(empty(trim(triggerBody()?['text'])), equals(uriPath(trim(triggerBody()?['text'])), '/')), '<none>', uriPath(trim(triggerBody()?['text']))), '<SITE-PATH>'), if(empty(trim(triggerBody()?['text'])), '<none>', uriHost(trim(triggerBody()?['text']))), '<HOST>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', trim(coalesce(triggerBody()?['text_1'], ''))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', toLower(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(toLower(trim(coalesce(triggerBody()?['text_1'], ''))))), '<COWORKER>')}"
         }
       }
     },
-    "R15": {
+    "G05": {
       "runAfter": {
         "Record_G04": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "parameters": {
+          "dataset": "@triggerBody()['text']",
+          "parameters/method": "GET",
+          "parameters/uri": "_api/web/roleassignments?$expand=RoleDefinitionBindings&$select=PrincipalId,RoleDefinitionBindings/Name",
+          "parameters/headers": {
+            "Accept": "application/json;odata=nometadata"
+          }
+        },
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "HttpRequest"
+        },
+        "authentication": {
+          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']",
+          "type": "Raw"
+        }
+      }
+    },
+    "Record_G05": {
+      "runAfter": {
+        "G05": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "AppendToArrayVariable",
+      "inputs": {
+        "name": "Results",
+        "value": {
+          "id": "G05",
+          "what": "Site role assignments by principal ID (match with G04 and G06)",
+          "code": "@{outputs('G05')?['statusCode']}",
+          "out": "@{replace(replace(replace(replace(replace(replace(replace(take(string(body('G05')), 3000), if(empty(trim(triggerBody()?['text'])), '<none>', trim(triggerBody()?['text'])), '<SITE>'), if(or(empty(trim(triggerBody()?['text'])), equals(uriPath(trim(triggerBody()?['text'])), '/')), '<none>', uriPath(trim(triggerBody()?['text']))), '<SITE-PATH>'), if(empty(trim(triggerBody()?['text'])), '<none>', uriHost(trim(triggerBody()?['text']))), '<HOST>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', trim(coalesce(triggerBody()?['text_1'], ''))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', toLower(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(toLower(trim(coalesce(triggerBody()?['text_1'], ''))))), '<COWORKER>')}",
+          "err": "@{replace(replace(replace(replace(replace(replace(replace(if(greaterOrEquals(int(coalesce(outputs('G05')?['statusCode'], 0)), 400), take(string(body('G05')), 600), ''), if(empty(trim(triggerBody()?['text'])), '<none>', trim(triggerBody()?['text'])), '<SITE>'), if(or(empty(trim(triggerBody()?['text'])), equals(uriPath(trim(triggerBody()?['text'])), '/')), '<none>', uriPath(trim(triggerBody()?['text']))), '<SITE-PATH>'), if(empty(trim(triggerBody()?['text'])), '<none>', uriHost(trim(triggerBody()?['text']))), '<HOST>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', trim(coalesce(triggerBody()?['text_1'], ''))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', toLower(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(toLower(trim(coalesce(triggerBody()?['text_1'], ''))))), '<COWORKER>')}"
+        }
+      }
+    },
+    "G06": {
+      "runAfter": {
+        "Record_G05": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "parameters": {
+          "dataset": "@triggerBody()['text']",
+          "parameters/method": "GET",
+          "parameters/uri": "_api/web/sitegroups?$expand=Users&$select=Id,Users/PrincipalType&$top=200",
+          "parameters/headers": {
+            "Accept": "application/json;odata=nometadata"
+          }
+        },
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "HttpRequest"
+        },
+        "authentication": {
+          "value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens']))['$ConnectionKey']",
+          "type": "Raw"
+        }
+      }
+    },
+    "G06_counts": {
+      "type": "Select",
+      "inputs": {
+        "from": "@coalesce(body('G06')?['value'], json('[]'))",
+        "select": "@concat(string(item()?['Id']), ':', string(sub(length(split(string(coalesce(item()?['Users'], json('[]'))), '\"PrincipalType\":1}')), 1)), '/', string(sub(length(split(string(coalesce(item()?['Users'], json('[]'))), '\"PrincipalType\":4}')), 1)))"
+      },
+      "runAfter": {
+        "G06": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      }
+    },
+    "Record_G06": {
+      "runAfter": {
+        "G06_counts": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "AppendToArrayVariable",
+      "inputs": {
+        "name": "Results",
+        "value": {
+          "id": "G06",
+          "what": "Each site group: member counts by type (id:users/security groups; no names)",
+          "code": "@{outputs('G06')?['statusCode']}",
+          "out": "@{join(coalesce(body('G06_counts'), json('[]')), ',')}",
+          "err": "@{replace(replace(replace(replace(replace(replace(replace(if(greaterOrEquals(int(coalesce(outputs('G06')?['statusCode'], 0)), 400), take(string(body('G06')), 600), ''), if(empty(trim(triggerBody()?['text'])), '<none>', trim(triggerBody()?['text'])), '<SITE>'), if(or(empty(trim(triggerBody()?['text'])), equals(uriPath(trim(triggerBody()?['text'])), '/')), '<none>', uriPath(trim(triggerBody()?['text']))), '<SITE-PATH>'), if(empty(trim(triggerBody()?['text'])), '<none>', uriHost(trim(triggerBody()?['text']))), '<HOST>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', trim(coalesce(triggerBody()?['text_1'], ''))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', toLower(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(toLower(trim(coalesce(triggerBody()?['text_1'], ''))))), '<COWORKER>')}"
+        }
+      }
+    },
+    "R15": {
+      "runAfter": {
+        "Record_G06": [
           "Succeeded",
           "Failed",
           "Skipped",
@@ -2333,7 +2488,7 @@
         "parameters": {
           "dataset": "@triggerBody()['text']",
           "parameters/method": "POST",
-          "parameters/uri": "_api/web/lists/getbytitle('PFMRightsProbeTEST')/roleassignments/addroleassignment(principalid=@{first(coalesce(body('G04_read'), json('[0]')))},roledefid=1073741827)",
+          "parameters/uri": "_api/web/lists/getbytitle('PFMRightsProbeTEST')/roleassignments/addroleassignment(principalid=@{body('C01')?['Id']},roledefid=1073741827)",
           "parameters/headers": {
             "Accept": "application/json;odata=nometadata",
             "Content-Type": "application/json;odata=verbose"
@@ -2364,9 +2519,9 @@
         "name": "Results",
         "value": {
           "id": "W11",
-          "what": "Give the coworker's first group that is not Owners or Members Contribute on the TEST list (group ID kept)",
+          "what": "Give the coworker's own user (C01 ID) Contribute on the TEST list",
           "code": "@{outputs('W11')?['statusCode']}",
-          "out": "granted to group @{string(first(coalesce(body('G04_read'), json('[0]'))))}",
+          "out": "granted to user id @{body('C01')?['Id']}",
           "err": "@{replace(replace(replace(replace(replace(replace(replace(if(greaterOrEquals(int(coalesce(outputs('W11')?['statusCode'], 0)), 400), take(string(body('W11')), 600), ''), if(empty(trim(triggerBody()?['text'])), '<none>', trim(triggerBody()?['text'])), '<SITE>'), if(or(empty(trim(triggerBody()?['text'])), equals(uriPath(trim(triggerBody()?['text'])), '/')), '<none>', uriPath(trim(triggerBody()?['text']))), '<SITE-PATH>'), if(empty(trim(triggerBody()?['text'])), '<none>', uriHost(trim(triggerBody()?['text']))), '<HOST>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', trim(coalesce(triggerBody()?['text_1'], ''))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', toLower(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(trim(coalesce(triggerBody()?['text_1'], '')))), '<COWORKER>'), if(empty(trim(coalesce(triggerBody()?['text_1'], ''))), '<none>', encodeUriComponent(toLower(trim(coalesce(triggerBody()?['text_1'], ''))))), '<COWORKER>')}"
         }
       }
@@ -2596,7 +2751,7 @@
         "parameters": {
           "dataset": "@triggerBody()['text']",
           "parameters/method": "POST",
-          "parameters/uri": "_api/web/DefaultDocumentLibrary/RootFolder/Files/add(url='90161Z-T11-rights-result-r4.json',overwrite=true)",
+          "parameters/uri": "_api/web/DefaultDocumentLibrary/RootFolder/Files/add(url='90161Z-T11-rights-result-r5.json',overwrite=true)",
           "parameters/headers": {
             "Accept": "application/json;odata=nometadata",
             "Content-Type": "application/json;odata=verbose"

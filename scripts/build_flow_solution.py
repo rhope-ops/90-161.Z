@@ -8,8 +8,12 @@ A def holds displayName, description, connections (connector names), triggers, a
 solution environment variable (type Text), so no site address is in the repo. Deterministic (uuid5 IDs, fixed zip timestamps, stored),
 so --check can compare the committed zip with a fresh build. Never hand-edit the zip. Not imported until the PFM reviews it.
 TEST (R15, PFM 14 Nov 26: test a solution import before the flow build): the same builder also writes
-flow/solution/90161Z-T17-solution-test-r1.zip from flow/solution/test-defs/*.json: unique name PFM90161ZTEST, only the
+flow/solution/90161Z-T17-solution-test-r2.zip from flow/solution/test-defs/*.json: unique name PFM90161ZTEST, only the
 environment variables its flows use; one harmless manual flow that reads one list count and writes one result file.
+r2 (R16, PFM 14 Nov 26): r1 failed to import (XML node error). Values now follow the T05 real export of this environment
+(docs/reviews/2026-11-12-gov-results-t01-t02-t05.md): platform version 9.2.26094.172, publisher unique name PFM, flow
+StateCode 1 / StatusCode 2 / ModernFlowType 0, runtimeSource invoker for a manual flow. The connection reference and
+environment variable XML are still not seen in a real export (T05 had neither).
 Strings that start with "@" are expressions on purpose here (build_flow_package.literal() is for static data only).
 """
 import argparse, io, json, pathlib, re, sys, uuid, zipfile
@@ -17,11 +21,12 @@ from xml.sax.saxutils import escape, quoteattr
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-flows-solution-r1.zip"
-TEST_DEFS, TEST_OUT = ROOT / "flow" / "solution" / "test-defs", ROOT / "flow" / "solution" / "90161Z-T17-solution-test-r1.zip"
+TEST_DEFS, TEST_OUT = ROOT / "flow" / "solution" / "test-defs", ROOT / "flow" / "solution" / "90161Z-T17-solution-test-r2.zip"
 NS = uuid.UUID("6f1c2b4e-9d0a-4c5e-8b7a-90161a000001")
 SCHEMA = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
 STAMP = (2026, 1, 1, 0, 0, 0)
-UNIQUE, PUBLISHER, PREFIX, VERSION = "PFM90161Z", "pfm90161z", "pfm", "1.0.0.1"
+UNIQUE, PUBLISHER, PREFIX, VERSION = "PFM90161Z", "PFM", "pfm", "1.0.0.1"   # publisher PFM as in the T05 export
+PLATFORM = "9.2.26094.172"   # OrganizationVersion of the T05 export
 OPTION_PREFIX = 10000 + uuid.uuid5(NS, "optionprefix").int % 90000  # arbitrary, unique per publisher; see README open choices
 CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Office 365 Outlook"}
 # Environment variables (type Text, 100000000). Defaults are list titles from schemas/lists; the site URL and the two day counts stay empty.
@@ -76,7 +81,9 @@ def workflow_json(d, used):
     for s, disp, default in ENV:
         if ENV_KEY[s] in used:
             params[ENV_KEY[s]] = {"defaultValue": default, "type": "String", "metadata": {"schemaName": s}}
-    refs = {c: {"runtimeSource": "embedded", "connection": {"connectionReferenceLogicalName": conn_logical(c)},
+    # T05: a manual flow runs on the invoker's connection; automated and scheduled flows use the owner's (embedded).
+    src = "invoker" if any(t.get("kind") == "Button" for t in d["triggers"].values()) else "embedded"
+    refs = {c: {"runtimeSource": src, "connection": {"connectionReferenceLogicalName": conn_logical(c)},
                 "api": {"name": c}} for c in d["connections"]}
     return {"properties": {
         "connectionReferences": refs,
@@ -101,11 +108,11 @@ def build(test=False) -> bytes:
             "      <Type>1</Type>\n      <Subprocess>0</Subprocess>\n      <Category>5</Category>\n      <Mode>0</Mode>\n"
             "      <Scope>4</Scope>\n      <OnDemand>0</OnDemand>\n      <TriggerOnCreate>0</TriggerOnCreate>\n"
             "      <TriggerOnDelete>0</TriggerOnDelete>\n      <AsyncAutodelete>0</AsyncAutodelete>\n"
-            "      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>\n      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
+            "      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>\n      <StateCode>1</StateCode>\n      <StatusCode>2</StatusCode>\n"
             "      <RunAs>1</RunAs>\n      <IsTransacted>1</IsTransacted>\n      <IntroducedVersion>1.0</IntroducedVersion>\n"
             "      <IsCustomizable>1</IsCustomizable>\n      <BusinessProcessType>0</BusinessProcessType>\n"
             "      <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>\n"
-            "      <PrimaryEntity>none</PrimaryEntity>\n"
+            "      <ModernFlowType>0</ModernFlowType>\n      <PrimaryEntity>none</PrimaryEntity>\n"
             f"      <LocalizedNames>\n        <LocalizedName languagecode=\"1033\" description={quoteattr(d['displayName'])} />\n      </LocalizedNames>\n"
             "    </Workflow>")
         root_components.append(f'      <RootComponent type="29" id="{{{wid}}}" behavior="0" />')
@@ -123,7 +130,8 @@ def build(test=False) -> bytes:
         files[f"environmentvariabledefinitions/{s}/environmentvariabledefinition.xml"] = (
             '<?xml version="1.0" encoding="utf-8"?>\n'
             f'<environmentvariabledefinition schemaname="{s}">\n'
-            f"  <defaultvalue>{escape(default)}</defaultvalue>\n"
+            + (f"  <defaultvalue>{escape(default)}</defaultvalue>\n" if default else "") +   # no empty element
+            
             f'  <displayname default={quoteattr(disp)}>\n    <label description={quoteattr(disp)} languagecode="1033" />\n  </displayname>\n'
             "  <introducedversion>1.0</introducedversion>\n  <iscustomizable>1</iscustomizable>\n  <isrequired>1</isrequired>\n"
             "  <secretstore>0</secretstore>\n  <type>100000000</type>\n</environmentvariabledefinition>\n")
@@ -138,7 +146,7 @@ def build(test=False) -> bytes:
         "</ImportExportXml>\n")
     files["solution.xml"] = (
         '<?xml version="1.0" encoding="utf-8"?>\n'
-        f'<ImportExportXml version="9.2.0.0" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" {XSI}>\n'
+        f'<ImportExportXml version="{PLATFORM}" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" {XSI}>\n'
         f"  <SolutionManifest>\n    <UniqueName>{unique}</UniqueName>\n"
         f'    <LocalizedNames>\n      <LocalizedName description="{title}" languagecode="1033" />\n    </LocalizedNames>\n'
         "    <Descriptions />\n"

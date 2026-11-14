@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (R15 results recorded; Round R16 is being built).
+Updated: 14 Nov 26 (Round R16: solution import test r2, rights for app users, logo and thumbnail).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,9 +24,21 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Next round R16 (being built, 14 Nov 26)
+## Round R16 r1: solution import test r2, rights for app users, logo and thumbnail (open, 14 Nov 26)
 
-**For:** fixes R15's three open points: the solution import (one small solution you make and export by hand, about 5 minutes, an estimate), the header logo and thumbnail, and the Contribute test for app users. The task appears here when it is ready.
+**For:** fixes R15's three open points. (1) The solution import failed in R15: the test solution r2 now uses the values from my T05 export. (2) The probe gives the coworker's own user Contribute on a test list (R15 found no group to test). (3) Site setup sets the header logo (white) and the thumbnail (navy) separately and checks each one.
+**Time:** about 25 minutes (estimate): two imports and runs in Power Automate 10, site setup 10 plus waiting for the two flows.
+**Changes:** on my computer: writes into T11, T14, T16, T17 and Rounds\R16; moves the R15 probe, setup and test files to the Recycle Bin. In Power Automate: imports the test solution "90-161.Z solution import test" r2 (one flow, one SharePoint connection reference, one "Site URL" variable; it replaces r1 if r1 is there) and the flow "90161Z T11 Rights Probe r5"; I run each once. On the new site: the test flow reads the PFM Settings row count and writes one result file; the probe creates a TEST list, library and group, gives the coworker's own user Contribute on the TEST list, reads the rights, then deletes all three; site setup uploads both logo files to Site Assets, sets the thumbnail and the header logo, and copies both result files (site address masked). No e-mail is sent by either flow. Saves one Outlook draft (never sent).
+Steps:
+1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R16-round-r1.ps1
+2. Start menu: type ISE, open Windows PowerShell ISE. File > New, click in the white pane, press Ctrl+V, then F5.
+3. In the Deployer window: choose the application, run the checks, then Deploy.
+4. Two step windows open at the right edge of the screen, one after the other: the solution import, then the probe import. Follow each, then select "Done: the run has started".
+5. Site setup asks for the site address (filled in from last time) and opens a CAC sign-in. It waits for both flows; keep the Deployer open.
+6. Open the site (Ctrl+F5) and look at the header logo; then open the SharePoint start page and look at the site's card (the thumbnail). The Outlook draft opens: add "header OK, thumbnail OK" or what looks wrong, then Send.
+**Report:** the draft itself. Claude watches the inbox for the subject "90161Z R16".
+**If it fails:** read the "What to do" line in the window. If the solution import shows an error, copy the error text (no names or site address) into the e-mail and select Skip in that step window. A FAIL line in site setup names the stage and the by-hand fallback (Change the look > Header).
 
 ## Done
 
