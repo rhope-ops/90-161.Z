@@ -6,8 +6,9 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R18, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = 'dfe1aadf'
+$buildId = '95092dd7'
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
+$logoPng = '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'
 $round = 'R18'
 $appFolder = '90-161.Z'
 $usersRoot = 'C:\Users'
@@ -1740,6 +1741,7 @@ if ($gui) {
     $basePath = Get-BasePath
     $hist0 = Read-RoundHistory $basePath
     $bold = $null; try { $bold = [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Bold') } catch { $null = $_ }
+    $regular = $null; try { $regular = [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Regular') } catch { $null = $_ }
     $mkLabel = { param($text) $l = New-Object System.Windows.Forms.Label; $l.AutoSize = $true; $l.MaximumSize = $wrap; $l.Text = $text; $l }
     $mkButton = { param($text) $b = New-Object System.Windows.Forms.Button; $b.Text = $text; $b.AutoSize = $true; $b.MinimumSize = New-Object System.Drawing.Size(110, 32); $b }
     $mkRows = { param([string[]]$Heights)
@@ -1755,7 +1757,7 @@ if ($gui) {
     $form.Font = New-Object System.Drawing.Font('Segoe UI', 10)
     $form.ClientSize = New-Object System.Drawing.Size(1020, 760)   # PFM 14 Nov 26: wide enough for little wrapping, not wider; $form.MinimumSize = New-Object System.Drawing.Size(680, 540)
     $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true
-    $wrap = New-Object System.Drawing.Size(960, 0)
+    $wrap = New-Object System.Drawing.Size(760, 0)   # layout B: the main area is the window less the 220 px rail
     $script:secret = Get-Secret (Get-ProfileLeaf) (Get-ProfileLeaf)   # saved checks are masked before they are written
     # R17 (PFM 14 Nov 26): rows and status lines have a fixed height (two lines), so nothing moves while checks and steps run.
     # $lineH is in screen pixels (grid rows, added after layout). Controls sized before layout are scaled by Windows for the
@@ -1806,33 +1808,37 @@ if ($gui) {
     # jumps and nothing moves.
     $script:bars = @{}
     $calm = $false; try { $calm = -not [System.Windows.Forms.SystemInformation]::UIEffectsEnabled } catch { $null = $_ }
-    $trackColor = [System.Drawing.Color]::FromArgb(230, 230, 230); $fillColor = [System.Drawing.Color]::FromArgb(30, 125, 50)
-    $edgePen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(118, 118, 118)); $fillBrush = New-Object System.Drawing.SolidBrush($fillColor)
+    # Layout B colors (Wing Master Version II, RADE docs/window-design.md): navy to Air Force blue, AF yellow for trim.
+    $navy = [System.Drawing.Color]::FromArgb(11, 37, 69); $afBlue = [System.Drawing.Color]::FromArgb(0, 83, 159)
+    $gold = [System.Drawing.Color]::FromArgb(255, 213, 32); $mist = [System.Drawing.Color]::FromArgb(221, 232, 243)
+    $trackColor = [System.Drawing.Color]::FromArgb(238, 241, 245)
+    $edgePen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(118, 118, 118))
     $twoPi = 2 * [math]::PI
     $drawBar = { param($P, $G)
       $b = $script:bars[[string]$P.Tag]; if (-not $b) { return }
       $w = $P.ClientSize.Width; $h = $P.ClientSize.Height; if ($w -lt 4 -or $h -lt 4) { return }
       $G.Clear($trackColor)
       $fw = [int][math]::Round($w * $b.Shown)
+      $fillColor = $b.Fill
       if ($fw -gt 0) {
-        $G.FillRectangle($fillBrush, 0, 0, $fw, $h)
+        $fb = New-Object System.Drawing.SolidBrush($fillColor); $G.FillRectangle($fb, 0, 0, $fw, $h); $fb.Dispose()
         if ($b.Sheen -and -not $calm -and $fw -gt 12) {
           $bw = [math]::Max(24, [int]($w * 0.08)); $x = [int](($b.Phase / $twoPi) * ($fw + $bw)) - $bw
           $rect = New-Object System.Drawing.Rectangle($x, 0, $bw, $h)
           $lg = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $fillColor, $fillColor, [single]0)
           $cb = New-Object System.Drawing.Drawing2D.ColorBlend(3)
-          $cb.Colors = [System.Drawing.Color[]]@([System.Drawing.Color]::FromArgb(0, 255, 255, 255), [System.Drawing.Color]::FromArgb(110, 200, 255, 200), [System.Drawing.Color]::FromArgb(0, 255, 255, 255))
+          $cb.Colors = [System.Drawing.Color[]]@([System.Drawing.Color]::FromArgb(0, 255, 255, 255), [System.Drawing.Color]::FromArgb(110, 255, 255, 255), [System.Drawing.Color]::FromArgb(0, 255, 255, 255))
           $cb.Positions = [single[]]@(0, 0.5, 1); $lg.InterpolationColors = $cb
           $G.SetClip((New-Object System.Drawing.Rectangle(0, 0, $fw, $h))); $G.FillRectangle($lg, $rect); $G.ResetClip(); $lg.Dispose()
         }
       }
       $G.DrawRectangle($edgePen, 0, 0, $w - 1, $h - 1) }
-    $mkBar = { param([string]$Name, [int]$H, [string]$Label)
+    $mkBar = { param([string]$Name, [int]$H, [string]$Label, $Fill)
       $p = New-Object System.Windows.Forms.Panel
       $p.Anchor = 'Left, Right'; $p.Height = $H; $p.Margin = New-Object System.Windows.Forms.Padding(3, 3, 3, 3); $p.Tag = $Name
       $p.AccessibleRole = 'ProgressBar'; $p.AccessibleName = $Label; $p.AccessibleDescription = '0 %'
       try { [System.Windows.Forms.Control].GetProperty('DoubleBuffered', [System.Reflection.BindingFlags]'NonPublic, Instance').SetValue($p, $true, $null) } catch { $null = $_ }
-      $script:bars[$Name] = @{ Panel = $p; Target = 0.0; Shown = 0.0; Sheen = $false; Phase = 0.0 }
+      $script:bars[$Name] = @{ Panel = $p; Target = 0.0; Shown = 0.0; Sheen = $false; Phase = 0.0; Fill = $Fill }
       $p.Add_Paint({ & $drawBar $this $_.Graphics })
       $p }
     $setBar = { param([string]$Name, [double]$Value, [bool]$Sheen)
@@ -1960,10 +1966,10 @@ if ($gui) {
       elseif ($_.KeyCode -eq 'Return') { $_.SuppressKeyPress = $true; if ($run.Enabled) { $run.PerformClick() } } })
     $allLabel = & $mkFixed 'Overall: not started' 2
     $allLabel.Margin = New-Object System.Windows.Forms.Padding(3, 8, 3, 0)
-    $bar = & $mkBar 'all' 20 'Overall progress'
+    $bar = & $mkBar 'all' 20 'Overall progress' $afBlue
     $stepLabel = & $mkFixed 'This step: none running' 2
     $stepLabel.Margin = New-Object System.Windows.Forms.Padding(3, 6, 3, 0)
-    $stepBar = & $mkBar 'step' 14 'Progress of this step'
+    $stepBar = & $mkBar 'step' 14 'Progress of this step' $gold
     $log = New-Object System.Windows.Forms.TextBox
     $log.Dock = 'Fill'; $log.Multiline = $true; $log.ScrollBars = 'Both'; $log.WordWrap = $false; $log.ReadOnly = $true; $log.AccessibleName = 'Log'
     $log.Font = New-Object System.Drawing.Font('Consolas', 9)
@@ -1988,7 +1994,64 @@ if ($gui) {
 
     foreach ($pnl in @($pChoose, $pCheck, $pDeploy)) { $pnl.Visible = $false; $body.Controls.Add($pnl) }
     $row = 0; foreach ($c in @($crumb, $banner, $body, $nav)) { $grid.Controls.Add($c, 0, $row); $row++ }
+    # ---- Layout B (PFM 14 Nov 26; RADE docs/window-design.md): a navy-to-blue rail on the left with a yellow edge: logo K,
+    # the word RADE beside it on the logo's midpoint, the tagline below, the three screens as steps, the round and build.
+    # Cosmetics never stop the window: if any part fails, the window runs without the rail.
+    $rail = $null; $railSteps = @()
+    try {
+      $rail = New-Object System.Windows.Forms.Panel
+      $rail.Dock = 'Left'; $rail.Width = 220; $rail.Margin = New-Object System.Windows.Forms.Padding(0)
+      try { [System.Windows.Forms.Control].GetProperty('DoubleBuffered', [System.Reflection.BindingFlags]'NonPublic, Instance').SetValue($rail, $true, $null) } catch { $null = $_ }
+      $rail.Add_Paint({
+        $r = $this.ClientRectangle; if ($r.Width -lt 4 -or $r.Height -lt 4) { return }
+        $lg = New-Object System.Drawing.Drawing2D.LinearGradientBrush($r, $navy, $afBlue, [single]90); $_.Graphics.FillRectangle($lg, $r); $lg.Dispose()
+        $gb = New-Object System.Drawing.SolidBrush($gold); $_.Graphics.FillRectangle($gb, $r.Right - 3, 0, 3, $r.Height); $gb.Dispose() })
+      $rail.Add_Resize({ $this.Invalidate() })
+      $rt = & $mkRows @('AutoSize', 'AutoSize', 'AutoSize', 'AutoSize', 'Percent', 'AutoSize')
+      $rt.BackColor = [System.Drawing.Color]::Transparent; $rt.Padding = New-Object System.Windows.Forms.Padding(18, 20, 21, 16)
+      $lock = New-Object System.Windows.Forms.TableLayoutPanel
+      $lock.AutoSize = $true; $lock.ColumnCount = 2; $lock.RowCount = 1; $lock.BackColor = [System.Drawing.Color]::Transparent; $lock.Margin = New-Object System.Windows.Forms.Padding(0)
+      $logoBox = New-Object System.Windows.Forms.PictureBox
+      $logoBox.Size = New-Object System.Drawing.Size(56, 56); $logoBox.SizeMode = 'Zoom'; $logoBox.BackColor = [System.Drawing.Color]::Transparent
+      $logoBox.Margin = New-Object System.Windows.Forms.Padding(0, 0, 12, 0); $logoBox.AccessibleName = 'RADE logo'
+      $logoBox.Image = [System.Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($logoPng))))
+      $word = New-Object System.Windows.Forms.Label
+      $word.AutoSize = $true; $word.Text = 'RADE'; $word.ForeColor = [System.Drawing.Color]::White; $word.BackColor = [System.Drawing.Color]::Transparent
+      $word.Anchor = 'Left'; $word.Margin = New-Object System.Windows.Forms.Padding(0, 2, 0, 0)   # Anchor Left: centered on the logo's midpoint
+      try { $word.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]20, $bold) } catch { $null = $_ }
+      $lock.Controls.Add($logoBox, 0, 0); $lock.Controls.Add($word, 1, 0)
+      $tag = New-Object System.Windows.Forms.Label
+      $tag.AutoSize = $true; $tag.MaximumSize = New-Object System.Drawing.Size(180, 0); $tag.Text = 'Test and deploy apps for your organization'
+      $tag.ForeColor = $mist; $tag.BackColor = [System.Drawing.Color]::Transparent; $tag.Margin = New-Object System.Windows.Forms.Padding(0, 10, 0, 16)
+      $rule = New-Object System.Windows.Forms.Panel
+      $rule.Height = 1; $rule.Width = 178; $rule.BackColor = [System.Drawing.Color]::FromArgb(70, 105, 150); $rule.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 14)
+      $stepBox = New-Object System.Windows.Forms.FlowLayoutPanel
+      $stepBox.AutoSize = $true; $stepBox.FlowDirection = 'TopDown'; $stepBox.WrapContents = $false; $stepBox.BackColor = [System.Drawing.Color]::Transparent; $stepBox.Margin = New-Object System.Windows.Forms.Padding(0)
+      foreach ($t in @('1   Choose', '2   Check', '3   Deploy')) {
+        $l = New-Object System.Windows.Forms.Label
+        $l.AutoSize = $true; $l.Text = $t; $l.ForeColor = $mist; $l.BackColor = [System.Drawing.Color]::Transparent; $l.Margin = New-Object System.Windows.Forms.Padding(0, 4, 0, 4)
+        try { $l.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]11) } catch { $null = $_ }
+        $railSteps += $l; [void]$stepBox.Controls.Add($l)
+      }
+      $railFoot = New-Object System.Windows.Forms.Label
+      $railFoot.AutoSize = $true; $railFoot.MaximumSize = New-Object System.Drawing.Size(180, 0); $railFoot.ForeColor = $mist; $railFoot.BackColor = [System.Drawing.Color]::Transparent
+      $railFoot.Text = 'Round ' + $round + "`r`n" + 'Build ' + $buildId
+      try { $railFoot.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]9) } catch { $null = $_ }
+      $row = 0; foreach ($c in @($lock, $tag, $rule, $stepBox, (New-Object System.Windows.Forms.Label), $railFoot)) { $rt.Controls.Add($c, 0, $row); $row++ }
+      $rail.Controls.Add($rt)
+    } catch { $rail = $null; $railSteps = @() }
+    # Primary buttons (Next, Run): Air Force blue with white text; gray when disabled, so the text keeps its contrast.
+    $stylePrimary = { param($B)
+      try {
+        $B.FlatStyle = 'Flat'; $B.FlatAppearance.BorderColor = $afBlue; $B.ForeColor = [System.Drawing.Color]::White; $B.BackColor = $afBlue
+        try { $B.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]10, $bold) } catch { $null = $_ }
+        $B.Add_EnabledChanged({ if ($this.Enabled) { $this.BackColor = $afBlue; $this.FlatAppearance.BorderColor = $afBlue } else { $this.BackColor = [System.Drawing.Color]::FromArgb(221, 226, 232); $this.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(201, 210, 220) } })
+        $B.Add_MouseEnter({ if ($this.Enabled) { $this.BackColor = $navy } }); $B.Add_MouseLeave({ if ($this.Enabled) { $this.BackColor = $afBlue } })
+      } catch { $null = $_ } }
+    & $stylePrimary $next; & $stylePrimary $run
     $form.Controls.Add($grid)
+    if ($rail) { $form.Controls.Add($rail); $grid.BringToFront(); $crumb.Visible = $false }   # the rail shows the screen steps
+    foreach ($h in @($chooseHead, $checkHead)) { try { $h.ForeColor = $navy } catch { $null = $_ } }   # the Fill control docks last, beside the rail
     $form.ResumeLayout($false); $form.PerformLayout()
 
     $script:screen = 0; $script:running = $false; $script:off = 0
@@ -2090,6 +2153,11 @@ if ($gui) {
       $script:screen = $I
       $pChoose.Visible = ($I -eq 0); $pCheck.Visible = ($I -eq 1); $pDeploy.Visible = ($I -eq 2)
       $crumb.Text = @('Step 1 of 3: Choose', 'Step 2 of 3: Check', 'Step 3 of 3: Deploy')[$I]
+      for ($j = 0; $j -lt $railSteps.Count; $j++) {   # the rail: this screen in AF yellow and bold, done screens white, later ones mist
+        try {
+          $railSteps[$j].ForeColor = $(if ($j -eq $I) { $gold } elseif ($j -lt $I) { [System.Drawing.Color]::White } else { $mist })
+          $railSteps[$j].Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]11, $(if ($j -eq $I) { $bold } else { $regular }))
+        } catch { $null = $_ } }
       $back.Visible = ($I -gt 0); $next.Visible = ($I -lt 2)
       $next.Text = $(if ($I -eq 0) { 'Next: check' } else { 'Next: deploy' })
       if ($I -eq 0) { $form.AcceptButton = $next; $appList.Focus() | Out-Null }

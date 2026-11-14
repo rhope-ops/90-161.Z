@@ -1155,6 +1155,7 @@ if ($gui) {
     $basePath = Get-BasePath
     $hist0 = Read-RoundHistory $basePath
     $bold = $null; try { $bold = [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Bold') } catch { $null = $_ }
+    $regular = $null; try { $regular = [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Regular') } catch { $null = $_ }
     $mkLabel = { param($text) $l = New-Object System.Windows.Forms.Label; $l.AutoSize = $true; $l.MaximumSize = $wrap; $l.Text = $text; $l }
     $mkButton = { param($text) $b = New-Object System.Windows.Forms.Button; $b.Text = $text; $b.AutoSize = $true; $b.MinimumSize = New-Object System.Drawing.Size(110, 32); $b }
     $mkRows = { param([string[]]$Heights)
@@ -1170,7 +1171,7 @@ if ($gui) {
     $form.Font = New-Object System.Drawing.Font('Segoe UI', 10)
     $form.ClientSize = New-Object System.Drawing.Size(1020, 760)   # PFM 14 Nov 26: wide enough for little wrapping, not wider; $form.MinimumSize = New-Object System.Drawing.Size(680, 540)
     $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true
-    $wrap = New-Object System.Drawing.Size(960, 0)
+    $wrap = New-Object System.Drawing.Size(760, 0)   # layout B: the main area is the window less the 220 px rail
     $script:secret = Get-Secret (Get-ProfileLeaf) (Get-ProfileLeaf)   # saved checks are masked before they are written
     # R17 (PFM 14 Nov 26): rows and status lines have a fixed height (two lines), so nothing moves while checks and steps run.
     # $lineH is in screen pixels (grid rows, added after layout). Controls sized before layout are scaled by Windows for the
@@ -1221,33 +1222,37 @@ if ($gui) {
     # jumps and nothing moves.
     $script:bars = @{}
     $calm = $false; try { $calm = -not [System.Windows.Forms.SystemInformation]::UIEffectsEnabled } catch { $null = $_ }
-    $trackColor = [System.Drawing.Color]::FromArgb(230, 230, 230); $fillColor = [System.Drawing.Color]::FromArgb(30, 125, 50)
-    $edgePen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(118, 118, 118)); $fillBrush = New-Object System.Drawing.SolidBrush($fillColor)
+    # Layout B colors (Wing Master Version II, RADE docs/window-design.md): navy to Air Force blue, AF yellow for trim.
+    $navy = [System.Drawing.Color]::FromArgb(11, 37, 69); $afBlue = [System.Drawing.Color]::FromArgb(0, 83, 159)
+    $gold = [System.Drawing.Color]::FromArgb(255, 213, 32); $mist = [System.Drawing.Color]::FromArgb(221, 232, 243)
+    $trackColor = [System.Drawing.Color]::FromArgb(238, 241, 245)
+    $edgePen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(118, 118, 118))
     $twoPi = 2 * [math]::PI
     $drawBar = { param($P, $G)
       $b = $script:bars[[string]$P.Tag]; if (-not $b) { return }
       $w = $P.ClientSize.Width; $h = $P.ClientSize.Height; if ($w -lt 4 -or $h -lt 4) { return }
       $G.Clear($trackColor)
       $fw = [int][math]::Round($w * $b.Shown)
+      $fillColor = $b.Fill
       if ($fw -gt 0) {
-        $G.FillRectangle($fillBrush, 0, 0, $fw, $h)
+        $fb = New-Object System.Drawing.SolidBrush($fillColor); $G.FillRectangle($fb, 0, 0, $fw, $h); $fb.Dispose()
         if ($b.Sheen -and -not $calm -and $fw -gt 12) {
           $bw = [math]::Max(24, [int]($w * 0.08)); $x = [int](($b.Phase / $twoPi) * ($fw + $bw)) - $bw
           $rect = New-Object System.Drawing.Rectangle($x, 0, $bw, $h)
           $lg = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $fillColor, $fillColor, [single]0)
           $cb = New-Object System.Drawing.Drawing2D.ColorBlend(3)
-          $cb.Colors = [System.Drawing.Color[]]@([System.Drawing.Color]::FromArgb(0, 255, 255, 255), [System.Drawing.Color]::FromArgb(110, 200, 255, 200), [System.Drawing.Color]::FromArgb(0, 255, 255, 255))
+          $cb.Colors = [System.Drawing.Color[]]@([System.Drawing.Color]::FromArgb(0, 255, 255, 255), [System.Drawing.Color]::FromArgb(110, 255, 255, 255), [System.Drawing.Color]::FromArgb(0, 255, 255, 255))
           $cb.Positions = [single[]]@(0, 0.5, 1); $lg.InterpolationColors = $cb
           $G.SetClip((New-Object System.Drawing.Rectangle(0, 0, $fw, $h))); $G.FillRectangle($lg, $rect); $G.ResetClip(); $lg.Dispose()
         }
       }
       $G.DrawRectangle($edgePen, 0, 0, $w - 1, $h - 1) }
-    $mkBar = { param([string]$Name, [int]$H, [string]$Label)
+    $mkBar = { param([string]$Name, [int]$H, [string]$Label, $Fill)
       $p = New-Object System.Windows.Forms.Panel
       $p.Anchor = 'Left, Right'; $p.Height = $H; $p.Margin = New-Object System.Windows.Forms.Padding(3, 3, 3, 3); $p.Tag = $Name
       $p.AccessibleRole = 'ProgressBar'; $p.AccessibleName = $Label; $p.AccessibleDescription = '0 %'
       try { [System.Windows.Forms.Control].GetProperty('DoubleBuffered', [System.Reflection.BindingFlags]'NonPublic, Instance').SetValue($p, $true, $null) } catch { $null = $_ }
-      $script:bars[$Name] = @{ Panel = $p; Target = 0.0; Shown = 0.0; Sheen = $false; Phase = 0.0 }
+      $script:bars[$Name] = @{ Panel = $p; Target = 0.0; Shown = 0.0; Sheen = $false; Phase = 0.0; Fill = $Fill }
       $p.Add_Paint({ & $drawBar $this $_.Graphics })
       $p }
     $setBar = { param([string]$Name, [double]$Value, [bool]$Sheen)
@@ -1375,10 +1380,10 @@ if ($gui) {
       elseif ($_.KeyCode -eq 'Return') { $_.SuppressKeyPress = $true; if ($run.Enabled) { $run.PerformClick() } } })
     $allLabel = & $mkFixed 'Overall: not started' 2
     $allLabel.Margin = New-Object System.Windows.Forms.Padding(3, 8, 3, 0)
-    $bar = & $mkBar 'all' 20 'Overall progress'
+    $bar = & $mkBar 'all' 20 'Overall progress' $afBlue
     $stepLabel = & $mkFixed 'This step: none running' 2
     $stepLabel.Margin = New-Object System.Windows.Forms.Padding(3, 6, 3, 0)
-    $stepBar = & $mkBar 'step' 14 'Progress of this step'
+    $stepBar = & $mkBar 'step' 14 'Progress of this step' $gold
     $log = New-Object System.Windows.Forms.TextBox
     $log.Dock = 'Fill'; $log.Multiline = $true; $log.ScrollBars = 'Both'; $log.WordWrap = $false; $log.ReadOnly = $true; $log.AccessibleName = 'Log'
     $log.Font = New-Object System.Drawing.Font('Consolas', 9)
@@ -1403,7 +1408,64 @@ if ($gui) {
 
     foreach ($pnl in @($pChoose, $pCheck, $pDeploy)) { $pnl.Visible = $false; $body.Controls.Add($pnl) }
     $row = 0; foreach ($c in @($crumb, $banner, $body, $nav)) { $grid.Controls.Add($c, 0, $row); $row++ }
+    # ---- Layout B (PFM 14 Nov 26; RADE docs/window-design.md): a navy-to-blue rail on the left with a yellow edge: logo K,
+    # the word RADE beside it on the logo's midpoint, the tagline below, the three screens as steps, the round and build.
+    # Cosmetics never stop the window: if any part fails, the window runs without the rail.
+    $rail = $null; $railSteps = @()
+    try {
+      $rail = New-Object System.Windows.Forms.Panel
+      $rail.Dock = 'Left'; $rail.Width = 220; $rail.Margin = New-Object System.Windows.Forms.Padding(0)
+      try { [System.Windows.Forms.Control].GetProperty('DoubleBuffered', [System.Reflection.BindingFlags]'NonPublic, Instance').SetValue($rail, $true, $null) } catch { $null = $_ }
+      $rail.Add_Paint({
+        $r = $this.ClientRectangle; if ($r.Width -lt 4 -or $r.Height -lt 4) { return }
+        $lg = New-Object System.Drawing.Drawing2D.LinearGradientBrush($r, $navy, $afBlue, [single]90); $_.Graphics.FillRectangle($lg, $r); $lg.Dispose()
+        $gb = New-Object System.Drawing.SolidBrush($gold); $_.Graphics.FillRectangle($gb, $r.Right - 3, 0, 3, $r.Height); $gb.Dispose() })
+      $rail.Add_Resize({ $this.Invalidate() })
+      $rt = & $mkRows @('AutoSize', 'AutoSize', 'AutoSize', 'AutoSize', 'Percent', 'AutoSize')
+      $rt.BackColor = [System.Drawing.Color]::Transparent; $rt.Padding = New-Object System.Windows.Forms.Padding(18, 20, 21, 16)
+      $lock = New-Object System.Windows.Forms.TableLayoutPanel
+      $lock.AutoSize = $true; $lock.ColumnCount = 2; $lock.RowCount = 1; $lock.BackColor = [System.Drawing.Color]::Transparent; $lock.Margin = New-Object System.Windows.Forms.Padding(0)
+      $logoBox = New-Object System.Windows.Forms.PictureBox
+      $logoBox.Size = New-Object System.Drawing.Size(56, 56); $logoBox.SizeMode = 'Zoom'; $logoBox.BackColor = [System.Drawing.Color]::Transparent
+      $logoBox.Margin = New-Object System.Windows.Forms.Padding(0, 0, 12, 0); $logoBox.AccessibleName = 'RADE logo'
+      $logoBox.Image = [System.Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($logoPng))))
+      $word = New-Object System.Windows.Forms.Label
+      $word.AutoSize = $true; $word.Text = 'RADE'; $word.ForeColor = [System.Drawing.Color]::White; $word.BackColor = [System.Drawing.Color]::Transparent
+      $word.Anchor = 'Left'; $word.Margin = New-Object System.Windows.Forms.Padding(0, 2, 0, 0)   # Anchor Left: centered on the logo's midpoint
+      try { $word.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]20, $bold) } catch { $null = $_ }
+      $lock.Controls.Add($logoBox, 0, 0); $lock.Controls.Add($word, 1, 0)
+      $tag = New-Object System.Windows.Forms.Label
+      $tag.AutoSize = $true; $tag.MaximumSize = New-Object System.Drawing.Size(180, 0); $tag.Text = 'Test and deploy apps for your organization'
+      $tag.ForeColor = $mist; $tag.BackColor = [System.Drawing.Color]::Transparent; $tag.Margin = New-Object System.Windows.Forms.Padding(0, 10, 0, 16)
+      $rule = New-Object System.Windows.Forms.Panel
+      $rule.Height = 1; $rule.Width = 178; $rule.BackColor = [System.Drawing.Color]::FromArgb(70, 105, 150); $rule.Margin = New-Object System.Windows.Forms.Padding(0, 0, 0, 14)
+      $stepBox = New-Object System.Windows.Forms.FlowLayoutPanel
+      $stepBox.AutoSize = $true; $stepBox.FlowDirection = 'TopDown'; $stepBox.WrapContents = $false; $stepBox.BackColor = [System.Drawing.Color]::Transparent; $stepBox.Margin = New-Object System.Windows.Forms.Padding(0)
+      foreach ($t in @('1   Choose', '2   Check', '3   Deploy')) {
+        $l = New-Object System.Windows.Forms.Label
+        $l.AutoSize = $true; $l.Text = $t; $l.ForeColor = $mist; $l.BackColor = [System.Drawing.Color]::Transparent; $l.Margin = New-Object System.Windows.Forms.Padding(0, 4, 0, 4)
+        try { $l.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]11) } catch { $null = $_ }
+        $railSteps += $l; [void]$stepBox.Controls.Add($l)
+      }
+      $railFoot = New-Object System.Windows.Forms.Label
+      $railFoot.AutoSize = $true; $railFoot.MaximumSize = New-Object System.Drawing.Size(180, 0); $railFoot.ForeColor = $mist; $railFoot.BackColor = [System.Drawing.Color]::Transparent
+      $railFoot.Text = 'Round ' + $round + "`r`n" + 'Build ' + $buildId
+      try { $railFoot.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]9) } catch { $null = $_ }
+      $row = 0; foreach ($c in @($lock, $tag, $rule, $stepBox, (New-Object System.Windows.Forms.Label), $railFoot)) { $rt.Controls.Add($c, 0, $row); $row++ }
+      $rail.Controls.Add($rt)
+    } catch { $rail = $null; $railSteps = @() }
+    # Primary buttons (Next, Run): Air Force blue with white text; gray when disabled, so the text keeps its contrast.
+    $stylePrimary = { param($B)
+      try {
+        $B.FlatStyle = 'Flat'; $B.FlatAppearance.BorderColor = $afBlue; $B.ForeColor = [System.Drawing.Color]::White; $B.BackColor = $afBlue
+        try { $B.Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]10, $bold) } catch { $null = $_ }
+        $B.Add_EnabledChanged({ if ($this.Enabled) { $this.BackColor = $afBlue; $this.FlatAppearance.BorderColor = $afBlue } else { $this.BackColor = [System.Drawing.Color]::FromArgb(221, 226, 232); $this.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(201, 210, 220) } })
+        $B.Add_MouseEnter({ if ($this.Enabled) { $this.BackColor = $navy } }); $B.Add_MouseLeave({ if ($this.Enabled) { $this.BackColor = $afBlue } })
+      } catch { $null = $_ } }
+    & $stylePrimary $next; & $stylePrimary $run
     $form.Controls.Add($grid)
+    if ($rail) { $form.Controls.Add($rail); $grid.BringToFront(); $crumb.Visible = $false }   # the rail shows the screen steps
+    foreach ($h in @($chooseHead, $checkHead)) { try { $h.ForeColor = $navy } catch { $null = $_ } }   # the Fill control docks last, beside the rail
     $form.ResumeLayout($false); $form.PerformLayout()
 
     $script:screen = 0; $script:running = $false; $script:off = 0
@@ -1505,6 +1567,11 @@ if ($gui) {
       $script:screen = $I
       $pChoose.Visible = ($I -eq 0); $pCheck.Visible = ($I -eq 1); $pDeploy.Visible = ($I -eq 2)
       $crumb.Text = @('Step 1 of 3: Choose', 'Step 2 of 3: Check', 'Step 3 of 3: Deploy')[$I]
+      for ($j = 0; $j -lt $railSteps.Count; $j++) {   # the rail: this screen in AF yellow and bold, done screens white, later ones mist
+        try {
+          $railSteps[$j].ForeColor = $(if ($j -eq $I) { $gold } elseif ($j -lt $I) { [System.Drawing.Color]::White } else { $mist })
+          $railSteps[$j].Font = New-Object System.Drawing.Font($form.Font.FontFamily, [single]11, $(if ($j -eq $I) { $bold } else { $regular }))
+        } catch { $null = $_ } }
       $back.Visible = ($I -gt 0); $next.Visible = ($I -lt 2)
       $next.Text = $(if ($I -eq 0) { 'Next: check' } else { 'Next: deploy' })
       if ($I -eq 0) { $form.AcceptButton = $next; $appList.Focus() | Out-Null }
@@ -1703,6 +1770,7 @@ try {
 '''
 
 # Checks every application runs (the rest come from its steps' "needs"). Ids must exist in the engine's $checkDefs.
+LOGO = 'assets/logo/rade-logo-K-128.png'   # copy of rhope-ops/RADE assets/logo/logo-K-128.png (master there)
 APP_NAME = '90-161.Z: Publications and Forms Management'   # full name; 90-161.Z is the short name (PFM 14 Nov 26)
 BASE_CHECKS = ['ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'net-bookmark']
 CHECK_IDS = re.findall(r"@\{ Id = '([a-z-]+)'", ENGINE)
@@ -1765,7 +1833,8 @@ def build(b):
     cleanup = ['$cleanup += @{ Path = %s; Kind = %s }' % (q(c['path']), q(c['kind'])) for c in b.get('cleanup', [])]
     # Support scripts that keep their names (they load each other) and samples: made by 90-161.Z, so cleanup may recycle them.
     known = sorted({f.name for f in (ROOT / 'scripts/gov').glob('*.ps1')} | {f.name for f in (ROOT / 'samples').glob('*')})
-    body = ('$goUrl = \'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md\'\n$round = %s\n$appFolder = \'90-161.Z\'\n$usersRoot = \'C:\\Users\'\n$files = @()\n%s\n$fetch = @()\n%s\n$steps = @()\n%s\n$collect = @()\n%s\n$cleanup = @()\n%s\n$known = @(%s)\n$apps = @()\n%s\n%s'
+    logo = base64.b64encode((ROOT / LOGO).read_bytes()).decode('ascii')   # layout B rail (PFM 14 Nov 26)
+    body = ('$goUrl = \'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md\'\n$logoPng = \'' + logo + '\'\n$round = %s\n$appFolder = \'90-161.Z\'\n$usersRoot = \'C:\\Users\'\n$files = @()\n%s\n$fetch = @()\n%s\n$steps = @()\n%s\n$collect = @()\n%s\n$cleanup = @()\n%s\n$known = @(%s)\n$apps = @()\n%s\n%s'
             % (q(b['round']), '\n'.join(parts), '\n'.join(fetchs), '\n'.join(steps), '\n'.join(collect), '\n'.join(cleanup), ', '.join(q(k) for k in known), '\n'.join(apps), ENGINE))
     build_id = hashlib.sha256(body.encode('ascii')).hexdigest()[:8]
     head = ('<#\n  RADE (Redacted Application Deployment Engine), round bundle: %s.\n'
