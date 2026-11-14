@@ -5,6 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Coordination suspense = 20 working days (weekdays; no holiday list, no hand edits). Guard/Reserve Applicability rows keep at least 30 calendar days (5.2.2). Replaces 15 = 21 calendar days. | PFM | flow/solution/README.md |
+| 2026-11-14 | Set and forget: no hand steps for users. Troubleshooting starts lean (failure e-mail per flow, Resubmit, F05 adds only missing rows), tested in R20 r2; RADE maintenance modes next. | PFM | docs/reviews/2026-11-14-flow-controls.md |
 | 2026-11-14 | Action Status adds Cancelled and Complete, with Status Reason and Held Since; every flow skips On Hold, Cancelled, Complete. Cancel keeps the row; hard delete only an empty draft (PFM). | PFM | docs/reviews/2026-11-14-flow-controls.md |
 | 2026-11-14 | Hold: reminders stop; on Resume open due dates move out by the weekdays held, logged as an extension. Pause, Resume, Cancel: PFM Office; the AO requests in the app. | PFM | docs/reviews/2026-11-14-flow-controls.md |
 | 2026-11-14 | Coordination round number on PFM Endorsements: Restart coordination makes fresh rows (old kept); Re-run routing adds only missing offices. Test mode (pfm_TestMode) goes into R20 r2. | PFM | docs/reviews/2026-11-14-flow-controls.md |

@@ -35,6 +35,7 @@ No flow reads Action Status, so On Hold changes nothing. There is no Cancelled o
 
 ## Open (agent REC, not approved)
 
-- Self-diagnosis ("doctor") and RADE repair: see the chat of 14 Nov 26; REC in docs/NEXT_PROMPT.md until approved.
-- Flow owner continuity: flows run on the PFM's connections; if the PFM leaves, every flow stops. REC: the Alternate PFM is co-owner of the solution flows; a handover checklist in docs/setup-and-updates.md.
-- Holidays (open choice 3), date-only columns (open choice 7), E9.
+- Troubleshooting (PFM 14 Nov 26, lean first): each flow e-mails the PFM on a failed step (flow, step, item ID, error); Resubmit from run history resumes; F05 adds only missing rows. R20 r2 tests: forced failure e-mail, Resubmit with no duplicates, one deleted row comes back, Repair round restores a removed column.
+- RADE maintenance modes (PFM goal 14 Nov 26: set and forget; agent REC, not approved): Diagnose, Repair, Restore, Reinstall, Fresh Install, Delete everything. Open: meaning of Reset, backup format (JSON + CSV), path without PnP, Record Sets excluded from delete.
+- Flow owner continuity: decided 11 Nov 26 (every flow and the Power App get a co-owner). Diagnose should check that a co-owner exists.
+- Date-only columns (open choice 7), E9. Holidays: closed (PFM 14 Nov 26: 20 working days, no holiday list).
