@@ -2,47 +2,44 @@
   "_doc": "Source for scripts/build_paste_bundles.py. Each bundle is one round: a self-contained PowerShell text the PFM copies from its raw page and pastes into Windows PowerShell ISE (F5). It writes the files, then opens RADE, the Redacted Application Deployment Engine (a window; text prompts if no window can open): steps run one by one with a live log and PASS/FAIL counts, then one results folder (Rounds\\\\<round>: a report file plus copies of the PDFs, to attach to one e-mail; zips do not cross the boundary) and a summary for the clipboard. It runs only the steps inside it (PFM 3A). A step's \"default\" may be {passed, paths}: the step is ticked only when those files changed since the round that passed it; after a round passes it, set passed to the new hash (PFM 14 Nov 26). Never hand-edit scripts/gov/paste/*.ps1: change this file or the sources and rebuild. A step may list \"needs\" (check ids in the engine's $checkDefs) and \"estimate\" (minutes, used until a real run time exists). \"apps\" is the embedded catalog the Choose screen lists (name, plain-English summary, step names); without it, one application has every step. A guide step may set \"doneText\" (its Done button) and \"doneLog\" (the log line on Done).",
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R17-round-r3.ps1",
-      "round": "R17",
-      "title": "Round R17: RADE (the window is renamed and moves its folder into OneDrive\\RADE), solution import tests A and B r3 (finds the XML error), logo K and thumbnail by hand (r2: logo K; r3: thicker yellow edge, PFM 14 Nov 26), site setup r8 checks them",
+      "out": "scripts/gov/paste/90161Z-R18-round-r1.ps1",
+      "round": "R18",
+      "title": "Round R18: solution import test A r4 (lowercase workflow GUID; R17 A and B both failed: workflow not declared as a root component), a working solution export as the fallback, site setup r9 collects the A result; step bar fills left to right; It failed button",
       "files": [
         {
           "dir": "T17",
-          "src": "flow/solution/90161Z-T17-solution-test-a-r3.zip"
+          "src": "flow/solution/90161Z-T17-solution-test-a-r4.zip"
         },
         {
           "dir": "T17",
-          "src": "flow/solution/90161Z-T17-solution-test-b-r3.zip"
-        },
-        {
-          "dir": "T14",
-          "src": "assets/logo/90161Z-T14-site-logo-r4.png"
+          "src": "scripts/gov/90161Z-T17-export-read-r1.ps1"
         },
         {
           "dir": "T16",
-          "src": "scripts/gov/90161Z-T16-site-setup-r8.ps1"
+          "src": "scripts/gov/90161Z-T16-site-setup-r9.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T17 Solution import test A r3 (no variable)",
+          "name": "T17 Solution import test A r4",
           "kind": "guide",
           "dir": "T17",
-          "file": "90161Z-T17-solution-test-a-r3.zip",
-          "note": "You import test solution A and run its flow (about 5 minutes, an estimate). A has no environment variable: if A imports and B does not, the variable file is the cause of the XML error.",
+          "file": "90161Z-T17-solution-test-a-r4.zip",
+          "note": "You import test solution A r4 and run its flow (about 5 minutes, an estimate). In R17 A and B failed: the flow was \"not declared as a root component\". r4 writes the flow ID in lowercase, as real exports do.",
           "marker": "90161Z-T17-solution-a-started.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
           "guide": [
             "1. Select Open in browser. Power Automate opens; sign in with your CAC if asked.",
-            "2. In the left menu select Solutions (under More if you do not see it), then Import solution > Browse.",
-            "3. In the File name box press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
-            "4. Connections: for SharePoint pick your existing connection. Select Import.",
-            "5. Wait for \"Successfully imported\" (1-3 minutes, an estimate). Open the solution \"90-161.Z solution import test A\",",
-            "   open the flow \"90161Z T17 Solution Import Test A r3\", select Run, paste the new site address into \"Site address\", then Run flow.",
-            "6. Come back here and select \"Done: the run has started\".",
-            "If the import fails: copy its error message (no names or site address) into the results e-mail, then select Skip this step."
+            "2. If the solution \"90-161.Z solution import test A\" or \"... test B\" is in Solutions from R17, leave it: the import replaces A.",
+            "3. Select Solutions (under More if you do not see it), then Import solution > Browse.",
+            "4. In the File name box press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
+            "5. Connections: for SharePoint pick your existing connection. Select Import.",
+            "6. Wait for \"Successfully imported\" (1-3 minutes, an estimate). Open the solution \"90-161.Z solution import test A\",",
+            "   open the flow \"90161Z T17 Solution Import Test A r4\", select Run, paste the new site address into \"Site address\", then Run flow.",
+            "7. Come back here and select \"Done: the run has started\".",
+            "If the import fails: copy the error message (no names or site address) into the box below, select It failed, then do the next step (the export)."
           ],
           "needs": [
             "net-flow",
@@ -51,23 +48,24 @@
           "estimate": 5
         },
         {
-          "name": "T17 Solution import test B r3 (with the variable)",
+          "name": "T17 Export a working solution (only if A failed)",
           "kind": "guide",
           "dir": "T17",
-          "file": "90161Z-T17-solution-test-b-r3.zip",
-          "note": "You import test solution B and run its flow (about 5 minutes, an estimate). B has the Site URL environment variable, now without the XML first line that is the likely cause of the R15 and R16 error.",
-          "marker": "90161Z-T17-solution-b-started.txt",
+          "file": "",
+          "note": "Only if test A failed: you export one solution that holds a working flow (about 5 minutes, an estimate), so the next build copies the real file layout. If A imported, select Skip.",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
+          "doneText": "Done: exported",
+          "doneLog": "Confirmed by you: the export 90161ZExportSample is saved.",
           "guide": [
-            "1. In Power Automate select Solutions, then Import solution > Browse (Open in browser if it is closed).",
-            "2. In the File name box press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
-            "3. Connections: for SharePoint pick your existing connection. Environment variable \"Site URL\": paste the new site address. Select Import.",
-            "4. Wait for \"Successfully imported\". Open the solution \"90-161.Z solution import test B\",",
-            "   open the flow \"90161Z T17 Solution Import Test B r3\", select Run, then Run flow.",
-            "5. Come back here and select \"Done: the run has started\".",
-            "If the import fails: copy its error message (no names or site address) into the results e-mail, then select Skip this step."
+            "If test A imported, select Skip this step.",
+            "1. In Power Automate select Solutions > New solution. Display name: 90161ZExportSample. Publisher: 90-161.Z (PFM). Select Create.",
+            "2. In the new solution select Add existing > Automation > Cloud flow > Outside Dataverse, tick one flow that works (for example the R13 probe flow), then Add.",
+            "3. Select Back to solutions (left arrow), tick 90161ZExportSample, select Export solution > Next.",
+            "4. Choose Unmanaged, select Export. Wait for the green bar, then select Download. The zip goes to Downloads: leave it there.",
+            "5. Come back here and select \"Done: exported\". The next step reads only solution.xml and customizations.xml from the zip, masks addresses, and collects them.",
+            "If the export fails: copy the error message (no names or site address) into the box below and select It failed."
           ],
           "needs": [
             "net-flow",
@@ -76,37 +74,20 @@
           "estimate": 5
         },
         {
-          "name": "T14 Site logo and thumbnail (by hand)",
-          "kind": "guide",
-          "dir": "T14",
-          "file": "90161Z-T14-site-logo-r4.png",
-          "note": "You set the header logo and the thumbnail on the site (about 2 minutes, an estimate). The script calls failed in R15 and R16 on this site; site setup checks the header logo after this step.",
-          "url": "https://usaf.dps.mil/sites/",
-          "url_source": "The site address you typed on the Check screen (Config\\90161Z-site.txt)",
-          "urlConfig": "90161Z-site.txt",
-          "doneText": "Done: logo and thumbnail set",
-          "doneLog": "Confirmed by you: the logo and the thumbnail are set.",
-          "guide": [
-            "1. Select Open in browser: the site opens.",
-            "2. Select the gear (Settings) at the top right, then Change the look > Header.",
-            "3. Site logo: select Change, press Ctrl+V in the File name box (the logo file path is on the clipboard), select Open.",
-            "4. Site logo thumbnail: select Change, press Ctrl+V again (the same file: the new logo works on the header and on white cards), select Open.",
-            "5. Select Save. Reload the page (Ctrl+F5) and look at the header logo.",
-            "6. Come back here and select \"Done: logo and thumbnail set\".",
-            "If Change the look has no Site logo thumbnail: set the Site logo only and write that in the results e-mail."
-          ],
-          "needs": [
-            "net-site"
-          ],
-          "estimate": 2
+          "name": "T17 Export reader r1",
+          "dir": "T17",
+          "file": "90161Z-T17-export-read-r1.ps1",
+          "minutes": 5,
+          "note": "Reads the export zip from Downloads (if there is one) and copies only solution.xml and customizations.xml to T17, addresses masked. No zip: one SKIP line.",
+          "estimate": 1
         },
         {
-          "name": "T16 Site setup r8",
+          "name": "T16 Site setup r9",
           "dir": "T16",
-          "file": "90161Z-T16-site-setup-r8.ps1",
+          "file": "90161Z-T16-site-setup-r9.ps1",
           "args": "-Logo",
           "minutes": 45,
-          "note": "Asks for the site address and a CAC sign-in, checks the site settings and the header logo (no logo changes), and collects the results of tests A and B (waits up to 15 minutes for each).",
+          "note": "Asks for the site address and a CAC sign-in, checks the site settings and the header logo (read-only), and collects the result of test A (waits up to 15 minutes).",
           "needs": [
             "pnp",
             "net-site",
@@ -118,18 +99,23 @@
       "collect": [
         {
           "dir": "T16",
-          "name": "90161Z-T16-setup-r8.txt",
-          "step": "T16 Site setup r8"
+          "name": "90161Z-T16-setup-r9.txt",
+          "step": "T16 Site setup r9"
         },
         {
           "dir": "T17",
-          "name": "90161Z-T17-solution-result-a-r3.txt",
-          "step": "T16 Site setup r8"
+          "name": "90161Z-T17-solution-result-a-r4.txt",
+          "step": "T16 Site setup r9"
         },
         {
           "dir": "T17",
-          "name": "90161Z-T17-solution-result-b-r3.txt",
-          "step": "T16 Site setup r8"
+          "name": "90161Z-T17-export-solution-r1.txt",
+          "step": "T17 Export a working solution (only if A failed)"
+        },
+        {
+          "dir": "T17",
+          "name": "90161Z-T17-export-customizations-r1.txt",
+          "step": "T17 Export a working solution (only if A failed)"
         }
       ],
       "cleanup": [
@@ -376,18 +362,54 @@
         {
           "path": "T16\\90161Z-T16-setup-r5.txt",
           "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-b-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-b-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-b-started.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r8.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r8.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T14",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R16",
+          "kind": "dir"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R17. Moves the 90-161.Z folder into RADE, finds the cause of the solution import error (tests A and B), and sets the site logo and thumbnail by hand.",
+          "summary": "Test round R18. Imports solution test A r4 (the R17 import error fix); if it fails, you export one working solution so the next build copies it. Site setup collects the result.",
           "steps": [
-            "T17 Solution import test A r3 (no variable)",
-            "T17 Solution import test B r3 (with the variable)",
-            "T14 Site logo and thumbnail (by hand)",
-            "T16 Site setup r8"
+            "T17 Solution import test A r4",
+            "T17 Export a working solution (only if A failed)",
+            "T17 Export reader r1",
+            "T16 Site setup r9"
           ]
         }
       ]

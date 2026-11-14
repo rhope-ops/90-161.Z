@@ -393,6 +393,7 @@ function Get-StepLine($Step, $R, [double]$Seconds) {
   # One line per step in the summary and the e-mail: name, result, check counts, time.
   $state = Get-StepState $R
   if ($R.Skipped) { return ($Step.Name + ': SKIPPED by you') }
+  if ($Step.Kind -eq 'guide' -and $R.FailText) { return ($Step.Name + ': FAILED (reported by you) in ' + (Format-Duration $Seconds) + ': ' + $R.FailText) }
   if ($Step.Kind -eq 'guide') { return ($Step.Name + ': ' + $state + ' (confirmed by you) in ' + (Format-Duration $Seconds)) }
   return ($Step.Name + ': ' + $state + ' (' + $R.Pass + ' passed, ' + $R.Fail + ' failed, exit code ' + $R.Exit + ') in ' + (Format-Duration $Seconds))
 }
@@ -437,14 +438,27 @@ function Show-GuideDialog($Step, [string]$File, [string]$Url, [string]$UrlFile) 
   $doneB = & $mk $(if ($Step.DoneText) { $Step.DoneText } else { 'Done: the run has started' })
   $skipB = & $mk $(if ($Step.SkipText) { $Step.SkipText } else { 'Skip this step' })
   $doneB.DialogResult = 'OK'; $skipB.DialogResult = 'Cancel'
-  # A check (no file) has a third answer, No: what the PFM saw shows a problem.
-  if ($File) { $btns.Controls.AddRange(@($openB, $copyB, $showB, $doneB, $skipB)) }
-  else { $noB = & $mk $Step.NoText; $noB.DialogResult = 'No'; $btns.Controls.AddRange(@($openB, $doneB, $noB, $skipB)) }
+  # A check (no file) has a third answer, No: what the PFM saw shows a problem. A file step (R18, PFM 14 Nov 26: in R17 both
+  # imports failed and the only way out was Skip) has It failed: the error text from the box goes into the log and the e-mail.
+  $script:guideError = ''
+  $errLabel = New-Object System.Windows.Forms.Label
+  $errLabel.AutoSize = $true; $errLabel.MaximumSize = $wrap; $errLabel.Margin = New-Object System.Windows.Forms.Padding(3, 8, 3, 3)
+  $errLabel.Text = 'If it failed: paste the error message here (no names or site address), then select It failed.'
+  $errBox = New-Object System.Windows.Forms.TextBox
+  $errBox.Multiline = $true; $errBox.ScrollBars = 'Vertical'; $errBox.Width = 400; $errBox.Height = 72; $errBox.AccessibleName = 'Error message'
+  $failB = & $mk 'It failed'
+  $failB.DialogResult = 'Abort'
+  $failB.Add_Click({ $script:guideError = [string]$errBox.Text })
+  if ($File) { $btns.Controls.AddRange(@($openB, $copyB, $showB, $doneB, $failB, $skipB)) }
+  elseif ($Step.NoText) { $noB = & $mk $Step.NoText; $noB.DialogResult = 'No'; $btns.Controls.AddRange(@($openB, $doneB, $noB, $skipB)) }
+  else { $btns.Controls.AddRange(@($openB, $doneB, $failB, $skipB)) }   # a round step with no file (R18: the export step)
   $note = New-Object System.Windows.Forms.Label
   $note.AutoSize = $true; $note.MaximumSize = $wrap
-  if (-not $File) { $note.Text = 'No file is needed for this check.' }
+  if (-not $File) { $note.Text = $(if ($Step.NoText) { 'No file is needed for this check.' } else { 'No file is needed for this step.' }) }
   else { $note.Text = $(if (Copy-TextToClipboard $File) { 'The full path of ' + $Step.File + ' is on the clipboard.' } else { 'Select Copy file path to put the path of ' + $Step.File + ' on the clipboard.' }) }
-  $row = 0; foreach ($c in @($head, $body, $urlPanel, $note, $btns)) { $g.Controls.Add($c, 0, $row); $row++ }
+  $parts = @($head, $body, $urlPanel, $note); if (-not $Step.NoText) { $parts += @($errLabel, $errBox) }; $parts += $btns
+  $g.RowCount = $parts.Count
+  $row = 0; foreach ($c in $parts) { $g.Controls.Add($c, 0, $row); $row++ }
   $d.Controls.Add($g)
   $openB.Add_Click({
     $u = $urlBox.Text.Trim()
@@ -460,12 +474,12 @@ function Show-GuideDialog($Step, [string]$File, [string]$Url, [string]$UrlFile) 
     $openB.Focus() | Out-Null })   # Enter on the focused button opens the browser; Done needs a deliberate click
   $res = [string]$d.ShowDialog()
   $d.Dispose()
-  return $res   # OK = Done or Yes, No = a check found a problem, Cancel = Skip or the window was closed
+  return $res   # OK = Done or Yes, No = a check found a problem, Abort = It failed ($script:guideError), Cancel = Skip or closed
 }
 function Invoke-GuideStep([string]$Base, $Step, [scriptblock]$Say) {
-  $r = @{ Pass = 0; Fail = 0; Exit = 0; Skipped = $false }
+  $r = @{ Pass = 0; Fail = 0; Exit = 0; Skipped = $false; FailText = '' }
   $dir = Join-Path $Base $Step.Dir
-  $file = Join-Path $dir $Step.File
+  $file = $(if ($Step.File) { Join-Path $dir $Step.File } else { '' })   # R18: a guide step may need no file
   $url = $Step.Url
   $urlFile = ''
   if ($Step.UrlConfig) {
@@ -474,16 +488,25 @@ function Invoke-GuideStep([string]$Base, $Step, [scriptblock]$Say) {
   }
   # An old marker from an earlier run would make site setup wait for a result that is not coming (review R13 #2).
   if ($Step.Marker) { $old = Join-Path $dir $Step.Marker; if (Test-Path -LiteralPath $old -PathType Leaf) { try { Remove-Item -LiteralPath $old -Force } catch { $null = $_ } } }
-  & $Say ('    File ready: ' + $Step.Dir + '\' + $Step.File)
+  if ($Step.File) { & $Say ('    File ready: ' + $Step.Dir + '\' + $Step.File) }
   if ($script:textMode) {
     foreach ($l in @($Step.Guide)) { & $Say ('    ' + $l) }
     & $Say ('    Address: ' + $url)
-    if (Copy-TextToClipboard $file) { & $Say '    The full file path is on the clipboard.' }
+    if ($file -and (Copy-TextToClipboard $file)) { & $Say '    The full file path is on the clipboard.' }
     if ($env:OS -eq 'Windows_NT') { try { Start-Process -FilePath $url } catch { $null = $_ } }
-    $a = [string](Read-Host 'Press Enter when the flow run has started, or type S and press Enter to skip this step'); $a = $(if ($a) { $a.Trim() } else { '' })   # no input (closed stdin) gives no value, not ''
-    $ok = ($a -notmatch '^[Ss]')
-  } else { $ok = ((Show-GuideDialog $Step $file $url $urlFile) -eq 'OK') }
-  if ($ok) {
+    $a = [string](Read-Host 'Press Enter when the flow run has started, type F and Enter if it failed, or S and Enter to skip this step'); $a = $(if ($a) { $a.Trim() } else { '' })   # no input (closed stdin) gives no value, not ''
+    $res = $(if ($a -match '^[Ss]') { 'Cancel' } elseif ($a -match '^[Ff]') { 'Abort' } else { 'OK' })
+    if ($res -eq 'Abort') { $script:guideError = [string](Read-Host 'Paste the error message (no names or site address), then press Enter') }
+  } else { $res = [string](Show-GuideDialog $Step $file $url $urlFile) }
+  $ok = ($res -eq 'OK')
+  if ($res -eq 'Abort') {
+    $t = ((ConvertTo-Masked ([string]$script:guideError)) -replace '\s+', ' ').Trim()
+    $t = $t -replace 'https://\S+', '<SITE>'   # an address in the pasted text never reaches the e-mail
+    if ($t.Length -gt 600) { $t = $t.Substring(0, 600) + ' ...' }
+    if (-not $t) { $t = 'no error text given' }
+    $r.Fail = 1; $r.FailText = $t
+    & $Say ('    Failed (reported by you): ' + $t)
+  } elseif ($ok) {
     if ($Step.Marker) { try { Set-Content -LiteralPath (Join-Path $dir $Step.Marker) -Value (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -Encoding UTF8 } catch { $null = $_ } }
     $r.Pass = 1
     & $Say ('    ' + $(if ($Step.DoneLog) { $Step.DoneLog } else { 'Confirmed by you: the flow is imported and its run has started.' }))
@@ -631,7 +654,7 @@ function Invoke-Round([bool]$Clean, [bool[]]$Selected, [string]$To, [scriptblock
     $ans = ''; if ($Answers -and $Answers.Count -gt $k) { $ans = [string]$Answers[$k] }
     if ($steps[$k].Kind -eq 'guide') { $r = Invoke-GuideStep $base $steps[$k] $speak }
     else { $r = Invoke-RoundStep $base $steps[$k] $speak $Tick $ans }
-    $script:ranSteps += $steps[$k].Name
+    if (-not $r.Skipped) { $script:ranSteps += $steps[$k].Name }   # R18: a step you skip expects no result files
     $secs = ((Get-Date) - $t0).TotalSeconds
     $state = Get-StepState $r
     if ($state -eq 'NEEDS REVIEW') { $script:roundBad = $true }
@@ -1075,7 +1098,7 @@ function Get-StepWeight($Hist, $Step) {
 function Get-Progress {
   # Returns the step fraction (-1 = unknown), the overall fraction and the seconds left, from $script:prog.
   $p = $script:prog
-  if (-not $p) { return @{ Step = -1; All = 0; Left = 0; Known = $false } }
+  if (-not $p) { return @{ Step = -1; StepShown = 0.0; All = 0; Left = 0; Known = $false } }
   $el = 0; if ($p.Start) { $el = ((Get-Date) - $p.Start).TotalSeconds }
   $f = -1.0
   if ($p.Frac -ge 0) { $f = [double]$p.Frac }
@@ -1086,7 +1109,7 @@ function Get-Progress {
   $curLeft = [math]::Max(0.0, $p.Cur - $el)
   if ($p.Frac -gt 0) { $curLeft = $el * (1 - $p.Frac) / $p.Frac }
   $left = [math]::Max(0.0, $p.Total - $p.Done - $p.Cur) + $curLeft
-  return @{ Step = $f; All = $all; Left = $left; Known = $p.Known; Elapsed = $el }
+  return @{ Step = $f; StepShown = $fa; All = $all; Left = $left; Known = $p.Known; Elapsed = $el }
 }
 function Get-ProgressText($G, [string]$Name) {
   $p = $script:prog
@@ -1193,8 +1216,9 @@ if ($gui) {
       $v.Add_SizeChanged({ for ($c = 0; $c -lt $this.Columns.Count; $c++) { & $refit $this $c } })
       $v }
     # R17 (PFM 14 Nov 26: the light-green sweep of the Windows bar was not smooth): RADE draws its own bars. A 30 ms timer
-    # eases the fill to its new value and moves one soft light band across it; an unknown step shows a block that glides
-    # back and forth. With Windows animations off ($calm) the fill jumps and nothing moves.
+    # eases the fill to its new value and moves one soft light band across it. R18 (PFM 14 Nov 26): both bars fill from left
+    # to right; the gliding back-and-forth block for an unknown step is gone. With Windows animations off ($calm) the fill
+    # jumps and nothing moves.
     $script:bars = @{}
     $calm = $false; try { $calm = -not [System.Windows.Forms.SystemInformation]::UIEffectsEnabled } catch { $null = $_ }
     $trackColor = [System.Drawing.Color]::FromArgb(230, 230, 230); $fillColor = [System.Drawing.Color]::FromArgb(30, 125, 50)
@@ -1204,22 +1228,17 @@ if ($gui) {
       $b = $script:bars[[string]$P.Tag]; if (-not $b) { return }
       $w = $P.ClientSize.Width; $h = $P.ClientSize.Height; if ($w -lt 4 -or $h -lt 4) { return }
       $G.Clear($trackColor)
-      if ($b.Busy) {
-        $seg = [int]($w * 0.3); $x = [int](($w - $seg) * (0.5 - 0.5 * [math]::Cos($b.Phase)))
-        $G.FillRectangle($fillBrush, $x, 0, $seg, $h)
-      } else {
-        $fw = [int][math]::Round($w * $b.Shown)
-        if ($fw -gt 0) {
-          $G.FillRectangle($fillBrush, 0, 0, $fw, $h)
-          if ($b.Sheen -and -not $calm -and $fw -gt 12) {
-            $bw = [math]::Max(24, [int]($w * 0.08)); $x = [int](($b.Phase / $twoPi) * ($fw + $bw)) - $bw
-            $rect = New-Object System.Drawing.Rectangle($x, 0, $bw, $h)
-            $lg = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $fillColor, $fillColor, [single]0)
-            $cb = New-Object System.Drawing.Drawing2D.ColorBlend(3)
-            $cb.Colors = [System.Drawing.Color[]]@([System.Drawing.Color]::FromArgb(0, 255, 255, 255), [System.Drawing.Color]::FromArgb(110, 200, 255, 200), [System.Drawing.Color]::FromArgb(0, 255, 255, 255))
-            $cb.Positions = [single[]]@(0, 0.5, 1); $lg.InterpolationColors = $cb
-            $G.SetClip((New-Object System.Drawing.Rectangle(0, 0, $fw, $h))); $G.FillRectangle($lg, $rect); $G.ResetClip(); $lg.Dispose()
-          }
+      $fw = [int][math]::Round($w * $b.Shown)
+      if ($fw -gt 0) {
+        $G.FillRectangle($fillBrush, 0, 0, $fw, $h)
+        if ($b.Sheen -and -not $calm -and $fw -gt 12) {
+          $bw = [math]::Max(24, [int]($w * 0.08)); $x = [int](($b.Phase / $twoPi) * ($fw + $bw)) - $bw
+          $rect = New-Object System.Drawing.Rectangle($x, 0, $bw, $h)
+          $lg = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $fillColor, $fillColor, [single]0)
+          $cb = New-Object System.Drawing.Drawing2D.ColorBlend(3)
+          $cb.Colors = [System.Drawing.Color[]]@([System.Drawing.Color]::FromArgb(0, 255, 255, 255), [System.Drawing.Color]::FromArgb(110, 200, 255, 200), [System.Drawing.Color]::FromArgb(0, 255, 255, 255))
+          $cb.Positions = [single[]]@(0, 0.5, 1); $lg.InterpolationColors = $cb
+          $G.SetClip((New-Object System.Drawing.Rectangle(0, 0, $fw, $h))); $G.FillRectangle($lg, $rect); $G.ResetClip(); $lg.Dispose()
         }
       }
       $G.DrawRectangle($edgePen, 0, 0, $w - 1, $h - 1) }
@@ -1228,29 +1247,25 @@ if ($gui) {
       $p.Anchor = 'Left, Right'; $p.Height = $H; $p.Margin = New-Object System.Windows.Forms.Padding(3, 3, 3, 3); $p.Tag = $Name
       $p.AccessibleRole = 'ProgressBar'; $p.AccessibleName = $Label; $p.AccessibleDescription = '0 %'
       try { [System.Windows.Forms.Control].GetProperty('DoubleBuffered', [System.Reflection.BindingFlags]'NonPublic, Instance').SetValue($p, $true, $null) } catch { $null = $_ }
-      $script:bars[$Name] = @{ Panel = $p; Target = 0.0; Shown = 0.0; Busy = $false; Sheen = $false; Phase = 0.0 }
+      $script:bars[$Name] = @{ Panel = $p; Target = 0.0; Shown = 0.0; Sheen = $false; Phase = 0.0 }
       $p.Add_Paint({ & $drawBar $this $_.Graphics })
       $p }
-    $setBar = { param([string]$Name, [double]$Value, [bool]$Busy, [bool]$Sheen)
+    $setBar = { param([string]$Name, [double]$Value, [bool]$Sheen)
       $b = $script:bars[$Name]; if (-not $b) { return }
       $v = [math]::Max(0.0, [math]::Min(1.0, $Value))
       if ($v -lt $b.Target - 0.001) { $b.Shown = $v }   # never slide backwards (a new step starts at 0)
       $b.Target = $v; $b.Sheen = $Sheen
-      if ($b.Busy -ne $Busy) { $b.Busy = $Busy; $b.Phase = 0.0 }
-      $b.Panel.AccessibleDescription = $(if ($Busy) { 'working' } else { [string][int]($v * 100) + ' %' })
+      $b.Panel.AccessibleDescription = [string][int]($v * 100) + ' %'
       $b.Panel.Invalidate() }
     $anim = New-Object System.Windows.Forms.Timer
     $anim.Interval = 30
     $anim.Add_Tick({
       foreach ($b in @($script:bars.Values)) {
         $dirty = $false
-        if ($b.Busy) { if (-not $calm) { $b.Phase += 0.08; $dirty = $true } }
-        else {
-          $d = $b.Target - $b.Shown
-          if ([math]::Abs($d) -gt 0.0005) { $b.Shown = $(if ($calm) { $b.Target } else { $b.Shown + $d * 0.18 }); $dirty = $true }
-          elseif ($b.Shown -ne $b.Target) { $b.Shown = $b.Target; $dirty = $true }
-          if ($b.Sheen -and -not $calm) { $b.Phase += 0.05; if ($b.Phase -gt $twoPi) { $b.Phase -= $twoPi }; $dirty = $true }
-        }
+        $d = $b.Target - $b.Shown
+        if ([math]::Abs($d) -gt 0.0005) { $b.Shown = $(if ($calm) { $b.Target } else { $b.Shown + $d * 0.18 }); $dirty = $true }
+        elseif ($b.Shown -ne $b.Target) { $b.Shown = $b.Target; $dirty = $true }
+        if ($b.Sheen -and -not $calm) { $b.Phase += 0.05; if ($b.Phase -gt $twoPi) { $b.Phase -= $twoPi }; $dirty = $true }
         if ($dirty) { $b.Panel.Invalidate() }
       } })
     $grid = & $mkRows @('AutoSize', 'AutoSize', 'Percent', 'AutoSize')
@@ -1535,11 +1550,12 @@ if ($gui) {
     $script:lastSummary = @()
     $say = { param($t) Add-RunLog $t; try { $log.AppendText($t + "`r`n"); [System.Windows.Forms.Application]::DoEvents() } catch { Write-Host $t } }
     $paint = {
-      # Both bars from Get-Progress (the timer draws them). Unknown step progress: a gliding block (still when animations are off).
+      # Both bars from Get-Progress (the timer draws them). Both fill from left to right; with no PROGRESS lines the step bar
+      # follows the time so far against the step's weight (Get-Progress StepShown, at most 90 %).
       if (-not $script:prog -or -not $script:stepStart) { return }
       $g = Get-Progress; $t = Get-ProgressText $g $script:statusBase
-      & $setBar 'all' ([math]::Max($g.All, $script:bars['all'].Target)) $false $true   # the overall bar never moves back in a run
-      if ($g.Step -lt 0) { & $setBar 'step' 0 (-not $calm) $false } else { & $setBar 'step' $g.Step $false $true }
+      & $setBar 'all' ([math]::Max($g.All, $script:bars['all'].Target)) $true   # the overall bar never moves back in a run
+      & $setBar 'step' ([math]::Max($g.StepShown, $script:bars['step'].Target)) $true   # nor the step bar inside one step
       if ($allLabel.Text -ne $t.All) { $allLabel.Text = $t.All }; if ($stepLabel.Text -ne $t.Step) { $stepLabel.Text = $t.Step } }
     $tick = { & $paint; [System.Windows.Forms.Application]::DoEvents() }
     $onStep = { param($k, $line)
@@ -1549,13 +1565,13 @@ if ($gui) {
     $onStatus = { param($i, $count, $name, $estimate)
       $null = $i; $null = $count   # the labels read $script:prog
       $script:statusBase = $name; $script:stepStart = Get-Date; $script:stepEst = $estimate
-      if ($i -le 1) { & $setBar 'all' 0 $false $false }   # a new run starts the overall bar at 0
+      if ($i -le 1) { & $setBar 'all' 0 $false }   # a new run starts the overall bar at 0
       # The step row says it is running; the clean-up row (row 0) says done once the next step starts.
       if ($script:off -eq 1 -and $name -ne 'Clean-up' -and [string]$stepView.Rows[0].Cells[1].Tag[1] -like 'Running now*') { & $stepSay 0 'Done. The log above the bars lists what moved to the Recycle Bin.' }
       $now = 'Running now. Started ' + (Get-Date -Format 'HH:mm') + '.'
       if ($name -eq 'Clean-up' -and $script:off -eq 1) { & $stepSay 0 $now }
       else { foreach ($kk in @($script:listIndex.Keys)) { if ($steps[$kk].Name -eq $name) { & $stepSay $script:listIndex[$kk] $now } } }
-      & $setBar 'step' 0 $false $false
+      & $setBar 'step' 0 $false
       & $paint; [System.Windows.Forms.Application]::DoEvents() }
     $windowLine = { if ($okBox.Checked) { 'Window: OK' } else { 'Window: NOT OK - write here what overlapped or was cut off' } }
     $toFront = { $form.TopMost = $true; $form.Activate(); $form.TopMost = $false }
@@ -1584,7 +1600,7 @@ if ($gui) {
       try {
         $script:lastSummary = Invoke-Round $clean $sel $to $say $tick $onStep $onStatus $windowLine $answers $checkLines
         $script:basePath = Get-BasePath   # RADE may have moved the app folder (R17)
-        $script:stepStart = $null; & $setBar 'all' 1 $false $false; & $setBar 'step' 1 $false $false
+        $script:stepStart = $null; & $setBar 'all' 1 $false; & $setBar 'step' 1 $false
         $allLabel.Text = 'Overall: DONE in ' + (Format-Duration ((Get-Date) - $script:roundStart).TotalSeconds) + '. ' + $script:lastSummary[0]
         $stepLabel.Text = $(if ($script:draftMade) { 'The Outlook draft is open.' } else { 'The results folder is open and the summary is copied.' })
         $copy.Enabled = $true; $open.Enabled = $true; $draft.Enabled = $true
@@ -1597,7 +1613,7 @@ if ($gui) {
         $script:basePath = Get-BasePath
         $msg = 'STOPPED: ' + (ConvertTo-Masked ([string]$_)); & $say $msg
         $w = Get-WhatToDo $msg; if ($w) { & $say $w }
-        & $setBar 'step' $script:bars['step'].Target $false $false; & $setBar 'all' $script:bars['all'].Target $false $false
+        & $setBar 'step' $script:bars['step'].Target $false; & $setBar 'all' $script:bars['all'].Target $false
         $allLabel.Text = 'Overall: STOPPED. See the last lines of the log.'; & $toFront
       }
       $run.Enabled = $true; $back.Enabled = $true; $script:running = $false
@@ -1744,7 +1760,7 @@ def build(b):
             fetch.append((f['dir'], f['name'], f['url'], ''))
     fetchs = ['$fetch += @{ Dir = %s; Name = %s; Url = %s; Sha = %s }' % tuple(q(x) for x in t) for t in fetch]
     for s in b['steps']:
-        assert any(f['dir'] == s['dir'] and Path(f['src']).name == s['file'] for f in b['files']), s
+        assert (s.get('kind') == 'guide' and not s['file']) or any(f['dir'] == s['dir'] and Path(f['src']).name == s['file'] for f in b['files']), s
     collect = ['$collect += @{ Dir = %s; Name = %s; Step = %s }' % (q(c['dir']), q(c['name']), q(c.get('step', ''))) for c in b['collect']]
     cleanup = ['$cleanup += @{ Path = %s; Kind = %s }' % (q(c['path']), q(c['kind'])) for c in b.get('cleanup', [])]
     # Support scripts that keep their names (they load each other) and samples: made by 90-161.Z, so cleanup may recycle them.

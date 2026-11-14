@@ -21,15 +21,15 @@ Updated: 2026-11-14 by Claude. Keep this file at 40 lines or fewer and state onl
 
 ## Waiting on the PFM (go.md)
 
-1. R17 r3 on go.md (14 Nov; r2 swapped in logo K, r3 its thicker yellow edge): T17 r3 tests A (no variable) and B (variable, no XML declaration), logo K as logo and thumbnail by hand, site setup r8 (reads the header logo; collects A and B). R16 results: docs/reviews/2026-11-14-r16-results.md. Next on the R17 e-mail: A/B tell the import cause; then the sprawl cuts not yet made (DECISIONS 14 Nov: probe mask once, one masking function, clean-up by revision rule; the logo fallbacks are gone), the flow build, T09 reader, T12 colors. Open: S2, S3, S5 3-15, S6, S7, S8-S11, F1-F4 (sweep page).
+1. R18 r1 on go.md (14 Nov): T17 test A r4 (lowercase workflow GUID; R17 A and B both failed: not declared as a root component), export fallback + export reader r1, site setup r9. R17 results: docs/reviews/2026-11-14-r17-results.md. Next on the R18 e-mail: A imports, or diff the export; then the sprawl cuts (DECISIONS 14 Nov), the flow build, T09 reader, T12 colors. Open: S2, S3, S5 3-15, S6, S7, S8-S11, F1-F4 (sweep page).
 2. Task 6 prompt r2 follow-up: list AFI (validator F-032/F-039 fixed 13 Nov).
 3. Seals: Claude corrected 17 unit seals (1,200 px, glow removed, 2 px feather; tool in the session scratchpad, not in the repo) and mailed them in 6 parts; R13 prepared and uploaded all 17 (library 90-161.Z, Seals and Seals/Prepared).
-4. Logo K (PFM 14 Nov): official logo for every app; master copy in rhope-ops/RADE assets/logo (build there). assets/logo/90161Z-T14-site-logo-r4.png is a copy of logo-K-512.png for the round bundle; set by hand in R17 (scripts cannot set it on this site). After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
+4. Logo K (PFM 14 Nov): official logo for every app; master copy in rhope-ops/RADE assets/logo. Not a round step any more: Claude e-mailed logo-K-512/64 on 14 Nov; the PFM sets it by hand; site setup reads the header logo. After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
 5. App writes (PFM 14 Nov: wing users Read on the site, data entry through the app): Power Apps writes with the user's own rights, so choose list-level Contribute on the app's lists (site stays Read) or a flow that writes with the PFM's connection. Agent REC: list-level Contribute on the intake lists only; R16 W11 proved a Read-only user gets Contribute on such a list.
 6. Result e-mails: delete only after the PFM confirms (AGENTS.md Project rules).
 
 ## Next design (after Task 5)
-0. Slice 1 first (DECISIONS 14 Nov): hold new scope until Publications + Endorsements + F05 + F03, list views only, take one fake publication from Coordination to Legal on the test site. If R17 A and B both fail: one more A/B round. After R17: RADE size in the summary, hash-pinned engine, JSON results block.
+0. Slice 1 first (DECISIONS 14 Nov): hold new scope until Publications + Endorsements + F05 + F03, list views only, take one fake publication from Coordination to Legal on the test site. After R17: RADE size in the summary, hash-pinned engine, JSON results block.
 1. Flows as solution-aware flows with connection references (match the real export), not legacy packages.
 2. Draft flows F01-F05 in flow/solution (F05 = routing, S5A; open points in its README). Not built: the endorser-answer app flow (endorsers answer in the app; flows only alert them).
 3. Then the Power Apps canvas app (docs/app/screen-map.md); Accessibility Checker 0 errors.

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 16 site setup, r8 (R17 r3: logo K with the thicker yellow edge, PFM 14 Nov 26; no logo calls, the PFM sets the logo by hand and this script checks it; collects the solution test A and B r3 results, masked; RADE folder). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 16 site setup, r9 (R18, PFM 14 Nov 26: collects only the solution test A r4 result, masked; test B is dropped; the PFM sets logo K by hand outside the round and this script still checks it read-only; RADE folder). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: sets up the new SharePoint site in one run, so the PFM does not click it by hand (DECISIONS 14 Nov 26:
   optional Deployer PnP write steps, allowed because the read-only PnP test passed). About 5 minutes (an estimate).
@@ -19,8 +19,8 @@
        permissions); uploads the images from T07\Seals and T07\Seals\Prepared. An image already there is replaced.
        r2 (R12 FAIL "File Not Found"): the folder paths come from the library's own root folder (its address can differ
        from its title), and Resolve-PnPFolder makes missing folders; a FAIL line names the stage that failed.
-    e. Flow results: copies "90161Z-T11-rights-result-r5.json" (probe, to T11) and "90161Z-T17-solution-result-a-r3.txt"
-       and "-b-r3.txt" (solution import tests A and B, to T17) from the site's default Documents library, and masks the site address, host and
+    e. Flow results: copies "90161Z-T11-rights-result-r5.json" (probe, to T11) and "90161Z-T17-solution-result-a-r4.txt"
+       (solution import test A r4, to T17) from the site's default Documents library, and masks the site address, host and
        path in each copy (r4). When the round's guide step for that flow was confirmed in the last 2 hours (its marker
        file), it waits for the file, checking every 30 seconds for up to 15 minutes.
     f. Task 2 check: counts the PFM lists and their rows (read-only).
@@ -28,7 +28,7 @@
   FAIL; one item never stops the others. Counts only: no list, seal or file names are written (seal names are unit names).
   The site address is kept only on this computer in Config\90161Z-site.txt; every output line shows it as <SITE> and the DODID
   as <DODID>. Error text is cut to 160 characters.
-  Output: 90161Z-T16-setup-r8.txt in the T16 folder (send this).
+  Output: 90161Z-T16-setup-r9.txt in the T16 folder (send this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Logo, -ProbeWaitMinutes (default 15), -NoPause.
 #>
 param([string]$Id, [switch]$Logo, [int]$ProbeWaitMinutes = 15, [switch]$NoPause)
@@ -222,7 +222,7 @@ try {
   $root = Split-Path -Parent $dir
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
-  $lines.Add('TASK T16 site setup r8, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', probe-wait-minutes=' + $ProbeWaitMinutes)
+  $lines.Add('TASK T16 site setup r9, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', probe-wait-minutes=' + $ProbeWaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
@@ -301,8 +301,7 @@ try {
     }
     # e. Probe result file.
     Add-Item 'e-probe-result' $FetchResult @('e-probe-result', 'T11', '90161Z-T11-rights-result-r5.json', '90161Z-T11-probe-started.txt', '90161Z T11 Rights Probe r5')
-    Add-Item 'e2-solution-result-a' $FetchResult @('e2-solution-result-a', 'T17', '90161Z-T17-solution-result-a-r3.txt', '90161Z-T17-solution-a-started.txt', '90161Z T17 Solution Import Test A r3')
-    Add-Item 'e3-solution-result-b' $FetchResult @('e3-solution-result-b', 'T17', '90161Z-T17-solution-result-b-r3.txt', '90161Z-T17-solution-b-started.txt', '90161Z T17 Solution Import Test B r3')
+    Add-Item 'e2-solution-result-a' $FetchResult @('e2-solution-result-a', 'T17', '90161Z-T17-solution-result-a-r4.txt', '90161Z-T17-solution-a-started.txt', '90161Z T17 Solution Import Test A r4')
     # f. Task 2 check.
     Add-Item 'f-task2-lists' {
       $pl = @(Get-PnPList -ErrorAction Stop | Where-Object { $_.Title -like 'PFM *' })
@@ -319,7 +318,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-setup-r8.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
+  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-setup-r9.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }
