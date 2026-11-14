@@ -76,7 +76,7 @@ for src in sorted(B.DEFS.glob("*.json")):
     hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
     hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
     if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
-    wfs = [n for n in zf.namelist() if n.startswith("Workflows/" + src.stem + "-")]
+    wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], B.guid("workflow", src.stem))[1:]]
     if len(wfs) != 1: bad(f"{src.name}: expected one workflow file in the zip, found {len(wfs)}"); continue
     wf = json.loads(zf.read(wfs[0]))["properties"]
     for c, ref in wf["connectionReferences"].items():
@@ -118,6 +118,42 @@ for z in [cz] + sorted((ROOT / "flow" / "solution").glob("90161Z-T17-*.zip")):
         if w != w.lower(): bad(f"{z.name}: WorkflowId {w} is not lowercase")
         if w not in roots: bad(f"{z.name}: workflow {w} has no RootComponent type 29 with the same id")
     if roots - set(wids): bad(f"{z.name}: RootComponent type 29 without a workflow: {sorted(roots - set(wids))}")
+
+# R19 (r5): each test zip has the layout of the PFM's R18 export (flow/solution/export-sample): the same elements, attributes
+# and values in the same order, apart from names, IDs and the connection reference, and the same bytes for [Content_Types].xml.
+import xml.etree.ElementTree as ET  # noqa: E402
+SAMPLE = ROOT / "flow" / "solution" / "export-sample"
+FREE_TEXT = {"UniqueName", "JsonFileName", "connectionreferencedisplayname"}   # values that name this solution, not its layout
+FREE_ATTR = {"description", "id", "WorkflowId", "Name", "connectionreferencelogicalname"}
+
+def layout(xml_bytes):
+    out = []
+    def walk(e, path):
+        tag = e.tag.split("}")[-1]; p = path + "/" + tag
+        pub = "/Publisher/" in p + "/"   # the publisher must match the export exactly, apart from its masked display name
+        attrs = tuple((k, "*" if k in FREE_ATTR and not (pub and k != "description") else v) for k, v in e.attrib.items())
+        out.append((p, attrs, "*" if tag in FREE_TEXT and not pub else (e.text or "").strip()))
+        for c in e: walk(c, p)
+    walk(ET.fromstring(xml_bytes), ""); return out
+
+ref_ct = None
+for z in sorted((ROOT / "flow" / "solution").glob("90161Z-T17-*.zip")):
+    with zipfile.ZipFile(z) as zz:
+        for f in ("solution.xml", "customizations.xml"):
+            got, want = zz.read(f), (SAMPLE / f).read_bytes()
+            if got.startswith(b"<?xml") or got.startswith(b"\xef\xbb\xbf"): bad(f"{z.name} {f}: starts with an XML declaration or BOM; the export has neither")
+            if b"\r\n" not in got or got.endswith(b"\n"): bad(f"{z.name} {f}: line ends differ from the export (CRLF, no final line end)")
+            lg, lw = layout(got), layout(want)
+            if lg != lw:
+                diff = next(((g, w) for g, w in zip(lg, lw) if g != w), (lg[len(lw):len(lw) + 1], lw[len(lg):len(lg) + 1]))
+                bad(f"{z.name} {f}: layout differs from the export sample at {diff}")
+        if zz.read("[Content_Types].xml") != (ref_ct := ref_ct or "\ufeff<?xml version=\"1.0\" encoding=\"utf-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ContentType=\"application/octet-stream\" /><Default Extension=\"json\" ContentType=\"application/octet-stream\" /></Types>".encode("utf-8")):
+            bad(f"{z.name}: [Content_Types].xml differs from the export")
+        for n in zz.namelist():
+            if n.startswith("Workflows/"):
+                wf = json.loads(zz.read(n).decode("utf-8"))["properties"]["definition"]
+                if "outputs" in wf: bad(f"{z.name} {n}: definition has 'outputs'; the export has none")
+                if "@parameters('$authentication')" in json.dumps(wf): bad(f"{z.name} {n}: manual flow uses @parameters('$authentication'); the export uses the run token")
 
 if errs:
     print("\n".join(errs)); sys.exit(1)

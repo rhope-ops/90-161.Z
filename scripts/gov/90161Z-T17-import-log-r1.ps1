@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 17 export reader, r1 (R18, PFM 14 Nov 26). Read-only on the site and in Power Automate. Windows PowerShell 5.1, no modules.
+  90-161.Z Task 17 import log reader, r1 (R19, PFM 14 Nov 26). Read-only. Windows PowerShell 5.1, no modules.
 .DESCRIPTION
-  What it is for: the fallback when solution import test A r4 fails. The PFM exports one working solution from Power
-  Automate (round step "T17 Export a working solution"); this script reads that export so the next build copies the real
-  solution layout instead of guessing it. About 1 minute (an estimate).
-  It looks for the newest file 90161ZExportSample*.zip in the T17 folder, then in Downloads (OneDrive Downloads too).
-  From the zip it copies only solution.xml and customizations.xml (never the flow definitions, which can hold the site
-  address) to T17 as 90161Z-T17-export-solution-r1.txt and 90161Z-T17-export-customizations-r1.txt (plain text files,
-  because zips do not cross the boundary). In each copy every https address becomes <SITE>, every e-mail address
-  becomes <EMAIL> and the DODID becomes <DODID>. It also lists the names of the files in the zip (names only).
-  No zip found: one SKIP line (test A imported, or the export step was skipped). It changes nothing else.
-  Output: the two copies above (the round collects them) and lines that start with PASS, SKIP or FAIL.
+  What it is for: when a solution import fails, Power Automate offers "Download log file" (an Excel XML file). In R17 and
+  R18 the error had to be pasted by hand and the paste held only the file's first lines. This script finds the newest
+  import log and copies its error rows, so the next build sees the real error. About 1 minute (an estimate).
+  It looks for the newest .xml file (changed in the last 3 days) that is an Excel XML spreadsheet, in the T17 folder,
+  Downloads, Desktop and Documents (local and OneDrive) and up to 2 folder levels below each (the browser saves where it
+  saved last). From it, it writes T17\90161Z-T17-import-log-r1.txt (plain text): the column headings and every row that
+  holds "fail", "error" or a 0x8 code, each cell joined with " | " (at most 80 rows). Every https address becomes <SITE>,
+  every e-mail address <EMAIL> and the DODID <DODID>. No log found: one SKIP line (the import worked, or no log was
+  downloaded). It changes nothing else.
+  Output: the file above (the round collects it) and lines that start with PASS, SKIP or FAIL.
   Parameters (used by RADE): -Id, -NoPause.
 #>
 param([string]$Id, [switch]$NoPause)
@@ -90,7 +90,17 @@ function Hide-Export([string]$Text, [string[]]$Secret) {
   $t = ConvertTo-Masked $Text $Secret
   $t = $t -replace 'https?://[^\s"''<>]+', '<SITE>'
   $t = $t -replace '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '<EMAIL>'
+  $t = $t -replace '\b[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.(sharepoint|dynamics|crm|powerapps|appsplatform)[A-Za-z0-9.-]*', '<HOST>'   # bare host names
   return $t
+}
+
+function Test-ExcelXml([string]$Path) {
+  # An Excel XML spreadsheet names its namespace in the first few KB.
+  try {
+    $sr = New-Object System.IO.StreamReader($Path)
+    try { $buf = New-Object char[] 4096; $n = $sr.Read($buf, 0, 4096); $head = New-Object string($buf, 0, $n) } finally { $sr.Dispose() }
+    return ($head -match 'urn:schemas-microsoft-com:office:spreadsheet')
+  } catch { return $false }
 }
 
 $code = 0
@@ -98,36 +108,54 @@ try {
   $who = Get-TaskId $Id
   $dir = Get-TaskDir $who.Id $task 'T17' -Create
   $places = @($dir)
-  if ($env:USERPROFILE) { $places += (Join-Path $env:USERPROFILE 'Downloads') }
-  $places += (Join-Path (Join-Path (Join-Path 'C:\Users' $who.Id) 'OneDrive - United States Air Force') 'Downloads')
-  $zip = $null
-  foreach ($pl in $places) {
+  $homes = @()
+  if ($env:USERPROFILE) { $homes += $env:USERPROFILE }
+  $homes += (Join-Path (Join-Path 'C:\Users' $who.Id) 'OneDrive - United States Air Force')
+  if ($env:OneDrive) { $homes += $env:OneDrive }
+  foreach ($hm in ($homes | Select-Object -Unique)) { foreach ($sub in @('Downloads', 'Desktop', 'Documents')) { $places += (Join-Path $hm $sub) } }
+  $since = (Get-Date).AddDays(-3)
+  $log = $null
+  foreach ($pl in ($places | Select-Object -Unique)) {   # the newest log wins, wherever it is (each folder and 2 levels below it)
     if (-not (Test-Path -LiteralPath $pl -PathType Container)) { continue }
-    $f = Get-ChildItem -LiteralPath $pl -Filter '90161ZExportSample*.zip' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if ($f -and (-not $zip -or $f.LastWriteTime -gt $zip.LastWriteTime)) { $zip = $f }
+    foreach ($f in @(Get-ChildItem -LiteralPath $pl -Filter '*.xml' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $since } | Sort-Object LastWriteTime -Descending)) {
+      if ($log -and $f.LastWriteTime -le $log.LastWriteTime) { break }
+      if (Test-ExcelXml $f.FullName) { $log = $f; break }
+    }
   }
-  if (-not $zip) {
-    Write-Output 'ITEM export-read SKIP no 90161ZExportSample*.zip in T17 or Downloads (test A imported, or the export step was skipped)'
+  if (-not $log) {
+    Write-Output 'ITEM import-log SKIP no Excel XML import log from the last 3 days in T17, Downloads, Desktop or Documents (the import worked, or no log was downloaded)'
   } else {
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $z = [System.IO.Compression.ZipFile]::OpenRead($zip.FullName)
-    try {
-      $names = @($z.Entries | ForEach-Object { $_.FullName })
-      Write-Output ('ITEM export-files PASS zip=' + $zip.Name + ' entries=' + $names.Count)
-      foreach ($n in $names) { Write-Output ('  file ' + (Hide-Export $n $who.Secret)) }
-      foreach ($pair in @(@('solution.xml', '90161Z-T17-export-solution-r1.txt'), @('customizations.xml', '90161Z-T17-export-customizations-r1.txt'))) {
-        $e = $z.Entries | Where-Object { $_.FullName -eq $pair[0] } | Select-Object -First 1
-        if (-not $e) { Write-Output ('ITEM export-' + $pair[0] + ' FAIL not in the zip'); $code = 1; continue }
-        $sr = New-Object System.IO.StreamReader($e.Open())
-        try { $text = $sr.ReadToEnd() } finally { $sr.Dispose() }
-        Set-Content -LiteralPath (Join-Path $dir $pair[1]) -Value (Hide-Export $text $who.Secret) -Encoding UTF8
-        Write-Output ('ITEM export-' + $pair[0] + ' PASS copied to T17\' + $pair[1] + ' (addresses masked)')
+    $doc = New-Object System.Xml.XmlDocument
+    $doc.XmlResolver = $null
+    $doc.Load($log.FullName)
+    $out = New-Object System.Collections.Generic.List[string]
+    $out.Add('IMPORT LOG ' + (Hide-Export $log.Name $who.Secret) + ', saved ' + $log.LastWriteTime.ToString('yyyy-MM-dd HH:mm'))
+    $kept = 0; $rows = 0; $full = $false
+    foreach ($ws in @($doc.SelectNodes("//*[local-name()='Worksheet']"))) {
+      $wsName = ''; foreach ($a in $ws.Attributes) { if ($a.LocalName -eq 'Name') { $wsName = $a.Value } }
+      $out.Add('SHEET ' + (Hide-Export $wsName $who.Secret))
+      if ($full) { break }   # at most 80 rows in all
+      $first = $true
+      foreach ($row in @($ws.SelectNodes(".//*[local-name()='Row']"))) {
+        $rows++
+        $cells = @($row.SelectNodes("./*[local-name()='Cell']") | ForEach-Object { ([string]$_.InnerText).Trim() -replace '\s+', ' ' })
+        $text = ($cells -join ' | ')
+        if ($first -or $text -match '(?i)fail|error|0x8') {
+          if ($kept -ge 80) { $full = $true; break }
+          if ($text.Length -gt 600) { $text = $text.Substring(0, 600) + ' ...' }
+          $out.Add((Hide-Export $text $who.Secret)); $kept++
+        }
+        $first = $false
       }
-    } finally { $z.Dispose() }
+    }
+    $file = Join-Path $dir '90161Z-T17-import-log-r1.txt'
+    Set-Content -LiteralPath $file -Value $out -Encoding UTF8
+    Write-Output ('ITEM import-log PASS rows=' + $rows + ' kept=' + $kept + ' copied to T17\90161Z-T17-import-log-r1.txt (addresses masked)')
   }
 } catch {
-  $msg = [string]$_.Exception.Message; if ($msg.Length -gt 160) { $msg = $msg.Substring(0, 160) }
-  Write-Output ('ITEM export-read FAIL ' + (ConvertTo-Masked $msg @()))
+  $sec = @(); if ($who -and $who.Secret) { $sec = $who.Secret }
+  $msg = Hide-Export ([string]$_.Exception.Message) $sec; if ($msg.Length -gt 160) { $msg = $msg.Substring(0, 160) }   # mask first, then cut
+  Write-Output ('ITEM import-log FAIL ' + $msg)
   $code = 1
 }
 if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
