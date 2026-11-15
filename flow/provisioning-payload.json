@@ -2732,7 +2732,7 @@
      "__metadata": {
       "type": "SP.XmlSchemaFieldCreationInformation"
      },
-     "SchemaXml": "<Field Name=\"EndorsementStatus\" StaticName=\"EndorsementStatus\" DisplayName=\"Endorsement Status\" Required=\"TRUE\" Type=\"Choice\"><CHOICES><CHOICE>Not Started</CHOICE><CHOICE>Concur</CHOICE><CHOICE>Concur With Comment</CHOICE><CHOICE>Concur—No Response</CHOICE><CHOICE>Nonconcur</CHOICE><CHOICE>No Comment</CHOICE><CHOICE>Not Applicable</CHOICE></CHOICES><Default>Not Started</Default></Field>",
+     "SchemaXml": "<Field Name=\"EndorsementStatus\" StaticName=\"EndorsementStatus\" DisplayName=\"Endorsement Status\" Required=\"TRUE\" Type=\"Choice\"><CHOICES><CHOICE>Not Started</CHOICE><CHOICE>Concur</CHOICE><CHOICE>Concur With Comment</CHOICE><CHOICE>Concur\u2014No Response</CHOICE><CHOICE>Nonconcur</CHOICE><CHOICE>No Comment</CHOICE><CHOICE>Not Applicable</CHOICE></CHOICES><Default>Not Started</Default></Field>",
      "Options": 24
     }
    }
