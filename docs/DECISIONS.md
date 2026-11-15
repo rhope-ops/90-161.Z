@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Signers: a commander acts through the CSS. The CSS gets the task, stands in for the signer and uploads the signed form; the signer may also use the app directly. Scope: 90-161.Z. | PFM | docs/roles-and-permissions.md |
 | 2026-11-15 | Priority (1B): the installer path is made simple first, then the member screens. Scope: 90-161.Z. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-15 | File rule: a wing member never edits or uploads a file, except the draft itself and one signature; the app keeps every file it already has. Scope: 90-161.Z. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-15 | DAF Form 673: signatures may be transcribed into 1 master document, and an e-signature counts. Scope: 90-161.Z. How the app does it is open. | PFM | docs/process-model.md |
