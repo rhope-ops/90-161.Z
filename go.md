@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 15 Nov 26 (Round R23 r2 open: a short engine check, about 5 minutes).
+Updated: 15 Nov 26 (no round is open: Round R23 passed two times).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,28 +24,10 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R23 r2: RADE engine-v2 shared-file check (open, 15 Nov 26)
-
-**For:** RADE engine-v2 keeps one record file per app in RADE\Config. R23 proves that this works in Windows PowerShell 5.1 on my computer. It runs one read-only step, then RADE tests its record files by itself.
-**Time:** about 5 minutes (estimate): checks 1, inventory 1, self-test under 1, the e-mail 2.
-**Changes:**
-- On my computer: RADE writes into T15 and Rounds\R23. The self-test makes a scratch folder in Rounds\R23 and removes it again. Nothing else changes.
-- On the site and in Power Automate: nothing. No sign-in.
-- RADE saves one Outlook draft (never sent).
-
-Steps:
-1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R23-round-r2.ps1
-2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
-3. In the RADE window, choose the application, run the checks, then select Deploy.
-4. Wait for DONE (about 2 minutes, estimate). Then I send the Outlook draft.
-
-**Report:** the draft itself, subject "90161Z R23". It holds the report file and the inventory file. The report must show 4 lines that start with "PASS shared files".
-**If it fails:** read the "What to do" line in the window. If a line says "FAIL shared files", send the draft as it is: that line is the result.
-
-
 ## Done
 
+- Round R23 r1 and r2 (15 Nov 26): passed two times. Checks 9 of 9, inventory PASSED, shared-file self-test 4 of 4, Window OK. RADE engine-v2 works in Windows PowerShell 5.1 on my computer. Details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-15-r23-results.md
 - Round R22 r3, second run (15 Nov 26): passed, every step PASSED (checks 14 of 14, T19 6 of 6, part 1 7 of 7, part 2 12 of 12, F03 confirmed, Window OK). First run of the engine-v1 guardrails on my computer. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-15-r22-results.md
 - Round R22 (14 Nov 26): slice 1 passes end to end. List check 6 of 6, test part 1 7 of 7, test part 2 12 of 12, Window: OK. The F03 step was answered "failed", but the test proves the run worked (suspense 11 of 11 rows, 1 escalation); its wording gets fixed. Details:
