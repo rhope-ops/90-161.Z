@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 19 list update r1 (R21, PFM 14 Nov 26: hold, cancel and coordination rounds). Windows PowerShell 5.1,
+  90-161.Z Task 19 list update r2 (R21, PFM 14 Nov 26: hold, cancel and coordination rounds; r2 R22). Windows PowerShell 5.1,
   the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  What it is for: adds the R21 columns to the lists that T02 r11 made on the test site, so F03 r3, F05 r2 and F06 r1 can
+  What it is for: adds the R21 columns to the lists that T02 r11 made on the test site, so F03 r4, F05 r2 and F06 r1 can
   use them. T02 r12 builds a new site with them already; this task updates an existing one. About 2 minutes (an estimate).
   WHAT IT CHANGES ON THE SITE (adds only; nothing is removed or renamed):
     1. PFM Publications: adds the columns Status Reason (multiple lines of text) and Held Since (date only).
@@ -13,7 +13,10 @@
   A column or choice that is already there is left as it is (PASS present), so a second run changes nothing.
   Counts and column names only: no names or addresses are written. The site address stays in Config\90161Z-site.txt on
   this computer; every output line shows it as <SITE> and the DODID as <DODID>.
-  Output: 90161Z-T19-list-update-r1.txt in the T19 folder (send it).
+  r2 (R22, R21 finding 1): r1 read the Action Status choices from the Choices property, which Get-PnPField does not fill in
+  PnP.PowerShell 1.12.0 (all 5 read as missing, and Set-PnPField -Values Choices had no effect). r2 reads the choices from
+  the field's SchemaXml and writes them through CSOM (FieldChoice.Choices, Update, ExecuteQuery).
+  Output: 90161Z-T19-list-update-r2.txt in the T19 folder (send it).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -NoPause.
 #>
 param([string]$Id, [switch]$NoPause)
@@ -152,7 +155,7 @@ try {
   Set-Location -LiteralPath $dir
   $configDir = Join-Path (Split-Path -Parent $dir) 'Config'
   $site = Get-SiteAddress $configDir
-  $lines.Add('TASK T19 list update r1, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+  $lines.Add('TASK T19 list update r2, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
@@ -171,15 +174,21 @@ try {
       $lines.Add('ITEM ' + $n + '-' + $f.Name + ' PASS added to ' + $f.List)
     }
   }
-  $field = Get-PnPField -List 'PFM Publications' -Identity 'ActionStatus' -ErrorAction Stop
-  $have = @($field.Choices)
+  # r2: the choices come from SchemaXml (CHOICES/CHOICE), not from .Choices (empty on the base Field object in PnP 1.12.0).
+  $readChoices = { @(([xml](Get-PnPField -List 'PFM Publications' -Identity 'ActionStatus' -ErrorAction Stop).SchemaXml).SelectNodes('//CHOICES/CHOICE') | ForEach-Object { $_.InnerText }) }
+  $have = @(& $readChoices)
   $missing = @($statusChoices | Where-Object { $have -notcontains $_ })
   if ($missing.Count) {
-    $all = @($have) + $missing
-    $null = Set-PnPField -List 'PFM Publications' -Identity 'ActionStatus' -Values @{ Choices = [string[]]$all } -ErrorAction Stop
-    $after = @((Get-PnPField -List 'PFM Publications' -Identity 'ActionStatus' -ErrorAction Stop).Choices)
+    $all = [string[]](@($have) + $missing)
+    $ctx = Get-PnPContext
+    $field = Get-PnPField -List 'PFM Publications' -Identity 'ActionStatus' -ErrorAction Stop
+    $choiceField = $ctx.GetType().GetMethod('CastTo').MakeGenericMethod([Microsoft.SharePoint.Client.FieldChoice]).Invoke($ctx, @($field))
+    $choiceField.Choices = $all
+    $choiceField.Update()
+    $ctx.ExecuteQuery()
+    $after = @(& $readChoices)
     $still = @($statusChoices | Where-Object { $after -notcontains $_ })
-    $lines.Add('ITEM 4-ActionStatus ' + $(if ($still.Count) { 'FAIL still missing: ' + ($still -join ', ') } else { 'PASS added choices: ' + ($missing -join ', ') }))
+    $lines.Add('ITEM 4-ActionStatus ' + $(if ($still.Count) { 'FAIL still missing: ' + ($still -join ', ') } else { 'PASS added choices: ' + ($missing -join ', ') + ' (choices now ' + $after.Count + ')' }))
   } else { $lines.Add('ITEM 4-ActionStatus PASS present, choices=' + $have.Count) }
   $row = @(Get-PnPListItem -List 'PFM Settings' -Fields 'Title', 'SettingValue' -ErrorAction Stop | Where-Object { [string]$_['Title'] -eq 'CoordinationSuspenseBusinessDays' })
   if (-not $row.Count) { $lines.Add('ITEM 5-suspense-setting FAIL no CoordinationSuspenseBusinessDays row in PFM Settings') }
@@ -196,7 +205,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T19-list-update-r1.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T19-list-update-r2.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
   if (@($masked | Where-Object { $_ -match '^STOPPED|^ITEM .* FAIL' }).Count) { exit 1 }

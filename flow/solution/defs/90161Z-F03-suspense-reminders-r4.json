@@ -1,5 +1,5 @@
 {
-  "displayName": "90161Z F03 Suspense Reminders r3",
+  "displayName": "90161Z F03 Suspense Reminders r4",
   "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one (20 working days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26.",
   "workflowKey": "90161Z-F03-suspense-reminders-r2",
   "connections": [
@@ -77,9 +77,19 @@
           "type": "Compose",
           "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd')"
         },
-        "Get_endorsements_without_suspense": {
+        "Today_weekday": {
           "runAfter": {
             "Today": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@addDays(outputs('Today'), if(equals(dayOfWeek(outputs('Today')), 6), -1, if(equals(dayOfWeek(outputs('Today')), 0), -2, 0)), 'yyyy-MM-dd')",
+          "description": "R22 (R21 finding 2): a Saturday or Sunday run counts the working days from the Friday before, as F06 does; otherwise 20 working days from a Saturday ended on a Monday, 1 working day late"
+        },
+        "Get_endorsements_without_suspense": {
+          "runAfter": {
+            "Today_weekday": [
               "Succeeded"
             ]
           },
@@ -121,7 +131,7 @@
             "Working_day_suspense": {
               "runAfter": {},
               "type": "Compose",
-              "inputs": "@addDays(outputs('Today'), add(mul(7, div(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), add(mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5), if(greater(add(dayOfWeek(outputs('Today')), mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+              "inputs": "@addDays(outputs('Today_weekday'), add(mul(7, div(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), add(mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5), if(greater(add(dayOfWeek(outputs('Today_weekday')), mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
             },
             "Calendar_30_suspense": {
               "runAfter": {

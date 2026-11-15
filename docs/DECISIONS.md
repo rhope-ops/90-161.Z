@@ -5,8 +5,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Flow state at import is per flow: a test round imports On only the flows it needs (R22: F05, F06; F03 Off); the real deployment solution imports every flow On. | PFM | flow/solution/README.md |
+| 2026-11-15 | R21 visual notes go to a separate RADE session (document now, build later); RADE does not wait for R22 results tonight. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/reviews/2026-11-15-r21-window-notes.md |
 | 2026-11-14 | Two R21 builds (PR 49 and PR 50) are combined into one R21 before it runs: T19 list columns, F06 hold and resume, R20 workflow IDs kept, RADE check fix. Do not run R21 until the combined build is on main. | PFM | docs/NEXT_PROMPT.md |
-| 2026-11-14 | R21 may change the test site lists (T19 adds Status Reason, Held Since, Coordination Round and two Action Status choices; adds only). | PFM | scripts/gov/90161Z-T19-list-update-r1.ps1 |
+| 2026-11-14 | R21 may change the test site lists (T19 adds Status Reason, Held Since, Coordination Round and two Action Status choices; adds only). | PFM | scripts/gov/90161Z-T19-list-update-r2.ps1 |
 | 2026-11-14 | Hold and resume logic is built now (F06 r1 in R21), not after the app: due dates move out by the weekdays held, logged as an extension. | PFM | flow/solution/README.md |
 | 2026-11-14 | RADE repository check fix goes into R21 (User-Agent and inner error kinds), in rhope-ops/RADE with its own review (RADE PR 17). | PFM | https://github.com/rhope-ops/RADE/blob/main/engine/rade_build.py |
 | 2026-11-14 | (1A) Failure e-mails link to the failed run: tests/check_flow_solution.py allows the DoD portal host make.powerautomate.appsplatform.us. (2A) Old round bundles leave when the next round ships. | PFM | flow/solution/README.md |
