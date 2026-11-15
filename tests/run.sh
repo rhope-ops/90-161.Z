@@ -304,7 +304,7 @@ needs() { python3 -c "import json,sys;print(' '.join(sorted({n for b in json.loa
 tp=$(mktemp -d); mkdir -p "$tp/u/test1234/OneDrive - United States Air Force"; pf=0; pr=0; pc=0
 # R06 cleanup fixture: finished folders with our files and one file 90-161.Z did not make (must stay).
 ob="$tp/u/test1234/OneDrive - United States Air Force/90-161.Z"; mkdir -p "$ob/T02" "$ob/T13" "$ob/Rounds/R09" "$ob/T07" "$ob/T09"
-touch "$ob/T02/90161Z-T02-provision-lists-r9.zip" "$ob/T02/Provision-Lists.ps1" "$ob/T13/90161Z-T13-label-capture-r2.ps1" "$ob/T13/my-notes.docx" \
+touch "$ob/T02/90161Z-T02-provision-lists-r9.zip" "$ob/T02/Test-Environment.ps1" "$ob/T13/90161Z-T13-label-capture-r2.ps1" "$ob/T13/my-notes.docx" \
   "$ob/Rounds/R09/90161Z-R09-report-r1.txt" "$ob/T07/90161Z-T07-seal-test-r4.ps1" "$ob/T07/90161Z-T07-key-r1.txt" "$ob/T09/90161Z-T09-page-r1.htm"
 echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (open, 1 Jan 26)\n' > "$tp/go.md"
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
@@ -322,7 +322,7 @@ for b in scripts/gov/paste/*.ps1; do
   # Saved checks (R17): the run wrote RADE/Config/rade-checks.json with PASSED entries only and no DODID.
   ck="$tp/u/test1234/OneDrive - United States Air Force/RADE/Config/rade-checks.json"
   [ -f "$ck" ] && ! grep -q test1234 "$ck" && python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert d['schema']=='rade-checks/1' and d['maxAgeDays']==7 and d['checks'] and all(v['state']=='PASSED' for v in d['checks'].values()) and not ({'word','disk','write'} & set(d['checks']))" "$ck" || { echo "rade-checks.json"; cat "$ck"; pf=$((pf+1)); }
-  st=$(grep -c '^Step [0-9]* of [0-9]*: ' "$tp/out.txt"); sm=$(grep -c '^  Result: \(PASSED\|NEEDS REVIEW\) (' "$tp/out.txt")
+  st=$(grep -c '^Step [0-9]* of [0-9]*: ' "$tp/out.txt"); sm=$(grep -c '^  Result: \(PASSED\|NEEDS REVIEW\|SKIPPED\) (' "$tp/out.txt")   # SKIPPED: a step whose "after" step did not pass (R25 on)
   [ "$st" -eq "$n" ] && [ "$sm" -eq "$n" ] && [ -f "$base/Rounds/$r/90161Z-$r-report-r1.txt" ] && grep -q "^Results folder: Rounds" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && grep -q "full log" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && pr=$((pr+1)) || { cat "$tp/out.txt" | tail -20; }
   # The screen shows the real path (PFM 13 Nov); everything else, and the report, masks it.
   ! { grep -v '^Working folder: ' "$tp/out.txt" | grep -q "test1234"; } && ! grep -q "test1234" "$base/Rounds/$r/90161Z-$r-report-r1.txt" || { echo "DODID not masked"; pf=$((pf+1)); }
