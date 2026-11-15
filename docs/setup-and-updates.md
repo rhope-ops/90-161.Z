@@ -2,6 +2,8 @@
 
 Status: design draft. The PFM decided the goals on 12 Nov (docs/DECISIONS.md: initial configuration, update check). Items marked **Rec:** are agent recommendations, not decisions. Items marked **Test** are not proven on the DoD tenant.
 
+Changed by the PFM, 15 Nov 26 (docs/DECISIONS.md), not yet worked into the text below: (1) Part 0 is now the RADE checks; a small probe flow stays only for the connector data policy (R7) and Send As (R9). (2) The app shows its installed version only and RADE compares versions at each run: the "Check for updates" button and the central Releases list (R11, section 5) are not built.
+
 ## 1. Goals (PFM, 12 Nov)
 
 1. One person with the needed rights sets up 90-161.Z end to end.
