@@ -3,7 +3,7 @@
   90-161.Z Task 19 list update r3 (PFM 15 Nov 26: the site address comes from RADE or Config, no question; R21, PFM 14 Nov 26: hold, cancel and coordination rounds; r2 R22). Windows PowerShell 5.1,
   the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  What it is for: adds the R21 columns to the lists that T02 r11 made on the test site, so F03 r4, F05 r2 and F06 r1 can
+  What it is for: adds the R21 columns to the lists that T02 r11 made on the test site, so F03 r4 (now r5), F05 r2 and F06 r1 can
   use them. T02 r12 builds a new site with them already; this task updates an existing one. About 2 minutes (an estimate).
   WHAT IT CHANGES ON THE SITE (adds only; nothing is removed or renamed):
     1. PFM Publications: adds the columns Status Reason (multiple lines of text) and Held Since (date only).
@@ -100,7 +100,7 @@ function Get-SiteAddress([string]$ConfigDir) {
   $f = Join-Path $ConfigDir '90161Z-site.txt'
   if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
   # RADE runs a step with no window, so a question there would wait unseen: stop with the fix instead.
-  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. In RADE, select "Change the site address", complete the "Site address" box, then run this step again.' }
+  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. Complete the "Site address" box in RADE, then run this step again.' }
   $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
   if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
   if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }

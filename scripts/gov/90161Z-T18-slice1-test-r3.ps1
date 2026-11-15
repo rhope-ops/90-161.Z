@@ -118,7 +118,7 @@ function Get-SiteAddress([string]$ConfigDir) {
   $f = Join-Path $ConfigDir '90161Z-site.txt'
   if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
   # RADE runs a step with no window, so a question there would wait unseen: stop with the fix instead.
-  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. In RADE, select "Change the site address", complete the "Site address" box, then run this step again.' }
+  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. Complete the "Site address" box in RADE, then run this step again.' }
   $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
   if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
   if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }
@@ -310,6 +310,9 @@ try {
     Add-Line 'i-f03-suspense' $(if ($checked -and $right -eq $checked) { 'PASS' } else { 'FAIL' }) ('rows with the 20-working-day suspense (' + $work.ToString('dd MMM yy') + ')=' + $right + ' of ' + $checked + $(if ($right -lt $checked) { '. F03 must run the same day as part 2; check its run history' } else { '' }))
     $logA = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('[TEST] Reminder Sent: E' + $pastRow + ' Escalation') }).Count
     Add-Line 'j-f03-escalation' $(if ($logA -eq 1) { 'PASS' } else { 'FAIL' }) ('test-mode escalation logged for the past-due A row=' + $logA + ' expected=1 (0 = Test mode was not Yes, or F03 did not run)')
+    # PFM 15 Nov 26 (the escalation e-mail never arrived, 3 rounds): F03 r5 writes in the log row which mailbox sent it.
+    $via = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('[TEST] Reminder Sent: E' + $pastRow + ' Escalation') } | ForEach-Object { if (([string]$_['EventDetails']) -match 'sent from (the shared mailbox|the flow owner mailbox)') { $Matches[1] } else { 'not recorded' } } | Select-Object -First 1)
+    Add-Line 'j2-f03-mailbox' 'INFO' ('the escalation e-mail was sent from: ' + $(if ($via.Count) { $via[0] } else { 'no log row' }) + '. If it is not in your Inbox: look in Junk and in the Sent Items of that mailbox')
     $logH = @(Get-RowsFor 'PFM Activity Log' $hId | Where-Object { ([string]$_['Title']) -match ('Reminder Sent: E' + $hRowId + ' ') }).Count
     $hFormal = @(Get-Formal $hId | Where-Object { $_.Id -ne $hRowId }).Count
     Add-Line 'k2-hold-still-skipped' $(if ($hFormal -eq 0) { 'PASS' } else { 'FAIL' }) ('F05 rows for H (On Hold) at part 2=' + $hFormal + ' expected=0')
