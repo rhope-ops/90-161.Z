@@ -226,8 +226,12 @@ for r in d['fields']:
     if b.get('ViewQuery'): ET.fromstring('<Q>' + b['ViewQuery'] + '</Q>')
 PY
 
-out=$(pwsh -NoProfile -File scripts/gov/Provision-Lists.ps1 -PlanOnly -SchemaPath schemas/lists 2>&1 | tail -1)
-[ "$out" = "PLAN lists=12 fields=199 views=18" ] && ok "lists plan ($out)" || bad "lists plan: $out"
+# T20 list provisioning by PnP (PFM 14 Nov 26): the plan counts come from the payload, and the script runs against a strict
+# fake site (tests/fake-pnp): create, a second run that creates nothing, a repair run, the clean check, masked output.
+out=$(pwsh -NoProfile -File scripts/gov/90161Z-T20-provision-lists-r1.ps1 -PlanOnly -PayloadPath flow/provisioning-payload.json 2>&1 | tail -1)
+[ "$out" = "PLAN lists=12 fields=199 views=18 rows=88 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
+out=$(pwsh -NoProfile -File tests/ps/Test-T20.ps1 2>&1 | tail -1)
+case "$out" in "T20 pass="*" fail=0") ok "T20 list provisioning on the fake site ($out)";; *) pwsh -NoProfile -File tests/ps/Test-T20.ps1 2>&1 | grep "T20TEST FAIL" | cut -c1-300; bad "T20 list provisioning: $out";; esac
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
 # Build is deterministic (fixed dates): a rebuild must match the committed file byte for byte.
@@ -300,7 +304,7 @@ needs() { python3 -c "import json,sys;print(' '.join(sorted({n for b in json.loa
 tp=$(mktemp -d); mkdir -p "$tp/u/test1234/OneDrive - United States Air Force"; pf=0; pr=0; pc=0
 # R06 cleanup fixture: finished folders with our files and one file 90-161.Z did not make (must stay).
 ob="$tp/u/test1234/OneDrive - United States Air Force/90-161.Z"; mkdir -p "$ob/T02" "$ob/T13" "$ob/Rounds/R09" "$ob/T07" "$ob/T09"
-touch "$ob/T02/90161Z-T02-provision-lists-r9.zip" "$ob/T02/Provision-Lists.ps1" "$ob/T13/90161Z-T13-label-capture-r2.ps1" "$ob/T13/my-notes.docx" \
+touch "$ob/T02/90161Z-T02-provision-lists-r9.zip" "$ob/T02/Test-Environment.ps1" "$ob/T13/90161Z-T13-label-capture-r2.ps1" "$ob/T13/my-notes.docx" \
   "$ob/Rounds/R09/90161Z-R09-report-r1.txt" "$ob/T07/90161Z-T07-seal-test-r4.ps1" "$ob/T07/90161Z-T07-key-r1.txt" "$ob/T09/90161Z-T09-page-r1.htm"
 echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (open, 1 Jan 26)\n' > "$tp/go.md"
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
@@ -318,8 +322,28 @@ for b in scripts/gov/paste/*.ps1; do
   # Saved checks (R17): the run wrote RADE/Config/rade-checks.json with PASSED entries only and no DODID.
   ck="$tp/u/test1234/OneDrive - United States Air Force/RADE/Config/rade-checks.json"
   [ -f "$ck" ] && ! grep -q test1234 "$ck" && python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert d['schema']=='rade-checks/1' and d['maxAgeDays']==7 and d['checks'] and all(v['state']=='PASSED' for v in d['checks'].values()) and not ({'word','disk','write'} & set(d['checks']))" "$ck" || { echo "rade-checks.json"; cat "$ck"; pf=$((pf+1)); }
-  st=$(grep -c '^Step [0-9]* of [0-9]*: ' "$tp/out.txt"); sm=$(grep -c '^  Result: \(PASSED\|NEEDS REVIEW\) (' "$tp/out.txt")
-  [ "$st" -eq "$n" ] && [ "$sm" -eq "$n" ] && [ -f "$base/Rounds/$r/90161Z-$r-report-r1.txt" ] && grep -q "^Results folder: Rounds" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && grep -q "full log" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && pr=$((pr+1)) || { cat "$tp/out.txt" | tail -20; }
+  # Every default step starts. A step is SKIPPED only when the manifest says so: its "after" names a script step (a script
+  # step cannot pass here: it stops at Unblock-File) or a step that is itself skipped. Every other step must end PASSED
+  # or NEEDS REVIEW. The exact set is compared, so an engine fault that skips more (or fewer) steps fails this test.
+  st=$(grep -c '^Step [0-9]* of [0-9]*: ' "$tp/out.txt")
+  sk=$(python3 - "$b" "$tp/out.txt" <<'PYS'
+import json, re, sys
+bundle = [b for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out'] == sys.argv[1]][0]
+steps = bundle['steps']; kind = {s['name']: s.get('kind', 'script') for s in steps}
+want = set()
+for s in steps:   # in order: a later step may depend on an earlier skipped one
+    if any(kind[a] == 'script' or a in want for a in s.get('after', [])): want.add(s['name'])
+got, ran, name = set(), set(), None
+for line in open(sys.argv[2], encoding='utf-8', errors='replace'):
+    m = re.match(r'^Step \d+ of \d+: (.+?)\s*$', line)
+    if m: name = m.group(1); continue
+    m = re.match(r'^  Result: (PASSED|NEEDS REVIEW|SKIPPED) \(', line)
+    if m and name: (got if m.group(1) == 'SKIPPED' else ran).add(name); name = None
+names = {s['name'] for s in steps}
+print('OK' if got == want and ran == names - want else 'MISMATCH skipped=%s want=%s ran=%d of %d' % (sorted(got), sorted(want), len(ran), len(names - want)))
+PYS
+)
+  [ "$st" -eq "$n" ] && [ "$sk" = "OK" ] && [ -f "$base/Rounds/$r/90161Z-$r-report-r1.txt" ] && grep -q "^Results folder: Rounds" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && grep -q "full log" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && pr=$((pr+1)) || { echo "round steps: $sk"; cat "$tp/out.txt" | tail -20; }
   # The screen shows the real path (PFM 13 Nov); everything else, and the report, masks it.
   ! { grep -v '^Working folder: ' "$tp/out.txt" | grep -q "test1234"; } && ! grep -q "test1234" "$base/Rounds/$r/90161Z-$r-report-r1.txt" || { echo "DODID not masked"; pf=$((pf+1)); }
   grep -q "^Working folder: $tp/u/test1234/" "$tp/out.txt" || { echo "real path not shown"; pf=$((pf+1)); }
@@ -344,12 +368,40 @@ for b in scripts/gov/paste/*.ps1; do
     && grep -q "^\"$r\",\"ROUND\"," "$base/Config/90161Z-history.csv" && pc=$((pc+1)) || { echo "cleanup/summary"; grep -E "^(Clean-up|Files left|90161Z)" "$base/Rounds/$r/90161Z-$r-report-r1.txt"; ls -R "$nb" | head -30; }
 done
 # Newest RADE (the PFM, 15 Nov 26: "there needs to be a check if RADE has upgraded every time we do a round"): the lock must
-# name the newest engine release of rhope-ops/RADE. Behind = FAIL with the command that moves it. No network = not checked.
-newest=$(timeout 30 git ls-remote --tags https://github.com/rhope-ops/RADE 'refs/tags/engine-v*' 2>/dev/null | sed -n 's#.*refs/tags/engine-v\([0-9]*\)$#\1#p' | sort -n | tail -1)
-locked=$(python3 -c "import json,re;print(re.sub(r'\D','',json.load(open('scripts/rade.lock.json')).get('tag','')))")
-if [ -z "$newest" ]; then ok "RADE engine is the newest release: NOT CHECKED (no answer from github.com); lock = engine-v$locked"
-elif [ "$locked" = "$newest" ]; then ok "RADE engine is the newest release (engine-v$locked)"
-else bad "RADE engine is behind: lock = engine-v$locked, newest release = engine-v$newest. Run: python3 scripts/bump_lock.py engine-v$newest, then build a new round"; fi
+# name the newest engine release of rhope-ops/RADE, and its commit must be the commit of that release tag (review of
+# 15 Nov 26: a lock with the new tag and an old commit passed). Behind or a wrong commit = FAIL with the command that
+# moves it. No network = NOTE, not a PASS (the same review: "PASS ... NOT CHECKED" read as a real pass).
+rade_lock_verdict() {  # $1 = output of git ls-remote --tags (may be empty), $2 = lock tag, $3 = lock commit
+  python3 - "$1" "$2" "$3" <<'PYR'
+import re, sys
+tags, lock_tag, lock_commit = sys.argv[1], sys.argv[2], sys.argv[3]
+sha = {}
+for line in tags.splitlines():
+    m = re.match(r'^([0-9a-f]{40})\s+refs/tags/(engine-v[0-9]+)(\^\{\})?$', line.strip())
+    if m and (m.group(3) or m.group(2) not in sha): sha[m.group(2)] = m.group(1)   # a peeled line (^{}) is the commit
+if not sha: print('NOTCHECKED'); sys.exit()
+newest = max(sha, key=lambda t: int(t.split('v')[-1]))
+if lock_tag != newest: print('BEHIND ' + newest)
+elif sha[newest] != lock_commit: print('WRONGCOMMIT ' + newest)
+else: print('OK ' + newest)
+PYR
+}
+fake_tags=$(printf '%s\trefs/tags/engine-v4\n%s\trefs/tags/engine-v5\n%s\trefs/tags/engine-v10\n' aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccccccccccccc)
+[ "$(rade_lock_verdict "$fake_tags" engine-v10 cccccccccccccccccccccccccccccccccccccccc)" = "OK engine-v10" ] \
+  && [ "$(rade_lock_verdict "$fake_tags" engine-v5 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)" = "BEHIND engine-v10" ] \
+  && [ "$(rade_lock_verdict "$fake_tags" engine-v10 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)" = "WRONGCOMMIT engine-v10" ] \
+  && [ "$(rade_lock_verdict "" engine-v10 cccccccccccccccccccccccccccccccccccccccc)" = "NOTCHECKED" ] \
+  && ok "newest-RADE check: verdicts (newest, behind, wrong commit, no network)" || bad "newest-RADE check: verdicts"
+tags=$(timeout 30 git ls-remote --tags https://github.com/rhope-ops/RADE 'refs/tags/engine-v*' 2>/dev/null || true)
+lock_tag=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('tag',''))")
+lock_commit=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('commit',''))")
+verdict=$(rade_lock_verdict "$tags" "$lock_tag" "$lock_commit")
+case "$verdict" in
+  OK*) ok "RADE engine is the newest release ($lock_tag, commit matches the tag)";;
+  NOTCHECKED) echo "NOTE RADE engine newest-release check NOT RUN (no answer from github.com); lock = $lock_tag";;
+  BEHIND*) bad "RADE engine is behind: lock = $lock_tag, newest release = ${verdict#BEHIND }. Run: python3 scripts/bump_lock.py ${verdict#BEHIND }, then build a new round";;
+  *) bad "RADE lock commit is not the commit of $lock_tag. Run: python3 scripts/bump_lock.py $lock_tag";;
+esac
 # NIPR-only start check (RADE engine-v3 on; the PFM, 15 Nov 26): the bundle as shipped, on this computer (not NIPR), prints
 # only the stop message and writes nothing.
 for b in scripts/gov/paste/*.ps1; do
@@ -397,10 +449,16 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r3.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1; do
+for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
 ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
+done
+# A list id right after URL-encoded characters (guid%27<id>%27) must be masked too (review of 15 Nov 26). The scripts
+# revised on or after 15 Nov 26 have the fix; T16 r4, T16 r11 and T19 r3 get it with their next revision.
+for hsf in scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+hs=$(pwsh -NoProfile -c '$src = Get-Content '"$hsf"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "lists(guid%270a1b2c3d-9999-2222-3333-444455556666%27)/items and %2F0a1b2c3d-9999-2222-3333-444455556666" "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
+! echo "$hs" | grep -qiE "0a1b2c3d|9999-2222" && echo "$hs" | grep -q "<GUID>" && ok "$(basename $hsf) hides a list id after URL-encoded characters" || { echo "$hs"; bad "GUID masking after URL-encoded characters: $(basename $hsf)"; }
 done
 # PFM 15 Nov 26 (enter the site once): Get-SiteAddress returns the address RADE holds, then the saved one, with no question.
 sa=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/src/site-common.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Get-SiteAddress.*?\n}\n").Value); function Read-Host { throw "ASKED" }; $d = Join-Path ([IO.Path]::GetTempPath()) ("sa" + [guid]::NewGuid().ToString("N")); $null = New-Item -ItemType Directory $d; $env:RADE_SITE = "https://fakeco.example/sites/one"; $a = Get-SiteAddress $d; $env:RADE_SITE = ""; Set-Content (Join-Path $d "90161Z-site.txt") "https://fakeco.example/sites/two"; $b = Get-SiteAddress $d; Remove-Item (Join-Path $d "90161Z-site.txt"); $c = try { Get-SiteAddress $d } catch { [string]$_.Exception.Message }; $env:RADE_CONTRACT = "1"; $e = try { Get-SiteAddress $d } catch { ([string]$_.Exception.Message).Substring(0, 20) }; $env:RADE_CONTRACT = ""; Remove-Item $d -Recurse -Force; "$a|$b|$c|$e"' 2>&1 | tail -1)

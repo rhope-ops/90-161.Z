@@ -8,7 +8,7 @@ Slice 1 (R21, was R20 r2; PFM 14 Nov 26): `90161Z-T18-slice1-flows-r5.zip` (r4 i
 
 ## Environment variables (type Text, so no site address is in the repo)
 
-Order on the import page (PFM 15 Nov 26): the four values a wing sets come first in the zip and their labels start with 1 to 4 (`LABEL` in scripts/build_flow_solution.py); a test-round slice imports with Test mode Yes (`SLICE_DEFAULT`), the full solution with No. Not yet seen on the import page.
+Order on the import page (PFM 15 Nov 26): the four values a wing sets come first in the zip and their labels start with 1 to 4 (`LABEL` in scripts/build_flow_solution.py); a test-round slice imports with Test mode Yes (`SLICE_DEFAULT`), the full solution with No. Seen in R24 (15 Nov 26): Test mode read Yes, F03 was Off and F05 and F06 were On, as built; the page showed the labels in the order 1, 3, 4, then 2 lower, so the page follows neither the file order nor the label text. The numbered labels stay as a way to find the 4 values; guides must not promise an order.
 
 | Schema name | Meaning | Default in the zip |
 |---|---|---|
