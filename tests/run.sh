@@ -356,7 +356,7 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 "$ENGINE" | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "Deployer fonts: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "Deployer fonts: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r10.ps1 scripts/gov/90161Z-T18-slice1-test-r2.ps1 scripts/gov/90161Z-T19-list-update-r1.ps1; do
+for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r2.ps1 scripts/gov/90161Z-T16-site-setup-r10.ps1 scripts/gov/90161Z-T18-slice1-test-r2.ps1 scripts/gov/90161Z-T19-list-update-r2.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
 ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
@@ -379,7 +379,7 @@ grep -q '\$script:draftMade = (-not \$why)' "$ENGINE" && grep -q "Outlook draft 
 python3 - <<'PYEOF' && ok "T19 list update: column XML and Action Status choices match schemas/lists" || bad "T19 list update differs from schemas/lists"
 import json, re, sys
 sys.path.insert(0, 'scripts'); import build_flow_payload as B
-s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r1.ps1', encoding='utf-8').read()
+s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r2.ps1', encoding='utf-8').read()
 rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'; Xml = '([^']+)' \}", t)
 assert len(rows) == 3, rows
 by_title = {v['title']: v for v in s.values()}

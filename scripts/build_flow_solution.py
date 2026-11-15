@@ -68,10 +68,17 @@ ENV = [  # (schema name, display name, default value)
 ]
 OPTIONAL = {"pfm_SharedMailbox"}   # isrequired 0: a wing without a shared mailbox leaves it empty
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
+# R22 (PFM 14 Nov 26: "flows added by the solution default to on; i had to turn f03 off"; "ideally the flows will be imported
+# on when this is ready for real deployment"): a test-round slice (SLICE1) imports every flow Off (StateCode 0 / StatusCode 1, the
+# Dataverse values for a turned-off flow) except the flows the round needs On (SLICE1_ON; PFM 15 Nov 26: "if it's all or none
+# import then on if it's more than 2 that need to be on. otherwise separately toggled": the state is per flow in
+# customizations.xml, so each flow gets its own); the full deployment solution (OUT) and the test solutions import On (1 / 2).
+OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r3.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 hold and resume joins R21
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r4.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 joins R21; r4 (R22): F03 r4
+SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
 
 
 def dumps(o):
@@ -150,8 +157,9 @@ def exported_text(path, text):
     return text
 
 
-def build(test=None, only=None) -> bytes:
-    """test: None for the flow solution, else one test def path (its own solution). only: def name prefixes (a slice)."""
+def build(test=None, only=None, on=()) -> bytes:
+    """test: None for the flow solution, else one test def path (its own solution). only: def name prefixes (a slice).
+    on: in a slice, the def name prefixes that import On; the slice's other flows import Off."""
     flows = load(DEFS) if test is None else [f for f in load(TEST_DEFS) if f[0] == test]
     if only:
         flows = [f for f in flows if f[0].name.startswith(only)]
@@ -177,8 +185,10 @@ def build(test=None, only=None) -> bytes:
             "      <Type>1</Type>\n      <Subprocess>0</Subprocess>\n      <Category>5</Category>\n      <Mode>0</Mode>\n"
             "      <Scope>4</Scope>\n      <OnDemand>0</OnDemand>\n      <TriggerOnCreate>0</TriggerOnCreate>\n"
             "      <TriggerOnDelete>0</TriggerOnDelete>\n      <AsyncAutodelete>0</AsyncAutodelete>\n"
-            "      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>\n      <StateCode>1</StateCode>\n      <StatusCode>2</StatusCode>\n"
-            "      <RunAs>1</RunAs>\n      <IsTransacted>1</IsTransacted>\n      <IntroducedVersion>1.0.0.0</IntroducedVersion>\n"
+            "      <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>\n"
+            + ("      <StateCode>1</StateCode>\n      <StatusCode>2</StatusCode>\n" if test is not None or not only or src.name.startswith(on) else OFF_STATE)
+            + "      <RunAs>1</RunAs>"
+            "\n      <IsTransacted>1</IsTransacted>\n      <IntroducedVersion>1.0.0.0</IntroducedVersion>\n"
             "      <IsCustomizable>1</IsCustomizable>\n      <BusinessProcessType>0</BusinessProcessType>\n"
             "      <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>\n"
             "      <ModernFlowType>0</ModernFlowType>\n      <PrimaryEntity>none</PrimaryEntity>\n"
@@ -253,9 +263,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="exit 1 if the committed zip differs from a fresh build")
     a = ap.parse_args()
-    jobs = [(None, OUT, None), (None, SLICE1[0], SLICE1[1])] + [(d, d.parent.parent / (d.stem + ".zip"), None) for d in sorted(TEST_DEFS.glob("*.json"))]
-    for test, out, only in jobs:
-        data = build(test, only)
+    jobs = [(None, OUT, None, ()), (None, SLICE1[0], SLICE1[1], SLICE1_ON)] + [(d, d.parent.parent / (d.stem + ".zip"), None, ()) for d in sorted(TEST_DEFS.glob("*.json"))]
+    for test, out, only, on in jobs:
+        data = build(test, only, on)
         if a.check:
             if not out.exists() or out.read_bytes() != data:
                 print(f"STALE {out.relative_to(ROOT)}"); sys.exit(1)

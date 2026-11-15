@@ -1,6 +1,6 @@
 # Next prompt: 90-161.Z
 
-Updated: 2026-11-14 by Claude. Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
+Updated: 2026-11-15 by Claude. Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
 
 ## Open now
 
@@ -21,7 +21,7 @@ Updated: 2026-11-14 by Claude. Keep this file at 40 lines or fewer and state onl
 
 ## Waiting on the PFM (go.md)
 
-1. R21 r2 on go.md (14 Nov, built; was "R20 r2"; PR 49, 50 and 51 combined, PFM 14 Nov): T19 list update r1 first (Status Reason, Held Since, Coordination Round, Action Status Cancelled/Complete; T02 r12 for a new site); F06 r1 hold/resume/cancel; F03/F05 keep the R20 workflow IDs (workflowKey); runs end Failed after the failure e-mail; RADE lock at RADE main eb561ce (P1 window + repository check User-Agent and inner error kinds, RADE PR 17); R20 left the build; its bundle file was removed when R21 shipped (tests/run.sh allows one round bundle). Solution 90161Z-T18-slice1-flows-r3.zip (r3: run link in the failure e-mail; F06 joins): F05 r2 (hold/cancel/complete skip, missing rows only, Legal at step 7), F03 r3 (Title in Update item = R20 finding 1; 20 working days, extension, hold skip); test mode, kill switch, failure e-mail; stable flow IDs. T18 test r2 (F05 on check, retrying polls, hold, forced failure + Resubmit, missing row, F03 checks). R20 r1 results: docs/reviews/2026-11-14-r20-results.md. R22: stage 6 target 25; RADE modes Install, Diagnose, Restore, Uninstall (docs/reviews/2026-11-14-flow-controls.md).
+1. R22 r1 on go.md (15 Nov, built): R21 fixes. T19 r2 (Action Status choices via SchemaXml + CSOM), slice zip r4 (F03 r4: weekend runs count from the Friday before; F05/F06 import On, F03 Off: per-flow state, DECISIONS 15 Nov), same T18 test r2. R21 results: docs/reviews/2026-11-14-r21-results.md. No inbox check-in for R22 (PFM 15 Nov: no results tonight). Next planned round (was "R22"): stage 6 target 25; RADE modes Install, Diagnose, Restore, Uninstall (docs/reviews/2026-11-14-flow-controls.md). RADE window notes from R21: RADE docs/reviews/2026-11-15-r21-window-notes.md (separate session).
 2. Task 6 prompt r2 follow-up: list AFI (validator F-032/F-039 fixed 13 Nov).
 3. Seals: Claude corrected 17 unit seals (1,200 px, glow removed, 2 px feather; tool in the session scratchpad, not in the repo) and mailed them in 6 parts; R13 prepared and uploaded all 17 (library 90-161.Z, Seals and Seals/Prepared).
 4. Logo K (PFM 14 Nov): official logo for every app; master copy in rhope-ops/RADE assets/logo. Not a round step any more: Claude e-mailed logo-K-512/64 on 14 Nov; the PFM sets it by hand; site setup reads the header logo. After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).

@@ -23,17 +23,17 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R21-round-r2.ps1",
-      "round": "R21",
-      "title": "Round R21: slice 1 on the test site. Import the 90-161.Z flows (F05 routing r2 and F03 reminders r3) in test mode, then three fake publications prove routing, hold, a failed run and its Resubmit, a missing row, the 20-working-day suspense and the move to Legal; all are removed at the end; T19 adds the new list columns first and F06 hold and resume is tested on F",
+      "out": "scripts/gov/paste/90161Z-R22-round-r1.ps1",
+      "round": "R22",
+      "title": "Round R22: R21 fixes on the test site. T19 r2 adds the two missing Action Status choices; the slice 1 flows import Off (F03 r4 counts the 20 working days from the Friday before when it runs on a weekend); then three fake publications repeat the R21 slice 1 test, and all are removed at the end",
       "files": [
         {
           "dir": "T19",
-          "src": "scripts/gov/90161Z-T19-list-update-r1.ps1"
+          "src": "scripts/gov/90161Z-T19-list-update-r2.ps1"
         },
         {
           "dir": "T18",
-          "src": "flow/solution/90161Z-T18-slice1-flows-r3.zip"
+          "src": "flow/solution/90161Z-T18-slice1-flows-r4.zip"
         },
         {
           "dir": "T17",
@@ -46,24 +46,24 @@
       ],
       "steps": [
         {
-          "name": "T19 Add the R21 list columns r1",
+          "name": "T19 Add the Action Status choices r2",
           "dir": "T19",
-          "file": "90161Z-T19-list-update-r1.ps1",
+          "file": "90161Z-T19-list-update-r2.ps1",
           "minutes": 10,
-          "note": "Signs in (CAC) and adds to the test site: Status Reason and Held Since on PFM Publications, the choices Cancelled and Complete on Action Status, Coordination Round on PFM Endorsements; sets the suspense setting to 20 working days. Adds only; a second run changes nothing. About 2 minutes (estimate).",
+          "note": "Signs in (CAC) and checks the R21 columns on the test site; adds the Action Status choices that are still missing (R21 could not read them). Adds only; a second run changes nothing. About 1 minute (estimate).",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 2
+          "estimate": 1
         },
         {
-          "name": "T18 Import the slice 1 flows r2",
+          "name": "T18 Import the slice 1 flows r3",
           "kind": "guide",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-flows-r3.zip",
-          "note": "You import the 90-161.Z flows solution (F05 routing r2, F03 reminders r3, F06 hold and resume r1) in test mode and turn F05 and F06 on. F03 r3 and F05 r2 replace the R20 flows in place. About 8 minutes (estimate).",
+          "file": "90161Z-T18-slice1-flows-r4.zip",
+          "note": "You import the 90-161.Z flows solution again (F03 reminders r4 replaces r3 in place; F05 r2 and F06 r1 are the same). F05 and F06 now import On and F03 imports Off, so you turn nothing on or off. About 6 minutes (estimate).",
           "marker": "90161Z-T18-slice1-imported.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
@@ -75,7 +75,7 @@
             "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
             "5. Environment variables: in Site URL, paste the test site address. In Alert e-mail, enter your own work e-mail address (failure notices and test e-mails go there). In Test mode, enter Yes. In Shared mailbox, enter the shared mailbox you have Send As rights to, or leave it empty. Keep the other values as shown (list names, 5, 3, 20 and Flows paused No).",
             "6. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "7. Open the solution \"90-161.Z flows\". It lists 3 flows: F03 Suspense Reminders r3, F05 Endorsement Routing r2, F06 Hold and Resume r1 (F03 r3 and F05 r2 replace F03 r2 and F05 r1; no second copy). Turn on F05 and F06 and check that each status reads On. Leave F03 off: you run it once by hand later in this round.",
+            "7. Open the solution \"90-161.Z flows\". It lists 3 flows: F03 Suspense Reminders r4, F05 Endorsement Routing r2, F06 Hold and Resume r1 (F03 r4 replaces F03 r3; no second copy). Check the status column: F05 and F06 read On, F03 reads Off. If F05 or F06 reads Off, turn it on; if F03 reads On, turn it off (you run it once by hand later in this round).",
             "8. Return to RADE and select \"Done: imported, F05 and F06 are on\".",
             "If the import fails: select \"Download log file\" (any folder; the next step finds it), type the first line of the red error message (no names or site address) in the box below, then select \"It failed\"."
           ],
@@ -84,7 +84,7 @@
             "net-flow",
             "flow-guide"
           ],
-          "estimate": 8
+          "estimate": 6
         },
         {
           "name": "T17 Import log reader r2",
@@ -133,7 +133,7 @@
           "estimate": 4
         },
         {
-          "name": "T18 Run F03 once r2",
+          "name": "T18 Run F03 once r3",
           "kind": "guide",
           "dir": "T18",
           "file": "",
@@ -145,11 +145,11 @@
           "guide": [
             "1. Safety check: if you did not enter exactly Yes in Test mode at import, select \"Skip\": F03 would e-mail real endorsers.",
             "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
-            "3. Open \"90161Z F03 Suspense Reminders r3\" and select Test > Manually > Test, then Run flow.",
-            "4. Wait until the run shows \"Your flow ran successfully\" (under 1 minute, estimate). F03 stays off after the test.",
+            "3. Open \"90161Z F03 Suspense Reminders r4\" and select Test > Manually > Test, then Run flow.",
+            "4. Wait until the run ends (under 1 minute, estimate). Read the status at the top of the run: \"Succeeded\" or \"Failed\". A grey \"skipped\" note on the last 3 steps (Failed actions, Failure lines, E-mail the failure) is normal: they run only when a step fails. F03 stays off after the test.",
             "5. In Outlook, check for one e-mail whose subject starts \"[TEST] Escalation\". It may take 1 to 2 minutes.",
             "6. Return to RADE and select \"Done: F03 ran\".",
-            "If the run fails: type the first line of the error (no names or site address) in the box below, then select \"It failed\"."
+            "If the run status is Failed: open the first step with a red mark, type its name and the first line of its error (no names or site address) in the box below, then select \"It failed\"."
           ],
           "doneText": "Done: F03 ran",
           "needs": [
@@ -175,8 +175,8 @@
       "collect": [
         {
           "dir": "T19",
-          "name": "90161Z-T19-list-update-r1.txt",
-          "step": "T19 Add the R21 list columns r1"
+          "name": "90161Z-T19-list-update-r2.txt",
+          "step": "T19 Add the Action Status choices r2"
         },
         {
           "dir": "T18",
@@ -566,20 +566,36 @@
         {
           "path": "T18\\90161Z-T18-slice1-flows-r2.zip",
           "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R20",
+          "kind": "dir"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R21. Imports the slice 1 flows (F05 routing r2, F03 reminders r3) in test mode, then proves routing, hold, a failed run with Resubmit, a missing row, the suspense and the move to Legal with three fake publications, and removes them. Adds the new list columns first (T19) and tests F06 hold, resume and cancel.",
+          "summary": "Test round R22. Fixes the 2 R21 findings: adds the missing Action Status choices (T19 r2) and imports F03 r4, which counts the suspense from the Friday before on a weekend run; all flows import Off. Then repeats the R21 slice 1 test with three fake publications and removes them.",
           "steps": [
-            "T19 Add the R21 list columns r1",
-            "T18 Import the slice 1 flows r2",
+            "T19 Add the Action Status choices r2",
+            "T18 Import the slice 1 flows r3",
             "T17 Import log reader r2",
             "T18 Slice 1 test, part 1 r2",
             "T18 Failure e-mail and Resubmit r1",
-            "T18 Run F03 once r2",
+            "T18 Run F03 once r3",
             "T18 Slice 1 test, part 2 r2"
           ]
         }
