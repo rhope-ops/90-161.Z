@@ -8,6 +8,11 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-15 | Round builds use the RADE release that exists; an engine change runs in its own RADE session at the same time and the round moves to it later. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Reviews in round builds: the rule stays (each fix gets a fresh review); the review starts while the hosted check runs, not after it. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Bloat audit 3 run on the PFM's request (tests 3 times slower than the baseline). Its proposals P1 to P9 are agent RECs until the PFM approves each. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
+| 2026-11-15 | SharePoint admin app (SPAR): a Power Apps canvas app any site owner opens by link; tick boxes and buttons, no drag and drop. Replaces the WPF part of 2026-11-14. No build yet. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-15 | 90-161.Z stays a Power Apps canvas app for all users; no desktop window replaces it. Confirms the platform decision of 2026-11-10. Scope: 90-161.Z. | PFM | docs/ARCHITECTURE.md |
+| 2026-11-15 | CRM file: an Excel table in the action's Working Files folder, made when coordination starts; the app adds each comment as a row; read-only for people; it goes into the record set. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
+| 2026-11-15 | Coordinators enter comments in the app, one row per comment (CRM columns, DAFMAN 5.3); the app makes the CRM file for the record set. File format and list design open. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
+| 2026-11-15 | Clickable previews are back (25A step 2): app previews at 375 and 1440 px, light and dark. The 13 Nov "no previews" text was not the PFM's decision and is withdrawn. | PFM | docs/app/screen-map.md |
 | 2026-11-15 | RADE lock moves to release engine-v6 (RADE 67f7681, serial 5) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-15 | Round order after R24 approved (1A): R25 lists by PnP, R26 Settings rows, R27 all flows, R28-R29 RADE maintenance, R30-R33 app, R34-R35 pilot start. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | R25 clean target (2B): delete the 12 test lists, the library, the flows and solutions by hand from an exact list; RADE then checks the site (read-only) before it installs. | PFM | go.md |
@@ -154,8 +159,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-13 | Word files get the Purview label automatically from a one-time capture. Test: R02. | PFM | archive |
 | 2026-11-13 | go.md and runner messages say e-mail (spelling per B1A), never the PFM's personal mail service. | PFM | archive |
 | 2026-11-13 | Wing PowerPoint master kept off this repo. **Rec:** use its r2 look as the theme for the briefs and the app (not yet approved). | Agent (Rec) | archive |
-| 2026-11-13 | Screen map: (26A) UI text in app code. (27A) one responsive app. (28A) My Work home. (29A) Action Status open to all. No previews. | PFM | docs/app/screen-map.md |
-| 2026-11-13 | Phase 4 (25A): screen map first (docs/app/screen-map.md). The planned previews were dropped by the screen-map row (no previews). | PFM | docs/app/screen-map.md |
+| 2026-11-13 | Screen map: (26A) UI text in app code. (27A) one responsive app. (28A) My Work home. (29A) Action Status open to all. ("No previews" withdrawn 15 Nov.) | PFM | docs/app/screen-map.md |
+| 2026-11-13 | Phase 4 (25A): screen map first (docs/app/screen-map.md). Clickable previews restored 15 Nov. | PFM | docs/app/screen-map.md |
 | 2026-11-13 | Periodic bloat, drift, duplication and assumption checks in every repo; question tool for 1-4 questions. | PFM | archive |
 | 2026-11-13 | Bloat audit: 14 days or 30 commits; 12,000 tokens; +25% timing (1A). Other repos (2B). Sync after check: mil (3A). Audit next (4A). | PFM | archive |
 | 2026-11-13 | Gov-device usability bar for go.md and runner windows; results folder Rounds\\<round>, no zips. | PFM | archive |
