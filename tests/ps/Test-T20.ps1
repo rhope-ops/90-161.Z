@@ -105,7 +105,7 @@ New-FakeSite
 $mine = Add-FakeList 'PFM Settings' 100 'My own list'
 $other = Add-FakeList 'PFM budget notes' 100 'PFM budget notes'
 $r = Invoke-T20 'Check'
-Test-That 'check: a person''s own list titled like ours is not named' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(1\): PFM Settings\.' -and $r.Text -notmatch 'budget') $r.Text
+Test-That 'check: a person''s own list with a title the install needs is a title clash, not ours to delete' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists PASS' -and $r.Text -match 'ITEM b2-title-in-use FAIL .*\(1\): PFM Settings\. .*Rename that list or delete it' -and $r.Text -notmatch 'budget') $r.Text
 $global:FakeSP.Lists.Remove($mine)
 $r = Invoke-T20 'Check'
 Test-That 'check: other lists that start with PFM are a count only' ($r.Code -eq 0 -and $r.Text -match 'other lists whose title starts with PFM: 1' -and $r.Text -notmatch 'budget') $r.Text
@@ -119,7 +119,7 @@ New-FakeSite
 $global:FakeSP.FailOn = '/views'
 $r = Invoke-T20 ''
 Test-That 'a refused request: STOPPED and exit 1' ($r.Code -eq 1 -and @($r.Out | Where-Object { $_ -match '^STOPPED: ' }).Count -eq 1) $r.Text
-Test-That 'a refused request: the message is masked' ($r.Text -match '<SITE>' -and $r.Text -notmatch 'fakehost|FakeWing') $r.Text
+Test-That 'a refused request: the message is masked' ($r.Text -match '<SITE>' -and $r.Text -notmatch 'fakehost|FakeWing|[0-9a-f]{8}-[0-9a-f]{4}-') $r.Text
 $global:FakeSP.FailOn = ''
 $r = Invoke-T20 ''
 Test-That 'after a stop: the next run finishes the site' ($r.Code -eq 0 -and $r.Text -match 'items with problems=0' -and (Get-Ours).Count -eq 12) $r.Text

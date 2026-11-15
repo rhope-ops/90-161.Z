@@ -1,55 +1,8 @@
 # SharePoint lists and provisioning script
 
-> Status (15 Nov 26): the lists are built by `scripts/gov/90161Z-T20-provision-lists-r1.ps1` (by PnP, from flow/provisioning-payload.json; first device run: Round R25) or by the provisioning flow (the fallback: docs/power-automate-provisioning.md). The older script `Provision-Lists.ps1` that the sections "What the script needs" and "How to run" describe was removed on 15 Nov 26 (it did not set titles, indexes, seed rows or edit-own-rows); those two sections are history. "What each list holds" and "Open choices" stay current.
+> Status (15 Nov 26): the lists are built by `scripts/gov/90161Z-T20-provision-lists-r1.ps1` (by PnP, from flow/provisioning-payload.json; its header gives the modes and what it changes; first device run: Round R25) or by the provisioning flow (the fallback: docs/power-automate-provisioning.md). The sections on the older script left this file with that script on 15 Nov 26.
 
 Status: draft (Agent, 2026-11-10; names updated per PFM 2026-11-11). Implements docs/ARCHITECTURE.md sections 3 and 4, docs/process-model.md, and the Product Index (DAFMAN 90-161 6.4.2). Nothing here is a PFM decision. No site, person or office data is in the repo.
-
-## What the script needs
-
-- Windows PowerShell 5.1 and PnP.PowerShell 1.12.0 (no other modules).
-- Site collection admin rights on the 90-161.Z site. No tenant admin and no app registration.
-- The script file and the four schema files, all in one folder tree on the gov device.
-
-## How to run
-
-1. On the gov device open the public repo in a browser. Open each file below, use "Raw", select all, copy.
-   - `scripts/gov/Provision-Lists.ps1`
-   - every file in `schemas/lists/` (7 files, named by list URL name)
-2. Create this folder layout and save each file in it as UTF-8 (Notepad: Save as, Encoding UTF-8):
-
-```powershell
-New-Item -ItemType Directory -Force -Path "$HOME\90-161.Z\scripts\gov", "$HOME\90-161.Z\schemas\lists" | Out-Null
-```
-
-   Files go to `$HOME\90-161.Z\scripts\gov\Provision-Lists.ps1` and `$HOME\90-161.Z\schemas\lists\*.json`.
-3. Open PowerShell (not as admin). (This PnP path was dropped on 10 Nov; see docs/power-automate-provisioning.md.)
-
-4. Check the schemas (no network, no sign-in):
-
-```powershell
-& "$HOME\90-161.Z\scripts\gov\Provision-Lists.ps1" -PlanOnly
-```
-
-   Last line must read `PLAN lists=4 fields=25 views=5`.
-5. Dry run. It asks for the site URL and the sign-in type (W = web window with CAC, P = username/password prompt). It changes nothing:
-
-```powershell
-& "$HOME\90-161.Z\scripts\gov\Provision-Lists.ps1" -DryRun
-```
-
-6. Provision (creates the 7 PFM lists in lookup order; skips anything that exists):
-
-```powershell
-& "$HOME\90-161.Z\scripts\gov\Provision-Lists.ps1"
-```
-
-7. Optional, after you verify docs/process-model.md against DAFMAN 90-161: add the nine Stage rows. Rows whose stage number already exists are skipped.
-
-```powershell
-& "$HOME\90-161.Z\scripts\gov\Provision-Lists.ps1" -SeedStages
-```
-
-Copy the lines between the `=====` markers (created and skipped counts) into the chat. The script prints no site URL, user name or list content, and error text has URLs replaced by `<url>`. There is no password parameter; with P the Windows prompt keeps the password in memory only. Parameters `-SiteUrl` and `-SignIn Web|Credential` skip the prompts. Exit code 0 = no failures, 1 = a failure, 2 = a schema problem.
 
 ## What each list holds
 

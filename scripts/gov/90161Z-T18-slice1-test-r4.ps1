@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 18 slice 1 end-to-end test, r4 (R24 finding: r3 counted the words "fail title" in a PASS line as a problem, so part 1 said "items with problems=1" with 0 failed; r4 counts only the result word FAIL. r3: PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
+  90-161.Z Task 18 slice 1 end-to-end test, r4 (R24 finding: r3 counted the words "fail title" in a PASS line as a problem, so part 1 said "items with problems=1" with 0 failed; r4 counts only the result word FAIL, and masks a list id that follows URL-encoded characters. r3: PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
   troubleshooting). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: proves on the test site that the slice-1 flows (F05 r2 routing, F03 r3 reminders) work end to end, and
@@ -150,7 +150,7 @@ function Hide-Site([string]$Text, [string]$Site) {
   $Text = $Text -replace 'https?://\S+', '<URL>'
   $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
   $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b', '<GUID>'
+  $Text = $Text -replace '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>'   # r4: no word boundary, so an id after URL-encoded characters (guid%27...) is masked too
   return $Text
 }
 

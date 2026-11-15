@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R25, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = '902c3a56'
+$buildId = '3d784161'
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
 $homeUrl = 'https://rhope-ops.github.io/90-161.Z'
@@ -17,7 +17,7 @@ $round = 'R25'
 $appFolder = '90-161.Z'
 $usersRoot = 'C:\Users'
 $files = @()
-$files += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.ps1'; Kind = 'text'; Sha = 'ae45f3c164de'; Data = @'
+$files += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.ps1'; Kind = 'text'; Sha = 'c450918e4560'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 20 list provisioning by PnP r1 (PFM 14 Nov 26: lists by PnP; PFM 15 Nov 26: clean install in R25).
@@ -32,7 +32,9 @@ $files += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.ps1'; Kind = 'te
                the probe's test group). A clean site passes. Result: 90161Z-T20-clean-check-r1.txt.
     -DryRun    Signs in and READS only. Prints what a run would create.
     (none)     Creates what is missing, then checks every list against the payload. Result: 90161Z-T20-provision-lists-r1.txt.
-  WHAT IT CHANGES ON THE SITE (create mode only; it adds, it never deletes):
+  WHAT IT CHANGES ON THE SITE (create mode only). It never deletes a list, a column, a view or a row. One thing it
+  sets again on every run: the columns shown by its own 18 views (a column that a person added to one of these views is
+  taken out again; the list's default view is not touched):
     1. Creates the lists that are missing (12 on a clean site), with versioning on.
     2. Adds the missing columns (199) and views (18) to them.
     3. Adds the seed rows (88) to PFM Offices, PFM Series, PFM Process Steps and PFM Settings: each row whose title is not there yet.
@@ -162,7 +164,8 @@ function Hide-Site([string]$Text, [string]$Site) {
   $Text = $Text -replace 'https?://\S+', '<URL>'
   $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
   $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '(?<![0-9a-fA-F])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9a-fA-F])', '<GUID>'
+  # No word boundary: a GUID right after URL-encoded characters (guid%27...) must be masked too.
+  $Text = $Text -replace '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>'
   return $Text
 }
 
@@ -280,11 +283,17 @@ try {
 
   if ($Check) {
     $internal = @($plan.Keys); $display = @($plan.Keys | ForEach-Object { $plan[$_].Display })
-    $isOurs = { param($l) ($internal -contains [string]$l.RootFolder.Name) -or ($display -contains [string]$l.Title) -or ([string]$l.RootFolder.Name -like 'PFMRightsProbe*') -or ([string]$l.Title -like 'PFMRightsProbe*') }
+    $isOurs = { param($l) ($internal -contains [string]$l.RootFolder.Name) -or ([string]$l.RootFolder.Name -like 'PFMRightsProbe*') -or ([string]$l.Title -like 'PFMRightsProbe*') }
+    # A list that 90-161.Z did not make but that has a title the install needs: SharePoint allows one list per title,
+    # so it blocks the install. Its title is one of our 12 product titles, so it can be named; the script never changes it.
+    $isClash = { param($l) -not (& $isOurs $l) -and (($display -contains [string]$l.Title) -or ($internal -contains [string]$l.Title)) }
     $left = @($siteLists | Where-Object { & $isOurs $_ } | ForEach-Object { [string]$_.Title } | Sort-Object)
-    $other = @($siteLists | Where-Object { -not (& $isOurs $_) -and ([string]$_.Title -like 'PFM*') }).Count
+    $clash = @($siteLists | Where-Object { & $isClash $_ } | ForEach-Object { [string]$_.Title } | Sort-Object)
+    $other = @($siteLists | Where-Object { -not (& $isOurs $_) -and -not (& $isClash $_) -and ([string]$_.Title -like 'PFM*') }).Count
     if ($left.Count) { $lines.Add('ITEM b-lists FAIL still on the site (' + $left.Count + '): ' + ($left -join ', ') + '. Delete them (go.md, "Clean the test site", step 5)') }
     else { $lines.Add('ITEM b-lists PASS no 90-161.Z list on the site (other lists whose title starts with PFM: ' + $other + ', not made by 90-161.Z, not touched)') }
+    if ($clash.Count) { $lines.Add('ITEM b2-title-in-use FAIL a list that 90-161.Z did not make has a title the install needs (' + $clash.Count + '): ' + ($clash -join ', ') + '. The install cannot use that title. Rename that list or delete it: your decision; this script does not change it') }
+    else { $lines.Add('ITEM b2-title-in-use PASS no other list has a title the install needs') }
     $lib = @($siteLists | Where-Object { [string]$_.Title -eq '90-161.Z' -or [string]$_.RootFolder.Name -eq '90-161.Z' })
     if ($lib.Count) { $lines.Add('ITEM c-library FAIL the library 90-161.Z is still on the site. Delete it (step 5)') }
     else { $lines.Add('ITEM c-library PASS no 90-161.Z library') }
@@ -6356,10 +6365,10 @@ try {
 if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 exit $code
 '@ }
-$files += @{ Dir = 'T18'; Name = '90161Z-T18-slice1-test-r4.ps1'; Kind = 'text'; Sha = '08b6a4cfa928'; Data = @'
+$files += @{ Dir = 'T18'; Name = '90161Z-T18-slice1-test-r4.ps1'; Kind = 'text'; Sha = 'bde1dfe0317a'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 18 slice 1 end-to-end test, r4 (R24 finding: r3 counted the words "fail title" in a PASS line as a problem, so part 1 said "items with problems=1" with 0 failed; r4 counts only the result word FAIL. r3: PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
+  90-161.Z Task 18 slice 1 end-to-end test, r4 (R24 finding: r3 counted the words "fail title" in a PASS line as a problem, so part 1 said "items with problems=1" with 0 failed; r4 counts only the result word FAIL, and masks a list id that follows URL-encoded characters. r3: PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
   troubleshooting). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: proves on the test site that the slice-1 flows (F05 r2 routing, F03 r3 reminders) work end to end, and
@@ -6509,7 +6518,7 @@ function Hide-Site([string]$Text, [string]$Site) {
   $Text = $Text -replace 'https?://\S+', '<URL>'
   $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
   $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b', '<GUID>'
+  $Text = $Text -replace '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>'   # r4: no word boundary, so an id after URL-encoded characters (guid%27...) is masked too
   return $Text
 }
 
@@ -6751,10 +6760,10 @@ $steps += @{ Name = 'T18 Import the slice 1 flows r5'; Dir = 'T18'; File = '9016
 $steps += @{ Name = 'T17 Import log reader r2'; Dir = 'T17'; File = '90161Z-T17-import-log-r2.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 5; Args = ''; Note = 'Runs only if the import failed: copies the error rows of an import log saved in the last 3 hours to T17, addresses masked. Otherwise it reports SKIPPED.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = '' }
 $steps += @{ Name = 'T18 Slice 1 test, part 1 r4'; Dir = 'T18'; File = '90161Z-T18-slice1-test-r4.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = '-Part 1'; Note = 'Signs in (CAC). Creates three fake publications at step 6 on the new lists and checks F05: rows for A only, F after its title fix, one removed row added back. Sets two rows past due for F03.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 720; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T18 Import the slice 1 flows r5'); Optional = $false; Help = 'Send the results as they are. A FAIL here on new lists is a finding about the lists or the flows.' }
 $steps += @{ Name = 'T18 Failure e-mail and Resubmit r1'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You check that F05 e-mailed you about the forced failure, then select Resubmit on that failed run. About 4 minutes (estimate).'; Kind = 'guide'; Guide = @('1. In Outlook, find the e-mail "90-161.Z flow failed: F05" (it arrived in part 1). It names the step "Test hook forced failure". Do not reply.', '2. Select "Open in browser" and open Solutions > "90-161.Z flows" > "90161Z F05 Endorsement Routing r2".', '3. Under 28-day run history, select the run marked Failed (the time in the e-mail).', '4. Select Resubmit at the top of the run. Wait until the new run shows Succeeded (under 1 minute, estimate).', '5. Return to RADE and select "Done: resubmitted".', 'If no failure e-mail arrived, or there is no failed run: type what you see (no names or site address) in the box below, then select "It failed".'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T18-resubmitted.txt'; Estimate = 240; DoneText = 'Done: resubmitted'; DoneLog = ''; Makes = @(); After = @('T18 Slice 1 test, part 1 r4'); Optional = $false; Help = '' }
-$steps += @{ Name = 'T18 Run F03 once r5'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You run F03 once by hand. In test mode its e-mails go only to you; in this round your own mailbox sends them. The last step asks where the e-mail arrived. About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Safety check: if Test mode did not read Yes at import, select "Skip": F03 would e-mail real endorsers.', '2. Select "Open in browser" and open Solutions > "90-161.Z flows".', '3. Open "90161Z F03 Suspense Reminders r5" and select Test > Manually > Test, then Run flow.', '4. Wait until the run ends (under 1 minute, estimate). Read only the status at the top of the run: "Succeeded" or "Failed".', '5. Grey (skipped) steps are normal: the last 3 steps, one of the two send steps, and most rows of the loop send nothing.', '6. If the status is Succeeded: return to RADE and select "Done: F03 ran". The last step of the round asks about the e-mail.', 'If the status is Failed: type the name of the first step with a red mark and the first line of its error (no names or site address), then select "It failed".'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T18-f03-ran.txt'; Estimate = 180; DoneText = 'Done: F03 ran'; DoneLog = ''; Makes = @(); After = @('T18 Slice 1 test, part 1 r4'); Optional = $false; Help = '' }
+$steps += @{ Name = 'T18 Run F03 once r5'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You run F03 once by hand. In test mode its e-mails go only to you; in this round your own mailbox sends them. A later step asks where the e-mail arrived. About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Safety check: if Test mode did not read Yes at import, select "Skip": F03 would e-mail real endorsers.', '2. Select "Open in browser" and open Solutions > "90-161.Z flows".', '3. Open "90161Z F03 Suspense Reminders r5" and select Test > Manually > Test, then Run flow.', '4. Wait until the run ends (under 1 minute, estimate). Read only the status at the top of the run: "Succeeded" or "Failed".', '5. Grey (skipped) steps are normal: the last 3 steps, one of the two send steps, and most rows of the loop send nothing.', '6. If the status is Succeeded: return to RADE and select "Done: F03 ran". A later step asks about the e-mail.', 'If the status is Failed: type the name of the first step with a red mark and the first line of its error (no names or site address), then select "It failed".'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T18-f03-ran.txt'; Estimate = 180; DoneText = 'Done: F03 ran'; DoneLog = ''; Makes = @(); After = @('T18 Slice 1 test, part 1 r4'); Optional = $false; Help = '' }
 $steps += @{ Name = 'T18 Slice 1 test, part 2 r4'; Dir = 'T18'; File = '90161Z-T18-slice1-test-r4.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 40; Args = '-Part 2'; Note = 'Checks: Resubmit made no duplicates; F03 suspense and one escalation; F06 hold, resume and cancel; Legal rows and step 7. Line j2 names the mailbox that sent the e-mail. Removes all test rows.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 720; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T18 Slice 1 test, part 1 r4'); Optional = $false; Help = 'Send the results as they are. The test rows stay on the site for review when a check fails.' }
 $steps += @{ Name = 'T18 Find the test e-mail r1'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You look for the F03 test e-mail and answer one question in this window. This closes a fault of 4 rounds: the e-mail was logged but never found. About 2 minutes (estimate).'; Kind = 'guide'; Guide = @('1. In Outlook, search All Mailboxes for a subject that starts with "[TEST] Escalation", received today.', '2. Look in this order: Inbox, Junk E-mail, then Sent Items.', '3. Select "Done: I looked" and answer where you found it.', 'If Outlook does not open: select "It failed" and type what you see (no names or addresses).'); Url = ''; UrlConfig = ''; Marker = '90161Z-T18-email-looked.txt'; Estimate = 120; DoneText = 'Done: I looked'; DoneLog = ''; Makes = @(); After = @('T18 Run F03 once r5'); Optional = $false; Help = ''; Answers = @(@{ Key = 'f03-email'; Prompt = 'Where is the e-mail "[TEST] Escalation" from this round?'; Kind = 'pick'; Choices = @('Inbox', 'Junk E-mail', 'Sent Items only', 'Not found') }) }
-$steps += @{ Name = 'RADE Window questions r1'; Dir = 'T20'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You answer 4 short questions about this window: restore after minimize, button borders, alignment. This replaces notes in the e-mail. About 2 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Minimize this window now (the button with the line, top right).', '2. Select RADE on the taskbar. The window must come back at its size, not as a full screen.', '3. Select "Done: I looked" and answer the 4 questions.', 'If the window does not come back: maximize it to go on, select "Done: I looked" and answer No to the first question.'); Url = ''; UrlConfig = ''; Marker = '90161Z-T20-window-looked.txt'; Estimate = 120; DoneText = 'Done: I looked'; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = ''; Answers = @(@{ Key = 'restored'; Prompt = 'Did the window come back from the taskbar after you minimized it?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'own-border'; Prompt = 'Did every button and choice show only a thin border? A black or gray outline around one counts as No.'; Kind = 'yesno'; Choices = @() }, @{ Key = 'aligned'; Prompt = 'Were the lines and buttons aligned on every card?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'look'; Prompt = 'Did anything look wrong? Name the card and the part. Do not type names or addresses.'; Kind = 'text'; Choices = @() }) }
+$steps += @{ Name = 'RADE Window questions r1'; Dir = 'T20'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You answer 4 short questions about this window: restore after minimize, button borders, alignment, and anything that looked wrong. This replaces notes in the e-mail. About 2 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Minimize this window now (the button with the line, top right).', '2. Select RADE on the taskbar. The window must come back at its size, not as a full screen.', '3. Select "Done: I looked" and answer the 4 questions.', 'If the window does not come back: maximize it to go on, select "Done: I looked" and answer No to the first question.'); Url = ''; UrlConfig = ''; Marker = '90161Z-T20-window-looked.txt'; Estimate = 120; DoneText = 'Done: I looked'; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = ''; Answers = @(@{ Key = 'restored'; Prompt = 'Did the window come back from the taskbar after you minimized it?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'own-border'; Prompt = 'Did every button and choice show only a thin border? A black or gray outline around one counts as No.'; Kind = 'yesno'; Choices = @() }, @{ Key = 'aligned'; Prompt = 'Were the lines and buttons aligned on every card?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'look'; Prompt = 'Did anything look wrong? Name the card and the part. Do not type names or addresses.'; Kind = 'text'; Choices = @() }) }
 $collect = @()
 $collect += @{ Dir = 'T20'; Name = '90161Z-T20-clean-check-r1.txt'; Step = 'T20 Clean site check r1' }
 $collect += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.txt'; Step = 'T20 Build the 12 lists r1' }

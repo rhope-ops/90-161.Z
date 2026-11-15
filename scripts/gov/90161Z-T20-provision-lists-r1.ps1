@@ -12,7 +12,9 @@
                the probe's test group). A clean site passes. Result: 90161Z-T20-clean-check-r1.txt.
     -DryRun    Signs in and READS only. Prints what a run would create.
     (none)     Creates what is missing, then checks every list against the payload. Result: 90161Z-T20-provision-lists-r1.txt.
-  WHAT IT CHANGES ON THE SITE (create mode only; it adds, it never deletes):
+  WHAT IT CHANGES ON THE SITE (create mode only). It never deletes a list, a column, a view or a row. One thing it
+  sets again on every run: the columns shown by its own 18 views (a column that a person added to one of these views is
+  taken out again; the list's default view is not touched):
     1. Creates the lists that are missing (12 on a clean site), with versioning on.
     2. Adds the missing columns (199) and views (18) to them.
     3. Adds the seed rows (88) to PFM Offices, PFM Series, PFM Process Steps and PFM Settings: each row whose title is not there yet.
@@ -142,7 +144,8 @@ function Hide-Site([string]$Text, [string]$Site) {
   $Text = $Text -replace 'https?://\S+', '<URL>'
   $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
   $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '(?<![0-9a-fA-F])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9a-fA-F])', '<GUID>'
+  # No word boundary: a GUID right after URL-encoded characters (guid%27...) must be masked too.
+  $Text = $Text -replace '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>'
   return $Text
 }
 
@@ -260,11 +263,17 @@ try {
 
   if ($Check) {
     $internal = @($plan.Keys); $display = @($plan.Keys | ForEach-Object { $plan[$_].Display })
-    $isOurs = { param($l) ($internal -contains [string]$l.RootFolder.Name) -or ($display -contains [string]$l.Title) -or ([string]$l.RootFolder.Name -like 'PFMRightsProbe*') -or ([string]$l.Title -like 'PFMRightsProbe*') }
+    $isOurs = { param($l) ($internal -contains [string]$l.RootFolder.Name) -or ([string]$l.RootFolder.Name -like 'PFMRightsProbe*') -or ([string]$l.Title -like 'PFMRightsProbe*') }
+    # A list that 90-161.Z did not make but that has a title the install needs: SharePoint allows one list per title,
+    # so it blocks the install. Its title is one of our 12 product titles, so it can be named; the script never changes it.
+    $isClash = { param($l) -not (& $isOurs $l) -and (($display -contains [string]$l.Title) -or ($internal -contains [string]$l.Title)) }
     $left = @($siteLists | Where-Object { & $isOurs $_ } | ForEach-Object { [string]$_.Title } | Sort-Object)
-    $other = @($siteLists | Where-Object { -not (& $isOurs $_) -and ([string]$_.Title -like 'PFM*') }).Count
+    $clash = @($siteLists | Where-Object { & $isClash $_ } | ForEach-Object { [string]$_.Title } | Sort-Object)
+    $other = @($siteLists | Where-Object { -not (& $isOurs $_) -and -not (& $isClash $_) -and ([string]$_.Title -like 'PFM*') }).Count
     if ($left.Count) { $lines.Add('ITEM b-lists FAIL still on the site (' + $left.Count + '): ' + ($left -join ', ') + '. Delete them (go.md, "Clean the test site", step 5)') }
     else { $lines.Add('ITEM b-lists PASS no 90-161.Z list on the site (other lists whose title starts with PFM: ' + $other + ', not made by 90-161.Z, not touched)') }
+    if ($clash.Count) { $lines.Add('ITEM b2-title-in-use FAIL a list that 90-161.Z did not make has a title the install needs (' + $clash.Count + '): ' + ($clash -join ', ') + '. The install cannot use that title. Rename that list or delete it: your decision; this script does not change it') }
+    else { $lines.Add('ITEM b2-title-in-use PASS no other list has a title the install needs') }
     $lib = @($siteLists | Where-Object { [string]$_.Title -eq '90-161.Z' -or [string]$_.RootFolder.Name -eq '90-161.Z' })
     if ($lib.Count) { $lines.Add('ITEM c-library FAIL the library 90-161.Z is still on the site. Delete it (step 5)') }
     else { $lines.Add('ITEM c-library PASS no 90-161.Z library') }

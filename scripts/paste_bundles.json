@@ -262,7 +262,7 @@
           "kind": "guide",
           "dir": "T18",
           "file": "",
-          "note": "You run F03 once by hand. In test mode its e-mails go only to you; in this round your own mailbox sends them. The last step asks where the e-mail arrived. About 3 minutes (estimate).",
+          "note": "You run F03 once by hand. In test mode its e-mails go only to you; in this round your own mailbox sends them. A later step asks where the e-mail arrived. About 3 minutes (estimate).",
           "marker": "90161Z-T18-f03-ran.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
@@ -273,7 +273,7 @@
             "3. Open \"90161Z F03 Suspense Reminders r5\" and select Test > Manually > Test, then Run flow.",
             "4. Wait until the run ends (under 1 minute, estimate). Read only the status at the top of the run: \"Succeeded\" or \"Failed\".",
             "5. Grey (skipped) steps are normal: the last 3 steps, one of the two send steps, and most rows of the loop send nothing.",
-            "6. If the status is Succeeded: return to RADE and select \"Done: F03 ran\". The last step of the round asks about the e-mail.",
+            "6. If the status is Succeeded: return to RADE and select \"Done: F03 ran\". A later step asks about the e-mail.",
             "If the status is Failed: type the name of the first step with a red mark and the first line of its error (no names or site address), then select \"It failed\"."
           ],
           "doneText": "Done: F03 ran",
@@ -340,7 +340,7 @@
           "kind": "guide",
           "dir": "T20",
           "file": "",
-          "note": "You answer 4 short questions about this window: restore after minimize, button borders, alignment. This replaces notes in the e-mail. About 2 minutes (estimate).",
+          "note": "You answer 4 short questions about this window: restore after minimize, button borders, alignment, and anything that looked wrong. This replaces notes in the e-mail. About 2 minutes (estimate).",
           "marker": "90161Z-T20-window-looked.txt",
           "guide": [
             "1. Minimize this window now (the button with the line, top right).",

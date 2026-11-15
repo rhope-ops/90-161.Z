@@ -46,7 +46,7 @@ Steps:
 ## Round R25 r1: clean install from zero (open, 15 Nov 26)
 
 **For:** R25 proves that RADE can install 90-161.Z on a clean site without the provisioning flow: it builds the 12 lists by PnP, sets up the site, and I import the flows and RADE tests them on the new lists. It is the first round on RADE engine-v6: questions are answered in the window (no notes in the e-mail), a minimized window comes back from the taskbar, every line of a card starts on one edge, and RADE draws its own button borders. These window fixes are proven only on my computer, so the last step asks me about them.
-**Time:** about 60 minutes (estimate): checks 2, clean check 1, lists 5, site setup 4, import 7, test part 1 12, failure e-mail 4, F03 run 3, test part 2 12, e-mail question 2, window questions 2.
+**Time:** about 60 minutes (estimate): checks 2, clean-up confirm 1, clean check 1, lists 5, site setup 4, import 7, import log check 1, test part 1 12, failure e-mail 4, F03 run 3, test part 2 12, e-mail question 2, window questions 2.
 **Changes:**
 - On my computer: RADE writes into T16, T17, T18, T20 and Rounds\R25, and moves old round files to the Recycle Bin.
 - On the test site: 12 new lists with 88 seed rows; the library "90-161.Z" with the 34 seals; three fake publications and their rows, which are moved to the site Recycle Bin at the end.
