@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | Date | Decision | By | Detail |
 |---|---|---|---|
 | 2026-11-14 | Lists by PnP: RADE builds the site objects from schemas/lists; the provisioning flow retires after one round proves list creation. Replaces 12 Nov 1A and 1B and 10 Nov (lists by flow). | PFM | docs/NEXT_PROMPT.md |
-| 2026-11-14 | No reconnaissance, reworded: nothing malicious or that could be misconstrued as such. Reading SharePoint data with my own account, to record what it can do, is allowed (14 Nov probes row stays). | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | No reconnaissance, hardened: never anything malicious or that could be misconstrued as malicious. Open reads of SharePoint data with my own account are allowed. Any doubt: ask the owner first. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Tests: no change. Rounds are the Windows PowerShell 5.1 test; cloud tests stay on PowerShell 7; a 5.1 fault is fixed when a round finds it. Replaces "how to move it is open" below. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Round results e-mail: the allowed owner-only exception to the DoD365 boundary rule until the test rounds end. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Flow health: a round tests a health flow with the Power Automate Management connector (own flows only); then choose between it and heartbeat rows. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
