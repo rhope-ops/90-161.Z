@@ -1,6 +1,6 @@
 # Roadmap evidence (15 Nov 26)
 
-Evidence for [docs/phases.md](../phases.md). Made by Claude on 15 Nov 26 from the 20 round results files in this folder (R01-R06, R09-R13, R15-R23; R07, R08 and R14 have none), the product files named below, and rhope-ops/RADE at 5e9a639. Two Haiku scouts read the files; Claude spot-checked R13, R19, R20, the 39 Gap rows and the 12 list schemas. A fresh reviewer then checked the tables against the sources; its 8 MINOR findings are worked in (3 capability rows corrected or added, rows 36 to 42 added). Counts and step names only.
+Evidence for [docs/phases.md](../phases.md). Made by Claude on 15 Nov 26 from the 20 round results files in this folder (R01-R06, R09-R13, R15-R23; R07, R08 and R14 have none), the product files named below, and rhope-ops/RADE docs at 5e9a639. Main moved during the work: R24 r1 (engine-v4, RADE 4a0fbad) is built and open, so rows 1 to 3 are in a built round. Two Haiku scouts read the files; Claude spot-checked R13, R19, R20, the 39 Gap rows and the 12 list schemas. A fresh reviewer then checked the tables against the sources; its 8 MINOR findings are worked in (3 capability rows corrected or added, rows 36 to 42 added). Counts and step names only.
 
 ## 1. Capability history (R01 to R23)
 
@@ -68,7 +68,7 @@ per round, R01-R23: 1.26 | passed in R15-R23: 12 = 1.33 per round
 | 2 | Site address entered once (T16 r4/r11, T18 r3, T19 r3) | yes | R24 | 1 | docs/DECISIONS.md 2026-11-15 "Site address is entered once" |
 | 3 | F03 r5: escalation e-mail arrives; log row names the mailbox | yes | R24 | 6 | docs/NEXT_PROMPT.md "Waiting on the PFM" item 1 (the PFM's report, 15 Nov 26; no results file records it); docs/reviews/2026-11-15-r23-results.md finding 3 (F03 r5 not yet run) |
 | 4 | F03 by-hand step wording (the new text is not written yet) | no | R24 | 6 | docs/reviews/2026-11-15-r22-results.md finding 2 |
-| 5 | Paste timing, 500 KB and 1 MB (the step is not built) | yes | R24 | 1 | docs/DECISIONS.md 2026-11-14 "Bundle size limit" |
+| 5 | Paste timing, 500 KB and 1 MB (the step is not built; not in R24 r1) | yes | R25 | 1 | docs/DECISIONS.md 2026-11-14 "Bundle size limit" |
 | 6 | 12 lists made by PnP from schemas/lists (scripts/gov/Provision-Lists.ps1 exists; not run in a round). Needs a clean target: the test site holds the 12 lists already | yes | R25 | 3, 5 | docs/DECISIONS.md 2026-11-14 "Lists by PnP" |
 | 7 | One-install record (`marker` in the manifest) | yes | R25 | 1 | RADE docs/engine.md "One install per site" |
 | 8 | Health-flow probe (Management connector) | yes | R25 | 6 | docs/DECISIONS.md 2026-11-14 "Flow health" |
@@ -101,7 +101,7 @@ per round, R01-R23: 1.26 | passed in R15-R23: 12 = 1.33 per round
 | 34 | Format tables 4.2-4.5 wording; Task 6 prompt follow-up | no | not a round (cloud work) | - | docs/format-rules.md lines 73-75 |
 | 35 | Rights row S14 (destructive, not tested) | no | REC: after the pilot | - | docs/rights-test-plan.md line 30 |
 | 37 | RADE puts the site address on the clipboard at the import guide step | yes | the first import round after the engine release | 1 | docs/NEXT_PROMPT.md "Waiting on the PFM" item 1 |
-| 38 | RADE items not verified on a device: layout self-check line, full-name domain check, site collection administrator read, the RADE page on a work computer | yes | the first round after the next lock move | 1 | RADE docs/NEXT_PROMPT.md State, items 3 and 8 |
+| 38 | RADE items not verified on a device: layout self-check line, full-name domain check, site collection administrator read, the RADE page on a work computer | yes | R24 (first device run of engine-v3 and v4) | 1 | RADE docs/NEXT_PROMPT.md State, items 3 and 8; go.md Round R24 r1 |
 | 39 | Design check r7 "Rules for the flows and the app": not built; no docs/flow-rules.md | no | before R27 (flows) and R30 (app) | 5 | docs/NEXT_PROMPT.md State |
 | 40 | Site home page (preview first), then a page and header flow | yes | R33 | 4 | docs/NEXT_PROMPT.md "Waiting on the PFM" item 4 |
 | 41 | Task 9 e-Publishing reader (paging past 100 rows); it feeds the intake cross-check | no | REC: in the pilot, with row 31 | 3 | go.md Done, Task 9; docs/reviews/2026-11-14-r10-results.md finding 1 |
