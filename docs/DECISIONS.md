@@ -7,7 +7,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 |---|---|---|---|
 | 2026-11-15 | Solution import page: the 4 values a wing sets come first with numbered labels; a test-round slice imports with Test mode Yes (full solution: No). Slice zip r5. Not seen on a device yet. | PFM | flow/solution/README.md |
 | 2026-11-15 | Site address is entered once, in RADE: task scripts take it from RADE or Config and ask only when neither has one (T16 r4/r11, T18 r3, T19 r3). The import page still needs it. | PFM | scripts/gov/src/site-common.ps1 |
-| 2026-11-15 | 90-161.Z runs the personal-data guard in the DoD tier. Approved `.pii-guard` entries: 5 allow (CUI choice, example host, 1 false match until RADE fix) and 7 binary skips; `check: mil` removed. | PFM | .pii-guard |
+| 2026-11-15 | 90-161.Z runs the personal-data guard in the DoD tier. `.pii-guard`: 4 allow (CUI choice, example host), 7 binary skips; `check: mil` and the false-match allow (after RADE 5e9a639) removed. | PFM | .pii-guard |
 | 2026-11-15 | Personal-data guard: two tiers in one scanner, set in `.pii-guard`: minimum (no line) and DoD (`profile: dod`: adds military hosts, marks, DoD ID numbers, unreadable files). Hand port from RADE. | PFM | scripts/pii_guard.py header; rhope-ops/RADE DECISIONS 2026-11-15 |
 | 2026-11-15 | Personal-data guard, minimum tier: a push with no name denylist is blocked. The PFM's projects do not use `denylist: warn`; the DoD tier ignores it. | PFM | scripts/pii_guard.py header |
 | 2026-11-15 | Name denylist: one master file in the PFM's Google Drive; other places are copies; the fingerprint (`pii_guard.py --status`) shows a copy that differs. An agent never opens the master file. | PFM | docs/FIRST_USE.md step 3 |

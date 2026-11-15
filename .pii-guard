@@ -23,8 +23,6 @@ Controlled Unclassified Information
 "CUI",
 # Example host in the Site URL prompt of scripts/gov/Provision-Lists.ps1 (PFM, 2026-11-15).
 sharepoint-mil.us
-# False match in docs/reviews/2026-11-12-pii-guard-history.md; remove when RADE's host check ignores a label that ends in "-" (PFM, 2026-11-15).
-Gmail-to-.mil
 # Binary files the guard cannot read: public references, generated packages, briefs, samples (PFM, 2026-11-15).
 skip: docs/brief/*.pptx
 skip: flow/packages/*.zip
