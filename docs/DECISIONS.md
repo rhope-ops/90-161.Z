@@ -5,7 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-15 | RADE lock moves to release engine-v5 (RADE 369ac14, serial 5) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
+| 2026-11-15 | RADE lock moves to release engine-v6 (RADE 67f7681, serial 5) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-15 | Round order after R24 approved (1A): R25 lists by PnP, R26 Settings rows, R27 all flows, R28-R29 RADE maintenance, R30-R33 app, R34-R35 pilot start. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | R25 clean target (2B): delete the 12 test lists, the library, the flows and solutions by hand from an exact list; RADE then checks the site (read-only) before it installs. | PFM | go.md |
 | 2026-11-15 | Both 14 Nov holds are lifted: the slice 1 scope hold (slice 1 passed in R22 and R24) and the hold on steps that need a PnP check. | PFM | docs/phases.md |

@@ -73,7 +73,14 @@
           "needs": [
             "net-flow"
           ],
-          "estimate": 1
+          "estimate": 1,
+          "answers": [
+            {
+              "key": "flows-gone",
+              "prompt": "Are all 90-161.Z solutions and flows deleted in Power Automate?",
+              "kind": "yesno"
+            }
+          ]
         },
         {
           "name": "T20 Clean site check r1",
@@ -177,6 +184,23 @@
             {
               "kind": "solution",
               "name": "90-161.Z flows (F03 r5, F05 r2, F06 r1)"
+            }
+          ],
+          "answers": [
+            {
+              "key": "label-order",
+              "prompt": "In which order did the page show the 4 numbered values? Type the numbers, for example 1 3 4 2.",
+              "kind": "text"
+            },
+            {
+              "key": "test-mode",
+              "prompt": "What did \"4 Test mode\" read before you changed anything?",
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No",
+                "Empty"
+              ]
             }
           ]
         },
@@ -296,6 +320,19 @@
           "estimate": 2,
           "after": [
             "T18 Run F03 once r5"
+          ],
+          "answers": [
+            {
+              "key": "f03-email",
+              "prompt": "Where is the e-mail \"[TEST] Escalation\" from this round?",
+              "kind": "pick",
+              "choices": [
+                "Inbox",
+                "Junk E-mail",
+                "Sent Items only",
+                "Not found"
+              ]
+            }
           ]
         }
       ],
