@@ -147,6 +147,7 @@ The project log records how the project got there (milestones, breakthroughs, mi
 
 ## Project rules
 
+- No kit sync (PFM, 2026-11-15): never run the kit's sync (`sync_baseline.py`) on this repo; it replaces project guards and rules (for example the `.mil` check in scripts/pii_guard.py). Port a kit fix by hand, one file at a time, by pull request with review.
 - Data boundary (PFM, 2026-11-10): government data stays in DoD365 and GenAI.mil only. Never put real drafts, publication content, names, emails, office symbols or comments in this repo or in a Claude chat. Use fake sample data. Sanitize bug reports.
 - Platform (PFM, 2026-11-10): frontend and data on SharePoint Lists, Power Automate and Power Apps in DoD365. The PFM is a site collection administrator with PowerShell access to SharePoint (2026-11-10). No tenant admin rights and standard connectors only (confirmed by the PFM, 2026-11-12).
 - Deployable package (PFM, 2026-11-12): 90-161.Z must be a package other wings can install. Every NIPR computer has Windows PowerShell 5.1 and PnP.PowerShell (PFM, 2026-11-14); rights differ, so assume their PFMs have fewer rights than this PFM. Every step that relies on extra authority (site collection administrator, Exchange Send As, records-manager rights) needs a documented fallback that works without it.
