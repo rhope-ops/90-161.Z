@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Personal-data guard: no DSN phone-number check (the old guard had one; the RADE guard has none). Agent REC to add it in RADE not approved. Scope: 90-161.Z. | PFM | scripts/pii_guard.py header |
 | 2026-11-15 | Solution import page: the 4 values a wing sets come first with numbered labels; a test-round slice imports with Test mode Yes (full solution: No). Slice zip r5. Not seen on a device yet. | PFM | flow/solution/README.md |
 | 2026-11-15 | Site address is entered once, in RADE: task scripts take it from RADE or Config and ask only when neither has one (T16 r4/r11, T18 r3, T19 r3). The import page still needs it. | PFM | scripts/gov/src/site-common.ps1 |
 | 2026-11-15 | 90-161.Z runs the personal-data guard in the DoD tier. `.pii-guard`: 4 allow (CUI choice, example host), 7 binary skips; `check: mil` and the false-match allow (after RADE 5e9a639) removed. | PFM | .pii-guard |
