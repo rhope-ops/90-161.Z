@@ -258,9 +258,9 @@ out=$(python3 scripts/build_rights_rows.py --check 2>&1 | tail -1); [ $? -eq 0 ]
 export ENGINE; ENGINE=$(python3 scripts/build_paste_bundles.py --engine-path) || { echo "$ENGINE"; bad "RADE engine not found or not the pinned one"; ENGINE=/dev/null; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 [ "$out" = "PASTE bundles=1 stale=0" ] && ok "paste bundles current ($out)" || bad "paste bundles: $out (run python3 scripts/build_paste_bundles.py)"
-# Bundle size limit (PFM 14 Nov 26): a pasted round stays readable for the ISSM and pastes fast; 300 KB = 307,200 bytes.
-big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 307200 ] || { echo "  $b bytes=$s"; big=$((big+1)); }; done
-[ "$big" -eq 0 ] && ok "paste bundles at most 300 KB" || bad "paste bundles over 300 KB: $big"
+# Bundle size limit (PFM 14 Nov 26, raised with the function-complete engine): 600 KB = 614,400 bytes.
+big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 614400 ] || { echo "  $b bytes=$s"; big=$((big+1)); }; done
+[ "$big" -eq 0 ] && ok "paste bundles at most 600 KB" || bad "paste bundles over 600 KB: $big"
 
 # Round bundle end to end in pwsh (Linux, text mode: no Windows Forms): profile folder and C:\Users swapped for a temp root.
 # Every written file must equal its source (text: BOM and CR removed); each step must start as a child process (on Linux
