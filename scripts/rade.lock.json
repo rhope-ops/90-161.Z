@@ -1,6 +1,6 @@
 {
   "repo": "rhope-ops/RADE",
-  "commit": "a3eadbd72a0bc0c47064e0f6788a2ae1e337131f",
+  "commit": "8951fce4a0e875db3cc43fcec67a2c87d67584ef",
   "engine": "engine/rade_build.py",
-  "sha256": "ec9bde95c67f1c65337d312ad21fcdb05b5d149cb6ba5cddc3039088d0846f90"
+  "sha256": "ee4444ec61e61453e9a2e083eea2336c486878d26ca1209d99abaf3935115200"
 }

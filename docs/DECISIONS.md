@@ -5,6 +5,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Guardrail: RADE stops before any write on a classified-network domain suffix (own domain name only) and accepts a site only on the DAF SharePoint prefix. No banner read. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | Guardrail: install needs Full Control (unchanged); RADE shows my own site collection admin flag but never requires it. Edit is not enough. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | Guardrail: one install per site. A row on the site holds the version and date; another account is blocked; first install shows "once per wing". Starts with the first deploy app. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | .pii-guard allows the public suffix smil.mil (it is in the NIPR check inside the round bundles). | PFM | .pii-guard |
 | 2026-11-14 | Three reads removed under the no-reconnaissance rule: the tenant search count (T16 sign-in test r3), AppLocker rule counts and the certificate count (T15 inventory r3). Both scripts stay. | PFM | scripts/gov/90161Z-T15-env-inventory-r3.ps1 |
 | 2026-11-14 | Flow values move to PFM Settings rows: flows paused, test mode, reminder, escalation and suspense days, shared mailbox. Site address, alert e-mail and list names stay variables. Not built. | PFM | flow/solution/README.md |
 | 2026-11-14 | RADE Maintenance screen: 5 buttons (Install, Diagnose, Back up, Restore, Uninstall). Adds Back up to the 14 Nov RADE modes row. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
