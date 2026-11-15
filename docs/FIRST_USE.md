@@ -44,8 +44,10 @@ The owner adds the names, comma or newline separated, in each place the answers 
 | B or C | The owner's computer | The file `~/.config/pii-guard/denylist.txt` (Windows: `C:\Users\<user>\.config\pii-guard\denylist.txt`), one name per line |
 | Always | GitHub pull-request check | `https://github.com/<owner/repo>/settings/secrets/actions` > New repository secret > Name `PII_GUARD_DENYLIST` |
 
+One master copy (the PFM, 2026-11-15): the owner keeps the list in one file in their own Google Drive and edits only that file. A computer with Drive for desktop reads it directly (set `PII_GUARD_DENYLIST_FILE` to the synced path); the cloud variable and the GitHub secret are pasted copies of it. An agent never opens the master file. To find a copy that differs, compare the fingerprint: `python3 scripts/pii_guard.py --status` in each place and the last line of the pull-request check print the same 8 characters when the lists are the same.
+
 ## 4. Verify
 
-Run `python3 scripts/pii_guard.py --status` in each place you can reach. It prints `denylist: N entries from <source>`, never the names. Then `python3 scripts/pii_guard.py --all` must print `PII GUARD PASS`. Report both lines. A cloud environment edited during this session is verified in the next session: the SessionStart check says so if it is still missing.
+Run `python3 scripts/pii_guard.py --status` in each place you can reach. It prints `denylist: N entries from <source>; fingerprint <8 characters>` and the tier, never the names. Then `python3 scripts/pii_guard.py --all` must print `PII GUARD PASS`. Report both lines. A cloud environment edited during this session is verified in the next session: the SessionStart check says so if it is still missing.
 
 Give the owner the claude.ai Project text from docs/host-prompts.md under Copy.
