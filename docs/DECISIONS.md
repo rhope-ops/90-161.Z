@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Audit 3 proposals P1 to P9 approved. Made: P1 to P4, P6 to P8. P5 is its own pull request (the PFM reads the new AGENTS.md lines first). P9 goes to the RADE audit. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
+| 2026-11-15 | Round builds: one new session for each round (P8); a `worker` on the standard tier unless the routing table says strong (P7). Scope: 90-161.Z round builds. | PFM | .claude/orchestration.md |
+| 2026-11-15 | Agents do not run tests/run.sh by hand just before a push: the pre-push hook runs it (P4). | PFM | AGENTS.md Commands |
 | 2026-11-15 | Round builds use the RADE release that exists; an engine change runs in its own RADE session at the same time and the round moves to it later. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Reviews in round builds: the rule stays (each fix gets a fresh review); the review starts while the hosted check runs, not after it. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Bloat audit 3 run on the PFM's request (tests 3 times slower than the baseline). Its proposals P1 to P9 are agent RECs until the PFM approves each. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
