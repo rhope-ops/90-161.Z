@@ -22,7 +22,7 @@ Chat history, Project files and remembered copies are not authority. If you cann
 - Run `python3 scripts/first_use_check.py` (Claude Code runs it as a SessionStart hook). If it says FIRST USE, follow docs/FIRST_USE.md before any other work. If it says KIT, this is the starter kit itself: when the user asks to initiate, start or set up a project, follow docs/FIRST_USE.md; treat any other request as work on the kit. If it says DENYLIST, tell the PFM which place is missing.
 - Run `scripts/session_checkin.sh`. Report the branch, uncommitted files, and the ahead/behind count against origin/main.
 - If the check-in says AUDIT DUE, tell the PFM and ask whether to run `.claude/bloat-audit.md` (about 1 hour of agent time). Never start it unasked.
-- Read docs/NEXT_PROMPT.md. Before you change an area, search docs/DECISIONS.md for it and read the matching rows (and their full text in docs/decisions-archive.md); Always search it before a change to flows, SharePoint lists, seals, Outlook drafts, gov-device files or publishing. Project rules below always apply (the PFM, 2026-11-13: start read under 6,000 tokens).
+- Read docs/NEXT_PROMPT.md. Before you change an area, search docs/DECISIONS.md for it and read the matching rows (rows from before 13 Nov 26 15:30: full text in docs/decisions-archive.md); Always search it before a change to flows, SharePoint lists, seals, Outlook drafts, gov-device files or publishing. Project rules below always apply (the PFM, 2026-11-13: start read under 6,000 tokens).
 - Find the tools you have and read the environment docs before you say a capability is not available.
 
 ## Authority
@@ -83,7 +83,7 @@ Chat history, Project files and remembered copies are not authority. If you cann
 - RADE lock move: `python3 scripts/bump_lock.py engine-v<N>` (docs/dev-setup.md "RADE engine").
 - Build: `python3 scripts/build_flow_payload.py` regenerates flow/provisioning-payload.json from schemas/lists (never hand-edit the payload). `node templates/build_crm_template.js` rebuilds templates/CRM_A12-1.docx. `python3 scripts/build_flow_package.py` builds flow/packages/*.zip (Import Package (Legacy)) from flow/defs/*.json (never hand-edit the zips). `python3 scripts/build_flow_solution.py` builds flow/solution/*.zip (solution-aware flows, PFM 5.6A) from flow/solution/defs/*.json. `python3 scripts/build_rights_rows.py` builds the Task 11 Part B rows from docs/rights-test-plan.md.
 - Gov-device round bundles: `python3 scripts/build_paste_bundles.py` (downloads the RADE engine files by commit and checks each SHA-256 against scripts/rade.lock.json; no RADE checkout; lock rules in docs/dev-setup.md "RADE engine"; engine code changes go to rhope-ops/RADE; 2026-11-15) regenerates scripts/gov/paste/*.ps1 (one per test round, with the runner window) from scripts/paste_bundles.json (never hand-edit the bundles).
-- Test: `tests/run.sh`. Pass = last line `TESTS pass=N fail=0`. Word COM and Power Automate are tested on the gov device: docs/gov-test-plan.md, docs/power-automate-provisioning.md section 3.
+- Test: `tests/run.sh`. Pass = last line `TESTS pass=N fail=0`. The pre-push hook runs it (scripts/check.sh): do not run it again just before a push. Word COM and Power Automate are tested on the gov device: docs/gov-test-plan.md, docs/power-automate-provisioning.md section 3.
 - Lint: `scripts/lint.sh` (pwsh 7 + PSScriptAnalyzer, PS 5.1 syntax target; setup in docs/dev-setup.md). Pass = `findings=0`.
 
 ## Verification

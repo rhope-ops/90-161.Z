@@ -2,7 +2,7 @@
   "timings": {
     "tests": {
       "cmd": "tests/run.sh",
-      "seconds": 25.4,
+      "seconds": 18.0,
       "max_slowdown": 0.25
     },
     "check-in": {
