@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | RADE lock moves to the "One thing" window (RADE fe32673). The rebuilt round bundle is R22 r2; R22 r1 is the file that made the recorded results. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-14 | Three reads removed under the no-reconnaissance rule: the tenant search count (T16 sign-in test r3), AppLocker rule counts and the certificate count (T15 inventory r3). Both scripts stay. | PFM | scripts/gov/90161Z-T15-env-inventory-r3.ps1 |
 | 2026-11-14 | Flow values move to PFM Settings rows: flows paused, test mode, reminder, escalation and suspense days, shared mailbox. Site address, alert e-mail and list names stay variables. Not built. | PFM | flow/solution/README.md |
 | 2026-11-14 | RADE Maintenance screen: 5 buttons (Install, Diagnose, Back up, Restore, Uninstall). Adds Back up to the 14 Nov RADE modes row. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
