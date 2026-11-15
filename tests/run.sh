@@ -294,6 +294,8 @@ big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 614400
 # Every written file must equal its source (text: BOM and CR removed); each step must start as a child process (on Linux
 # the runner stops at Unblock-File, so its step reads CHECK); the results folder must hold the report (summary + full
 # log) with no DODID. The window path (Windows Forms) cannot run here: lint only.
+# needs <bundle>: the check ids the bundle's steps list in the manifest, space-separated.
+needs() { python3 -c "import json,sys;print(' '.join(sorted({n for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']==sys.argv[1] for s in b['steps'] for n in s.get('needs',[])})))" "$1"; }
 tp=$(mktemp -d); mkdir -p "$tp/u/test1234/OneDrive - United States Air Force"; pf=0; pr=0; pc=0
 # R06 cleanup fixture: finished folders with our files and one file 90-161.Z did not make (must stay).
 ob="$tp/u/test1234/OneDrive - United States Air Force/90-161.Z"; mkdir -p "$ob/T02" "$ob/T13" "$ob/Rounds/R09" "$ob/T07" "$ob/T09"
@@ -321,8 +323,11 @@ for b in scripts/gov/paste/*.ps1; do
   grep -q "^A newer round, R99, is in the repository" "$tp/out.txt" || { echo "newer-round banner missing"; pf=$((pf+1)); }
   # Choose and Check screens (PFM 14 Nov 26): the report names the application and counts the checks; text mode cannot
   # sign in, so the sign-in check is NOT RUN, and no check line holds the DODID.
-  rp="$base/Rounds/$r/90161Z-$r-report-r1.txt"
-  grep -q "^Application: " "$rp" && tr -d "\r" < "$rp" | grep -qE "^Checks\. Passed: [0-9]+\. Warnings: [0-9]+\. Failed: [0-9]+\. Not run: [0-9]+\.$" && grep -q "^  NOT RUN: You can change the site" "$rp" && grep -q "^  PASSED: You can import flows" "$tp/out.txt" || { echo "application or check lines missing in the report"; grep -E "^(Application|Checks|  [A-Z])" "$rp"; pf=$((pf+1)); }
+  # A round shows only the checks its steps need (manifest "needs"; R23 needs none of these, PFM 2026-11-15).
+  rp="$base/Rounds/$r/90161Z-$r-report-r1.txt"; nd=$(needs "$b")
+  grep -q "^Application: " "$rp" && tr -d "\r" < "$rp" | grep -qE "^Checks\. Passed: [0-9]+\. Warnings: [0-9]+\. Failed: [0-9]+\. Not run: [0-9]+\.$" \
+    && { [[ " $nd " != *" site-rights "* ]] || grep -q "^  NOT RUN: You can change the site" "$rp"; } \
+    && { [[ " $nd " != *" flow-guide "* ]] || grep -q "^  PASSED: You can import flows" "$tp/out.txt"; } || { echo "application or check lines missing in the report"; grep -E "^(Application|Checks|  [A-Z])" "$rp"; pf=$((pf+1)); }
   grep -q "^Note: no window could open, so the round runs in text mode" "$base/Rounds/$r/90161Z-$r-report-r1.txt" || { echo "report does not name the no-window cause"; pf=$((pf+1)); }
   # Downloads: repo files must match their SHA-256; public files land and are attached; the skipped step's file is not expected.
   nf=$(python3 -c "import json;print(sum(len(b.get('fetch',[])) for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b'))")
@@ -355,12 +360,14 @@ for b in scripts/gov/paste/*.ps1; do
   # R17: the checks may save RADE/Config/rade-checks.json (shown on the Check screen); nothing else may exist.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out.txt" 2>&1; [ -e "$te/u/test1234/OneDrive - United States Air Force/90-161.Z" ] && tw=$((tw+1))
   [ "$(cd "$te/u/test1234/OneDrive - United States Air Force" && find . -type f | sort | tr '\n' ' ')" = "./RADE/Config/rade-checks.json " ] || { echo "files after N:"; find "$te/u" -type f; tw=$((tw+1)); }
-  grep -q "^You cannot deploy yet: a check is FAILED or NOT RUN" "$te/out.txt" || { echo "check gate did not stop the deploy"; tw=$((tw+1)); }
+  # The gate test needs a check that fails here: the SharePoint tool (manifest "needs" pnp). A round without it has no gate stop.
+  nd=$(needs "$b")
+  [[ " $nd " != *" pnp "* ]] || grep -q "^You cannot deploy yet: a check is FAILED or NOT RUN" "$te/out.txt" || { echo "check gate did not stop the deploy"; tw=$((tw+1)); }
   # Review R17 MAJOR 1: a fresh install (no 90-161.Z folder anywhere) finds OneDrive and can write there.
   grep -q "^  PASSED: Your OneDrive folder is set up" "$te/out.txt" && grep -q "^  PASSED: Files can be saved in OneDrive" "$te/out.txt" || { echo "fresh install: OneDrive checks"; grep "OneDrive" "$te/out.txt"; tw=$((tw+1)); }
   # Saved checks (R17, PFM 14 Nov 26): a second run uses the PASSED results saved by the first, and still runs the others.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out2.txt" 2>&1
-  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(date +%d-%m-%y)" "$te/out2.txt" && grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt" || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
+  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(date +%d-%m-%y)" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
 done; rm -rf "$te"
 [ "$ab" -eq 0 ] && [ "$tw" -eq 0 ] && ok "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw; Enter path = round bundle test)" || bad "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw)"
 
