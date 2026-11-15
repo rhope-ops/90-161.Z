@@ -65,8 +65,12 @@ def main_serial():
     return json.loads(shown)["serial"]
 
 
-def traced_build(cache_root):
-    """Run the bundle build in this process and return the files it opened under the engine cache folder."""
+def traced_build(cache_root, engine):
+    """Build the bundles, then run the engine again in this process and return the files it opens under its
+    cache folder. The build starts the engine as a child process (scripts/build_paste_bundles.py), so a trace of
+    the build alone sees only the download and hash reads, not the engine's own reads."""
+    if subprocess.run([sys.executable, "scripts/build_paste_bundles.py"], cwd=ROOT).returncode:
+        sys.exit("FAIL the bundle build stopped")
     seen = set()
 
     def hook(event, args):
@@ -75,12 +79,12 @@ def traced_build(cache_root):
             if p.startswith(cache_root + os.sep):
                 seen.add(os.path.relpath(p, cache_root).replace(os.sep, "/"))
     sys.addaudithook(hook)
-    argv, sys.argv = sys.argv, ["build_paste_bundles.py"]
+    argv, sys.argv = sys.argv, [engine, "--app-root", ROOT]
     try:
-        runpy.run_path(os.path.join(ROOT, "scripts", "build_paste_bundles.py"), run_name="__main__")
+        runpy.run_path(os.path.join(cache_root, engine), run_name="__main__")
     except SystemExit as e:
         if e.code not in (None, 0):
-            sys.exit("FAIL the bundle build stopped (exit %s)" % e.code)
+            sys.exit("FAIL the traced engine run stopped (exit %s)" % e.code)
     finally:
         sys.argv = argv
     return seen
@@ -114,7 +118,7 @@ def bump(tag):
     with open(DECISIONS, "w") as f:
         f.write(text.replace(head, head + row))
 
-    seen = traced_build(os.path.join(ROOT, ".rade-cache", rel["commit"]))
+    seen = traced_build(os.path.join(ROOT, ".rade-cache", rel["commit"]), rel["engine"])
     if seen != set(rel["files"]):
         sys.exit("FAIL trace: the engine opened %s, the lock lists %s" % (sorted(seen), sorted(rel["files"])))
     print("TRACE PASS: the engine opened the %d files the lock lists" % len(seen))
