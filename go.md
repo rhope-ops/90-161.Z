@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 15 Nov 26 (no round is open: Round R23 passed two times).
+Updated: 15 Nov 26 (Round R24 r1 open: newest RADE and the flow import changes, about 40 minutes).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -23,6 +23,32 @@ Steps:
 **If it fails:** the window shows a line that starts with "What to do" under the problem: do that. Otherwise send the line that starts with STOPPED. The report file in Rounds\<round> also holds it. Do not work around it. If no window opens, the same steps run as text in ISE and the results folder opens by itself.
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
+
+## Round R24 r1: newest RADE (engine-v4) and the 15 Nov flow changes (open, 15 Nov 26)
+
+**For:** 90-161.Z now uses the newest RADE release, engine-v4. R24 is its first run on my work computer. It also tests the changes I asked for on 15 Nov: the import page order, Test mode already Yes, no site question in the steps, and which mailbox sends the F03 escalation e-mail.
+**Time:** about 40 minutes (estimate): checks 2, list check 1, import 6, test part 1 12, failure e-mail 4, F03 run 3, test part 2 12.
+**Changes:**
+- On my computer: RADE writes into T17, T18, T19 and Rounds\R24, and moves old round files to the Recycle Bin.
+- On the test site: three fake publications and the rows the flows make for them. All are moved to the site Recycle Bin at the end.
+- In Power Automate: the solution "90-161.Z flows" is imported again (F03 r5 replaces r4; no second copy).
+- E-mail: test e-mails go only to my alert address. RADE saves one Outlook draft (never sent).
+- New: RADE starts only on a NIPR computer. On any other computer it prints "This application cannot be installed in your environment." and ends.
+
+Steps:
+1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R24-round-r1.ps1
+2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
+3. In the RADE window, choose the application, run the checks, then select Run. RADE does the list check and both test parts.
+4. Three steps need me: the import (the window gives the steps), the Resubmit, and one run of F03.
+5. At the import, I note two answers for the e-mail: were labels 1 to 4 together at the top, and did Test mode already read Yes.
+6. Wait for DONE. RADE opens an Outlook draft.
+7. I look in my Inbox, in Junk, and in the Sent Items of the shared mailbox for a subject that starts with "[TEST] Escalation".
+8. In the draft I add 3 lines: labels 1 to 4 at the top (yes or no), Test mode already Yes (yes or no), and where I found the escalation e-mail (or "not found"). Then I send it.
+
+**Report:** the draft itself, subject "90161Z R24". It holds the report file and the three result files (T19, T18 part 1, T18 part 2).
+**If it fails:** read the "What to do" line in the window. If a step fails, send the draft as it is: the failed line is the result.
+
 
 ## Done
 
