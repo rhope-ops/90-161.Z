@@ -34,6 +34,8 @@ echo "uncommitted: $uncommitted"
 [ "$uncommitted" -gt 0 ] && git status --short
 
 [ -f scripts/bloat_check.py ] && python3 scripts/bloat_check.py --brief
+# Personal-data guard: list source, entry count, fingerprint (compare it between places) and tier; never the names.
+if [ -f .pii-guard ] && [ -f scripts/pii_guard.py ]; then python3 scripts/pii_guard.py --status || true; fi
 
 if grep -rIl '{{[A-Z_]*}}' --exclude-dir=.git --exclude=bootstrap.sh --exclude=session_checkin.sh --exclude=sync_baseline.py --exclude=first_use_check.py --exclude=drift.py --exclude=check.sh --exclude=README.md . >/dev/null 2>&1; then
   echo "warning: template placeholders remain; run scripts/bootstrap.sh"

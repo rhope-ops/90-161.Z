@@ -70,7 +70,7 @@ Chat history, Project files and remembered copies are not authority. If you cann
 
 - Never commit personal data: real names, email addresses, phone numbers, home or work addresses, ID numbers, or the PFM's job details. Use a role (for example "the maintainer") and fake sample data. A private repo may put its owner's real name in the `- Owner:` line.
 - Commit with a GitHub noreply address (`ID+USER@users.noreply.github.com`) or the agent's own noreply identity, never a personal email.
-- A `.pii-guard` file at the repo root turns on `scripts/pii_guard.py` in pre-push, before each merge ("Delivery") and, on a public repo, in the pull-request Action; with it on, a push with no name denylist fails (the PFM, 2026-11-11). What it blocks and where the denylist lives: the header of `scripts/pii_guard.py`. Check with `python3 scripts/pii_guard.py --status` (a count, never names).
+- A `.pii-guard` file at the repo root turns on `scripts/pii_guard.py` in pre-push, before each merge ("Delivery") and, on a public repo, in the pull-request Action; with it on, a push with no name denylist fails (the PFM, 2026-11-11). The line `profile: dod` in `.pii-guard` adds the DoD tier (the PFM, 2026-11-15). What each tier blocks and where the denylist lives: the header of `scripts/pii_guard.py`. Check with `python3 scripts/pii_guard.py --status` (a count, a fingerprint and the tier, never names).
 - Never ask for the denylist names in chat, and never commit the denylist: the PFM adds them in the places docs/FIRST_USE.md lists.
 - When the guard blocks: remove the data, fix the unpushed commit, and push again. Only the PFM adds allow entries to `.pii-guard`. Never push with `--no-verify`.
 
