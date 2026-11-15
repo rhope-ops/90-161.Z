@@ -5,6 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | No automatic Gmail watch for round e-mails: search for the round subject only when the PFM says the e-mail is sent or received. Replaces 2026-11-13 "Round e-mails". | PFM | AGENTS.md Unattended work |
+| 2026-11-15 | Turn summaries and "Next" lines link the RADE page https://rhope-ops.github.io/RADE, not go.md. | PFM | AGENTS.md Project rules |
 | 2026-11-15 | Hosted checks only on public repos (all my projects): public repos may use free GitHub Actions; private repos review themselves locally. pii-guard.yml restored here. Replaces the row below. | PFM | AGENTS.md |
 | 2026-11-15 | No outside checks, all my projects: nothing relies on GitHub Actions or hosted CI; checks run locally. pii-guard.yml and bump-lock.yml removed; merge gate = local checks. Replaced (row above). | PFM | AGENTS.md |
 | 2026-11-15 | Lock moves: local script scripts/bump_lock.py (copy the release lock, serial + 1, decision row, rebuild with file trace, checks). Replaces the bump-lock workflow of the same day. | PFM | scripts/bump_lock.py |
@@ -105,7 +107,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-13 | Retest PnP sign-in (revisits 1B): T16 tries SPO Management Shell with the DoD and High clouds, web login, interactive; read-only, optional step in R09. | PFM | scripts/gov/90161Z-T16-pnp-signin-test-r1.ps1 |
 | 2026-11-13 | Sweep while away: R09 = inventory (T15), T11 Part B form, T09 collector, task scripts drop the DODID question now; flow solution package as a draft. R09 waits for PFM review. No PnP steps (1B stands). | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-13 | Deployer first: every gov-device step a script can do runs in the round, now and later; R08 replaces R07 and carries Tasks 10, 12, 14, 7. | PFM | AGENTS.md Project rules |
-| 2026-11-13 | Round e-mails: Claude watches Gmail for the round subject every 10 min for up to 2 h after a round goes live (no chat message needed). | PFM | AGENTS.md Unattended work |
+| 2026-11-13 | Round e-mails: Claude watches Gmail for the round subject every 10 min for up to 2 h after a round goes live (no chat message needed). Replaced 2026-11-15. | PFM | AGENTS.md Unattended work |
 | 2026-11-13 | Speed: (A) one docs commit and PR per round; (B) project log "Next row: N" line; (C) one decisions table. Bloat audit every 300 commits. | PFM | docs/reviews/2026-11-13-speed-analysis.md |
 | 2026-11-13 | R06: Deployer name; real path on screen; To box saved in Config; cleanup of finished files to the Recycle Bin; Window-OK box; OK/CHECK subject; progress, estimates, help lines; Copy script. | PFM | docs/reviews/2026-11-13-r05-results.md |
 | 2026-11-13 | Rounds ask no DODID: the runner uses the Windows profile folder (the empty-box default worked in R04). Enter or Run starts. Task scripts drop it at their next revision. | PFM | docs/reviews/2026-11-13-r04-results.md |
