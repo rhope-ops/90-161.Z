@@ -153,9 +153,21 @@ def self_test():
     return 1 if fails else 0
 
 
+def changed_files():
+    out = subprocess.run(["git", "status", "--short"], cwd=ROOT, capture_output=True, text=True).stdout
+    return out.strip() or "(none)"
+
+
 if __name__ == "__main__":
     if sys.argv[1:] == ["--test"]:
         sys.exit(self_test())
     if len(sys.argv) != 2:
         sys.exit(__doc__)
-    bump(sys.argv[1])
+    try:
+        bump(sys.argv[1])
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            # The lock and the decision row may already be written. Never reset or clean (AGENTS.md "Git safety"):
+            # fix the cause and run again, or undo these files with a normal edit.
+            print("Files changed so far:\n" + changed_files(), file=sys.stderr)
+        raise
