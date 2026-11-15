@@ -120,14 +120,14 @@ From audit 2: "rights work as designed" moved from medium to high (17 of 17 answ
 
 ### Approval (15 Nov 26, after this report)
 
-The PFM approved P1 to P9 on 15 Nov 26. Made: P1 (see the numbers in pull request 2 of this audit), P2 (duplicates 78 to 49: the 49 are real, see T8), P3 (handoff detail moved unchanged to [2026-11-15-handoff-detail.md](2026-11-15-handoff-detail.md); start read 7,404 to about 7,070 tokens), P4 and P6 (one line each in AGENTS.md), P7 and P8 (DECISIONS and the handoff). P5 is a separate pull request that the PFM reads first. P9 is noted in the handoff for the RADE audit.
+The PFM approved P1 to P9 on 15 Nov 26. Made: P1 (pull request 84: 13 small checks run in one `pwsh` process, tests/ps/Invoke-Batch.ps1; `pwsh` starts 21 to 8; `tests/run.sh` 27.3 s to 18.0 s; the 86 PASS lines are the same, character for character), P2 (duplicates 78 to 49: the 49 are real, see T8), P3 (handoff detail moved unchanged to [2026-11-15-handoff-detail.md](2026-11-15-handoff-detail.md); start read 7,404 to about 7,070 tokens), P4 and P6 (one line each in AGENTS.md), P7 and P8 (DECISIONS and the handoff). P5 is a separate pull request that the PFM reads first. P9 is noted in the handoff for the RADE audit.
 
 ## 6. Tech-debt register
 
 | Item | Owner | Review |
 |---|---|---|
 | T4 (audit 2): duplicate count includes generated copies (P2) | Claude | Closed 15 Nov (P2 made); the coverage table header (6 files) still counts as 1 line |
-| T5: `tests/run.sh` 27 s against the 12.2 s of audit 2; new baseline 25.4 s recorded; P1 open | Claude | After R25 |
+| T5: `tests/run.sh` 18 s after P1, against the 12.2 s of audit 2; T20 (8 s) and lint (7 s) set the floor | Claude | After R25 |
 | T7 (review of this audit): `scripts/lint.sh` passes with 0 findings when the PSScriptAnalyzer module is missing; `tests/run.sh` has no `trap`, and each run leaves a `/tmp/t20-<guid>` folder | Claude | Proposal with P1 |
 | T8: with generated blocks skipped, 49 duplicate lines remain; about 40 are the same hand-written code in 5 task scripts (Hide-Site masking, PnP module check, sign-in) | Claude | Proposal: move them into the site-common block, with new script revisions, when those scripts next change |
 | T6: paste limit set before the paste timing ran (assumption 3) | PFM | R26 |
