@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Round builds use the RADE release that exists; an engine change runs in its own RADE session at the same time and the round moves to it later. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
+| 2026-11-15 | Reviews in round builds: the rule stays (each fix gets a fresh review); the review starts while the hosted check runs, not after it. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
+| 2026-11-15 | Bloat audit 3 run on the PFM's request (tests 3 times slower than the baseline). Its proposals P1 to P9 are agent RECs until the PFM approves each. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | RADE lock moves to release engine-v6 (RADE 67f7681, serial 5) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-15 | Round order after R24 approved (1A): R25 lists by PnP, R26 Settings rows, R27 all flows, R28-R29 RADE maintenance, R30-R33 app, R34-R35 pilot start. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | R25 clean target (2B): delete the 12 test lists, the library, the flows and solutions by hand from an exact list; RADE then checks the site (read-only) before it installs. | PFM | go.md |

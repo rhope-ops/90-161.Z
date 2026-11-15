@@ -2,12 +2,12 @@
   "timings": {
     "tests": {
       "cmd": "tests/run.sh",
-      "seconds": 12.2,
+      "seconds": 25.4,
       "max_slowdown": 0.25
     },
     "check-in": {
       "cmd": "scripts/session_checkin.sh",
-      "seconds": 0.5,
+      "seconds": 1.0,
       "max_slowdown": 0.25
     }
   },
@@ -19,9 +19,9 @@
     "tests/fixtures/*.publication.json"
   ],
   "last_audit": {
-    "date": "2026-11-13",
-    "commit": "e44c29b",
-    "report": "docs/reviews/2026-11-13-bloat-audit-2.md"
+    "date": "2026-11-15",
+    "commit": "d9292f3",
+    "report": "docs/reviews/2026-11-15-bloat-audit-3.md"
   },
   "every_commits": 300
 }
