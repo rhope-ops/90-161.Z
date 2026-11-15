@@ -111,7 +111,7 @@ Scope: Chapter 5 (staffing, coordination, certification and approval), Chapter 6
 | 6.3.4 | 3075 | Units below wing or delta that post their own publications may take corrective actions the same way. | - | PFM | Partial: wing PFM follows the same steps | list design:18 | Info |
 | 6.4 | 3077 | Heading: posting products issued below wing or delta level, or by ANG wings and subunits. | - | - | Yes (ANG wing named) | process-model.md:48 | Info |
 | 6.4.1 | 3079 | PFMs distribute local publications and forms on approved websites or other approved methods. | T-3 | PFM | Yes | process-model.md:19,48; DECISIONS.md:103; schema PFMProductIndex.PostedLink | Covered |
-| 6.4.2 | 3081 | PFMs maintain a Product Index of all applicable organizational publications and forms. | T-3 | PFM | Yes | process-model.md:19,48; schema PFMProductIndex (PFMProductIndex.json:9-180); DECISIONS.md:58; docs/sharepoint-lists.md:70 | Covered |
+| 6.4.2 | 3081 | PFMs maintain a Product Index of all applicable organizational publications and forms. | T-3 | PFM | Yes | process-model.md:19,48; schema PFMProductIndex (PFMProductIndex.json:9-180); DECISIONS.md:58; docs/sharepoint-lists.md ("What each list holds", PFM Product Index) | Covered |
 | 6.5 | 3082 | Heading: establishing a Functional Publications Library (FPL). | - | - | Yes (optional) | DECISIONS.md:42 (FPL custodians left out) | Info |
 | 6.5.1 | 3083 | Commanders and directors may establish FPLs holding a copy of this manual and a PI of included publications. | - | commander | Yes (optional) | DECISIONS.md:42 | Gap |
 | 6.5.2 | 3086 | FPLs link to e-Publishing products; classified and CUI products may be posted directly or printed. | - | commander | Yes (optional) | DECISIONS.md:42 | Info |
