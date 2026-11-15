@@ -30,7 +30,7 @@ Rules for the asking agent:
 
 1. Run `scripts/bootstrap.sh "<1>" <owner/repo from git remote get-url origin> "<2>" "<4>"`. Leave out the 4th argument for "the owner". The script deletes itself when done; keep this file, because step 3 is also what an agent shows when a session reports DENYLIST.
 2. Public repo: add to AGENTS.md "Project rules" a line that names a private place for the project log (for example a private Claude doc), because the log can hold environment detail. Write the date and "(the owner, YYYY-MM-DD)".
-3. Guard off (5B): delete `.pii-guard`. The hook and the merge check then skip the guard.
+3. Guard off (5B): delete `.pii-guard`. The hook, the merge check and the Action then skip the guard.
 4. Record the answers as the owner's decisions in docs/DECISIONS.md, and add one `decision` row to the project log.
 5. Commit with a noreply identity, run `scripts/session_checkin.sh` (it installs the git hooks), and push.
 

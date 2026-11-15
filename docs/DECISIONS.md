@@ -5,7 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-15 | No outside checks, all my projects: nothing relies on GitHub Actions or hosted CI; checks run locally. pii-guard.yml and bump-lock.yml removed; merge gate = local checks. | PFM | AGENTS.md |
+| 2026-11-15 | Hosted checks only on public repos (all my projects): public repos may use free GitHub Actions; private repos review themselves locally. pii-guard.yml restored here. Replaces the row below. | PFM | AGENTS.md |
+| 2026-11-15 | No outside checks, all my projects: nothing relies on GitHub Actions or hosted CI; checks run locally. pii-guard.yml and bump-lock.yml removed; merge gate = local checks. Replaced (row above). | PFM | AGENTS.md |
 | 2026-11-15 | Lock moves: local script scripts/bump_lock.py (copy the release lock, serial + 1, decision row, rebuild with file trace, checks). Replaces the bump-lock workflow of the same day. | PFM | scripts/bump_lock.py |
 | 2026-11-15 | Manual "bump lock" workflow (Actions, input: engine tag): copies the RADE release lock, rebuilds, runs scripts/check.sh and the PII guard itself, opens one pull request. Replaced (row above). | PFM | PR 69 |
 | 2026-11-15 | R23 = one read-only step (T15 inventory r3) plus the engine-v2 shared-file self-test; the 2 bundle tests read the expected checks from the round's "needs". | PFM | tests/run.sh |
