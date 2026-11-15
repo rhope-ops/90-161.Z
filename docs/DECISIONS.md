@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Round builds use the RADE release that exists; an engine change runs in its own RADE session at the same time and the round moves to it later. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
+| 2026-11-15 | Reviews in round builds: the rule stays (each fix gets a fresh review); the review starts while the hosted check runs, not after it. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
+| 2026-11-15 | Bloat audit 3 run on the PFM's request (tests 3 times slower than the baseline). Its proposals P1 to P9 are agent RECs until the PFM approves each. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | SharePoint admin app (SPAR): a Power Apps canvas app any site owner opens by link; tick boxes and buttons, no drag and drop. Replaces the WPF part of 2026-11-14. No build yet. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-15 | 90-161.Z stays a Power Apps canvas app for all users; no desktop window replaces it. Confirms the platform decision of 2026-11-10. Scope: 90-161.Z. | PFM | docs/ARCHITECTURE.md |
 | 2026-11-15 | CRM file: an Excel table in the action's Working Files folder, made when coordination starts; the app adds each comment as a row; read-only for people; it goes into the record set. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |

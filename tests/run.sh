@@ -9,7 +9,11 @@ bad() { echo "FAIL $1"; fail=$((fail+1)); }
 
 python3 scripts/bloat_check.py --test >/tmp/bloat.out 2>&1 && ok "bloat_check self-test" || { cat /tmp/bloat.out; bad "bloat_check self-test"; }
 
-scripts/lint.sh >/tmp/lint.out 2>&1 && ok "lint ($(tail -1 /tmp/lint.out))" || { cat /tmp/lint.out; bad "lint"; }
+# The two slowest checks (lint, T20 on the fake site) run beside the other tests (bloat audit 3, 2026-11-15: 36 s suite);
+# each result is read where its PASS line is written: T20 at its old place, lint at the end.
+bg=$(mktemp -d)
+scripts/lint.sh >"$bg/lint.out" 2>&1 & lint_pid=$!
+pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!
 
 # All Test-Publication.ps1 runs happen in ONE pwsh process (tests/ps/Invoke-Validations.ps1; PFM P1, bloat audit 2,
 # 2026-11-13): one pwsh start per input cost about 0.75 s each. Inputs are made first; each test reads vout/vrc.
@@ -230,8 +234,8 @@ PY
 # fake site (tests/fake-pnp): create, a second run that creates nothing, a repair run, the clean check, masked output.
 out=$(pwsh -NoProfile -File scripts/gov/90161Z-T20-provision-lists-r1.ps1 -PlanOnly -PayloadPath flow/provisioning-payload.json 2>&1 | tail -1)
 [ "$out" = "PLAN lists=12 fields=199 views=18 rows=88 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
-out=$(pwsh -NoProfile -File tests/ps/Test-T20.ps1 2>&1 | tail -1)
-case "$out" in "T20 pass="*" fail=0") ok "T20 list provisioning on the fake site ($out)";; *) pwsh -NoProfile -File tests/ps/Test-T20.ps1 2>&1 | grep "T20TEST FAIL" | cut -c1-300; bad "T20 list provisioning: $out";; esac
+wait "$t20_pid"; t20rc=$?; out=$(tail -1 "$bg/t20.out")
+case "$t20rc $out" in "0 T20 pass="*" fail=0") ok "T20 list provisioning on the fake site ($out)";; *) grep "T20TEST FAIL" "$bg/t20.out" | cut -c1-300; bad "T20 list provisioning (exit $t20rc): $out";; esac
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
 # Build is deterministic (fixed dates): a rebuild must match the committed file byte for byte.
@@ -492,6 +496,7 @@ want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] =
 got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
-rm -rf "$vd"
+wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }
+rm -rf "$vd" "$bg"
 echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]
