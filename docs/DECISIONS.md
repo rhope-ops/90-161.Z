@@ -5,6 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | SharePoint admin app (SPAR): a Power Apps canvas app any site owner opens by link; tick boxes and buttons, no drag and drop. Replaces the WPF part of 2026-11-14. No build yet. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-15 | 90-161.Z stays a Power Apps canvas app for all users; no desktop window replaces it. Confirms the platform decision of 2026-11-10. Scope: 90-161.Z. | PFM | docs/ARCHITECTURE.md |
 | 2026-11-15 | CRM file: an Excel table in the action's Working Files folder, made when coordination starts; the app adds each comment as a row; read-only for people; it goes into the record set. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
 | 2026-11-15 | Coordinators enter comments in the app, one row per comment (CRM columns, DAFMAN 5.3); the app makes the CRM file for the record set. File format and list design open. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
 | 2026-11-15 | Clickable previews are back (25A step 2): app previews at 375 and 1440 px, light and dark. The 13 Nov "no previews" text was not the PFM's decision and is withdrawn. | PFM | docs/app/screen-map.md |
