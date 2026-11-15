@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | RADE lock moves to the engine with the guardrails (RADE fc6990d). The rebuilt round bundle is R22 r3. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-14 | Guardrail: RADE stops before any write on a classified-network domain suffix (own domain name only) and accepts a site only on the DAF SharePoint prefix. No banner read. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Guardrail: install needs Full Control (unchanged); RADE shows my own site collection admin flag but never requires it. Edit is not enough. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Guardrail: one install per site. A row on the site holds the version and date; another account is blocked; first install shows "once per wing". Starts with the first deploy app. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
