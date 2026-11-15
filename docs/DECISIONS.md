@@ -7,6 +7,17 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 |---|---|---|---|
 | 2026-11-15 | SharePoint admin app (SPAR): a Power Apps canvas app any site owner opens by link; tick boxes and buttons, no drag and drop. Replaces the WPF part of 2026-11-14. No build yet. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-15 | 90-161.Z stays a Power Apps canvas app for all users; no desktop window replaces it. Confirms the platform decision of 2026-11-10. Scope: 90-161.Z. | PFM | docs/ARCHITECTURE.md |
+| 2026-11-15 | CRM file: an Excel table in the action's Working Files folder, made when coordination starts; the app adds each comment as a row; read-only for people; it goes into the record set. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
+| 2026-11-15 | Coordinators enter comments in the app, one row per comment (CRM columns, DAFMAN 5.3); the app makes the CRM file for the record set. File format and list design open. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
+| 2026-11-15 | Clickable previews are back (25A step 2): app previews at 375 and 1440 px, light and dark. The 13 Nov "no previews" text was not the PFM's decision and is withdrawn. | PFM | docs/app/screen-map.md |
+| 2026-11-15 | RADE lock moves to release engine-v6 (RADE 67f7681, serial 5) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
+| 2026-11-15 | Round order after R24 approved (1A): R25 lists by PnP, R26 Settings rows, R27 all flows, R28-R29 RADE maintenance, R30-R33 app, R34-R35 pilot start. Scope: 90-161.Z. | PFM | docs/phases.md |
+| 2026-11-15 | R25 clean target (2B): delete the 12 test lists, the library, the flows and solutions by hand from an exact list; RADE then checks the site (read-only) before it installs. | PFM | go.md |
+| 2026-11-15 | Both 14 Nov holds are lifted: the slice 1 scope hold (slice 1 passed in R22 and R24) and the hold on steps that need a PnP check. | PFM | docs/phases.md |
+| 2026-11-15 | RADE pull request 53 merged (site name on the Ready card); engine work for the R24 notes is done by the 90-161.Z session in rhope-ops/RADE under RADE's rules. | PFM | https://github.com/rhope-ops/RADE/pull/53 |
+| 2026-11-15 | Newest-RADE check: fix both review findings (compare the lock commit with the tag commit; no network is a NOTE, not a PASS). | PFM | tests/run.sh |
+| 2026-11-15 | How R25 is built (not approved yet): T20 replays the T02 payload by PnP REST, MERGE by CSOM; value 3 (shared mailbox) empty to split the F03 e-mail fault; T18 r4; health probe and paste timing to R26. | Agent | docs/reviews/2026-11-15-r24-results.md |
+| 2026-11-15 | The install record (RADE `marker`) is not in R25: the engine allows it only in a deploy, and a deploy sends no results e-mail. It moves to the first deploy round (agent finding). | Agent | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-15 | Roadmap lives in docs/phases.md: phase states and the rounds to the pilot (phase 8); round counts, no dates. Exit criteria, round order and estimate there are agent RECs. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | 90-161.Z uses the newest RADE release, and a check tells when RADE has a newer one. | PFM | tests/run.sh |
 | 2026-11-15 | How (not approved yet): tests/run.sh fails when the lock is behind the newest `engine-v<N>` tag (no network: not checked); R24 combines engine-v4 with the 15 Nov flow changes; bundle tests use a stand-in NIPR name. | Agent | go.md |
@@ -145,8 +156,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-13 | Word files get the Purview label automatically from a one-time capture. Test: R02. | PFM | archive |
 | 2026-11-13 | go.md and runner messages say e-mail (spelling per B1A), never the PFM's personal mail service. | PFM | archive |
 | 2026-11-13 | Wing PowerPoint master kept off this repo. **Rec:** use its r2 look as the theme for the briefs and the app (not yet approved). | Agent (Rec) | archive |
-| 2026-11-13 | Screen map: (26A) UI text in app code. (27A) one responsive app. (28A) My Work home. (29A) Action Status open to all. No previews. | PFM | docs/app/screen-map.md |
-| 2026-11-13 | Phase 4 (25A): screen map first (docs/app/screen-map.md). The planned previews were dropped by the screen-map row (no previews). | PFM | docs/app/screen-map.md |
+| 2026-11-13 | Screen map: (26A) UI text in app code. (27A) one responsive app. (28A) My Work home. (29A) Action Status open to all. ("No previews" withdrawn 15 Nov.) | PFM | docs/app/screen-map.md |
+| 2026-11-13 | Phase 4 (25A): screen map first (docs/app/screen-map.md). Clickable previews restored 15 Nov. | PFM | docs/app/screen-map.md |
 | 2026-11-13 | Periodic bloat, drift, duplication and assumption checks in every repo; question tool for 1-4 questions. | PFM | archive |
 | 2026-11-13 | Bloat audit: 14 days or 30 commits; 12,000 tokens; +25% timing (1A). Other repos (2B). Sync after check: mil (3A). Audit next (4A). | PFM | archive |
 | 2026-11-13 | Gov-device usability bar for go.md and runner windows; results folder Rounds\\<round>, no zips. | PFM | archive |

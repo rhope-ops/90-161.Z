@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 18 slice 1 end-to-end test, r3 (PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
+  90-161.Z Task 18 slice 1 end-to-end test, r4 (R24 finding: r3 counted the words "fail title" in a PASS line as a problem, so part 1 said "items with problems=1" with 0 failed; r4 counts only the result word FAIL, and masks a list id that follows URL-encoded characters. r3: PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
   troubleshooting). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: proves on the test site that the slice-1 flows (F05 r2 routing, F03 r3 reminders) work end to end, and
@@ -30,7 +30,7 @@
   notices (offices with an endorser only) go to the alert address only.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this
   computer; every output line shows it as <SITE> and the DODID as <DODID>.
-  Output: 90161Z-T18-slice1-part1-r3.txt or 90161Z-T18-slice1-part2-r3.txt in the T18 folder (send both).
+  Output: 90161Z-T18-slice1-part1-r4.txt or 90161Z-T18-slice1-part2-r4.txt in the T18 folder (send both).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1 or 2, -WaitMinutes (default 10), -NoPause.
 #>
 param([string]$Id, [ValidateSet(1, 2)][int]$Part = 1, [int]$WaitMinutes = 10, [switch]$NoPause)
@@ -150,7 +150,7 @@ function Hide-Site([string]$Text, [string]$Site) {
   $Text = $Text -replace 'https?://\S+', '<URL>'
   $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
   $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b', '<GUID>'
+  $Text = $Text -replace '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>'   # r4: no word boundary, so an id after URL-encoded characters (guid%27...) is masked too
   return $Text
 }
 
@@ -222,7 +222,7 @@ try {
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
   $pubFile = Join-Path $dir '90161Z-T18-test-publications-r3.txt'   # item IDs of A, H, F and the two F03 test rows, for part 2
-  $lines.Add('TASK T18 slice 1 end-to-end r3, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
+  $lines.Add('TASK T18 slice 1 end-to-end r4, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
@@ -360,7 +360,7 @@ try {
     Add-Line 'n-f05-step7' $(if ($script:atStep -eq $step7.Id) { 'PASS' } else { 'FAIL' }) $(if ($script:atStep -eq $step7.Id) { 'publication A moved to step 7' } else { 'publication A not at step 7' })
 
     # 10. Clean-up. On a FAIL the rows stay for review; part 1 of the next run removes them (it finds them by title).
-    if (@($lines | Where-Object { $_ -match '^ITEM .* FAIL' }).Count) { Add-Line 'o-clean-up' 'SKIP' 'kept for review because a check failed; part 1 of the next run removes them' }
+    if (@($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count) { Add-Line 'o-clean-up' 'SKIP' 'kept for review because a check failed; part 1 of the next run removes them' }
     else {
       $n = 0
       foreach ($p in $aId, $hId, $fId) { $n += Clear-TestPublication $p }
@@ -369,14 +369,14 @@ try {
     }
   }
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
-  $nf = @($lines | Where-Object { $_ -match '^ITEM .* FAIL' }).Count
+  $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
   $lines.Add('SLICE1 part ' + $Part + ' done, items with problems=' + $nf)
 } catch {
   $m = ConvertTo-Masked (Hide-Site ([string]$_) $site) $secret
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T18-slice1-part' + $Part + '-r3.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T18-slice1-part' + $Part + '-r4.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }
