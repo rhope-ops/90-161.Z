@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Coordinators enter comments in the app, one row per comment (CRM columns, DAFMAN 5.3); the app makes the CRM file for the record set. File format and list design open. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
 | 2026-11-15 | Clickable previews are back (25A step 2): app previews at 375 and 1440 px, light and dark. The 13 Nov "no previews" text was not the PFM's decision and is withdrawn. | PFM | docs/app/screen-map.md |
 | 2026-11-15 | Roadmap lives in docs/phases.md: phase states and the rounds to the pilot (phase 8); round counts, no dates. Exit criteria, round order and estimate there are agent RECs. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | 90-161.Z uses the newest RADE release, and a check tells when RADE has a newer one. | PFM | tests/run.sh |
