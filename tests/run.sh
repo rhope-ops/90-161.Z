@@ -322,8 +322,28 @@ for b in scripts/gov/paste/*.ps1; do
   # Saved checks (R17): the run wrote RADE/Config/rade-checks.json with PASSED entries only and no DODID.
   ck="$tp/u/test1234/OneDrive - United States Air Force/RADE/Config/rade-checks.json"
   [ -f "$ck" ] && ! grep -q test1234 "$ck" && python3 -c "import json,sys; d=json.load(open(sys.argv[1])); assert d['schema']=='rade-checks/1' and d['maxAgeDays']==7 and d['checks'] and all(v['state']=='PASSED' for v in d['checks'].values()) and not ({'word','disk','write'} & set(d['checks']))" "$ck" || { echo "rade-checks.json"; cat "$ck"; pf=$((pf+1)); }
-  st=$(grep -c '^Step [0-9]* of [0-9]*: ' "$tp/out.txt"); sm=$(grep -c '^  Result: \(PASSED\|NEEDS REVIEW\|SKIPPED\) (' "$tp/out.txt")   # SKIPPED: a step whose "after" step did not pass (R25 on)
-  [ "$st" -eq "$n" ] && [ "$sm" -eq "$n" ] && [ -f "$base/Rounds/$r/90161Z-$r-report-r1.txt" ] && grep -q "^Results folder: Rounds" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && grep -q "full log" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && pr=$((pr+1)) || { cat "$tp/out.txt" | tail -20; }
+  # Every default step starts. A step is SKIPPED only when the manifest says so: its "after" names a script step (a script
+  # step cannot pass here: it stops at Unblock-File) or a step that is itself skipped. Every other step must end PASSED
+  # or NEEDS REVIEW. The exact set is compared, so an engine fault that skips more (or fewer) steps fails this test.
+  st=$(grep -c '^Step [0-9]* of [0-9]*: ' "$tp/out.txt")
+  sk=$(python3 - "$b" "$tp/out.txt" <<'PYS'
+import json, re, sys
+bundle = [b for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out'] == sys.argv[1]][0]
+steps = bundle['steps']; kind = {s['name']: s.get('kind', 'script') for s in steps}
+want = set()
+for s in steps:   # in order: a later step may depend on an earlier skipped one
+    if any(kind[a] == 'script' or a in want for a in s.get('after', [])): want.add(s['name'])
+got, ran, name = set(), set(), None
+for line in open(sys.argv[2], encoding='utf-8', errors='replace'):
+    m = re.match(r'^Step \d+ of \d+: (.+?)\s*$', line)
+    if m: name = m.group(1); continue
+    m = re.match(r'^  Result: (PASSED|NEEDS REVIEW|SKIPPED) \(', line)
+    if m and name: (got if m.group(1) == 'SKIPPED' else ran).add(name); name = None
+names = {s['name'] for s in steps}
+print('OK' if got == want and ran == names - want else 'MISMATCH skipped=%s want=%s ran=%d of %d' % (sorted(got), sorted(want), len(ran), len(names - want)))
+PYS
+)
+  [ "$st" -eq "$n" ] && [ "$sk" = "OK" ] && [ -f "$base/Rounds/$r/90161Z-$r-report-r1.txt" ] && grep -q "^Results folder: Rounds" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && grep -q "full log" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && pr=$((pr+1)) || { echo "round steps: $sk"; cat "$tp/out.txt" | tail -20; }
   # The screen shows the real path (PFM 13 Nov); everything else, and the report, masks it.
   ! { grep -v '^Working folder: ' "$tp/out.txt" | grep -q "test1234"; } && ! grep -q "test1234" "$base/Rounds/$r/90161Z-$r-report-r1.txt" || { echo "DODID not masked"; pf=$((pf+1)); }
   grep -q "^Working folder: $tp/u/test1234/" "$tp/out.txt" || { echo "real path not shown"; pf=$((pf+1)); }
@@ -429,7 +449,7 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1; do
+for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
 ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }

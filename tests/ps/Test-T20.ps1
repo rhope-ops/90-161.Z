@@ -52,11 +52,18 @@ Test-That 'site: Title column renamed' (@(@($ours | Where-Object { $_.RootFolder
 Test-That 'site: versioning on' (@($ours | Where-Object { -not $_.EnableVersioning }).Count -eq 0)
 $file = Get-Content -LiteralPath (Join-Path $t20 '90161Z-T20-provision-lists-r1.txt') -Raw
 Test-That 'result file: no site address, host or id' ($file -notmatch 'fakehost|FakeWing|tester01|[0-9a-f]{8}-[0-9a-f]{4}-')
+# Every POST body the script sent equals the payload's body for that request, in the payload's order (list ids aside).
+$pl = Get-Content -LiteralPath (Join-Path $t20 'provisioning-payload.json') -Raw | ConvertFrom-Json
+$want = @(@($pl.lists) + @($pl.fields) + @($pl.rows) | ForEach-Object { (($_.body | ConvertTo-Json -Depth 20 -Compress) -replace '\{__\w+_ID__\}', '{G}') })
+$got = @($global:FakeSP.Sent | ForEach-Object { ((($_ | ConvertFrom-Json) | ConvertTo-Json -Depth 20 -Compress) -replace '\{[0-9a-f]{8}-[0-9a-f-]{27}\}', '{G}') })
+$diff = @(0..([Math]::Max($want.Count, $got.Count) - 1) | Where-Object { $want[$_] -cne $got[$_] })
+Test-That 'every POST body equals the payload body, in order' ($want.Count -eq 432 -and $got.Count -eq 432 -and $diff.Count -eq 0) ('want ' + $want.Count + ' got ' + $got.Count + ' first diff at ' + $(if ($diff.Count) { $diff[0] } else { '-' }))
 
 $posts = $global:FakeSP.Posts
 $r = Invoke-T20 ''
-Test-That 'second run: creates nothing and passes' ($r.Code -eq 0 -and $r.Text -match 'CREATED lists=0 fields=0 views=0 view-column requests=0 rows=0' -and $r.Text -match 'items with problems=0') $r.Text
-Test-That 'second run: no POST' ($global:FakeSP.Posts -eq $posts)
+Test-That 'second run: creates nothing and passes' ($r.Code -eq 0 -and $r.Text -match 'CREATED lists=0 fields=0 views=0 view-column requests=115 rows=0' -and $r.Text -match 'items with problems=0') $r.Text
+Test-That 'second run: only the 115 view-column requests are sent again' ($global:FakeSP.Posts -eq $posts + 115)
+Test-That 'second run: same site (199 columns, 18 views with columns, 88 rows)' (((Get-Ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199 -and ((Get-Ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 88 -and @(Get-Ours | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0)
 
 $r = Invoke-T20 'Check'
 Test-That 'provisioned site: the check fails with 12 lists' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(12\)') $r.Text
@@ -80,6 +87,32 @@ $global:FakeSP.Groups = @('PFM Rights Probe TEST', 'PFM Somebody Else', 'Members
 $r = Invoke-T20 'Check'
 Test-That 'check names the library, the file and the test group' ($r.Text -match 'ITEM c-library FAIL' -and $r.Text -match 'ITEM d-files FAIL result files still in Documents \(1\): 90161Z-T11-rights-result-r5\.json' -and $r.Text -match 'ITEM e-groups FAIL') $r.Text
 Test-That 'check never prints another group name' ($r.Text -notmatch 'Somebody Else|notes\.docx')
+
+# A run that the service stops at ANY request is finished by the next run: stop after 20, 300, 351 and 400 requests
+# (inside the lists, between a view and its columns, and inside the seed rows).
+foreach ($stopAt in 20, 300, 351, 400) {
+  New-FakeSite
+  $global:FakeSP.FailAfter = $stopAt
+  $r1 = Invoke-T20 ''
+  $global:FakeSP.FailAfter = 0
+  $r2 = Invoke-T20 ''
+  $o = Get-Ours
+  Test-That ('stopped after ' + $stopAt + ' requests: the next run completes the site') ($r1.Code -eq 1 -and $r2.Code -eq 0 -and $r2.Text -match 'items with problems=0' -and $o.Count -eq 12 -and (($o | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 88 -and (($o | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199 -and @($o | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0) ($r1.Out[-1] + ' / ' + $r2.Out[-1])
+}
+
+# A list a person made and titled like one of ours is never changed, and the check does not ask to delete it.
+New-FakeSite
+$mine = Add-FakeList 'PFM Settings' 100 'My own list'
+$other = Add-FakeList 'PFM budget notes' 100 'PFM budget notes'
+$r = Invoke-T20 'Check'
+Test-That 'check: a person''s own list titled like ours is not named' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(1\): PFM Settings\.' -and $r.Text -notmatch 'budget') $r.Text
+$global:FakeSP.Lists.Remove($mine)
+$r = Invoke-T20 'Check'
+Test-That 'check: other lists that start with PFM are a count only' ($r.Code -eq 0 -and $r.Text -match 'other lists whose title starts with PFM: 1' -and $r.Text -notmatch 'budget') $r.Text
+$mine2 = Add-FakeList 'PFMOffices title only' 100 'Some folder'
+$mine2.Title = 'PFMOffices'
+$r = Invoke-T20 ''
+Test-That 'create: a list that only has our title is not touched' ($mine2.FieldList.Count -eq 6 -and $mine2.Items.Count -eq 0) ''
 
 # A request the service refuses stops the run with a line the person can send.
 New-FakeSite

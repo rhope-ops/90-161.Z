@@ -5,7 +5,7 @@
 # It proves the script's logic and order, not the real service: the gov device round is that proof.
 
 function New-FakeSite {
-  $global:FakeSP = @{ Lists = (New-Object System.Collections.ArrayList); Groups = @(); Posts = 0; Gets = 0; Connected = $false; Url = ''; FailOn = '' }
+  $global:FakeSP = @{ Lists = (New-Object System.Collections.ArrayList); Groups = @(); Posts = 0; Gets = 0; Connected = $false; Url = ''; FailOn = ''; FailAfter = 0; Sent = (New-Object System.Collections.ArrayList) }
   $docs = Add-FakeList 'Documents' 101 'Shared Documents'
   $null = $docs
 }
@@ -89,11 +89,12 @@ function Invoke-PnPSPRestMethod {
       return (@{ value = @($global:FakeSP.Lists | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Title = $_.Title; ItemCount = $_.Items.Count; EnableVersioning = $_.EnableVersioning; BaseTemplate = $_.BaseTemplate; Hidden = $_.Hidden; RootFolder = $_.RootFolder } }) } | ConvertTo-Json -Depth 6 -Compress)
     }
     if ($path -eq 'web/sitegroups') { return (@{ value = @($global:FakeSP.Groups | ForEach-Object { @{ Title = $_ } }) } | ConvertTo-Json -Depth 4 -Compress) }
-    if ($path -match "^web/lists\(guid'([^']+)'\)/(fields|views|rootfolder/files)$") {
+    if ($path -match "^web/lists\(guid'([^']+)'\)/(fields|views|rootfolder/files|items)$") {
       $l = Get-FakeListById $Matches[1]
       switch ($Matches[2]) {
         'fields' { return (@{ value = @($l.FieldList | ForEach-Object { @{ InternalName = $_.InternalName; Indexed = $_.Indexed } }) } | ConvertTo-Json -Depth 4 -Compress) }
         'views' { return (@{ value = @($l.ViewList | ForEach-Object { @{ Title = $_.Title } }) } | ConvertTo-Json -Depth 4 -Compress) }
+        'items' { return (@{ value = @($l.Items | ForEach-Object { @{ Title = [string]$_.Title } }) } | ConvertTo-Json -Depth 4 -Compress) }
         default { return (@{ value = @($l.Files | ForEach-Object { @{ Name = $_ } }) } | ConvertTo-Json -Depth 4 -Compress) }
       }
     }
@@ -104,7 +105,9 @@ function Invoke-PnPSPRestMethod {
   if ($Content -isnot [string]) { throw 'FAKE: the body must be a JSON string' }
   $b = $Content | ConvertFrom-Json
   if ($global:FakeSP.FailOn -and $path.EndsWith($global:FakeSP.FailOn)) { throw ('FAKE 500: the service refused ' + $Url) }
+  if ($global:FakeSP.FailAfter -gt 0 -and $global:FakeSP.Posts -ge $global:FakeSP.FailAfter) { throw ('FAKE 429: throttled at ' + $Url) }
   $global:FakeSP.Posts++
+  $null = $global:FakeSP.Sent.Add([string]$Content)
   if ($path -eq 'web/lists') {
     if ($b.__metadata.type -ne 'SP.List') { throw 'FAKE 400: SP.List expected' }
     if (@($global:FakeSP.Lists | Where-Object { $_.Title -eq $b.Title }).Count) { throw ('FAKE 500: a list titled ' + $b.Title + ' exists') }

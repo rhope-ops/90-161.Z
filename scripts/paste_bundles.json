@@ -334,6 +334,44 @@
               ]
             }
           ]
+        },
+        {
+          "name": "RADE Window questions r1",
+          "kind": "guide",
+          "dir": "T20",
+          "file": "",
+          "note": "You answer 4 short questions about this window: restore after minimize, button borders, alignment. This replaces notes in the e-mail. About 2 minutes (estimate).",
+          "marker": "90161Z-T20-window-looked.txt",
+          "guide": [
+            "1. Minimize this window now (the button with the line, top right).",
+            "2. Select RADE on the taskbar. The window must come back at its size, not as a full screen.",
+            "3. Select \"Done: I looked\" and answer the 4 questions.",
+            "If the window does not come back: maximize it to go on, select \"Done: I looked\" and answer No to the first question."
+          ],
+          "doneText": "Done: I looked",
+          "answers": [
+            {
+              "key": "restored",
+              "prompt": "Did the window come back from the taskbar after you minimized it?",
+              "kind": "yesno"
+            },
+            {
+              "key": "own-border",
+              "prompt": "Did every button and choice show only a thin border? A black or gray outline around one counts as No.",
+              "kind": "yesno"
+            },
+            {
+              "key": "aligned",
+              "prompt": "Were the lines and buttons aligned on every card?",
+              "kind": "yesno"
+            },
+            {
+              "key": "look",
+              "prompt": "Did anything look wrong? Name the card and the part. Do not type names or addresses.",
+              "kind": "text"
+            }
+          ],
+          "estimate": 2
         }
       ],
       "collect": [
@@ -834,7 +872,8 @@
             "T18 Failure e-mail and Resubmit r1",
             "T18 Run F03 once r5",
             "T18 Slice 1 test, part 2 r4",
-            "T18 Find the test e-mail r1"
+            "T18 Find the test e-mail r1",
+            "RADE Window questions r1"
           ]
         }
       ]

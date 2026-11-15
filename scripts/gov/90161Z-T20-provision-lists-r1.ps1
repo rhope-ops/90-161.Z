@@ -15,12 +15,14 @@
   WHAT IT CHANGES ON THE SITE (create mode only; it adds, it never deletes):
     1. Creates the lists that are missing (12 on a clean site), with versioning on.
     2. Adds the missing columns (199) and views (18) to them.
-    3. Adds the seed rows (88) to PFM Offices, PFM Series, PFM Process Steps and PFM Settings, only when the list is empty.
+    3. Adds the seed rows (88) to PFM Offices, PFM Series, PFM Process Steps and PFM Settings: each row whose title is not there yet.
     4. Sets the display titles ("PFM Offices", ...), the column titles and the indexes.
     5. Sets "read all, edit own rows" on PFM Publications and PFM Endorsements.
   A second run skips what is there, so a run that stopped can be run again.
   How: the POST requests of the payload go through Invoke-PnPSPRestMethod (the same requests the flow sends); the 23 MERGE
   updates go through CSOM (Update, ExecuteQuery), the way T16 and T19 already write on this computer.
+  Which lists are "ours": only a list that was created under the internal name (its folder has that name). A list that a
+  person made and titled like one of ours is never changed.
   Counts and list, column and view names only (they are product names). The site address stays on this computer; every
   output line shows it as <SITE> and the DODID as <DODID>. Group names are never written, only a count.
   If it stops: send the result file. The T02 flow (go.md Done, Task 2) stays the fallback.
@@ -140,7 +142,7 @@ function Hide-Site([string]$Text, [string]$Site) {
   $Text = $Text -replace 'https?://\S+', '<URL>'
   $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
   $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b', '<GUID>'
+  $Text = $Text -replace '(?<![0-9a-fA-F])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9a-fA-F])', '<GUID>'
   return $Text
 }
 
@@ -178,8 +180,9 @@ function Get-Plan($P) {
 function Invoke-Rest([string]$Method, [string]$Uri, [string]$Body) {
   # One SharePoint REST request through the signed-in PnP connection (sign-in cookies and the request digest come from PnP).
   $url = $script:site.TrimEnd('/') + '/' + $Uri
-  if ($Method -eq 'Get') { return [string](Invoke-PnPSPRestMethod -Method Get -Url $url -Accept 'application/json;odata=nometadata' -Raw -ErrorAction Stop) }
-  return [string](Invoke-PnPSPRestMethod -Method Post -Url $url -Content $Body -ContentType 'application/json;odata=verbose' -Accept 'application/json;odata=nometadata' -Raw -ErrorAction Stop)
+  # No -Accept: the cmdlet's own default (application/json;odata=nometadata) is what the script reads.
+  if ($Method -eq 'Get') { return [string](Invoke-PnPSPRestMethod -Method Get -Url $url -Raw -ErrorAction Stop) }
+  return [string](Invoke-PnPSPRestMethod -Method Post -Url $url -Content $Body -ContentType 'application/json;odata=verbose' -Raw -ErrorAction Stop)
 }
 
 function Get-RestValue([string]$Uri) {
@@ -193,10 +196,10 @@ function Get-SiteList {
   return @(Get-RestValue ('_api/web/lists?$select=Id,Title,ItemCount,EnableVersioning,BaseTemplate,Hidden,RootFolder/Name&$expand=RootFolder&$top=1000') | Where-Object { -not $_.Hidden })
 }
 
-function Find-OurList($SiteLists, [string]$Internal, [string]$Display) {
-  foreach ($l in $SiteLists) {
-    if ([string]$l.RootFolder.Name -eq $Internal -or [string]$l.Title -eq $Internal -or [string]$l.Title -eq $Display) { return $l }
-  }
+function Find-OurList($SiteLists, [string]$Internal) {
+  # Ours = created under the internal name, so its folder has that name. A list that a person made and titled
+  # "PFM Settings" has another folder name: it is never matched, so nothing is added to it.
+  foreach ($l in $SiteLists) { if ([string]$l.RootFolder.Name -eq $Internal) { return $l } }
   return $null
 }
 
@@ -253,12 +256,15 @@ try {
   $siteLists = Get-SiteList
   $lines.Add('ITEM a-rest-read PASS lists read from the site=' + $siteLists.Count)
   $found = @{}
-  foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k $plan[$k].Display; if ($l) { $found[$k] = $l } }
+  foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k; if ($l) { $found[$k] = $l } }
 
   if ($Check) {
-    $left = @($siteLists | Where-Object { [string]$_.Title -like 'PFM*' -or [string]$_.RootFolder.Name -like 'PFM*' } | ForEach-Object { [string]$_.Title } | Sort-Object)
+    $internal = @($plan.Keys); $display = @($plan.Keys | ForEach-Object { $plan[$_].Display })
+    $isOurs = { param($l) ($internal -contains [string]$l.RootFolder.Name) -or ($display -contains [string]$l.Title) -or ([string]$l.RootFolder.Name -like 'PFMRightsProbe*') -or ([string]$l.Title -like 'PFMRightsProbe*') }
+    $left = @($siteLists | Where-Object { & $isOurs $_ } | ForEach-Object { [string]$_.Title } | Sort-Object)
+    $other = @($siteLists | Where-Object { -not (& $isOurs $_) -and ([string]$_.Title -like 'PFM*') }).Count
     if ($left.Count) { $lines.Add('ITEM b-lists FAIL still on the site (' + $left.Count + '): ' + ($left -join ', ') + '. Delete them (go.md, "Clean the test site", step 5)') }
-    else { $lines.Add('ITEM b-lists PASS no PFM list on the site') }
+    else { $lines.Add('ITEM b-lists PASS no 90-161.Z list on the site (other lists whose title starts with PFM: ' + $other + ', not made by 90-161.Z, not touched)') }
     $lib = @($siteLists | Where-Object { [string]$_.Title -eq '90-161.Z' -or [string]$_.RootFolder.Name -eq '90-161.Z' })
     if ($lib.Count) { $lines.Add('ITEM c-library FAIL the library 90-161.Z is still on the site. Delete it (step 5)') }
     else { $lines.Add('ITEM c-library PASS no 90-161.Z library') }
@@ -275,6 +281,13 @@ try {
     $lines.Add('CLEAN check done, items with problems=' + $nf)
   } else {
     $write = -not $DryRun
+    # Before any write: this PowerShell must write a list inside a request body as a JSON list ("results":[...]).
+    $probe = @($p.rows | Where-Object { @($_.body.PSObject.Properties | Where-Object { $_.Value -and $_.Value.PSObject.Properties['results'] }).Count } | Select-Object -First 1)
+    if ($probe.Count) {
+      $pj = $probe[0].body | ConvertTo-Json -Depth 20 -Compress
+      if ($pj -notmatch '"results":\[' -or $pj -match '"Count":') { throw 'JSON not written as expected by this PowerShell (a list in a request body). Nothing was changed. Send this line.' }
+      $lines.Add('ITEM a2-json PASS request bodies are written as expected')
+    }
     $made = @{ lists = 0; fields = 0; views = 0; viewops = 0; rows = 0; updates = 0; permissions = 0 }
     $skip = @{ lists = 0; fields = 0; views = 0; rows = 0 }
     $lines.Add('BEFORE lists on the site=' + $found.Count + ' of ' + $plan.Count)
@@ -288,7 +301,7 @@ try {
     }
     if ($write) {
       $siteLists = Get-SiteList
-      foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k $plan[$k].Display; if ($l) { $found[$k] = $l } }
+      foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k; if ($l) { $found[$k] = $l } }
       $missing = @($plan.Keys | Where-Object { -not $found.ContainsKey($_) })
       if ($missing.Count) { throw ('LISTS not on the site after the create step: ' + ($missing -join ', ')) }
     }
@@ -303,7 +316,6 @@ try {
         $haveViews[$k] = @(Get-RestValue ($base + '/views?$select=Title&$top=500') | ForEach-Object { [string]$_.Title })
       }
     }
-    $skipView = @{}
     $lastList = ''
     foreach ($op in $p.fields) {
       $uri = [string]$op.uri
@@ -326,22 +338,31 @@ try {
         $made.fields++
       } elseif ($rest -eq 'views') {
         $title = [string]$op.body.Title
-        if ($haveViews[$k] -contains $title) { $skipView[$k + '|' + $title] = $true; $skip.views++; continue }
+        if ($haveViews[$k] -contains $title) { $skip.views++; continue }
         if ($write) { $null = Invoke-Rest 'Post' $target ($op.body | ConvertTo-Json -Depth 20 -Compress) }
         $made.views++
       } elseif ($rest -match "^views/getbytitle\('([^']+)'\)/viewfields/") {
-        if ($skipView.ContainsKey($k + '|' + [uri]::UnescapeDataString($Matches[1]))) { continue }
+        # Always sent, also for a view that was there: clear the columns, then add each one. A run that stopped between
+        # the view and its columns is repaired this way; for a complete view it changes nothing.
         if ($write) { $null = Invoke-Rest 'Post' $target '{}' }
         $made.viewops++
       } else { throw ('PAYLOAD request not understood for ' + $k) }
     }
 
-    # 3. Seed rows, only into a list that has no row.
+    # 3. Seed rows: each row whose Title is not in the list yet (so a run that stopped part way is repaired, and a
+    # second run adds nothing).
     $lastList = ''
+    $haveRows = @{}
     foreach ($r in $p.rows) {
       if ([string]$r.uri -notmatch "^_api/web/lists/getbytitle\('([^']+)'\)/items$") { throw 'PAYLOAD row request not understood' }
       $k = $Matches[1]
-      if ($found.ContainsKey($k) -and [int]$found[$k].ItemCount -gt 0) { $skip.rows++; continue }
+      if (-not $haveRows.ContainsKey($k)) {
+        $haveRows[$k] = @()
+        if ($found.ContainsKey($k) -and [int]$found[$k].ItemCount -gt 0) {
+          $haveRows[$k] = @(Get-RestValue ("_api/web/lists(guid'" + $found[$k].Id + "')/items?" + '$select=Title&$top=5000') | ForEach-Object { [string]$_.Title })
+        }
+      }
+      if ($haveRows[$k] -contains [string]$r.body.Title) { $skip.rows++; continue }
       if ($write) {
         if ($k -ne $lastList) { Write-Host ('  Seed rows of ' + $k + ' ...'); $lastList = $k }
         $null = Invoke-Rest 'Post' ("_api/web/lists(guid'" + $found[$k].Id + "')/items") ($r.body | ConvertTo-Json -Depth 20 -Compress)
@@ -373,7 +394,7 @@ try {
       foreach ($k in $plan.Keys) {
         $n++
         $e = $plan[$k]
-        $l = Find-OurList $siteLists $k $e.Display
+        $l = Find-OurList $siteLists $k
         $tag = 'ITEM L' + $n.ToString('00') + '-' + $k
         if (-not $l) { $lines.Add($tag + ' FAIL the list is not on the site'); continue }
         $base = "_api/web/lists(guid'" + $l.Id + "')"
@@ -395,7 +416,7 @@ try {
         if ($bad.Count) { $lines.Add($tag + ' FAIL ' + ($bad -join '; ')) }
         else { $lines.Add($tag + ' PASS "' + $e.Display + '": columns ' + $e.Fields.Count + ', indexed ' + $e.Indexed.Count + ', views ' + $e.Views.Count + ', rows ' + [int]$l.ItemCount + $(if ($e.Secure) { ', edit own rows set' } else { '' })) }
       }
-      $lines.Add('AFTER lists on the site=' + @($plan.Keys | Where-Object { Find-OurList $siteLists $_ $plan[$_].Display }).Count + ' of ' + $plan.Count)
+      $lines.Add('AFTER lists on the site=' + @($plan.Keys | Where-Object { Find-OurList $siteLists $_ }).Count + ' of ' + $plan.Count)
     }
     $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
     $lines.Add('PROVISION done, items with problems=' + $nf)

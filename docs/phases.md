@@ -20,6 +20,8 @@ Scale note (REC from 12 Nov 26, estimate, not measured): PFM Activity Log reache
 
 ## Rounds to the pilot (order approved by the PFM, 15 Nov 26)
 
+The PFM approved the order of the rounds. What moved between rounds after that approval is an agent **REC:** the health-flow probe and paste timing from R25 to R26, and the install record to R34.
+
 A round holds only steps that test something not yet verified (PFM, 2026-11-14). Round numbers after R24 are an order, not a promise: a round that needs a fix runs again under the next number.
 
 | Round | Phase | Proves | Needs first | If it fails |

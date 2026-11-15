@@ -35,7 +35,7 @@ Steps:
 2. Do the same for the solution "90-161.Z solution import test A" (its flow is "90161Z T17 Solution Import Test A r5") and for any other solution whose name starts with "90-161.Z" (for example "90-161.Z solution import test B").
 3. Do the same for my two sample solutions, if they still exist: "90161ZT05SolutionSample" and "90161ZExportSample".
 4. Power Automate > My flows: delete every flow whose name starts with "90161Z" (the T02 Provision Lists flows, the T11 Rights Probe flows, the T03 and T04 test flows).
-5. Test site > Site contents: delete these 12 lists: PFM Offices, PFM Series, PFM Process Steps, PFM Settings, PFM Guidance, PFM Product Index, PFM Publications, PFM Waivers, PFM Activity Log, PFM Endorsements, PFM Recommendations (DAF Form 847), PFM Reviews. Delete the library "90-161.Z" too (R25 makes it again and uploads the 34 seals from my T07 folder).
+5. Test site > Site contents: delete these 12 lists: PFM Offices, PFM Series, PFM Process Steps, PFM Settings, PFM Guidance, PFM Product Index, PFM Publications, PFM Waivers, PFM Activity Log, PFM Endorsements, PFM Recommendations (DAF Form 847), PFM Reviews. Delete the library "90-161.Z" too (R25 makes it again and uploads the 34 seals from my T07 folder). If a list or library named "PFMRightsProbeTEST" or "PFMRightsProbeLib" is there (left by a stopped rights probe), delete it too.
 6. Test site > Documents: delete the files whose names start with "90161Z-T11-rights-result" and "90161Z-T17-solution-result".
 7. Test site > Site permissions: there is no 90-161.Z group to delete. Only if a group named "PFM Rights Probe TEST" exists, delete it.
 8. Keep: my connections in Power Automate, the site time zone, the site logo, and the RADE folder on my computer. Do not empty the site Recycle Bin.
@@ -45,8 +45,8 @@ Steps:
 
 ## Round R25 r1: clean install from zero (open, 15 Nov 26)
 
-**For:** R25 proves that RADE can install 90-161.Z on a clean site without the provisioning flow: it builds the 12 lists by PnP, sets up the site, and I import the flows and RADE tests them on the new lists. It is the first round on RADE engine-v6: questions are answered in the window (no notes in the e-mail), a minimized window comes back from the taskbar, and the "Record" link is no longer cut.
-**Time:** about 60 minutes (estimate): checks 2, clean check 1, lists 5, site setup 4, import 7, test part 1 12, failure e-mail 4, F03 run 3, test part 2 12, e-mail question 2.
+**For:** R25 proves that RADE can install 90-161.Z on a clean site without the provisioning flow: it builds the 12 lists by PnP, sets up the site, and I import the flows and RADE tests them on the new lists. It is the first round on RADE engine-v6: questions are answered in the window (no notes in the e-mail), a minimized window comes back from the taskbar, every line of a card starts on one edge, and RADE draws its own button borders. These window fixes are proven only on my computer, so the last step asks me about them.
+**Time:** about 60 minutes (estimate): checks 2, clean check 1, lists 5, site setup 4, import 7, test part 1 12, failure e-mail 4, F03 run 3, test part 2 12, e-mail question 2, window questions 2.
 **Changes:**
 - On my computer: RADE writes into T16, T17, T18, T20 and Rounds\R25, and moves old round files to the Recycle Bin.
 - On the test site: 12 new lists with 88 seed rows; the library "90-161.Z" with the 34 seals; three fake publications and their rows, which are moved to the site Recycle Bin at the end.
@@ -63,9 +63,9 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 6. Wait while RADE checks the site, builds the lists and sets up the site (about 10 minutes, estimate). If the check step fails, it names what is left: delete that, then start again at step 2.
 7. When the window shows the import step: do the steps it lists. Leave "3 Shared mailbox" empty. Then answer its 2 questions in the window.
 8. When the window shows the Resubmit step and the F03 step: do the steps each lists.
-9. At the last step, look for the e-mail "[TEST] Escalation" in Outlook and answer where it is.
-10. Wait for DONE. RADE opens an Outlook draft. Send it; nothing needs to be added.
-11. Minimize the RADE window once during the round and bring it back from the taskbar. If that does not work, write one line about it in the draft.
+9. At the e-mail step, look for the e-mail "[TEST] Escalation" in Outlook and answer where it is.
+10. At the last step, minimize the RADE window, bring it back from the taskbar, and answer its 4 questions about the window.
+11. Wait for DONE. RADE opens an Outlook draft. Send it as it is: every answer is already in it.
 
 **Report:** the draft itself, subject "90161Z R25". It holds the report file and the result files (T20 check, T20 lists, T16, T18 part 1, T18 part 2), and the import log file (T17) if the import failed.
 **If it fails:** read the "What to do" line in the window. If a step fails, send the draft as it is: the failed line is the result. The list step can be run again; it skips what is there. If it stops with "already exists", empty the 12 PFM lists from the site Recycle Bin (this cannot be undone) and run the round again. The provisioning flow (Task 2 in Done) stays the fallback.

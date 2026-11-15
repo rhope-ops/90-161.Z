@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R25, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = '3b1d5a7e'
+$buildId = '902c3a56'
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
 $homeUrl = 'https://rhope-ops.github.io/90-161.Z'
@@ -17,7 +17,7 @@ $round = 'R25'
 $appFolder = '90-161.Z'
 $usersRoot = 'C:\Users'
 $files = @()
-$files += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.ps1'; Kind = 'text'; Sha = 'c27383e4b1d0'; Data = @'
+$files += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.ps1'; Kind = 'text'; Sha = 'ae45f3c164de'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 20 list provisioning by PnP r1 (PFM 14 Nov 26: lists by PnP; PFM 15 Nov 26: clean install in R25).
@@ -35,12 +35,14 @@ $files += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.ps1'; Kind = 'te
   WHAT IT CHANGES ON THE SITE (create mode only; it adds, it never deletes):
     1. Creates the lists that are missing (12 on a clean site), with versioning on.
     2. Adds the missing columns (199) and views (18) to them.
-    3. Adds the seed rows (88) to PFM Offices, PFM Series, PFM Process Steps and PFM Settings, only when the list is empty.
+    3. Adds the seed rows (88) to PFM Offices, PFM Series, PFM Process Steps and PFM Settings: each row whose title is not there yet.
     4. Sets the display titles ("PFM Offices", ...), the column titles and the indexes.
     5. Sets "read all, edit own rows" on PFM Publications and PFM Endorsements.
   A second run skips what is there, so a run that stopped can be run again.
   How: the POST requests of the payload go through Invoke-PnPSPRestMethod (the same requests the flow sends); the 23 MERGE
   updates go through CSOM (Update, ExecuteQuery), the way T16 and T19 already write on this computer.
+  Which lists are "ours": only a list that was created under the internal name (its folder has that name). A list that a
+  person made and titled like one of ours is never changed.
   Counts and list, column and view names only (they are product names). The site address stays on this computer; every
   output line shows it as <SITE> and the DODID as <DODID>. Group names are never written, only a count.
   If it stops: send the result file. The T02 flow (go.md Done, Task 2) stays the fallback.
@@ -160,7 +162,7 @@ function Hide-Site([string]$Text, [string]$Site) {
   $Text = $Text -replace 'https?://\S+', '<URL>'
   $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
   $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b', '<GUID>'
+  $Text = $Text -replace '(?<![0-9a-fA-F])[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?![0-9a-fA-F])', '<GUID>'
   return $Text
 }
 
@@ -198,8 +200,9 @@ function Get-Plan($P) {
 function Invoke-Rest([string]$Method, [string]$Uri, [string]$Body) {
   # One SharePoint REST request through the signed-in PnP connection (sign-in cookies and the request digest come from PnP).
   $url = $script:site.TrimEnd('/') + '/' + $Uri
-  if ($Method -eq 'Get') { return [string](Invoke-PnPSPRestMethod -Method Get -Url $url -Accept 'application/json;odata=nometadata' -Raw -ErrorAction Stop) }
-  return [string](Invoke-PnPSPRestMethod -Method Post -Url $url -Content $Body -ContentType 'application/json;odata=verbose' -Accept 'application/json;odata=nometadata' -Raw -ErrorAction Stop)
+  # No -Accept: the cmdlet's own default (application/json;odata=nometadata) is what the script reads.
+  if ($Method -eq 'Get') { return [string](Invoke-PnPSPRestMethod -Method Get -Url $url -Raw -ErrorAction Stop) }
+  return [string](Invoke-PnPSPRestMethod -Method Post -Url $url -Content $Body -ContentType 'application/json;odata=verbose' -Raw -ErrorAction Stop)
 }
 
 function Get-RestValue([string]$Uri) {
@@ -213,10 +216,10 @@ function Get-SiteList {
   return @(Get-RestValue ('_api/web/lists?$select=Id,Title,ItemCount,EnableVersioning,BaseTemplate,Hidden,RootFolder/Name&$expand=RootFolder&$top=1000') | Where-Object { -not $_.Hidden })
 }
 
-function Find-OurList($SiteLists, [string]$Internal, [string]$Display) {
-  foreach ($l in $SiteLists) {
-    if ([string]$l.RootFolder.Name -eq $Internal -or [string]$l.Title -eq $Internal -or [string]$l.Title -eq $Display) { return $l }
-  }
+function Find-OurList($SiteLists, [string]$Internal) {
+  # Ours = created under the internal name, so its folder has that name. A list that a person made and titled
+  # "PFM Settings" has another folder name: it is never matched, so nothing is added to it.
+  foreach ($l in $SiteLists) { if ([string]$l.RootFolder.Name -eq $Internal) { return $l } }
   return $null
 }
 
@@ -273,12 +276,15 @@ try {
   $siteLists = Get-SiteList
   $lines.Add('ITEM a-rest-read PASS lists read from the site=' + $siteLists.Count)
   $found = @{}
-  foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k $plan[$k].Display; if ($l) { $found[$k] = $l } }
+  foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k; if ($l) { $found[$k] = $l } }
 
   if ($Check) {
-    $left = @($siteLists | Where-Object { [string]$_.Title -like 'PFM*' -or [string]$_.RootFolder.Name -like 'PFM*' } | ForEach-Object { [string]$_.Title } | Sort-Object)
+    $internal = @($plan.Keys); $display = @($plan.Keys | ForEach-Object { $plan[$_].Display })
+    $isOurs = { param($l) ($internal -contains [string]$l.RootFolder.Name) -or ($display -contains [string]$l.Title) -or ([string]$l.RootFolder.Name -like 'PFMRightsProbe*') -or ([string]$l.Title -like 'PFMRightsProbe*') }
+    $left = @($siteLists | Where-Object { & $isOurs $_ } | ForEach-Object { [string]$_.Title } | Sort-Object)
+    $other = @($siteLists | Where-Object { -not (& $isOurs $_) -and ([string]$_.Title -like 'PFM*') }).Count
     if ($left.Count) { $lines.Add('ITEM b-lists FAIL still on the site (' + $left.Count + '): ' + ($left -join ', ') + '. Delete them (go.md, "Clean the test site", step 5)') }
-    else { $lines.Add('ITEM b-lists PASS no PFM list on the site') }
+    else { $lines.Add('ITEM b-lists PASS no 90-161.Z list on the site (other lists whose title starts with PFM: ' + $other + ', not made by 90-161.Z, not touched)') }
     $lib = @($siteLists | Where-Object { [string]$_.Title -eq '90-161.Z' -or [string]$_.RootFolder.Name -eq '90-161.Z' })
     if ($lib.Count) { $lines.Add('ITEM c-library FAIL the library 90-161.Z is still on the site. Delete it (step 5)') }
     else { $lines.Add('ITEM c-library PASS no 90-161.Z library') }
@@ -295,6 +301,13 @@ try {
     $lines.Add('CLEAN check done, items with problems=' + $nf)
   } else {
     $write = -not $DryRun
+    # Before any write: this PowerShell must write a list inside a request body as a JSON list ("results":[...]).
+    $probe = @($p.rows | Where-Object { @($_.body.PSObject.Properties | Where-Object { $_.Value -and $_.Value.PSObject.Properties['results'] }).Count } | Select-Object -First 1)
+    if ($probe.Count) {
+      $pj = $probe[0].body | ConvertTo-Json -Depth 20 -Compress
+      if ($pj -notmatch '"results":\[' -or $pj -match '"Count":') { throw 'JSON not written as expected by this PowerShell (a list in a request body). Nothing was changed. Send this line.' }
+      $lines.Add('ITEM a2-json PASS request bodies are written as expected')
+    }
     $made = @{ lists = 0; fields = 0; views = 0; viewops = 0; rows = 0; updates = 0; permissions = 0 }
     $skip = @{ lists = 0; fields = 0; views = 0; rows = 0 }
     $lines.Add('BEFORE lists on the site=' + $found.Count + ' of ' + $plan.Count)
@@ -308,7 +321,7 @@ try {
     }
     if ($write) {
       $siteLists = Get-SiteList
-      foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k $plan[$k].Display; if ($l) { $found[$k] = $l } }
+      foreach ($k in $plan.Keys) { $l = Find-OurList $siteLists $k; if ($l) { $found[$k] = $l } }
       $missing = @($plan.Keys | Where-Object { -not $found.ContainsKey($_) })
       if ($missing.Count) { throw ('LISTS not on the site after the create step: ' + ($missing -join ', ')) }
     }
@@ -323,7 +336,6 @@ try {
         $haveViews[$k] = @(Get-RestValue ($base + '/views?$select=Title&$top=500') | ForEach-Object { [string]$_.Title })
       }
     }
-    $skipView = @{}
     $lastList = ''
     foreach ($op in $p.fields) {
       $uri = [string]$op.uri
@@ -346,22 +358,31 @@ try {
         $made.fields++
       } elseif ($rest -eq 'views') {
         $title = [string]$op.body.Title
-        if ($haveViews[$k] -contains $title) { $skipView[$k + '|' + $title] = $true; $skip.views++; continue }
+        if ($haveViews[$k] -contains $title) { $skip.views++; continue }
         if ($write) { $null = Invoke-Rest 'Post' $target ($op.body | ConvertTo-Json -Depth 20 -Compress) }
         $made.views++
       } elseif ($rest -match "^views/getbytitle\('([^']+)'\)/viewfields/") {
-        if ($skipView.ContainsKey($k + '|' + [uri]::UnescapeDataString($Matches[1]))) { continue }
+        # Always sent, also for a view that was there: clear the columns, then add each one. A run that stopped between
+        # the view and its columns is repaired this way; for a complete view it changes nothing.
         if ($write) { $null = Invoke-Rest 'Post' $target '{}' }
         $made.viewops++
       } else { throw ('PAYLOAD request not understood for ' + $k) }
     }
 
-    # 3. Seed rows, only into a list that has no row.
+    # 3. Seed rows: each row whose Title is not in the list yet (so a run that stopped part way is repaired, and a
+    # second run adds nothing).
     $lastList = ''
+    $haveRows = @{}
     foreach ($r in $p.rows) {
       if ([string]$r.uri -notmatch "^_api/web/lists/getbytitle\('([^']+)'\)/items$") { throw 'PAYLOAD row request not understood' }
       $k = $Matches[1]
-      if ($found.ContainsKey($k) -and [int]$found[$k].ItemCount -gt 0) { $skip.rows++; continue }
+      if (-not $haveRows.ContainsKey($k)) {
+        $haveRows[$k] = @()
+        if ($found.ContainsKey($k) -and [int]$found[$k].ItemCount -gt 0) {
+          $haveRows[$k] = @(Get-RestValue ("_api/web/lists(guid'" + $found[$k].Id + "')/items?" + '$select=Title&$top=5000') | ForEach-Object { [string]$_.Title })
+        }
+      }
+      if ($haveRows[$k] -contains [string]$r.body.Title) { $skip.rows++; continue }
       if ($write) {
         if ($k -ne $lastList) { Write-Host ('  Seed rows of ' + $k + ' ...'); $lastList = $k }
         $null = Invoke-Rest 'Post' ("_api/web/lists(guid'" + $found[$k].Id + "')/items") ($r.body | ConvertTo-Json -Depth 20 -Compress)
@@ -393,7 +414,7 @@ try {
       foreach ($k in $plan.Keys) {
         $n++
         $e = $plan[$k]
-        $l = Find-OurList $siteLists $k $e.Display
+        $l = Find-OurList $siteLists $k
         $tag = 'ITEM L' + $n.ToString('00') + '-' + $k
         if (-not $l) { $lines.Add($tag + ' FAIL the list is not on the site'); continue }
         $base = "_api/web/lists(guid'" + $l.Id + "')"
@@ -415,7 +436,7 @@ try {
         if ($bad.Count) { $lines.Add($tag + ' FAIL ' + ($bad -join '; ')) }
         else { $lines.Add($tag + ' PASS "' + $e.Display + '": columns ' + $e.Fields.Count + ', indexed ' + $e.Indexed.Count + ', views ' + $e.Views.Count + ', rows ' + [int]$l.ItemCount + $(if ($e.Secure) { ', edit own rows set' } else { '' })) }
       }
-      $lines.Add('AFTER lists on the site=' + @($plan.Keys | Where-Object { Find-OurList $siteLists $_ $plan[$_].Display }).Count + ' of ' + $plan.Count)
+      $lines.Add('AFTER lists on the site=' + @($plan.Keys | Where-Object { Find-OurList $siteLists $_ }).Count + ' of ' + $plan.Count)
     }
     $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
     $lines.Add('PROVISION done, items with problems=' + $nf)
@@ -6733,6 +6754,7 @@ $steps += @{ Name = 'T18 Failure e-mail and Resubmit r1'; Dir = 'T18'; File = ''
 $steps += @{ Name = 'T18 Run F03 once r5'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You run F03 once by hand. In test mode its e-mails go only to you; in this round your own mailbox sends them. The last step asks where the e-mail arrived. About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Safety check: if Test mode did not read Yes at import, select "Skip": F03 would e-mail real endorsers.', '2. Select "Open in browser" and open Solutions > "90-161.Z flows".', '3. Open "90161Z F03 Suspense Reminders r5" and select Test > Manually > Test, then Run flow.', '4. Wait until the run ends (under 1 minute, estimate). Read only the status at the top of the run: "Succeeded" or "Failed".', '5. Grey (skipped) steps are normal: the last 3 steps, one of the two send steps, and most rows of the loop send nothing.', '6. If the status is Succeeded: return to RADE and select "Done: F03 ran". The last step of the round asks about the e-mail.', 'If the status is Failed: type the name of the first step with a red mark and the first line of its error (no names or site address), then select "It failed".'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T18-f03-ran.txt'; Estimate = 180; DoneText = 'Done: F03 ran'; DoneLog = ''; Makes = @(); After = @('T18 Slice 1 test, part 1 r4'); Optional = $false; Help = '' }
 $steps += @{ Name = 'T18 Slice 1 test, part 2 r4'; Dir = 'T18'; File = '90161Z-T18-slice1-test-r4.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 40; Args = '-Part 2'; Note = 'Checks: Resubmit made no duplicates; F03 suspense and one escalation; F06 hold, resume and cancel; Legal rows and step 7. Line j2 names the mailbox that sent the e-mail. Removes all test rows.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 720; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T18 Slice 1 test, part 1 r4'); Optional = $false; Help = 'Send the results as they are. The test rows stay on the site for review when a check fails.' }
 $steps += @{ Name = 'T18 Find the test e-mail r1'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You look for the F03 test e-mail and answer one question in this window. This closes a fault of 4 rounds: the e-mail was logged but never found. About 2 minutes (estimate).'; Kind = 'guide'; Guide = @('1. In Outlook, search All Mailboxes for a subject that starts with "[TEST] Escalation", received today.', '2. Look in this order: Inbox, Junk E-mail, then Sent Items.', '3. Select "Done: I looked" and answer where you found it.', 'If Outlook does not open: select "It failed" and type what you see (no names or addresses).'); Url = ''; UrlConfig = ''; Marker = '90161Z-T18-email-looked.txt'; Estimate = 120; DoneText = 'Done: I looked'; DoneLog = ''; Makes = @(); After = @('T18 Run F03 once r5'); Optional = $false; Help = ''; Answers = @(@{ Key = 'f03-email'; Prompt = 'Where is the e-mail "[TEST] Escalation" from this round?'; Kind = 'pick'; Choices = @('Inbox', 'Junk E-mail', 'Sent Items only', 'Not found') }) }
+$steps += @{ Name = 'RADE Window questions r1'; Dir = 'T20'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You answer 4 short questions about this window: restore after minimize, button borders, alignment. This replaces notes in the e-mail. About 2 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Minimize this window now (the button with the line, top right).', '2. Select RADE on the taskbar. The window must come back at its size, not as a full screen.', '3. Select "Done: I looked" and answer the 4 questions.', 'If the window does not come back: maximize it to go on, select "Done: I looked" and answer No to the first question.'); Url = ''; UrlConfig = ''; Marker = '90161Z-T20-window-looked.txt'; Estimate = 120; DoneText = 'Done: I looked'; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = ''; Answers = @(@{ Key = 'restored'; Prompt = 'Did the window come back from the taskbar after you minimized it?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'own-border'; Prompt = 'Did every button and choice show only a thin border? A black or gray outline around one counts as No.'; Kind = 'yesno'; Choices = @() }, @{ Key = 'aligned'; Prompt = 'Were the lines and buttons aligned on every card?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'look'; Prompt = 'Did anything look wrong? Name the card and the part. Do not type names or addresses.'; Kind = 'text'; Choices = @() }) }
 $collect = @()
 $collect += @{ Dir = 'T20'; Name = '90161Z-T20-clean-check-r1.txt'; Step = 'T20 Clean site check r1' }
 $collect += @{ Dir = 'T20'; Name = '90161Z-T20-provision-lists-r1.txt'; Step = 'T20 Build the 12 lists r1' }
@@ -6855,7 +6877,7 @@ $cleanup += @{ Path = 'Rounds\R22'; Kind = 'dir' }
 $cleanup += @{ Path = 'Rounds\R23'; Kind = 'dir' }
 $known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r11.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r4.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
 $apps = @()
-$apps += @{ Name = '90-161.Z: Publications and Forms Management'; Summary = 'Test round R25: clean install. Checks that the site is clean, builds the 12 lists, sets up the site, then imports and tests the flows.'; Steps = @(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10); Checks = @('nipr', 'ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'pnp', 'net-bookmark', 'net-site', 'net-flow', 'site-rights', 'flow-guide'); Mode = 'test'; Version = ''; Marker = $null }
+$apps += @{ Name = '90-161.Z: Publications and Forms Management'; Summary = 'Test round R25: clean install. Checks that the site is clean, builds the 12 lists, sets up the site, then imports and tests the flows.'; Steps = @(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11); Checks = @('nipr', 'ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'pnp', 'net-bookmark', 'net-site', 'net-flow', 'site-rights', 'flow-guide'); Mode = 'test'; Version = ''; Marker = $null }
 
 # ---------------- RADE, the Redacted Application Deployment Engine (generated; same engine in every round bundle) ----------------
 function Get-Secret([string]$Id, [string]$Leaf) {
