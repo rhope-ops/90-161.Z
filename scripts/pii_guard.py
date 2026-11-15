@@ -8,10 +8,10 @@ Usage:
     python3 scripts/pii_guard.py --push            # pre-push hook mode: reads the hook's stdin lines
     python3 scripts/pii_guard.py FILE ...          # these files
     python3 scripts/pii_guard.py --status          # where the denylist comes from and how many entries (never the names)
-    --require-denylist                             # fail when no denylist is found (the hook and the Action use it)
+    --require-denylist                             # fail when no denylist is found (the hook and the merge check use it)
     python3 scripts/pii_guard.py --test            # self-test; prints PII GUARD TEST PASS
 
-Opt-in: the guard runs only in a repo with a `.pii-guard` file at its root (the hook and the Action check for it).
+Opt-in: the guard runs only in a repo with a `.pii-guard` file at its root (the hook and the merge check look for it).
 That file lists exact strings that are allowed (one per line, `#` comments), and paths to skip as
 `skip: <path or glob>` lines (for example a public reference text that quotes office contacts), and opt-in checks as
 `check: <name>` lines (today: `check: mil`). Only the PFM adds entries;

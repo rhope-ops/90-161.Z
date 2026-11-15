@@ -5,7 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-15 | Manual "bump lock" workflow (Actions, input: engine tag): copies the RADE release lock, rebuilds, runs scripts/check.sh and the PII guard itself, opens one pull request. | PFM | .github/workflows/bump-lock.yml |
+| 2026-11-15 | No outside checks, all my projects: nothing relies on GitHub Actions or hosted CI; checks run locally. pii-guard.yml and bump-lock.yml removed; merge gate = local checks. | PFM | AGENTS.md |
+| 2026-11-15 | Lock moves: local script scripts/bump_lock.py (copy the release lock, serial + 1, decision row, rebuild with file trace, checks). Replaces the bump-lock workflow of the same day. | PFM | scripts/bump_lock.py |
 | 2026-11-15 | R23 = one read-only step (T15 inventory r3) plus the engine-v2 shared-file self-test; the 2 bundle tests read the expected checks from the round's "needs". | PFM | tests/run.sh |
 | 2026-11-15 | RADE lock moves to release engine-v2 (RADE 1a1dead, serial 3): shared files (RADE PR 42). Round bundle R23 r1; R22 r3 bundle removed (ran twice). Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-15 | No kit sync for this repo: the sync replaced the .mil check in scripts/pii_guard.py and project rules. Pull request 61 closed, not merged. Kit fixes are ported by hand. | PFM | AGENTS.md |
