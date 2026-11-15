@@ -27,6 +27,7 @@ Updated: 2026-11-15 by Claude. Keep this file at 40 lines or fewer and state onl
 4. Logo K (PFM 14 Nov): official logo for every app; master copy in rhope-ops/RADE assets/logo. Not a round step any more: Claude e-mailed logo-K-512/64 on 14 Nov; the PFM sets it by hand; site setup reads the header logo. After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
 5. App writes (PFM 14 Nov: wing users Read on the site, data entry through the app): Power Apps writes with the user's own rights, so choose list-level Contribute on the app's lists (site stays Read) or a flow that writes with the PFM's connection. Agent REC: list-level Contribute on the intake lists only; R16 W11 proved a Read-only user gets Contribute on such a list.
 6. Result e-mails: app-drafted round e-mails go to Trash once results are on main; others need confirmation (AGENTS.md Project rules, 15 Nov).
+7. App preview r2 (15 Nov): RADE "One thing" design and RADE colors, balanced with the Hybrid board of https://claude.ai/artifact/8PXrZk5hvq6ByeML7VrEpQ, clickable, sample data: https://claude.ai/artifact/8DShFnoUqr5MWZAqwKKqxb. Not approved; 5 open questions in its "Design notes".
 
 ## Next
 

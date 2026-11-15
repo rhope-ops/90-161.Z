@@ -1,6 +1,6 @@
 # App screen map r1 (13 Nov 26)
 
-Status: phase 4, step 1 (PFM 25A, 13 Nov): every screen, who sees it, what it does, where its text comes from. Items marked **REC:** are open until the PFM approves. Approved 13 Nov (26A-29A). No clickable previews (PFM, 13 Nov). Colors stay provisional until go.md Task 12.
+Status: phase 4, step 1 (PFM 25A, 13 Nov): every screen, who sees it, what it does, where its text comes from. Items marked **REC:** are open until the PFM approves. Approved 13 Nov (26A-29A). Clickable previews at 375 and 1440 px, light and dark (25A; PFM, 15 Nov: the 13 Nov "no previews" text is withdrawn). Colors stay provisional until go.md Task 12.
 
 ## 1. Rules for every screen
 
