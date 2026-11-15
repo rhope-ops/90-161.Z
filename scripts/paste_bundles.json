@@ -23,7 +23,7 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R23-round-r1.ps1",
+      "out": "scripts/gov/paste/90161Z-R23-round-r2.ps1",
       "round": "R23",
       "title": "Round R23: Windows PowerShell 5.1 proof of the RADE engine-v2 shared files (RADE PR 42). One read-only step (T15 inventory r3), then the engine's shared-file self-test on a scratch folder that it removes again",
       "files": [

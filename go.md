@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 15 Nov 26 (Round R23 r1 open: a short engine check, about 5 minutes).
+Updated: 15 Nov 26 (Round R23 r2 open: a short engine check, about 5 minutes).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,7 +24,7 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R23 r1: RADE engine-v2 shared-file check (open, 15 Nov 26)
+## Round R23 r2: RADE engine-v2 shared-file check (open, 15 Nov 26)
 
 **For:** RADE engine-v2 keeps one record file per app in RADE\Config. R23 proves that this works in Windows PowerShell 5.1 on my computer. It runs one read-only step, then RADE tests its record files by itself.
 **Time:** about 5 minutes (estimate): checks 1, inventory 1, self-test under 1, the e-mail 2.
@@ -35,7 +35,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R23-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R23-round-r2.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
 3. In the RADE window, choose the application, run the checks, then select Deploy.
 4. Wait for DONE (about 2 minutes, estimate). Then I send the Outlook draft.

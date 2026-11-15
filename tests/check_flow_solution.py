@@ -185,6 +185,12 @@ for z in SLICES:
         defaults = {e: re.search(r"<defaultvalue>([^<]*)</defaultvalue>", zz.read(f"environmentvariabledefinitions/{e}/environmentvariabledefinition.xml").decode()) for e in envs}
         if (defaults.get("pfm_ReminderLeadDays") or [None, None])[1] != "5" or (defaults.get("pfm_EscalationLagDays") or [None, None])[1] != "3":
             bad(f"{z.name}: F03 defaults are not 5 and 3 (PFM, 2026-11-14)")
+        # PFM 15 Nov 26: the values a wing sets are first and together (file order and numbered labels); a slice imports Test mode Yes.
+        first = re.findall(r'<RootComponent type="380" schemaName="([^"]+)"', sol)[:4]
+        labels = [re.search(r'displayname default="([^"]+)"', zz.read(f"environmentvariabledefinitions/{e}/environmentvariabledefinition.xml").decode()).group(1) for e in first]
+        if first != ["pfm_SiteUrl", "pfm_AlertEmail", "pfm_SharedMailbox", "pfm_TestMode"] or [x[:2] for x in labels] != ["1 ", "2 ", "3 ", "4 "]:
+            bad(f"{z.name}: the values to set are not first, in order, with numbered labels: {first} {labels}")
+        if (defaults.get("pfm_TestMode") or [None, None])[1] != "Yes": bad(f"{z.name}: a test-round slice must import with Test mode Yes")
         if b"<isrequired>0</isrequired>" not in zz.read("environmentvariabledefinitions/pfm_SharedMailbox/environmentvariabledefinition.xml"):
             bad(f"{z.name}: the shared mailbox variable must be optional")
         if len(re.findall(r'<RootComponent type="29"', sol)) != 3: bad(f"{z.name}: slice 1 must hold exactly F03, F05 and F06 (R21)")

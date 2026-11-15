@@ -49,8 +49,20 @@ PLATFORM, SERVICEABILITY = "9.2.26101.188", "9.2.26101.00188"   # the R18 export
 OPTION_PREFIX = 89127   # the publisher PFM in this environment (R18 export, r5); a new environment creates PFM with it
 CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Office 365 Outlook"}
 # Environment variables (type Text, 100000000). Defaults are list titles from schemas/lists; the site URL and the two day counts stay empty.
+# Order and labels (PFM 15 Nov 26: "sort the fields when importing a solution so the ones i need to modify are sequential and on
+# top"): the values a wing must set come first here (the RootComponent order in solution.xml) and their import-page labels (LABEL)
+# start with a number, so they are together and first whether the page keeps the file order or sorts by name (agent finding,
+# Confidence medium: the page's sort rule is not documented; the next import shows it). A flow parameter key (ENV_KEY) keeps the
+# plain name: flows bind a variable by its schema name.
 ENV = [  # (schema name, display name, default value)
     ("pfm_SiteUrl", "Site URL", ""),
+    ("pfm_AlertEmail", "Alert e-mail", ""),   # failure e-mails and test-mode e-mails go here (PFM, 2026-11-14)
+    ("pfm_SharedMailbox", "Shared mailbox", ""),   # optional: F03 sends from it (Send As); empty = the flow owner's mailbox
+    ("pfm_TestMode", "Test mode", "No"),   # Yes: every flow e-mail goes to the alert address only
+    ("pfm_FlowsPaused", "Flows paused", "No"),   # Yes: every flow stops at its first step (kill switch)
+    ("pfm_ReminderLeadDays", "Reminder lead days", "5"),   # weekdays before the suspense (PFM, 2026-11-14)
+    ("pfm_EscalationLagDays", "Escalation lag days", "3"),   # working days after the suspense (PFM, 2026-11-14)
+    ("pfm_SuspenseWorkdays", "Suspense working days", "20"),   # F03 default suspense (PFM, 2026-11-14: 20 working days)
     ("pfm_ListPublications", "List PFM Publications", "PFM Publications"),
     ("pfm_ListActivityLog", "List PFM Activity Log", "PFM Activity Log"),
     ("pfm_ListReviews", "List PFM Reviews", "PFM Reviews"),
@@ -58,14 +70,12 @@ ENV = [  # (schema name, display name, default value)
     ("pfm_ListProductIndex", "List PFM Product Index", "PFM Product Index"),
     ("pfm_ListProcessSteps", "List PFM Process Steps", "PFM Process Steps"),
     ("pfm_ListOffices", "List PFM Offices", "PFM Offices"),
-    ("pfm_ReminderLeadDays", "Reminder lead days", "5"),   # weekdays before the suspense (PFM, 2026-11-14)
-    ("pfm_EscalationLagDays", "Escalation lag days", "3"),   # working days after the suspense (PFM, 2026-11-14)
-    ("pfm_SharedMailbox", "Shared mailbox", ""),   # optional: F03 sends from it (Send As); empty = the flow owner's mailbox
-    ("pfm_SuspenseWorkdays", "Suspense working days", "20"),   # F03 default suspense (PFM, 2026-11-14: 20 working days)
-    ("pfm_AlertEmail", "Alert e-mail", ""),   # failure e-mails and test-mode e-mails go here (PFM, 2026-11-14)
-    ("pfm_TestMode", "Test mode", "No"),   # Yes: every flow e-mail goes to the alert address only
-    ("pfm_FlowsPaused", "Flows paused", "No"),   # Yes: every flow stops at its first step (kill switch)
 ]
+LABEL = {"pfm_SiteUrl": "1 Site URL (enter)", "pfm_AlertEmail": "2 Alert e-mail (enter)",
+         "pfm_SharedMailbox": "3 Shared mailbox (optional)", "pfm_TestMode": "4 Test mode (Yes or No)"}
+# A test-round slice imports with Test mode Yes (PFM 15 Nov 26: "why aren't fields that need to be on, like Test, already on?"),
+# so every flow e-mail of a test goes to the alert address only; the full deployment solution keeps No.
+SLICE_DEFAULT = {"pfm_TestMode": "Yes"}
 OPTIONAL = {"pfm_SharedMailbox"}   # isrequired 0: a wing without a shared mailbox leaves it empty
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 # R22 (PFM 14 Nov 26: "flows added by the solution default to on; i had to turn f03 off"; "ideally the flows will be imported
@@ -77,7 +87,7 @@ OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r4.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 joins R21; r4 (R22): F03 r4
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r5.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 joins R21; r4 (R22): F03 r4; r5: order, labels, Test mode Yes
 SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
 
 
@@ -205,6 +215,7 @@ def build(test=None, only=None, on=()) -> bytes:
             "      <iscustomizable>1</iscustomizable>\n      <promptingbehavior>0</promptingbehavior>\n"
             "      <statecode>0</statecode>\n      <statuscode>1</statuscode>\n    </connectionreference>")
     for s, disp, default in env:
+        disp, default = LABEL.get(s, disp), (SLICE_DEFAULT.get(s, default) if only else default)
         files[f"environmentvariabledefinitions/{s}/environmentvariabledefinition.xml"] = (
             f'<environmentvariabledefinition schemaname="{s}">\n'
             + (f"  <defaultvalue>{escape(default)}</defaultvalue>\n" if default else "") +   # no empty element; no XML declaration (r3)

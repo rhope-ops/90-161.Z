@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R23, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = '79bc4f8a'
+$buildId = '649909e6'
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
 $homeUrl = 'https://rhope-ops.github.io/90-161.Z'
@@ -326,7 +326,7 @@ $cleanup += @{ Path = 'T19\90161Z-T19-list-update-r1.ps1'; Kind = 'glob' }
 $cleanup += @{ Path = 'T19\90161Z-T19-list-update-r1.txt'; Kind = 'glob' }
 $cleanup += @{ Path = 'T18\90161Z-T18-slice1-flows-r3.zip'; Kind = 'glob' }
 $cleanup += @{ Path = 'Rounds\R20'; Kind = 'dir' }
-$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r3.ps1', '90161Z-T16-site-setup-r10.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r2.ps1', '90161Z-T19-list-update-r2.ps1', 'New-Publication.ps1', 'Provision-Lists.ps1', 'Publication.Common.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
+$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r11.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r3.ps1', '90161Z-T19-list-update-r3.ps1', 'New-Publication.ps1', 'Provision-Lists.ps1', 'Publication.Common.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
 $apps = @()
 $apps += @{ Name = '90-161.Z: Publications and Forms Management'; Summary = 'Test round R23. Proves the RADE engine-v2 shared files on Windows PowerShell 5.1: one read-only inventory step, then 4 shared-file self-tests. Nothing changes on the site or in Power Automate.'; Steps = @(0); Checks = @('nipr', 'ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'net-bookmark'); Mode = 'test'; Version = ''; Marker = $null }
 

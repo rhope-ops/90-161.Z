@@ -380,13 +380,16 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r3.ps1 scripts/gov/90161Z-T16-site-setup-r10.ps1 scripts/gov/90161Z-T18-slice1-test-r2.ps1 scripts/gov/90161Z-T19-list-update-r2.ps1; do
+for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r3.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
 ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
 done
+# PFM 15 Nov 26 (enter the site once): Get-SiteAddress returns the address RADE holds, then the saved one, with no question.
+sa=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/src/site-common.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Get-SiteAddress.*?\n}\n").Value); function Read-Host { throw "ASKED" }; $d = Join-Path ([IO.Path]::GetTempPath()) ("sa" + [guid]::NewGuid().ToString("N")); $null = New-Item -ItemType Directory $d; $env:RADE_SITE = "https://fakeco.example/sites/one"; $a = Get-SiteAddress $d; $env:RADE_SITE = ""; Set-Content (Join-Path $d "90161Z-site.txt") "https://fakeco.example/sites/two"; $b = Get-SiteAddress $d; Remove-Item (Join-Path $d "90161Z-site.txt"); $c = try { Get-SiteAddress $d } catch { [string]$_.Exception.Message }; $env:RADE_CONTRACT = "1"; $e = try { Get-SiteAddress $d } catch { ([string]$_.Exception.Message).Substring(0, 20) }; $env:RADE_CONTRACT = ""; Remove-Item $d -Recurse -Force; "$a|$b|$c|$e"' 2>&1 | tail -1)
+[ "$sa" = "https://fakeco.example/sites/one|https://fakeco.example/sites/two|ASKED|SITE ADDRESS not set" ] && ok "site address: from RADE, then from Config; with neither, a question outside RADE and a stop with the fix inside RADE" || { echo "$sa"; bad "site address: one entry"; }
 # R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
-hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r10.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
+hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r11.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
 ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "
@@ -403,7 +406,7 @@ fb=0; for b in scripts/gov/paste/*.ps1; do grep -q "Outlook draft could not be c
 python3 - <<'PYEOF' && ok "T19 list update: column XML and Action Status choices match schemas/lists" || bad "T19 list update differs from schemas/lists"
 import json, re, sys
 sys.path.insert(0, 'scripts'); import build_flow_payload as B
-s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r2.ps1', encoding='utf-8').read()
+s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r3.ps1', encoding='utf-8').read()
 rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'; Xml = '([^']+)' \}", t)
 assert len(rows) == 3, rows
 by_title = {v['title']: v for v in s.values()}

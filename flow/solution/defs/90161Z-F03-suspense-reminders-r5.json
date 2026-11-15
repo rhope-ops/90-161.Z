@@ -1,5 +1,5 @@
 {
-  "displayName": "90161Z F03 Suspense Reminders r4",
+  "displayName": "90161Z F03 Suspense Reminders r5",
   "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one (20 working days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26.",
   "workflowKey": "90161Z-F03-suspense-reminders-r2",
   "connections": [
@@ -461,7 +461,7 @@
                               "item/Title": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), 'Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'))",
                               "item/Publication/Id": "@items('For_each_open_endorsement')?['Publication']?['Id']",
                               "item/EventType/Value": "Reminder Sent",
-                              "item/EventDetails": "@concat(outputs('Tier'), ' e-mail sent for endorsement row ', string(items('For_each_open_endorsement')?['ID']), '; suspense ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10))"
+                              "item/EventDetails": "@concat(outputs('Tier'), ' e-mail sent for endorsement row ', string(items('For_each_open_endorsement')?['ID']), '; suspense ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '; sent from the flow owner mailbox', '; sent from the shared mailbox'))"
                             },
                             "authentication": "@parameters('$authentication')"
                           }
