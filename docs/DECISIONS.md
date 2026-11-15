@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Immutable rule: nothing like network reconnaissance may occur in RADE or in any app (fixed hosts, the one site given, own flows only). Cannot be changed, like the DoD365 boundary rule. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Hard rule: users cannot write data across the DoD365 boundary through any app. Inside DoD365, RADE may read and write app data where a run type needs it. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | What works on the PFM's NIPR computer works on all, PnP.PowerShell included; no special flag on the account. Windows PowerShell 5.1 is the least always available. Rights can still differ. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Tests run on Windows PowerShell 5.1 from now on. Rounds already do; tests/run.sh runs PowerShell 7 on Linux, and how to move it is open. | PFM | docs/NEXT_PROMPT.md |
