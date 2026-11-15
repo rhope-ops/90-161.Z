@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write the Task 11 Part B rows (docs/rights-test-plan.md section 6) to scripts/gov/data/90161Z-T11-partb-rows-r1.json.
 
-One source: the table in the plan. The Deployer's Part B form (scripts/gov/90161Z-T11-partb-form-r2.ps1) reads this
+One source: the table in the plan. The RADE round's Part B form (scripts/gov/90161Z-T11-partb-form-r2.ps1) reads this
 file, so the form never drifts from the plan. Never hand-edit the JSON.
 Usage: python3 scripts/build_rights_rows.py [--check]   (--check: exit 1 if the JSON is out of date)
 """
