@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Three reads removed under the no-reconnaissance rule: the tenant search count (T16 sign-in test r3), AppLocker rule counts and the certificate count (T15 inventory r3). Both scripts stay. | PFM | scripts/gov/90161Z-T15-env-inventory-r3.ps1 |
+| 2026-11-14 | Flow values move to PFM Settings rows: flows paused, test mode, reminder, escalation and suspense days, shared mailbox. Site address, alert e-mail and list names stay variables. Not built. | PFM | flow/solution/README.md |
+| 2026-11-14 | RADE Maintenance screen: 5 buttons (Install, Diagnose, Back up, Restore, Uninstall). Adds Back up to the 14 Nov RADE modes row. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Lists by PnP: RADE builds the site objects from schemas/lists; the provisioning flow retires after one round proves list creation. Replaces 12 Nov 1A and 1B and 10 Nov (lists by flow). | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-14 | No reconnaissance, hardened: never anything malicious or that could be misconstrued as malicious. Open reads of SharePoint data with my own account are allowed. Any doubt: ask the owner first. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Tests: no change. Rounds are the Windows PowerShell 5.1 test; cloud tests stay on PowerShell 7; a 5.1 fault is fixed when a round finds it. Replaces "how to move it is open" below. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |

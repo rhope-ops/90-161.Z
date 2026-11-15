@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 15 environment inventory, r2. Read-only. Windows PowerShell 5.1, no modules.
+  90-161.Z Task 15 environment inventory, r3. Read-only. Windows PowerShell 5.1, no modules.
 .DESCRIPTION
   Records the facts the 90-161.Z package depends on, so other wings' computers can be compared with this one
   (deployable package rule, PFM 12 Nov 26): PowerShell and .NET versions, language mode and execution policy,
@@ -9,11 +9,12 @@
   time zone, and whether the hosts the rounds use answer (status only).
   r2 (PFM 14 Nov 26: document more for future projects) adds: every installed module (names and versions), PowerShell 7,
   other tools on the path, more Office and Windows COM apps, WebView2, new Teams, Power BI Desktop, the fonts DAFMAN
-  formatting uses, whether Add-Type can compile C#, AppLocker rule counts, smart-card certificate count (count only),
-  .NET runtimes, and more hosts (status only). Nothing is started except COM registration lookups; no app opens.
+  formatting uses, whether Add-Type can compile C#, .NET runtimes, and more hosts (status only).
+  r3 (PFM 14 Nov 26, no-reconnaissance rule): the AppLocker rule counts and the certificate count are removed; no
+  step uses them. Nothing is started except COM registration lookups; no app opens.
   It changes nothing. It never writes the computer name, user name, paths or addresses: the DODID and profile
   folder are replaced by <DODID>.
-  Output: 90161Z-T15-inventory-r2.txt in the T15 folder (send this).
+  Output: 90161Z-T15-inventory-r3.txt in the T15 folder (send this).
   Parameters (used by the 90-161.Z Deployer): -Id, -NoPause.
 #>
 param([string]$Id, [switch]$NoPause)
@@ -118,7 +119,7 @@ try {
   $dir = Get-TaskDir $id $task 'Task 15' -Create
   Set-Location -LiteralPath $dir
   $lines = New-Object System.Collections.Generic.List[string]
-  $lines.Add('TASK T15 environment inventory r2, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+  $lines.Add('TASK T15 environment inventory r3, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
   $add = { param($k, $v) $lines.Add('ENV ' + $k + '=' + $v) }
 
   & $add 'powershell' ([string]$PSVersionTable.PSVersion + ' ' + $PSVersionTable.PSEdition)
@@ -183,24 +184,15 @@ try {
     Add-Type -TypeDefinition 'public static class P90161Z { public static int Two() { return 2; } }' -ErrorAction Stop
     & $add 'add-type-csharp' $(if ([P90161Z]::Two() -eq 2) { 'works' } else { 'wrong result' })
   } catch { & $add 'add-type-csharp' ('blocked ' + ($_.Exception.GetType().Name -replace '(?i)fail', 'fault')) }
-  try {
-    $al = Get-AppLockerPolicy -Effective -ErrorAction Stop
-    foreach ($rc in @($al.RuleCollections)) { & $add ('applocker-' + $rc.RuleCollectionType) ('rules=' + @($rc).Count + ' mode=' + $rc.EnforcementMode) }
-    if (-not @($al.RuleCollections).Count) { & $add 'applocker' 'no rules' }
-  } catch { & $add 'applocker' ('not readable ' + ($_.Exception.GetType().Name -replace '(?i)fail', 'fault')) }
-  try {
-    $sc = @(Get-ChildItem Cert:\CurrentUser\My -ErrorAction Stop | Where-Object { $_.HasPrivateKey }).Count
-    & $add 'certificates-with-key' ([string]$sc)
-  } catch { & $add 'certificates-with-key' 'unknown' }
   $rt = Get-Command dotnet -CommandType Application -ErrorAction SilentlyContinue
   if ($rt) { foreach ($r in @(& dotnet --list-runtimes 2>$null)) { & $add 'dotnet-runtime' (($r -split ' \[')[0]) } }
 
   $lines.Add('INVENTORY PASS items=' + @($lines | Where-Object { $_ -like 'ENV *' }).Count)
   $masked = @($lines | ForEach-Object { ConvertTo-Masked $_ $secret })
-  Set-Content -LiteralPath (Join-Path $dir '90161Z-T15-inventory-r2.txt') -Value $masked -Encoding UTF8
+  Set-Content -LiteralPath (Join-Path $dir '90161Z-T15-inventory-r3.txt') -Value $masked -Encoding UTF8
   $masked | ForEach-Object { Write-Host $_ }
   Write-Host ''
-  Write-Host 'Saved: 90161Z-T15-inventory-r2.txt in the T15 folder. Nothing was changed.'
+  Write-Host 'Saved: 90161Z-T15-inventory-r3.txt in the T15 folder. Nothing was changed.'
 } catch {
   $msg = [string]$_
   if ($secret) { $msg = ConvertTo-Masked $msg $secret }
