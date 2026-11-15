@@ -39,7 +39,7 @@ The PFM's decisions of 15 Nov 26 from this record are in [DECISIONS.md](../DECIS
 | Big files (over 500 KB) | 0 counted (ref/ and the round bundle are ignored) | 0 | 0 |
 | Timing: `tests/run.sh` | 36.0 s (baseline 12.2 s) | 27.3 s | +25 % of baseline |
 | Timing: `scripts/check.sh` (each push) | 48.3 s | about 39 s (estimate: 48.3 less the 8.7 s saved in the suite; not measured again) | - |
-| Timing: check-in | 0.7 s (baseline 0.5 s) | 0.7 s | +25 % |
+| Timing: check-in | 0.7 s (baseline 0.5 s) | 0.7 s to 1.0 s (3 runs; baseline kept at 0.5 s) | +25 % |
 | Removals proposed / approved / made | 9 / 0 / 0 | | |
 | Rules removed or merged | 0 | 0 | |
 | Key assumptions: high / medium / low / untraced | 4 / 5 / 6 / 0 (new since audit 2) | | |
@@ -56,7 +56,7 @@ The PFM's decisions of 15 Nov 26 from this record are in [DECISIONS.md](../DECIS
 | Lint | 7.3 | PSScriptAnalyzer over 24 files, one call for each file |
 | Round bundle "Enter starts the run" | 3.7 | Bundle runs in pwsh |
 | Newest-RADE verdicts | 3.6 | 4 cases, each starts processes |
-| 122 tests under 0.3 s each | 2.6 | - |
+| All steps under 0.3 s each | 2.6 | - |
 | Process starts | - | 21 `pwsh` starts (0.24 s empty, about 0.45 s with a script load) and 62 `python3` starts for each run |
 
 - Fix made: lint and T20 start in the background at the top of `tests/run.sh`; T20 is read at its old place and lint at the end. 36.0 s to 27.3 s (2 runs: 27.3, 27.5). 86 of 86 pass. Mutation checks: a parse error in a gov script gives `FAIL lint`; a forced T20 failure gives `FAIL T20 ... (exit 1)`.
@@ -123,7 +123,8 @@ From audit 2: "rights work as designed" moved from medium to high (17 of 17 answ
 | Item | Owner | Review |
 |---|---|---|
 | T4 (audit 2): duplicate count includes generated copies (P2) | Claude | Next audit |
-| T5: `tests/run.sh` 27 s against the 12.2 s of audit 2; new baseline 27 s recorded; P1 open | Claude | After R25 |
+| T5: `tests/run.sh` 27 s against the 12.2 s of audit 2; new baseline 25.4 s recorded; P1 open | Claude | After R25 |
+| T7 (review of this audit): `scripts/lint.sh` passes with 0 findings when the PSScriptAnalyzer module is missing; `tests/run.sh` has no `trap`, and each run leaves a `/tmp/t20-<guid>` folder | Claude | Proposal with P1 |
 | T6: paste limit set before the paste timing ran (assumption 3) | PFM | R26 |
 
 Next audit by 29 Nov 26 or 300 commits.

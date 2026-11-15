@@ -7,7 +7,7 @@
     },
     "check-in": {
       "cmd": "scripts/session_checkin.sh",
-      "seconds": 1.0,
+      "seconds": 0.5,
       "max_slowdown": 0.25
     }
   },
