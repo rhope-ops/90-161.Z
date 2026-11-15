@@ -1,0 +1,119 @@
+name: bump-lock
+# Manual "bump lock" (the PFM, 2026-11-15): moves scripts/rade.lock.json to a RADE engine release, rebuilds the round
+# bundles, runs the repo checks and opens one pull request. Same rule as a session: docs/dev-setup.md "RADE engine".
+# Manual runs only (AGENTS.md "Checks": Actions minutes). A pull request opened with GITHUB_TOKEN starts no other
+# workflow, so this job runs scripts/check.sh and the PII guard itself before it opens the pull request; when a check
+# fails, no pull request is opened. Needs the repo setting "Allow GitHub Actions to create and approve pull requests".
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "RADE engine release tag, for example engine-v3"
+        required: true
+        type: string
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: bump-lock
+  cancel-in-progress: false
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Check the tag and that no open pull request changes the lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$TAG" =~ ^engine-v[0-9]{1,4}$ ]] || { echo "FAIL tag must look like engine-v3, got: $TAG"; exit 1; }
+          if git ls-remote --exit-code origin "refs/heads/bump-lock/$TAG" >/dev/null; then echo "FAIL branch bump-lock/$TAG exists already"; exit 1; fi
+          prs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100" --jq '.[].number')
+          open=""
+          for n in $prs; do
+            f=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$n/files?per_page=100" --jq '.[].filename')
+            if grep -qx 'scripts/rade.lock.json' <<<"$f"; then open="$open $n"; fi
+          done
+          [ -z "$open" ] || { echo "FAIL open pull request(s) already change the lock:$open"; exit 1; }
+      - name: Copy the lock from the RADE release
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/release/rade-engine.lock.json" \
+            "https://github.com/rhope-ops/RADE/releases/download/$TAG/rade-engine.lock.json"
+          # An annotated tag lists its commit on the peeled line (^{}); a lightweight tag has only the plain line.
+          refs=$(git ls-remote https://github.com/rhope-ops/RADE "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          tagged=$(awk -v t="refs/tags/$TAG^{}" '$2 == t {print $1}' <<<"$refs")
+          [ -n "$tagged" ] || tagged=$(awk -v t="refs/tags/$TAG" '$2 == t {print $1}' <<<"$refs")
+          python3 -I - "$RUNNER_TEMP/release/rade-engine.lock.json" "$tagged" <<'EOF'
+          import json, os, re, sys
+          rel = json.load(open(sys.argv[1])); tagged = sys.argv[2]; tag = os.environ["TAG"]
+          p = "scripts/rade.lock.json"; lock = json.load(open(p))
+          bad = []
+          if rel.get("repo") != lock["repo"]: bad.append("repo is not " + lock["repo"])
+          if not re.fullmatch(r"[0-9a-f]{40}", str(rel.get("commit", ""))): bad.append("commit is not a 40-hex SHA")
+          if rel.get("commit") != tagged: bad.append("commit does not match tag %s (%s)" % (tag, tagged or "not found"))
+          files = rel.get("files") or {}
+          if rel.get("engine") not in files: bad.append("engine file is not in files")
+          for k, v in files.items():
+              if not re.fullmatch(r"[A-Za-z0-9_.\-]+(/[A-Za-z0-9_.\-]+)*", k) or ".." in k.split("/"): bad.append("bad path " + k)
+              if not re.fullmatch(r"[0-9a-f]{64}", str(v)): bad.append("bad SHA-256 for " + k)
+          if bad: sys.exit("FAIL release lock: " + "; ".join(bad))
+          if rel["commit"] == lock["commit"]: sys.exit("FAIL the lock already names " + rel["commit"][:7])
+          lock.update(commit=rel["commit"], tag=tag, serial=lock["serial"] + 1, engine=rel["engine"], files=files)
+          open(p, "w").write(json.dumps(lock, indent=2) + "\n")
+          print("LOCK %s %s serial %d files %d" % (tag, rel["commit"][:7], lock["serial"], len(files)))
+          with open(os.environ["GITHUB_ENV"], "a") as e: e.write("SHORT=%s\nSERIAL=%d\n" % (rel["commit"][:7], lock["serial"]))
+          EOF
+      - name: Record the decision row
+        run: |
+          row="| $(TZ=America/Chicago date +%F) | RADE lock moves to release $TAG (RADE $SHORT, serial $SERIAL) by the bump-lock workflow; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |"
+          awk -v r="$row" '{print} !done && /^\|---\|---\|---\|---\|$/ {print r; done=1}' docs/DECISIONS.md > "$RUNNER_TEMP/d.md"
+          grep -qF "$row" "$RUNNER_TEMP/d.md" || { echo "FAIL could not add the decision row"; exit 1; }
+          mv "$RUNNER_TEMP/d.md" docs/DECISIONS.md
+      - name: Test packages (the versions in docs/dev-setup.md step 4)
+        env:
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
+        run: |
+          python3 -m pip install --quiet --user python-docx==1.2.0 pillow==12.3.0
+          npm install --global --silent docx@9.7.1
+          echo "NODE_PATH=$(npm root --global)" >> "$GITHUB_ENV"
+      - name: Rebuild the round bundles
+        run: python3 scripts/build_paste_bundles.py
+      - name: Commit on a new branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "bump-lock/$TAG"
+          git add -A scripts/rade.lock.json scripts/gov/paste docs/DECISIONS.md
+          git commit -q -m "Lock: RADE release $TAG (RADE $SHORT, serial $SERIAL); bundles rebuilt" \
+            -m "Made by the bump-lock workflow (run ${{ github.run_id }})."
+          git show --stat --oneline HEAD
+      - name: Repo checks (tests/run.sh among them)
+        run: scripts/check.sh
+      - name: PII guard on the new commit
+        env:
+          PII_GUARD_DENYLIST: ${{ secrets.PII_GUARD_DENYLIST }}
+        run: python3 scripts/pii_guard.py --require-denylist --all --range "origin/main..HEAD" --allow-from origin/main
+      - name: Push and open the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push -u origin "bump-lock/$TAG"
+          cat > "$RUNNER_TEMP/body.md" <<EOF
+          Moves scripts/rade.lock.json to RADE release [$TAG](https://github.com/rhope-ops/RADE/releases/tag/$TAG) (commit $SHORT, serial $SERIAL), rebuilds the round bundles and adds the decision row.
+
+          Checks in [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}): scripts/check.sh (tests/run.sh) and the PII guard passed before this pull request was opened. The pii-guard check does not start by itself on a pull request opened by this workflow.
+
+          Before merge (docs/dev-setup.md "RADE engine"):
+          - [ ] The file list in the lock matches a trace of the engine's file opens.
+          - [ ] If a rebuilt bundle already went to the work computer, raise its revision (r<N>) in scripts/paste_bundles.json and rebuild.
+          - [ ] Fresh review of the diff (AGENTS.md "Delegation").
+          EOF
+          gh api "repos/$GITHUB_REPOSITORY/pulls" -f base=main -f head="bump-lock/$TAG" \
+            -f title="Lock: RADE release $TAG (serial $SERIAL)" -F body=@"$RUNNER_TEMP/body.md" --jq '.html_url'

@@ -23,175 +23,30 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R22-round-r3.ps1",
-      "round": "R22",
-      "title": "Round R22: R21 fixes on the test site. T19 r2 adds the two missing Action Status choices; the slice 1 flows import Off (F03 r4 counts the 20 working days from the Friday before when it runs on a weekend); then three fake publications repeat the R21 slice 1 test, and all are removed at the end",
+      "out": "scripts/gov/paste/90161Z-R23-round-r1.ps1",
+      "round": "R23",
+      "title": "Round R23: Windows PowerShell 5.1 proof of the RADE engine-v2 shared files (RADE PR 42). One read-only step (T15 inventory r3), then the engine's shared-file self-test on a scratch folder that it removes again",
       "files": [
         {
-          "dir": "T19",
-          "src": "scripts/gov/90161Z-T19-list-update-r2.ps1"
-        },
-        {
-          "dir": "T18",
-          "src": "flow/solution/90161Z-T18-slice1-flows-r4.zip"
-        },
-        {
-          "dir": "T17",
-          "src": "scripts/gov/90161Z-T17-import-log-r2.ps1"
-        },
-        {
-          "dir": "T18",
-          "src": "scripts/gov/90161Z-T18-slice1-test-r2.ps1"
+          "dir": "T15",
+          "src": "scripts/gov/90161Z-T15-env-inventory-r3.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T19 Add the Action Status choices r2",
-          "dir": "T19",
-          "file": "90161Z-T19-list-update-r2.ps1",
-          "minutes": 10,
-          "note": "Signs in (CAC) and checks the R21 columns on the test site; adds the Action Status choices that are still missing (R21 could not read them). Adds only; a second run changes nothing. About 1 minute (estimate).",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 1
-        },
-        {
-          "name": "T18 Import the slice 1 flows r3",
-          "kind": "guide",
-          "dir": "T18",
-          "file": "90161Z-T18-slice1-flows-r4.zip",
-          "note": "You import the 90-161.Z flows solution again (F03 reminders r4 replaces r3 in place; F05 r2 and F06 r1 are the same). F05 and F06 now import On and F03 imports Off, so you turn nothing on or off. About 6 minutes (estimate).",
-          "marker": "90161Z-T18-slice1-imported.txt",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
-          "guide": [
-            "1. Select \"Open in browser\". Power Automate opens; sign in with your CAC if asked.",
-            "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
-            "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
-            "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
-            "5. Environment variables: in Site URL, paste the test site address. In Alert e-mail, enter your own work e-mail address (failure notices and test e-mails go there). In Test mode, enter Yes. In Shared mailbox, enter the shared mailbox you have Send As rights to, or leave it empty. Keep the other values as shown (list names, 5, 3, 20 and Flows paused No).",
-            "6. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "7. Open the solution \"90-161.Z flows\". It lists 3 flows: F03 Suspense Reminders r4, F05 Endorsement Routing r2, F06 Hold and Resume r1 (F03 r4 replaces F03 r3; no second copy). Check the status column: F05 and F06 read On, F03 reads Off. If F05 or F06 reads Off, turn it on; if F03 reads On, turn it off (you run it once by hand later in this round).",
-            "8. Return to RADE and select \"Done: imported, F05 and F06 are on\".",
-            "If the import fails: select \"Download log file\" (any folder; the next step finds it), type the first line of the red error message (no names or site address) in the box below, then select \"It failed\"."
-          ],
-          "doneText": "Done: imported, F05 and F06 are on",
-          "needs": [
-            "net-flow",
-            "flow-guide"
-          ],
-          "estimate": 6
-        },
-        {
-          "name": "T17 Import log reader r2",
-          "dir": "T17",
-          "file": "90161Z-T17-import-log-r2.ps1",
+          "name": "T15 Environment inventory r3",
+          "dir": "T15",
+          "file": "90161Z-T15-env-inventory-r3.ps1",
           "minutes": 5,
-          "note": "Runs only if the import failed: copies the error rows of an import log saved in the last 3 hours to T17, addresses masked. Otherwise it reports SKIPPED.",
+          "note": "Read-only: records the PowerShell, .NET, Office and module versions this package depends on, and whether the round hosts answer (status only). No sign-in, no app opens, nothing changes. About 1 minute (estimate). After this step, RADE runs its shared-file self-test (4 checks) on a scratch folder in Rounds\\R23 and removes it again.",
           "estimate": 1
-        },
-        {
-          "name": "T18 Slice 1 test, part 1 r2",
-          "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r2.ps1",
-          "args": "-Part 1",
-          "minutes": 30,
-          "note": "1. Signs in (CAC) and reads the steps and offices. 2. Creates three fake publications at step 6: A (On Track), H (On Hold) and F (a title that makes F05 fail in test mode). 3. Checks that F05 makes rows for A only. 4. Fixes F's title and checks its rows. 5. Removes one of A's rows and checks that F05 adds back only that one. 6. Sets two rows past due for the F03 check.",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 12
-        },
-        {
-          "name": "T18 Failure e-mail and Resubmit r1",
-          "kind": "guide",
-          "dir": "T18",
-          "file": "",
-          "note": "You check that F05 e-mailed you about the forced failure, then select Resubmit on that failed run. About 4 minutes (estimate).",
-          "marker": "90161Z-T18-resubmitted.txt",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
-          "guide": [
-            "1. In Outlook, find the e-mail \"90-161.Z flow failed: F05\" (it arrived during part 1). It names the failed step \"Test hook forced failure\". You do not need to reply.",
-            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\" > \"90161Z F05 Endorsement Routing r2\".",
-            "3. Under 28-day run history, select the run marked Failed (the time in the e-mail).",
-            "4. Select Resubmit at the top of the run. Wait until the new run shows Succeeded (under 1 minute, estimate).",
-            "5. Return to RADE and select \"Done: resubmitted\".",
-            "If no failure e-mail arrived, or there is no failed run: type what you see (no names or site address) in the box below, then select \"It failed\"."
-          ],
-          "doneText": "Done: resubmitted",
-          "needs": [
-            "net-flow"
-          ],
-          "estimate": 4
-        },
-        {
-          "name": "T18 Run F03 once r3",
-          "kind": "guide",
-          "dir": "T18",
-          "file": "",
-          "note": "You run F03 once by hand. In test mode its e-mails go only to you: expect one \"[TEST] Escalation\" e-mail for the test row. About 3 minutes (estimate).",
-          "marker": "90161Z-T18-f03-ran.txt",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
-          "guide": [
-            "1. Safety check: if you did not enter exactly Yes in Test mode at import, select \"Skip\": F03 would e-mail real endorsers.",
-            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
-            "3. Open \"90161Z F03 Suspense Reminders r4\" and select Test > Manually > Test, then Run flow.",
-            "4. Wait until the run ends (under 1 minute, estimate). Read the status at the top of the run: \"Succeeded\" or \"Failed\". A grey \"skipped\" note on the last 3 steps (Failed actions, Failure lines, E-mail the failure) is normal: they run only when a step fails. F03 stays off after the test.",
-            "5. In Outlook, check for one e-mail whose subject starts \"[TEST] Escalation\". It may take 1 to 2 minutes.",
-            "6. Return to RADE and select \"Done: F03 ran\".",
-            "If the run status is Failed: open the first step with a red mark, type its name and the first line of its error (no names or site address) in the box below, then select \"It failed\"."
-          ],
-          "doneText": "Done: F03 ran",
-          "needs": [
-            "net-flow"
-          ],
-          "estimate": 3
-        },
-        {
-          "name": "T18 Slice 1 test, part 2 r2",
-          "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r2.ps1",
-          "args": "-Part 2",
-          "minutes": 40,
-          "note": "7. Checks that Resubmit made no duplicate rows. 8. Checks F03: the 20-working-day suspense, one escalation for A's past-due row, nothing for the On Hold row. 8b. Hold, resume and cancel on F: checks that F06 moves each suspense out by the weekdays held and logs the cancel once. 9. Answers A's rows Concur, marks the comments adjudicated and waits for the Legal rows and step 7. 10. Moves every test row to the site Recycle Bin.",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 12
         }
       ],
       "collect": [
         {
-          "dir": "T19",
-          "name": "90161Z-T19-list-update-r2.txt",
-          "step": "T19 Add the Action Status choices r2"
-        },
-        {
-          "dir": "T18",
-          "name": "90161Z-T18-slice1-part1-r2.txt",
-          "step": "T18 Slice 1 test, part 1 r2"
-        },
-        {
-          "dir": "T18",
-          "name": "90161Z-T18-slice1-part2-r2.txt",
-          "step": "T18 Slice 1 test, part 2 r2"
-        },
-        {
-          "dir": "T17",
-          "name": "90161Z-T17-import-log-r2.txt",
-          "step": "T17 Import log reader r2"
+          "dir": "T15",
+          "name": "90161Z-T15-inventory-r3.txt",
+          "step": "T15 Environment inventory r3"
         }
       ],
       "cleanup": [
@@ -588,15 +443,9 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R22. Fixes the 2 R21 findings: adds the missing Action Status choices (T19 r2) and imports F03 r4, which counts the suspense from the Friday before on a weekend run; all flows import Off. Then repeats the R21 slice 1 test with three fake publications and removes them.",
+          "summary": "Test round R23. Proves the RADE engine-v2 shared files on Windows PowerShell 5.1: one read-only inventory step, then 4 shared-file self-tests. Nothing changes on the site or in Power Automate.",
           "steps": [
-            "T19 Add the Action Status choices r2",
-            "T18 Import the slice 1 flows r3",
-            "T17 Import log reader r2",
-            "T18 Slice 1 test, part 1 r2",
-            "T18 Failure e-mail and Resubmit r1",
-            "T18 Run F03 once r3",
-            "T18 Slice 1 test, part 2 r2"
+            "T15 Environment inventory r3"
           ]
         }
       ]
