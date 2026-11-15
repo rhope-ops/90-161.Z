@@ -258,6 +258,7 @@ out=$(python3 scripts/build_rights_rows.py --check 2>&1 | tail -1); [ $? -eq 0 ]
 # use the pinned engine: RADE_DIR is cleared, so a committed bundle from an override build shows as stale. Engine
 # behavior is tested in rhope-ops/RADE (tests/engine_test.sh); the tests here use only this repo's bundle and files.
 unset RADE_DIR
+out=$(python3 scripts/bump_lock.py --test 2>&1); [ $? -eq 0 ] && ok "bump_lock release-lock checks ($out)" || { echo "$out"; bad "bump_lock release-lock checks"; }
 out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 esha=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));print(l['files'][l['engine']][:12])")
