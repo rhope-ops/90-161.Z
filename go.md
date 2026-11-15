@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 14 Nov 26 (Round R22 done: slice 1 passes; no open round).
+Updated: 15 Nov 26 (Round R22 done: slice 1 passes; no open round).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,7 +24,7 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-No open round (14 Nov 26). From the next round on, RADE first reads this computer's own domain name and stops if it is a classified network, accepts only a usaf.dps.mil site address, and shows whether I am a site collection administrator (shown only).
+No open round (15 Nov 26). From the next round on, RADE first reads this computer's own domain name and stops if it is a classified network, accepts only a usaf.dps.mil site address, and shows whether I am a site collection administrator (shown only).
 
 ## Done
 
