@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Hard rule: users cannot write data across the DoD365 boundary through any app. Inside DoD365, RADE may read and write app data where a run type needs it. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | What works on the PFM's NIPR computer works on all, PnP.PowerShell included; no special flag on the account. Windows PowerShell 5.1 is the least always available. Rights can still differ. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | Tests run on Windows PowerShell 5.1 from now on. Rounds already do; tests/run.sh runs PowerShell 7 on Linux, and how to move it is open. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-14 | RADE and the app: RADE owns the computer and the run; 90-161.Z owns the product and the site (every list, flow, setting and its data). | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Maintenance: RADE offers Install, Diagnose, Restore, Uninstall and keeps its record; 90-161.Z supplies the steps for each. Refines the 14 Nov RADE modes row. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | One preflight: RADE checks replace the Setup Check flow (Part 0); a small probe flow stays for the connector data policy and Send As. | PFM | docs/setup-and-updates.md |
