@@ -14,6 +14,16 @@ python3 scripts/bloat_check.py --test >/tmp/bloat.out 2>&1 && ok "bloat_check se
 bg=$(mktemp -d)
 scripts/lint.sh >"$bg/lint.out" 2>&1 & lint_pid=$!
 pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!
+# The small pwsh checks (Hide-Site masking, Get-SiteAddress, two-space sentences, opening paragraph, Font binding, T20 -PlanOnly)
+# run in ONE more pwsh process (tests/ps/Invoke-Batch.ps1; bloat audit 3, P1, 2026-11-15), each in its own runspace, each
+# writing <name>.out and <name>.rc to a fresh folder. A missing .rc (the member did not run) or an rc other than 0 = FAIL.
+bd=$(mktemp -d)
+trap 'kill $(jobs -p) 2>/dev/null; rm -rf "${vd:-}" "${bg:-}" "${bd:-}" "${tp:-}" "${te:-}" "${sealraw:-}"' EXIT
+pwsh -NoProfile -File tests/ps/Invoke-Batch.ps1 -OutDir "$bd" >"$bd/batch.log" 2>&1 & batch_pid=$!
+bout() {  # $1 = member name: print its output; fail when the member did not finish with rc 0 (after the wait below)
+  [ "$(cat "$bd/$1.rc" 2>/dev/null)" = "0" ] || return 1
+  cat "$bd/$1.out"
+}
 
 # All Test-Publication.ps1 runs happen in ONE pwsh process (tests/ps/Invoke-Validations.ps1; PFM P1, bloat audit 2,
 # 2026-11-13): one pwsh start per input cost about 0.75 s each. Inputs are made first; each test reads vout/vrc.
@@ -232,7 +242,8 @@ PY
 
 # T20 list provisioning by PnP (PFM 14 Nov 26): the plan counts come from the payload, and the script runs against a strict
 # fake site (tests/fake-pnp): create, a second run that creates nothing, a repair run, the clean check, masked output.
-out=$(pwsh -NoProfile -File scripts/gov/90161Z-T20-provision-lists-r1.ps1 -PlanOnly -PayloadPath flow/provisioning-payload.json 2>&1 | tail -1)
+wait "$batch_pid"   # first use of the batch results
+out=$(bout plan | tail -1)
 [ "$out" = "PLAN lists=12 fields=199 views=18 rows=88 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
 wait "$t20_pid"; t20rc=$?; out=$(tail -1 "$bg/t20.out")
 case "$t20rc $out" in "0 T20 pass="*" fail=0") ok "T20 list provisioning on the fake site ($out)";; *) grep "T20TEST FAIL" "$bg/t20.out" | cut -c1-300; bad "T20 list provisioning (exit $t20rc): $out";; esac
@@ -241,11 +252,11 @@ node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDX
 # Build is deterministic (fixed dates): a rebuild must match the committed file byte for byte.
 git diff --quiet HEAD -- templates/CRM_A12-1.docx && ok "CRM template rebuild matches committed file" || bad "CRM template rebuild differs from committed file (commit the rebuild if the source changed)"
 
-got=$(pwsh -NoProfile -c '. ./scripts/gov/Publication.Common.ps1; ConvertTo-TwoSpaceSentence "Do this. (T-3) Then Mr. A. B. Smith signs. Use e.g. Forms. Done? Yes."')
+got=$(bout twospace)
 want="Do this. (T-3)  Then Mr. A. B. Smith signs.  Use e.g. Forms.  Done?  Yes."
 [ "$got" = "$want" ] && ok "two-space sentences (L-004)" || { echo "got:  [$got]"; echo "want: [$want]"; bad "two-space sentences"; }
 
-got=$(pwsh -NoProfile -c '. ./scripts/gov/Publication.Common.ps1; $p = Get-Content samples/publication.sample.json -Raw | ConvertFrom-Json; Get-OpeningParagraph $p' | grep -o -E "implements|Ensure all records|DAF Form 847|may be supplemented|authorities to waive" | tr '\n' ',')
+got=$(bout opening | grep -o -E "implements|Ensure all records|DAF Form 847|may be supplemented|authorities to waive" | tr '\n' ',')
 [ "$got" = "implements,Ensure all records,DAF Form 847,may be supplemented,authorities to waive," ] && ok "opening paragraph order (4.5.5)" || { echo "got: $got"; bad "opening paragraph order"; }
 
 ! grep -rniE "@us\.af\.mil|@mail\.mil|usaf\.dps\.mil/sites/[a-z0-9]" samples tests schemas docs scripts flow templates/build_crm_template.js >/dev/null && ok "no .mil addresses in repo content" || bad "no .mil addresses"
@@ -255,7 +266,7 @@ out=$(cd ref && sha256sum -c --quiet SHA256SUMS 2>&1) && ok "ref files match ref
 
 # F-032/F-039 false positives (T06 review 12 Nov 26): cover values count as use; office symbols and AFI-type prefixes skip the
 # four-times rule; the fixed summary-of-changes sentence is not a compliance statement. Sample: only OPR and ANG warn.
-out=$(pwsh -NoProfile -File scripts/gov/Test-Publication.ps1 -Path samples/publication.sample.json 2>&1 | grep -E "^WARN F-032|^VALIDATE")
+out=$(vout sample | grep -E "^WARN F-032|^VALIDATE")
 echo "$out" | grep -q "VALIDATE fails=0 warns=2" && ! echo "$out" | grep -qE "'(OPR-A|OPR-B|AFI)'" && ok "validator F-032 false positives gone (sample warns=2: OPR, ANG)" || { echo "$out"; bad "validator F-032 false positives"; }
 # B3A/P3 (PFM 2026-11-13): one source for the gov task-script block; no task script asks for the DODID outside it.
 out=$(python3 scripts/build_task_scripts.py --check 2>&1); [ $? -eq 0 ] && ok "task scripts share one block ($(echo "$out" | tail -1))" || { echo "$out"; bad "task-common block (run python3 scripts/build_task_scripts.py)"; }
@@ -451,25 +462,27 @@ dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p'
 # R06 lesson: New-Object with a string for an enum argument can match two overloads ("Multiple ambiguous overloads") and
 # drop the RADE window to text mode. Binding check in pwsh for every New-Object System.Drawing.Font call in the bundles.
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
-amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
+amb=$(bout font | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
-hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
-! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
+hs=$(bout "hs$n")
+[ -n "$hs" ] && ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
+n=$((n+1))
 done
 # A list id right after URL-encoded characters (guid%27<id>%27) must be masked too (review of 15 Nov 26). The scripts
 # revised on or after 15 Nov 26 have the fix; T16 r4, T16 r11 and T19 r3 get it with their next revision.
-for hsf in scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
-hs=$(pwsh -NoProfile -c '$src = Get-Content '"$hsf"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "lists(guid%270a1b2c3d-9999-2222-3333-444455556666%27)/items and %2F0a1b2c3d-9999-2222-3333-444455556666" "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
+n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+hs=$(bout "hsg$n")
 ! echo "$hs" | grep -qiE "0a1b2c3d|9999-2222" && echo "$hs" | grep -q "<GUID>" && ok "$(basename $hsf) hides a list id after URL-encoded characters" || { echo "$hs"; bad "GUID masking after URL-encoded characters: $(basename $hsf)"; }
+n=$((n+1))
 done
 # PFM 15 Nov 26 (enter the site once): Get-SiteAddress returns the address RADE holds, then the saved one, with no question.
-sa=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/src/site-common.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Get-SiteAddress.*?\n}\n").Value); function Read-Host { throw "ASKED" }; $d = Join-Path ([IO.Path]::GetTempPath()) ("sa" + [guid]::NewGuid().ToString("N")); $null = New-Item -ItemType Directory $d; $env:RADE_SITE = "https://fakeco.example/sites/one"; $a = Get-SiteAddress $d; $env:RADE_SITE = ""; Set-Content (Join-Path $d "90161Z-site.txt") "https://fakeco.example/sites/two"; $b = Get-SiteAddress $d; Remove-Item (Join-Path $d "90161Z-site.txt"); $c = try { Get-SiteAddress $d } catch { [string]$_.Exception.Message }; $env:RADE_CONTRACT = "1"; $e = try { Get-SiteAddress $d } catch { ([string]$_.Exception.Message).Substring(0, 20) }; $env:RADE_CONTRACT = ""; Remove-Item $d -Recurse -Force; "$a|$b|$c|$e"' 2>&1 | tail -1)
+sa=$(bout siteaddr | tail -1)
 [ "$sa" = "https://fakeco.example/sites/one|https://fakeco.example/sites/two|ASKED|SITE ADDRESS not set" ] && ok "site address: from RADE, then from Config; with neither, a question outside RADE and a stop with the fix inside RADE" || { echo "$sa"; bad "site address: one entry"; }
 # R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
-hs=$(pwsh -NoProfile -c '$src = Get-Content scripts/gov/90161Z-T16-site-setup-r11.ps1 -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); Hide-Site "getbyemail(@v)?@v=%27first.last.9999%40fakeco.example%27" ""' 2>&1)
-! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
+hs=$(bout hsenc)
+[ -n "$hs" ] && ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "
 import json; a = json.load(open('flow/defs/90161Z-T11-rights-probe-r5.json'))['actions']
@@ -497,6 +510,5 @@ got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
 wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }
-rm -rf "$vd" "$bg"
 echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]
