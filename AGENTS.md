@@ -34,7 +34,7 @@ Chat history, Project files and remembered copies are not authority. If you cann
 ## Delivery
 
 - Batch (the PFM, 2026-11-13): one docs commit and one pull request per round or per request, not per change.
-- Deliver every change without being asked, by pull request (the PFM, 2026-11-13): commit, push your branch, open a pull request to main, and merge it when three things hold: the pre-push hook passed (scripts/check.sh and the PII guard); `python3 scripts/pii_guard.py --require-denylist --all --range origin/main..HEAD --allow-from origin/main` passes (main's allow list); and, for code, checks or scripts, the fresh review in "Delegation" finds no MAJOR finding (a MAJOR finding: ask the PFM). No auto-merge (no hosted checks to wait for). Then verify that origin/main has the commit, and republish the affected artifacts. GitHub deletes the merged branch.
+- Deliver every change without being asked, by pull request (the PFM, 2026-11-13): commit, push your branch, open a pull request to main, and merge it when three things hold: the pre-push hook passed (scripts/check.sh and the PII guard); `python3 scripts/pii_guard.py --require-denylist --all --range origin/main..HEAD --allow-from origin/main` passes (main's allow list), and on a public repo the pii-guard check on the pull request passes too (wait for it); and, for code, checks or scripts, the fresh review in "Delegation" finds no MAJOR finding (a MAJOR finding: ask the PFM). Merge by hand, not auto-merge. Then verify that origin/main has the commit, and republish the affected artifacts. GitHub deletes the merged branch.
 - A host limit wins over this section (for example a required branch, or a push or merge the host does not allow without the PFM): do the steps it allows, then report each other step as blocked, with its cause and what unblocks it.
 - Exception: for a UI or design change that the PFM has not approved, show a preview first (a preview artifact, or the pull request as a draft). Merge after the PFM approves. Delete previews after they ship.
 - For changes that are not UI or design, this rule overrides the personal "preview first" rule.
@@ -70,7 +70,7 @@ Chat history, Project files and remembered copies are not authority. If you cann
 
 - Never commit personal data: real names, email addresses, phone numbers, home or work addresses, ID numbers, or the PFM's job details. Use a role (for example "the maintainer") and fake sample data. A private repo may put its owner's real name in the `- Owner:` line.
 - Commit with a GitHub noreply address (`ID+USER@users.noreply.github.com`) or the agent's own noreply identity, never a personal email.
-- A `.pii-guard` file at the repo root turns on `scripts/pii_guard.py` in pre-push and before each merge ("Delivery"); with it on, a push with no name denylist fails (the PFM, 2026-11-11). What it blocks and where the denylist lives: the header of `scripts/pii_guard.py`. Check with `python3 scripts/pii_guard.py --status` (a count, never names).
+- A `.pii-guard` file at the repo root turns on `scripts/pii_guard.py` in pre-push, before each merge ("Delivery") and, on a public repo, in the pull-request Action; with it on, a push with no name denylist fails (the PFM, 2026-11-11). What it blocks and where the denylist lives: the header of `scripts/pii_guard.py`. Check with `python3 scripts/pii_guard.py --status` (a count, never names).
 - Never ask for the denylist names in chat, and never commit the denylist: the PFM adds them in the places docs/FIRST_USE.md lists.
 - When the guard blocks: remove the data, fix the unpushed commit, and push again. Only the PFM adds allow entries to `.pii-guard`. Never push with `--no-verify`.
 
@@ -96,7 +96,7 @@ Chat history, Project files and remembered copies are not authority. If you cann
 
 - Never repin an approval, add an exemption, skip a test or edit a generated report to make a check pass.
 - Never hand-edit generated files. Change the source and rebuild.
-- Local checks only (the PFM, 2026-11-15; replaces the 11 Nov Actions rule): no check, gate or task relies on GitHub Actions or other hosted CI. Agents run the checks in Commands in their own workspace; the pre-push hook enforces them.
+- Hosted checks only on public repos (the PFM, 2026-11-15; replaces the 11 Nov Actions rule): a public repo may run GitHub Actions checks (free), on `pull_request` and `workflow_dispatch` only; a private repo runs every check locally. Local checks come first everywhere: agents run the checks in Commands in their own workspace, and the pre-push hook enforces them.
 
 ## Decisions
 
@@ -148,7 +148,7 @@ The project log records how the project got there (milestones, breakthroughs, mi
 
 ## Project rules
 
-- No outside checks (PFM, 2026-11-15; all the PFM's projects): no project relies on outside code checks or inspection (GitHub Actions or other hosted CI); checks run locally. No files in .github/workflows.
+- Hosted checks (PFM, 2026-11-15; all the PFM's projects): only a public repo may use outside checks (GitHub Actions); a private repo reviews itself with local checks. This repo is public: .github/workflows/pii-guard.yml is the second gate.
 - No kit sync (PFM, 2026-11-15): never run the kit's sync (`sync_baseline.py`) on this repo; it replaces project guards and rules (for example the `.mil` check in scripts/pii_guard.py). Port a kit fix by hand, one file at a time, by pull request with review.
 - Data boundary (PFM, 2026-11-10): government data stays in DoD365 and GenAI.mil only. Never put real drafts, publication content, names, emails, office symbols or comments in this repo or in a Claude chat. Use fake sample data. Sanitize bug reports.
 - Platform (PFM, 2026-11-10): frontend and data on SharePoint Lists, Power Automate and Power Apps in DoD365. The PFM is a site collection administrator with PowerShell access to SharePoint (2026-11-10). No tenant admin rights and standard connectors only (confirmed by the PFM, 2026-11-12).
