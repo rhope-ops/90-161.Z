@@ -30,7 +30,7 @@ Updated: 2026-11-15 by Claude. Keep this file at 40 lines or fewer and state onl
 
 ## Next
 
-- Roadmap (PFM 15 Nov): phase states, exit criteria and the rounds from R24 to the pilot are in docs/phases.md (round order and estimate = agent REC; evidence docs/reviews/2026-11-15-roadmap-evidence.md). Slice 1 is done (R22), so the scope hold of 14 Nov has ended. Not built: the endorser-answer app flow.
+- Roadmap (PFM 15 Nov): phase states, exit criteria and the rounds from R24 to the pilot are in docs/phases.md (round order and estimate = agent REC; evidence docs/reviews/2026-11-15-roadmap-evidence.md). Slice 1 passed in R22; agent REC: the scope hold of 14 Nov has ended (the PFM confirms). Not built: the endorser-answer app flow.
 
 ## Do not
 

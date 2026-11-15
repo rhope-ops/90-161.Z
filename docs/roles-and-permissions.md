@@ -1,6 +1,6 @@
 # Roles, permissions and intake: design r1 (12 Nov 26)
 
-Status: design from phase 2+3 rounds 1-2 (PFM 4A 5A 6A 7A 8A+ 9A; 10A 11A 12A+ 13A 14B, 12 Nov; docs/phases.md). Items marked **REC:** are agent recommendations, open until the PFM approves. Items marked **Test** are not proven on the tenant (docs/rights-test-plan.md). Library layout and folder permissions: docs/reviews/2026-11-12-list-design-full-scope.md section 5 (decided in batch 2).
+Status: design from phase 2+3 rounds 1-2 (PFM 4A 5A 6A 7A 8A+ 9A; 10A 11A 12A+ 13A 14B, 12 Nov; docs/decisions-archive.md). Items marked **REC:** are agent recommendations, open until the PFM approves. Items marked **Test** are not proven on the tenant (docs/rights-test-plan.md). Library layout and folder permissions: docs/reviews/2026-11-12-list-design-full-scope.md section 5 (decided in batch 2).
 
 ## 1. Roles are data (PFM 4A, 6A)
 
