@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Bundle size limit: 600 KB (614,400 bytes), up from 300 KB. The next round times a paste of 500 KB and 1 MB; the limit is then set from that. To apply: tests/run.sh. | PFM | rhope-ops/RADE docs/DECISIONS.md |
 | 2026-11-15 | Round result e-mails the app drafted ("90161Z R<NN>") go to Trash without asking once their results are on main; other result e-mails still need confirmation. Replaces 2026-11-12 for app drafts. | PFM | AGENTS.md Project rules |
 | 2026-11-15 | Flow state at import is per flow: a test round imports On only the flows it needs (R22: F05, F06; F03 Off); the real deployment solution imports every flow On. | PFM | flow/solution/README.md |
 | 2026-11-15 | R21 visual notes go to a separate RADE session (document now, build later); RADE does not wait for R22 results tonight. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/reviews/2026-11-15-r21-window-notes.md |
