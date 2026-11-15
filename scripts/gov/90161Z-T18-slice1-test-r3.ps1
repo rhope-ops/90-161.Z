@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 18 slice 1 end-to-end test, r2 (R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
+  90-161.Z Task 18 slice 1 end-to-end test, r3 (PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
   troubleshooting). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: proves on the test site that the slice-1 flows (F05 r2 routing, F03 r3 reminders) work end to end, and
@@ -30,7 +30,7 @@
   notices (offices with an endorser only) go to the alert address only.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this
   computer; every output line shows it as <SITE> and the DODID as <DODID>.
-  Output: 90161Z-T18-slice1-part1-r2.txt or 90161Z-T18-slice1-part2-r2.txt in the T18 folder (send both).
+  Output: 90161Z-T18-slice1-part1-r3.txt or 90161Z-T18-slice1-part2-r3.txt in the T18 folder (send both).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1 or 2, -WaitMinutes (default 10), -NoPause.
 #>
 param([string]$Id, [ValidateSet(1, 2)][int]$Part = 1, [int]$WaitMinutes = 10, [switch]$NoPause)
@@ -107,20 +107,24 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
 }
 # <<< task-common
-
+# >>> site-common: generated from scripts/gov/src/site-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function Get-SiteAddress([string]$ConfigDir) {
-  # Kept only on this computer (the repo is public). Asked every run, filled in with the last address (r2: new site).
+  # One entry (PFM 15 Nov 26): the address RADE holds (RADE_SITE, from its "Site address" box) is used with no question;
+  # outside RADE the one saved in Config\90161Z-site.txt is used. Only when neither exists does a question open (once).
+  # To change the site, use "Change the site address" in RADE. Kept only on this computer (the repo is public).
+  $ok = '^https://[^/\s]+/sites/[^/\s]+'
+  $v = ([string]$env:RADE_SITE).Trim()
+  if ($v -match $ok) { return $v }
   $f = Join-Path $ConfigDir '90161Z-site.txt'
-  $last = 'https://'
-  if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v) { $last = $v } }
-  Add-Type -AssemblyName Microsoft.VisualBasic
-  $v = [string][Microsoft.VisualBasic.Interaction]::InputBox('Address of the test SharePoint site (starts with https://). It is kept only on this computer.', '90-161.Z Task 18', $last)
-  $v = $v.Trim()
-  if ($v -notmatch '^https://[^/]+/sites/[^/]+') { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
+  if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
+  $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
+  if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
   if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }
   Set-Content -LiteralPath $f -Value $v -Encoding UTF8
   return $v
 }
+# <<< site-common
+
 function Hide-Site([string]$Text, [string]$Site) {
   # The result is e-mailed: no site, tenant or sign-in address may stay in it (review R09 T16; the same rule in T18).
   $Text = $Text -replace '[\w.+-]+@[\w.-]+', '<EMAIL>'
@@ -215,8 +219,8 @@ try {
   $root = Split-Path -Parent $dir
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
-  $pubFile = Join-Path $dir '90161Z-T18-test-publications-r2.txt'   # item IDs of A, H, F and the two F03 test rows, for part 2
-  $lines.Add('TASK T18 slice 1 end-to-end r2, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
+  $pubFile = Join-Path $dir '90161Z-T18-test-publications-r3.txt'   # item IDs of A, H, F and the two F03 test rows, for part 2
+  $lines.Add('TASK T18 slice 1 end-to-end r3, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1

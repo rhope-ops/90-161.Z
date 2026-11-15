@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 16 site setup, r10 (R19, PFM 14 Nov 26: collects the solution test A r5 result; r9 (R18) collected A r4, masked; test B is dropped; the PFM sets logo K by hand outside the round and this script still checks it read-only; RADE folder). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 16 site setup, r11 (PFM 15 Nov 26: the site address comes from RADE or Config, no question; r10 R19, PFM 14 Nov 26: collects the solution test A r5 result; r9 (R18) collected A r4, masked; test B is dropped; the PFM sets logo K by hand outside the round and this script still checks it read-only; RADE folder). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: sets up the new SharePoint site in one run, so the PFM does not click it by hand (DECISIONS 14 Nov 26:
   optional Deployer PnP write steps, allowed because the read-only PnP test passed). About 5 minutes (an estimate).
@@ -28,7 +28,7 @@
   FAIL; one item never stops the others. Counts only: no list, seal or file names are written (seal names are unit names).
   The site address is kept only on this computer in Config\90161Z-site.txt; every output line shows it as <SITE> and the DODID
   as <DODID>. Error text is cut to 160 characters.
-  Output: 90161Z-T16-setup-r10.txt in the T16 folder (send this).
+  Output: 90161Z-T16-setup-r11.txt in the T16 folder (send this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Logo, -ProbeWaitMinutes (default 15), -NoPause.
 #>
 param([string]$Id, [switch]$Logo, [int]$ProbeWaitMinutes = 15, [switch]$NoPause)
@@ -103,20 +103,24 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
 }
 # <<< task-common
-
+# >>> site-common: generated from scripts/gov/src/site-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function Get-SiteAddress([string]$ConfigDir) {
-  # Kept only on this computer (the repo is public). Asked every run, filled in with the last address (r2: new site).
+  # One entry (PFM 15 Nov 26): the address RADE holds (RADE_SITE, from its "Site address" box) is used with no question;
+  # outside RADE the one saved in Config\90161Z-site.txt is used. Only when neither exists does a question open (once).
+  # To change the site, use "Change the site address" in RADE. Kept only on this computer (the repo is public).
+  $ok = '^https://[^/\s]+/sites/[^/\s]+'
+  $v = ([string]$env:RADE_SITE).Trim()
+  if ($v -match $ok) { return $v }
   $f = Join-Path $ConfigDir '90161Z-site.txt'
-  $last = 'https://'
-  if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v) { $last = $v } }
-  Add-Type -AssemblyName Microsoft.VisualBasic
-  $v = [string][Microsoft.VisualBasic.Interaction]::InputBox('Address of the NEW SharePoint site (the one Task 2 filled), starts with https://. Change it if it shows the old site. Kept only on this computer.', '90-161.Z Task 16', $last)
-  $v = $v.Trim()
-  if ($v -notmatch '^https://[^/]+/sites/[^/]+') { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
+  if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
+  $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
+  if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
   if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }
   Set-Content -LiteralPath $f -Value $v -Encoding UTF8
   return $v
 }
+# <<< site-common
+
 function Hide-Site([string]$Text, [string]$Site) {
   # The result is e-mailed: no site, tenant or sign-in address may stay in it (review R09 T16).
   $Text = $Text -replace '[\w.+-]+@[\w.-]+', '<EMAIL>'
@@ -222,7 +226,7 @@ try {
   $root = Split-Path -Parent $dir
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
-  $lines.Add('TASK T16 site setup r10, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', probe-wait-minutes=' + $ProbeWaitMinutes)
+  $lines.Add('TASK T16 site setup r11, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', probe-wait-minutes=' + $ProbeWaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
@@ -318,7 +322,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-setup-r10.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
+  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-setup-r11.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }

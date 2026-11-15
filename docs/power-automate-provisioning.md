@@ -25,7 +25,7 @@ Columns, views and their DAFMAN references: `schemas/lists/*.json` (one file per
 
 ## 2. Import and run
 
-Package: `flow/packages/90161Z-T02-provision-lists-r12.zip` (built by `python3 scripts/build_flow_package.py` from `flow/defs/90161Z-T02-provision-lists-r12.json`; the payload is embedded at build). r12 (R21) adds Status Reason, Held Since, Coordination Round and the Action Status choices Cancelled and Complete; a site made by r11 gets them from T19 instead (scripts/gov/90161Z-T19-list-update-r2.ps1). Steps for the gov device are in go.md, Task 2 (new site, PFM S1, 2026-11-14).
+Package: `flow/packages/90161Z-T02-provision-lists-r12.zip` (built by `python3 scripts/build_flow_package.py` from `flow/defs/90161Z-T02-provision-lists-r12.json`; the payload is embedded at build). r12 (R21) adds Status Reason, Held Since, Coordination Round and the Action Status choices Cancelled and Complete; a site made by r11 gets them from T19 instead (scripts/gov/90161Z-T19-list-update-r3.ps1). Steps for the gov device are in go.md, Task 2 (new site, PFM S1, 2026-11-14).
 
 The flow asks for one input, **Site URL**: the full address of the site that will hold the lists. Paste it from the site's address bar. The site-title check was removed in r9 (PFM, 2026-11-12); check the address before you run.
 
