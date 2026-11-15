@@ -5,6 +5,13 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Priority (1B): the installer path is made simple first, then the member screens. Scope: 90-161.Z. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-15 | File rule: a wing member never edits or uploads a file, except the draft itself and one signature; the app keeps every file it already has. Scope: 90-161.Z. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-15 | DAF Form 673: signatures may be transcribed into 1 master document, and an e-signature counts. Scope: 90-161.Z. How the app does it is open. | PFM | docs/process-model.md |
+| 2026-11-15 | CRM: people may edit it jointly if endorsers cannot overwrite each other. Adds to the two CRM rows below; how (list rows or a shared file) is open. Scope: 90-161.Z. | PFM | docs/process-model.md "CRM columns" |
+| 2026-11-15 | Fix pass approved (2A): guidance r4, a comments-list schema and app preview r3, each for the PFM's approval before a merge. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/TAWJaeByeAn19hQW5PLZxh |
+| 2026-11-15 | The PFM is the sole judge of app previews: no previews or tests with other people. The app keeps the RADE "One thing" design. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/TAWJaeByeAn19hQW5PLZxh |
+| 2026-11-15 | Screen bar (not approved yet): at most 3 sentences on a screen or in an e-mail, one main button, reasons behind "Why". Preview r3 is drawn to it. Scope: 90-161.Z. | Agent | https://claude.ai/artifact/TAWJaeByeAn19hQW5PLZxh |
 | 2026-11-15 | Round builds use the RADE release that exists; an engine change runs in its own RADE session at the same time and the round moves to it later. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Reviews in round builds: the rule stays (each fix gets a fresh review); the review starts while the hosted check runs, not after it. Scope: 90-161.Z round builds. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Bloat audit 3 run on the PFM's request (tests 3 times slower than the baseline). Its proposals P1 to P9 are agent RECs until the PFM approves each. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
