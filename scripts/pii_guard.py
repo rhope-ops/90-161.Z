@@ -91,8 +91,9 @@ SECRET = [re.compile(r) for r in (
 )]
 # DoD tier (`profile: dod`). The marks are split in the source so this file does not flag itself.
 MILHOST = re.compile(
-    r"(?i)(?<![A-Za-z0-9-])(?:(?:[a-z0-9-]+\.)+mil(?![A-Za-z0-9-]|\.[A-Za-z0-9])"   # any host under the military domain
-    r"|(?:[a-z0-9-]+\.)*sharepoint-mil\.us\b|dod\.teams\.microsoft\.us\b)")          # DoD cloud tenant hosts
+    r"(?i)(?<![A-Za-z0-9])(?:(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+mil(?![A-Za-z0-9-]|\.[A-Za-z0-9])"   # any host under the military domain
+    r"|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*sharepoint-mil\.us\b|dod\.teams\.microsoft\.us\b)")    # DoD cloud tenant hosts
+# A DNS label is 1-63 letters, digits or inside hyphens, so "word-" + ".mil" is not a host (the length cap stops runaway backtracking on long "a-a-a-" runs).
 MARKING = [re.compile(r) for r in (
     r"\bCUI/" r"/", r"^[^A-Za-z0-9]*CU" r"I[^A-Za-z0-9]*$", r"(?i)\bcontrolled\s+unclassified\s+" r"information\b",
     r"^[^A-Za-z0-9]*(?:SEC" r"RET|CONFID" r"ENTIAL|UNCLASS" r"IFIED)[^A-Za-z0-9]*$",  # one word alone on its line, upper case
@@ -459,6 +460,10 @@ def self_test():
     for label, text in (("wildcard", "*" + dot + "unit" + dot + "mi" + "l"), ("leading dot", "domain=" + dot + "unit" + dot + "mi" + "l"),
                         ("handle", at + "unit" + dot + "mi" + "l team")):
         expect("dod milhost: " + label, text, ["milhost"], dod=True)
+    expect("dod milhost: hyphen inside a label", "see my-base" + dot + "mi" + "l", ["milhost"], dod=True)
+    expect("dod milhost: after a leading hyphen", "-unit" + dot + "mi" + "l", ["milhost"], dod=True)
+    expect("dod: not a host: label ends in a hyphen", "Gmail-to-" + dot + "mi" + "l", [], dod=True)
+    expect("dod: not a host: hyphen before the dot", "a-" + dot + "unit-" + dot + "mi" + "l", [], dod=True)
     expect("minimum tier: host not checked", "see " + mil, [])
     expect("dod: mail address is one finding, kind email", "ann" + at + "unit" + dot + "mi" + "l", ["email"], dod=True)
     expect("dod: not a host: other domain after it", "x" + dot + "mi" + "l" + dot + "example" + dot + "org", [], dod=True)
