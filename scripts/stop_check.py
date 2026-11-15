@@ -5,7 +5,7 @@ Blocks (exit 2, reason on stderr) when the checkout has uncommitted changes, or
 commits that its upstream branch does not have, or a branch that was never pushed.
 Passes a clean read-only checkout: no changes (untracked files included), no stash,
 and HEAD is on the default branch (origin/main, else origin/master) or behind it, so
-an unpushed session branch with no work of its own does not block (the PFM, 2026-11-11).
+an unpushed session branch with no work of its own does not block (kit default, 2026-11-11).
 Allows the stop on the second try in a row (stop_hook_active), so a turn that must
 end anyway (for example, near the usage limit, or when the PFM said hold) can end.
 Outside a git repo, or when git fails, it allows the stop.
@@ -75,7 +75,7 @@ def problems():
         found.append(f"branch {branch} has no upstream (never pushed)")
     elif default_ref() and not on_default_branch():
         # Detached HEAD (also during a rebase that is not finished) with commits the default branch lacks
-        # (the PFM, 2026-11-11). With no origin/main or origin/master to compare with, the old pass stays.
+        # (kit default, 2026-11-11). With no origin/main or origin/master to compare with, the old pass stays.
         found.append(f"detached HEAD has commits not on {default_ref()}")
     return found
 

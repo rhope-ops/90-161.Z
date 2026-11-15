@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Block personal data and secrets before they reach the remote: emails, phone numbers, ID-number shapes, API tokens
-and private keys, names from a denylist that is kept outside the repo, and (opt-in) .mil addresses.
+and private keys, and names from a denylist that is kept outside the repo.
 
 Usage:
     python3 scripts/pii_guard.py --all             # every tracked file (working tree)
@@ -8,13 +8,14 @@ Usage:
     python3 scripts/pii_guard.py --push            # pre-push hook mode: reads the hook's stdin lines
     python3 scripts/pii_guard.py FILE ...          # these files
     python3 scripts/pii_guard.py --status          # where the denylist comes from and how many entries (never the names)
-    --require-denylist                             # fail when no denylist is found (the hook and the Action use it)
+    --require-denylist                             # fail when no denylist is found (the hook and the Action use it),
+                                                   # or only warn when .pii-guard has the line `denylist: warn`
     python3 scripts/pii_guard.py --test            # self-test; prints PII GUARD TEST PASS
 
 Opt-in: the guard runs only in a repo with a `.pii-guard` file at its root (the hook and the Action check for it).
 That file lists exact strings that are allowed (one per line, `#` comments), and paths to skip as
-`skip: <path or glob>` lines (for example a public reference text that quotes office contacts), and opt-in checks as
-`check: <name>` lines (today: `check: mil`). Only the PFM adds entries;
+`skip: <path or glob>` lines (for example a public reference text that quotes office contacts), and the option line
+`denylist: warn` (starter tier; kit default since 2026-11-13): with no denylist, --require-denylist warns instead of failing. Only the PFM adds entries;
 agents never add one to get past a block (AGENTS.md "Personal data").
 
 Name denylist (never committed): one name or word per line, `#` comments, matched whole-word, any case.
@@ -26,9 +27,8 @@ With no denylist, names are not checked and the guard says so (exit code unchang
 Checks:
     email      any address, except *@users.noreply.github.com, noreply@ / no-reply@ addresses, and the
                reserved example domains (example.com/.org/.net, *.example, *.invalid, *.test, *.localhost)
-    mil        any .mil address or host name (email or web); only with a `check: mil` line in .pii-guard
-    phone      US numbers (NNN-NNN-NNNN, (NNN) NNN-NNNN, NNN.NNN.NNNN), +country numbers, DSN numbers
-    id         SSN shape (NNN-NN-NNNN); a 10-digit number next to EDIPI / DoD ID / CAC
+    phone      US numbers (NNN-NNN-NNNN, (NNN) NNN-NNNN, NNN.NNN.NNNN), +country numbers
+    id         SSN shape (NNN-NN-NNNN), or 9 digits next to SSN / social security
     secret     API tokens (GitHub, GitLab, AWS, Anthropic, OpenAI, Google, Slack, Stripe) and private-key headers
     name       denylist words
 Matches are printed masked (names and secrets as a length only), so CI logs do not repeat them. Exit 1 when anything is found.
@@ -45,19 +45,15 @@ import tempfile
 
 ZERO = re.compile(r"^0+$")
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
-# The character before ".mil" must be a letter or digit: a domain label never ends in "-" (PFM, 2026-11-13).
-MIL = re.compile(r"(?i)\b[A-Za-z0-9._%+-]*[A-Za-z0-9]\.mil\b(?![.-][A-Za-z0-9])")
 PHONE = [
     re.compile(r"(?<![\w./-])\(?\d{3}\)?[-. ]\d{3}[-.]\d{4}(?![\w-])"),
     re.compile(r"(?<![\w./-])\(\d{3}\) ?\d{3}[-. ]\d{4}(?![\w-])"),
     re.compile(r"(?<![\w+])\+\d{1,3}[ -]\(?\d{1,4}\)?[ -]\d{2,4}[ -]\d{3,4}(?![\w-])"),
-    re.compile(r"(?i)\bDSN:?\s*\d{3}[-. ]\d{4}\b"),
     re.compile(r"(?i)\b(?:phone|tel|cell|mobile|fax|call)\b\D{0,20}?(\+?1?[ .-]?\d{3}[ .-]?\d{3}[ .-]?\d{4})\b"),
     re.compile(r"(?<![\w+])\+1\d{10}\b"),
 ]
 SSN = re.compile(r"(?<![\w-])\d{3}-\d{2}-\d{4}(?![\w-])")
 SSN_KW = re.compile(r"(?i)\b(?:SSN|social security)\b\D{0,20}?(\d{3}[ -]?\d{2}[ -]?\d{4})\b")
-EDIPI = re.compile(r"(?i)\b(?:EDIPI|DoD ?ID|DODID|CAC)\b\D{0,20}(\d{10})\b")
 SECRET = [re.compile(r) for r in (
     r"\bgh[pousr]_[A-Za-z0-9]{36,}\b",                 # GitHub tokens
     r"\bgithub_pat_[A-Za-z0-9_]{60,}\b",               # GitHub fine-grained token
@@ -80,7 +76,7 @@ def mask(kind, s):
     """Show the kind and a length, never enough to rebuild the value (CI logs may be public)."""
     if kind in ("name", "secret"):
         return f"<{len(s)} chars>"
-    if kind in ("email", "mil") and "@" in s:
+    if kind == "email" and "@" in s:
         return "***@" + "*" * len(s.split("@", 1)[1])
     return "*" * (len(s) - 2) + s[-2:] if len(s) > 6 else "*" * len(s)
 
@@ -121,6 +117,14 @@ MISSING_HELP = ("no denylist found. Add your names (comma or newline separated),
                 "See docs/FIRST_USE.md.")
 
 
+WARN_OPTION = "denylist: warn"  # .pii-guard option line; first_use_check.py reads it too
+
+
+def warn_mode(root):
+    """True when .pii-guard in the working tree has the option line `denylist: warn`."""
+    return WARN_OPTION in load_allow(root)
+
+
 def load_denylist():
     return parse_denylist(denylist_source()[0])
 
@@ -136,11 +140,6 @@ def load_allow(root, ref=None):
     # A comment starts at the line start or after whitespace, so "skip: docs/#1.txt" keeps its "#".
     vals = (re.split(r"(?:^|\s)#", l, maxsplit=1)[0].strip() for l in text.splitlines())
     return {v for v in vals if v}
-
-
-def check_on(allow, name):
-    """True when .pii-guard turns on the opt-in check `name` with a `check: <name>` line."""
-    return any(a.startswith("check:") and a[6:].strip().lower() == name for a in allow)
 
 
 def skipped(path, allow):
@@ -159,17 +158,14 @@ def scan_text(text, where, deny, allow):
         for m in EMAIL.finditer(line):
             if not ALLOWED_EMAIL.search(m.group()):
                 hits.append(("email", m.group()))
-        if check_on(allow, "mil"):
-            hits += [("mil", m.group()) for m in MIL.finditer(line)]
         for rx in SECRET:
             hits += [("secret", m.group()) for m in rx.finditer(line)]
         for rx in PHONE:
             hits += [("phone", m.group(m.lastindex or 0)) for m in rx.finditer(line)]
         hits += [("id", m.group()) for m in SSN.finditer(line)]
         hits += [("id", m.group(1)) for m in SSN_KW.finditer(line)]
-        hits += [("id", m.group(1)) for m in EDIPI.finditer(line)]
         if name_re:
-            spans = [(s.start(), s.end()) for v in allow if not v.startswith(("skip:", "check:"))
+            spans = [(s.start(), s.end()) for v in allow if not v.startswith("skip:")
                      for s in re.finditer(re.escape(v), line, re.IGNORECASE)]
             hits += [("name", m.group(1)) for m in name_re.finditer(line)
                      if not any(a <= m.start(1) and m.end(1) <= b for a, b in spans)]  # inside an allowed string
@@ -213,9 +209,15 @@ def scan_commits(revs, root, deny, allow):
         found += [(f"commit {short} message", n, k, v) for _, n, k, v in scan_text("\n".join(lines[4:]), "", deny, allow)]
         patch = git("-c", "core.quotepath=off", "show", "--format=", "--unified=0", "--no-color", "--no-ext-diff",
                     "--src-prefix=a/", "--dst-prefix=b/", sha, root=root)
-        cur = "?"
+        cur, in_header = "?", False
         for line in patch.splitlines():
-            if line.startswith("+++ "):
+            # A "+++ " line names the file only in a file header (after "diff --git", before the first "@@").
+            # In a hunk it is an added line that starts with "++ ", and must be scanned like any other.
+            if line.startswith(("diff --git ", "diff --cc ", "diff --combined ")):  # the last two: merge commits
+                in_header = True
+            elif line.startswith("@@"):
+                in_header = False
+            elif in_header and line.startswith("+++ "):
                 name = line[4:].split("\t", 1)[0]
                 if len(name) > 1 and name[0] == name[-1] == '"':
                     name = name[1:-1].replace('\\"', '"').replace("\\\\", "\\")
@@ -263,18 +265,11 @@ def self_test():
     expect("noreply allowed", "noreply" + at + "anthropic" + dot + "com", [])
     expect("example domain allowed", "a" + at + "example" + dot + "com", [])
     expect("placeholder t@t ignored", "t" + at + "t", [])
-    mil_on = ["check: mil"]
-    expect(".mil off by default", "see genai" + dot + "mil today", [])
-    expect(".mil email", "x" + dot + "y" + at + "us.af" + dot + "mil", ["email", "mil"], allow=mil_on)
-    expect(".mil host", "see genai" + dot + "mil today", ["mil"], allow=mil_on)
-    expect(".mil after a hyphen is not a host", "Gmail-to-" + dot + "mil mail is filtered", [], allow=mil_on)
-    expect(".mil host with a hyphen inside", "see my-base" + dot + "mil today", ["mil"], allow=mil_on)
     expect("phone dashes", "call 555-123-" + "4567", ["phone"])
     expect("phone parens", "call (555) 123-" + "4567", ["phone"])
     expect("phone intl", "call +44 20 7946 " + "0958", ["phone"])
-    expect("DSN", "DSN 312-" + "5550", ["phone"])
     expect("SSN shape", "id 123-45-" + "6789", ["id"])
-    expect("EDIPI", "EDIPI: 12345" + "67890", ["id"])
+    expect("SSN keyword", "SSN 123 45 " + "6789", ["id"])
     expect("date not a phone", "2026-11-11 10:00", [])
     expect("version not a phone", "v2.1.41 and 1.2.3.4", [])
     expect("unix time not an id", "ts 17312" + "34567", [])
@@ -282,20 +277,20 @@ def self_test():
     expect("denylist name", "ask Alex" + "andra first", ["name"], deny=["Alexandra"])
     expect("denylist any case", "ALEX" + "ANDRA", ["name"], deny=["alexandra"])
     expect("denylist whole word", "Alexandra" + "s", [], deny=["Alexandra"])
-    expect("allow list", "see genai" + dot + "mil", [], allow=["genai" + dot + "mil", "check: mil"])
-    expect("skip line is not an allowed value", "see genai" + dot + "mil", ["mil"], allow=["skip: ref/x.txt", "check: mil"])
+    expect("allow list", "mail jane" + at + "corp" + dot + "io", [], allow=["jane" + at + "corp" + dot + "io"])
+    expect("allow list is case-exact for findings", "mail jane" + at + "CORP" + dot + "io", ["email"], allow=["jane" + at + "corp" + dot + "io"])
+    expect("skip line is not an allowed value", "mail jane" + at + "corp" + dot + "io", ["email"], allow=["skip: ref/x.txt"])
     good = not skipped("a.txt", {"skip: *"}) and not skipped("a/b.txt", {"skip: **"}) \
         and skipped("ref/x.txt", {"skip: ref/x.txt"}) and skipped("ref/a/b.txt", {"skip: ref/"}) \
         and skipped("ref/y.txt", {"skip: ref/*.txt"}) and not skipped("docs/x.txt", {"skip: ref/x.txt"})
     print(("ok   " if good else "FAIL ") + "skip: exact path, folder, glob; other paths still scanned")
     ok = ok and good
-    expect("name inside an allowed host is not flagged", "https://acme" + dot + "dps" + dot + "mil/sites/x", [],
-           deny=["ACME"], allow=["acme" + dot + "dps" + dot + "mil", "check: mil"])
-    expect("allowed string matches in any case", "https://ACME" + dot + "DPS" + dot + "MIL/x", ["mil"],
-           deny=["ACME"], allow=["acme" + dot + "dps" + dot + "mil", "check: mil"])
-    expect("same name elsewhere on the line is flagged", "ACME team at acme" + dot + "dps" + dot + "mil", ["name"],
-           deny=["ACME"], allow=["acme" + dot + "dps" + dot + "mil", "check: mil"])
-    expect("check line is not an allowed value", "see check: mil", [], allow=["check: mil"])
+    expect("name inside an allowed host is not flagged", "https://acme" + dot + "example" + dot + "org/sites/x", [],
+           deny=["ACME"], allow=["acme" + dot + "example" + dot + "org"])
+    expect("allowed string matches in any case", "https://ACME" + dot + "EXAMPLE" + dot + "ORG/x", [],
+           deny=["ACME"], allow=["acme" + dot + "example" + dot + "org"])
+    expect("same name elsewhere on the line is flagged", "ACME team at acme" + dot + "example" + dot + "org", ["name"],
+           deny=["ACME"], allow=["acme" + dot + "example" + dot + "org"])
     # Secret test values are built at run time, so this file holds no token shape itself.
     x36 = "A1b2C3d4E5" * 3 + "F6g7H8"
     for label, val in (("GitHub token", "gh" + "p_" + x36), ("GitHub fine-grained", "github" + "_pat_" + x36 * 2),
@@ -359,6 +354,15 @@ def self_test():
         good = r.returncode == 0
         print(("ok   " if good else "FAIL ") + "branch delete with no denylist: passes")
         ok = ok and good
+        pathlib.Path(d, ".pii-guard").write_text("# starter\ndenylist: warn\n")
+        r = subprocess.run(me + ["--all", "--require-denylist"], cwd=d, env=env, capture_output=True, text=True)
+        good = r.returncode == 0 and "WARNING" in r.stdout and warn_mode(d)
+        pathlib.Path(d, "a.txt").write_text("mail bob" + at + "corp" + dot + "io\n")
+        subprocess.run(["git", "add", "a.txt"], cwd=d, check=True, capture_output=True)
+        r = subprocess.run(me + ["--all", "--require-denylist"], cwd=d, env=env, capture_output=True, text=True)
+        good = good and r.returncode == 1
+        print(("ok   " if good else "FAIL ") + "denylist: warn: no denylist only warns; an email still blocks")
+        ok = ok and good
     with tempfile.TemporaryDirectory() as d:
         env = {**os.environ, "GIT_AUTHOR_NAME": "Sam", "GIT_COMMITTER_NAME": "Sam",
                "GIT_AUTHOR_EMAIL": "1+s" + at + "users.noreply.github" + dot + "com",
@@ -377,6 +381,27 @@ def self_test():
         kinds = sorted(k for _, _, k, _ in found)
         good = n == 1 and kinds == ["email", "name"]
         print(("ok   " if good else "FAIL ") + f"commit range: {n} commit(s), {kinds}")
+        ok = ok and good
+        mid = git("rev-parse", "HEAD", root=d).strip()
+        pathlib.Path(d, "a.txt").write_text("clean\nmail bob" + at + "corp" + dot + "io\n++ x\nmail sue" + at + "corp" + dot + "io\n")
+        run("add", "."); run("commit", "-q", "-m", "plus lines")
+        found, _ = scan_commits([f"{mid}..HEAD"], d, [], {"skip: x"})
+        good = [k for _, _, k, _ in found] == ["email"] and all(" a.txt" in w for w, _, _, _ in found)
+        print(("ok   " if good else "FAIL ") + f"added '++ ' line is content, not a file header: {[k for _, _, k, _ in found]}")
+        ok = ok and good
+        run("checkout", "-q", "-b", "side", mid)
+        pathlib.Path(d, "c.txt").write_text("side\n")
+        run("add", "."); run("commit", "-q", "-m", "side")
+        run("checkout", "-q", "main")
+        pathlib.Path(d, "c.txt").write_text("main\n")
+        run("add", "."); run("commit", "-q", "-m", "main c")
+        subprocess.run(["git", "merge", "-q", "side"], cwd=d, env=env, capture_output=True)
+        pathlib.Path(d, "c.txt").write_text("both\nmail ann" + at + "corp" + dot + "io\n")
+        run("add", "."); run("commit", "-q", "-m", "merge side")
+        found_skip, _ = scan_commits(["HEAD~1..HEAD"], d, [], {"skip: c.txt"})
+        found_all, _ = scan_commits(["HEAD~1..HEAD"], d, [], set())
+        good = found_skip == [] and [(w.split()[-1], k) for w, _, k, _ in found_all] == [("c.txt", "email")]
+        print(("ok   " if good else "FAIL ") + f"merge commit (diff --cc): file name kept, skip rule applies: {len(found_skip)}, {len(found_all)}")
         ok = ok and good
         env["GIT_AUTHOR_EMAIL"] = "me" + at + "home" + dot + "net"
         run("commit", "-q", "--allow-empty", "-m", "x")
@@ -419,13 +444,18 @@ def main():
     except (subprocess.CalledProcessError, FileNotFoundError):
         root = "."
     deny, allow = load_denylist(), load_allow(root, a.allow_from)
+    warn_only = WARN_OPTION in allow
+    allow = {v for v in allow if not v.startswith("denylist:")}
     revsets = [[a.range]] if a.range else []
     if a.push:
         revsets += push_revs(sys.stdin.read(), root)
     deletes_only = a.push and not revsets and not (a.all or a.files or a.range)
     if a.require_denylist and not deny and not deletes_only:
-        print("PII GUARD FAIL: " + MISSING_HELP)
-        return 1
+        if not warn_only:
+            print("PII GUARD FAIL: " + MISSING_HELP)
+            return 1
+        print("PII GUARD WARNING: names are not checked (.pii-guard has 'denylist: warn'); every other check runs. "
+              + MISSING_HELP)
     found, what = [], []
     if a.all:
         files = git("ls-files", "-z", root=root).split("\0")

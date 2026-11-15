@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # One check command for the repo (AGENTS.md "Commands": Test). Runs, in order:
-#   1. the self-test of each kit script (--test), 2. the project log check (docs/LOG.md),
+#   1. the self-test of each kit script present (--test; a starter project has fewer), 2. the project log check (full tier),
 #   3. the personal-data scan of all tracked files (when .pii-guard exists; in GitHub Actions the pii-guard step does it),
-#   4. scripts/check.local.sh, when it exists: this project's own tests (sync_baseline.py never touches that file).
+#   4. scripts/check.local.sh, when it exists: this project's own tests (SKIP when missing: AGENTS.md Delivery then gates main).
 # Prints one PASS/FAIL/SKIP line per check, the output of each failed check, and "CHECK PASS" or "CHECK FAIL" last.
 # Exit 0 only when no check failed. Needs bash, git and python3.
 set -uo pipefail
@@ -23,13 +23,14 @@ run() {  # run NAME COMMAND...
 skip() { echo "SKIP  $1 ($2)"; skip=$((skip + 1)); }
 
 for s in pii_guard first_use_check stop_check worker_guard log_check timeline bloat_check; do
-  if [ -f "scripts/$s.py" ]; then run "$s self-test" python3 "scripts/$s.py" --test; else skip "$s self-test" "not in this repo"; fi
+  if [ -f "scripts/$s.py" ]; then run "$s self-test" python3 "scripts/$s.py" --test; fi  # absent: not in this tier
 done
 if [ -f scripts/drift.py ]; then run "drift self-test" python3 scripts/drift.py --test; fi  # kit only: projects have no sync tools
 if [ -f scripts/git-hooks/pre-push ]; then run "pre-push self-test" scripts/git-hooks/pre-push --test; fi
 
-if grep -q '{{PROJECT_NAME}}' AGENTS.md 2>/dev/null; then
-  if [ -f KIT_LOG.md ]; then run "kit log" python3 scripts/log_check.py KIT_LOG.md; fi
+if [ ! -f scripts/log_check.py ]; then
+  :  # starter tier: no project log
+elif grep -q '{{PROJECT_NAME}}' AGENTS.md 2>/dev/null && grep -q '{{PROJECT_NAME}}' docs/LOG.md 2>/dev/null; then
   skip "project log" "template placeholders: run first use"
 elif [ -f docs/LOG.md ]; then
   run "project log" python3 scripts/log_check.py docs/LOG.md
@@ -45,7 +46,11 @@ else
   run "personal-data scan" python3 scripts/pii_guard.py --all
 fi
 
-if [ -f scripts/check.local.sh ]; then run "project checks (check.local.sh)" bash scripts/check.local.sh; fi
+if [ -f scripts/check.local.sh ]; then
+  run "project checks (check.local.sh)" bash scripts/check.local.sh
+else
+  skip "project checks" "no scripts/check.local.sh: no project tests yet; AGENTS.md Delivery gates main"
+fi
 
 total=$((pass + fail + skip))
 if [ "$fail" -eq 0 ]; then

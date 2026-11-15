@@ -85,7 +85,7 @@ if [ -f "$top/.pii-guard" ]; then
   pout=$(printf '%s\n' "$input" | python3 "$guard" --push --require-denylist 2>&1); rc=$?
   [ -n "$pout" ] && printf '%s\n' "$pout" >&2
   if [ "$rc" -ne 0 ]; then
-    if printf '%s' "$pout" | grep -q "no denylist found"; then
+    if printf '%s' "$pout" | grep -q "PII GUARD FAIL: no denylist found"; then
       echo "pre-push: blocked: this session has no name denylist, so the guard cannot check names. Add it (docs/FIRST_USE.md step 4), then push again." >&2
     else
       echo "pre-push: blocked by pii_guard.py: personal data or a secret is in this push (listed above, masked). Remove it, then push again." >&2

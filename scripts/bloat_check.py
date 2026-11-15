@@ -11,7 +11,7 @@ Usage:
 
 It measures:
     start read    lines, bytes and ~tokens (bytes / 4) of the files every session reads first
-                  (AGENTS.md, CLAUDE.md, docs/NEXT_PROMPT.md, plus "start_read" in the config)
+                  (AGENTS.md, CLAUDE.md, docs/NEXT_PROMPT.md, docs/DECISIONS.md, plus "start_read" in the config)
     handoff       docs/NEXT_PROMPT.md lines
     duplicates    normalized text lines of 80+ characters found in 2 or more tracked files
     big files     tracked files over the size budget
@@ -20,8 +20,8 @@ It measures:
 
 .bloat-audit.json (project-owned; the full audit in .claude/bloat-audit.md writes it). All keys are optional:
     {"last_audit": {"date": "YYYY-MM-DD", "commit": "<sha>", "report": "<path>"},
-     "every_days": 14, "every_commits": 30,
-     "budgets": {"start_read_tokens": 12000, "start_read_warn_tokens": 6000, "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20},
+     "every_days": 14, "every_commits": 300,
+     "budgets": {"start_read_tokens": 6000, "start_read_warn_tokens": 4500, "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20},
      "start_read": [], "ignore": ["ref/**"],
      "timings": {"tests": {"cmd": "tests/run.sh", "seconds": 20.8, "max_slowdown": 0.25}}}
 start_read_warn_tokens only warns (never "over", never fails --strict); set it to the cap to turn the warning off.
@@ -44,9 +44,9 @@ import time
 from pathlib import Path
 
 CONFIG = ".bloat-audit.json"
-START_READ = ["AGENTS.md", "CLAUDE.md", "docs/NEXT_PROMPT.md"]  # docs/DECISIONS.md is searched per area, not read at start (the PFM, 2026-11-13)
-DEFAULTS = {"every_days": 14, "every_commits": 30,
-            "budgets": {"start_read_tokens": 12000, "start_read_warn_tokens": 6000, "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20}}
+START_READ = ["AGENTS.md", "CLAUDE.md", "docs/NEXT_PROMPT.md", "docs/DECISIONS.md"]
+DEFAULTS = {"every_days": 14, "every_commits": 300,
+            "budgets": {"start_read_tokens": 6000, "start_read_warn_tokens": 4500, "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20}}
 TEXT_EXT = {".md", ".txt", ".py", ".sh", ".ps1", ".psm1", ".js", ".ts", ".json", ".yml", ".yaml", ".html", ".css",
             ".toml", ".ini", ".cfg", ".csv", ""}
 MIN_DUP = 80          # characters in a normalized line before it counts as a duplicate
@@ -127,7 +127,7 @@ def big_files(root, files, kb):
 def audit_due(root, cfg, today):
     last = cfg.get("last_audit") or {}
     if not last.get("date"):
-        # Never audited: due once the repo is every_days or every_commits past its first commit (the PFM, 2026-11-13),
+        # Never audited: due once the repo is every_days or every_commits past its first commit (kit default, 2026-11-13),
         # so a new project does not report AUDIT DUE on day one. No history readable, or a shallow clone (its oldest
         # commit is a cut, not the first commit): due.
         if git(root, "rev-parse", "--is-shallow-repository") == "true":
@@ -187,7 +187,7 @@ def report(root, args, today=None):
     over = []
     if s_tok > b["start_read_tokens"]:
         over.append("start read")
-    # Early warning only (never fails --strict): rule growth shows before the hard cap (the PFM, 2026-11-13).
+    # Early warning only (never fails --strict): rule growth shows before the hard cap (kit default, 2026-11-13).
     warn = "start read over warning" if b.get("start_read_warn_tokens", 0) < s_tok <= b["start_read_tokens"] else ""
     if h_lines > b["handoff_lines"]:
         over.append("handoff")
@@ -202,7 +202,7 @@ def report(root, args, today=None):
         data["timings"] = cfg.get("timings", {})
         (root / CONFIG).write_text(json.dumps(data, indent=2) + "\n")
 
-    tail = f"AUDIT DUE ({due}): ask the owner whether to run .claude/bloat-audit.md" if due else "audit not due"
+    tail = f"AUDIT DUE ({due}): ask the PFM whether to run .claude/bloat-audit.md" if due else "audit not due"
     if args.brief:
         print(f"bloat:       start read ~{s_tok:,} tokens (budget {b['start_read_tokens']:,}) · duplicate lines "
               f"{len(dups)} · big files {len(big)} · over: {', '.join(over) or 'none'}{' · ' + warn if warn else ''} · {tail}")

@@ -8,7 +8,7 @@ Why: two audits of one project found layered bloat that made a simple operation 
 
 - Measure first, then change. Every finding has evidence: a path and line, a count, a size or a time. No finding from impression.
 - Fix the cause, then apply the same fix everywhere the pattern appears.
-- Removals need the PFM's approval (the PFM, 2026-11-13). Do not remove, shorten or reword code, a script, a flag, a config, a template, a doc section, a rule, a decision, a test or a feature until the PFM approves. Propose it with evidence and options (Step 5.4).
+- Removals need the PFM's approval (kit default, 2026-11-13). Do not remove, shorten or reword code, a script, a flag, a config, a template, a doc section, a rule, a decision, a test or a feature until the PFM approves. Propose it with evidence and options (Step 5.4).
 - "Nothing in the repo calls it" does not prove a thing is unused. People run tools by hand, from other repos or devices, and from pasted prompts. Agents read only the repo, so a request that lives only in chat is invisible to them.
 - Exceptions (no approval), the only list: (a) files made on this audit's own branch; (b) generated files rebuilt from their source; (c) agent scratch files (debug output, "_old"/"_v2" copies) that nothing references AND whose adding commit names no request or decision; (d) exact duplicates merged into the canonical copy, text kept word for word; (e) reference text moved out of start-read files unchanged, except from instruction and guard files (AGENTS.md "Untrusted input"), where every change is a proposal. List each in the report.
 - Chesterton's fence: before you propose a removal, find why the thing exists (git log -S, DECISIONS, the commit that added it) and put the reason, or "not found", in the proposal.
@@ -31,7 +31,7 @@ Every item below finds; it does not fix. A fix that removes, shortens, rewords, 
 ### General project hygiene (industry practice)
 
 1. Duplication (DRY, single source of truth): the same fact, rule, value, list or code block in 2+ places. Keep one canonical place; others link to it. Includes copy-pasted code that should be a shared function, and docs that restate other docs.
-2. Drift: copies that started equal and now differ (docs vs code, README vs AGENTS.md, a schema vs the builder, a project vs the kit: the kit's `scripts/drift.py`). Decide which copy is right from the source of authority, not from the newer date.
+2. Drift: copies that started equal and now differ (docs vs code, README vs AGENTS.md, a schema vs the builder, a project vs the kit it came from). Decide which copy is right from the source of authority, not from the newer date.
 3. Dead code and dead files: functions, scripts, flags, configs, templates, test fixtures and branches nothing calls or reads. Check with grep for every name, and the build and test entry points.
 4. Stale docs: text that describes old behavior, finished plans, closed questions, superseded revisions (r1, r2 when r5 is current), TODOs older than 30 days, broken links.
 5. Layered wrappers: a script that calls a script that calls a script; checks that run the same test twice; retries around retries; config that overrides config. Draw the call chain for each common operation and time each layer.
