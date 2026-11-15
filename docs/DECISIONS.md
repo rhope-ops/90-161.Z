@@ -5,6 +5,14 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | RADE lock moves to release engine-v6 (RADE 67f7681, serial 5) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
+| 2026-11-15 | Round order after R24 approved (1A): R25 lists by PnP, R26 Settings rows, R27 all flows, R28-R29 RADE maintenance, R30-R33 app, R34-R35 pilot start. Scope: 90-161.Z. | PFM | docs/phases.md |
+| 2026-11-15 | R25 clean target (2B): delete the 12 test lists, the library, the flows and solutions by hand from an exact list; RADE then checks the site (read-only) before it installs. | PFM | go.md |
+| 2026-11-15 | Both 14 Nov holds are lifted: the slice 1 scope hold (slice 1 passed in R22 and R24) and the hold on steps that need a PnP check. | PFM | docs/phases.md |
+| 2026-11-15 | RADE pull request 53 merged (site name on the Ready card); engine work for the R24 notes is done by the 90-161.Z session in rhope-ops/RADE under RADE's rules. | PFM | https://github.com/rhope-ops/RADE/pull/53 |
+| 2026-11-15 | Newest-RADE check: fix both review findings (compare the lock commit with the tag commit; no network is a NOTE, not a PASS). | PFM | tests/run.sh |
+| 2026-11-15 | How R25 is built (not approved yet): T20 replays the T02 payload by PnP REST, MERGE by CSOM; value 3 (shared mailbox) empty to split the F03 e-mail fault; T18 r4; health probe and paste timing to R26. | Agent | docs/reviews/2026-11-15-r24-results.md |
+| 2026-11-15 | The install record (RADE `marker`) is not in R25: the engine allows it only in a deploy, and a deploy sends no results e-mail. It moves to the first deploy round (agent finding). | Agent | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-15 | Roadmap lives in docs/phases.md: phase states and the rounds to the pilot (phase 8); round counts, no dates. Exit criteria, round order and estimate there are agent RECs. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | 90-161.Z uses the newest RADE release, and a check tells when RADE has a newer one. | PFM | tests/run.sh |
 | 2026-11-15 | How (not approved yet): tests/run.sh fails when the lock is behind the newest `engine-v<N>` tag (no network: not checked); R24 combines engine-v4 with the 15 Nov flow changes; bundle tests use a stand-in NIPR name. | Agent | go.md |

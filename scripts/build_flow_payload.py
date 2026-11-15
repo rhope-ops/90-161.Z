@@ -135,7 +135,9 @@ def build():
 if __name__ == '__main__':
     out = build()
     path = os.path.join(ROOT, 'flow', 'provisioning-payload.json')
-    text = json.dumps(out, ensure_ascii=False, indent=1) + '\n'
+    # ASCII only (15 Nov 26): RADE embeds this file in a round bundle as ASCII text for T20. A character such as the
+    # dash in "Concur\u2014No Response" is written as a JSON escape; every reader gets the same value.
+    text = json.dumps(out, ensure_ascii=True, indent=1) + '\n'
     if '--check' in sys.argv:
         ok = os.path.exists(path) and open(path, encoding='utf-8').read() == text
         print('PAYLOAD up to date' if ok else 'PAYLOAD stale: run scripts/build_flow_payload.py'); sys.exit(0 if ok else 1)

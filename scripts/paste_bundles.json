@@ -8,7 +8,8 @@
     "home": "https://rhope-ops.github.io/90-161.Z",
     "own": [
       "90161Z-*",
-      "SAMPLEWING*"
+      "SAMPLEWING*",
+      "provisioning-payload.json"
     ],
     "knownDirs": [
       [
@@ -23,13 +24,21 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R24-round-r1.ps1",
-      "round": "R24",
-      "title": "Round R24: the newest RADE engine (engine-v4, with the NIPR-only start check) and the 15 Nov changes on the test site. The flows solution imports with the 4 values to set first and Test mode already Yes; the task scripts use the site address RADE holds; F03 r5 records which mailbox sent the escalation e-mail. Three fake publications repeat the slice 1 test, and all are removed at the end",
+      "out": "scripts/gov/paste/90161Z-R25-round-r1.ps1",
+      "round": "R25",
+      "title": "Round R25: clean install from zero on the test site. After the old lists, flows and solutions are deleted by hand, RADE checks that the site is clean, builds the 12 lists by PnP (no provisioning flow), sets up the site, and the slice 1 flows are imported and tested on the new lists. First round on RADE engine-v6: questions are answered in the window",
       "files": [
         {
-          "dir": "T19",
-          "src": "scripts/gov/90161Z-T19-list-update-r3.ps1"
+          "dir": "T20",
+          "src": "scripts/gov/90161Z-T20-provision-lists-r1.ps1"
+        },
+        {
+          "dir": "T20",
+          "src": "flow/provisioning-payload.json"
+        },
+        {
+          "dir": "T16",
+          "src": "scripts/gov/90161Z-T16-site-setup-r11.ps1"
         },
         {
           "dir": "T18",
@@ -41,29 +50,109 @@
         },
         {
           "dir": "T18",
-          "src": "scripts/gov/90161Z-T18-slice1-test-r3.ps1"
+          "src": "scripts/gov/90161Z-T18-slice1-test-r4.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T19 Check the list columns r3",
-          "dir": "T19",
-          "file": "90161Z-T19-list-update-r3.ps1",
+          "name": "T20 Clean the site by hand r1",
+          "kind": "guide",
+          "dir": "T20",
+          "file": "",
+          "note": "You confirm that the old test objects are deleted (the task \"Clean the test site\" on the bookmark page). The next step checks the site. About 1 minute (estimate).",
+          "marker": "90161Z-T20-clean-confirmed.txt",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt",
+          "guide": [
+            "1. Before this round, do the task \"Clean the test site\" on the bookmark page (8 steps: solutions, flows, lists, the library, result files).",
+            "2. If it is done: select \"Done: site is clean\" and answer one question about Power Automate.",
+            "If it is not done: select \"It failed\", close RADE, do the task, then run the round again."
+          ],
+          "doneText": "Done: site is clean",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 1,
+          "answers": [
+            {
+              "key": "flows-gone",
+              "prompt": "Are all 90-161.Z solutions and flows deleted in Power Automate?",
+              "kind": "yesno"
+            }
+          ]
+        },
+        {
+          "name": "T20 Clean site check r1",
+          "dir": "T20",
+          "file": "90161Z-T20-provision-lists-r1.ps1",
+          "args": "-Check",
           "minutes": 10,
-          "note": "Signs in (CAC) with the site address RADE holds: no site question. Checks the R21 columns and Action Status choices on the test site and adds only what is missing. About 1 minute (estimate).",
+          "note": "Signs in (CAC) and reads only. Passes when the site has no PFM list, no 90-161.Z library, no 90161Z result file and no probe test group. Changes nothing. About 1 minute (estimate).",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 1
+          "estimate": 1,
+          "after": [
+            "T20 Clean the site by hand r1"
+          ],
+          "help": "Delete what the FAIL lines name (task \"Clean the test site\"), then run the round again."
         },
         {
-          "name": "T18 Import the slice 1 flows r4",
+          "name": "T20 Build the 12 lists r1",
+          "dir": "T20",
+          "file": "90161Z-T20-provision-lists-r1.ps1",
+          "minutes": 30,
+          "note": "Creates the 12 PFM lists with their columns, views, 88 seed rows, titles, indexes and edit-own-rows, then checks each list. It adds only; a second run skips what is there. About 5 minutes (estimate).",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "estimate": 5,
+          "after": [
+            "T20 Clean site check r1"
+          ],
+          "help": "Send the results as they are. The step can be run again: it skips what is there.",
+          "makes": [
+            {
+              "kind": "lists",
+              "name": "the 12 PFM lists (PFM Offices to PFM Reviews)"
+            }
+          ]
+        },
+        {
+          "name": "T16 Site setup r11",
+          "dir": "T16",
+          "file": "90161Z-T16-site-setup-r11.ps1",
+          "args": "-Logo",
+          "minutes": 45,
+          "note": "Makes the 90-161.Z library again and uploads the seals from T07, checks the time zone, the header logo and edit-own-rows, and counts the lists and rows. About 4 minutes (estimate).",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "estimate": 4,
+          "after": [
+            "T20 Build the 12 lists r1"
+          ],
+          "help": "Send the results as they are; each FAIL line names its own fix.",
+          "makes": [
+            {
+              "kind": "library",
+              "name": "90-161.Z (folders Seals and Seals/Prepared)"
+            }
+          ]
+        },
+        {
+          "name": "T18 Import the slice 1 flows r5",
           "kind": "guide",
           "dir": "T18",
           "file": "90161Z-T18-slice1-flows-r5.zip",
-          "note": "You import the 90-161.Z flows solution again. New: the 4 values you set are first, with labels 1 to 4, and Test mode is already Yes. F03 r5 replaces r4 in place. About 6 minutes (estimate).",
+          "note": "You import the 90-161.Z flows solution into the clean environment and answer 2 questions in this window. Value 3 (shared mailbox) stays empty in this round. About 7 minutes (estimate).",
           "marker": "90161Z-T18-slice1-imported.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
@@ -73,12 +162,12 @@
             "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
             "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
             "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
-            "5. Environment variables: look for the labels that start with 1 to 4. \"1 Site URL\": paste the test site address. \"2 Alert e-mail\": your own work e-mail address.",
-            "6. \"3 Shared mailbox\": the shared mailbox you have Send As rights to, or empty. \"4 Test mode\" must read Yes: if it reads No, enter Yes. Keep all other values.",
-            "7. Note for your results e-mail: were labels 1 to 4 together at the top (yes or no), and did Test mode already read Yes (yes or no).",
+            "5. Environment variables: find the 4 labels that start with 1 to 4. They can be in any order on the page; remember the order you see.",
+            "6. \"1 Site URL\": paste the test site address. \"2 Alert e-mail\": your own work e-mail address.",
+            "7. \"3 Shared mailbox\": leave it EMPTY in this round (it tests which mailbox sends). \"4 Test mode\" must read Yes. Keep all other values.",
             "8. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "9. Open the solution \"90-161.Z flows\". It lists F03 r5, F05 r2 and F06 r1. F05 and F06 must read On and F03 Off; if one differs, change it.",
-            "10. Return to RADE and select \"Done: imported\".",
+            "9. Open the solution \"90-161.Z flows\". F05 and F06 must read On and F03 Off; if one differs, change it.",
+            "10. Return to RADE, select \"Done: imported\" and answer the 2 questions.",
             "If the import fails: select \"Download log file\" (any folder), type the first line of the red error (no names or site address) below, then select \"It failed\"."
           ],
           "doneText": "Done: imported",
@@ -86,7 +175,34 @@
             "net-flow",
             "flow-guide"
           ],
-          "estimate": 6
+          "estimate": 7,
+          "after": [
+            "T20 Build the 12 lists r1"
+          ],
+          "help": "Send the results as they are; the next step reads the import log if you downloaded it.",
+          "makes": [
+            {
+              "kind": "solution",
+              "name": "90-161.Z flows (F03 r5, F05 r2, F06 r1)"
+            }
+          ],
+          "answers": [
+            {
+              "key": "label-order",
+              "prompt": "In which order did the page show the 4 numbered values? Type the numbers, for example 1 3 4 2.",
+              "kind": "text"
+            },
+            {
+              "key": "test-mode",
+              "prompt": "What did \"4 Test mode\" read before you changed anything?",
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No",
+                "Empty"
+              ]
+            }
+          ]
         },
         {
           "name": "T17 Import log reader r2",
@@ -97,18 +213,22 @@
           "estimate": 1
         },
         {
-          "name": "T18 Slice 1 test, part 1 r3",
+          "name": "T18 Slice 1 test, part 1 r4",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r3.ps1",
+          "file": "90161Z-T18-slice1-test-r4.ps1",
           "args": "-Part 1",
           "minutes": 30,
-          "note": "Signs in (CAC), no site question. Creates three fake publications at step 6 and checks F05: rows for A only, F after its title fix, one removed row added back. Sets two rows past due for F03.",
+          "note": "Signs in (CAC). Creates three fake publications at step 6 on the new lists and checks F05: rows for A only, F after its title fix, one removed row added back. Sets two rows past due for F03.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 12
+          "estimate": 12,
+          "after": [
+            "T18 Import the slice 1 flows r5"
+          ],
+          "help": "Send the results as they are. A FAIL here on new lists is a finding about the lists or the flows."
         },
         {
           "name": "T18 Failure e-mail and Resubmit r1",
@@ -132,14 +252,17 @@
           "needs": [
             "net-flow"
           ],
-          "estimate": 4
+          "estimate": 4,
+          "after": [
+            "T18 Slice 1 test, part 1 r4"
+          ]
         },
         {
-          "name": "T18 Run F03 once r4",
+          "name": "T18 Run F03 once r5",
           "kind": "guide",
           "dir": "T18",
           "file": "",
-          "note": "You run F03 once by hand and answer one question: is the run status Succeeded? In test mode its e-mails go only to you. About 3 minutes (estimate).",
+          "note": "You run F03 once by hand. In test mode its e-mails go only to you; in this round your own mailbox sends them. A later step asks where the e-mail arrived. About 3 minutes (estimate).",
           "marker": "90161Z-T18-f03-ran.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
@@ -150,45 +273,132 @@
             "3. Open \"90161Z F03 Suspense Reminders r5\" and select Test > Manually > Test, then Run flow.",
             "4. Wait until the run ends (under 1 minute, estimate). Read only the status at the top of the run: \"Succeeded\" or \"Failed\".",
             "5. Grey (skipped) steps are normal: the last 3 steps, one of the two send steps, and most rows of the loop send nothing.",
-            "6. If the status is Succeeded: return to RADE and select \"Done: F03 ran\". The e-mail is checked after the round, not here.",
+            "6. If the status is Succeeded: return to RADE and select \"Done: F03 ran\". A later step asks about the e-mail.",
             "If the status is Failed: type the name of the first step with a red mark and the first line of its error (no names or site address), then select \"It failed\"."
           ],
           "doneText": "Done: F03 ran",
           "needs": [
             "net-flow"
           ],
-          "estimate": 3
+          "estimate": 3,
+          "after": [
+            "T18 Slice 1 test, part 1 r4"
+          ]
         },
         {
-          "name": "T18 Slice 1 test, part 2 r3",
+          "name": "T18 Slice 1 test, part 2 r4",
           "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r3.ps1",
+          "file": "90161Z-T18-slice1-test-r4.ps1",
           "args": "-Part 2",
           "minutes": 40,
-          "note": "Checks: Resubmit made no duplicates; F03 suspense and one escalation; F06 hold, resume and cancel; Legal rows and step 7. New line j2-f03-mailbox: which mailbox sent the e-mail. Removes all test rows.",
+          "note": "Checks: Resubmit made no duplicates; F03 suspense and one escalation; F06 hold, resume and cancel; Legal rows and step 7. Line j2 names the mailbox that sent the e-mail. Removes all test rows.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 12
+          "estimate": 12,
+          "after": [
+            "T18 Slice 1 test, part 1 r4"
+          ],
+          "help": "Send the results as they are. The test rows stay on the site for review when a check fails."
+        },
+        {
+          "name": "T18 Find the test e-mail r1",
+          "kind": "guide",
+          "dir": "T18",
+          "file": "",
+          "note": "You look for the F03 test e-mail and answer one question in this window. This closes a fault of 4 rounds: the e-mail was logged but never found. About 2 minutes (estimate).",
+          "marker": "90161Z-T18-email-looked.txt",
+          "guide": [
+            "1. In Outlook, search All Mailboxes for a subject that starts with \"[TEST] Escalation\", received today.",
+            "2. Look in this order: Inbox, Junk E-mail, then Sent Items.",
+            "3. Select \"Done: I looked\" and answer where you found it.",
+            "If Outlook does not open: select \"It failed\" and type what you see (no names or addresses)."
+          ],
+          "doneText": "Done: I looked",
+          "estimate": 2,
+          "after": [
+            "T18 Run F03 once r5"
+          ],
+          "answers": [
+            {
+              "key": "f03-email",
+              "prompt": "Where is the e-mail \"[TEST] Escalation\" from this round?",
+              "kind": "pick",
+              "choices": [
+                "Inbox",
+                "Junk E-mail",
+                "Sent Items only",
+                "Not found"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "RADE Window questions r1",
+          "kind": "guide",
+          "dir": "T20",
+          "file": "",
+          "note": "You answer 4 short questions about this window: restore after minimize, button borders, alignment, and anything that looked wrong. This replaces notes in the e-mail. About 2 minutes (estimate).",
+          "marker": "90161Z-T20-window-looked.txt",
+          "guide": [
+            "1. Minimize this window now (the button with the line, top right).",
+            "2. Select RADE on the taskbar. The window must come back at its size, not as a full screen.",
+            "3. Select \"Done: I looked\" and answer the 4 questions.",
+            "If the window does not come back: maximize it to go on, select \"Done: I looked\" and answer No to the first question."
+          ],
+          "doneText": "Done: I looked",
+          "answers": [
+            {
+              "key": "restored",
+              "prompt": "Did the window come back from the taskbar after you minimized it?",
+              "kind": "yesno"
+            },
+            {
+              "key": "own-border",
+              "prompt": "Did every button and choice show only a thin border? A black or gray outline around one counts as No.",
+              "kind": "yesno"
+            },
+            {
+              "key": "aligned",
+              "prompt": "Were the lines and buttons aligned on every card?",
+              "kind": "yesno"
+            },
+            {
+              "key": "look",
+              "prompt": "Did anything look wrong? Name the card and the part. Do not type names or addresses.",
+              "kind": "text"
+            }
+          ],
+          "estimate": 2
         }
       ],
       "collect": [
         {
-          "dir": "T19",
-          "name": "90161Z-T19-list-update-r3.txt",
-          "step": "T19 Check the list columns r3"
+          "dir": "T20",
+          "name": "90161Z-T20-clean-check-r1.txt",
+          "step": "T20 Clean site check r1"
+        },
+        {
+          "dir": "T20",
+          "name": "90161Z-T20-provision-lists-r1.txt",
+          "step": "T20 Build the 12 lists r1"
+        },
+        {
+          "dir": "T16",
+          "name": "90161Z-T16-setup-r11.txt",
+          "step": "T16 Site setup r11"
         },
         {
           "dir": "T18",
-          "name": "90161Z-T18-slice1-part1-r3.txt",
-          "step": "T18 Slice 1 test, part 1 r3"
+          "name": "90161Z-T18-slice1-part1-r4.txt",
+          "step": "T18 Slice 1 test, part 1 r4"
         },
         {
           "dir": "T18",
-          "name": "90161Z-T18-slice1-part2-r3.txt",
-          "step": "T18 Slice 1 test, part 2 r3"
+          "name": "90161Z-T18-slice1-part2-r4.txt",
+          "step": "T18 Slice 1 test, part 2 r4"
         },
         {
           "dir": "T17",
@@ -616,21 +826,54 @@
         {
           "path": "Rounds\\R21",
           "kind": "dir"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R22",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R23",
+          "kind": "dir"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R24: first round on RADE engine-v4. Imports the flows with the new field order, repeats the slice 1 test, and removes its test rows.",
+          "summary": "Test round R25: clean install. Checks that the site is clean, builds the 12 lists, sets up the site, then imports and tests the flows.",
           "steps": [
-            "T19 Check the list columns r3",
-            "T18 Import the slice 1 flows r4",
+            "T20 Clean the site by hand r1",
+            "T20 Clean site check r1",
+            "T20 Build the 12 lists r1",
+            "T16 Site setup r11",
+            "T18 Import the slice 1 flows r5",
             "T17 Import log reader r2",
-            "T18 Slice 1 test, part 1 r3",
+            "T18 Slice 1 test, part 1 r4",
             "T18 Failure e-mail and Resubmit r1",
-            "T18 Run F03 once r4",
-            "T18 Slice 1 test, part 2 r3"
+            "T18 Run F03 once r5",
+            "T18 Slice 1 test, part 2 r4",
+            "T18 Find the test e-mail r1",
+            "RADE Window questions r1"
           ]
         }
       ]
