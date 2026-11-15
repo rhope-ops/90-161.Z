@@ -11,6 +11,8 @@ usaf.dps.mil
 www.ang.af.mil
 www.dafhistory.af.mil
 www.trademark.af.mil
+# Public suffix of a classified network, in the RADE NIPR check inside the round bundles (PFM, 2026-11-14).
+smil.mil
 # Escaped form of the same public host, in tests/run.sh (PFM, 2026-11-11).
 usaf\.dps\.mil
 check: mil
