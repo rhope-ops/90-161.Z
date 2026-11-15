@@ -27,6 +27,8 @@ def sha256(path):
 
 def fetch(lock, cache=CACHE, opener=urllib.request.urlopen):
     """Return the folder that holds the locked files, each one checked against the lock. Stops (SystemExit) on failure."""
+    if lock['engine'] not in lock['files']:
+        sys.exit('FAIL scripts/rade.lock.json: the engine file %r has no SHA-256 in "files".' % lock['engine'])
     home = Path(cache) / lock['commit']
     for rel, want in lock['files'].items():
         if rel.startswith('/') or '..' in Path(rel).parts:

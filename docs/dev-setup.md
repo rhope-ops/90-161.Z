@@ -1,6 +1,6 @@
 # Dev setup (agent workspace, Linux)
 
-Cloud sessions (PFM, 2026-11-11): start them on the environment "RADE" (named "90-161.Z" before 14 Nov 26); its setup script does steps 1-2 below. On any other environment, do steps 1-2 by hand.
+Cloud sessions (PFM, 2026-11-11): start them on the environment "RADE"; its setup script does steps 1-2 below. On any other environment, do steps 1-2 by hand.
 
 Checks run PowerShell 7 on Linux. They check syntax and PS 5.1 compatibility only. Word COM and PnP cannot run here; those parts are verified on the gov device.
 

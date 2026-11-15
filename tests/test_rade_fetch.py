@@ -73,8 +73,9 @@ try:
     c = tmp / 'c3'; calls = []
     home = shim.fetch(LOCK, c, opener(GOOD, calls))
     check('good download: 2 files, hashes match', len(calls) == 2 and all(shim.sha256(home / k) == v for k, v in LOCK['files'].items()), calls)
-    shim.fetch(LOCK, c, offline)
-    check('full cache needs no network', True)
+    before = {k: (home / k).stat().st_mtime_ns for k in GOOD}
+    again = stopped(lambda: shim.fetch(LOCK, c, offline))
+    check('full cache needs no network and stays unchanged', again is None and before == {k: (home / k).stat().st_mtime_ns for k in GOOD}, again)
 
     # 4. A cache file changed after download: found on the next build, replaced when online, deleted and stopped when offline.
     (home / 'engine/rade_build.py').write_bytes(b'print("changed")\n'); calls = []
@@ -85,9 +86,12 @@ try:
     check('changed cache file offline: stop, changed file deleted', msg and msg.startswith('FAIL cannot download') and not (home / 'engine/rade_build.py').exists(), msg)
 
     # 5. A lock path that leaves the cache is refused.
-    evil = dict(LOCK, files={'../x': 'a' * 64})
+    evil = dict(LOCK, files=dict({'../x': 'a' * 64}, **LOCK['files']))
     msg = stopped(lambda: shim.fetch(evil, tmp / 'c5', opener(GOOD, [])))
     check('lock path outside the cache is refused', msg and 'bad file path' in msg and not (tmp / 'x').exists(), msg)
+
+    msg = stopped(lambda: shim.fetch(dict(LOCK, engine='engine/other.py'), tmp / 'c5', opener(GOOD, [])))
+    check('engine file without a hash in the lock is refused', msg and 'has no SHA-256' in msg, msg)
 
     # 6. RADE_DIR override: a warning, and the lock is not used.
     over = tmp / 'over'; (over / 'engine').mkdir(parents=True); (over / 'engine/rade_build.py').write_text('print("override engine ran")\n')
