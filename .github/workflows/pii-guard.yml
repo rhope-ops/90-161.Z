@@ -14,7 +14,14 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Repo checks (self-tests and project log)
+      - name: Test packages (the versions in docs/dev-setup.md step 4)
+        env:
+          PIP_BREAK_SYSTEM_PACKAGES: "1"
+        run: |
+          python3 -m pip install --quiet --user python-docx==1.2.0 pillow==12.3.0 jsonschema
+          npm install --global --silent docx@9.7.1
+          echo "NODE_PATH=$(npm root --global)" >> "$GITHUB_ENV"
+      - name: Repo checks (self-tests, project log and project tests)
         run: scripts/check.sh
       - name: Scan files and commits
         env:
