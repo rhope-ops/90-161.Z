@@ -5,6 +5,12 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-14 | Lists by PnP: RADE builds the site objects from schemas/lists; the provisioning flow retires after one round proves list creation. Replaces 12 Nov 1A and 1B and 10 Nov (lists by flow). | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-14 | No reconnaissance, hardened: never anything malicious or that could be misconstrued as malicious. Open reads of SharePoint data with my own account are allowed. Any doubt: ask the owner first. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | Tests: no change. Rounds are the Windows PowerShell 5.1 test; cloud tests stay on PowerShell 7; a 5.1 fault is fixed when a round finds it. Replaces "how to move it is open" below. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | Round results e-mail: the allowed owner-only exception to the DoD365 boundary rule until the test rounds end. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | Flow health: a round tests a health flow with the Power Automate Management connector (own flows only); then choose between it and heartbeat rows. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | AGENTS.md Deployable package line: PnP.PowerShell and Windows PowerShell 5.1 are on every NIPR computer; fallbacks are for rights that differ, not for PowerShell to SharePoint. | PFM | AGENTS.md |
 | 2026-11-14 | Immutable rule: nothing like network reconnaissance may occur in RADE or in any app (fixed hosts, the one site given, own flows only). Cannot be changed, like the DoD365 boundary rule. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Hard rule: users cannot write data across the DoD365 boundary through any app. Inside DoD365, RADE may read and write app data where a run type needs it. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | What works on the PFM's NIPR computer works on all, PnP.PowerShell included; no special flag on the account. Windows PowerShell 5.1 is the least always available. Rights can still differ. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
