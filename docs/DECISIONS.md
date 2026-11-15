@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Roadmap lives in docs/phases.md: phase states and the rounds to the pilot (phase 8); round counts, no dates. Exit criteria, round order and estimate there are agent RECs. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | 90-161.Z uses the newest RADE release, and a check tells when RADE has a newer one. | PFM | tests/run.sh |
 | 2026-11-15 | How (not approved yet): tests/run.sh fails when the lock is behind the newest `engine-v<N>` tag (no network: not checked); R24 combines engine-v4 with the 15 Nov flow changes; bundle tests use a stand-in NIPR name. | Agent | go.md |
 | 2026-11-15 | RADE lock moves to release engine-v4 (RADE 4a0fbad, serial 4) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
@@ -148,7 +149,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-13 | Bloat audit: 14 days or 30 commits; 12,000 tokens; +25% timing (1A). Other repos (2B). Sync after check: mil (3A). Audit next (4A). | PFM | archive |
 | 2026-11-13 | Gov-device usability bar for go.md and runner windows; results folder Rounds\\<round>, no zips. | PFM | archive |
 | 2026-11-13 | Backups: (22A) row history, recycle bin, chapters; PFM Office rolls back. (23A) 8 weekly + 12 monthly. (24A) e-mails: new task, due date; rest weekly. | PFM | docs/backup-and-restore.md |
-| 2026-11-13 | (19A) weekly digest per person, Wed 0700 Central. (20A+) weekly backup, chapters, in-app rollback. (21A) weekly disabled-account list. | PFM | docs/phases.md |
+| 2026-11-13 | (19A) weekly digest per person, Wed 0700 Central. (20A+) weekly backup, chapters, in-app rollback. (21A) weekly disabled-account list. | PFM | docs/decisions-archive.md |
 | 2026-11-13 | RADE: (R1A) code embedded. (R2A) v1: file bridge, one agent flow. (R3A) repo rade. (R4A) PFM runs v1. (R5B) no other app first. (R6A) zip by e-mail. | PFM | https://claude.ai/artifact/GLdT7Nr4aVn3EenyYnAuJF |
 | 2026-11-13 | ISSM ruling: scripts without elevated credentials may be pasted and run in PowerShell ISE. No elevation, admin credentials or RunAs. | PFM | archive |
 | 2026-11-13 | Logo: woven square-in-a-square mark with a serif Greek rho, white and light blue for blue backgrounds (assets/logo, built by scripts/build_logo.py). | PFM | assets/logo/ |
@@ -156,7 +157,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-12 | Package: (15A) folders by permission. (16A) attachments off; metadata ties files. (17A) Document Role suggested. (18A) originals stay. (4) test zip. | PFM (15A 16A 17A 18A+, 4 test) | docs/roles-and-permissions.md |
 | 2026-11-12 | (10A) Acting PFM leaves next weekday after Acting Until. (11A) PFM or Alternate names Acting PFM. (12A) covers to CSV. (13A) PFM Office owns itself. (14B) intake. | PFM | docs/roles-and-permissions.md |
 | 2026-11-12 | (4A) PFM, Alternate, Acting PFM, Acting Until in PFM Settings. (5A) connection references. (6A) Acting PFM full rights. (7A) PFM Office group. (8A) intake. (9A) library. | PFM | docs/roles-and-permissions.md |
-| 2026-11-12 | Phase 1 (1A): ISE runner only runs and tests gov-device code; lists and permissions stay in flows. (1B) no PnP setup path. (2A) Phases 2 and 3 together. (3A) Phases 5-9 added. | PFM (1A, conditional; 1B 2A 3A); Agent | docs/phases.md |
+| 2026-11-12 | Phase 1 (1A): ISE runner only runs and tests gov-device code; lists and permissions stay in flows. (1B) no PnP setup path. (2A) Phases 2 and 3 together. (3A) Phases 5-9 added. | PFM (1A, conditional; 1B 2A 3A); Agent | docs/decisions-archive.md |
 | 2026-11-12 | (4C) Next apps: trackers and process apps. (5A) kit repo on archimedes_lever baseline; 90-161.Z is app #1. (6A) Stage 1 runner OK. | PFM | archive |
 | 2026-11-12 | (1A) Pipeline tool in two stages: Stage 1 GUI runner, faster rounds; Stage 2 app generator. (3A) runner never fetches code at run time. | PFM | archive |
 | 2026-11-12 | ISSM written approval for paste and run: R02 closed for this wing. | PFM | archive |

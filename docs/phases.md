@@ -1,55 +1,55 @@
-# Project phases (12 Nov 26)
+# Project phases and rounds to the pilot (15 Nov 26)
 
-Status: the PFM's phase order (12 Nov, in chat) plus agent recommendations marked **REC:**. A REC is not a decision until the PFM approves it; approved items go to docs/DECISIONS.md.
+Status: the PFM's phase order (12 Nov 26; [DECISIONS.md](DECISIONS.md) rows of 2026-11-12 and 2026-11-13, full text in [decisions-archive.md](decisions-archive.md); where those rows cite docs/phases.md they mean [the version of 12 Nov 26](https://github.com/rhope-ops/90-161.Z/blob/5e376e1/docs/phases.md), which also holds the options not chosen) and the roadmap the PFM asked for on 15 Nov 26: round counts, no dates, to the pilot. The exit criteria, the round order and the estimate are agent recommendations (**REC:**) until the PFM approves them. Evidence for every row: [reviews/2026-11-15-roadmap-evidence.md](reviews/2026-11-15-roadmap-evidence.md).
 
-## PFM's phases (12 Nov)
+## Phases
 
-| # | Phase | State now |
-|---|---|---|
-| 1 | Build and test the PowerShell ISE deployment engine UI | Built: Stage 1 runner (WinForms window in the paste, branch ccr-2cb71415-mt9o5x, commit 4aa462b, build b60abd8b). Cloud checks on that branch: tests 50 pass / 0 fail, lint 0 findings. Not tested on the gov device: waits for Round R01 (go.md Fix first). |
-| 2 | Outstanding items: function, use, scale, flexibility (for example the PFM away on deployment, roles easy to re-assign) | Partial: continuity (co-owners, how-to last), P4A sender switch, P5A handover runbook, 1.1C AO change. No role model for an acting PFM yet. |
-| 3 | Lists, libraries, security settings; use existing groups; setup takes in as much existing data as possible | Partial: list design approved (14A), access group by type (P6, docs/setup-and-updates.md 4a), CSV import of products (3A), Series and Table A3.2 seeds. Rights not tested (go.md Task 11). |
-| 4 | The app: UX/UI in full, all text | Inputs exist: docs/style-standard.md, customer guidance r3 (75 screens), PFM Guidance list (12A), palette (values wait for go.md Task 12). No screen map yet. |
+| # | Phase | State (15 Nov 26) | Proof | REC: exit criterion (pass or fail) |
+|---|---|---|---|---|
+| 1 | Deployment engine (RADE) | Install runs work: engine-v2 passed 2 times; engine-v4 is locked and first runs in R24. Not built: Diagnose, Back up, Restore, Uninstall; the install record (`marker`) | [R23](reviews/2026-11-15-r23-results.md) | A round passes each of the 5 run types, and the site holds the install record |
+| 2 | Function, use, scale | Design decided (roles, backup, digest). 0 built | [roles-and-permissions.md](roles-and-permissions.md), [backup-and-restore.md](backup-and-restore.md) | The role re-assign screen passes a round; a Restore dry run shows the right counts; a co-owner re-binds a connection (P19) |
+| 3 | Lists, security, intake | 12 lists and 88 rows on the test site, made by the T02 flow; rights form answered 17 of 17 (open: P18, P19, S14). Not run: lists by PnP; intake | [R12](reviews/2026-11-14-r12-results.md), [R13](reviews/2026-11-14-r13-results.md) | PnP makes the 12 lists on a clean site and a dry run then reports 0 differences from [schemas/lists](../schemas/lists) |
+| 4 | App UX and text | Screen map r1 approved (25 screens); previews cancelled; palette provisional | [app/screen-map.md](app/screen-map.md) | Palette values final (Task 12) |
+| 5 | Flow rules, provisioning | The T02 flow works; it retires after the PnP round. The flow and app rules of design check r7 are not built | [power-automate-provisioning.md](power-automate-provisioning.md), [NEXT_PROMPT.md](NEXT_PROMPT.md) State | T02 flow removed; provisioning and setup docs rewritten for PnP; the r7 rules are in the flows and the app |
+| 6 | Flows build | Slice 1 passed end to end (F03, F05, F06). F01, F02, F04 drafted, never imported. Settings-row values not built | [R22](reviews/2026-11-15-r22-results.md), [flow/solution/README.md](../flow/solution/README.md) | The full solution imports with every flow On; each of F01 to F06 has a passed device check; 6 values come from PFM Settings rows |
+| 7 | Canvas app | 0 of 25 screens built; the endorser-answer flow is not built | [app/screen-map.md](app/screen-map.md) | 25 screens built; Accessibility Checker 0 errors; a Read-only user enters data; an endorser answer is recorded |
+| 8 | Pilot on the test site | Not started | [rights-test-plan.md](rights-test-plan.md) rows P18, P19 | Start: a second account with fewer rights installs from zero and takes 1 fake publication through every process step |
+| 9 | Handover (how-to, kit repo, releases) | Not started; outside this roadmap | - | - |
 
-## REC: changes to the plan
+Scale note (REC from 12 Nov 26, estimate, not measured): PFM Activity Log reaches the 5,000-item view threshold in about 2.5 years at 2,000 rows a year (50 actions x 40 events); index Created and Action ID when the list is made; a yearly archive flow.
 
-1. **DECIDED (PFM 1A, 12 Nov):** Phase 1 = runner only (test loop for gov-device code). SharePoint setup stays in Power Automate flows. Reason: the PnP sign-in failed (10 Nov), and other wings may have no PowerShell access to SharePoint (Deployable package rule), so a PowerShell installer would be a second path to keep working.
-2. **DECIDED (PFM 2A, 12 Nov):** Run phases 2 and 3 as one discussion pass while R01 waits on the gov device. Role re-assignment is a permissions design question: it changes the same Settings rows and groups as phase 3.
-3. **DECIDED (PFM 3A, 12 Nov):** Add the phases that follow phase 4 (they are in NEXT_PROMPT "Next design" but not in this order):
-   - 5. Flow rule catalog (docs/flow-rules.md, decided 2A) and T02 r10 provisioning.
-   - 6. Flows build (solution-aware, connection references).
-   - 7. App build (Power Apps canvas), Accessibility Checker 0 errors.
-   - 8. Pilot on the test site (requested), rights tests (Task 11) before it.
-   - 9. Handover: maintainer how-to, kit repo (5A), releases.
+## Rounds to the pilot (R24 is built; the order after it is a REC)
 
-## Phase 2 and 3 starting points (agent first take)
+A round holds only steps that test something not yet verified (PFM, 2026-11-14). Round numbers after R24 are an order, not a promise: a round that needs a fix runs again under the next number.
 
-- Risk (high): flows run on the PFM's connections (2.2A). If the PFM's account is disabled, every flow stops; a co-owner does not move the connections. Connection references let a co-owner re-bind them in one place.
-- **REC:** roles as data, not names in code: PFM Settings rows PFM, Alternate PFM, Acting PFM (with Acting Until); the app shows PFM screens to members of the PFM office SharePoint group; flows address the role, not a person. Re-assign = one screen, one flow (group membership, Settings row, Activity Log row).
-- Existing groups (high confidence): SharePoint permissions can be granted to existing Entra/AD security groups, M365 groups and SharePoint groups. A flow can set them through SharePoint REST if the installer has Manage Permissions (R5); otherwise a checklist for the site owner.
-- Intake of existing data, candidates: existing site groups and members (offered as choices, not copied); posted publications in an existing library (designator, title, date from file names and properties, the PFM confirms each row); the products CSV (3A); the e-Publishing index (Task 9). Org box addresses for PFM Offices are entered or loaded by CSV (org boxes are not users; directory lookup is unlikely to find them).
+| Round | Phase | Proves | Needs first | If it fails |
+|---|---|---|---|---|
+| R24 | 6, 1 | Open: R24 r1 is on main ([go.md](../go.md)). First run of engine-v4 (NIPR-only start check); import page of slice zip r5 (4 values first, Test mode Yes); site address entered once; F03 r5 escalation e-mail and its mailbox | Nothing: the PFM runs it | Slice zip r4 (passed in R22) stays the base |
+| R25 | 3, 5, 1 | 12 lists by PnP on a clean target (`scripts/gov/Provision-Lists.ps1`, not yet run in a round); the install record; the health-flow probe; paste timing 500 KB and 1 MB (step not built) | A clean target (the test site holds the 12 lists already); the PFM confirms the 14 Nov hold on PnP steps is lifted; triage of the 10 list Gap rows; step script changes (review) | The T02 flow stays (worked R11 to R13) |
+| R26 | 6 | 6 flow values from PFM Settings rows (new F03, F05, F06); stage 6 target 25 working days | R25 | Values stay environment variables |
+| R27 | 6 | F01, F02, F04; the full solution with every flow On | R26; the PFM answers the open flow choices; triage of the 3 flow Gap rows; the r7 flow rules | Import the slice plus one flow at a time |
+| R28 | 1, 2 | RADE Diagnose and Back up | The PFM approves the function lists in rhope-ops/RADE; an engine release; a lock move | Backup by hand per [backup-and-restore.md](backup-and-restore.md) |
+| R29 | 1, 2 | RADE Restore; Uninstall, then a clean reinstall | R28 | Old solutions removed by hand |
+| R30 | 7 | Canvas app imports; a Read-only user writes through the app | R27; the app build (cloud work); DEC on app writes; the r7 app rules | A flow writes with the PFM's connection |
+| R31 | 7 | Endorsers answer in the app; Restart coordination | R30 | - |
+| R32 | 2, 7 | PFM Office screens; role re-assign; the weekly backup flow and the disabled-account list (screens P13, P14 show them) | R31 | - |
+| R33 | 4, 7 | Accessibility Checker 0 errors; final palette; site home page (preview first) and its header flow | Palette values (Task 12) | - |
+| R34 | 8 | Install from zero by a second account with fewer rights | R27, R29, R33 | The documented fallback for each missing right |
+| R35 | 8 | Rights rows P18 and P19; then the pilot starts | R34 | Fallbacks in [rights-test-plan.md](rights-test-plan.md) |
 
-## Phase 2+3 round 1 (12 Nov): Q4-Q9 answered (4A 5A 6A 7A 8A plus manual upload, 9A); design and round 2 (Q10-Q14): docs/roles-and-permissions.md
+- Critical path: R24, R25, R26, R27, then R30 to R35. R28 and R29 depend on the second repo and can move anywhere before R34. R24 can run while R25 is built.
+- R24 r1 was built by another session on 15 Nov 26 while this roadmap was written; it is the slice retest this roadmap recommended, on engine-v4. It closes 3 open device items; the PFM reported that the F03 test e-mail did not arrive in 3 rounds. The paste-timing step is not in it and moves to R25. The site address on the clipboard waits for a later engine release.
+- Estimate: 12 rounds if each passes on its first run; **23 to 25 is the expected number**; 27 at the high end. Basis: 29 capabilities in R01 to R23 took a mean of 2.28 rounds each, 14 passed in their first round, and 31 device capabilities remain. **Confidence: low to medium**: no canvas app round is in the history.
+- REC, not in a round before the pilot: the weekly digest, the setup intake and the Task 9 e-Publishing reader (in the pilot); the 107 "Renderer gap" and 152 Partial coverage rows (triage by the PFM, cloud work); Task 7 Part A with fake seals (drop: the real seals passed in R13); rights row S14 (after the pilot).
 
-| Q | Question | Options | REC |
-|---|---|---|---|
-| Q4 | Role model for PFM away | A: PFM, Alternate PFM, Acting PFM (+ Acting Until) as PFM Settings rows; PFM screens open to the PFM Office group; flows address the role. B: Person columns, edited by hand | A |
-| Q5 | Whose connections run the flows | A: the PFM's, connection references, the alternate re-binds by runbook. B: the alternate keeps disabled backup copies. C: ask the communications squadron for a non-person service account | A (C closed: no service account, PFM 12 Nov and 14 Nov) |
-| Q6 | Rights of the Acting PFM | A: full PFM rights, logged, reminder before Acting Until. B: no Settings changes | A |
-| Q7 | Permission groups | A: setup makes one SharePoint group "PFM Office" (edit all PFM lists and the library; config lists edit only for it); wing access group read/contribute per P2A and 10A; existing AD groups nested where they exist. B: only the site's existing Owners/Members groups | A |
-| Q8 | Intake sources in setup | A: existing site groups (as choices), scan of a library of posted publications into PFM Product Index (view "PFM - Imported, Not Confirmed"), products CSV (3A), e-Publishing index cross-check. B: CSV only | A |
-| Q9 | Where posted wing publications live now | A: a library on the same site. B: a library on another site. C: mixed, or only on e-Publishing | Fact from the PFM |
+## The PFM's decisions the rounds wait for
 
-Scale (REC, no question): PFM Activity Log reaches the 5,000-item view threshold in about 2.5 years at an estimated 2,000 rows a year (50 actions x 40 events; estimate, not measured). Index Created and Action ID at provisioning; views filter on indexed columns; a yearly archive flow.
-
-## Phase 2 use and scale, round 4 (12 Nov): answered 19A weekly (Wed 0700), 20A plus chapters (docs/backup-and-restore.md), 21A
-
-| Q | Question | Options | REC |
-|---|---|---|---|
-| Q19 | E-mail volume | A: one daily digest per person (weekdays) of what waits on them; immediate e-mail only for a new task and a due date reached. B: one e-mail per event | A: an AO with 10 coordinators would get 20+ e-mails per round with B |
-| Q20 | Backup of list data | A: a weekly flow exports every PFM list to CSV in Record Sets/Backups, keeps 8 weeks. B: rely on the recycle bin and version history only | A: covers a wrong bulk edit or a deleted list after 93 days (risk R17) |
-| Q21 | People who leave (AO, coordinator, approver) | A: a weekly flow checks the accounts named on open actions (Office 365 Users) and lists disabled or missing ones on the PFM screen. B: found by hand when an action stalls | A, if Office 365 Users passes the data-policy test (rights test D1/M03) |
-
-## Phase 4 (13 Nov)
-
-Step 1 screen map: docs/app/screen-map.md r1 (25 built screens). Map approved (26A-29A). Step 2 (clickable previews) cancelled by the PFM, 13 Nov.
+| Before | Decision |
+|---|---|
+| The next engine release | rhope-ops/RADE pull request 53 (Ready card shows the saved site name) |
+| R25 | Confirm that the slice 1 scope hold has ended (slice 1 passed in R22) and that the hold on steps that need a PnP check (14 Nov 26) is lifted; the clean target: a second test site, or delete the 12 test lists (cannot be undone); which of the 39 coverage Gap rows close before the pilot ([dafman-coverage/README.md](dafman-coverage/README.md)) |
+| R27 | Flow open points: F05 a to e and open choices 2, 4, 5, 7, 9 to 13, 15 ([flow/solution/README.md](../flow/solution/README.md)) |
+| R28 | RADE maintenance function lists D1 to D8 and R1 to R7 (agent REC in rhope-ops/RADE docs/engine.md) |
+| R30 | How the app writes: list-level Contribute or a flow ([NEXT_PROMPT.md](NEXT_PROMPT.md) item 5) |
+| R33 | Palette values (Task 12) |
+| The pilot | Second-look F1 to F5 and sweep items S8 to S11; which phase 2 flows run in the pilot |
