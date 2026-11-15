@@ -254,10 +254,38 @@ out=$(python3 scripts/build_task_scripts.py --check 2>&1); [ $? -eq 0 ] && ok "t
 
 # Task 11 Part B rows come from docs/rights-test-plan.md section 6 (one source; the Deployer form reads the JSON).
 out=$(python3 scripts/build_rights_rows.py --check 2>&1 | tail -1); [ $? -eq 0 ] && echo "$out" | grep -q "stale=0" && ok "T11 Part B rows match the plan ($out)" || bad "T11 Part B rows stale: $out (run python3 scripts/build_rights_rows.py)"
-# The RADE engine lives in rhope-ops/RADE (pinned by scripts/rade.lock.json); tests read its source through the shim.
-export ENGINE; ENGINE=$(python3 scripts/build_paste_bundles.py --engine-path) || { echo "$ENGINE"; bad "RADE engine not found or not the pinned one"; ENGINE=/dev/null; }
+# The RADE engine is downloaded by commit and checked by SHA-256 (scripts/rade.lock.json; PFM 2026-11-15). The tests always
+# use the pinned engine: RADE_DIR is cleared, so a committed bundle from an override build shows as stale.
+unset RADE_DIR
+out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
+export ENGINE; ENGINE=$(python3 scripts/build_paste_bundles.py --engine-path) || { bad "RADE engine: download or SHA-256 check failed (message above)"; ENGINE=/dev/null; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
-[ "$out" = "PASTE bundles=1 stale=0" ] && ok "paste bundles current ($out)" || bad "paste bundles: $out (run python3 scripts/build_paste_bundles.py)"
+esha=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));print(l['files'][l['engine']][:12])")
+nh=$(grep -L "engine/rade_build.py, sha256 $esha)" scripts/gov/paste/*.ps1 | wc -l)
+[ "$out" = "PASTE bundles=1 stale=0" ] && [ "$nh" -eq 0 ] && ok "paste bundles current and built by the pinned engine ($out; bundles naming another engine: $nh)" || bad "paste bundles: $out; bundles naming another engine: $nh (run python3 scripts/build_paste_bundles.py with RADE_DIR not set)"
+# Lock bump (PFM 2026-11-15): a changed lock has serial = main's serial + 1 and builds on main's last lock commit, so two
+# sessions that move the lock at once collide. Rule on who may change the lock: docs/dev-setup.md "RADE engine".
+lb=$(python3 - <<'PYEOF'
+import json, subprocess
+def git(*a):
+    r = subprocess.run(('git',) + a, capture_output=True, text=True); return r.returncode, r.stdout.strip()
+mine = json.load(open('scripts/rade.lock.json'))
+rc, base = git('show', 'origin/main:scripts/rade.lock.json')
+if rc != 0:
+    print('FAIL cannot read the lock on origin/main (run: git fetch origin main)'); raise SystemExit
+base = json.loads(base)
+if mine == base:
+    print('ok same as origin/main (serial %s)' % mine.get('serial')); raise SystemExit
+want = int(base.get('serial', 0)) + 1
+if mine.get('serial') != want:
+    print('FAIL serial is %s, must be %s (origin/main has %s)' % (mine.get('serial'), want, base.get('serial', 'none'))); raise SystemExit
+rc, last = git('log', '-1', '--format=%H', 'origin/main', '--', 'scripts/rade.lock.json')
+rc2, _ = git('merge-base', '--is-ancestor', last, 'HEAD')
+print('ok changed, serial %s = main + 1, on top of main lock commit %s' % (want, last[:7]) if last and rc2 == 0
+      else 'FAIL the branch does not hold the last lock commit on origin/main (%s): merge main, then rebuild' % last[:7])
+PYEOF
+)
+[ "${lb%% *}" = "ok" ] && ok "RADE lock bump (${lb#ok })" || bad "RADE lock bump: ${lb#FAIL }"
 # Bundle size limit (PFM 14 Nov 26, raised with the function-complete engine): 600 KB = 614,400 bytes.
 big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 614400 ] || { echo "  $b bytes=$s"; big=$((big+1)); }; done
 [ "$big" -eq 0 ] && ok "paste bundles at most 600 KB" || bad "paste bundles over 600 KB: $big"
