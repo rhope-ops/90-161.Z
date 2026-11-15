@@ -252,13 +252,13 @@ echo "$out" | grep -q "VALIDATE fails=0 warns=2" && ! echo "$out" | grep -qE "'(
 # B3A/P3 (PFM 2026-11-13): one source for the gov task-script block; no task script asks for the DODID outside it.
 out=$(python3 scripts/build_task_scripts.py --check 2>&1); [ $? -eq 0 ] && ok "task scripts share one block ($(echo "$out" | tail -1))" || { echo "$out"; bad "task-common block (run python3 scripts/build_task_scripts.py)"; }
 
-# Task 11 Part B rows come from docs/rights-test-plan.md section 6 (one source; the Deployer form reads the JSON).
+# Task 11 Part B rows come from docs/rights-test-plan.md section 6 (one source; the RADE form step reads the JSON).
 out=$(python3 scripts/build_rights_rows.py --check 2>&1 | tail -1); [ $? -eq 0 ] && echo "$out" | grep -q "stale=0" && ok "T11 Part B rows match the plan ($out)" || bad "T11 Part B rows stale: $out (run python3 scripts/build_rights_rows.py)"
 # The RADE engine is downloaded by commit and checked by SHA-256 (scripts/rade.lock.json; PFM 2026-11-15). The tests always
-# use the pinned engine: RADE_DIR is cleared, so a committed bundle from an override build shows as stale.
+# use the pinned engine: RADE_DIR is cleared, so a committed bundle from an override build shows as stale. Engine
+# behavior is tested in rhope-ops/RADE (tests/engine_test.sh); the tests here use only this repo's bundle and files.
 unset RADE_DIR
 out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
-export ENGINE; ENGINE=$(python3 scripts/build_paste_bundles.py --engine-path) || { bad "RADE engine: download or SHA-256 check failed (message above)"; ENGINE=/dev/null; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 esha=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));print(l['files'][l['engine']][:12])")
 nh=$(grep -L "engine/rade_build.py, sha256 $esha)" scripts/gov/paste/*.ps1 | wc -l)
@@ -304,7 +304,7 @@ swap() { sed -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" -e "s#Url = 'h
 for b in scripts/gov/paste/*.ps1; do
   swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
   # Text mode runs the default steps that need no folder (the optional steps are skipped).
-  n=$(python3 -c "import json,pathlib;f='$ENGINE';ns={'__file__':str(pathlib.Path(f).resolve())};exec(open(f).read().split(chr(10)+'def here')[0],ns);ns['ROOT']=pathlib.Path('.').resolve();print(sum(1 for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b' for s in b['steps'] if ns['step_default'](s) and 'ask' not in s))")
+  n=$(grep -c "^\$steps += @{.*Default = \$true; AskParam = '';" "$b")
   r=$(python3 -c "import json;print([b['round'] for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b'][0])")
   # R17 (PFM 14 Nov 26): the run moves the old 90-161.Z folder (the fixture) into OneDrive/RADE.
   base="$tp/u/test1234/OneDrive - United States Air Force/RADE/90-161.Z"; nb="$base"
@@ -340,11 +340,8 @@ while IFS=$'\t' read -r dir src; do
 done < <(python3 -c "import json;[print(f['dir']+'\t'+f['src']) for b in json.load(open('scripts/paste_bundles.json'))['bundles'] for f in b['files']]")
 rm -rf "$tp"
 [ $pr -eq 1 ] && [ $pf -eq 0 ] && ok "round bundle text mode: files exact, steps run, report in results folder, DODID masked, real path on screen (rounds=$pr mismatches=$pf)" || bad "round bundle: rounds ok=$pr mismatches=$pf"
-[ $pc -eq 1 ] && ok "Deployer cleanup: only 90-161.Z files recycled, other files and their folder kept, summary has the clean-up line, files left, subject NEEDS REVIEW, history row" || bad "Deployer cleanup and summary (see output above)"
+[ $pc -eq 1 ] && ok "RADE cleanup: only 90-161.Z files recycled, other files and their folder kept, summary has the clean-up line, files left, subject NEEDS REVIEW, history row" || bad "Deployer cleanup and summary (see output above)"
 
-# Two bars (PFM 14 Nov 26): progress math and the PROGRESS line rule, from the bundle's own functions (review PR 26).
-pg=$(pwsh -NoProfile -File tests/ps/Test-DeployerProgress.ps1 -Bundle "$(ls scripts/gov/paste/90161Z-R*-round-r*.ps1 | sort | tail -1)" 2>&1)
-[ "$(echo $pg)" = "0.10 0.28 101 | -1 0.375 0.50 | True True False gate False True True True" ] && ok "Deployer progress math, PROGRESS lines and the check gate ($(echo $pg))" || bad "Deployer progress math: got '$pg'"
 
 # Enter starts the run (PFM 2026-11-13): in the window Enter is the card's primary button (on "Ready" that is Install or Run;
 # never on a hand step: RADE "One thing" window, 14 Nov 26); text mode shows the plan, Enter runs, N stops with nothing written.
@@ -367,26 +364,14 @@ for b in scripts/gov/paste/*.ps1; do
 done; rm -rf "$te"
 [ "$ab" -eq 0 ] && [ "$tw" -eq 0 ] && ok "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw; Enter path = round bundle test)" || bad "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw)"
 
-# Step default by file hash (PFM 14 Nov 26): a step with default {passed, paths} is ticked only when those files changed.
-sd=$(python3 - <<'PYEOF'
-import pathlib
-import os
-src = pathlib.Path(os.environ['ENGINE']).read_text()
-ns = {'__file__': os.environ['ENGINE']}; exec(src.split('\ndef here')[0], ns); ns['ROOT'] = pathlib.Path('.').resolve()
-p = ['samples/publication.sample.json']; h = ns['files_hash'](p)
-print(ns['step_default']({'default': {'passed': h, 'paths': p}}), ns['step_default']({'default': {'passed': 'x', 'paths': p}}),
-      ns['step_default']({}), ns['step_default']({'default': False}))
-PYEOF
-)
-[ "$sd" = "False True True False" ] && ok "step default follows changed files (unchanged off, changed on)" || bad "step default by hash: $sd"
 # No DODID question in rounds (PFM 2026-11-13): the profile folder is the DODID.
 dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p' "$b" | grep -qE "Read-Host 'DODID|idBox" && dq=$((dq+1)); done
 [ "$dq" -eq 0 ] && ok "rounds ask no DODID (bundles that ask: $dq)" || bad "rounds ask no DODID (bundles that ask: $dq)"
 # R06 lesson: New-Object with a string for an enum argument can match two overloads ("Multiple ambiguous overloads") and
-# drop the Deployer to text mode. Binding check in pwsh for every New-Object System.Drawing.Font call in the bundles.
-fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 "$ENGINE" | wc -l)
+# drop the RADE window to text mode. Binding check in pwsh for every New-Object System.Drawing.Font call in the bundles.
+fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(pwsh -NoProfile -c 'Add-Type -AssemblyName System.Drawing.Common; try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }' 2>&1 | tail -1)
-[ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "Deployer fonts: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "Deployer fonts: string enum in Font() found=$fa (pwsh: $amb)"
+[ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
 for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r3.ps1 scripts/gov/90161Z-T16-site-setup-r10.ps1 scripts/gov/90161Z-T18-slice1-test-r2.ps1 scripts/gov/90161Z-T19-list-update-r2.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(pwsh -NoProfile -c '$src = Get-Content '"$t16"' -Raw; Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value); $at = [string][char]64; Hide-Site ("x jane.doe.1234567890" + $at + "fakeco.onmicrosoft.us said no; bob" + $at + "unit.example.m" + "il https://login.microsoftonline.us/0a1b2c3d-1111-2222-3333-444455556666/o fakeco.onmicrosoft.us https://fakeco.sharepoint.us/sites/pfmtest/_api fakeco-admin.sharepoint.us /sites/pfmtest/_api %2Fsites%2Fpfmtest pfmtest") "https://fakeco.sharepoint.us/sites/pfmtest"' 2>&1)
@@ -403,7 +388,7 @@ assert 'getuserbyid(@{body(\'C01\')' in a['G04']['inputs']['parameters']['parame
 assert list(a).index('C01') < list(a).index('G04') < list(a).index('W11')" && ok "probe r5: W11 grants the C01 user ID; G04 by user ID; G06 counts" || bad "probe r5 W11/C01/G04/G06"
 # R05 (PFM 2026-11-13): every bundle makes an Outlook draft and never sends it; off Windows it falls back to folder + clipboard.
 nd=$(grep -L 'ComObject Outlook.Application' scripts/gov/paste/*.ps1 | wc -l); ns=$(grep -ciE '\.Send\(|\.Send\b *$' scripts/gov/paste/*.ps1 | awk -F: '{s+=$NF} END{print s+0}')
-grep -q '\$script:draftMade = (-not \$why)' "$ENGINE" && grep -q "Outlook draft could not be created" "$ENGINE"; fb=$?
+fb=0; for b in scripts/gov/paste/*.ps1; do grep -q "Outlook draft could not be created" "$b" || fb=1; done
 [ "$nd" -eq 0 ] && [ "$ns" -eq 0 ] && [ "$fb" -eq 0 ] && ok "Outlook draft step, never sent (bundles without draft: $nd; Send calls: $ns; fallback present)" || bad "Outlook draft step (without draft: $nd; Send calls: $ns; fallback rc=$fb)"
 
 # R21: T19 adds to an existing site the same column XML T02 r12 builds a new site with (one source: schemas/lists).

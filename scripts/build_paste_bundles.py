@@ -10,7 +10,6 @@ RADE_DIR=<folder> is the one override, for a test of an unmerged engine: it skip
 commit a bundle built that way (tests/run.sh checks the committed bundle against the pinned engine).
 Lock rules (serial, who may change it): docs/dev-setup.md "RADE engine".
 Usage: python3 scripts/build_paste_bundles.py [--check]      build (or check) every bundle in scripts/paste_bundles.json
-       python3 scripts/build_paste_bundles.py --engine-path  print the checked engine path (tests read it)
 """
 import hashlib, json, os, subprocess, sys, urllib.request
 from pathlib import Path
@@ -77,6 +76,4 @@ def engine():
 
 if __name__ == '__main__':
     e = engine()
-    if '--engine-path' in sys.argv:
-        print(e); sys.exit(0)
     sys.exit(subprocess.call([sys.executable, '-B', str(e), '--app-root', str(ROOT)] + [a for a in sys.argv[1:] if a == '--check']))
