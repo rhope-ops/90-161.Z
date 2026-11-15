@@ -5,6 +5,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | RADE and the app: RADE owns the computer and the run; 90-161.Z owns the product and the site (every list, flow, setting and its data). | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-15 | Maintenance: RADE offers Install, Diagnose, Restore, Uninstall and keeps its record; 90-161.Z supplies the steps for each. Refines the 14 Nov RADE modes row. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-15 | One preflight: RADE checks replace the Setup Check flow (Part 0); a small probe flow stays for the connector data policy and Send As. | PFM | docs/setup-and-updates.md |
+| 2026-11-15 | Updates: the app shows its installed version only; RADE compares versions at each run. No central Releases list. Replaces the 12 Nov update-check row. | PFM | docs/setup-and-updates.md |
 | 2026-11-14 | Bundle size limit: 600 KB (614,400 bytes), up from 300 KB. The next round times a paste of 500 KB and 1 MB; the limit is then set from that. To apply: tests/run.sh. | PFM | rhope-ops/RADE docs/DECISIONS.md |
 | 2026-11-15 | Round result e-mails the app drafted ("90161Z R<NN>") go to Trash without asking once their results are on main; other result e-mails still need confirmation. Replaces 2026-11-12 for app drafts. | PFM | AGENTS.md Project rules |
 | 2026-11-15 | Flow state at import is per flow: a test round imports On only the flows it needs (R22: F05, F06; F03 Off); the real deployment solution imports every flow On. | PFM | flow/solution/README.md |
