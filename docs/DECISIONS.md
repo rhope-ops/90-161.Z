@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | RADE lock moves to the first signed engine release, engine-v1 (RADE ba1b64e, serial 2). Same 2 files and hashes; bundle R22 r3 unchanged. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-15 | No RADE checkout: the build downloads the engine files by commit and checks each SHA-256 (lock: 2 files, serial 1). Same bundle R22 r3. scripts/check.local.sh runs the tests in CI. | PFM | docs/dev-setup.md |
 | 2026-11-15 | Lock rule: only a 90-161.Z session changes scripts/rade.lock.json, on the PFM's request, one pull request, serial + 1 (test enforces). A RADE session never edits this repo. | PFM | docs/dev-setup.md |
 | 2026-11-14 | RADE lock moves to the engine with the guardrails (RADE fc6990d). The rebuilt round bundle is R22 r3. Not verified on a device. | PFM | scripts/rade.lock.json |
