@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | P5 merged on the PFM's word (pull request 86: 2 AGENTS.md lines). Delete branch claude/exciting-planck-gfr1nu: main has a newer port of its guard work. AGENTS.md speed rules: wait for R26. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Audit 3 proposals P1 to P9 approved. Made: P1 to P4, P6 to P8. P5 is its own pull request (the PFM reads the new AGENTS.md lines first). P9 goes to the RADE audit. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Round builds: one new session for each round (P8); a `worker` on the standard tier unless the routing table says strong (P7). Scope: 90-161.Z round builds. | PFM | .claude/orchestration.md |
 | 2026-11-15 | Agents do not run tests/run.sh by hand just before a push: the pre-push hook runs it (P4). | PFM | AGENTS.md Commands |
