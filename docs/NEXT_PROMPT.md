@@ -26,7 +26,7 @@ Updated: 2026-11-15 by Claude. Keep this file at 40 lines or fewer and state onl
 3. Seals: Claude corrected 17 unit seals (1,200 px, glow removed, 2 px feather; tool in the session scratchpad, not in the repo) and mailed them in 6 parts; R13 prepared and uploaded all 17 (library 90-161.Z, Seals and Seals/Prepared).
 4. Logo K (PFM 14 Nov): official logo for every app; master copy in rhope-ops/RADE assets/logo. Not a round step any more: Claude e-mailed logo-K-512/64 on 14 Nov; the PFM sets it by hand; site setup reads the header logo. After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
 5. App writes (PFM 14 Nov: wing users Read on the site, data entry through the app): Power Apps writes with the user's own rights, so choose list-level Contribute on the app's lists (site stays Read) or a flow that writes with the PFM's connection. Agent REC: list-level Contribute on the intake lists only; R16 W11 proved a Read-only user gets Contribute on such a list.
-6. Result e-mails: delete only after the PFM confirms (AGENTS.md Project rules).
+6. Result e-mails: app-drafted round e-mails go to Trash once results are on main; others need confirmation (AGENTS.md Project rules, 15 Nov).
 
 ## Next design (after Task 5)
 0. Slice 1 first (DECISIONS 14 Nov): hold new scope until Publications + Endorsements + F05 + F03, list views only, take one fake publication from Coordination to Legal on the test site. After R17: RADE size in the summary, hash-pinned engine, JSON results block.

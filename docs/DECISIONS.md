@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Round result e-mails the app drafted ("90161Z R<NN>") go to Trash without asking once their results are on main; other result e-mails still need confirmation. Replaces 2026-11-12 for app drafts. | PFM | AGENTS.md Project rules |
 | 2026-11-15 | Flow state at import is per flow: a test round imports On only the flows it needs (R22: F05, F06; F03 Off); the real deployment solution imports every flow On. | PFM | flow/solution/README.md |
 | 2026-11-15 | R21 visual notes go to a separate RADE session (document now, build later); RADE does not wait for R22 results tonight. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/reviews/2026-11-15-r21-window-notes.md |
 | 2026-11-14 | Two R21 builds (PR 49 and PR 50) are combined into one R21 before it runs: T19 list columns, F06 hold and resume, R20 workflow IDs kept, RADE check fix. Do not run R21 until the combined build is on main. | PFM | docs/NEXT_PROMPT.md |
