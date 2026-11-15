@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | 90-161.Z runs the personal-data guard in the DoD tier. Approved `.pii-guard` entries: 5 allow (CUI choice, example host, 1 false match until RADE fix) and 7 binary skips; `check: mil` removed. | PFM | .pii-guard |
 | 2026-11-15 | Personal-data guard: two tiers in one scanner, set in `.pii-guard`: minimum (no line) and DoD (`profile: dod`: adds military hosts, marks, DoD ID numbers, unreadable files). Hand port from RADE. | PFM | scripts/pii_guard.py header; rhope-ops/RADE DECISIONS 2026-11-15 |
 | 2026-11-15 | Personal-data guard, minimum tier: a push with no name denylist is blocked. The PFM's projects do not use `denylist: warn`; the DoD tier ignores it. | PFM | scripts/pii_guard.py header |
 | 2026-11-15 | Name denylist: one master file in the PFM's Google Drive; other places are copies; the fingerprint (`pii_guard.py --status`) shows a copy that differs. An agent never opens the master file. | PFM | docs/FIRST_USE.md step 3 |
