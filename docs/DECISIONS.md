@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | No kit sync for this repo: the sync replaced the .mil check in scripts/pii_guard.py and project rules. Pull request 61 closed, not merged. Kit fixes are ported by hand. | PFM | AGENTS.md |
 | 2026-11-15 | Clean-up of the RADE split: engine-only tests move to rhope-ops/RADE (tests here use only this repo's bundle; 79 to 77 tests); 8 Detail links of engine decisions now point to the engine in RADE. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/make-an-app.md |
 | 2026-11-15 | RADE lock moves to the first signed engine release, engine-v1 (RADE ba1b64e, serial 2). Same 2 files and hashes; bundle R22 r3 unchanged. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-15 | No RADE checkout: the build downloads the engine files by commit and checks each SHA-256 (lock: 2 files, serial 1). Same bundle R22 r3. scripts/check.local.sh runs the tests in CI. | PFM | docs/dev-setup.md |
