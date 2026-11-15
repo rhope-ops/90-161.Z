@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Clickable previews are back (25A step 2): app previews at 375 and 1440 px, light and dark. The 13 Nov "no previews" text was not the PFM's decision and is withdrawn. | PFM | docs/app/screen-map.md |
 | 2026-11-15 | Roadmap lives in docs/phases.md: phase states and the rounds to the pilot (phase 8); round counts, no dates. Exit criteria, round order and estimate there are agent RECs. Scope: 90-161.Z. | PFM | docs/phases.md |
 | 2026-11-15 | 90-161.Z uses the newest RADE release, and a check tells when RADE has a newer one. | PFM | tests/run.sh |
 | 2026-11-15 | How (not approved yet): tests/run.sh fails when the lock is behind the newest `engine-v<N>` tag (no network: not checked); R24 combines engine-v4 with the 15 Nov flow changes; bundle tests use a stand-in NIPR name. | Agent | go.md |
@@ -143,8 +144,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-13 | Word files get the Purview label automatically from a one-time capture. Test: R02. | PFM | archive |
 | 2026-11-13 | go.md and runner messages say e-mail (spelling per B1A), never the PFM's personal mail service. | PFM | archive |
 | 2026-11-13 | Wing PowerPoint master kept off this repo. **Rec:** use its r2 look as the theme for the briefs and the app (not yet approved). | Agent (Rec) | archive |
-| 2026-11-13 | Screen map: (26A) UI text in app code. (27A) one responsive app. (28A) My Work home. (29A) Action Status open to all. No previews. | PFM | docs/app/screen-map.md |
-| 2026-11-13 | Phase 4 (25A): screen map first (docs/app/screen-map.md). The planned previews were dropped by the screen-map row (no previews). | PFM | docs/app/screen-map.md |
+| 2026-11-13 | Screen map: (26A) UI text in app code. (27A) one responsive app. (28A) My Work home. (29A) Action Status open to all. ("No previews" withdrawn 15 Nov.) | PFM | docs/app/screen-map.md |
+| 2026-11-13 | Phase 4 (25A): screen map first (docs/app/screen-map.md). Clickable previews restored 15 Nov. | PFM | docs/app/screen-map.md |
 | 2026-11-13 | Periodic bloat, drift, duplication and assumption checks in every repo; question tool for 1-4 questions. | PFM | archive |
 | 2026-11-13 | Bloat audit: 14 days or 30 commits; 12,000 tokens; +25% timing (1A). Other repos (2B). Sync after check: mil (3A). Audit next (4A). | PFM | archive |
 | 2026-11-13 | Gov-device usability bar for go.md and runner windows; results folder Rounds\\<round>, no zips. | PFM | archive |
