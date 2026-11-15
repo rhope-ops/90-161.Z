@@ -117,6 +117,8 @@ function Get-SiteAddress([string]$ConfigDir) {
   if ($v -match $ok) { return $v }
   $f = Join-Path $ConfigDir '90161Z-site.txt'
   if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
+  # RADE runs a step with no window, so a question there would wait unseen: stop with the fix instead.
+  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. In RADE, select "Change the site address", complete the "Site address" box, then run this step again.' }
   $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
   if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
   if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }
@@ -371,7 +373,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T18-slice1-part' + $Part + '-r2.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T18-slice1-part' + $Part + '-r3.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }

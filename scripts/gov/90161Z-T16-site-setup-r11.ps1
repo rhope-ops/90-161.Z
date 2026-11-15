@@ -113,6 +113,8 @@ function Get-SiteAddress([string]$ConfigDir) {
   if ($v -match $ok) { return $v }
   $f = Join-Path $ConfigDir '90161Z-site.txt'
   if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
+  # RADE runs a step with no window, so a question there would wait unseen: stop with the fix instead.
+  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. In RADE, select "Change the site address", complete the "Site address" box, then run this step again.' }
   $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
   if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
   if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }

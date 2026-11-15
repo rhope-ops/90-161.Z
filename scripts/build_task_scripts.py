@@ -37,10 +37,12 @@ def main(check):
             if (ASKS_DODID if src == SRC else 'function Get-SiteAddress') in outside:
                 unshared.append(f.name)
             if m is None:
+                if src != SRC and 'Get-SiteAddress' in text and f.name not in unshared:
+                    unshared.append(f.name)   # uses the site address without the shared block
                 continue
             shared += src == SRC
             if m.group(1) != block:
-                stale.append(f.name)
+                stale.append(f.name) if f.name not in stale else None
                 if not check:
                     text = text[:m.start(1)] + block + text[m.end(1):]
                     f.write_text(text, encoding='utf-8')
