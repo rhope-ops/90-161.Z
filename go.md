@@ -39,14 +39,18 @@ Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R24-round-r1.ps1
 2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
-3. In the RADE window, choose the application, run the checks, then select Run. RADE does the list check and both test parts.
-4. Three steps need me: the import (the window gives the steps), the Resubmit, and one run of F03.
-5. At the import, I note two answers for the e-mail: were labels 1 to 4 together at the top, and did Test mode already read Yes.
-6. Wait for DONE. RADE opens an Outlook draft.
-7. I look in my Inbox, in Junk, and in the Sent Items of the shared mailbox for a subject that starts with "[TEST] Escalation".
-8. In the draft I add 3 lines: labels 1 to 4 at the top (yes or no), Test mode already Yes (yes or no), and where I found the escalation e-mail (or "not found"). Then I send it.
+3. In the RADE window, choose the application.
+4. Select the button that runs the checks.
+5. Select Run. RADE does the list check and both test parts itself.
+6. When the window shows the import step: do the steps it lists. Note two answers: were labels 1 to 4 together at the top, and did Test mode already read Yes.
+7. When the window shows the Resubmit step: do the steps it lists.
+8. When the window shows the F03 step: run F03 once, as it says.
+9. Wait for DONE. RADE opens an Outlook draft.
+10. Look in my Inbox, in Junk, and in the Sent Items of the shared mailbox for a subject that starts with "[TEST] Escalation".
+11. In the draft, add 3 lines: labels 1 to 4 at the top (yes or no), Test mode already Yes (yes or no), and where I found the escalation e-mail (or "not found").
+12. Send the draft.
 
-**Report:** the draft itself, subject "90161Z R24". It holds the report file and the three result files (T19, T18 part 1, T18 part 2).
+**Report:** the draft itself, subject "90161Z R24". It holds the report file and the three result files (T19, T18 part 1, T18 part 2), and the import log file (T17) if the import failed.
 **If it fails:** read the "What to do" line in the window. If a step fails, send the draft as it is: the failed line is the result.
 
 
