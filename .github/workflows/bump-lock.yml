@@ -23,13 +23,14 @@ jobs:
     timeout-minutes: 10
     env:
       TAG: ${{ inputs.tag }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
       - name: Check the tag and that no open pull request changes the lock
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           [[ "$TAG" =~ ^engine-v[0-9]{1,4}$ ]] || { echo "FAIL tag must look like engine-v3, got: $TAG"; exit 1; }
           if git ls-remote --exit-code origin "refs/heads/bump-lock/$TAG" >/dev/null; then echo "FAIL branch bump-lock/$TAG exists already"; exit 1; fi
@@ -45,7 +46,10 @@ jobs:
           mkdir -p "$RUNNER_TEMP/release"
           curl -fsSL --retry 3 -o "$RUNNER_TEMP/release/rade-engine.lock.json" \
             "https://github.com/rhope-ops/RADE/releases/download/$TAG/rade-engine.lock.json"
-          tagged=$(git ls-remote https://github.com/rhope-ops/RADE "refs/tags/$TAG" | cut -f1)
+          # An annotated tag lists its commit on the peeled line (^{}); a lightweight tag has only the plain line.
+          refs=$(git ls-remote https://github.com/rhope-ops/RADE "refs/tags/$TAG" "refs/tags/$TAG^{}")
+          tagged=$(awk -v t="refs/tags/$TAG^{}" '$2 == t {print $1}' <<<"$refs")
+          [ -n "$tagged" ] || tagged=$(awk -v t="refs/tags/$TAG" '$2 == t {print $1}' <<<"$refs")
           python3 -I - "$RUNNER_TEMP/release/rade-engine.lock.json" "$tagged" <<'EOF'
           import json, os, re, sys
           rel = json.load(open(sys.argv[1])); tagged = sys.argv[2]; tag = os.environ["TAG"]
@@ -97,6 +101,8 @@ jobs:
           PII_GUARD_DENYLIST: ${{ secrets.PII_GUARD_DENYLIST }}
         run: python3 scripts/pii_guard.py --require-denylist --all --range "origin/main..HEAD" --allow-from origin/main
       - name: Push and open the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git push -u origin "bump-lock/$TAG"
           cat > "$RUNNER_TEMP/body.md" <<EOF
