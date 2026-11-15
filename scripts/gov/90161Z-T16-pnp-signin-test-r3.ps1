@@ -1,18 +1,19 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 16 PnP test and SharePoint inventory, r2. Read-only. Windows PowerShell 5.1, the installed PnP.PowerShell 1.x.
+  90-161.Z Task 16 PnP test and SharePoint inventory, r3. Read-only. Windows PowerShell 5.1, the installed PnP.PowerShell 1.x.
 .DESCRIPTION
   R09 and R10: -UseWebLogin connected (manage lists, manage site, add items all True); the SPO Management Shell routes
   cannot work in PnP 1.12 (parameter set error both rounds), so r2 tries web login only.
   r2 asks for the site address every run, filled in with the last one, so the PFM can point it at the new site
   (PFM 14 Nov 26: read-only PnP test on the new site). After it connects it records, read-only, what later projects can
   rely on (PFM 14 Nov 26: document more functionality): rights, lists, storage, features, content types, term store,
-  search, app catalog, site collection admin count, and whether the Power Platform cmdlets work with this sign-in.
+  app catalog, site collection admin count, and whether the Power Platform cmdlets work with this sign-in.
+  r3 (PFM 14 Nov 26, no-reconnaissance rule): the search count across the tenant is removed; no step uses it.
   Each item says PASS with a count or value, or "not available" with the error type. No names are kept.
   It changes nothing on the site and nothing on this computer except the site address file below.
   The site address is kept only on this computer in Config\90161Z-site.txt; every output line shows it as <SITE>, and
   the DODID as <DODID>. Error text is cut to 160 characters.
-  Output: 90161Z-T16-pnp-result-r2.txt in the T16 folder (send this).
+  Output: 90161Z-T16-pnp-result-r3.txt in the T16 folder (send this).
   Parameters (used by the 90-161.Z Deployer): -Id, -NoPause.
 #>
 param([string]$Id, [switch]$NoPause)
@@ -139,7 +140,7 @@ try {
   if (Test-Path -LiteralPath $sf -PathType Leaf) { $prev = ([string](Get-Content -LiteralPath $sf -TotalCount 1)).Trim() }
   $site = Get-SiteAddress $configDir
   $sameSite = [string]($prev -and ($prev -ieq $site))
-  $lines.Add('TASK T16 PnP test and inventory r2, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', read-only')
+  $lines.Add('TASK T16 PnP test and inventory r3, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', read-only')
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1   # module warnings never reach the log
@@ -174,7 +175,6 @@ try {
     Add-Inv 'content-types' { @(Get-PnPContentType -ErrorAction Stop).Count }
     Add-Inv 'site-admins-count' { @(Get-PnPSiteCollectionAdmin -ErrorAction Stop).Count }
     Add-Inv 'term-groups' { @(Get-PnPTermGroup -ErrorAction Stop).Count }
-    Add-Inv 'search-rows' { (Submit-PnPSearchQuery -Query '*' -MaxResults 1 -ErrorAction Stop).TotalRows }
     Add-Inv 'app-catalog' { if (Get-PnPTenantAppCatalogUrl -ErrorAction Stop) { 'exists' } else { 'none' } }
     Add-Inv 'site-designs-readable' { @(Get-PnPSiteDesign -ErrorAction Stop).Count }
     Add-Inv 'power-platform-environments' { @(Get-PnPPowerPlatformEnvironment -ErrorAction Stop).Count }
@@ -195,7 +195,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-pnp-result-r2.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
+  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-pnp-result-r3.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }
