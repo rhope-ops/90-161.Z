@@ -14,6 +14,7 @@ It measures:
                   (AGENTS.md, CLAUDE.md, docs/NEXT_PROMPT.md, plus "start_read" in the config)
     handoff       docs/NEXT_PROMPT.md lines
     duplicates    normalized text lines of 80+ characters found in 2 or more tracked files
+                  (lines between "# >>> ... generated from ..." and "# <<< ..." markers are not counted)
     big files     tracked files over the size budget
     audit due     days and commits on main since the last full audit (.bloat-audit.json "last_audit")
     timings       (--time) wall time of each named command against its recorded baseline
@@ -111,7 +112,19 @@ def duplicates(root, files):
             text = p.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
+        generated = False
         for line in text.splitlines():
+            # Text between "# >>> ... generated from ..." and "# <<< ..." is a copy a build script writes and checks
+            # (bloat audit 3, P2; the PFM, 2026-11-15): it is not counted, so a hand-made duplicate stays visible.
+            mark = line.strip()
+            if mark.startswith("# >>> ") and "generated from" in mark:
+                generated = True
+                continue
+            if mark.startswith("# <<< "):
+                generated = False
+                continue
+            if generated:
+                continue
             n = norm(line)
             if len(n) >= MIN_DUP:
                 seen.setdefault(n, set()).add(rel)
@@ -240,6 +253,13 @@ def self_test():
         cfg = load_config(root)
         files = scan_files(root, cfg)
         assert len(duplicates(root, files)) == 1, "duplicate across files, case and bullets ignored"
+        gen = "x = 1\n# >>> blk: generated from src by build (do not edit)\n" + "g" * 90 + "\n# <<< blk\n"
+        (root / "g1.ps1").write_text(gen)
+        (root / "g2.ps1").write_text(gen + "h" * 90 + "\n")
+        (root / "g3.ps1").write_text("h" * 90 + "\n")
+        subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
+        files = scan_files(root, cfg)
+        assert len(duplicates(root, files)) == 2, "generated block not counted; a line after its end marker is counted"
         assert [f for f, _ in big_files(root, files, 2)] == ["big.txt"], "big file"
         assert "days since" in audit_due(root, cfg, datetime.date(2026, 2, 1)), "due by days"
         assert audit_due(root, cfg, datetime.date(2026, 1, 5)) == "", "not due"
