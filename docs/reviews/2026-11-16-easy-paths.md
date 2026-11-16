@@ -17,4 +17,4 @@ Rule (PFM, 16 Nov 26): no platform limit is assumed unless confidence is high; e
 
 Also read: e-mail answer buttons "are only supported with single user mailboxes" (Office 365 Outlook page), so answers stay in the app; an e-mail link can open the app on an exact card (https://learn.microsoft.com/en-us/power-platform/power-fx/reference/function-param). The two US Government pages list no limits themselves; they point to a download that was not read.
 
-Results: R26 r1 ran on 15 Nov 26 (2026-11-16-r26-results.md): T3, T5 and T6 passed, T9 failed, and T2, T4, T7, T8 and T10 did not run.
+Results (2026-11-16-r26-results.md): after R26 r1 (15 Nov 26) and r2 (16 Nov 26), T2, T3, T5, T6, T7, T9 and T10 passed; T4 failed on way a (way b not tried) and T8 failed (fallback: named people on the office row).
