@@ -10,7 +10,7 @@ Fresh-context check of the rule line that changed against origin/main (`.claude/
 
 ## Port detail
 
-Kit change rhope-ops/archimedes_lever#27 (c523a21..a0b5568), ported by hand: `pii_guard.py --hook` (PreToolUse, outgoing tool calls), `--stdin`, named files that cannot be read or scanned fail, linear EMAIL pattern, per-file commit scan; `.claude/settings.json` hook, allow and ask lists; `bloat_check.py --skills`; personal-data skill "Before you send". The project keeps its own MILHOST label rules; added lookbehinds stop a match from starting inside a host name (after "x.", "x-" or "--"), so 200 KB adversarial inputs take under 0.03 s; old and new findings were equal on 100,009 inputs.
+Kit change rhope-ops/archimedes_lever#27 (c523a21..a0b5568), ported by hand: `pii_guard.py --hook` (PreToolUse, outgoing tool calls), `--stdin`, named files that cannot be read or scanned fail, linear EMAIL pattern, per-file commit scan; `.claude/settings.json` hook, allow and ask lists; `bloat_check.py --skills`; personal-data skill "Before you send". The project keeps its own MILHOST pattern unchanged. (A first port commit added lookbehinds to make it linear; a fresh review found that they missed hosts the old pattern found, so that change was taken out. The slow case, one long line of hyphenated labels, is a known limit; the hook fails closed on its 8 s budget.)
 
 ## Reviewer
 
