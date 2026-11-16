@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | (2A) pii_guard.py finds MILHOST hosts with milhosts(): linear, exactly the matches of MILHOST.finditer; the pattern stays unchanged. | PFM | scripts/pii_guard.py, milhosts() |
 | 2026-11-16 | Guard bullet: the hook "checks the outgoing tool calls it names (list and gaps: personal-data skill)", replacing "each outgoing tool call" | PFM | docs/reviews/2026-11-16-rule-conflict-kit-port-4.md |
 | 2026-11-16 | Allow list: `Bash(git diff*)` narrowed to `Bash(git diff)` + `Bash(git diff *)` (the wide entry also allowed `git difftool -x`) | PFM | rhope-ops/archimedes_lever docs/DECISIONS.md |
 | 2026-11-16 | Kit round, part 2: skill line on sample addresses; `scan_text` repeat check by set, containment by binary search (same results, 200 KB 13 s -> 0.1 s) | PFM | rhope-ops/archimedes_lever docs/DECISIONS.md |
