@@ -27,6 +27,8 @@ Limits (a pass here is not proof that a step is clear; the fresh-reader check in
 - A menu path (A > B > C) counts as 1 action.
 - Two things joined by "and" with one verb count as 1 action (tick "A" and "B").
 - A value given as "Label: value" with no verb is not counted.
+- An action written after the literal text of "type:" or "paste:" is not read: put it in the next step.
+- "wait", "keep" and "remember" are not counted as actions.
 - A verb that is not in VERBS is not counted; a pointer worded in a way POINTERS does not know is not found.
 - Build words (block, way, part, item) are found only when they point (block 1, the part "X").
 
@@ -64,6 +66,8 @@ POINTERS = [
     (r'\b(?:steps?|blocks?|items?|parts?|sections?|paragraphs?|attachments?|ways?) (?:\d+|Q)', 'names a step, block, item or part'),
     (r'\b%s (?:says?|lists?|describes?|tells?|explains?)\b' % THING, 'defers to a file or window'),
     (r'\b(?:in|from|of|under) (?:the|that|this) (?:\w+ )?(?:file|guide|document|section|readme)\b(?! (?:name|path|box|explorer|menu|tab)\b)', 'defers to a file or section'),
+    (r'\b(?:previous|earlier|last|next|same|other) steps?\b|\bsteps? (?:above|below|before)\b', 'names another step'),
+    (r'\b(?:described|explained|listed|given|shown) in\b|\b(?:do|does) the same\b|\brepeat\b', 'refers elsewhere'),
     (r'(?:^|[.;:,] )see\b|\b(?:refer to|according to|as above|as below|as before|as described|same as)\b', 'refers elsewhere'),
 ]
 WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
@@ -84,7 +88,7 @@ def count_actions(sentence):
         low = w.lower()
         if low == 'then' and (i == len(words) - 1 or words[i + 1] not in VERBS):
             n += 1  # "then" with no verb after it repeats the last verb (select Open, then Next)
-        if low not in VERBS or i == len(words) - 1:
+        if low not in VERBS or (i == len(words) - 1 and words[i - 1].lower() != 'then'):
             continue
         if i and (w[0].isupper() or words[i - 1].lower() in NOT_AFTER):
             continue
@@ -163,6 +167,10 @@ def self_test():
         ('4. Look in Power Automate as the window says.', 'points'),
         ('5. Fill in the values. See the setup document.', 'points'),
         ('If a paste is refused: use the lines under it in the file.', 'points'),
+        ('1. Paste the text from the previous step.', 'points'),
+        ('2. Run the script described in the README.', 'points'),
+        ('3. Do the same for the second app.', 'points'),
+        ('4. Select Save then close.', 'holds 2'),
         ('6. Select Import solution, then Browse.', 'holds 2'),
         ('7. Press Ctrl+V, select Open, then Next.', 'holds 3'),
         ('8. Select Save. Select Publish.', 'holds 2'),
