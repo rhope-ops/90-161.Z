@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | go.md round steps hold only the steps that start the round; the runner window holds every other step (one place per step; choice 2A). | PFM | AGENTS.md "Gov-device usability" (3) |
+| 2026-11-16 | Guide steps: each names the exact thing to select and holds the exact text; none points elsewhere; tests/check_guide_text.py and a fresh-reader check run before a round ships. | PFM | AGENTS.md "Gov-device usability" (3) |
+| 2026-11-16 | The R26 step text is fixed in one pass after the R26 results arrive, not before; until then its failing steps are a reported baseline. Scope: round R26. | PFM | tests/check_guide_text.baseline.json |
 | 2026-11-16 | R26 test app: no importable file (Microsoft Learn: no supported way outside Power Apps Studio); the PFM makes a blank app and pastes code blocks. Scope: round R26. | PFM | go.md |
 | 2026-11-16 | R26 test T9: the Mail connector send (Learn: not in DoD) goes in its own small solution that an import may refuse; a refusal is the result. Scope: round R26. | PFM | go.md |
 | 2026-11-16 | R26: T6 way a is a look in the flow designer with 1 question (no documented action definition without a model id); rounds after R26 move by one number. Scope: round R26. | PFM | docs/phases.md |
