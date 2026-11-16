@@ -34,12 +34,12 @@ grp seal 'scripts/gov/90161Z-T07-*' 'scripts/build_test_seals.py' 'tests/ps/Test
 grp t20 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*' 'tests/ps/Test-T20.ps1' 'tests/fake-pnp/*' 'schemas/lists/*' \
   'flow/provisioning-payload.json' 'scripts/build_flow_payload.py'
 grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' 'samples/90161Z-T21-*' 'scripts/build_probe_samples.py'
-grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*'
+grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py'
 grp t22 'scripts/gov/90161Z-T22-*'
-# Lint: the full lane lints every file; the fast lane only the changed PowerShell files under scripts/gov (that exist).
+# Lint: the full lane, or a changed scripts/lint.sh, lints every file; else only the changed PowerShell files under scripts/gov.
 lintfiles=()
-if [ "$changed" != '*all*' ] && ! need; then
+if [ "$changed" != '*all*' ] && ! need scripts/lint.sh; then
   while IFS= read -r f; do [[ $f == scripts/gov/*.ps1 || $f == scripts/gov/*.psm1 ]] && [ -f "$f" ] && lintfiles+=("$f"); done <<<"$changed"
   [ "${#lintfiles[@]}" -gt 0 ] && on[lint]=1 || on[lint]=0
 else
