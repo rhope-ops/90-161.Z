@@ -34,6 +34,11 @@ IntroducedVersion 1.0.0.0; no empty "outputs" in the definition; a manual (invok
 [Content_Types].xml on one line with a byte order mark; CRLF line ends and no final line end, as exported.
 tests/check_flow_solution.py compares each zip with the sample.
 Strings that start with "@" are expressions on purpose here (build_flow_package.literal() is for static data only).
+R26 (16 Nov 26, task T21 probe): a test def may hold "solution": {"variant", "title", "zip"}; all test defs with the same
+variant build into ONE test solution (unique name PFM90161ZTEST + variant) with the given title and zip name. A test def
+without "solution" builds as before (T17). A flow whose trigger is kind "Button" runs on the invoker's connection; every
+other flow, the Power Apps (V2) trigger kind "PowerAppV2" included, runs on the owner's embedded connections and
+authenticates with @parameters('$authentication').
 """
 import argparse, io, json, pathlib, re, sys, uuid, zipfile
 from xml.sax.saxutils import escape, quoteattr
@@ -47,7 +52,10 @@ STAMP = (2026, 1, 1, 0, 0, 0)
 UNIQUE, PUBLISHER, PREFIX, VERSION = "PFM90161Z", "PFM", "pfm", "1.0.0.1"   # publisher PFM as in the T05 export
 PLATFORM, SERVICEABILITY = "9.2.26101.188", "9.2.26101.00188"   # the R18 export (r5); T05 had 9.2.26094.172
 OPTION_PREFIX = 89127   # the publisher PFM in this environment (R18 export, r5); a new environment creates PFM with it
-CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Office 365 Outlook"}
+CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Office 365 Outlook",
+              "shared_onedriveforbusiness": "OneDrive for Business", "shared_office365users": "Office 365 Users",
+              "shared_office365groups": "Office 365 Groups", "shared_wordonlinebusiness": "Word Online (Business)",
+              "shared_sendmail": "Mail"}   # the last five: the T21 probe flows (R26, 16 Nov 26)
 # Environment variables (type Text, 100000000). Defaults are list titles from schemas/lists; the site URL and the two day counts stay empty.
 # Order and labels (PFM 15 Nov 26: "sort the fields when importing a solution so the ones i need to modify are sequential and on
 # top"): the values a wing must set come first here (the RootComponent order in solution.xml) and their import-page labels (LABEL)
@@ -133,6 +141,7 @@ def workflow_json(d, used):
         if ENV_KEY[s] in used:
             params[ENV_KEY[s]] = {"defaultValue": default, "type": "String", "metadata": {"schemaName": s}}
     # T05: a manual flow runs on the invoker's connection; automated and scheduled flows use the owner's (embedded).
+    # R26: the Power Apps (V2) trigger (kind PowerAppV2) is not "Button": it uses the owner's connections, as automated flows do.
     src = "invoker" if any(t.get("kind") == "Button" for t in d["triggers"].values()) else "embedded"
     refs = {c: {"runtimeSource": src, "connection": {"connectionReferenceLogicalName": conn_logical(c)},
                 "api": {"name": c}} for c in d["connections"]}
@@ -167,17 +176,37 @@ def exported_text(path, text):
     return text
 
 
+def test_variant(d):
+    return d.get("solution", {}).get("variant") or d["variant"]
+
+
+def test_jobs():
+    """One (defs, zip path, title) per test solution: defs with a "solution" block are grouped by variant; the others stand alone."""
+    jobs, groups = [], {}
+    for f in load(TEST_DEFS):
+        sol = f[1].get("solution")
+        if sol:
+            groups.setdefault(sol["variant"], []).append(f)
+        else:
+            jobs.append(([f[0]], TEST_DEFS.parent / (f[0].stem + ".zip")))
+    for v, fl in sorted(groups.items()):
+        if len({(f[1]["solution"]["title"], f[1]["solution"]["zip"]) for f in fl}) != 1:
+            raise ValueError(f"variant {v}: the defs name different titles or zips")
+        jobs.append(([f[0] for f in fl], TEST_DEFS.parent / fl[0][1]["solution"]["zip"]))
+    return jobs
+
+
 def build(test=None, only=None, on=()) -> bytes:
-    """test: None for the flow solution, else one test def path (its own solution). only: def name prefixes (a slice).
+    """test: None for the flow solution, else a list of test def paths (one test solution). only: def name prefixes (a slice).
     on: in a slice, the def name prefixes that import On; the slice's other flows import Off."""
-    flows = load(DEFS) if test is None else [f for f in load(TEST_DEFS) if f[0] == test]
+    flows = load(DEFS) if test is None else [f for f in load(TEST_DEFS) if f[0] in test]
     if only:
         flows = [f for f in flows if f[0].name.startswith(only)]
     if test is None:
         unique, title = UNIQUE, "90-161.Z flows"
     else:
-        v = flows[0][1]["variant"]
-        unique, title = UNIQUE + "TEST" + v, "90-161.Z solution import test " + v
+        v = test_variant(flows[0][1])
+        unique, title = UNIQUE + "TEST" + v, flows[0][1].get("solution", {}).get("title") or "90-161.Z solution import test " + v
     used_env = {k for _, _, u in flows for k in u}
     env = ENV if test is None and not only else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test or slice carries only what it uses
     files, wf_xml, root_components = {}, [], []
@@ -274,7 +303,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="exit 1 if the committed zip differs from a fresh build")
     a = ap.parse_args()
-    jobs = [(None, OUT, None, ()), (None, SLICE1[0], SLICE1[1], SLICE1_ON)] + [(d, d.parent.parent / (d.stem + ".zip"), None, ()) for d in sorted(TEST_DEFS.glob("*.json"))]
+    jobs = [(None, OUT, None, ()), (None, SLICE1[0], SLICE1[1], SLICE1_ON)] + [(defs, out, None, ()) for defs, out in test_jobs()]
     for test, out, only, on in jobs:
         data = build(test, only, on)
         if a.check:
