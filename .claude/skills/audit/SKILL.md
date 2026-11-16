@@ -1,6 +1,13 @@
+---
+name: audit
+description: Use when the PFM asks for a bloat, drift, rule or speed audit, when the check-in says AUDIT DUE and the PFM agrees to run it, before a release, and when a timed operation is 25% slower than its baseline. Gives the full audit - measure, find bloat by category (rule census and slow or serial steps included), check assumptions, fix, and deliver removals as one small pull request for the PFM.
+---
+
 # Bloat, drift and assumption audit
 
-The full periodic audit that AGENTS.md "Bloat, drift and assumptions" calls for. Claude or a person can run it. Read it only when an audit is due or asked for; it is not a start-of-session file.
+The full periodic audit that AGENTS.md "Bloat, drift and assumptions" calls for. Claude or a person can run it. Never start it unasked: when the check-in says AUDIT DUE, tell the PFM and ask (about 1 hour of agent time).
+
+Due: every 14 days or 300 commits to main, whichever comes first; before a release; and when a timed operation is 25% slower than its baseline. The PFM may set other values in `.bloat-audit.json`.
 
 Why: two audits of one project found layered bloat that made a simple operation 5x slower (116.6 s to 23.4 s after the fix). Each layer looked reasonable when an agent added it. Agents add; they seldom remove. This audit finds what to remove and proposes it.
 
@@ -8,9 +15,10 @@ Why: two audits of one project found layered bloat that made a simple operation 
 
 - Measure first, then change. Every finding has evidence: a path and line, a count, a size or a time. No finding from impression.
 - Fix the cause, then apply the same fix everywhere the pattern appears.
-- Removals need the PFM's approval (the PFM, 2026-11-13). Do not remove, shorten or reword code, a script, a flag, a config, a template, a doc section, a rule, a decision, a test or a feature until the PFM approves. Propose it with evidence and options (Step 5.4).
+- Removals need the PFM's approval. Do not remove, shorten or reword code, a script, a flag, a config, a template, a doc section, a rule, a decision, a test or a feature until the PFM approves. Deliver the proposals as a ready pull request that only the PFM merges (Step 5.4).
+- Profile before you prune: a slow check is more often 1 or 2 hot spots than too many tests. Time the steps first.
 - "Nothing in the repo calls it" does not prove a thing is unused. People run tools by hand, from other repos or devices, and from pasted prompts. Agents read only the repo, so a request that lives only in chat is invisible to them.
-- Exceptions (no approval), the only list: (a) files made on this audit's own branch; (b) generated files rebuilt from their source; (c) agent scratch files (debug output, "_old"/"_v2" copies) that nothing references AND whose adding commit names no request or decision; (d) exact duplicates merged into the canonical copy, text kept word for word; (e) reference text moved out of start-read files unchanged, except from instruction and guard files (AGENTS.md "Untrusted input"), where every change is a proposal. List each in the report.
+- Exceptions (no approval), the only list: (a) files made on this audit's own branch; (b) generated files rebuilt from their source; (c) agent scratch files (debug output, "_old"/"_v2" copies) that nothing references AND whose adding commit names no request or decision; (d) exact duplicates merged into the canonical copy, text kept word for word; (e) reference text moved out of start-read files unchanged, except from instruction and guard files (AGENTS.md "Rules and decisions"), where every change is a proposal. List each in the report.
 - Chesterton's fence: before you propose a removal, find why the thing exists (git log -S, DECISIONS, the commit that added it) and put the reason, or "not found", in the proposal.
 - Never weaken a check, hook, test or guard to make a number smaller.
 - Generated files: fix the source and rebuild. Never hand-edit the output.
@@ -19,7 +27,7 @@ Why: two audits of one project found layered bloat that made a simple operation 
 
 ## Step 1: inventory and baseline (measure before)
 
-1. `python3 scripts/bloat_check.py --time` (full report). Copy the numbers into the report.
+1. `python3 scripts/bloat_check.py --time` (full report) and `python3 scripts/bloat_check.py --rules` (rule counts). Copy the numbers into the report. Run `scripts/check.sh` and copy its `TIME` line (wall time and the 3 slowest steps).
 2. If `.bloat-audit.json` has no `timings`, add the 2–4 operations people run most (tests, build, session check-in, the main user task) and run `--time --record` once to set a baseline. Record the machine type: times compare only on the same kind of machine.
 3. List tracked files by size and by last change (`git ls-files`, `git log -1 --format=%cs -- <file>`). Mark files with no change in 90+ days and no reference from any other file.
 4. Count what every session loads: instruction files, imported files, the handoff, the decision log, host prompts, personal preferences, hook output. Express it in tokens (bytes / 4).
@@ -31,11 +39,11 @@ Every item below finds; it does not fix. A fix that removes, shortens, rewords, 
 ### General project hygiene (industry practice)
 
 1. Duplication (DRY, single source of truth): the same fact, rule, value, list or code block in 2+ places. Keep one canonical place; others link to it. Includes copy-pasted code that should be a shared function, and docs that restate other docs.
-2. Drift: copies that started equal and now differ (docs vs code, README vs AGENTS.md, a schema vs the builder, a project vs the kit: the kit's `scripts/drift.py`). Decide which copy is right from the source of authority, not from the newer date.
+2. Drift: copies that started equal and now differ (docs vs code, README vs AGENTS.md, a schema vs the builder, a project vs the kit it came from). Decide which copy is right from the source of authority, not from the newer date.
 3. Dead code and dead files: functions, scripts, flags, configs, templates, test fixtures and branches nothing calls or reads. Check with grep for every name, and the build and test entry points.
 4. Stale docs: text that describes old behavior, finished plans, closed questions, superseded revisions (r1, r2 when r5 is current), TODOs older than 30 days, broken links.
 5. Layered wrappers: a script that calls a script that calls a script; checks that run the same test twice; retries around retries; config that overrides config. Draw the call chain for each common operation and time each layer.
-6. Performance regressions: compare timings with the baseline. Profile the slowest operation (`time`, `python3 -X importtime`, `-m cProfile`, `Measure-Command`) and name the top 3 costs.
+6. Performance regressions: compare timings with the baseline. Profile the slowest operation (`time`, `python3 -X importtime`, `-m cProfile`, `Measure-Command`) and name the top 3 costs. Then look for work in series that could be shared or parallel: list the steps of the slowest operation with their times; mark the steps that share no files or state (they can run in parallel on the idle cores); count the process starts (one interpreter or shell start for each small step is a cost: batch them into one process); and count how many times one change runs the same step (by hand, in a hook, in CI).
 7. Dependencies: unused packages, two libraries for one job, pinned versions no longer needed, vendored copies of public code.
 8. Repository weight: big binaries, generated files that could be rebuilt, old releases, logs, caches committed by mistake.
 9. CI and automation: workflows, hooks and scheduled jobs that no longer catch anything, run on every push when a pull request is enough, or duplicate a local check. Count minutes used against the budget.
@@ -45,8 +53,8 @@ Every item below finds; it does not fix. A fix that removes, shortens, rewords, 
 ### Agentic AI carve-outs
 
 12. Instruction bloat: AGENTS.md, CLAUDE.md, host prompts, project instructions and personal preferences. Find rules that repeat, conflict, are already enforced by a hook or test (keep the hook, shorten the rule to a pointer), or describe one past incident. Every rule needs a reason a reader can check. Prefer one line per rule.
-13. Context cost: everything loaded at session start costs tokens on every turn of every session. Move reference text (long tables, history, evidence) out of start-read files into files read on demand. Decision logs grow forever: keep the current decisions in the start-read file and move superseded ones to an archive file.
-14. Rule accretion: rules added after one incident and never retired. Give each such rule a review date; at the date, propose to retire it if it caught nothing.
+13. Context cost: everything loaded at session start costs tokens on every turn of every session. Move reference text (long tables, history, evidence) out of start-read files into files read on demand. The decision log is a record, not a start-read file: check that no start-read file imports it or tells agents to read it at start, and that a decision that must bind every session is one line in "Project rules".
+14. Rule census: count the rules (`bloat_check.py --rules`) and compare with the last audit. "The rule has a reason" is not a pass: every rule has one. For each rule in AGENTS.md and "Project rules", write one of: enforced by a hook or test (shorten it to a pointer); a procedure (move it to a skill); the model does it without the rule (retire); evidence that it changed an outcome since the last audit (a log row, a review, a corrected turn: keep); no evidence (retire, or give it a review date). Report the count for each class.
 15. Cross-host duplication: the same rule in the repo, a claude.ai Project, personal preferences and memory. The repo is the source; other places hold a pointer only. Personal preferences hold personal style, not project rules.
 16. Handoff and memory rot: NEXT_PROMPT.md, memory files and review folders that keep closed items, old links and repeated status. Keep the handoff at its line budget; archive reviews older than 90 days into a single index.
 17. Agent-made helpers: one-off scripts, debug files, scratch copies, "_v2"/"_new"/"_old" files and extra wrappers left by agents. Each needs a caller or a recorded reason; if it has neither, propose its removal.
@@ -77,13 +85,15 @@ Assumptions that nobody checked are drift that has not happened yet.
 1. Write `docs/reviews/YYYY-MM-DD-bloat-audit.md` (or the place AGENTS.md "Project rules" names): the before/after table, findings by category with evidence, fixes made, proposals for the PFM, the assumption table, the tech-debt register.
 2. Update `.bloat-audit.json`: `last_audit` (date, commit on main after the fixes, report path), new `timings` baselines (`--time --record`), and `ignore` globs for generated or reference files that the duplicate scan should skip (each new glob is a proposal: it hides files from the scan).
 3. Log the audit in the project log (milestone; a breakthrough when a fix removes a blocker or saves 25%+ time).
-4. Ask the PFM the open questions together, each with options and a recommendation. Group removal proposals in one table: what, where, why it exists (or "not found"), evidence it is unused, saving, risk, REC.
+4. Ask the PFM the open questions together, each with options and a recommendation. Removal proposals: make the 5 with the largest saving on a second branch and open one pull request for them, one commit for each item, with a table in its text: what, where, why it exists (or "not found"), evidence it is unused, saving, risk. An agent never merges this pull request: the PFM's merge is the approval, and the PFM can drop a commit. List the other proposals in the report for the next audit; a long list is not approved, so it removes nothing.
 
 ## Report table (minimum)
 
 | Measure | Before | After | Budget |
 |---|---|---|---|
 | Start read (~tokens) | | | |
+| Rule bullets: AGENTS.md / Project rules | | | |
+| Check lanes: fast / full (s), slowest step | | | |
 | Duplicate lines (80+ chars, 2+ files) | | | |
 | Tracked files / size | | | |
 | Big files | | | |

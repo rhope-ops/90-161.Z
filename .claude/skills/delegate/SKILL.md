@@ -1,6 +1,11 @@
+---
+name: delegate
+description: Use before you delegate work to a subagent, run more than one agent, write an agent brief, pick a model for a task, or review and merge a worker's branch. Gives the agents (scout, worker, reviewer), model routing by tier, the brief format, review and merge steps, lanes, and fallbacks for claude.ai chat.
+---
+
 # Orchestration: more than one agent
 
-Read this file when you delegate work or run more than one agent. AGENTS.md "Delegation" points here. The PFM's decisions (2026-11-10): the orchestrator stays on the strongest model; models are chosen per task with the routing table below. Routing names tiers; the table below maps them to Claude models.
+AGENTS.md "Delegation" points here. Ask each agent for concise findings with evidence paths. The PFM's decisions (2026-11-10): the orchestrator stays on the strongest model; models are chosen per task with the routing table below. Routing names tiers; the table below maps them to Claude models.
 
 ## Agents (.claude/agents/)
 

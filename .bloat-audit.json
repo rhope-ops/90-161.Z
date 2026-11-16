@@ -1,4 +1,8 @@
 {
+  "budgets": {
+    "start_read_tokens": 12000,
+    "start_read_warn_tokens": 6000
+  },
   "timings": {
     "tests": {
       "cmd": "tests/run.sh",

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Git pre-push hook for Claude, any git client, and people.
 # Install once per clone: git config core.hooksPath <the folder of this file> (scripts/session_checkin.sh or a SessionStart hook does it).
-# Also runs scripts/check.sh (when present) and scripts/pii_guard.py --push (when the repo root has a .pii-guard file).
+# Also runs scripts/check.sh (when present): the full lane for a push to main, master or the default branch (the
+# remote's HEAD, init.defaultBranch, or each name in the git config key check.fullLaneBranch), the fast lane for any other
+# branch (.claude/skills/deliver/SKILL.md), and scripts/pii_guard.py on the tracked files and the pushed commits (when
+# the repo root has a .pii-guard file).
 # Blocks: a push that is not a fast-forward (every force-push form, including --force-with-lease),
 # deleting main or master on the remote, and pushing a remote commit this clone has not fetched.
 # A person who truly needs to override runs the push with --no-verify; agents never do (AGENTS.md "Git safety").
@@ -32,6 +35,21 @@ check() {  # reads "<local ref> <local sha> <remote ref> <remote sha>" lines; pr
   return $blocked
 }
 
+lane_of() {  # lane_of [BRANCH...]: reads the same lines; prints "full" when a pushed commit goes to main, master or
+             # one of the named branches, else "fast"
+  awk -v names="main master $*" 'BEGIN {n = split(names, a, " "); for (i = 1; i <= n; i++) full["refs/heads/" a[i]] = 1}
+       NF>=4 && $2 !~ /^0+$/ && ($3 in full) {f=1} END {print (f ? "full" : "fast")}'
+}
+
+default_branches() {  # default_branches REMOTE: the names this clone knows for a default branch, on one line
+  local r="${1:-origin}" d out=""
+  d="$(git symbolic-ref -q "refs/remotes/$r/HEAD" 2>/dev/null)" && out="${d#"refs/remotes/$r/"}"
+  for d in $(git config --get init.defaultBranch 2>/dev/null) $(git config --get-all check.fullLaneBranch 2>/dev/null); do
+    out="$out $d"
+  done
+  printf '%s' "${out# }"
+}
+
 if [ "${1:-}" = "--test" ]; then
   set -e
   t=$(mktemp -d); trap 'rm -rf "$t"' EXIT
@@ -52,6 +70,25 @@ if [ "${1:-}" = "--test" ]; then
   run "sha256: new branch passes"  0 "refs/heads/x $c refs/heads/x $z64"
   run "sha256: delete branch passes" 0 "(delete) $z64 refs/heads/x $c"
   run "sha256: delete main blocked"  1 "(delete) $z64 refs/heads/main $b"
+  lane() { local name=$1 want=$2 got; got=$(printf '%s\n' "$3" | lane_of)
+           if [ "$got" = "$want" ]; then echo "ok   $name"; else echo "FAIL $name (got $got)"; fails=1; fi; }
+  lane "push to main: full lane"      full "refs/heads/main $b refs/heads/main $a"
+  lane "push to master: full lane"    full "refs/heads/x $b refs/heads/master $a"
+  lane "push to a branch: fast lane"  fast "refs/heads/main $c refs/heads/x $zero"
+  lane "branch and main: full lane"   full "refs/heads/x $c refs/heads/x $zero
+refs/heads/main $b refs/heads/main $a"
+  lane "delete only: fast lane"       fast "(delete) $zero refs/heads/main $b"
+  export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1  # the host's init.defaultBranch must not change the cases
+  eq() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1 (got '$2', want '$3')"; fails=1; fi; }
+  eq "no origin/HEAD, no config: no extra default branch" "$(default_branches origin)" ""
+  eq "a branch named trunk is fast then" "$(printf '%s\n' "refs/heads/x $c refs/heads/trunk $a" | lane_of $(default_branches origin))" fast
+  git update-ref refs/remotes/origin/trunk "$a"; git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/trunk
+  eq "origin/HEAD names the default branch" "$(default_branches origin)" "trunk"
+  eq "push to that default branch: full lane" "$(printf '%s\n' "refs/heads/x $c refs/heads/trunk $a" | lane_of $(default_branches origin))" full
+  git update-ref refs/remotes/team/fork/rel/1.0 "$a"; git symbolic-ref refs/remotes/team/fork/HEAD refs/remotes/team/fork/rel/1.0
+  eq "a remote and a branch with a slash" "$(default_branches team/fork)" "rel/1.0"
+  git config check.fullLaneBranch release
+  eq "check.fullLaneBranch adds a name" "$(printf '%s\n' "refs/heads/x $c refs/heads/release $a" | lane_of $(default_branches https://example.invalid/r.git))" full
   [ $fails = 0 ] && echo "PRE-PUSH TEST PASS" || { echo "PRE-PUSH TEST FAIL"; exit 1; }
   exit 0
 fi
@@ -64,13 +101,23 @@ top="$(git rev-parse --show-toplevel)"
 
 # Repo checks: a push that carries commits runs scripts/check.sh on this checkout and is blocked when it fails,
 # so an agent cannot sign off its own work (AGENTS.md "Git safety"). A push that only deletes branches skips it.
-if [ -f "$top/scripts/check.sh" ] && printf '%s\n' "$input" | awk 'NF>=4 && $2 !~ /^0+$/ {f=1} END {exit !f}'; then
-  cout=$(bash "$top/scripts/check.sh" 2>&1); crc=$?
+# Lane: full for main, master or the remote's default branch, so nothing reaches the default branch on a fast-lane pass; fast for other branches.
+# --cached: a lane that already passed on this commit with a clean tree is not run again.
+# --no-pii: with the guard on, the guard step below scans the tracked files and the pushed commits in one run.
+carries=0
+printf '%s\n' "$input" | awk 'NF>=4 && $2 !~ /^0+$/ {f=1} END {exit !f}' && carries=1
+if [ -f "$top/scripts/check.sh" ] && [ "$carries" = 1 ]; then
+  args=(--cached)
+  # shellcheck disable=SC2046  # the names are split on purpose
+  [ "$(printf '%s\n' "$input" | lane_of $(default_branches "${1:-origin}"))" = fast ] && args+=(--fast)
+  [ -f "$top/.pii-guard" ] && args+=(--no-pii)
+  cout=$(bash "$top/scripts/check.sh" "${args[@]}" 2>&1); crc=$?
   if [ "$crc" -ne 0 ]; then
     printf '%s\n' "$cout" >&2
-    echo "pre-push: blocked: scripts/check.sh failed (output above). Fix the cause, then push again." >&2
+    echo "pre-push: blocked: scripts/check.sh ${args[*]} failed (output above). Fix the cause, then push again." >&2
     exit 1
   fi
+  printf '%s\n' "$cout" | grep -E '^(TIME|CHECK) ' >&2
 fi
 
 # Personal-data guard: runs only in a repo that opts in with a .pii-guard file at its root (AGENTS.md "Personal data").
@@ -82,13 +129,15 @@ if [ -f "$top/.pii-guard" ]; then
   if [ -z "$guard" ]; then
     echo "pre-push: blocked: .pii-guard is on but pii_guard.py was not found (scripts/ or tools/)." >&2; exit 1
   fi
-  pout=$(printf '%s\n' "$input" | python3 "$guard" --push --require-denylist 2>&1); rc=$?
+  gargs=(--push --require-denylist)
+  [ "$carries" = 1 ] && gargs=(--all "${gargs[@]}")  # one run: every tracked file, and the pushed commits
+  pout=$(printf '%s\n' "$input" | python3 "$guard" "${gargs[@]}" 2>&1); rc=$?
   [ -n "$pout" ] && printf '%s\n' "$pout" >&2
   if [ "$rc" -ne 0 ]; then
-    if printf '%s' "$pout" | grep -q "no denylist found"; then
+    if printf '%s' "$pout" | grep -q "PII GUARD FAIL: no denylist found"; then
       echo "pre-push: blocked: this session has no name denylist, so the guard cannot check names. Add it (docs/FIRST_USE.md step 4), then push again." >&2
     else
-      echo "pre-push: blocked by pii_guard.py: personal data or a secret is in this push (listed above, masked). Remove it, then push again." >&2
+      echo "pre-push: blocked by pii_guard.py: personal data or a secret is in a tracked file or in this push (listed above, masked). Remove it, then push again." >&2
     fi
     exit 1
   fi

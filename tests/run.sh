@@ -1,26 +1,65 @@
 #!/usr/bin/env bash
 # 90-161.Z test runner (agent workspace). Pass = last line "TESTS pass=N fail=0", exit 0.
 # Word COM and PnP cannot run here; those parts are tested on the gov device (docs/gov-test-plan.md).
+# Lanes (.claude/skills/deliver/SKILL.md): tests/run.sh = full lane, every test. tests/run.sh --fast = fast lane: every
+# cheap check (stale generated files: task scripts, bundles, lock, payloads, packages; JSON; names; guide text) runs
+# always; a slow group (pwsh, network, lint) runs only when a file it reads changed against the merge base with
+# origin/main, and lint checks only the changed PowerShell files. A change to this file or scripts/check.local.sh, or no
+# merge base, runs everything. Each skipped group prints a SKIP line; the full lane before a merge runs them all.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
-pass=0; fail=0
+pass=0; fail=0; skipped=0
 ok()  { echo "PASS $1"; pass=$((pass+1)); }
 bad() { echo "FAIL $1"; fail=$((fail+1)); }
+sk()  { echo "SKIP $1 (fast lane: the files it reads did not change)"; skipped=$((skipped+1)); }
+lane=full
+case "${1:-}" in --fast) lane=fast ;; '') ;; *) echo "usage: tests/run.sh [--fast]" >&2; exit 2 ;; esac
+changed='*all*'
+if [ "$lane" = fast ] && base=$(git merge-base HEAD origin/main 2>/dev/null); then
+  changed=$( { git diff --name-only "$base"; git ls-files -o --exclude-standard; } 2>/dev/null | sort -u)
+fi
+need() {  # need GLOB...: true in the full lane, with no merge base, or when a changed file matches a glob (* matches /)
+  [ "$changed" = '*all*' ] && return 0
+  local f g
+  while IFS= read -r f; do
+    for g in tests/run.sh scripts/check.local.sh "$@"; do [[ $f == $g ]] && return 0; done
+  done <<<"$changed"
+  return 1
+}
+declare -A on
+grp() { local n=$1; shift; if need "$@"; then on[$n]=1; else on[$n]=0; fi; }
+grp val 'scripts/gov/Test-Publication.ps1' 'scripts/gov/Publication.Common.ps1' 'samples/*' 'tests/fixtures/*' \
+  'tests/ps/Invoke-Validations.ps1' 'schemas/publication.schema.json'
+grp seal 'scripts/gov/90161Z-T07-*' 'scripts/build_test_seals.py' 'tests/ps/Test-SealTrim.ps1' 'tests/fixtures/seal*'
+grp t20 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*' 'tests/ps/Test-T20.ps1' 'tests/fake-pnp/*' 'schemas/lists/*' \
+  'flow/provisioning-payload.json' 'scripts/build_flow_payload.py'
+grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' 'samples/90161Z-T21-*' 'scripts/build_probe_samples.py'
+grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*'
+grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py'
+grp t22 'scripts/gov/90161Z-T22-*'
+# Lint: the full lane lints every file; the fast lane only the changed PowerShell files under scripts/gov (that exist).
+lintfiles=()
+if [ "$changed" != '*all*' ] && ! need; then
+  while IFS= read -r f; do [[ $f == scripts/gov/*.ps1 || $f == scripts/gov/*.psm1 ]] && [ -f "$f" ] && lintfiles+=("$f"); done <<<"$changed"
+  [ "${#lintfiles[@]}" -gt 0 ] && on[lint]=1 || on[lint]=0
+else
+  on[lint]=1
+fi
 
 python3 scripts/bloat_check.py --test >/tmp/bloat.out 2>&1 && ok "bloat_check self-test" || { cat /tmp/bloat.out; bad "bloat_check self-test"; }
 
 # The two slowest checks (lint, T20 on the fake site) run beside the other tests (bloat audit 3, 2026-11-15: 36 s suite);
 # each result is read where its PASS line is written: T20 at its old place, lint at the end.
 bg=$(mktemp -d)
-scripts/lint.sh >"$bg/lint.out" 2>&1 & lint_pid=$!
-pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!
-pwsh -NoProfile -File tests/ps/Test-T21.ps1 >"$bg/t21.out" 2>&1 & t21_pid=$!
+[ "${on[lint]}" = 1 ] && { scripts/lint.sh "${lintfiles[@]}" >"$bg/lint.out" 2>&1 & lint_pid=$!; }
+[ "${on[t20]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!; }
+[ "${on[t21]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T21.ps1 >"$bg/t21.out" 2>&1 & t21_pid=$!; }
 # The small pwsh checks (Hide-Site masking, Get-SiteAddress, two-space sentences, opening paragraph, Font binding, T20 -PlanOnly)
 # run in ONE more pwsh process (tests/ps/Invoke-Batch.ps1; bloat audit 3, P1, 2026-11-15), each in its own runspace, each
 # writing <name>.out and <name>.rc to a fresh folder. A missing .rc (the member did not run) or an rc other than 0 = FAIL.
 bd=$(mktemp -d)
 trap 'kill $(jobs -p) 2>/dev/null; rm -rf "${vd:-}" "${bg:-}" "${bd:-}" "${tp:-}" "${te:-}" "${sealraw:-}"' EXIT
-pwsh -NoProfile -File tests/ps/Invoke-Batch.ps1 -OutDir "$bd" >"$bd/batch.log" 2>&1 & batch_pid=$!
+[ "${on[batch]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Invoke-Batch.ps1 -OutDir "$bd" >"$bd/batch.log" 2>&1 & batch_pid=$!; }
 bout() {  # $1 = member name: print its output; fail when the member did not finish with rc 0 (after the wait below)
   [ "$(cat "$bd/$1.rc" 2>/dev/null)" = "0" ] || return 1
   cat "$bd/$1.out"
@@ -53,10 +92,11 @@ PY40
 printf '%s\t%s\n' sample samples/publication.sample.json wing "$vd/wing.json" delta "$vd/delta.json" hq "$vd/hq.json" \
   bad tests/fixtures/bad.publication.json f020 "$vd/f020.json" placeholder tests/fixtures/placeholder.publication.json \
   seal tests/fixtures/seal.publication.json sealok tests/fixtures/seal-ok.publication.json > "$vd/list.txt"
-pwsh -NoProfile -File tests/ps/Invoke-Validations.ps1 -List "$vd/list.txt" -OutDir "$vd"
+[ "${on[val]}" = 1 ] && pwsh -NoProfile -File tests/ps/Invoke-Validations.ps1 -List "$vd/list.txt" -OutDir "$vd"
 vout() { cat "$vd/$1.out"; [ -f "$vd/$1.err" ] && cat "$vd/$1.err" >&2; true; }
 vrc() { cat "$vd/$1.rc"; }
 
+if [ "${on[val]}" = 1 ]; then
 out=$(vout sample); rc=$(vrc sample)
 [ $rc -eq 0 ] && echo "$out" | tail -1 | grep -q '^VALIDATE fails=0 ' && ok "sample validates ($(echo "$out" | tail -1))" || { echo "$out"; bad "sample validates"; }
 
@@ -72,13 +112,16 @@ out=$(vout bad); rc=$(vrc bad)
 got=$(echo "$out" | grep -oE '^FAIL [A-Z]+-?[0-9]*' | awk '{print $2}' | sort -u | tr '\n' ' ')
 want="F-005 F-013 F-018 F-020 F-021 F-022 F-025 F-026 F-029 F-031 F-033 F-034 F-035 F-037 SCHEMA W-001 "
 [ $rc -eq 1 ] && [ "$got" = "$want" ] && ok "bad fixture fails on expected rules" || { echo "got:  $got"; echo "want: $want"; bad "bad fixture"; }
+else sk "sample validates"; sk "F-040 and F-039 in wing/delta vs other issuers"; sk "bad fixture fails on expected rules"; fi
 
 for f in samples/publication.sample.json tests/fixtures/bad.publication.json schemas/publication.schema.json schemas/lists/*.json flow/provisioning-payload.json; do
   python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" && ok "json $f" || bad "json $f"
 done
 
+if [ "${on[val]}" = 1 ]; then
 n20=$(vout f020 | grep -c "^FAIL F-020 meta.accessibilityLink")
 [ "$n20" -eq 2 ] && ok "F-020 accessibility link checks (bad text and bad url: $n20 FAIL)" || bad "F-020 accessibility link checks ($n20 FAIL, want 2)"
+else sk "F-020 accessibility link checks"; fi
 python3 - <<'PY' && ok "sample matches JSON schema" || bad "sample matches JSON schema"
 import json, sys
 try:
@@ -91,23 +134,29 @@ PY
 grep -q "\$nb = \$t.Replace('-', \[string\]\[char\]30)" scripts/gov/New-Publication.ps1 && ok "tier numbers use a Word nonbreaking hyphen (T01 r4)" || bad "tier nonbreaking hyphen"
 [ "$(ls scripts/gov/90161Z-T01-renderer-test-r*.ps1 | wc -l)" -eq 1 ] && ok "one T01 runner revision" || bad "more than one T01 runner"
 
+if [ "${on[val]}" = 1 ]; then
 out=$(vout placeholder); rc=$(vrc placeholder)
 got=$(echo "$out" | grep -oE '^FAIL [A-Z]+-?[0-9]*' | awk '{print $2}' | sort -u | tr '\n' ' ')
 [ $rc -eq 1 ] && [ "$got" = "X-001 " ] && ok "placeholder fixture fails on X-001 only" || { echo "got: $got"; bad "placeholder fixture"; }
+else sk "placeholder fixture fails on X-001 only"; fi
 python3 scripts/build_messy_draft.py --check && ok "T06 messy draft up to date" || bad "T06 messy draft stale"
 for k in ComplianceBefore ComplianceRuleDist ReleaseRuleDist BlockRuleBefore GroupBlankLine TocFontSize; do
   grep -q "^\$$k = " scripts/gov/New-Publication.ps1 || { bad "renderer constant $k (L-008a, L-010c, L-012)"; continue; }
 done && ok "renderer cover and TOC constants present (L-008a, L-010c, L-012)"
 
 python3 scripts/build_test_seals.py --check && ok "T07 test seals up to date" || bad "T07 test seals stale"
+if [ "${on[seal]}" = 1 ]; then
 sealraw=$(mktemp -d); python3 scripts/build_test_seals.py --raw "$sealraw" >/dev/null
 out=$(pwsh -NoProfile -File tests/ps/Test-SealTrim.ps1 -RawDir "$sealraw"); rc=$?; rm -rf "$sealraw"
 [ $rc -eq 0 ] && [ "$(echo "$out" | grep -c '^PASS')" -eq 4 ] && ok "seal trim matches the reference on 4 test seals (L-007a)" || { echo "$out"; bad "seal trim"; }
+else sk "seal trim matches the reference on 4 test seals (L-007a)"; fi
+if [ "${on[val]}" = 1 ]; then
 out=$(vout seal); rc=$(vrc seal)
 got=$(echo "$out" | grep -oE '^FAIL [A-Z]+-?[0-9a-z]*' | awk '{print $2}' | sort -u | tr '\n' ' ')
 [ $rc -eq 1 ] && [ "$got" = "L-007a " ] && ok "unprepared seal fails on L-007a only" || { echo "got: $got"; bad "seal fixture"; }
 out=$(vout sealok); rc=$(vrc sealok)
 [ $rc -eq 0 ] && echo "$out" | tail -1 | grep -q '^VALIDATE fails=0 ' && ok "prepared seal path accepted (L-007a)" || { echo "$out" | grep FAIL; bad "prepared seal path"; }
+else sk "unprepared seal fails on L-007a only"; sk "prepared seal path accepted (L-007a)"; fi
 grep -q '$pic.Width = \[single\]$ShieldWidth; $pic.Height = \[single\]$ShieldWidth' scripts/gov/New-Publication.ps1 && ok "renderer places seals in the 1.20 in box (L-007)" || bad "renderer seal box"
 grep -q "Write-Output ('RENDER-ERROR line '" scripts/gov/New-Publication.ps1 && grep -q "exit 3 }" scripts/gov/New-Publication.ps1 && ok "renderer names the failing line and flags FORMAT-FAIL (T06/T07 cast error)" || bad "renderer error line"
 
@@ -243,27 +292,35 @@ PY
 
 # T20 list provisioning by PnP (PFM 14 Nov 26): the plan counts come from the payload, and the script runs against a strict
 # fake site (tests/fake-pnp): create, a second run that creates nothing, a repair run, the clean check, masked output.
+if [ "${on[batch]}" = 1 ]; then
 wait "$batch_pid"   # first use of the batch results
 out=$(bout plan | tail -1)
 [ "$out" = "PLAN lists=12 fields=199 views=18 rows=88 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
+else sk "lists plan"; fi
+if [ "${on[t20]}" = 1 ]; then
 wait "$t20_pid"; t20rc=$?; out=$(tail -1 "$bg/t20.out")
 case "$t20rc $out" in "0 T20 pass="*" fail=0") ok "T20 list provisioning on the fake site ($out)";; *) grep "T20TEST FAIL" "$bg/t20.out" | cut -c1-300; bad "T20 list provisioning (exit $t20rc): $out";; esac
+else sk "T20 list provisioning on the fake site"; fi
 
 # R26 probe (T21): the 2 fake sample files and the fake PDF block in the script are built by code and match byte for byte; the device script runs on a small fake site.
 python3 scripts/build_probe_samples.py --check && ok "T21 probe samples up to date" || bad "T21 probe samples stale (run python3 scripts/build_probe_samples.py)"
+if [ "${on[t21]}" = 1 ]; then
 wait "$t21_pid"; t21rc=$?; out=$(tail -1 "$bg/t21.out")
 case "$t21rc $out" in "0 T21 pass="*" fail=0") ok "T21 probe script on the fake site ($out)";; *) grep "T21TEST FAIL" "$bg/t21.out" | cut -c1-300; bad "T21 probe script (exit $t21rc): $out";; esac
+else sk "T21 probe script on the fake site"; fi
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
 # Build is deterministic (fixed dates): a rebuild must match the committed file byte for byte.
 git diff --quiet HEAD -- templates/CRM_A12-1.docx && ok "CRM template rebuild matches committed file" || bad "CRM template rebuild differs from committed file (commit the rebuild if the source changed)"
 
+if [ "${on[batch]}" = 1 ]; then
 got=$(bout twospace)
 want="Do this. (T-3)  Then Mr. A. B. Smith signs.  Use e.g. Forms.  Done?  Yes."
 [ "$got" = "$want" ] && ok "two-space sentences (L-004)" || { echo "got:  [$got]"; echo "want: [$want]"; bad "two-space sentences"; }
 
 got=$(bout opening | grep -o -E "implements|Ensure all records|DAF Form 847|may be supplemented|authorities to waive" | tr '\n' ',')
 [ "$got" = "implements,Ensure all records,DAF Form 847,may be supplemented,authorities to waive," ] && ok "opening paragraph order (4.5.5)" || { echo "got: $got"; bad "opening paragraph order"; }
+else sk "two-space sentences (L-004)"; sk "opening paragraph order (4.5.5)"; fi
 
 ! grep -rniE "@us\.af\.mil|@mail\.mil|usaf\.dps\.mil/sites/[a-z0-9]" samples tests schemas docs scripts flow templates/build_crm_template.js >/dev/null && ok "no .mil addresses in repo content" || bad "no .mil addresses"
 
@@ -272,8 +329,10 @@ out=$(cd ref && sha256sum -c --quiet SHA256SUMS 2>&1) && ok "ref files match ref
 
 # F-032/F-039 false positives (T06 review 12 Nov 26): cover values count as use; office symbols and AFI-type prefixes skip the
 # four-times rule; the fixed summary-of-changes sentence is not a compliance statement. Sample: only OPR and ANG warn.
+if [ "${on[val]}" = 1 ]; then
 out=$(vout sample | grep -E "^WARN F-032|^VALIDATE")
 echo "$out" | grep -q "VALIDATE fails=0 warns=2" && ! echo "$out" | grep -qE "'(OPR-A|OPR-B|AFI)'" && ok "validator F-032 false positives gone (sample warns=2: OPR, ANG)" || { echo "$out"; bad "validator F-032 false positives"; }
+else sk "validator F-032 false positives gone"; fi
 # B3A/P3 (PFM 2026-11-13): one source for the gov task-script block; no task script asks for the DODID outside it.
 out=$(python3 scripts/build_task_scripts.py --check 2>&1); [ $? -eq 0 ] && ok "task scripts share one block ($(echo "$out" | tail -1))" || { echo "$out"; bad "task-common block (run python3 scripts/build_task_scripts.py)"; }
 
@@ -322,6 +381,7 @@ big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 614400
 # log) with no DODID. The window path (Windows Forms) cannot run here: lint only.
 # needs <bundle>: the check ids the bundle's steps list in the manifest, space-separated.
 needs() { python3 -c "import json,sys;print(' '.join(sorted({n for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']==sys.argv[1] for s in b['steps'] for n in s.get('needs',[])})))" "$1"; }
+if [ "${on[bundle]}" = 1 ]; then
 tp=$(mktemp -d); mkdir -p "$tp/u/test1234/OneDrive - United States Air Force"; pf=0; pr=0; pc=0
 # R06 cleanup fixture: finished folders with our files and one file 90-161.Z did not make (must stay).
 ob="$tp/u/test1234/OneDrive - United States Air Force/90-161.Z"; mkdir -p "$ob/T02" "$ob/T13" "$ob/Rounds/R09" "$ob/T07" "$ob/T09"
@@ -388,6 +448,7 @@ PYS
     && grep -qF "T13 1 (1 other)" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && head -1 "$base/Rounds/$r/90161Z-$r-report-r1.txt" | tr -d "\r" | grep -q "90161Z $r NEEDS REVIEW$" \
     && grep -q "^\"$r\",\"ROUND\"," "$base/Config/90161Z-history.csv" && pc=$((pc+1)) || { echo "cleanup/summary"; grep -E "^(Clean-up|Files left|90161Z)" "$base/Rounds/$r/90161Z-$r-report-r1.txt"; ls -R "$nb" | head -30; }
 done
+fi
 # Newest RADE (the PFM, 15 Nov 26: "there needs to be a check if RADE has upgraded every time we do a round"): the lock must
 # name the newest engine release of rhope-ops/RADE, and its commit must be the commit of that release tag (review of
 # 15 Nov 26: a lock with the new tag and an old commit passed). Behind or a wrong commit = FAIL with the command that
@@ -413,6 +474,7 @@ fake_tags=$(printf '%s\trefs/tags/engine-v4\n%s\trefs/tags/engine-v5\n%s\trefs/t
   && [ "$(rade_lock_verdict "$fake_tags" engine-v10 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)" = "WRONGCOMMIT engine-v10" ] \
   && [ "$(rade_lock_verdict "" engine-v10 cccccccccccccccccccccccccccccccccccccccc)" = "NOTCHECKED" ] \
   && ok "newest-RADE check: verdicts (newest, behind, wrong commit, no network)" || bad "newest-RADE check: verdicts"
+if [ "${on[bundle]}" = 1 ]; then
 tags=$(timeout 30 git ls-remote --tags https://github.com/rhope-ops/RADE 'refs/tags/engine-v*' 2>/dev/null || true)
 lock_tag=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('tag',''))")
 lock_commit=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('commit',''))")
@@ -423,6 +485,8 @@ case "$verdict" in
   BEHIND*) bad "RADE engine is behind: lock = $lock_tag, newest release = ${verdict#BEHIND }. Run: python3 scripts/bump_lock.py ${verdict#BEHIND }, then build a new round";;
   *) bad "RADE lock commit is not the commit of $lock_tag. Run: python3 scripts/bump_lock.py $lock_tag";;
 esac
+else sk "RADE engine is the newest release (network)"; fi
+if [ "${on[bundle]}" = 1 ]; then
 # NIPR-only start check (RADE engine-v3 on; the PFM, 15 Nov 26): the bundle as shipped, on this computer (not NIPR), prints
 # only the stop message and writes nothing.
 for b in scripts/gov/paste/*.ps1; do
@@ -437,10 +501,12 @@ done < <(python3 -c "import json;[print(f['dir']+'\t'+f['src']) for b in json.lo
 rm -rf "$tp"
 [ $pr -eq 1 ] && [ $pf -eq 0 ] && ok "round bundle text mode: files exact, steps run, report in results folder, DODID masked, real path on screen (rounds=$pr mismatches=$pf)" || bad "round bundle: rounds ok=$pr mismatches=$pf"
 [ $pc -eq 1 ] && ok "RADE cleanup: only 90-161.Z files recycled, other files and their folder kept, summary has the clean-up line, files left, subject NEEDS REVIEW, history row" || bad "RADE cleanup and summary (see output above)"
+else sk "NIPR-only start check"; sk "round bundle text mode"; sk "RADE cleanup"; fi
 
 
 # Enter starts the run (PFM 2026-11-13): in the window Enter is the card's primary button (on "Ready" that is Install or Run;
 # never on a hand step: RADE "One thing" window, 14 Nov 26); text mode shows the plan, Enter runs, N stops with nothing written.
+if [ "${on[bundle]}" = 1 ]; then
 ab=$(grep -L 'AcceptButton = \$(if (\$c.NoAccept) { \$null } else { \$accept })' scripts/gov/paste/*.ps1 | wc -l)
 # ... and on "Ready" the primary button is Install or Run and starts the run.
 ab=$((ab + $(grep -L "{ 'primary' } else { 'off' }); Act = { & \$ui.Run }" scripts/gov/paste/*.ps1 | wc -l)))
@@ -461,12 +527,14 @@ for b in scripts/gov/paste/*.ps1; do
   grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(date +%d-%m-%y)" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
 done; rm -rf "$te"
 [ "$ab" -eq 0 ] && [ "$tw" -eq 0 ] && ok "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw; Enter path = round bundle test)" || bad "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw)"
+else sk "Enter starts the run"; fi
 
 # No DODID question in rounds (PFM 2026-11-13): the profile folder is the DODID.
 dq=0; for b in scripts/gov/paste/*.ps1; do sed -n '/round runner (generated/,$p' "$b" | grep -qE "Read-Host 'DODID|idBox" && dq=$((dq+1)); done
 [ "$dq" -eq 0 ] && ok "rounds ask no DODID (bundles that ask: $dq)" || bad "rounds ask no DODID (bundles that ask: $dq)"
 # R06 lesson: New-Object with a string for an enum argument can match two overloads ("Multiple ambiguous overloads") and
 # drop the RADE window to text mode. Binding check in pwsh for every New-Object System.Drawing.Font call in the bundles.
+if [ "${on[batch]}" = 1 ]; then
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(bout font | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
@@ -489,6 +557,7 @@ sa=$(bout siteaddr | tail -1)
 # R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
 hs=$(bout hsenc)
 [ -n "$hs" ] && ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
+else sk "RADE fonts in the bundles"; sk "Hide-Site masking of T16, T18, T19, T20 scripts"; sk "list id after URL-encoded characters"; sk "site address: from RADE, then from Config"; sk "site setup r6 masks a URL-encoded e-mail address"; fi
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "
 import json; a = json.load(open('flow/defs/90161Z-T11-rights-probe-r5.json'))['actions']
@@ -517,6 +586,7 @@ assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
 # T22 PFM window preview (R26 r2, PFM 16 Nov 26): the cards as text (-PlanOnly; no window here). Each choice and button opens a card
 # that exists, each card has one blue button at most, and the text is fake (every publication and office says FAKE).
+if [ "${on[t22]}" = 1 ]; then
 python3 - <<'PYT22' && ok "T22 window preview cards" || bad "T22 window preview cards"
 import re, subprocess, sys
 out = subprocess.run(['pwsh', '-NoProfile', '-File', 'scripts/gov/90161Z-T22-pfm-window-r1.ps1', '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
@@ -535,9 +605,10 @@ assert all(ord(c) < 128 for c in '\n'.join(out))
 for l in out:
     for w in re.findall(r'\b(OI \d\d-\d\d|OFFICE \w)\b', l): assert 'FAKE ' + w in l, l
 PYT22
+else sk "T22 window preview cards"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
-wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }
-echo "TESTS pass=$pass fail=$fail"
+if [ "${on[lint]}" = 1 ]; then wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }; else sk "lint"; fi
+[ "$lane" = fast ] && echo "TESTS pass=$pass fail=$fail skip=$skipped (fast lane)" || echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check a project log (docs/LOG.md) against the project log rules (AGENTS.md "Project log" and .claude/project-log.md).
+"""Check a project log (docs/LOG.md) against the project log rules (AGENTS.md "Project log" and .claude/skills/project-log/SKILL.md).
 
 Usage:
     python3 scripts/log_check.py [FILE ...]        # default: docs/LOG.md
@@ -14,7 +14,7 @@ Checks (each failure prints FILE:LINE: message):
   YYYY-MM-DD HH:MM-YYYY-MM-DD HH:MM; "~" before the date or a time marks an estimate. Dates and times must exist.
 - Type is milestone, breakthrough, miss or decision.
 - Arc is kebab-case and has a row in the Arcs table; every Arcs row is used at least once.
-- Evidence is not empty and not "-" (.claude/project-log.md: never chat text alone).
+- Evidence is not empty and not "-" (.claude/skills/project-log/SKILL.md: never chat text alone).
 Exit 0 and "LOG CHECK PASS: N rows" when clean, exit 1 with the findings otherwise.
 It does not judge whether a row's type or text is right; that stays a human review.
 Standard library only. It reads files only; it never writes.
