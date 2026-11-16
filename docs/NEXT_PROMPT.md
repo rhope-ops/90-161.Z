@@ -31,7 +31,7 @@ Updated: 2026-11-16 by Claude. Keep this file at 40 lines or fewer and state onl
 
 ## Next
 
-- Round build speed (PFM 15 Nov; DECISIONS): a round build uses the RADE release that exists, and an engine change runs in its own RADE session at the same time; start each fresh review while the hosted check runs; one new session for each round; a `worker` on the standard tier unless .claude/skills/delegate/SKILL.md says strong. Agent REC, not a decision: target about 60 min for a round build with no engine change (estimate from the audit 3 time record); report the real time of R26. Time record of the R25 session: the audit 3 report, section 1.
+- Round build speed (PFM 15 Nov): the steps are in `.claude/skills/round/SKILL.md` section 0. Agent REC, not a decision: target about 60 min for a round build with no engine change (estimate from the audit 3 time record); report the real time of R26. Time record of the R25 session: the audit 3 report, section 1.
 - Roadmap (PFM 15 Nov): phase states, exit criteria and the rounds from R24 to the pilot are in docs/phases.md (round order approved by the PFM, 1A; exit criteria and estimate = agent REC; evidence docs/reviews/2026-11-15-roadmap-evidence.md). Slice 1 passed in R22; both holds of 14 Nov are lifted (PFM 15 Nov). Not built: the endorser-answer app flow.
 
 ## Do not
