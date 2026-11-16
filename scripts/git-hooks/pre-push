@@ -5,7 +5,7 @@
 # remote's HEAD, init.defaultBranch, or each name in the git config key check.fullLaneBranch), the fast lane for any other
 # branch (.claude/skills/deliver/SKILL.md), and scripts/pii_guard.py on the tracked files and the pushed commits (when
 # the repo root has a .pii-guard file).
-# Blocks: a push that is not a fast-forward (every force-push form, including --force-with-lease),
+# Blocks: a push that git runs outside the repo's own work tree (own_tree), a push that is not a fast-forward (every force-push form, including --force-with-lease),
 # deleting main or master on the remote, and pushing a remote commit this clone has not fetched.
 # A person who truly needs to override runs the push with --no-verify; agents never do (AGENTS.md "Git safety").
 # Self-test: bash scripts/git-hooks/pre-push --test
@@ -50,13 +50,30 @@ default_branches() {  # default_branches REMOTE: the names this clone knows for 
   printf '%s' "${out# }"
 }
 
+shown() { grep -E '^ *(TIME|WARN|CHECK) '; }  # the lines of a passing check.sh run that a push shows (WARN lines of a
+                                                # passing check are indented)
+
+own_tree() {  # own_tree: prints the top folder when it is this repo's own work tree, else nothing. "git --git-dir=<repo>/.git
+             # push" run from another folder makes that folder the work tree: the checks would run there, or not at all.
+  local top gd own
+  top="$(git rev-parse --show-toplevel 2>/dev/null)" && [ -n "$top" ] || return 0
+  gd="$(git rev-parse --absolute-git-dir 2>/dev/null)" && gd="$(cd "$gd" && pwd -P)" || return 0
+  own="$(cd "$top" 2>/dev/null && unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_INDEX_FILE && git rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+  [ "$(cd "$own" && pwd -P)" = "$gd" ] && printf '%s' "$top"
+  return 0
+}
+
 if [ "${1:-}" = "--test" ]; then
   set -e
+  # The host's git config (forced signing, init.defaultBranch, "git -c ..." on the push) must not change the cases.
+  export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+  unset GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
   t=$(mktemp -d); trap 'rm -rf "$t"' EXIT
   git -C "$t" init -q -b main && cd "$t"
-  git -c user.email=t@t -c user.name=t commit -q --allow-empty -m a; a=$(git rev-parse HEAD)
-  git -c user.email=t@t -c user.name=t commit -q --allow-empty -m b; b=$(git rev-parse HEAD)
-  git checkout -q -b side "$a"; git -c user.email=t@t -c user.name=t commit -q --allow-empty -m c; c=$(git rev-parse HEAD)
+  cm() { git -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -q --allow-empty -m "$1"; }
+  cm a; a=$(git rev-parse HEAD)
+  cm b; b=$(git rev-parse HEAD)
+  git checkout -q -b side "$a"; cm c; c=$(git rev-parse HEAD)
   set +e; fails=0
   run() { local name=$1 want=$2 input=$3 got; out=$(printf '%s\n' "$input" | check); got=$?
           if [ "$got" = "$want" ]; then echo "ok   $name"; else echo "FAIL $name (exit $got) $out"; fails=1; fi; }
@@ -78,7 +95,6 @@ if [ "${1:-}" = "--test" ]; then
   lane "branch and main: full lane"   full "refs/heads/x $c refs/heads/x $zero
 refs/heads/main $b refs/heads/main $a"
   lane "delete only: fast lane"       fast "(delete) $zero refs/heads/main $b"
-  export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1  # the host's init.defaultBranch must not change the cases
   eq() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1 (got '$2', want '$3')"; fails=1; fi; }
   eq "no origin/HEAD, no config: no extra default branch" "$(default_branches origin)" ""
   eq "a branch named trunk is fast then" "$(printf '%s\n' "refs/heads/x $c refs/heads/trunk $a" | lane_of $(default_branches origin))" fast
@@ -89,6 +105,23 @@ refs/heads/main $b refs/heads/main $a"
   eq "a remote and a branch with a slash" "$(default_branches team/fork)" "rel/1.0"
   git config check.fullLaneBranch release
   eq "check.fullLaneBranch adds a name" "$(printf '%s\n' "refs/heads/x $c refs/heads/release $a" | lane_of $(default_branches https://example.invalid/r.git))" full
+  git config --add check.fullLaneBranch hotfix
+  eq "check.fullLaneBranch: every value counts" "$(default_branches https://example.invalid/r.git)" "release hotfix"
+  eq "push to the second value: full lane" "$(printf '%s\n' "refs/heads/x $c refs/heads/hotfix $a" | lane_of $(default_branches https://example.invalid/r.git))" full
+  git config --unset-all check.fullLaneBranch; git config init.defaultBranch dev
+  eq "init.defaultBranch adds a name" "$(default_branches https://example.invalid/r.git)" "dev"
+  eq "push to init.defaultBranch: full lane" "$(printf '%s\n' "refs/heads/x $c refs/heads/dev $a" | lane_of $(default_branches https://example.invalid/r.git))" full
+  git config --unset init.defaultBranch
+  eq "a push shows TIME, WARN and CHECK lines, also an indented WARN" "$(printf '%s\n' 'PASS  a' '      WARN  rule lint: x' 'TIME  full' 'WARN  slower' 'CHECK PASS' '      rules: y' 'PASS  x WARN y' | shown | tr '\n' '|')" "      WARN  rule lint: x|TIME  full|WARN  slower|CHECK PASS|"
+  o=$(mktemp -d); git -C "$o" init -q -b main  # another repo: the folder a "git --git-dir=..." push may start in
+  eq "own work tree: the top folder" "$(own_tree)" "$(pwd -P)"
+  eq "from a subfolder: the top folder" "$(mkdir -p sub && cd sub && own_tree)" "$(pwd -P)"
+  eq "--git-dir from another repo's folder: none" "$(cd "$o" && GIT_DIR="$t/.git" own_tree)" ""
+  eq "--git-dir from a plain folder: none" "$(cd "$o" && mkdir -p plain && cd plain && GIT_DIR="$t/.git" GIT_WORK_TREE="$o/plain" own_tree)" ""
+  eq "--git-dir with --work-tree of this repo: the top folder" "$(cd "$o" && GIT_DIR="$t/.git" GIT_WORK_TREE="$t" own_tree)" "$(pwd -P)"
+  git worktree add -q -b wtb "$o/wt" "$a"
+  eq "a linked worktree: its own top folder" "$(cd "$o/wt" && GIT_DIR="$t/.git/worktrees/wt" own_tree)" "$(cd "$o/wt" && pwd -P)"
+  rm -rf "$o"
   [ $fails = 0 ] && echo "PRE-PUSH TEST PASS" || { echo "PRE-PUSH TEST FAIL"; exit 1; }
   exit 0
 fi
@@ -97,11 +130,16 @@ input=$(cat)
 out=$(printf '%s\n' "$input" | check) || { echo "$out" >&2; exit 1; }
 [ -n "$out" ] && echo "$out" >&2
 
-top="$(git rev-parse --show-toplevel)"
+top="$(own_tree)"
+if [ -z "$top" ]; then
+  echo "pre-push: blocked: git runs this push outside the repo's own work tree (for example \"git --git-dir=<repo>/.git push\" from another folder), so the checks and the personal-data guard cannot run. Run the push from inside the repo folder." >&2
+  exit 1
+fi
+cd "$top" || exit 1
 
 # Repo checks: a push that carries commits runs scripts/check.sh on this checkout and is blocked when it fails,
 # so an agent cannot sign off its own work (AGENTS.md "Git safety"). A push that only deletes branches skips it.
-# Lane: full for main, master or the remote's default branch, so nothing reaches the default branch on a fast-lane pass; fast for other branches.
+# Lane: full for main, master or a default branch (default_branches), so nothing reaches it on a fast-lane pass; fast for other branches.
 # --cached: a lane that already passed on this commit with a clean tree is not run again.
 # --no-pii: with the guard on, the guard step below scans the tracked files and the pushed commits in one run.
 carries=0
@@ -117,7 +155,7 @@ if [ -f "$top/scripts/check.sh" ] && [ "$carries" = 1 ]; then
     echo "pre-push: blocked: scripts/check.sh ${args[*]} failed (output above). Fix the cause, then push again." >&2
     exit 1
   fi
-  printf '%s\n' "$cout" | grep -E '^(TIME|CHECK) ' >&2
+  printf '%s\n' "$cout" | shown >&2
 fi
 
 # Personal-data guard: runs only in a repo that opts in with a .pii-guard file at its root (AGENTS.md "Personal data").
@@ -131,8 +169,12 @@ if [ -f "$top/.pii-guard" ]; then
   fi
   gargs=(--push --require-denylist)
   [ "$carries" = 1 ] && gargs=(--all "${gargs[@]}")  # one run: every tracked file, and the pushed commits
+  g0=$(date +%s%N 2>/dev/null)
   pout=$(printf '%s\n' "$input" | python3 "$guard" "${gargs[@]}" 2>&1); rc=$?
   [ -n "$pout" ] && printf '%s\n' "$pout" >&2
+  # Compare the guard's time with its baseline (warn only; .claude/skills/efficiency/SKILL.md). Needs date +%N (GNU).
+  case "$g0" in *N|'') ;; *) [ -f "$top/scripts/bloat_check.py" ] && [ "$carries" = 1 ] && python3 "$top/scripts/bloat_check.py" \
+    --project "$top" --compare "push-guard=$(awk -v a="$g0" -v b="$(date +%s%N)" 'BEGIN {printf "%.1f", (b - a) / 1e9}')" 2>&1 | tail -n 1 >&2 ;; esac
   if [ "$rc" -ne 0 ]; then
     if printf '%s' "$pout" | grep -q "PII GUARD FAIL: no denylist found"; then
       echo "pre-push: blocked: this session has no name denylist, so the guard cannot check names. Add it (docs/FIRST_USE.md step 4), then push again." >&2

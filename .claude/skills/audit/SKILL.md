@@ -1,13 +1,13 @@
 ---
 name: audit
-description: Use when the PFM asks for a bloat, drift, rule or speed audit, when the check-in says AUDIT DUE and the PFM agrees to run it, before a release, and when a timed operation is 25% slower than its baseline. Gives the full audit - measure, find bloat by category (rule census and slow or serial steps included), check assumptions, fix, and deliver removals as one small pull request for the PFM.
+description: Use when the PFM asks for a bloat, drift, rule or speed audit, when the check-in says AUDIT DUE and the PFM agrees to run it, and before a release (one slow operation: the efficiency skill). Gives the full audit - measure, find bloat by category (rule census and slow or serial steps included), check assumptions, fix, and deliver removals as one small pull request for the PFM.
 ---
 
 # Bloat, drift and assumption audit
 
 The full periodic audit that AGENTS.md "Bloat, drift and assumptions" calls for. Claude or a person can run it. Never start it unasked: when the check-in says AUDIT DUE, tell the PFM and ask (about 1 hour of agent time).
 
-Due: every 14 days or 300 commits to main, whichever comes first; before a release; and when a timed operation is 25% slower than its baseline. The PFM may set other values in `.bloat-audit.json`.
+Due: every 14 days or 300 commits to main, whichever comes first, and before a release. The PFM may set other values in `.bloat-audit.json`. One operation slower than its baseline: `.claude/skills/efficiency/SKILL.md`; it proposes this audit when the cause is spread over many files.
 
 Why: two audits of one project found layered bloat that made a simple operation 5x slower (116.6 s to 23.4 s after the fix). Each layer looked reasonable when an agent added it. Agents add; they seldom remove. This audit finds what to remove and proposes it.
 
@@ -54,7 +54,7 @@ Every item below finds; it does not fix. A fix that removes, shortens, rewords, 
 
 12. Instruction bloat: AGENTS.md, CLAUDE.md, host prompts, project instructions and personal preferences. Find rules that repeat, conflict, are already enforced by a hook or test (keep the hook, shorten the rule to a pointer), or describe one past incident. Every rule needs a reason a reader can check. Prefer one line per rule.
 13. Context cost: everything loaded at session start costs tokens on every turn of every session. Move reference text (long tables, history, evidence) out of start-read files into files read on demand. The decision log is a record, not a start-read file: check that no start-read file imports it or tells agents to read it at start, and that a decision that must bind every session is one line in "Project rules".
-14. Rule census: count the rules (`bloat_check.py --rules`) and compare with the last audit. "The rule has a reason" is not a pass: every rule has one. For each rule in AGENTS.md and "Project rules", write one of: enforced by a hook or test (shorten it to a pointer); a procedure (move it to a skill); the model does it without the rule (retire); evidence that it changed an outcome since the last audit (a log row, a review, a corrected turn: keep); no evidence (retire, or give it a review date). Report the count for each class.
+14. Rule census: count the rules (`bloat_check.py --rules`) and compare with the last audit. Run `bloat_check.py --lint` and put each flag (near-duplicate, vague, untested) in the census. "The rule has a reason" is not a pass: every rule has one. For each rule in AGENTS.md and "Project rules", write one of: enforced by a hook or test (shorten it to a pointer); a procedure (move it to a skill); the model does it without the rule (retire); evidence that it changed an outcome since the last audit (a log row, a review, a corrected turn: keep); no evidence (retire, or give it a review date). Report the count for each class.
 15. Cross-host duplication: the same rule in the repo, a claude.ai Project, personal preferences and memory. The repo is the source; other places hold a pointer only. Personal preferences hold personal style, not project rules.
 16. Handoff and memory rot: NEXT_PROMPT.md, memory files and review folders that keep closed items, old links and repeated status. Keep the handoff at its line budget; archive reviews older than 90 days into a single index.
 17. Agent-made helpers: one-off scripts, debug files, scratch copies, "_v2"/"_new"/"_old" files and extra wrappers left by agents. Each needs a caller or a recorded reason; if it has neither, propose its removal.
@@ -83,7 +83,7 @@ Assumptions that nobody checked are drift that has not happened yet.
 ## Step 5: record
 
 1. Write `docs/reviews/YYYY-MM-DD-bloat-audit.md` (or the place AGENTS.md "Project rules" names): the before/after table, findings by category with evidence, fixes made, proposals for the PFM, the assumption table, the tech-debt register.
-2. Update `.bloat-audit.json`: `last_audit` (date, commit on main after the fixes, report path), new `timings` baselines (`--time --record`), and `ignore` globs for generated or reference files that the duplicate scan should skip (each new glob is a proposal: it hides files from the scan).
+2. Update `.bloat-audit.json`: `last_audit` (date, commit on main after the fixes, report path), new `timings` baselines (`--time --record`, and `scripts/check.sh --record` for the lanes), and `ignore` globs for generated or reference files that the duplicate scan should skip (each new glob is a proposal: it hides files from the scan).
 3. Log the audit in the project log (milestone; a breakthrough when a fix removes a blocker or saves 25%+ time).
 4. Ask the PFM the open questions together, each with options and a recommendation. Removal proposals: make the 5 with the largest saving on a second branch and open one pull request for them, one commit for each item, with a table in its text: what, where, why it exists (or "not found"), evidence it is unused, saving, risk. An agent never merges this pull request: the PFM's merge is the approval, and the PFM can drop a commit. List the other proposals in the report for the next audit; a long list is not approved, so it removes nothing.
 

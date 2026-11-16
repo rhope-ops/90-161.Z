@@ -384,6 +384,10 @@ def report(found, what, deny, dod=False):
 
 
 def self_test():
+    # The host's git config (forced signing, -c on the command line) must not change the cases.
+    for k in ("GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT"):
+        os.environ.pop(k, None)
+    os.environ.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
     at, dot = "@", "."
     ok = True
 
@@ -659,6 +663,7 @@ def self_test():
         for k in [k for k in env if k.startswith("GIT_") and k not in (
                 "GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL")]:
             env.pop(k)
+        env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
         run = lambda *a: subprocess.run(["git", *a], cwd=d, env=env, check=True, capture_output=True)
         run("init", "-q", "-b", "main")
         pathlib.Path(d, "a.txt").write_text("clean\n")

@@ -24,7 +24,8 @@ AGENTS.md "Delivery" and "Checks" point here. The rules are there; this file hol
 | Fast | `scripts/check.sh --fast` | Rule caps and pointers; self-tests only of the kit scripts that changed against origin/main; the project log check; the personal-data scan; `scripts/check.local.sh --fast` | The pre-push hook, on each push to a branch other than main |
 | Full | `scripts/check.sh` | Everything: all self-tests and `scripts/check.local.sh` with no argument | Before a merge (step 3), the pre-push hook on a push to main, and the pull-request Action |
 
-- Steps of a lane run in parallel. Each run ends with a `TIME` line: the wall time and the 3 slowest steps. A slow step is a finding: report it under Suggest.
+- Steps of a lane run in parallel. Each run ends with a `TIME` line (the wall time and the 3 slowest steps) and a line that compares the times with their baselines. A `WARN  slower than the baseline` line (full tier) starts the `efficiency` skill; it never fails the lane.
+- A passing step can print `WARN` lines (rule lint). When rule lines changed, the full lane fails until the conflict check of `.claude/skills/rule-change/SKILL.md` has a record.
 - `scripts/check.local.sh` gets `--fast` as its first argument in the fast lane. A fast project lane must still check each changed file in full and that generated files are not stale. A script that ignores the argument runs everything, which is slow but safe.
 - A lane that passed on a clean tree leaves a stamp in `.git/`; the hook skips a repeat run on the same commit. Never write the stamp by hand.
 - The fast lane can miss a defect in a file that did not change. The full lane before the merge is the gate: never merge on a fast-lane pass.

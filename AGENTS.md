@@ -85,15 +85,15 @@ Nothing else is a rule. docs/DECISIONS.md is the record of what the PFM decided:
 
 ## Handoff
 
-- Keep status in repo files, never only in chat (the next session cannot see this chat; it reads the files). The current request overrides an older handoff. Keep docs/NEXT_PROMPT.md short (40 lines or fewer) and put detailed evidence in docs/reviews/.
+- Keep status in repo files, never only in chat (the next session cannot see this chat; it reads the files). The current request overrides an older handoff. Keep docs/NEXT_PROMPT.md short (40 lines or fewer) and put detailed evidence in docs/reviews/. Steps: `.claude/skills/handoff/SKILL.md`.
 
 ## Bloat, drift and assumptions
 
 - One fact, rule or value lives in one place; other places link to it. Before you add a file, rule, script, check or doc section, search for an existing place and extend or replace it. A change removes what it makes obsolete (code, docs, files, rules) in the same commit.
-- Instruction files and host prompts hold rules only, one line each where possible (every line costs tokens on every task and can lower adherence). A rule a hook or test enforces becomes a pointer to it; a procedure that only some tasks need becomes a skill.
+- Instruction files and host prompts hold rules only, one line per rule (every line costs tokens on every task and can lower adherence); a rule that needs more lines is a procedure. A rule a hook or test enforces becomes a pointer to it; a procedure that only some tasks need becomes a skill.
 - Assumptions: before work of 3+ steps, state the key assumptions (the ones that change the result if wrong) with source and confidence (high / medium / low); ask about the low ones before you build. Never present an assumption as a fact.
 <!-- full -->
-- `scripts/bloat_check.py` (run by the check-in and by check.sh) measures the rule count against its caps, the start-read size, duplicate lines and the audit due date. The full audit, and when it is due: `.claude/skills/audit/SKILL.md`. Never start an audit unasked.
+- `scripts/bloat_check.py` (run by the check-in and by check.sh) measures the rule count against its caps, the start-read size, duplicate lines and the audit due date. The full audit, and when it is due: `.claude/skills/audit/SKILL.md`. Never start an audit unasked. A run slower than its baseline: `.claude/skills/efficiency/SKILL.md`.
 <!-- /full -->
 
 <!-- full -->

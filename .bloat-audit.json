@@ -9,7 +9,7 @@
       "seconds": 18.0,
       "max_slowdown": 0.25
     },
-    "check-in": {
+    "checkin": {
       "cmd": "scripts/session_checkin.sh",
       "seconds": 0.5,
       "max_slowdown": 0.25
