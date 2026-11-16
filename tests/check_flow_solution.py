@@ -198,6 +198,102 @@ for z in SLICES:
         for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
             if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
+# R26 (task T21, probe flows): three unmanaged test solutions built from flow/solution/test-defs/90161Z-T21-*.json:
+# P (3 flows, 5 connection references), W and M (one flow each). Same file rules as the export (no XML declaration, CRLF, root
+# components), and the data boundary: no ".mil", no mail address, no site host in any file. Every runAfter name exists on the same
+# level; every "@parameters('...')" resolves; each RESULT row runs after every status; a trigger condition is in the F05 shape.
+T21_EXPECT = {"90161Z-T21-probe-r1.zip": (3, 5), "90161Z-T21-probe-word-r1.zip": (1, 2), "90161Z-T21-probe-mail-r1.zip": (1, 2)}
+ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
+T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
+
+def check_levels(actions, where, outer=()):
+    """runAfter names must be siblings (same level); names are unique across the flow."""
+    for name, a in actions.items():
+        for dep, statuses in a.get("runAfter", {}).items():
+            if dep not in actions: bad(f"{where}: {name} runs after '{dep}', which is not on the same level")
+            if not set(statuses) <= ALL_STATUS: bad(f"{where}: {name} has unknown run-after status {statuses}")
+        p = a.get("inputs", {}).get("parameters", {}) if isinstance(a.get("inputs"), dict) else {}
+        if p.get("item/Title") == "RESULT" or p.get("item/Title") in ("T2-PDF", "T4b"):
+            for dep, statuses in a.get("runAfter", {}).items():
+                if set(statuses) != ALL_STATUS and not (name.startswith("T4b_row") or name == "T2_pdf_row"):
+                    bad(f"{where}: {name} writes a row but runs only after {dep} {statuses}; capture every status")
+        for sub in (a.get("actions", {}), a.get("else", {}).get("actions", {})):
+            check_levels(sub, where)
+
+t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
+if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
+t21_defs = sorted(B.TEST_DEFS.glob("90161Z-T21-*.json"))
+if len(t21_defs) != 5: bad(f"expected 5 T21 test defs, found {len(t21_defs)}")
+by_zip = {}
+for src in t21_defs:
+    d = json.loads(src.read_text(encoding="utf-8"))
+    by_zip.setdefault(d["solution"]["zip"], []).append(d)
+    names = set(re.findall(r"actions\('([^']+)'\)|outputs\('([^']+)'\)|body\('([^']+)'\)", json.dumps(d["actions"])))
+    all_names = {n for n, _ in walk_actions(d["actions"])}
+    for tup in names:
+        for n in tup:
+            if n and n not in all_names: bad(f"{src.name}: expression names action '{n}', which does not exist")
+    check_levels(d["actions"], src.name)
+    for s in strings(d): expr_ok(s, src.name)
+    for ref in re.findall(r"parameters\('([^']+)'\)", src.read_text(encoding="utf-8")):
+        if not ref.startswith("$") and ref not in B.ENV_KEY.values(): bad(f"{src.name}: unresolved parameter {ref}")
+    hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
+    hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
+    if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
+    for tn, t in d["triggers"].items():
+        if t.get("kind") == "PowerAppV2":
+            if "text" not in t["inputs"]["schema"]["properties"]: bad(f"{src.name}: PowerAppV2 trigger has no text input")
+        else:
+            c = t.get("conditions")
+            if not (isinstance(c, list) and c and all(set(x) == {"expression"} and x["expression"].startswith("@") for x in c)): bad(f"{src.name}: trigger condition not in the form [{{expression}}]")
+            if t["inputs"]["host"]["operationId"] != "GetOnNewItems" or t["inputs"]["parameters"].get("dataset") != "@parameters('Site URL (pfm_SiteUrl)')":
+                bad(f"{src.name}: trigger is not GetOnNewItems on the Site URL variable")
+    if re.search(r"\.mil\b|@[A-Za-z0-9-]+\.(com|net|org|gov|edu|us)\b|sharepoint\.(com|us)", src.read_text(encoding="utf-8")): bad(f"{src.name}: address or host text in the def")
+for zname, (nwf, ncr) in T21_EXPECT.items():
+    z = ROOT / "flow" / "solution" / zname
+    if not z.exists(): continue
+    with zipfile.ZipFile(z) as zz:
+        for n in zz.namelist():
+            if n.endswith(".xml"): minidom.parseString(zz.read(n))
+        blob = "\n".join(zz.read(n).decode("utf-8") for n in zz.namelist())
+        c, sol = zz.read("customizations.xml").decode("utf-8"), zz.read("solution.xml").decode("utf-8")
+        if re.search(r"\.mil\b", blob, re.I): bad(f"{zname}: holds '.mil'")
+        if re.search(r"@[A-Za-z0-9-]+\.(com|net|org|gov|edu|us|mil)\b", blob): bad(f"{zname}: holds an '@' followed by a mail domain")
+        if re.search(r"sharepoint\.(com|us)|https?://[^/\s\"]*sharepoint", blob, re.I): bad(f"{zname}: holds sharepoint host text")
+        for host in re.findall(r"https?://([A-Za-z0-9.-]+)", blob):
+            if host not in T21_HOSTS: bad(f"{zname}: URL host {host} not allowed")
+        for f in ("solution.xml", "customizations.xml"):
+            got = zz.read(f)
+            if got.startswith(b"<?xml") or got.startswith(b"\xef\xbb\xbf"): bad(f"{zname} {f}: starts with an XML declaration or BOM")
+            if b"\r\n" not in got or got.endswith(b"\n"): bad(f"{zname} {f}: line ends differ from the export")
+        if zz.read("[Content_Types].xml") != ref_ct: bad(f"{zname}: [Content_Types].xml differs from the export")
+        wids = re.findall(r'WorkflowId="\{([^}]+)\}"', c)
+        roots = set(re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', sol))
+        if len(wids) != nwf or set(wids) != roots: bad(f"{zname}: {len(wids)} workflows, {len(roots)} roots; expected {nwf}")
+        if any(w != w.lower() for w in wids): bad(f"{zname}: WorkflowId not lowercase")
+        if len(re.findall(r"<connectionreference ", c)) != ncr: bad(f"{zname}: expected {ncr} connection references")
+        if c.count("<StateCode>1</StateCode>") != nwf: bad(f"{zname}: every probe flow imports On (StateCode 1)")
+        envs = {n.split("/")[1] for n in zz.namelist() if n.startswith("environmentvariabledefinitions/")}
+        if envs != set(re.findall(r'<RootComponent type="380" schemaName="([^"]+)"', sol)): bad(f"{zname}: environment variable files differ from type 380 roots")
+        want_env = set()
+        for n in zz.namelist():
+            if n.startswith("environmentvariabledefinitions/") and zz.read(n).startswith(b"<?xml"): bad(f"{zname} {n}: XML declaration")
+            if n.startswith("Workflows/"):
+                w = json.loads(zz.read(n).decode("utf-8"))["properties"]
+                wf = w["definition"]
+                if "outputs" in wf: bad(f"{zname} {n}: definition has 'outputs'")
+                if "RunToken" in json.dumps(w) or "X-MS-APIM-Tokens" in json.dumps(w): bad(f"{zname} {n}: run-token authentication; probe flows use the owner connections")
+                if {r["runtimeSource"] for r in w["connectionReferences"].values()} != {"embedded"}: bad(f"{zname} {n}: connections must be embedded")
+                for r in w["connectionReferences"].values():
+                    if r["connection"]["connectionReferenceLogicalName"] not in c: bad(f"{zname} {n}: logical name not in customizations.xml")
+                for ref in re.findall(r"parameters\('([^']+)'\)", json.dumps(wf)):
+                    if ref.startswith("$"): continue
+                    if ref not in wf["parameters"]: bad(f"{zname} {n}: parameter {ref} not declared")
+                    else: want_env.add(wf["parameters"][ref]["metadata"]["schemaName"])
+        if envs != want_env: bad(f"{zname}: environment variables {sorted(envs)} differ from the ones the flows read {sorted(want_env)}")
+    if sorted(d["displayName"] for d in by_zip.get(zname, [])) != sorted(set(d["displayName"] for d in by_zip.get(zname, []))): bad(f"{zname}: duplicate flow names")
+    if len(by_zip.get(zname, [])) != nwf: bad(f"{zname}: expected {nwf} defs, found {len(by_zip.get(zname, []))}")
+
 if errs:
     print("\n".join(errs)); sys.exit(1)
-print(f"PASS flow solution: defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")
+print(f"PASS flow solution: t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")

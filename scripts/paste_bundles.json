@@ -24,136 +24,76 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R25-round-r1.ps1",
-      "round": "R25",
-      "title": "Round R25: clean install from zero on the test site. After the old lists, flows and solutions are deleted by hand, RADE checks that the site is clean, builds the 12 lists by PnP (no provisioning flow), sets up the site, and the slice 1 flows are imported and tested on the new lists. First round on RADE engine-v6: questions are answered in the window",
+      "out": "scripts/gov/paste/90161Z-R26-round-r1.ps1",
+      "round": "R26",
+      "title": "Round R26: the easy-path probe. Tries the easy ways for tests T2 to T10 of the 13-step process on the test site with fake data: file conversion, form filling, a Read-only person writing through an app, address-list search, mailbox members, 4 ways to send an e-mail (read back by a flow), and a signed PDF. One PASSED or FAILED line per test. Everything it makes on the site goes to the site Recycle Bin at the end",
       "files": [
         {
-          "dir": "T20",
-          "src": "scripts/gov/90161Z-T20-provision-lists-r1.ps1"
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-probe-r1.ps1"
         },
         {
-          "dir": "T20",
-          "src": "flow/provisioning-payload.json"
+          "dir": "T21",
+          "src": "flow/solution/90161Z-T21-probe-r1.zip"
         },
         {
-          "dir": "T16",
-          "src": "scripts/gov/90161Z-T16-site-setup-r11.ps1"
+          "dir": "T21",
+          "src": "flow/solution/90161Z-T21-probe-word-r1.zip"
         },
         {
-          "dir": "T18",
-          "src": "flow/solution/90161Z-T18-slice1-flows-r5.zip"
+          "dir": "T21",
+          "src": "flow/solution/90161Z-T21-probe-mail-r1.zip"
+        },
+        {
+          "dir": "T21",
+          "src": "samples/90161Z-T21-fake-draft-r1.docx"
+        },
+        {
+          "dir": "T21",
+          "src": "samples/90161Z-T21-fake-form-r1.html"
+        },
+        {
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-probe-app-r1.txt"
         },
         {
           "dir": "T17",
           "src": "scripts/gov/90161Z-T17-import-log-r2.ps1"
-        },
-        {
-          "dir": "T18",
-          "src": "scripts/gov/90161Z-T18-slice1-test-r4.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T20 Clean the site by hand r1",
-          "kind": "guide",
-          "dir": "T20",
-          "file": "",
-          "note": "You confirm that the old test objects are deleted (the task \"Clean the test site\" on the bookmark page). The next step checks the site. About 1 minute (estimate).",
-          "marker": "90161Z-T20-clean-confirmed.txt",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
-          "guide": [
-            "1. Before this round, do the task \"Clean the test site\" on the bookmark page (8 steps: solutions, flows, lists, the library, result files).",
-            "2. If it is done: select \"Done: site is clean\" and answer one question about Power Automate.",
-            "If it is not done: select \"It failed\", close RADE, do the task, then run the round again."
-          ],
-          "doneText": "Done: site is clean",
-          "needs": [
-            "net-flow"
-          ],
-          "estimate": 1,
-          "answers": [
-            {
-              "key": "flows-gone",
-              "prompt": "Are all 90-161.Z solutions and flows deleted in Power Automate?",
-              "kind": "yesno"
-            }
-          ]
-        },
-        {
-          "name": "T20 Clean site check r1",
-          "dir": "T20",
-          "file": "90161Z-T20-provision-lists-r1.ps1",
-          "args": "-Check",
-          "minutes": 10,
-          "note": "Signs in (CAC) and reads only. Passes when the site has no PFM list, no 90-161.Z library, no 90161Z result file and no probe test group. Changes nothing. About 1 minute (estimate).",
+          "name": "T21 Make the probe list and library r1",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-r1.ps1",
+          "args": "-Part Make",
+          "minutes": 15,
+          "note": "Signs in (CAC). Makes the list \"90161Z Probe\" and the library \"90161Z Probe Files\", lets site visitors write to that list only, uploads 2 fake files, saves 1 fake PDF. About 2 minutes (estimate).",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 1,
-          "after": [
-            "T20 Clean the site by hand r1"
-          ],
-          "help": "Delete what the FAIL lines name (task \"Clean the test site\"), then run the round again."
-        },
-        {
-          "name": "T20 Build the 12 lists r1",
-          "dir": "T20",
-          "file": "90161Z-T20-provision-lists-r1.ps1",
-          "minutes": 30,
-          "note": "Creates the 12 PFM lists with their columns, views, 88 seed rows, titles, indexes and edit-own-rows, then checks each list. It adds only; a second run skips what is there. About 5 minutes (estimate).",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 5,
-          "after": [
-            "T20 Clean site check r1"
-          ],
-          "help": "Send the results as they are. The step can be run again: it skips what is there.",
+          "estimate": 2,
+          "help": "Send the results as they are. The step can be run again.",
           "makes": [
             {
-              "kind": "lists",
-              "name": "the 12 PFM lists (PFM Offices to PFM Reviews)"
-            }
-          ]
-        },
-        {
-          "name": "T16 Site setup r11",
-          "dir": "T16",
-          "file": "90161Z-T16-site-setup-r11.ps1",
-          "args": "-Logo",
-          "minutes": 45,
-          "note": "Makes the 90-161.Z library again and uploads the seals from T07, checks the time zone, the header logo and edit-own-rows, and counts the lists and rows. About 4 minutes (estimate).",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 4,
-          "after": [
-            "T20 Build the 12 lists r1"
-          ],
-          "help": "Send the results as they are; each FAIL line names its own fix.",
-          "makes": [
+              "kind": "list",
+              "name": "90161Z Probe"
+            },
             {
               "kind": "library",
-              "name": "90-161.Z (folders Seals and Seals/Prepared)"
+              "name": "90161Z Probe Files (2 fake files)"
             }
           ]
         },
         {
-          "name": "T18 Import the slice 1 flows r5",
+          "name": "T21 Import the probe solution r1",
           "kind": "guide",
-          "dir": "T18",
-          "file": "90161Z-T18-slice1-flows-r5.zip",
-          "note": "You import the 90-161.Z flows solution into the clean environment and answer 2 questions in this window. Value 3 (shared mailbox) stays empty in this round. About 7 minutes (estimate).",
-          "marker": "90161Z-T18-slice1-imported.txt",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-r1.zip",
+          "note": "You import the solution \"90-161.Z probe\" and select Done. About 8 minutes (estimate).",
+          "marker": "90161Z-T21-probe-imported.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
@@ -161,244 +101,400 @@
             "1. Select \"Open in browser\". Power Automate opens; sign in with your CAC if asked.",
             "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
             "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
-            "4. Connections: for SharePoint and for Office 365 Outlook, select your existing connection.",
-            "5. Environment variables: find the 4 labels that start with 1 to 4. They can be in any order on the page; remember the order you see.",
-            "6. \"1 Site URL\": paste the test site address. \"2 Alert e-mail\": your own work e-mail address.",
-            "7. \"3 Shared mailbox\": leave it EMPTY in this round (it tests which mailbox sends). \"4 Test mode\" must read Yes. Keep all other values.",
-            "8. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "9. Open the solution \"90-161.Z flows\". F05 and F06 must read On and F03 Off; if one differs, change it.",
-            "10. Return to RADE, select \"Done: imported\" and answer the 2 questions.",
-            "If the import fails: select \"Download log file\" (any folder), type the first line of the red error (no names or site address) below, then select \"It failed\"."
+            "4. Connections: select your existing connection for SharePoint, Outlook, OneDrive, Office 365 Users and Office 365 Groups.",
+            "5. If a connector has no connection: select New connection > Create, sign in, return to the import tab and select Refresh.",
+            "6. Environment variables: \"1 Site URL\": paste the test site address. \"3 Shared mailbox\": type the PFM office mailbox address (not empty).",
+            "7. Keep all other values. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "8. Open the solution. The 3 flows \"90161Z T21 Probe ...\" must read On. If one reads Off, turn it on.",
+            "9. Return to RADE and select \"Done: imported\".",
+            "If the import fails: Select \"Download log file\", type the first red error line (no names) below, then select \"It failed\"."
           ],
           "doneText": "Done: imported",
           "needs": [
             "net-flow",
             "flow-guide"
           ],
-          "estimate": 7,
+          "estimate": 8,
           "after": [
-            "T20 Build the 12 lists r1"
+            "T21 Make the probe list and library r1"
           ],
-          "help": "Send the results as they are; the next step reads the import log if you downloaded it.",
+          "help": "Send the results as they are; the import log step reads the log if you downloaded it.",
           "makes": [
             {
               "kind": "solution",
-              "name": "90-161.Z flows (F03 r5, F05 r2, F06 r1)"
+              "name": "90-161.Z probe (3 flows: Files, Mail, App)"
             }
           ],
-          "answers": [
+          "doneLog": "Confirmed by you: imported."
+        },
+        {
+          "name": "T21 Import the Word solution r1",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-word-r1.zip",
+          "note": "You import the solution \"90-161.Z probe Word\" and select Done. The import may be refused on this tenant: a refusal is a valid result. About 4 minutes (estimate).",
+          "marker": "90161Z-T21-word-imported.txt",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt",
+          "guide": [
+            "1. Select \"Open in browser\". Power Automate opens; sign in with your CAC if asked.",
+            "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
+            "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
+            "4. Connections: select your existing connection for SharePoint; create one for Word Online (Business).",
+            "5. Word Online (Business) is a Premium connector. If the page says you have no licence for it, that is the refusal.",
+            "6. Environment variables: \"1 Site URL\": the test site address (it can be filled already).",
+            "7. Keep all other values. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "8. Open the solution. The flow \"90161Z T21 Probe Word r1\" must read On. If one reads Off, turn it on.",
+            "9. Return to RADE and select \"Done: imported\".",
+            "If the import is refused: that is a result. Select \"Download log file\", type the first red error line (no names) below, then select \"It failed\"."
+          ],
+          "doneText": "Done: imported",
+          "needs": [
+            "net-flow",
+            "flow-guide"
+          ],
+          "estimate": 4,
+          "after": [
+            "T21 Make the probe list and library r1"
+          ],
+          "help": "Send the results as they are; the import log step reads the log if you downloaded it.",
+          "makes": [
             {
-              "key": "label-order",
-              "prompt": "In which order did the page show the 4 numbered values? Type the numbers, for example 1 3 4 2.",
-              "kind": "text"
-            },
-            {
-              "key": "test-mode",
-              "prompt": "What did \"4 Test mode\" read before you changed anything?",
-              "kind": "pick",
-              "choices": [
-                "Yes",
-                "No",
-                "Empty"
-              ]
+              "kind": "solution",
+              "name": "90-161.Z probe Word (1 flow)"
             }
-          ]
+          ],
+          "doneLog": "Confirmed by you: imported."
+        },
+        {
+          "name": "T21 Import the Mail solution r1",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-mail-r1.zip",
+          "note": "You import the solution \"90-161.Z probe Mail\" and select Done. The import may be refused on this tenant: a refusal is a valid result. About 4 minutes (estimate).",
+          "marker": "90161Z-T21-mail-imported.txt",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt",
+          "guide": [
+            "1. Select \"Open in browser\". Power Automate opens; sign in with your CAC if asked.",
+            "2. Select Solutions (under More if it is not shown), then Import solution > Browse.",
+            "3. In the File name box, press Ctrl+V (the file path is on the clipboard), select Open, then Next.",
+            "4. Connections: select your existing connection for SharePoint; create one for Mail.",
+            "5. Microsoft says the Mail connector is not in DoD. If the page cannot find it, that is the refusal.",
+            "6. Environment variables: \"1 Site URL\": the test site address. \"2 Alert e-mail\": your own work e-mail address.",
+            "7. Keep all other values. Select Import and wait for \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "8. Open the solution. The flow \"90161Z T21 Probe Mail Notify r1\" must read On. If one reads Off, turn it on.",
+            "9. Return to RADE and select \"Done: imported\".",
+            "If the import is refused: that is a result. Select \"Download log file\", type the first red error line (no names) below, then select \"It failed\"."
+          ],
+          "doneText": "Done: imported",
+          "needs": [
+            "net-flow",
+            "flow-guide"
+          ],
+          "estimate": 4,
+          "after": [
+            "T21 Make the probe list and library r1"
+          ],
+          "help": "Send the results as they are; the import log step reads the log if you downloaded it.",
+          "makes": [
+            {
+              "kind": "solution",
+              "name": "90-161.Z probe Mail (1 flow)"
+            }
+          ],
+          "doneLog": "Confirmed by you: imported."
         },
         {
           "name": "T17 Import log reader r2",
           "dir": "T17",
           "file": "90161Z-T17-import-log-r2.ps1",
           "minutes": 5,
-          "note": "Runs only if the import failed: copies the error rows of an import log saved in the last 3 hours to T17, addresses masked. Otherwise it reports SKIPPED.",
+          "note": "Runs only if an import failed: copies the error rows of an import log saved in the last 3 hours to T17, addresses masked. Otherwise it reports SKIPPED.",
           "estimate": 1
         },
         {
-          "name": "T18 Slice 1 test, part 1 r4",
-          "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r4.ps1",
-          "args": "-Part 1",
-          "minutes": 30,
-          "note": "Signs in (CAC). Creates three fake publications at step 6 on the new lists and checks F05: rows for A only, F after its title fix, one removed row added back. Sets two rows past due for F03.",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 12,
-          "after": [
-            "T18 Import the slice 1 flows r5"
-          ],
-          "help": "Send the results as they are. A FAIL here on new lists is a finding about the lists or the flows."
-        },
-        {
-          "name": "T18 Failure e-mail and Resubmit r1",
+          "name": "T21 AI Builder look r1",
           "kind": "guide",
-          "dir": "T18",
+          "dir": "T21",
           "file": "",
-          "note": "You check that F05 e-mailed you about the forced failure, then select Resubmit on that failed run. About 4 minutes (estimate).",
-          "marker": "90161Z-T18-resubmitted.txt",
+          "note": "Test T6, way a. You look whether Power Automate offers an AI Builder action on this tenant, and answer 1 question. Nothing is saved. About 3 minutes (estimate).",
+          "marker": "90161Z-T21-aib-looked.txt",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
           "guide": [
-            "1. In Outlook, find the e-mail \"90-161.Z flow failed: F05\" (it arrived in part 1). It names the step \"Test hook forced failure\". Do not reply.",
-            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\" > \"90161Z F05 Endorsement Routing r2\".",
-            "3. Under 28-day run history, select the run marked Failed (the time in the e-mail).",
-            "4. Select Resubmit at the top of the run. Wait until the new run shows Succeeded (under 1 minute, estimate).",
-            "5. Return to RADE and select \"Done: resubmitted\".",
-            "If no failure e-mail arrived, or there is no failed run: type what you see (no names or site address) in the box below, then select \"It failed\"."
+            "1. Select \"Open in browser\". In Power Automate select Create > Instant cloud flow > Skip (no name is needed).",
+            "2. Select the + under the trigger (or New step). In the search box type: AI Builder",
+            "3. Look for the action \"Run a prompt\" (older name: \"Create text with GPT using a prompt\").",
+            "4. If it is offered: select it, open its Prompt list, and look whether a prompt such as \"Summarize text\" can be chosen.",
+            "5. Close the browser tab without saving (select Leave if asked).",
+            "6. Return to RADE, select \"Done: I looked\" and answer the question.",
+            "If Power Automate does not open: select \"It failed\" and type what you see (no names or addresses)."
           ],
-          "doneText": "Done: resubmitted",
-          "needs": [
-            "net-flow"
-          ],
-          "estimate": 4,
-          "after": [
-            "T18 Slice 1 test, part 1 r4"
-          ]
-        },
-        {
-          "name": "T18 Run F03 once r5",
-          "kind": "guide",
-          "dir": "T18",
-          "file": "",
-          "note": "You run F03 once by hand. In test mode its e-mails go only to you; in this round your own mailbox sends them. A later step asks where the e-mail arrived. About 3 minutes (estimate).",
-          "marker": "90161Z-T18-f03-ran.txt",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
-          "guide": [
-            "1. Safety check: if Test mode did not read Yes at import, select \"Skip\": F03 would e-mail real endorsers.",
-            "2. Select \"Open in browser\" and open Solutions > \"90-161.Z flows\".",
-            "3. Open \"90161Z F03 Suspense Reminders r5\" and select Test > Manually > Test, then Run flow.",
-            "4. Wait until the run ends (under 1 minute, estimate). Read only the status at the top of the run: \"Succeeded\" or \"Failed\".",
-            "5. Grey (skipped) steps are normal: the last 3 steps, one of the two send steps, and most rows of the loop send nothing.",
-            "6. If the status is Succeeded: return to RADE and select \"Done: F03 ran\". A later step asks about the e-mail.",
-            "If the status is Failed: type the name of the first step with a red mark and the first line of its error (no names or site address), then select \"It failed\"."
-          ],
-          "doneText": "Done: F03 ran",
+          "doneText": "Done: I looked",
           "needs": [
             "net-flow"
           ],
           "estimate": 3,
-          "after": [
-            "T18 Slice 1 test, part 1 r4"
-          ]
+          "answers": [
+            {
+              "key": "t6-aibuilder",
+              "prompt": "What did Power Automate offer for AI Builder?",
+              "kind": "pick",
+              "choices": [
+                "Run a prompt, and a prompt can be chosen",
+                "Run a prompt, but no prompt or an error",
+                "Other AI Builder actions only",
+                "No AI Builder action"
+              ]
+            }
+          ],
+          "doneLog": "Confirmed by you: I looked."
         },
         {
-          "name": "T18 Slice 1 test, part 2 r4",
-          "dir": "T18",
-          "file": "90161Z-T18-slice1-test-r4.ps1",
-          "args": "-Part 2",
-          "minutes": 40,
-          "note": "Checks: Resubmit made no duplicates; F03 suspense and one escalation; F06 hold, resume and cancel; Legal rows and step 7. Line j2 names the mailbox that sent the e-mail. Removes all test rows.",
+          "name": "T21 Run the flow tests r1",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-r1.ps1",
+          "args": "-Part Run",
+          "minutes": 30,
+          "note": "Signs in (CAC). Starts the probe flows and waits up to 14 minutes: file conversion (T3, T5), fields (T6), 4 test e-mails read back by a flow (T9). Do not open Outlook. About 15 minutes (estimate).",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 12,
+          "estimate": 15,
           "after": [
-            "T18 Slice 1 test, part 1 r4"
+            "T21 Import the probe solution r1"
           ],
-          "help": "Send the results as they are. The test rows stay on the site for review when a check fails."
+          "help": "Send the results as they are. A FAILED line is a result of the probe, not a fault of the round."
         },
         {
-          "name": "T18 Find the test e-mail r1",
+          "name": "T21 Build the test app r1",
           "kind": "guide",
-          "dir": "T18",
-          "file": "",
-          "note": "You look for the F03 test e-mail and answer one question in this window. This closes a fault of 4 rounds: the e-mail was logged but never found. About 2 minutes (estimate).",
-          "marker": "90161Z-T18-email-looked.txt",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-app-r1.txt",
+          "note": "You make one blank canvas app and paste 6 small code blocks. A plain test screen, not a design. Microsoft has no supported import for an app built outside Power Apps. About 15 minutes (estimate).",
+          "marker": "90161Z-T21-app-built.txt",
+          "url": "https://make.apps.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Apps US Government (https://learn.microsoft.com/power-platform/admin/powerapps-us-government): DoD maker portal; editable in the window, remembered in Config (agent value, not confirmed on the device)",
+          "urlConfig": "90161Z-app-portal.txt",
           "guide": [
-            "1. In Outlook, search All Mailboxes for a subject that starts with \"[TEST] Escalation\", received today.",
-            "2. Look in this order: Inbox, Junk E-mail, then Sent Items.",
-            "3. Select \"Done: I looked\" and answer where you found it.",
-            "If Outlook does not open: select \"It failed\" and type what you see (no names or addresses)."
+            "1. Open the code file: press Windows key + R, press Ctrl+V (the file path is on the clipboard), then Enter. Keep Notepad open.",
+            "2. Select \"Open in browser\". Power Apps opens; sign in with your CAC if asked.",
+            "3. Select Create > Blank app > Blank canvas app. Name: 90161Z T21 Probe r1. Format: Tablet. Select Create.",
+            "4. On the left select Data > Add data > SharePoint. Paste the test site address, tick \"90161Z Probe\" and \"90161Z Probe Files\", select Connect.",
+            "5. Select Add data again, type Office 365 Users, and select it.",
+            "6. On the left select Power Automate (under the three dots if it is not shown) > Add flow > \"90161Z T21 Probe App r1\".",
+            "7. Select Insert > Edit form. Data source: \"90161Z Probe\". Keep the fields Title and Attachments. Drag the form to the lower right.",
+            "8. In Tree view, double-click the name of the form and type: frmProbe",
+            "9. Set the form as the part \"BY HAND for block 6\" in the file says, items 4 to 6 (3 short formulas).",
+            "10. In Notepad, copy block 1 (the lines between its 2 marker lines). In Tree view, right-click Screen1 and select Paste code.",
+            "11. Do step 10 again for blocks 2 to 6. If a block is refused: use the part \"BY HAND\" under that block in the file, then go on.",
+            "12. Select Save (Ctrl+S), then Publish > Publish this version.",
+            "13. Return to RADE, select \"Done: app built\" and answer the 2 questions.",
+            "If you cannot go on: type the block number and the first error line (no names) below, then select \"It failed\". The app steps are then skipped."
           ],
-          "doneText": "Done: I looked",
-          "estimate": 2,
+          "doneText": "Done: app built",
+          "estimate": 15,
           "after": [
-            "T18 Run F03 once r5"
+            "T21 Import the probe solution r1"
           ],
-          "answers": [
+          "help": "Send the results as they are; the error line tells the next build which block to fix.",
+          "makes": [
             {
-              "key": "f03-email",
-              "prompt": "Where is the e-mail \"[TEST] Escalation\" from this round?",
-              "kind": "pick",
-              "choices": [
-                "Inbox",
-                "Junk E-mail",
-                "Sent Items only",
-                "Not found"
-              ]
+              "kind": "app",
+              "name": "90161Z T21 Probe r1 (Power Apps, 1 screen)"
             }
-          ]
-        },
-        {
-          "name": "RADE Window questions r1",
-          "kind": "guide",
-          "dir": "T20",
-          "file": "",
-          "note": "You answer 4 short questions about this window: restore after minimize, button borders, alignment, and anything that looked wrong. This replaces notes in the e-mail. About 2 minutes (estimate).",
-          "marker": "90161Z-T20-window-looked.txt",
-          "guide": [
-            "1. Minimize this window now (the button with the line, top right).",
-            "2. Select RADE on the taskbar. The window must come back at its size, not as a full screen.",
-            "3. Select \"Done: I looked\" and answer the 4 questions.",
-            "If the window does not come back: maximize it to go on, select \"Done: I looked\" and answer No to the first question."
           ],
-          "doneText": "Done: I looked",
           "answers": [
             {
-              "key": "restored",
-              "prompt": "Did the window come back from the taskbar after you minimized it?",
-              "kind": "yesno"
+              "key": "app-blocks",
+              "prompt": "Which block numbers pasted as code with no error? For example 1 2 3 4 5 6. Type 0 for none.",
+              "kind": "text"
             },
             {
-              "key": "own-border",
-              "prompt": "Did every button and choice show only a thin border? A black or gray outline around one counts as No.",
-              "kind": "yesno"
-            },
-            {
-              "key": "aligned",
-              "prompt": "Were the lines and buttons aligned on every card?",
-              "kind": "yesno"
-            },
-            {
-              "key": "look",
-              "prompt": "Did anything look wrong? Name the card and the part. Do not type names or addresses.",
+              "key": "app-minutes",
+              "prompt": "About how many minutes did this step take?",
               "kind": "text"
             }
           ],
-          "estimate": 2
+          "doneLog": "Confirmed by you: app built."
+        },
+        {
+          "name": "T21 App tests r1",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "You use the test app: 2 buttons, 1 search, 1 look at the draft, and you sign 1 fake PDF and attach it. Tests T2, T4, T7, T8 and T10. About 10 minutes (estimate).",
+          "marker": "90161Z-T21-app-tested.txt",
+          "guide": [
+            "1. In Power Apps select Play (the triangle, top right, or F5).",
+            "2. Select the button \"T4 a\". A green line must say the row was written.",
+            "3. Select the button \"T4 b, T7 b, T8\". A line must say the flow started.",
+            "4. In the search box type the first 3 letters of any last name, then select \"T7 a: search\". The line under it shows counts only.",
+            "5. Look at the PDF viewer and at the image beside it. Remember which of them shows the fake draft.",
+            "6. In File Explorer open your OneDrive folder RADE\\90-161.Z\\T21 and open 90161Z-T21-fake-sign-r1.pdf.",
+            "7. In Acrobat select All tools > Use a certificate > Digitally sign, draw a box and sign with your CAC.",
+            "8. Save the signed file in the same folder with -signed at the end of its name.",
+            "9. In the app form: type T10 in Title if it is empty. Select \"Attach file\", choose the signed PDF, select \"T10: submit the form\".",
+            "10. Return to RADE, select \"Done: tested\" and answer the 3 questions.",
+            "If a button shows a red line: go on with the next step, and type the button name and the first words in the last answer."
+          ],
+          "doneText": "Done: tested",
+          "estimate": 10,
+          "after": [
+            "T21 Build the test app r1"
+          ],
+          "answers": [
+            {
+              "key": "t2-view",
+              "prompt": "What showed the fake draft in the app?",
+              "kind": "pick",
+              "choices": [
+                "PDF viewer and image",
+                "PDF viewer only",
+                "Image only",
+                "Neither"
+              ]
+            },
+            {
+              "key": "t10-signed",
+              "prompt": "Could you sign the fake PDF with your CAC and attach it?",
+              "kind": "yesno"
+            },
+            {
+              "key": "app-notes",
+              "prompt": "Did a button show a red line? Type the button and the first words (no names or addresses), or none.",
+              "kind": "text"
+            }
+          ],
+          "doneLog": "Confirmed by you: tested."
+        },
+        {
+          "name": "T21 Second person r1",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "Test T4. A second person with only Read on the test site opens the app and selects 2 buttons (about 5 minutes, estimate). If nobody is free today, select Skip: T4 is then not run.",
+          "marker": "90161Z-T21-second-person.txt",
+          "url": "https://make.apps.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Apps US Government (https://learn.microsoft.com/power-platform/admin/powerapps-us-government): DoD maker portal; editable in the window, remembered in Config (agent value, not confirmed on the device)",
+          "urlConfig": "90161Z-app-portal.txt",
+          "guide": [
+            "1. In Power Apps select Apps, select the three dots beside \"90161Z T21 Probe r1\", then Share.",
+            "2. Add the second person as User (not Co-owner), select Share, and send that person the app link (Details > Web link).",
+            "3. The person opens the link, selects Allow if asked, then selects the button \"T4 a\" and then the button \"T4 b, T7 b, T8\".",
+            "4. Ask what the lines said (written, started, or refused).",
+            "5. Return to RADE, select \"Done: second person\" and answer the question.",
+            "If the person cannot open the app: type the first line of what the person sees (no names) below, then select \"It failed\"."
+          ],
+          "doneText": "Done: second person",
+          "estimate": 5,
+          "after": [
+            "T21 Build the test app r1"
+          ],
+          "answers": [
+            {
+              "key": "t4-second",
+              "prompt": "What did the second person see?",
+              "kind": "pick",
+              "choices": [
+                "Both buttons worked",
+                "Only T4 a worked",
+                "Only the flow button worked",
+                "Neither worked"
+              ]
+            }
+          ],
+          "doneLog": "Confirmed by you: second person."
+        },
+        {
+          "name": "T21 Read the app tests r1",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-r1.ps1",
+          "args": "-Part App",
+          "minutes": 15,
+          "note": "Signs in (CAC) and reads the rows the app and its flow wrote. One PASSED or FAILED line for T4, T7, T8 and T10: field names and counts only. About 3 minutes (estimate).",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "estimate": 3,
+          "after": [
+            "T21 App tests r1"
+          ],
+          "help": "Send the results as they are."
+        },
+        {
+          "name": "T21 Remove the probe list and library r1",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-r1.ps1",
+          "args": "-Part Clean",
+          "minutes": 10,
+          "note": "Signs in (CAC). Moves the list \"90161Z Probe\" and the library \"90161Z Probe Files\" to the site Recycle Bin (restorable for 93 days). Removes nothing else. About 1 minute (estimate).",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "estimate": 1,
+          "after": [
+            "T21 Make the probe list and library r1"
+          ],
+          "help": "Send the results as they are. The step can be run again."
+        },
+        {
+          "name": "T21 Remove the probe solutions and app r1",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "You delete what the round made outside the site: up to 3 solutions, 1 app and 1 OneDrive folder. About 4 minutes (estimate).",
+          "marker": "90161Z-T21-removed.txt",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt",
+          "guide": [
+            "1. Select \"Open in browser\". In Power Automate select Solutions.",
+            "2. For \"90-161.Z probe\", \"90-161.Z probe Word\" and \"90-161.Z probe Mail\", if listed: select the three dots > Delete from this environment.",
+            "3. In Power Apps select Apps, the three dots beside \"90161Z T21 Probe r1\", then Delete.",
+            "4. In OneDrive (web), delete the folder \"90161Z-probe\" if it is there.",
+            "5. In Outlook, delete the test e-mails whose subject starts with \"[TEST] 90161Z T9\" (up to 4).",
+            "6. Return to RADE and select \"Done: removed\".",
+            "If something does not delete: type its name and the first line of the message, then select \"It failed\"."
+          ],
+          "doneText": "Done: removed",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 4,
+          "doneLog": "Confirmed by you: removed."
         }
       ],
       "collect": [
         {
-          "dir": "T20",
-          "name": "90161Z-T20-clean-check-r1.txt",
-          "step": "T20 Clean site check r1"
+          "dir": "T21",
+          "name": "90161Z-T21-probe-make-r1.txt",
+          "step": "T21 Make the probe list and library r1"
         },
         {
-          "dir": "T20",
-          "name": "90161Z-T20-provision-lists-r1.txt",
-          "step": "T20 Build the 12 lists r1"
+          "dir": "T21",
+          "name": "90161Z-T21-probe-run-r1.txt",
+          "step": "T21 Run the flow tests r1"
         },
         {
-          "dir": "T16",
-          "name": "90161Z-T16-setup-r11.txt",
-          "step": "T16 Site setup r11"
+          "dir": "T21",
+          "name": "90161Z-T21-probe-app-r1.txt",
+          "step": "T21 Read the app tests r1"
         },
         {
-          "dir": "T18",
-          "name": "90161Z-T18-slice1-part1-r4.txt",
-          "step": "T18 Slice 1 test, part 1 r4"
-        },
-        {
-          "dir": "T18",
-          "name": "90161Z-T18-slice1-part2-r4.txt",
-          "step": "T18 Slice 1 test, part 2 r4"
+          "dir": "T21",
+          "name": "90161Z-T21-probe-clean-r1.txt",
+          "step": "T21 Remove the probe list and library r1"
         },
         {
           "dir": "T17",
@@ -854,26 +950,47 @@
         {
           "path": "Rounds\\R23",
           "kind": "dir"
+        },
+        {
+          "path": "T20",
+          "kind": "dir"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r11.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R24",
+          "kind": "dir"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R25: clean install. Checks that the site is clean, builds the 12 lists, sets up the site, then imports and tests the flows.",
+          "summary": "Test round R26: the easy-path probe. Makes a probe list, imports up to 3 small solutions, runs flow tests; you build and use a plain test app.",
           "steps": [
-            "T20 Clean the site by hand r1",
-            "T20 Clean site check r1",
-            "T20 Build the 12 lists r1",
-            "T16 Site setup r11",
-            "T18 Import the slice 1 flows r5",
+            "T21 Make the probe list and library r1",
+            "T21 Import the probe solution r1",
+            "T21 Import the Word solution r1",
+            "T21 Import the Mail solution r1",
             "T17 Import log reader r2",
-            "T18 Slice 1 test, part 1 r4",
-            "T18 Failure e-mail and Resubmit r1",
-            "T18 Run F03 once r5",
-            "T18 Slice 1 test, part 2 r4",
-            "T18 Find the test e-mail r1",
-            "RADE Window questions r1"
+            "T21 AI Builder look r1",
+            "T21 Run the flow tests r1",
+            "T21 Build the test app r1",
+            "T21 App tests r1",
+            "T21 Second person r1",
+            "T21 Read the app tests r1",
+            "T21 Remove the probe list and library r1",
+            "T21 Remove the probe solutions and app r1"
           ]
         }
       ]

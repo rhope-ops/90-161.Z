@@ -1,0 +1,799 @@
+{
+  "displayName": "90161Z T21 Probe Mail r1",
+  "description": "R26 probe (task T21, fake data only). On a RUN-MAIL row in the probe list: sends three fake [TEST] e-mails to the flow owner (S1 shared-mailbox action, S2 send with From = the shared mailbox, S3 plain send), then after 2 and 8 minutes reads the inbox, junk and sent folders by Graph for the tag and writes RESULT rows T9 S1..S3, READ1, READ2 (subjects only, no address or body). Environment variable: Site URL, Shared mailbox.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365",
+    "shared_office365users"
+  ],
+  "triggers": {
+    "When_an_item_is_created": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "conditions": [
+        {
+          "expression": "@startsWith(triggerBody()?['Title'],'RUN-MAIL')"
+        }
+      ],
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnNewItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "Profile": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+          "connectionName": "shared_office365users",
+          "operationId": "MyProfile_V2"
+        },
+        "parameters": {
+          "$select": "mail"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "Tag": {
+      "runAfter": {},
+      "type": "Compose",
+      "inputs": "@substring(triggerBody()?['Title'], 9)"
+    },
+    "Has_box": {
+      "runAfter": {
+        "Profile": [
+          "Succeeded"
+        ],
+        "Tag": [
+          "Succeeded"
+        ]
+      },
+      "type": "If",
+      "expression": {
+        "equals": [
+          "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+          false
+        ]
+      },
+      "actions": {
+        "S1": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+              "connectionName": "shared_office365",
+              "operationId": "SharedMailboxSendEmailV2"
+            },
+            "parameters": {
+              "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+              "emailMessage/To": "@body('Profile')?['mail']",
+              "emailMessage/Subject": "@concat('[TEST] 90161Z T9 S1 ', outputs('Tag'))",
+              "emailMessage/Body": "<p>90-161.Z probe test message (fake content).</p>"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "S2": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+              "connectionName": "shared_office365",
+              "operationId": "SendEmailV2"
+            },
+            "parameters": {
+              "emailMessage/To": "@body('Profile')?['mail']",
+              "emailMessage/Subject": "@concat('[TEST] 90161Z T9 S2 ', outputs('Tag'))",
+              "emailMessage/Body": "<p>90-161.Z probe test message (fake content).</p>",
+              "emailMessage/From": "@parameters('Shared mailbox (pfm_SharedMailbox)')"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "else": {
+        "actions": {}
+      }
+    },
+    "S3": {
+      "runAfter": {
+        "Profile": [
+          "Succeeded"
+        ],
+        "Tag": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "parameters": {
+          "emailMessage/To": "@body('Profile')?['mail']",
+          "emailMessage/Subject": "@concat('[TEST] 90161Z T9 S3 ', outputs('Tag'))",
+          "emailMessage/Body": "<p>90-161.Z probe test message (fake content).</p>"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "S1_row": {
+      "runAfter": {
+        "Has_box": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T9",
+          "item/ProbeWay": "S1",
+          "item/ProbeResult": "@if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), 'FAIL', if(equals(actions('S1')?['status'], 'Succeeded'), 'PASS', 'FAIL'))",
+          "item/ProbeDetail": "@if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), 'shared mailbox value empty', concat('sent=', actions('S1')?['status'], '; status=', if(equals(actions('S1')?['outputs']?['statusCode'], null), 'none', string(actions('S1')?['outputs']?['statusCode']))))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "S2_row": {
+      "runAfter": {
+        "Has_box": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T9",
+          "item/ProbeWay": "S2",
+          "item/ProbeResult": "@if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), 'FAIL', if(equals(actions('S2')?['status'], 'Succeeded'), 'PASS', 'FAIL'))",
+          "item/ProbeDetail": "@if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), 'shared mailbox value empty', concat('sent=', actions('S2')?['status'], '; status=', if(equals(actions('S2')?['outputs']?['statusCode'], null), 'none', string(actions('S2')?['outputs']?['statusCode']))))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "S3_row": {
+      "runAfter": {
+        "S3": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T9",
+          "item/ProbeWay": "S3",
+          "item/ProbeResult": "@if(equals(actions('S3')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('sent=', actions('S3')?['status'], '; status=', if(equals(actions('S3')?['outputs']?['statusCode'], null), 'none', string(actions('S3')?['outputs']?['statusCode'])))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ1_delay": {
+      "runAfter": {
+        "Has_box": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "S3": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Wait",
+      "inputs": {
+        "interval": {
+          "count": 2,
+          "unit": "Minute"
+        }
+      }
+    },
+    "READ1_inbox": {
+      "runAfter": {
+        "READ1_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "Uri": "@concat('/v1.0/me/mailFolders/inbox/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Method": "GET",
+          "ContentType": "application/json"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ1_junk": {
+      "runAfter": {
+        "READ1_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "Uri": "@concat('/v1.0/me/mailFolders/junkemail/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Method": "GET",
+          "ContentType": "application/json"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ1_sent": {
+      "runAfter": {
+        "READ1_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "Uri": "@concat('/v1.0/me/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Method": "GET",
+          "ContentType": "application/json"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ1_hasbox": {
+      "runAfter": {
+        "READ1_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "If",
+      "expression": {
+        "equals": [
+          "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+          false
+        ]
+      },
+      "actions": {
+        "READ1_box": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+              "connectionName": "shared_office365",
+              "operationId": "HttpRequest"
+            },
+            "parameters": {
+              "Uri": "@concat('/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+              "Method": "GET",
+              "ContentType": "application/json"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "else": {
+        "actions": {}
+      }
+    },
+    "READ1_where_S1": {
+      "runAfter": {
+        "READ1_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ1_inbox')?['outputs']?['body']), 'T9 S1 '), '+inbox', ''), if(contains(string(actions('READ1_junk')?['outputs']?['body']), 'T9 S1 '), '+junk', ''), if(contains(string(actions('READ1_sent')?['outputs']?['body']), 'T9 S1 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ1_box')?['outputs']?['body'])), 'T9 S1 '), '+boxsent', ''))"
+    },
+    "READ1_where_S2": {
+      "runAfter": {
+        "READ1_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ1_inbox')?['outputs']?['body']), 'T9 S2 '), '+inbox', ''), if(contains(string(actions('READ1_junk')?['outputs']?['body']), 'T9 S2 '), '+junk', ''), if(contains(string(actions('READ1_sent')?['outputs']?['body']), 'T9 S2 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ1_box')?['outputs']?['body'])), 'T9 S2 '), '+boxsent', ''))"
+    },
+    "READ1_where_S3": {
+      "runAfter": {
+        "READ1_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ1_inbox')?['outputs']?['body']), 'T9 S3 '), '+inbox', ''), if(contains(string(actions('READ1_junk')?['outputs']?['body']), 'T9 S3 '), '+junk', ''), if(contains(string(actions('READ1_sent')?['outputs']?['body']), 'T9 S3 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ1_box')?['outputs']?['body'])), 'T9 S3 '), '+boxsent', ''))"
+    },
+    "READ1_where_S4": {
+      "runAfter": {
+        "READ1_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ1_inbox')?['outputs']?['body']), 'T9 S4 '), '+inbox', ''), if(contains(string(actions('READ1_junk')?['outputs']?['body']), 'T9 S4 '), '+junk', ''), if(contains(string(actions('READ1_sent')?['outputs']?['body']), 'T9 S4 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ1_box')?['outputs']?['body'])), 'T9 S4 '), '+boxsent', ''))"
+    },
+    "READ1_row": {
+      "runAfter": {
+        "READ1_where_S1": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_where_S2": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_where_S3": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ1_where_S4": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T9",
+          "item/ProbeWay": "READ1",
+          "item/ProbeResult": "INFO",
+          "item/ProbeDetail": "@concat('S1=', if(empty(outputs('READ1_where_S1')), 'none', substring(outputs('READ1_where_S1'), 1)), ' ', 'S2=', if(empty(outputs('READ1_where_S2')), 'none', substring(outputs('READ1_where_S2'), 1)), ' ', 'S3=', if(empty(outputs('READ1_where_S3')), 'none', substring(outputs('READ1_where_S3'), 1)), ' ', 'S4=', if(empty(outputs('READ1_where_S4')), 'none', substring(outputs('READ1_where_S4'), 1)), ' ', '; http=', concat(if(equals(actions('READ1_inbox')?['outputs']?['statusCode'], null), 'none', string(actions('READ1_inbox')?['outputs']?['statusCode'])), '/', if(equals(actions('READ1_junk')?['outputs']?['statusCode'], null), 'none', string(actions('READ1_junk')?['outputs']?['statusCode'])), '/', if(equals(actions('READ1_sent')?['outputs']?['statusCode'], null), 'none', string(actions('READ1_sent')?['outputs']?['statusCode'])), '/', if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), 'skipped', if(equals(actions('READ1_box')?['outputs']?['statusCode'], null), 'none', string(actions('READ1_box')?['outputs']?['statusCode'])))))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ2_delay": {
+      "runAfter": {
+        "READ1_row": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Wait",
+      "inputs": {
+        "interval": {
+          "count": 6,
+          "unit": "Minute"
+        }
+      }
+    },
+    "READ2_inbox": {
+      "runAfter": {
+        "READ2_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "Uri": "@concat('/v1.0/me/mailFolders/inbox/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Method": "GET",
+          "ContentType": "application/json"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ2_junk": {
+      "runAfter": {
+        "READ2_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "Uri": "@concat('/v1.0/me/mailFolders/junkemail/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Method": "GET",
+          "ContentType": "application/json"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ2_sent": {
+      "runAfter": {
+        "READ2_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "Uri": "@concat('/v1.0/me/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Method": "GET",
+          "ContentType": "application/json"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "READ2_hasbox": {
+      "runAfter": {
+        "READ2_delay": [
+          "Succeeded"
+        ]
+      },
+      "type": "If",
+      "expression": {
+        "equals": [
+          "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+          false
+        ]
+      },
+      "actions": {
+        "READ2_box": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+              "connectionName": "shared_office365",
+              "operationId": "HttpRequest"
+            },
+            "parameters": {
+              "Uri": "@concat('/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+              "Method": "GET",
+              "ContentType": "application/json"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "else": {
+        "actions": {}
+      }
+    },
+    "READ2_where_S1": {
+      "runAfter": {
+        "READ2_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ2_inbox')?['outputs']?['body']), 'T9 S1 '), '+inbox', ''), if(contains(string(actions('READ2_junk')?['outputs']?['body']), 'T9 S1 '), '+junk', ''), if(contains(string(actions('READ2_sent')?['outputs']?['body']), 'T9 S1 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ2_box')?['outputs']?['body'])), 'T9 S1 '), '+boxsent', ''))"
+    },
+    "READ2_where_S2": {
+      "runAfter": {
+        "READ2_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ2_inbox')?['outputs']?['body']), 'T9 S2 '), '+inbox', ''), if(contains(string(actions('READ2_junk')?['outputs']?['body']), 'T9 S2 '), '+junk', ''), if(contains(string(actions('READ2_sent')?['outputs']?['body']), 'T9 S2 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ2_box')?['outputs']?['body'])), 'T9 S2 '), '+boxsent', ''))"
+    },
+    "READ2_where_S3": {
+      "runAfter": {
+        "READ2_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ2_inbox')?['outputs']?['body']), 'T9 S3 '), '+inbox', ''), if(contains(string(actions('READ2_junk')?['outputs']?['body']), 'T9 S3 '), '+junk', ''), if(contains(string(actions('READ2_sent')?['outputs']?['body']), 'T9 S3 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ2_box')?['outputs']?['body'])), 'T9 S3 '), '+boxsent', ''))"
+    },
+    "READ2_where_S4": {
+      "runAfter": {
+        "READ2_inbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_junk": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_sent": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_hasbox": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@concat(if(contains(string(actions('READ2_inbox')?['outputs']?['body']), 'T9 S4 '), '+inbox', ''), if(contains(string(actions('READ2_junk')?['outputs']?['body']), 'T9 S4 '), '+junk', ''), if(contains(string(actions('READ2_sent')?['outputs']?['body']), 'T9 S4 '), '+sent', ''), if(contains(if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '', string(actions('READ2_box')?['outputs']?['body'])), 'T9 S4 '), '+boxsent', ''))"
+    },
+    "READ2_row": {
+      "runAfter": {
+        "READ2_where_S1": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_where_S2": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_where_S3": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "READ2_where_S4": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T9",
+          "item/ProbeWay": "READ2",
+          "item/ProbeResult": "INFO",
+          "item/ProbeDetail": "@concat('S1=', if(empty(outputs('READ2_where_S1')), 'none', substring(outputs('READ2_where_S1'), 1)), ' ', 'S2=', if(empty(outputs('READ2_where_S2')), 'none', substring(outputs('READ2_where_S2'), 1)), ' ', 'S3=', if(empty(outputs('READ2_where_S3')), 'none', substring(outputs('READ2_where_S3'), 1)), ' ', 'S4=', if(empty(outputs('READ2_where_S4')), 'none', substring(outputs('READ2_where_S4'), 1)), ' ', '; http=', concat(if(equals(actions('READ2_inbox')?['outputs']?['statusCode'], null), 'none', string(actions('READ2_inbox')?['outputs']?['statusCode'])), '/', if(equals(actions('READ2_junk')?['outputs']?['statusCode'], null), 'none', string(actions('READ2_junk')?['outputs']?['statusCode'])), '/', if(equals(actions('READ2_sent')?['outputs']?['statusCode'], null), 'none', string(actions('READ2_sent')?['outputs']?['statusCode'])), '/', if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), 'skipped', if(equals(actions('READ2_box')?['outputs']?['statusCode'], null), 'none', string(actions('READ2_box')?['outputs']?['statusCode'])))))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "solution": {
+    "variant": "P",
+    "title": "90-161.Z probe",
+    "zip": "90161Z-T21-probe-r1.zip"
+  }
+}

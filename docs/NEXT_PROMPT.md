@@ -1,6 +1,6 @@
 # Next prompt: 90-161.Z
 
-Updated: 2026-11-15 by Claude. Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
+Updated: 2026-11-16 by Claude. Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
 
 ## Open now
 
@@ -21,13 +21,13 @@ Updated: 2026-11-15 by Claude. Keep this file at 40 lines or fewer and state onl
 
 ## Waiting on the PFM (go.md)
 
-1. R25 r1 passed for the clean install (15 Nov; docs/reviews/2026-11-15-r25-results.md). Open from it: the F03 test e-mail (not found, fifth round; it goes into probe test T9: every send path, read back by a flow); the window items (restore after minimize, first-card alignment, 1 layout defect) are in a RADE session with a draft pull request (rhope-ops/RADE; a clickable RADE mockup is with the PFM for marks). Next round: the probe round, plan with the PFM for approval; agent REC: it runs before the old R26 content (docs/phases.md). No task is open in go.md. The RADE bloat audit (after R25, PFM 15 Nov) takes proposal P9 of audit 3 here.
+1. Round R26 r1, the easy-path probe (built 16 Nov; go.md; plan: docs/reviews/2026-11-15-r25-results.md "Probe plan"): tests T2 to T10, one PASSED or FAILED line each; T9 is the fix path for the F03 test e-mail (5 rounds). Done = the results e-mail "90161Z R26"; then write docs/reviews results and choose a fallback only for each FAILED test (docs/reviews/2026-11-16-easy-paths.md). Not in R26: paste timing (engine-v6 has no step for it). RADE window items of R25: a RADE session with a draft pull request (rhope-ops/RADE). The RADE bloat audit (after R25, PFM 15 Nov) takes proposal P9 of audit 3 here.
 2. Task 6 prompt r2 follow-up: list AFI (validator F-032/F-039 fixed 13 Nov).
 3. Seals: done in R13 (all 17 prepared and uploaded); detail: docs/reviews/2026-11-15-handoff-detail.md.
 4. Logo K (PFM 14 Nov): official logo for every app; master copy in rhope-ops/RADE assets/logo. Not a round step any more: Claude e-mailed logo-K-512/64 on 14 Nov; the PFM sets it by hand; site setup reads the header logo. After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
 5. App writes (PFM 14 Nov: wing users Read on the site, data entry through the app): Power Apps writes with the user's own rights, so choose list-level Contribute on the app's lists (site stays Read) or a flow that writes with the PFM's connection. Agent REC: list-level Contribute on the intake lists only; R16 W11 proved a Read-only user gets Contribute on such a list.
 6. Result e-mails: app-drafted round e-mails go to Trash once results are on main; others need confirmation (AGENTS.md Project rules, 15 Nov).
-7. Target process (PFM 16 Nov; DECISIONS): the PFM's 13 steps in docs/process-model.md "Target process"; cards in docs/app/screen-map.md section 0. Not built. Next: a probe round for the easy paths T2 to T10 (docs/reviews/2026-11-16-easy-paths.md; no fallback is designed before its test has run), then list changes, F05 in 3 waves, guidance r4 and a preview, each for the PFM alone to judge (no previews for other people). Ask the PFM to review when a step is stuck. App preview r2 (https://claude.ai/artifact/8DShFnoUqr5MWZAqwKKqxb) is from before the 13 steps.
+7. Target process (PFM 16 Nov; DECISIONS): the PFM's 13 steps in docs/process-model.md "Target process"; cards in docs/app/screen-map.md section 0. Not built. Next: the R26 results (item 1; no fallback is designed before its test has run), then list changes, F05 in 3 waves, guidance r4 and a preview, each for the PFM alone to judge (no previews for other people). Ask the PFM to review when a step is stuck. App preview r2 (https://claude.ai/artifact/8DShFnoUqr5MWZAqwKKqxb) is from before the 13 steps.
 
 ## Next
 

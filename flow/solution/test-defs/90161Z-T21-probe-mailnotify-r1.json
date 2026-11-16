@@ -1,0 +1,96 @@
+{
+  "displayName": "90161Z T21 Probe Mail Notify r1",
+  "description": "R26 probe (task T21, fake data only). On a RUN-MAIL row in the probe list: sends one fake [TEST] e-mail to the alert address with the Mail connector (Send an email notification V3) and writes RESULT T9 S4. UNVERIFIED: the parameter keys request/to, request/subject and request/text are the author's best knowledge of the connector, not copied from a working file; an import or run may refuse them. Environment variable: Site URL, Alert e-mail.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_sendmail"
+  ],
+  "triggers": {
+    "When_an_item_is_created": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "conditions": [
+        {
+          "expression": "@startsWith(triggerBody()?['Title'],'RUN-MAIL')"
+        }
+      ],
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnNewItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "Tag": {
+      "runAfter": {},
+      "type": "Compose",
+      "inputs": "@substring(triggerBody()?['Title'], 9)"
+    },
+    "S4": {
+      "runAfter": {
+        "Tag": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sendmail",
+          "connectionName": "shared_sendmail",
+          "operationId": "SendEmailV3"
+        },
+        "parameters": {
+          "request/to": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "request/subject": "@concat('[TEST] 90161Z T9 S4 ', outputs('Tag'))",
+          "request/text": "90-161.Z probe test message S4 (fake content)."
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "S4_row": {
+      "runAfter": {
+        "S4": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T9",
+          "item/ProbeWay": "S4",
+          "item/ProbeResult": "@if(equals(actions('S4')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('sent=', actions('S4')?['status'], '; status=', if(equals(actions('S4')?['outputs']?['statusCode'], null), 'none', string(actions('S4')?['outputs']?['statusCode'])))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "solution": {
+    "variant": "M",
+    "title": "90-161.Z probe Mail",
+    "zip": "90161Z-T21-probe-mail-r1.zip"
+  }
+}

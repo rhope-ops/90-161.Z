@@ -1,0 +1,229 @@
+{
+  "displayName": "90161Z T21 Probe Word r1",
+  "description": "R26 probe (task T21, fake data only). On a RUN-FILES row in the probe list: finds the library drive and the fake draft, runs Word Online (Business) Populate a Microsoft Word template (content control ids 916101 and 916102) and Convert Word document to PDF, saves 90161Z-T21-T3a.docx and .pdf, writes the RESULT row T3 a. Needs the premium Word Online (Business) connector, so the import may be refused. Environment variable: Site URL.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_wordonlinebusiness"
+  ],
+  "triggers": {
+    "When_an_item_is_created": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "conditions": [
+        {
+          "expression": "@startsWith(triggerBody()?['Title'],'RUN-FILES')"
+        }
+      ],
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnNewItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "W_drives": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "parameters/method": "GET",
+          "parameters/uri": "_api/v2.0/drives",
+          "parameters/headers": {
+            "Accept": "application/json;odata=nometadata"
+          }
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "W_find": {
+      "runAfter": {
+        "W_drives": [
+          "Succeeded"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@coalesce(body('W_drives')?['value'], json('[]'))",
+        "where": "@equals(item()?['name'], '90161Z Probe Files')"
+      }
+    },
+    "W_driveid": {
+      "runAfter": {
+        "W_find": [
+          "Succeeded"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@first(body('W_find'))?['id']"
+    },
+    "W_item": {
+      "runAfter": {
+        "W_driveid": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "parameters/method": "GET",
+          "parameters/uri": "@concat('_api/v2.0/drives/', outputs('W_driveid'), '/root:/90161Z-T21-fake-draft-r1.docx')",
+          "parameters/headers": {
+            "Accept": "application/json;odata=nometadata"
+          }
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "W_populate": {
+      "runAfter": {
+        "W_item": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness",
+          "connectionName": "shared_wordonlinebusiness",
+          "operationId": "CreateFileItem"
+        },
+        "parameters": {
+          "source": "@parameters('Site URL (pfm_SiteUrl)')",
+          "drive": "@outputs('W_driveid')",
+          "file": "@body('W_item')?['id']",
+          "dynamicFileSchema/916101": "FAKE SUBJECT R26",
+          "dynamicFileSchema/916102": "FAKE OPR R26"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "W_save_docx": {
+      "runAfter": {
+        "W_populate": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "CreateFile"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "folderPath": "/90161ZProbeFiles",
+          "name": "90161Z-T21-T3a.docx",
+          "body": "@body('W_populate')"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "W_pdf": {
+      "runAfter": {
+        "W_item": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_wordonlinebusiness",
+          "connectionName": "shared_wordonlinebusiness",
+          "operationId": "GetFilePDF"
+        },
+        "parameters": {
+          "source": "@parameters('Site URL (pfm_SiteUrl)')",
+          "drive": "@outputs('W_driveid')",
+          "file": "@body('W_item')?['id']"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "W_save_pdf": {
+      "runAfter": {
+        "W_pdf": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "CreateFile"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "folderPath": "/90161ZProbeFiles",
+          "name": "90161Z-T21-T3a.pdf",
+          "body": "@body('W_pdf')"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "W_row": {
+      "runAfter": {
+        "W_save_docx": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "W_save_pdf": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T3",
+          "item/ProbeWay": "a",
+          "item/ProbeResult": "@if(equals(actions('W_save_docx')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('tried=Word Online Populate a Word template and Convert to PDF; status=', if(equals(actions('W_populate')?['outputs']?['statusCode'], null), 'none', string(actions('W_populate')?['outputs']?['statusCode'])), '; ', concat('W_drives=', actions('W_drives')?['status'], '/', if(equals(actions('W_drives')?['outputs']?['statusCode'], null), 'none', string(actions('W_drives')?['outputs']?['statusCode']))), '; ', concat('W_item=', actions('W_item')?['status'], '/', if(equals(actions('W_item')?['outputs']?['statusCode'], null), 'none', string(actions('W_item')?['outputs']?['statusCode']))), '; ', concat('W_populate=', actions('W_populate')?['status'], '/', if(equals(actions('W_populate')?['outputs']?['statusCode'], null), 'none', string(actions('W_populate')?['outputs']?['statusCode']))), '; ', concat('W_save_docx=', actions('W_save_docx')?['status'], '/', if(equals(actions('W_save_docx')?['outputs']?['statusCode'], null), 'none', string(actions('W_save_docx')?['outputs']?['statusCode']))), '; ', concat('W_pdf=', actions('W_pdf')?['status'], '/', if(equals(actions('W_pdf')?['outputs']?['statusCode'], null), 'none', string(actions('W_pdf')?['outputs']?['statusCode']))), '; ', concat('W_save_pdf=', actions('W_save_pdf')?['status'], '/', if(equals(actions('W_save_pdf')?['outputs']?['statusCode'], null), 'none', string(actions('W_save_pdf')?['outputs']?['statusCode']))))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "solution": {
+    "variant": "W",
+    "title": "90-161.Z probe Word",
+    "zip": "90161Z-T21-probe-word-r1.zip"
+  }
+}
