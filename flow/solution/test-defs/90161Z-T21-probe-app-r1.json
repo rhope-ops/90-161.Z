@@ -1,0 +1,400 @@
+{
+  "displayName": "90161Z T21 Probe App r1",
+  "description": "R26 probe (task T21, fake data only). Called from the test app (Power Apps V2 trigger, one text input callerId); runs on the flow owner connections. Tests: T4 b (SharePoint write as the owner), T7 b (Office 365 Users search, counts of filled fields only), T8 a (Office 365 Groups: find the group by the shared mailbox address, list members), T8 b (Graph reach of the shared mailbox folders). Writes RESULT rows with counts and status codes, never values. Returns the text done. Environment variable: Site URL, Shared mailbox.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365users",
+    "shared_office365groups",
+    "shared_office365"
+  ],
+  "triggers": {
+    "manual": {
+      "type": "Request",
+      "kind": "PowerAppV2",
+      "inputs": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "title": "callerId",
+              "type": "string",
+              "x-ms-dynamically-added": true,
+              "description": "Please enter your input",
+              "x-ms-content-hint": "TEXT"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    }
+  },
+  "actions": {
+    "Me": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+          "connectionName": "shared_office365users",
+          "operationId": "MyProfile_V2"
+        },
+        "parameters": {
+          "$select": "id"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T4b_row": {
+      "runAfter": {
+        "Me": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "T4b",
+          "item/ProbeDetail": "@concat('caller-is-owner=', if(equals(triggerBody()?['text'], body('Me')?['id']), 'yes', 'no'))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T4b_result": {
+      "runAfter": {
+        "T4b_row": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T4",
+          "item/ProbeWay": "b",
+          "item/ProbeResult": "@if(equals(actions('T4b_row')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('tried=PostItem with the flow owner connection; status=', if(equals(actions('T4b_row')?['outputs']?['statusCode'], null), 'none', string(actions('T4b_row')?['outputs']?['statusCode'])), '; ', concat('Me=', actions('Me')?['status'], '/', if(equals(actions('Me')?['outputs']?['statusCode'], null), 'none', string(actions('Me')?['outputs']?['statusCode']))))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T7b_search": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users",
+          "connectionName": "shared_office365users",
+          "operationId": "SearchUserV2"
+        },
+        "parameters": {
+          "searchTerm": "a",
+          "top": 5
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T7b_name": {
+      "runAfter": {
+        "T7b_search": [
+          "Succeeded"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@coalesce(body('T7b_search')?['value'], json('[]'))",
+        "where": "@not(empty(coalesce(item()?['DisplayName'], item()?['displayName'], '')))"
+      }
+    },
+    "T7b_dept": {
+      "runAfter": {
+        "T7b_search": [
+          "Succeeded"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@coalesce(body('T7b_search')?['value'], json('[]'))",
+        "where": "@not(empty(coalesce(item()?['Department'], item()?['department'], '')))"
+      }
+    },
+    "T7b_office": {
+      "runAfter": {
+        "T7b_search": [
+          "Succeeded"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@coalesce(body('T7b_search')?['value'], json('[]'))",
+        "where": "@not(empty(coalesce(item()?['OfficeLocation'], item()?['officeLocation'], '')))"
+      }
+    },
+    "T7b_mail": {
+      "runAfter": {
+        "T7b_search": [
+          "Succeeded"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@coalesce(body('T7b_search')?['value'], json('[]'))",
+        "where": "@not(empty(coalesce(item()?['Mail'], item()?['mail'], '')))"
+      }
+    },
+    "T7b_row": {
+      "runAfter": {
+        "T7b_name": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "T7b_dept": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "T7b_office": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "T7b_mail": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T7",
+          "item/ProbeWay": "b",
+          "item/ProbeResult": "@if(equals(actions('T7b_search')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('rows=', string(length(coalesce(body('T7b_search')?['value'], json('[]')))), ' displayName=', string(length(coalesce(actions('T7b_name')?['outputs']?['body'], json('[]')))), ' department=', string(length(coalesce(actions('T7b_dept')?['outputs']?['body'], json('[]')))), ' officeLocation=', string(length(coalesce(actions('T7b_office')?['outputs']?['body'], json('[]')))), ' mail=', string(length(coalesce(actions('T7b_mail')?['outputs']?['body'], json('[]')))), '; status=', if(equals(actions('T7b_search')?['outputs']?['statusCode'], null), 'none', string(actions('T7b_search')?['outputs']?['statusCode'])))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T8a_find": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365groups",
+          "connectionName": "shared_office365groups",
+          "operationId": "HttpRequestV2"
+        },
+        "parameters": {
+          "Uri": "@concat('https://graph.microsoft.com/v1.0/groups?$filter=mail%20eq%20%27', parameters('Shared mailbox (pfm_SharedMailbox)'), '%27&$select=id')",
+          "Method": "GET"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T8a_gid": {
+      "runAfter": {
+        "T8a_find": [
+          "Succeeded"
+        ]
+      },
+      "type": "Compose",
+      "inputs": "@coalesce(first(coalesce(body('T8a_find')?['value'], json('[]')))?['id'], '')"
+    },
+    "T8a_found": {
+      "runAfter": {
+        "T8a_gid": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "If",
+      "expression": {
+        "equals": [
+          "@empty(outputs('T8a_gid'))",
+          false
+        ]
+      },
+      "actions": {
+        "T8a_members": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365groups",
+              "connectionName": "shared_office365groups",
+              "operationId": "ListGroupMembers"
+            },
+            "parameters": {
+              "groupId": "@outputs('T8a_gid')",
+              "$top": 999
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "else": {
+        "actions": {}
+      }
+    },
+    "T8a_row": {
+      "runAfter": {
+        "T8a_found": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T8",
+          "item/ProbeWay": "a",
+          "item/ProbeResult": "@if(equals(actions('T8a_find')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('group=', if(empty(outputs('T8a_gid')), 'none', 'found'), ' members=', if(empty(outputs('T8a_gid')), '0', string(length(coalesce(actions('T8a_members')?['outputs']?['body']?['value'], json('[]'))))), ' status=', if(empty(outputs('T8a_gid')), if(equals(actions('T8a_find')?['outputs']?['statusCode'], null), 'none', string(actions('T8a_find')?['outputs']?['statusCode'])), if(equals(actions('T8a_members')?['outputs']?['statusCode'], null), 'none', string(actions('T8a_members')?['outputs']?['statusCode']))))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T8b_get": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "HttpRequest"
+        },
+        "parameters": {
+          "Uri": "@concat('https://graph.microsoft.com/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/inbox?$select=id')",
+          "Method": "GET",
+          "ContentType": "application/json"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "T8b_row": {
+      "runAfter": {
+        "T8b_get": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "T8",
+          "item/ProbeWay": "b",
+          "item/ProbeResult": "@if(equals(actions('T8b_get')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('tried=Graph users/<box>/mailFolders (mailbox reachable=', if(equals(actions('T8b_get')?['status'], 'Succeeded'), 'yes', 'no'), ', status=', if(equals(actions('T8b_get')?['outputs']?['statusCode'], null), 'none', string(actions('T8b_get')?['outputs']?['statusCode'])), '); members=no Graph resource in the connector''s segments')"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "Respond_to_the_app": {
+      "runAfter": {
+        "T4b_result": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "T7b_row": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "T8a_row": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "T8b_row": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Response",
+      "kind": "PowerApp",
+      "inputs": {
+        "statusCode": 200,
+        "body": {
+          "response": "done"
+        },
+        "schema": {
+          "type": "object",
+          "properties": {
+            "response": {
+              "title": "response",
+              "x-ms-dynamically-added": true,
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "solution": {
+    "variant": "P",
+    "title": "90-161.Z probe",
+    "zip": "90161Z-T21-probe-r1.zip"
+  }
+}
