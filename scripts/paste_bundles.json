@@ -201,7 +201,7 @@
             "11. Look at the new tab: the PDF should open in the browser.",
             "12. Return to the RADE window.",
             "13. Select \"Done: I looked\".",
-            "If a link opens an error or nothing: go on with the next step and pick the answer that fits.",
+            "If a link opens an error or nothing: that is a result. The questions after Done ask for it.",
             "If the test page is closed: select \"Show file in folder\", then double-click \"90161Z-T21-links-r2.html\"."
           ],
           "marker": "90161Z-T21-draft-looked.txt",
@@ -259,7 +259,7 @@
             "8. Select Save.",
             "9. Return to the RADE window.",
             "10. Select \"Done: row added\".",
-            "If no names show, or your name is not there: select Save, then pick the answer that fits.",
+            "If no names show, or your name is not there: select Save. The questions after Done ask for it.",
             "If the test page is closed: select \"Show file in folder\", then double-click \"90161Z-T21-links-r2.html\"."
           ],
           "marker": "90161Z-T21-person-added.txt",
@@ -487,7 +487,7 @@
             "3. In the search box at the top, type: 90161Z T9",
             "4. Press Enter.",
             "5. Look at the subjects found: each one has S3, S5 or S6 in it.",
-            "If nothing is found: that is a result; go on with the next step.",
+            "If nothing is found: that is a result.",
             "6. Select the folder \"Junk Email\".",
             "7. In the search box at the top, type: 90161Z T9",
             "8. Press Enter.",

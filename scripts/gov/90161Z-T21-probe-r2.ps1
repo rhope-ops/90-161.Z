@@ -557,14 +557,14 @@ try {
       $uid = [int]$withPerson[0].Item['ProbePerson'].LookupId
       # One request per field with $select (a whole list item holds both "Id" and "ID", which Windows PowerShell 5.1's
       # ConvertFrom-Json refuses); the raw text is read with a pattern, so no JSON parser sees it. A field the list does
-      # not have answers with an error: n/a. PASS needs the e-mail address to have a value (the easy path: office and mail).
+      # not have, or a failed request, reads as 'not read'. PASS needs the e-mail address to have a value (the easy path: office and mail).
       $present = @(); $mailYes = $false
       foreach ($f in 'EMail', 'Department', 'JobTitle', 'Office') {
         $v = 'n/a'
         try {
           $raw = Invoke-Rest 'Get' ('_api/web/siteuserinfolist/items(' + $uid + ')?$select=' + $f) ''
           if ($raw -match ('"' + $f + '"\s*:\s*"([^"]*)"')) { $v = $(if ($Matches[1]) { 'yes' } else { 'no' }) } elseif ($raw -match ('"' + $f + '"\s*:\s*null')) { $v = 'no' }
-        } catch { $v = 'n/a' }
+        } catch { $v = 'not read' }
         if ($f -eq 'EMail' -and $v -eq 'yes') { $mailYes = $true }
         $present += ($f + '=' + $v)
       }
