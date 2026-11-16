@@ -1,10 +1,15 @@
 # Decisions: 90-161.Z
 
 Newest first. "By" = PFM for a decision. "By" = Agent for a recommendation that PFM has not approved yet.
+A record that agents read on demand, not at the start of a session (the PFM, 2026-11-16): a row binds the task or thing it names; only a line in AGENTS.md binds every session (AGENTS.md "Rules and decisions").
 One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one line per decision, 200 characters or fewer; detail lives in the linked doc. Rows from before 13 Nov 26 15:30 have full text in docs/decisions-archive.md "Full text of current rows"; read it before you act on them.
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | Round skill `.claude/skills/round/SKILL.md` from the outline approved as shown (1a): results, task script, round definition, bundle, go.md usability bar, release order. | PFM | .claude/skills/round/SKILL.md |
+| 2026-11-16 | AGENTS.md "Project rules": the 14 lines proposed in the port session, approved as shown (1a); they replace the 21 old rule items. Platform line follows the 16 Nov front-end split. | PFM | AGENTS.md |
+| 2026-11-16 | Kit port by hand (no kit sync; kit ceac0e8): rule gate and caps, kit skills replace .claude/orchestration.md, bloat-audit.md and project-log.md, two check lanes (tests/run.sh --fast). One pull request, not merged by the agent. DECISIONS.md leaves the start read. | PFM | AGENTS.md |
+| 2026-11-16 | Start-read budget stays at the PFM's 13 Nov values (12,000 tokens, warning 6,000), now set in .bloat-audit.json because the kit script defaults to 4,500. Scope: this port; open to change. | Agent | .bloat-audit.json |
 | 2026-11-16 | R27 also tests one tiny cloud-built app file (.msapp) uploaded in 2 places in Power Apps (about 5 minutes); R26 r2 stays as built. Scope: round R27. | PFM | docs/phases.md |
 | 2026-11-16 | RADE stays the frame for all projects: each script = RADE + 1 app; RADE opens first (checks, update notice that points to the RADE page), then Start opens the app in its own look. No app list to download from. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-16 | The RADE changes (Start button, desktop icon, update notice) are planned after the R26 r2 results, for the PFM's approval; engine work goes to rhope-ops/RADE. | PFM | docs/NEXT_PROMPT.md |

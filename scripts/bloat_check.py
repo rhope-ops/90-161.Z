@@ -7,11 +7,21 @@ Usage:
     python3 scripts/bloat_check.py --time     # also run each timed command in .bloat-audit.json and compare
     python3 scripts/bloat_check.py --time --record   # run them and store the new seconds as the baseline
     python3 scripts/bloat_check.py --strict   # exit 1 when a budget is over or the audit is due
+    python3 scripts/bloat_check.py --rules    # rule counts against the caps, rule lines added or removed against
+                                              # origin/main, and missing .claude/ paths; exit 1 when a cap is passed
+                                              # or a path is missing (scripts/check.sh runs this)
     python3 scripts/bloat_check.py --test     # self-test; prints BLOAT TEST PASS
 
 It measures:
     start read    lines, bytes and ~tokens (bytes / 4) of the files every session reads first
-                  (AGENTS.md, CLAUDE.md, docs/NEXT_PROMPT.md, plus "start_read" in the config)
+                  (AGENTS.md, CLAUDE.md, docs/NEXT_PROMPT.md, plus "start_read" in the config; docs/DECISIONS.md
+                  is a record that agents read on demand, so it is not counted)
+    rules         list items in AGENTS.md (any marker, any indent; a wrapped line is part of its item): the kit
+                  sections (the header, "## Commands" and the numbered ranking in "## Order of authority" are not
+                  counted) and "## Project rules" (there a paragraph or a table row counts too), each against its
+                  cap, so rules cannot grow unseen
+    pointers      each `.claude/...`, `scripts/...` and `docs/...` path in backticks and each relative link in
+                  AGENTS.md exists (text moved to a skill is not lost)
     handoff       docs/NEXT_PROMPT.md lines
     duplicates    normalized text lines of 80+ characters found in 2 or more tracked files
                   (lines between "# >>> ... generated from ..." and "# <<< ..." markers are not counted)
@@ -19,10 +29,11 @@ It measures:
     audit due     days and commits on main since the last full audit (.bloat-audit.json "last_audit")
     timings       (--time) wall time of each named command against its recorded baseline
 
-.bloat-audit.json (project-owned; the full audit in .claude/bloat-audit.md writes it). All keys are optional:
+.bloat-audit.json (project-owned; the full audit in .claude/skills/audit/SKILL.md writes it). All keys are optional:
     {"last_audit": {"date": "YYYY-MM-DD", "commit": "<sha>", "report": "<path>"},
-     "every_days": 14, "every_commits": 30,
-     "budgets": {"start_read_tokens": 12000, "start_read_warn_tokens": 6000, "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20},
+     "every_days": 14, "every_commits": 300,
+     "budgets": {"start_read_tokens": 4500, "start_read_warn_tokens": 3500, "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20,
+                 "rules": 35, "project_rules": 15},
      "start_read": [], "ignore": ["ref/**"],
      "timings": {"tests": {"cmd": "tests/run.sh", "seconds": 20.8, "max_slowdown": 0.25}}}
 start_read_warn_tokens only warns (never "over", never fails --strict); set it to the cap to turn the warning off.
@@ -45,9 +56,15 @@ import time
 from pathlib import Path
 
 CONFIG = ".bloat-audit.json"
-START_READ = ["AGENTS.md", "CLAUDE.md", "docs/NEXT_PROMPT.md"]  # docs/DECISIONS.md is searched per area, not read at start (the PFM, 2026-11-13)
-DEFAULTS = {"every_days": 14, "every_commits": 30,
-            "budgets": {"start_read_tokens": 12000, "start_read_warn_tokens": 6000, "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20}}
+START_READ = ["AGENTS.md", "CLAUDE.md", "docs/NEXT_PROMPT.md"]
+DEFAULTS = {"every_days": 14, "every_commits": 300,
+            "budgets": {"start_read_tokens": 4500, "start_read_warn_tokens": 3500, "handoff_lines": 40, "file_kb": 500,
+                        "duplicate_lines": 20, "rules": 35, "project_rules": 15}}
+RULES_FILE = "AGENTS.md"
+PROJECT_RULES = "## Project rules"
+NOT_RULES = {"## Commands"}  # project-owned settings, not rules
+RANKED = {"## Order of authority"}  # its numbered ranking of sources is not a rule count; a bullet there is
+OPTIONAL = {"scripts/check.local.sh"}  # named in AGENTS.md, present only when the project has tests
 TEXT_EXT = {".md", ".txt", ".py", ".sh", ".ps1", ".psm1", ".js", ".ts", ".json", ".yml", ".yaml", ".html", ".css",
             ".toml", ".ini", ".cfg", ".csv", ""}
 MIN_DUP = 80          # characters in a normalized line before it counts as a duplicate
@@ -92,6 +109,104 @@ def start_read(root, cfg):
     return lines, size, size // 4, sorted(files, key=lambda f: -f[1])
 
 
+ITEM = re.compile(r"^\s*(?:[-*+]|(\d+)[.)])\s+(.*)$")
+RULE_HR = re.compile(r"^\s*([-*_])(\s*\1){2,}\s*$")           # --- or * * *: a horizontal rule, not a rule
+TABLE_SEP = re.compile(r"^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")  # |---|---|: the row above it is a header
+
+
+def rule_lines(text):
+    """Return (kit, project, every): the rule lines of an AGENTS.md text, by where they are.
+
+    A rule line is a list item with any marker ("- ", "* ", "+ ", "1. ") at any indent; a line that follows it with
+    no blank line between is its continuation, not a new rule. kit = items under a "## " heading above
+    "## Project rules" (not the header, not NOT_RULES sections; in RANKED sections the numbered ranking is not
+    counted, a bullet is); project = items under "## Project rules", and there also each paragraph and each table
+    row (not the header row), so a rule that is not a bullet still counts; every = the items of all sections, for
+    the list of changed lines. Not counted anywhere: blank lines, "###" sub-headings, horizontal rules, table
+    separator rows, lines in ``` or ~~~ fences, <!-- comments -->. In the kit itself the file marks tier text
+    with <!-- starter --> blocks: those are dropped, so the count is the full tier.
+    """
+    text = re.sub(r"(?ms)^<!-- starter -->\n.*?^<!-- /starter -->\n", "", text)
+    text = re.sub(r"(?s)<!--.*?-->", "", text)
+    rows, sec, fenced, open_item = [], None, False, False  # rows: [section, text, counted]
+    for line in text.splitlines():
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced, open_item = not fenced, False
+        elif fenced:
+            continue
+        elif line.startswith("## "):
+            sec, open_item = line.rstrip(), False
+        elif not sec:
+            continue
+        elif not line.strip() or line.lstrip().startswith("#") or RULE_HR.match(line):
+            open_item = False
+        elif TABLE_SEP.match(line) and "-" in line:
+            if open_item and rows and rows[-1][1].startswith("|"):
+                rows.pop()  # the header row of a table
+            open_item = False
+        else:
+            m = ITEM.match(line)
+            if m:
+                counted = sec not in NOT_RULES and not (sec in RANKED and m.group(1))
+                rows.append([sec, m.group(2).strip(), counted])
+                open_item = True
+            elif open_item and not line.lstrip().startswith("|"):
+                rows[-1][1] += " " + line.strip()  # a wrapped line belongs to the item above it
+            elif sec == PROJECT_RULES:
+                rows.append([sec, line.strip(), True])
+                open_item = True
+    kit = [t for s_, t, c in rows if c and s_ != PROJECT_RULES]
+    project = [t for s_, t, c in rows if c and s_ == PROJECT_RULES]
+    return kit, project, [t for _, t, _ in rows]
+
+
+def missing_pointers(root, text):
+    """Paths that AGENTS.md names and that do not exist: each `.claude/...`, `scripts/...` and `docs/...` path
+    inside backticks (also after a command word: `python3 scripts/x.py --test`), and relative link targets."""
+    text = re.sub(r"(?ms)^<!-- starter -->\n.*?^<!-- /starter -->\n", "", text)
+    names = set()
+    for span in re.findall(r"`([^`\n]+)`", text):
+        names |= {w.rstrip(".,;:)") for w in span.split() if re.match(r"(?:\.claude|scripts|docs)/", w)}
+    names -= OPTIONAL
+    names |= {t.split("#")[0] for t in re.findall(r"\]\(([^)\s]+)\)", text)
+              if "://" not in t and not t.startswith(("#", "mailto:"))}
+    return sorted(n for n in names if n and not re.search(r"[<>*{]", n) and not (root / n).exists())
+
+
+def rules_report(root, cfg):
+    """Return (lines to print, problems). Problems fail scripts/check.sh: a cap passed, or a missing path."""
+    p = root / RULES_FILE
+    if not p.is_file():
+        return [f"rules:       no {RULES_FILE}"], []
+    text = p.read_text(encoding="utf-8", errors="replace")
+    b = cfg["budgets"]
+    kit, project, every = rule_lines(text)
+    out = [f"rules:       {RULES_FILE} {len(kit)} (cap {b['rules']}) · Project rules {len(project)} (cap {b['project_rules']})"]
+    problems = []
+    if len(kit) > b["rules"]:
+        problems.append(f"rules over the cap ({len(kit)} > {b['rules']})")
+    if len(project) > b["project_rules"]:
+        problems.append(f"project rules over the cap ({len(project)} > {b['project_rules']})")
+    old = None
+    for ref in ("origin/main", "origin/master"):
+        old = git(root, "show", f"{ref}:{RULES_FILE}")
+        if old is not None:
+            break
+    if old is not None:
+        was = set(rule_lines(old)[2])
+        now = set(every)
+        for mark, lines in (("+", [l for l in every if l not in was]), ("-", sorted(was - now))):
+            out += [f"  {mark} {l}" for l in lines]  # the whole line: a change near its end must show
+        if was != now:
+            out.append("  (rule lines changed against the default branch: each one needs the owner's approval of its exact text)")
+    gone = missing_pointers(root, text)
+    if gone:
+        problems.append("missing paths named in AGENTS.md: " + ", ".join(gone))
+    for pr in problems:
+        out.append(f"RULES FAIL:  {pr}")
+    return out, problems
+
+
 def norm(line):
     line = re.sub(r"^[\s>#|*\-+0-9.]+", "", line)
     return re.sub(r"\s+", " ", line).strip().lower()
@@ -115,7 +230,7 @@ def duplicates(root, files):
         generated = False
         for line in text.splitlines():
             # Text between "# >>> ... generated from ..." and "# <<< ..." is a copy a build script writes and checks
-            # (bloat audit 3, P2; the PFM, 2026-11-15): it is not counted, so a hand-made duplicate stays visible.
+            # (90-161.Z: bloat audit 3, P2; the PFM, 2026-11-15): it is not counted, so a hand-made duplicate stays visible.
             mark = line.strip()
             if mark.startswith("# >>> ") and "generated from" in mark:
                 generated = True
@@ -140,7 +255,7 @@ def big_files(root, files, kb):
 def audit_due(root, cfg, today):
     last = cfg.get("last_audit") or {}
     if not last.get("date"):
-        # Never audited: due once the repo is every_days or every_commits past its first commit (the PFM, 2026-11-13),
+        # Never audited: due once the repo is every_days or every_commits past its first commit (kit default, 2026-11-13),
         # so a new project does not report AUDIT DUE on day one. No history readable, or a shallow clone (its oldest
         # commit is a cut, not the first commit): due.
         if git(root, "rev-parse", "--is-shallow-repository") == "true":
@@ -200,7 +315,7 @@ def report(root, args, today=None):
     over = []
     if s_tok > b["start_read_tokens"]:
         over.append("start read")
-    # Early warning only (never fails --strict): rule growth shows before the hard cap (the PFM, 2026-11-13).
+    # Early warning only (never fails --strict): rule growth shows before the hard cap (kit default, 2026-11-13).
     warn = "start read over warning" if b.get("start_read_warn_tokens", 0) < s_tok <= b["start_read_tokens"] else ""
     if h_lines > b["handoff_lines"]:
         over.append("handoff")
@@ -208,6 +323,8 @@ def report(root, args, today=None):
         over.append("duplicates")
     if big:
         over.append("big files")
+    r_rows, r_problems = rules_report(root, cfg)
+    over += r_problems
     t_rows, slow = run_timings(root, cfg, args.record) if args.time else ([], [])
     over += [f"timing {n}" for n in slow]
     if args.record and args.time:
@@ -215,14 +332,19 @@ def report(root, args, today=None):
         data["timings"] = cfg.get("timings", {})
         (root / CONFIG).write_text(json.dumps(data, indent=2) + "\n")
 
-    tail = f"AUDIT DUE ({due}): ask the owner whether to run .claude/bloat-audit.md" if due else "audit not due"
+    tail = (f"AUDIT DUE ({due}): tell the owner and ask whether to run the audit skill (.claude/skills/audit/SKILL.md, "
+            "about 1 hour of agent time); never start it unasked") if due else "audit not due"
     if args.brief:
-        print(f"bloat:       start read ~{s_tok:,} tokens (budget {b['start_read_tokens']:,}) · duplicate lines "
+        print(f"bloat:       start read ~{s_tok:,} tokens (budget {b['start_read_tokens']:,}) · {r_rows[0][13:]} · duplicate lines "
               f"{len(dups)} · big files {len(big)} · over: {', '.join(over) or 'none'}{' · ' + warn if warn else ''} · {tail}")
     else:
         print(f"start read:  {s_lines} lines, {s_bytes:,} bytes, ~{s_tok:,} tokens (budget {b['start_read_tokens']:,})")
         for rel, size in s_files:
             print(f"  {rel}: {size:,} bytes")
+        print(r_rows[0])
+        moved = sum(1 for r in r_rows if r.startswith(("  + ", "  - ")))
+        if moved:
+            print(f"  {moved} rule line(s) added or removed against the default branch (list: --rules)")
         print(f"handoff:     docs/NEXT_PROMPT.md {h_lines} lines (budget {b['handoff_lines']})")
         print(f"duplicates:  {len(dups)} lines of {MIN_DUP}+ characters in 2+ files (budget {b['duplicate_lines']})")
         for n, fs in dups[:10]:
@@ -258,8 +380,10 @@ def self_test():
         (root / "g2.ps1").write_text(gen + "h" * 90 + "\n")
         (root / "g3.ps1").write_text("h" * 90 + "\n")
         subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
-        files = scan_files(root, cfg)
-        assert len(duplicates(root, files)) == 2, "generated block not counted; a line after its end marker is counted"
+        assert len(duplicates(root, scan_files(root, cfg))) == 2, "generated block not counted; a line after its end marker is counted"
+        for g in ("g1.ps1", "g2.ps1", "g3.ps1"):
+            (root / g).unlink()
+        subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
         assert [f for f, _ in big_files(root, files, 2)] == ["big.txt"], "big file"
         assert "days since" in audit_due(root, cfg, datetime.date(2026, 2, 1)), "due by days"
         assert audit_due(root, cfg, datetime.date(2026, 1, 5)) == "", "not due"
@@ -287,6 +411,45 @@ def self_test():
         a = argparse.Namespace(brief=False, time=False, record=False, strict=True)
         with contextlib.redirect_stdout(io.StringIO()):
             assert report(root, a, datetime.date(2026, 1, 5)) == 1, "strict fails when over budget"
+        # Rules: count by place, caps, changed lines against origin/main, and paths that must exist.
+        sample = ("# T\n\n- Repo: x\n\n## Git safety\n\n- Rule one.\n- Rule two.\n<!-- starter -->\n- Starter only.\n"
+                  "<!-- /starter -->\n```\n- in a fence\n```\n\n## Commands\n\n- Build: none.\n\n## Project rules\n\n"
+                  "<!-- - a comment -->\n- Project rule.\n")
+        kit, project, every = rule_lines(sample)
+        assert kit == ["Rule one.", "Rule two."] and project == ["Project rule."], "header, Commands, fences, comments and starter blocks are not rules"
+        assert "Build: none." in every, "the list of changed lines also covers sections that are not counted"
+        kit, project, _ = rule_lines("## A\n\n* Star.\n1. Numbered.\n  - Nested.\nA paragraph.\n\n## Project rules\n\n+ Plus.\nA rule as a paragraph.\n")
+        assert kit == ["Star.", "Numbered.", "Nested. A paragraph."] and project == ["Plus. A rule as a paragraph."], "every list marker counts; a line right below an item is its continuation"
+        kit, project, every = rule_lines("## Order of authority\n\n1. The owner.\n2. This file.\n- A bullet here counts.\n\n## B\n\n- One rule,\n  wrapped.\n~~~\n- in a tilde fence\n~~~\n* * *\n---\n### Sub\n\n"
+                                         "## Project rules\n\n### Group\n\n- P one,\n  wrapped.\n\nA paragraph rule\nover two lines.\n\n---\n\n| Rule | Why |\n|---|---|\n| T one | x |\n| T two | y |\n")
+        assert kit == ["A bullet here counts.", "One rule, wrapped."], "the ranking is not counted, a bullet in that section is; wraps, fences, rules and sub-headings are not rules"
+        assert project == ["P one, wrapped.", "A paragraph rule over two lines.", "| T one | x |", "| T two | y |"], "Project rules: wrapped bullet 1, paragraph 1, table rows without header and separator"
+        assert "The owner." in every, "ranking lines are still listed when they change"
+        with tempfile.TemporaryDirectory() as o:
+            g = lambda *c: subprocess.run(["git", "-C", o, "-c", "user.email=t@t", "-c", "user.name=t", *c], check=True, capture_output=True)
+            g("init", "-q", "-b", "main")
+            ro = Path(o)
+            (ro / "AGENTS.md").write_text("## A\n\n- Old rule.\n- Kept rule.\n\n## Project rules\n\n")
+            g("add", "-A"); g("commit", "-q", "-m", "a"); g("update-ref", "refs/remotes/origin/main", "HEAD")
+            caps = {"budgets": {**DEFAULTS["budgets"], "rules": 2, "project_rules": 1}}
+            (ro / "AGENTS.md").write_text("## A\n\n- New rule.\n- Kept rule.\n\n## Project rules\n\n- P1.\n")
+            rows, problems = rules_report(ro, caps)
+            assert not problems, "at the cap is not over"
+            assert any(r.startswith("  + New rule.") for r in rows) and any(r.startswith("  - Old rule.") for r in rows), "a swap is listed"
+            (ro / "AGENTS.md").write_text("## A\n\n- New rule.\n- Kept rule.\n- Third.\n\n## Project rules\n\n- P1.\n- P2.\n")
+            rows, problems = rules_report(ro, caps)
+            assert len(problems) == 2 and "rules over the cap (3 > 2)" in problems[0] and "project rules over" in problems[1], "both caps fail"
+            (ro / "AGENTS.md").write_text("## A\n\n- See `.claude/skills/x/SKILL.md` and [doc](docs/gone.md), [web](https://e.example/a), `.claude/skills/<name>/`, `scripts/gone.sh --fast`, `scripts/check.local.sh`, `python3 scripts/gone2.py --test`.\n")
+            rows, problems = rules_report(ro, caps)
+            assert problems == ["missing paths named in AGENTS.md: .claude/skills/x/SKILL.md, docs/gone.md, scripts/gone.sh, scripts/gone2.py"], "missing paths (also after a command word), not URLs, patterns or optional files"
+            (ro / ".claude/skills/x").mkdir(parents=True); (ro / ".claude/skills/x/SKILL.md").write_text("x")
+            (ro / "docs").mkdir(); (ro / "docs/gone.md").write_text("x")
+            (ro / "scripts").mkdir(); (ro / "scripts/gone.sh").write_text("x"); (ro / "scripts/gone2.py").write_text("x")
+            assert rules_report(ro, caps)[1] == [], "paths exist: pass"
+            with contextlib.redirect_stdout(io.StringIO()):
+                assert main_rules(ro) == 0, "--rules passes"
+                (ro / "AGENTS.md").write_text("## A\n\n" + "- r.\n" * 36)
+                assert main_rules(ro) == 1, "--rules fails over the default cap of 35"
         (root / CONFIG).write_text(json.dumps({"budgets": {"start_read_warn_tokens": 1, "start_read_tokens": 99999},
                                                "last_audit": {"date": "2026-01-01"}}))
         w = io.StringIO()
@@ -305,8 +468,21 @@ def self_test():
     print("BLOAT TEST PASS")
 
 
+def main_rules(root):
+    try:
+        cfg = load_config(root)
+    except (ValueError, TypeError, KeyError) as e:
+        print(f"rules:       {CONFIG} unreadable ({e}); fix it first")
+        return 1
+    rows, problems = rules_report(root, cfg)
+    print("\n".join(rows))
+    print("RULES FAIL" if problems else "RULES PASS")
+    return 1 if problems else 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--rules", action="store_true")
     ap.add_argument("--brief", action="store_true")
     ap.add_argument("--time", action="store_true")
     ap.add_argument("--record", action="store_true")
@@ -318,6 +494,8 @@ def main():
         self_test()
         return 0
     root = Path(git(Path(args.project), "rev-parse", "--show-toplevel") or args.project)
+    if args.rules:
+        return main_rules(root)
     return report(root, args)
 
 
