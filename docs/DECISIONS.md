@@ -5,6 +5,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | RADE stays the frame for all projects: each script = RADE + 1 app; RADE opens first (checks, update notice that points to the RADE page), then Start opens the app in its own look. No app list to download from. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-16 | The RADE changes (Start button, desktop icon, update notice) are planned after the R26 r2 results, for the PFM's approval; engine work goes to rhope-ops/RADE. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-16 | The PFM app is its own full-screen 90-161.Z window in the RADE style, installed and updated by RADE (deploy mode); RADE and 90-161.Z stay separate repos (not merged). Other PFMs get it through RADE. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-16 | R26 r2: the T22 window preview opens at full screen. Scope: round R26. | PFM | scripts/gov/90161Z-T22-pfm-window-r1.ps1 |
 | 2026-11-16 | Front end split: the PFM works in a RADE-style window (Windows PowerShell); AOs, OPR mailbox people and endorsers use SharePoint list forms from an e-mail link. Replaces Power Apps for the app (10 Nov). | PFM | docs/reviews/2026-11-16-r26-results.md |
