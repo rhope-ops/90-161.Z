@@ -257,7 +257,7 @@
           "operationId": "HttpRequest"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Uri": "@concat('/v1.0/me/mailFolders/inbox/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
           "Method": "GET",
           "ContentType": "application/json"
         },
@@ -278,7 +278,7 @@
           "operationId": "HttpRequest"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/me/mailFolders/junkemail/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Uri": "@concat('/v1.0/me/mailFolders/junkemail/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
           "Method": "GET",
           "ContentType": "application/json"
         },
@@ -299,7 +299,7 @@
           "operationId": "HttpRequest"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/me/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Uri": "@concat('/v1.0/me/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
           "Method": "GET",
           "ContentType": "application/json"
         },
@@ -330,7 +330,7 @@
               "operationId": "HttpRequest"
             },
             "parameters": {
-              "Uri": "@concat('https://graph.microsoft.com/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+              "Uri": "@concat('/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
               "Method": "GET",
               "ContentType": "application/json"
             },
@@ -539,7 +539,7 @@
           "operationId": "HttpRequest"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Uri": "@concat('/v1.0/me/mailFolders/inbox/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
           "Method": "GET",
           "ContentType": "application/json"
         },
@@ -560,7 +560,7 @@
           "operationId": "HttpRequest"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/me/mailFolders/junkemail/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Uri": "@concat('/v1.0/me/mailFolders/junkemail/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
           "Method": "GET",
           "ContentType": "application/json"
         },
@@ -581,7 +581,7 @@
           "operationId": "HttpRequest"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/me/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+          "Uri": "@concat('/v1.0/me/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
           "Method": "GET",
           "ContentType": "application/json"
         },
@@ -612,7 +612,7 @@
               "operationId": "HttpRequest"
             },
             "parameters": {
-              "Uri": "@concat('https://graph.microsoft.com/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
+              "Uri": "@concat('/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/sentitems/messages?$filter=contains(subject,''', outputs('Tag'), ''')&$select=subject&$top=25')",
               "Method": "GET",
               "ContentType": "application/json"
             },

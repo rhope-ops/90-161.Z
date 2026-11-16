@@ -204,7 +204,7 @@ for z in SLICES:
 # level; every "@parameters('...')" resolves; each RESULT row runs after every status; a trigger condition is in the F05 shape.
 T21_EXPECT = {"90161Z-T21-probe-r1.zip": (3, 5), "90161Z-T21-probe-word-r1.zip": (1, 2), "90161Z-T21-probe-mail-r1.zip": (1, 2)}
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
-T21_HOSTS = ALLOWED_HOSTS | {"graph.microsoft.com"}   # Graph calls in the mail and app flows
+T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
 
 def check_levels(actions, where, outer=()):
     """runAfter names must be siblings (same level); names are unique across the flow."""

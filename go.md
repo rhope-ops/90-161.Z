@@ -33,7 +33,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 - On the test site: 1 list "90161Z Probe" and 1 library "90161Z Probe Files" with fake files and rows. The site's visitors get Contribute on that list only. Both go to the site Recycle Bin at the end.
 - In Power Automate and Power Apps: up to 3 small solutions ("90-161.Z probe", "90-161.Z probe Word", "90-161.Z probe Mail"; 5 flows in all), 1 plain test app "90161Z T21 Probe r1", and up to 4 new connections (OneDrive for Business, Office 365 Users, Office 365 Groups, and Word or Mail if the tenant allows them). I delete them in the last step.
 - In my OneDrive: a folder "90161Z-probe" with temporary fake files (the flows delete the files).
-- E-mail: up to 4 test e-mails, subject "[TEST] 90161Z T9", to my own address only. RADE saves one Outlook draft (never sent).
+- E-mail: up to 4 test e-mails for each run of the flow tests step, subject "[TEST] 90161Z T9", to my own address only. RADE saves one Outlook draft (never sent).
 
 Steps:
 1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
@@ -44,7 +44,7 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 5. At each of the 3 import steps: do the steps the window lists. The Word and Mail imports can be refused on our tenant: then type the first line of the error and select "It failed". A refusal is a result.
 6. At the AI Builder step: look in Power Automate as the window says and answer 1 question.
 7. Wait while RADE runs the flow tests (about 15 minutes, estimate). I do not open Outlook for this.
-8. At the app step: make the blank app and paste the 6 code blocks, as the window lists. The code file opens in Notepad.
+8. At the app step: make the blank app, add 1 form and paste the 6 code blocks, as the window lists. The code file opens in Notepad.
 9. At the app tests step: select 2 buttons, do 1 search, look at the draft, sign the fake PDF with my CAC and attach it. Answer 3 questions.
 10. At the second-person step: a person with only Read on the test site opens the app and selects 2 buttons (about 5 minutes for that person). If nobody is free: select Skip.
 11. RADE reads the results and moves the probe list and library to the site Recycle Bin.

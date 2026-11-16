@@ -203,7 +203,7 @@
           "item/Title": "RESULT",
           "item/ProbeTest": "T7",
           "item/ProbeWay": "b",
-          "item/ProbeResult": "@if(equals(actions('T7b_search')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeResult": "@if(greater(length(coalesce(actions('T7b_search')?['outputs']?['body']?['value'], json('[]'))), 0), 'PASS', 'FAIL')",
           "item/ProbeDetail": "@concat('rows=', string(length(coalesce(body('T7b_search')?['value'], json('[]')))), ' displayName=', string(length(coalesce(actions('T7b_name')?['outputs']?['body'], json('[]')))), ' department=', string(length(coalesce(actions('T7b_dept')?['outputs']?['body'], json('[]')))), ' officeLocation=', string(length(coalesce(actions('T7b_office')?['outputs']?['body'], json('[]')))), ' mail=', string(length(coalesce(actions('T7b_mail')?['outputs']?['body'], json('[]')))), '; status=', if(equals(actions('T7b_search')?['outputs']?['statusCode'], null), 'none', string(actions('T7b_search')?['outputs']?['statusCode'])))"
         },
         "authentication": "@parameters('$authentication')"
@@ -219,7 +219,7 @@
           "operationId": "HttpRequestV2"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/groups?$filter=mail%20eq%20%27', parameters('Shared mailbox (pfm_SharedMailbox)'), '%27&$select=id')",
+          "Uri": "@concat('/v1.0/groups?$filter=mail%20eq%20%27', parameters('Shared mailbox (pfm_SharedMailbox)'), '%27&$select=id')",
           "Method": "GET"
         },
         "authentication": "@parameters('$authentication')"
@@ -294,7 +294,7 @@
           "item/Title": "RESULT",
           "item/ProbeTest": "T8",
           "item/ProbeWay": "a",
-          "item/ProbeResult": "@if(equals(actions('T8a_find')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeResult": "@if(and(not(empty(outputs('T8a_gid'))), equals(actions('T8a_members')?['status'], 'Succeeded')), 'PASS', 'FAIL')",
           "item/ProbeDetail": "@concat('group=', if(empty(outputs('T8a_gid')), 'none', 'found'), ' members=', if(empty(outputs('T8a_gid')), '0', string(length(coalesce(actions('T8a_members')?['outputs']?['body']?['value'], json('[]'))))), ' status=', if(empty(outputs('T8a_gid')), if(equals(actions('T8a_find')?['outputs']?['statusCode'], null), 'none', string(actions('T8a_find')?['outputs']?['statusCode'])), if(equals(actions('T8a_members')?['outputs']?['statusCode'], null), 'none', string(actions('T8a_members')?['outputs']?['statusCode']))))"
         },
         "authentication": "@parameters('$authentication')"
@@ -310,7 +310,7 @@
           "operationId": "HttpRequest"
         },
         "parameters": {
-          "Uri": "@concat('https://graph.microsoft.com/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/inbox?$select=id')",
+          "Uri": "@concat('/v1.0/users/', parameters('Shared mailbox (pfm_SharedMailbox)'), '/mailFolders/inbox?$select=id')",
           "Method": "GET",
           "ContentType": "application/json"
         },
@@ -339,7 +339,7 @@
           "item/Title": "RESULT",
           "item/ProbeTest": "T8",
           "item/ProbeWay": "b",
-          "item/ProbeResult": "@if(equals(actions('T8b_get')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
+          "item/ProbeResult": "FAIL",
           "item/ProbeDetail": "@concat('tried=Graph users/<box>/mailFolders (mailbox reachable=', if(equals(actions('T8b_get')?['status'], 'Succeeded'), 'yes', 'no'), ', status=', if(equals(actions('T8b_get')?['outputs']?['statusCode'], null), 'none', string(actions('T8b_get')?['outputs']?['statusCode'])), '); members=no Graph resource in the connector''s segments')"
         },
         "authentication": "@parameters('$authentication')"

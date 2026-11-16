@@ -249,7 +249,7 @@ out=$(bout plan | tail -1)
 wait "$t20_pid"; t20rc=$?; out=$(tail -1 "$bg/t20.out")
 case "$t20rc $out" in "0 T20 pass="*" fail=0") ok "T20 list provisioning on the fake site ($out)";; *) grep "T20TEST FAIL" "$bg/t20.out" | cut -c1-300; bad "T20 list provisioning (exit $t20rc): $out";; esac
 
-# R26 probe (T21): the three fake sample files are built by code and match byte for byte; the device script runs on a small fake site.
+# R26 probe (T21): the 2 fake sample files and the fake PDF block in the script are built by code and match byte for byte; the device script runs on a small fake site.
 python3 scripts/build_probe_samples.py --check && ok "T21 probe samples up to date" || bad "T21 probe samples stale (run python3 scripts/build_probe_samples.py)"
 wait "$t21_pid"; t21rc=$?; out=$(tail -1 "$bg/t21.out")
 case "$t21rc $out" in "0 T21 pass="*" fail=0") ok "T21 probe script on the fake site ($out)";; *) grep "T21TEST FAIL" "$bg/t21.out" | cut -c1-300; bad "T21 probe script (exit $t21rc): $out";; esac

@@ -469,16 +469,18 @@ try {
     $t4a = @($rows | Where-Object { $_.Title -eq 'T4a' })
     $other = 0
     foreach ($r in $t4a) { $a = $r.Item['Author']; if ($meId -gt 0 -and $a -and [int]$a.LookupId -ne $meId) { $other++ } }
-    $aOk = ($t4a.Count -ge 1)
+    # T4 needs a second person: a row the signed-in person wrote proves nothing about a person with Read only.
+    $aOk = ($other -ge 1)
     $b = Find-Result $rows 'T4' 'b'
     $bDetail = $(if ($b) { Format-Detail $b.ProbeDetail } else { '' })
     if (-not $bDetail) {
       $t4b = @($rows | Where-Object { $_.Title -eq 'T4b' })
       if ($t4b.Count) { $bDetail = Format-Detail $t4b[0].ProbeDetail }
     }
-    $bPass = ($b -and $b.ProbeResult -eq 'PASS')
-    Add-Test 'T4' @(('a app write with own rights=' + $(if ($aOk) { 'PASS' } else { 'FAIL' }) + ' (T4a rows=' + $t4a.Count + '; rows by other people=' + $other + ')'),
-      ('b flow with the owner connection=' + $(if ($b) { $b.ProbeResult } else { 'FAIL' }) + $(if ($bDetail) { ' (' + $bDetail + ')' } elseif (-not $b) { ' (no result row)' } else { '' }))) ($aOk -or $bPass)
+    $t4bOther = @($rows | Where-Object { ($_.Title -eq 'T4b' -or ($_.Title -eq 'RESULT' -and $_.ProbeTest -eq 'T4' -and $_.ProbeWay -eq 'b')) -and ([string]$_.ProbeDetail) -match 'caller-is-owner=no' }).Count
+    $bPass = ($b -and $b.ProbeResult -eq 'PASS' -and $t4bOther -ge 1)
+    Add-Test 'T4' @(('a app write with own rights=' + $(if ($aOk) { 'PASS' } else { 'FAIL' }) + ' (T4a rows=' + $t4a.Count + '; rows by a second person=' + $other + ')'),
+      ('b flow with the owner connection=' + $(if ($bPass) { 'PASS' } else { 'FAIL' }) + ' (runs by a second person=' + $(if ($t4bOther -ge 1) { 'yes' } else { 'no' }) + ')' + $(if ($bDetail) { ' (' + $bDetail + ')' } elseif (-not $b) { ' (no result row)' } else { '' }))) ($aOk -or $bPass)
     Add-WayTest 'T7' $rows @(@('T7', 'a', 'app Office 365 Users search', $false), @('T7', 'b', 'flow Office 365 Users search', $false))
     Add-WayTest 'T8' $rows @(@('T8', 'a', 'Office 365 Groups members', $false), @('T8', 'b', 'Graph mailbox request', $false))
     $att = @($rows | Where-Object { $_.Title -eq 'T10' }).Count

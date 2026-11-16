@@ -268,7 +268,7 @@ Add-Res $lst 'T10' 'b' 'FAIL' 'tried=OneDrive Convert file on the signed PDF; st
 $r = Invoke-T21 'App'; Note $r
 $tl = @($r.Out | Where-Object { $_ -match '^T\d+ (PASSED|FAILED):' })
 Test-That 'App: 4 lines (T4, T7, T8, T10) and the last line' ($r.Code -eq 0 -and $tl.Count -eq 4 -and (@($tl | ForEach-Object { ($_ -split ' ')[0] }) -join ',') -eq 'T4,T7,T8,T10' -and $r.Out[-1] -eq 'PROBE App done: passed=4 failed=0') $r.Text
-Test-That 'App: T4 counts rows and other people''s rows' ($tl[0] -match 'T4a rows=2; rows by other people=1' -and $tl[0] -match 'b flow with the owner connection=PASS \(caller-is-owner=no\)') $tl[0]
+Test-That 'App: T4 counts rows and other people''s rows' ($tl[0] -match 'T4a rows=2; rows by a second person=1' -and $tl[0] -match 'b flow with the owner connection=PASS \(runs by a second person=yes\)') $tl[0]
 Test-That 'App: T8 and T10 PASSED when one way passed' ($tl[2] -match '^T8 PASSED: a .*=FAIL .*; b .*=PASS' -and $tl[3] -match '^T10 PASSED: a .*=PASS \(attachments=1 byteRange=yes sig=yes\); b .*=FAIL') ($tl -join "`n")
 Test-That 'App: T2 is left to the window answer' ($r.Text -match 'NOTE T2: left to the answer')
 
@@ -282,6 +282,7 @@ $global:F.OnGet = { if ($global:F.Gets -ge 4) { $global:F.OnGet = $null; Add-Res
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $r = Invoke-T21 'App' @{ PollSeconds = 1 }; Note $r
 Test-That 'App: waits for T10 a and T8 b, ends early when they are there' ($r.Text -match 'WAIT app result rows T10 a and T8 b there' -and $r.Text -match 'T10 PASSED: a .*=PASS \(attachments=1\)' -and $sw.Elapsed.TotalSeconds -ge 1 -and $sw.Elapsed.TotalSeconds -lt 60) $r.Text
+Test-That 'App: T4 is FAILED when no second person wrote a row' ($r.Text -match 'T4 FAILED: a .*=FAIL \(T4a rows=0; rows by a second person=0\)') $r.Text
 New-Site; $null = Invoke-T21 'Make'
 $sw.Restart(); $r = Invoke-T21 'App' @{ PollSeconds = 1 }
 Test-That 'App: no app rows, no wait' ($r.Text -match 'WAIT none' -and $sw.Elapsed.TotalSeconds -lt 20)
