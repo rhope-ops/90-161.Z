@@ -2,6 +2,32 @@
 
 Source: DAFMAN 90-161, 18 Oct 2023, Change 1, Corrective Action 1 May 2026. Status: draft. Paragraph references checked against ref/dafman90-161.txt on 12 Nov 26 (docs/reviews/2026-11-12-dafman-full-gap-check.md, docs/reviews/2026-11-12-independent-review.md).
 
+## Target process (PFM, 16 Nov 26)
+
+The PFM's 13 steps (docs/DECISIONS.md, 2026-11-16) are the target. The stage table below is what the lists and flows hold today; it changes when the flows and screens are rebuilt. "Stage" = the row of that table a step uses. Easy paths and what the documents say: docs/reviews/2026-11-16-easy-paths.md.
+
+| Step | What happens | Who acts | Stage today | Ref |
+|---|---|---|---|---|
+| 1 | A publication is triggered for review; the trigger may force a full review | The system | 12 | 7.4.2, 7.4.4 |
+| 2 | The OPR's closest organization mailbox gets the e-mail | The system | 0 | 2.7.2 |
+| 3 | A person from that box names 1 or 2 AOs in the app; the app logs who | OPR | 0 | 2.7.2 |
+| 4 | The AOs get one e-mail: the app, the last published version, a DAF Form 399 | The system | 1 | 7.4.4 |
+| 5 | The AO answers "needs further review?" (no = certify current, 399; yes = full process, 673) and names the certifier, the approver and the CSS box of each; mandatory endorsers are prefilled | AO | 1 | 7.5.1, 5.6.3, 5.7 |
+| 6 | The AO shares the draft with anyone; they read it and leave feedback in the app | AO, reviewers | 2, 4 | 3.2, 3.3 |
+| 7 | The AO adds endorsers and fills in the master DAF Form 673 | AO | 2 | 5.1.3, 5.1.5 |
+| 8 | The AO flags the PFM; the PFM reviews and formats, the privacy monitor review is recorded, and only the PFM starts endorsement | PFM, privacy monitor | 3, 5 | 2.8.1, Chapter 4 |
+| 9 | Endorsers review the final draft in the app, comment on the joint CRM and answer; "//SIGNED//" counts; answers are transcribed to one form; the originals stay in the record set | Endorsers, AO | 6 | 5.1.4.3, 5.1.5, 5.3, 5.4 |
+| 10 | Wave 1 optional endorsers, wave 2 mandatory endorsers, wave 3 legal. A wave opens when every answer of the wave before is on record | The system | 6, 7 | 5.1.8.2, 5.4.3 |
+| 11 | Everything returns to the PFM, who builds the final copy; then the certifier, then the approver. The CSS may act for an official; officials get no e-mail | PFM, CSS, officials | 8, 9 | 5.6, 5.7, 5.7.4 |
+| 12 | After the last signature: the AO is asked for related e-mail, the PFM is alerted, the publication is available at once | The system, AO | 11 | 6.4.1, 5.1.5 |
+| 13 | The PFM can change who gets any step or skip anyone, with a logged reason; the app shows, extracts and summarizes publications and forms | PFM | any | PFM decision |
+
+- Time (PFM, 16 Nov 26): each wave has its own due time. The DAFMAN minimum is 15 business days (5.1.4.3, T-3). The AO may give a wave more; the app then shows a note that the ANG may move slower than the AO wants. The wording of that note needs the PFM's approval.
+- A silent endorser: after the due date the AO records "Concur—No Response" with the reason (5.4.3.2; never for legal), or the PFM skips the row (step 13).
+- Roles are data: one person may hold several (in this wing the PFM is also the privacy monitor) and signs for each role held.
+- Stage 10 (submission) has no AO step in the target: the app holds the files after steps 8 and 11. The OPR signature for an administrative change and for Certify Current is given at step 5 or 11.
+- New publications and changes the OPR starts enter at step 3.
+
 ## Stages (one publication action)
 
 One stage table (PFM 1A, 12 Nov 26, independent review): the walkthrough stages 0-12 (https://claude.ai/artifact/VLxDqQfhEfWSw4Ckrc52Ki). PFM Process Steps is seeded from this table.
