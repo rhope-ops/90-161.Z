@@ -13,7 +13,7 @@ AGENTS.md "Delegation" points here. Ask each agent for concise findings with evi
 |---|---|---|---|
 | `scout` | haiku | Read, Grep, Glob | Searches, file lists, summaries of test or log output |
 | `worker` | sonnet | Read, Edit, Write, Bash, Grep, Glob; guard hook | One brief-ready task on its own branch |
-| `reviewer` | sonnet | Read, Grep, Glob, Bash; guard hook | Fresh review: diff and brief only |
+| `reviewer` | inherit (the author's tier) | Read, Grep, Glob, Bash; guard hook | Fresh review: diff and brief only |
 
 `scripts/worker_guard.py` (PreToolUse hook) blocks push to main or master, every force-push form, rebase, reset --hard, clean and branch deletes for `worker`; with `--readonly` it also blocks every git verb that changes the repo, for `reviewer`. It is a seat belt for honest mistakes, not a security boundary: it cannot see file writes or commands built at run time.
 
@@ -26,7 +26,7 @@ Route by tier. Pass a model on the call only where this table says "strong" for 
 | Search, file lists, summaries of test or log output | `scout` | fast |
 | Task from a brief | `worker` | standard |
 | Worker task that failed its checks 2 times, a refactor over 5+ files, a performance fix | `worker` | strong (model on the call) |
-| Fresh review of a routine diff | `reviewer` | standard |
+| Fresh review of a routine diff | `reviewer` | the author's tier (inherit) |
 | Fresh review of data or save migrations, git or hook tools, security, or a refactor that must not change behavior | `reviewer` | strong (model on the call) |
 | Merges, conflict choices, design, artifacts, deploys | orchestrator | strong |
 

@@ -1,0 +1,34 @@
+# Rule conflict check: kit port 2 (kit c523a21), 2026-11-16
+
+Reviewer: fresh `reviewer` subagent, model tier Opus (the author's tier), given only the changed lines, AGENTS.md, docs/DECISIONS.md and the brief of `.claude/skills/rule-change/SKILL.md`.
+
+## Changed lines (approved by the PFM, 2026-11-16, exact text)
+
+- Handoff: "... put detailed evidence in docs/reviews/." + " Steps: `.claude/skills/handoff/SKILL.md`."
+- Bloat: "one line each where possible (every line costs tokens on every task and can lower adherence)." -> "one line per rule (every line costs tokens on every task and can lower adherence); a rule that needs more lines is a procedure."
+- `scripts/bloat_check.py` bullet: + " A run slower than its baseline: `.claude/skills/efficiency/SKILL.md`."
+
+## Findings (no MAJOR, no conflict between two rules)
+
+| # | Severity | Finding | Action |
+|---|---|---|---|
+| 1 | MINOR | efficiency skill cited "(the PFM, 2026-11-16)" for "warn only"; no DECISIONS row. Cause: the port renamed "the owner" of a kit decision. | Fixed: cites the kit decision. |
+| 2 | MINOR | "one line per rule" vs "Order of authority" (a ranked list of 4 lines and a paragraph): an audit could move it into a skill. | Open: to the PFM (REC: keep; the list is one ranking that bloat_check does not count as rules). |
+| 3 | MINOR | Handoff line "The current request overrides an older handoff." repeats Order of authority (item 1 above item 4); the handoff skill says it a third time. Sentence not changed by this port. | Open: to the PFM (REC: next audit). |
+| 4 | NIT | "Start of session" and the handoff skill both say read docs/NEXT_PROMPT.md. | Noted. |
+| 5 | NIT | +25% limit and "propose the audit" agree with DECISIONS rows of 2026-11-13. | OK. |
+
+rule-conflict-check: 5a5b94a0763f
+Skipped (kit port 2): rule-tests scenarios 11-15 (older than ceac0e8), docs/FILES.md, bootstrap.sh, sync_baseline.py (not in this repo).
+
+## Fresh diff review (Opus, 2026-11-16): no MAJOR
+
+- MINOR 1, push-guard baseline missing: fixed, recorded 3.6 s (median of 3 runs of `pii_guard.py --require-denylist --all --range origin/main..HEAD`; 3.6, 3.6, 3.5 s).
+- MINOR 2, `scripts/session_checkin.sh` is the whole kit c523a21 file, so it also brings 4 kit changes from before ceac0e8 that port 1 did not take: `cd "$top"` to the repo top, the "(installed now)" hooks text, the `check-last` line (check.sh here already writes it) and the placeholder check skipped only in the kit clone (kit d77e9b7). Same behaviour here (origin is not the kit); recorded, kept.
+- NIT: `check` timing has no `cmd`/`max_slowdown` (default 0.25 is used); Handoff rule has no rule-tests scenario (WARN only, same in the kit).
+
+## Second conflict check (after the PFM's 1A and 2B, 2026-11-16)
+
+Change: the Handoff line loses "The current request overrides an older handoff." (Order of authority ranks the request above the handoff). Fresh `reviewer` subagent, Opus, same brief. Result: no MAJOR, no conflict, no decision contradicts the lines; 3 NITs (the handoff skill's step 3 now points to Order of authority; "read NEXT_PROMPT" in both the start rule and the skill; "one line per rule" vs Order of authority, decided by 1A). No change.
+
+rule-conflict-check: b02209601660
