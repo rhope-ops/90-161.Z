@@ -31,6 +31,9 @@
         "personal-data scan": 8.1,
         "project checks (check.local.sh)": 25.4
       }
+    },
+    "push-guard": {
+      "seconds": 3.6
     }
   },
   "ignore": [
