@@ -213,6 +213,8 @@ LookUp('90161Z Probe Files', 'File name with extension' = "90161Z-T21-fake-draft
 
 BY HAND for block 6 (T10)
   The form itself is always made by hand (it is not in a block):
+  If you already made and named the form in the RADE window steps (the steps
+  before the blocks), do NOT insert a second form: do only items 7 and 8 here.
   1. Insert menu, Edit form. Name it frmProbe.
   2. Set its DataSource property to: '90161Z Probe'
   3. Edit fields: keep only Title and Attachments.

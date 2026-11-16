@@ -66,7 +66,7 @@
           "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
           "table": "90161Z Probe",
           "item/Title": "T4b",
-          "item/ProbeDetail": "@concat('caller-is-owner=', if(equals(triggerBody()?['text'], body('Me')?['id']), 'yes', 'no'))"
+          "item/ProbeDetail": "@concat('caller-is-owner=', if(not(equals(actions('Me')?['status'], 'Succeeded')), 'unknown', if(equals(triggerBody()?['text'], actions('Me')?['outputs']?['body']?['id']), 'yes', 'no')))"
         },
         "authentication": "@parameters('$authentication')"
       }

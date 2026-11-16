@@ -283,6 +283,16 @@ $sw = [Diagnostics.Stopwatch]::StartNew()
 $r = Invoke-T21 'App' @{ PollSeconds = 1 }; Note $r
 Test-That 'App: waits for T10 a and T8 b, ends early when they are there' ($r.Text -match 'WAIT app result rows T10 a and T8 b there' -and $r.Text -match 'T10 PASSED: a .*=PASS \(attachments=1\)' -and $sw.Elapsed.TotalSeconds -ge 1 -and $sw.Elapsed.TotalSeconds -lt 60) $r.Text
 Test-That 'App: T4 is FAILED when no second person wrote a row' ($r.Text -match 'T4 FAILED: a .*=FAIL \(T4a rows=0; rows by a second person=0\)') $r.Text
+# T4 way b is not proven when the flow ran only for the owner (or the owner check is unknown), even with RESULT T4 b = PASS.
+foreach ($who in @('yes', 'unknown')) {
+  New-Site; $null = Invoke-T21 'Make'
+  $lst = Get-Probe '90161ZProbe'
+  $null = $lst.Items.Add(@{ Id = 401; Title = 'T4b'; ProbeTest = ''; ProbeWay = ''; ProbeResult = ''; ProbeDetail = ('caller-is-owner=' + $who); Author = $null })
+  Add-Res $lst 'T4' 'b' 'PASS' 'tried=PostItem with the flow owner connection; status=201'
+  Add-Res $lst 'T10' 'a' 'PASS' 'attachments=1'; Add-Res $lst 'T8' 'b' 'FAIL' 'x'
+  $r = Invoke-T21 'App' @{ PollSeconds = 1 }; Note $r
+  Test-That ('App: T4 b is FAIL when caller-is-owner=' + $who) ($r.Text -match 'T4 FAILED: a .*=FAIL .*; b flow with the owner connection=FAIL \(runs by a second person=no\)') $r.Text
+}
 New-Site; $null = Invoke-T21 'Make'
 $sw.Restart(); $r = Invoke-T21 'App' @{ PollSeconds = 1 }
 Test-That 'App: no app rows, no wait' ($r.Text -match 'WAIT none' -and $sw.Elapsed.TotalSeconds -lt 20)
