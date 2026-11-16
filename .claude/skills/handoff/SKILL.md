@@ -27,4 +27,4 @@ In the kit clone itself (the KIT line at start), docs/NEXT_PROMPT.md is the temp
 
 1. Read docs/NEXT_PROMPT.md after the check-in.
 2. Check each claim against the repo before you act on it: is the commit on origin/main, is the pull request still open, does the file exist? A claim that fails is drift: report it.
-3. The current request overrides the handoff. If they conflict, say so and follow the request.
+3. The current request overrides the handoff (AGENTS.md "Order of authority"). If they conflict, say so and follow the request.
