@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | R27 also tests one tiny cloud-built app file (.msapp) uploaded in 2 places in Power Apps (about 5 minutes); R26 r2 stays as built. Scope: round R27. | PFM | docs/phases.md |
 | 2026-11-16 | RADE stays the frame for all projects: each script = RADE + 1 app; RADE opens first (checks, update notice that points to the RADE page), then Start opens the app in its own look. No app list to download from. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-16 | The RADE changes (Start button, desktop icon, update notice) are planned after the R26 r2 results, for the PFM's approval; engine work goes to rhope-ops/RADE. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-16 | The PFM app is its own full-screen 90-161.Z window in the RADE style, installed and updated by RADE (deploy mode); RADE and 90-161.Z stay separate repos (not merged). Other PFMs get it through RADE. | PFM | docs/NEXT_PROMPT.md |
