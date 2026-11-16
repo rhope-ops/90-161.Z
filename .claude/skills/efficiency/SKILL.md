@@ -5,7 +5,7 @@ description: Use when a check run, the session check-in, a push or `bloat_check.
 
 # Efficiency: a measured slowdown
 
-AGENTS.md "Bloat, drift and assumptions" points here. A slowdown that nobody looks at grows: agents add steps, and each one seems small. So each repeatable process compares its time with a baseline, and a slowdown starts this skill. Warn only: a slowdown never fails a check (the PFM, 2026-11-16).
+AGENTS.md "Bloat, drift and assumptions" points here. A slowdown that nobody looks at grows: agents add steps, and each one seems small. So each repeatable process compares its time with a baseline, and a slowdown starts this skill. Warn only: a slowdown never fails a check (kit decision, 2026-11-16; ported here by the PFM's port request of 2026-11-16).
 
 ## Where times are compared
 
