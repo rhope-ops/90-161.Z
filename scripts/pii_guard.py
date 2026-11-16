@@ -58,6 +58,7 @@ Matches are printed masked (names and secrets as a length only), so CI logs do n
 Standard library only. Needs git (except for FILE mode).
 """
 import argparse
+import bisect
 import contextlib
 import fnmatch
 import hashlib
@@ -262,6 +263,22 @@ def skipped(path, allow):
     return any(fnmatch.fnmatchcase(path, g) or path.startswith(g.rstrip("/") + "/") for g in globs if g)
 
 
+def _inside(spans):
+    """A test for "the span (s, e) lies inside one of these spans", in log time: one sort, then a binary search over
+    the starts and a running maximum of the ends (spans may overlap). A plain any() was quadratic on long lines."""
+    spans = sorted(spans)
+    starts = [a for a, _ in spans]
+    reach, best = [], -1
+    for _, b in spans:
+        best = max(best, b)
+        reach.append(best)
+
+    def test(s, e):
+        i = bisect.bisect_right(starts, s) - 1
+        return i >= 0 and reach[i] >= e
+    return test
+
+
 def scan_text(text, where, deny, allow, dod=False):
     """Return findings (where, line_no, kind, masked) for one text. dod: also run the DoD checks."""
     found = []
@@ -279,24 +296,22 @@ def scan_text(text, where, deny, allow, dod=False):
         hits += [("id", m.group()) for m in SSN.finditer(line)]
         hits += [("id", m.group(1)) for m in SSN_KW.finditer(line)]
         if dod:
-            mails = [m.span() for m in emails(line)]  # the host of a mail address is part of that finding
-            hits += [("milhost", m.group()) for m in MILHOST.finditer(line)
-                     if not any(a <= m.start() and m.end() <= b for a, b in mails)]
+            in_mail = _inside(m.span() for m in emails(line))  # the host of a mail address is part of that finding
+            hits += [("milhost", m.group()) for m in MILHOST.finditer(line) if not in_mail(m.start(), m.end())]
             for rx in DODID:
                 hits += [("dodid", m.group(1)) for m in rx.finditer(line)]
             for rx in MARKING:
                 hits += [("marking", m.group().strip()) for m in rx.finditer(line)]
         if name_re:
-            spans = [(s.start(), s.end()) for v in allow if not v.startswith("skip:")
-                     for s in re.finditer(re.escape(v), line, re.IGNORECASE)]
+            in_allowed = _inside((s.start(), s.end()) for v in allow if not v.startswith("skip:")
+                                 for s in re.finditer(re.escape(v), line, re.IGNORECASE))
             hits += [("name", m.group(1)) for m in name_re.finditer(line)
-                     if not any(a <= m.start(1) and m.end(1) <= b for a, b in spans)]  # inside an allowed string
-        seen = set()
+                     if not in_allowed(m.start(1), m.end(1))]  # inside an allowed string
+        seen = set()  # values already reported on this line, of any kind (a set: a list scan was quadratic)
         for kind, val in hits:
-            if val in allow or (kind == "milhost" and val.lower() in hosts_ok) or (kind, val) in seen \
-                    or any(val == v for _, v in seen):
+            if val in allow or (kind == "milhost" and val.lower() in hosts_ok) or val in seen:
                 continue
-            seen.add((kind, val))
+            seen.add(val)
             found.append((where, n, kind, mask(kind, val)))
     return found
 
@@ -542,6 +557,12 @@ def self_test():
     ok = ok and good
     teams = "api" + dot + "dod" + dot + "teams" + dot + "microsoft" + dot + "us"
     expect("a DoD Teams host with a subdomain", "see https://" + teams + "/x", ["milhost"], dod=True)
+    t0 = time.time()
+    many = "".join("a" + str(i) + at + "b" + dot + "cc " for i in range(17_600))  # 200 KB of distinct addresses
+    scan_text(many, "t", [], set(), True)
+    good = time.time() - t0 < 2
+    print(("ok   " if good else "FAIL ") + f"200 KB of distinct addresses: linear ({time.time() - t0:.2f} s)")
+    ok = ok and good
     expect("address joined to the end of an allowed one", "x" + at + "example" + dot + "com+bob" + at + "corp" + dot + "org", ["email"])
     expect("github noreply allowed", "123+x" + at + "users.noreply.github" + dot + "com", [])
     expect("noreply allowed", "noreply" + at + "anthropic" + dot + "com", [])
