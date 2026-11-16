@@ -5,6 +5,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-15 | Probe round (plan approved): the easy-path probe T2 to T10 runs next, before the Settings-row values of the old R26; the F03 mail fault is test T9 (every send path at once, read back by a flow); a second person with Read does T4; build effort approved (3 workers, 1 reviewer, 3 to 5 hours, estimate). Scope: this round. | PFM | docs/reviews/2026-11-15-r25-results.md "Probe plan" |
 | 2026-11-16 | Process 1: an existing publication is triggered for review by itself; the trigger may force a full review. | PFM | docs/process-model.md "Target process" |
 | 2026-11-16 | Process 2-3: the OPR's closest organization mailbox is e-mailed; a person from that box names 1 or 2 AOs in the app (address-list search). The app logs who. | PFM | docs/process-model.md "Target process" |
 | 2026-11-16 | Process 4: the AOs get one e-mail with links to the app, the last published version and a DAF Form 399. | PFM | docs/process-model.md "Target process" |

@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 15 Nov 26 (R24 passed. Open: "Clean the test site", then Round R25 r1: clean install, about 60 minutes).
+Updated: 15 Nov 26 (R25: the clean install passed; the F03 test e-mail and 2 window items did not. No task is open: the next round waits for my approval of its plan).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,54 +24,14 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Clean the test site (open, 15 Nov 26; do this before Round R25)
+## Next round (not ready yet)
 
-**For:** R25 installs 90-161.Z from zero, the way another wing will. So everything the test rounds made on the test site and in Power Automate must go first. I chose to delete it by hand (15 Nov 26).
-**Time:** about 20 minutes (estimate).
-**Changes:** it deletes the items below, and only those. Lists and the library go to the site Recycle Bin and can be restored for 93 days. Deleted flows and solutions cannot be restored; R25 imports the flows again. Nothing on my computer changes.
-
-Steps:
-1. Power Automate > Solutions > open "90-161.Z flows". Select each of these, then Delete > "Delete from this environment", in this order: the 3 cloud flows ("90161Z F03 Suspense Reminders r5", "90161Z F05 Endorsement Routing r2", "90161Z F06 Hold and Resume r1"); the 13 environment variables (names start with pfm_); the 2 connection references ("SharePoint" and "Office 365 Outlook"). Then go back to Solutions and delete the solution "90-161.Z flows". Reason: deleting a solution alone leaves its parts behind.
-2. Do the same for the solution "90-161.Z solution import test A" (its flow is "90161Z T17 Solution Import Test A r5") and for any other solution whose name starts with "90-161.Z" (for example "90-161.Z solution import test B").
-3. Do the same for my two sample solutions, if they still exist: "90161ZT05SolutionSample" and "90161ZExportSample".
-4. Power Automate > My flows: delete every flow whose name starts with "90161Z" (the T02 Provision Lists flows, the T11 Rights Probe flows, the T03 and T04 test flows).
-5. Test site > Site contents: delete these 12 lists: PFM Offices, PFM Series, PFM Process Steps, PFM Settings, PFM Guidance, PFM Product Index, PFM Publications, PFM Waivers, PFM Activity Log, PFM Endorsements, PFM Recommendations (DAF Form 847), PFM Reviews. Delete the library "90-161.Z" too (R25 makes it again and uploads the 34 seals from my T07 folder). If a list or library named "PFMRightsProbeTEST" or "PFMRightsProbeLib" is there (left by a stopped rights probe), delete it too.
-6. Test site > Documents: delete the files whose names start with "90161Z-T11-rights-result" and "90161Z-T17-solution-result".
-7. Test site > Site permissions: there is no 90-161.Z group to delete. Only if a group named "PFM Rights Probe TEST" exists, delete it.
-8. Keep: my connections in Power Automate, the site time zone, the site logo, and the RADE folder on my computer. Do not empty the site Recycle Bin.
-
-**Report:** nothing to send. R25 checks the site itself and names anything that is left.
-**If it fails:** if an item cannot be deleted, leave it and start R25: its check step names what is left, and I send that result.
-
-## Round R25 r1: clean install from zero (open, 15 Nov 26)
-
-**For:** R25 proves that RADE can install 90-161.Z on a clean site without the provisioning flow: it builds the 12 lists by PnP, sets up the site, and I import the flows and RADE tests them on the new lists. It is the first round on RADE engine-v6: questions are answered in the window (no notes in the e-mail), a minimized window comes back from the taskbar, every line of a card starts on one edge, and RADE draws its own button borders. These window fixes are proven only on my computer, so the last step asks me about them.
-**Time:** about 60 minutes (estimate): checks 2, clean-up confirm 1, clean check 1, lists 5, site setup 4, import 7, import log check 1, test part 1 12, failure e-mail 4, F03 run 3, test part 2 12, e-mail question 2, window questions 2.
-**Changes:**
-- On my computer: RADE writes into T16, T17, T18, T20 and Rounds\R25, and moves old round files to the Recycle Bin.
-- On the test site: 12 new lists with 88 seed rows; the library "90-161.Z" with the 34 seals; three fake publications and their rows, which are moved to the site Recycle Bin at the end.
-- In Power Automate: the solution "90-161.Z flows" is imported (F03 r5, F05 r2, F06 r1).
-- E-mail: test e-mails go only to my alert address, from my own mailbox in this round. RADE saves one Outlook draft (never sent).
-
-Steps:
-1. Do the task "Clean the test site" above first.
-2. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R25-round-r1.ps1
-3. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
-4. In the RADE window, choose the application, then select the button that runs the checks.
-5. Select Run. At the first step, select "Done: site is clean" and answer its question.
-6. Wait while RADE checks the site, builds the lists and sets up the site (about 10 minutes, estimate). If the check step fails, it names what is left: delete that, then start again at step 2.
-7. When the window shows the import step: do the steps it lists. Leave "3 Shared mailbox" empty. Then answer its 2 questions in the window.
-8. When the window shows the Resubmit step and the F03 step: do the steps each lists.
-9. At the e-mail step, look for the e-mail "[TEST] Escalation" in Outlook and answer where it is.
-10. At the last step, minimize the RADE window, bring it back from the taskbar, and answer its 4 questions about the window.
-11. Wait for DONE. RADE opens an Outlook draft. Send it as it is: every answer is already in it.
-
-**Report:** the draft itself, subject "90161Z R25". It holds the report file and the result files (T20 check, T20 lists, T16, T18 part 1, T18 part 2), and the import log file (T17) if the import failed.
-**If it fails:** read the "What to do" line in the window. If a step fails, send the draft as it is: the failed line is the result. The list step can be run again; it skips what is there. If it stops with "already exists", empty the 12 PFM lists from the site Recycle Bin (this cannot be undone) and run the round again. The provisioning flow (Task 2 in Done) stays the fallback.
+No task is open. Round R25 is done (below). The next round, a probe of the easy paths, waits for my approval of its plan in the Claude chat.
 
 ## Done
 
+- Round R25 r1 and "Clean the test site" (15 Nov 26): the clean install passed. Clean check 7 of 7, 12 lists by PnP 15 of 15, site setup 6 of 6, import confirmed, test part 1 7 of 7, test part 2 12 of 12, shared files 4 of 4, Window OK. Did not pass: the F03 test e-mail (not found, fifth round), the failure e-mail (it arrived late), restore after minimize, alignment on the first card. Details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-15-r25-results.md
 - Round R24 r1 (15 Nov 26): passed. Checks 14 of 14, list check 6 of 6, import confirmed, test part 1 7 of 7, test part 2 12 of 12, shared files 4 of 4, Window OK. First run of RADE engine-v4 on my computer. My notes (label order 1, 3, 4, 2; no answer box; minimize; window look; e-mail not found) are in the details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-15-r24-results.md
 - Round R23 r1 and r2 (15 Nov 26): passed two times. Checks 9 of 9, inventory PASSED, shared-file self-test 4 of 4, Window OK. RADE engine-v2 works in Windows PowerShell 5.1 on my computer. Details:
