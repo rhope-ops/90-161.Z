@@ -516,6 +516,10 @@ got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
 python3 tests/check_probe_app.py >/dev/null && ok "probe app code file (T21 paste blocks)" || bad "probe app code file"
+# Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16). The steps of the shipped R26 r1 text that fail are in
+# tests/check_guide_text.baseline.json: the PASS line gives their count; they are rewritten after the R26 results.
+python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
+gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1); known = R26 r1 baseline, reported, not blocking)" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
 wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }
 echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]
