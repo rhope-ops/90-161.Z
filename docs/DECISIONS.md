@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | Allow list: `Bash(git diff*)` narrowed to `Bash(git diff)` + `Bash(git diff *)` (the wide entry also allowed `git difftool -x`) | PFM | rhope-ops/archimedes_lever docs/DECISIONS.md |
+| 2026-11-16 | Kit round, part 2: skill line on sample addresses; `scan_text` repeat check by set, containment by binary search (same results, 200 KB 13 s -> 0.1 s) | PFM | rhope-ops/archimedes_lever docs/DECISIONS.md |
+| 2026-11-16 | Agent values in the hook port, open to change: ask list, 8 MB and 8 s hook limits, Gmail to/cc/bcc exception, `--skills` thresholds (as in the kit's Agent rows) | Agent | rhope-ops/archimedes_lever docs/DECISIONS.md |
+| 2026-11-16 | Port kit PII hook (archimedes_lever#27): `--hook` on outgoing tool calls, `--stdin`, linear email pattern; guard bullet names the hook (exact text approved in the kit decision) | PFM | docs/reviews/2026-11-16-rule-conflict-kit-port-3.md |
 | 2026-11-16 | Deliver skill step 1: commit messages that name a blocked git form go in a file (`git commit -F <file>`), as the deny rules match the whole command. Suggest text approved as shown. | PFM | .claude/skills/deliver/SKILL.md |
 | 2026-11-16 | Port the kit's 22 extra deny rules into .claude/settings.json (discard, forced and hook-bypass git forms, also with git options before the verb); adds protection only. | PFM | .claude/settings.json |
 | 2026-11-16 | Kit port 2 review items: keep "one line per rule" as approved (1A); remove "The current request overrides an older handoff." from the AGENTS.md Handoff line, as Order of authority says it (2B). | PFM | docs/reviews/2026-11-16-rule-conflict-kit-port-2.md |

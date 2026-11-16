@@ -225,6 +225,7 @@ selftest session_checkin scripts/session_checkin.sh -- bash scripts/session_chec
 if [ -f scripts/bloat_check.py ]; then
   if [ "$lane" = full ]; then run "rule caps and pointers" python3 scripts/bloat_check.py --rules --gate
   else run "rule caps and pointers" python3 scripts/bloat_check.py --rules; fi
+  run "skills well-formed" python3 scripts/bloat_check.py --skills
 fi
 
 if [ ! -f scripts/log_check.py ]; then

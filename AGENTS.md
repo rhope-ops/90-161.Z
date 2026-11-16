@@ -60,7 +60,7 @@ Nothing else is a rule. docs/DECISIONS.md is the record of what the PFM decided:
 ## Personal data
 
 - Never commit secrets, tokens, credentials or personal data: real names, email addresses, phone numbers, home or work addresses, ID numbers, or the PFM's job details (git history keeps them for good, and a repo that holds them can never go public). Use a role (for example "the maintainer") and fake sample data; commit with a GitHub noreply address, never a personal email. A private repo may put its owner's real name in the `- Owner:` line.
-- The guard (`scripts/pii_guard.py`, on when `.pii-guard` exists) checks every push and pull request. When it blocks, and for its state, tiers and denylist: `.claude/skills/personal-data/SKILL.md`. Never ask for the denylist names in chat, never commit the denylist, and never add an allow entry: only the PFM does.
+- The guard (`scripts/pii_guard.py`, on when `.pii-guard` exists) checks every push and pull request, and a PreToolUse hook (`pii_guard.py --hook`, `.claude/settings.json`) checks each outgoing tool call. When it blocks, and for its state, tiers and denylist: `.claude/skills/personal-data/SKILL.md`. Never ask for the denylist names in chat, never commit the denylist, and never add an allow entry: only the PFM does.
 
 ## Commands
 

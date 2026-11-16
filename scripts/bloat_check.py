@@ -14,6 +14,11 @@ Usage:
                                               # record in docs/reviews/ names their hash (scripts/check.sh full lane)
     python3 scripts/bloat_check.py --lint     # rule lint of every rule line: near-duplicates, vague words, untested
                                               # rules; report only (--rules lints the changed lines)
+    python3 scripts/bloat_check.py --skills   # check each .claude/skills/*/SKILL.md: FAIL (exit 1) with no frontmatter,
+                                              # no name or description, or a name that differs from its folder;
+                                              # WARN (exit 0) for a description not starting "Use when"/"Use before",
+                                              # over 1024 characters, a file over 150 lines, or an orphan skill
+                                              # (name in neither AGENTS.md nor another SKILL.md); last line SKILLS PASS/FAIL
     python3 scripts/bloat_check.py --compare NAME=SECONDS ...   # compare times that a script measured with their
                                               # baselines; one TIME or WARN line; never fails (scripts/check.sh,
                                               # session_checkin.sh and the pre-push hook run it); --record stores them
@@ -682,7 +687,110 @@ def self_test():
         assert json.loads((root / CONFIG).read_text())["timings"]["check"]["steps"]["a"] == 1.2 and "budgets" in json.loads((root / CONFIG).read_text()), "--record keeps the other keys"
         rows, _ = run_timings(root, {"timings": {"nocmd": {"seconds": 1}}}, record=False)
         assert rows == [], "--time skips a timing with no cmd"
+    with tempfile.TemporaryDirectory() as d:
+        rs = Path(d)
+        (rs / "AGENTS.md").write_text("Skills: ok, nodesc, noname, wrongname, nofm, longone, warnone.\n")
+
+        def mk(folder, body):
+            (rs / ".claude/skills" / folder).mkdir(parents=True, exist_ok=True)
+            (rs / ".claude/skills" / folder / "SKILL.md").write_text(body)
+        good = "---\nname: {}\ndescription: Use when testing.\n---\nbody\n"
+        mk("ok", good.format("ok"))
+        with contextlib.redirect_stdout(io.StringIO()) as w:
+            assert main_skills(rs) == 0, "clean skill passes"
+        assert w.getvalue().strip() == "SKILLS PASS: 1 skills, 0 warnings", "clean pass line"
+        mk("nofm", "no frontmatter\n")
+        mk("nodesc", "---\nname: nodesc\n---\n")
+        mk("noname", "---\ndescription: Use when x.\n---\n")
+        mk("wrongname", "---\nname: other\ndescription: Use when x.\n---\n")
+        rows, fails, _, _ = skills_report(rs)
+        assert fails == 4 and sum(r.startswith("FAIL") for r in rows) == 4, "each FAIL case"
+        with contextlib.redirect_stdout(io.StringIO()) as w:
+            assert main_skills(rs) == 1, "a malformed skill fails"
+        assert w.getvalue().strip().splitlines()[-1].startswith("SKILLS FAIL:"), "fail line"
+        for f in ("nofm", "nodesc", "noname", "wrongname"):
+            (rs / ".claude/skills" / f / "SKILL.md").unlink()
+        mk("warnone", "---\nname: warnone\ndescription: Does things.\n---\n")
+        mk("longone", "---\nname: longone\ndescription: Use before " + "x" * 1030 + "\n---\n" + "l\n" * 150)
+        mk("orphan", good.format("orphan"))
+        rows, fails, warns, n = skills_report(rs)
+        txt = "\n".join(rows)
+        assert fails == 0 and n == 4 and warns == 4, "four WARN cases, no FAIL"
+        assert all(r.startswith("  WARN") for r in rows), "WARN lines are indented"
+        assert 'warnone/SKILL.md: description does not start' in txt, "WARN: description start"
+        assert "longone/SKILL.md: description is 1041 characters" in txt and "longone/SKILL.md: 154 lines" in txt, "WARN: long description and file"
+        assert "orphan/SKILL.md: orphan" in txt, "WARN: orphan"
+        (rs / ".claude/skills/warnone/SKILL.md").write_text("---\nname: warnone\ndescription: Does things.\n---\nSee orphan.\n")
+        assert "orphan/SKILL.md: orphan" not in "\n".join(skills_report(rs)[0]), "a mention in another SKILL.md is no orphan"
+        assert skill_frontmatter("---\nname: f\ndescription: >\n  Use when folded.\n---\n")["description"] == "Use when folded.", "a folded description keeps no > marker"
     print("BLOAT TEST PASS")
+
+
+def skill_frontmatter(text):
+    """Returns {key: value} of the YAML frontmatter (simple `key: value`, indented continuation lines), or None."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    try:
+        end = next(i for i in range(1, len(lines)) if lines[i].strip() == "---")
+    except StopIteration:
+        return None
+    fm, key = {}, None
+    for ln in lines[1:end]:
+        m = re.match(r"([A-Za-z_-]+):\s*(.*)$", ln)
+        if m and not ln[0].isspace():
+            key = m.group(1)
+            fm[key] = m.group(2).strip()
+        elif key and ln.strip():
+            head = "" if fm[key] in (">", "|", ">-", "|-") else fm[key]  # a block marker is not part of the text
+            fm[key] = (head + " " + ln.strip()).strip()
+    for k, v in fm.items():
+        fm[k] = "" if v in (">", "|", ">-", "|-") else v.strip("\"'")
+    return fm
+
+
+def skills_report(root):
+    """Returns (lines, fails, warns, count) for .claude/skills/*/SKILL.md."""
+    files = sorted((root / ".claude/skills").glob("*/SKILL.md"))
+    texts = {f.parent.name: f.read_text(encoding="utf-8", errors="replace") for f in files}
+    agents = (root / "AGENTS.md").read_text(encoding="utf-8", errors="replace") if (root / "AGENTS.md").is_file() else ""
+    out, fails, warns = [], 0, 0
+    for name, text in texts.items():
+        rel = f".claude/skills/{name}/SKILL.md"
+        fm = skill_frontmatter(text)
+        if fm is None:
+            out.append(f"FAIL  {rel}: no YAML frontmatter")
+            fails += 1
+            continue
+        bad = [f"no {k}" for k in ("name", "description") if not fm.get(k)]
+        if fm.get("name") and fm["name"] != name:
+            bad.append(f"name \"{fm['name']}\" differs from folder \"{name}\"")
+        if bad:
+            out.append(f"FAIL  {rel}: {', '.join(bad)}")
+            fails += 1
+        desc = fm.get("description", "")
+        warn = []
+        if desc and not desc.startswith(("Use when", "Use before")):
+            warn.append('description does not start with "Use when" or "Use before"')
+        if len(desc) > 1024:
+            warn.append(f"description is {len(desc)} characters (over 1024)")
+        n = len(text.splitlines())
+        if n > 150:
+            warn.append(f"{n} lines (over 150)")
+        pat = r"(?<![\w-])" + re.escape(name) + r"(?![\w-])"
+        if not re.search(pat, agents) and not any(re.search(pat, t) for o, t in texts.items() if o != name):
+            warn.append("orphan: name not mentioned in AGENTS.md or another SKILL.md")
+        for w in warn:
+            out.append(f"  WARN  {rel}: {w}")
+        warns += len(warn)
+    return out, fails, warns, len(texts)
+
+
+def main_skills(root):
+    rows, fails, warns, n = skills_report(root)
+    print("\n".join(rows + [f"SKILLS FAIL: {fails} skill(s) malformed, {n} skills, {warns} warnings" if fails
+                           else f"SKILLS PASS: {n} skills, {warns} warnings"]))
+    return 1 if fails else 0
 
 
 def main_lint(root):
@@ -706,7 +814,7 @@ def main_rules(root, gate=False):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0], allow_abbrev=False)
     ap.add_argument("--rules", action="store_true")
     ap.add_argument("--brief", action="store_true")
     ap.add_argument("--time", action="store_true")
@@ -716,6 +824,7 @@ def main():
     ap.add_argument("--compare", nargs="+", metavar="NAME=SECONDS")
     ap.add_argument("--gate", action="store_true")
     ap.add_argument("--lint", action="store_true")
+    ap.add_argument("--skills", action="store_true")
     ap.add_argument("--project", default=".")
     args = ap.parse_args()
     if args.test:
@@ -724,6 +833,8 @@ def main():
     root = Path(git(Path(args.project), "rev-parse", "--show-toplevel") or args.project)
     if args.lint:
         return main_lint(root)
+    if args.skills:
+        return main_skills(root)
     if args.rules:
         return main_rules(root, args.gate)
     if args.compare:
