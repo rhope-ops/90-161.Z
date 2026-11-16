@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-16 | Agent values in the hook port, open to change: allow and ask lists, 8 MB and 8 s hook limits, Gmail to/cc/bcc exception, `--skills` thresholds (as in the kit's Agent rows) | Agent | rhope-ops/archimedes_lever docs/DECISIONS.md |
+| 2026-11-16 | Agent values in the hook port, open to change: ask list, 8 MB and 8 s hook limits, Gmail to/cc/bcc exception, `--skills` thresholds (as in the kit's Agent rows) | Agent | rhope-ops/archimedes_lever docs/DECISIONS.md |
 | 2026-11-16 | Port kit PII hook (archimedes_lever#27): `--hook` on outgoing tool calls, `--stdin`, linear email pattern; guard bullet names the hook (exact text approved by PFM) | PFM | docs/reviews/2026-11-16-rule-conflict-kit-port-3.md |
 | 2026-11-16 | Deliver skill step 1: commit messages that name a blocked git form go in a file (`git commit -F <file>`), as the deny rules match the whole command. Suggest text approved as shown. | PFM | .claude/skills/deliver/SKILL.md |
 | 2026-11-16 | Port the kit's 22 extra deny rules into .claude/settings.json (discard, forced and hook-bypass git forms, also with git options before the verb); adds protection only. | PFM | .claude/settings.json |
