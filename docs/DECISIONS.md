@@ -5,6 +5,26 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | Process 1: an existing publication is triggered for review by itself; the trigger may force a full review. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 2-3: the OPR's closest organization mailbox is e-mailed; a person from that box names 1 or 2 AOs in the app (address-list search). The app logs who. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 4: the AOs get one e-mail with links to the app, the last published version and a DAF Form 399. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 5: the AO answers "needs further review?" No = certify current (399 only). Yes = full process (673). The AO names certifier, approver and the CSS box of each. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 5: the AO picks boxes from a list of all known organization boxes with a summary of each. All mandatory endorsers are prefilled. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 6: the AO may share the draft with anyone. That person gets a link, reads the draft in the app and leaves feedback there. All feedback is given in the app. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 7: the AO adds as many or as few endorsers as wanted and fills in the master DAF Form 673. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 8: the AO flags the PFM when the draft is ready. The PFM reviews it, and only the PFM starts endorsement. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 9: endorsers review the final draft in the app, comment on the joint CRM and answer. "//SIGNED// name, grade" counts (5.1.4.3). Answers are transcribed to one form. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 10: mandatory endorsers unlock only when every optional endorser has an answer on record. Same steps for both. Legal is last (5.1.8.2). | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 11: everything returns to the PFM before certification and approval, then goes to the certifier, then the approver. The PFM builds the final copy at this step. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 11: a stand-in (the CSS) may do every step in the app for an official. Officials get no e-mail alerts; only the CSS box or a named CSS does. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 12: after the last signature the AO is asked to upload related e-mail for the archive, the PFM is alerted, and the publication is available at once. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 13: the PFM can change who gets any step, or skip anyone, whatever DAFMAN 90-161 says; each change is logged with a reason. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process 13: the app makes a publication and its forms easy to see, read, extract details from and summarize. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Capabilities: no platform limit is assumed unless confidence is high; every easy path is tried at least once before a fallback. Scope: 90-161.Z. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Process time: each wave has its own due time. The AO may give a wave more than the DAFMAN minimum, with a careful note that the ANG may move slower than the AO wants. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | Privacy monitor review follows DAFMAN 2.8.1. The role is data: in this wing the PFM holds it, another wing may differ. A person signs for every role they hold. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | New publications and changes the OPR starts use the same process from step 3. | PFM | docs/process-model.md "Target process" |
+| 2026-11-16 | How (not approved yet): the 13 steps change the 14 Nov routing order (now 3 waves) and "no hand edits" of the suspense; the stage table and screen map change when flows and screens are built. | Agent | docs/process-model.md "Target process" |
 | 2026-11-15 | P5 merged on the PFM's word (pull request 86: 2 AGENTS.md lines). Delete branch claude/exciting-planck-gfr1nu: main has a newer port of its guard work. AGENTS.md speed rules: wait for R26. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Audit 3 proposals P1 to P9 approved. Made: P1 to P4, P6 to P8. P5 is its own pull request (the PFM reads the new AGENTS.md lines first). P9 goes to the RADE audit. | PFM | docs/reviews/2026-11-15-bloat-audit-3.md |
 | 2026-11-15 | Round builds: one new session for each round (P8); a `worker` on the standard tier unless the routing table says strong (P7). Scope: 90-161.Z round builds. | PFM | .claude/orchestration.md |

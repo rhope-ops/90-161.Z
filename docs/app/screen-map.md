@@ -2,6 +2,23 @@
 
 Status: phase 4, step 1 (PFM 25A, 13 Nov): every screen, who sees it, what it does, where its text comes from. Items marked **REC:** are open until the PFM approves. Approved 13 Nov (26A-29A). Clickable previews at 375 and 1440 px, light and dark (25A; PFM, 15 Nov: the 13 Nov "no previews" text is withdrawn). Colors stay provisional until go.md Task 12.
 
+## 0. Target (PFM, 16 Nov 26)
+
+The screens follow the PFM's 13 steps (docs/process-model.md "Target process"). Sections 3 to 6 below describe the 13 Nov map; they are cut to the cards in this table when the first preview of the 13 steps is approved. One card = one thing, in the RADE "One thing" design.
+
+| Step | Card | Who |
+|---|---|---|
+| 3 | Name the AOs | A person from the OPR's box |
+| 5 | Does it need further review?; Who signs (certifier, approver, CSS boxes) | AO |
+| 6 | Share the draft; Read and leave feedback | AO; anyone invited |
+| 7 | Add endorsers; Fill in the DAF Form 673 | AO |
+| 8 | Ready for the PFM; Start endorsement | AO; PFM |
+| 9 | Read the draft; Add a comment; Your answer; Decide a comment | Endorser; AO |
+| 10 | Give this wave more time | AO |
+| 11 | Ready for signatures; Attach the signed form | PFM; CSS or the official |
+| 12 | Add related e-mail | AO |
+| 13 | Change or skip; Publication and forms (read, details, summary) | PFM; anyone |
+
 ## 1. Rules for every screen
 
 - One screen = one task (docs/guidance/customer-steps.md). Step screens show "Step X of Y", the due date, the heading, the instructions, "Why", and one main button.
