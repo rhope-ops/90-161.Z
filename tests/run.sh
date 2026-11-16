@@ -509,6 +509,7 @@ want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] =
 got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
+python3 tests/check_probe_app.py >/dev/null && ok "probe app code file (T21 paste blocks)" || bad "probe app code file"
 wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }
 echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]
