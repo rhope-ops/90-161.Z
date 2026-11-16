@@ -20,7 +20,7 @@ Scale note (REC from 12 Nov 26, estimate, not measured): PFM Activity Log reache
 
 ## Rounds to the pilot (order approved by the PFM, 15 Nov 26)
 
-The PFM approved the order of the rounds. What moved between rounds after that approval is an agent **REC:** the health-flow probe and paste timing from R25 to R26, and the install record to R34.
+The PFM approved the order of the rounds, and on 15 Nov 26 the probe round as the next round (R26). What moved between rounds after that approval is an agent **REC:** the health-flow probe and paste timing from R25 to R27, and the install record to R35.
 
 A round holds only steps that test something not yet verified (PFM, 2026-11-14). Round numbers after R24 are an order, not a promise: a round that needs a fix runs again under the next number.
 
@@ -28,20 +28,21 @@ A round holds only steps that test something not yet verified (PFM, 2026-11-14).
 |---|---|---|---|---|
 | R24 | 6, 1 | Passed on 15 Nov 26 ([results](reviews/2026-11-15-r24-results.md)): engine-v4, import page of slice zip r5, site address entered once. Open from it: the F03 test e-mail was not found; the window did not look like the approved Polish pass | - | - |
 | R25 | 3, 5, 1 | Passed on 15 Nov 26 for the install ([results](reviews/2026-11-15-r25-results.md)): clean-site check 7 of 7, 12 lists by PnP 15 of 15, site setup, slice import and test on the new lists (7 of 7, 12 of 12). Open from it: the F03 test e-mail was not found (fifth round; the shared mailbox value was not empty, so the own-mailbox test did not run); engine-v6 did not fix restore after minimize or the alignment of the first card | - | - |
-| R26 | 6, 1 | 6 flow values from PFM Settings rows (new F03, F05, F06); stage 6 target 25 working days; moved from R25: the health-flow probe, paste timing 500 KB and 1 MB | R25; triage of the 10 list Gap rows | Values stay environment variables |
-| R27 | 6 | F01, F02, F04; the full solution with every flow On | R26; the PFM answers the open flow choices; triage of the 3 flow Gap rows; the r7 flow rules | Import the slice plus one flow at a time |
-| R28 | 1, 2 | RADE Diagnose and Back up | The PFM approves the function lists in rhope-ops/RADE; an engine release; a lock move | Backup by hand per [backup-and-restore.md](backup-and-restore.md) |
-| R29 | 1, 2 | RADE Restore; Uninstall, then a clean reinstall | R28 | Old solutions removed by hand |
-| R30 | 7 | Canvas app imports; a Read-only user writes through the app | R27; the app build (cloud work); DEC on app writes; the r7 app rules | A flow writes with the PFM's connection |
-| R31 | 7 | Endorsers answer in the app; Restart coordination | R30 | - |
-| R32 | 2, 7 | PFM Office screens; role re-assign; the weekly backup flow and the disabled-account list (screens P13, P14 show them) | R31 | - |
-| R33 | 4, 7 | Accessibility Checker 0 errors; final palette; site home page (preview first) and its header flow | Palette values (Task 12) | - |
-| R34 | 8 | Install from zero by a second account with fewer rights | R27, R29, R33 | The documented fallback for each missing right |
-| R35 | 8 | Rights rows P18 and P19; then the pilot starts | R34 | Fallbacks in [rights-test-plan.md](rights-test-plan.md) |
+| R26 | 6, 7, 1 | The easy-path probe (built 16 Nov 26, [plan](reviews/2026-11-15-r25-results.md)): tests T2 to T10 of [easy-paths](reviews/2026-11-16-easy-paths.md), one PASSED or FAILED line each; T9 is the fix path for the F03 mail fault. Not in it: paste timing (engine-v6 has no such step) | R25 | Each FAILED test takes its fallback from the easy-paths table |
+| R27 | 6, 1 | 6 flow values from PFM Settings rows (new F03, F05, F06); stage 6 target 25 working days; the health-flow probe, paste timing 500 KB and 1 MB (when a RADE release has the step) | R26; the 13-step change of F05 (3 waves); triage of the 10 list Gap rows | Values stay environment variables |
+| R28 | 6 | F01, F02, F04; the full solution with every flow On | R27; the PFM answers the open flow choices; triage of the 3 flow Gap rows; the r7 flow rules | Import the slice plus one flow at a time |
+| R29 | 1, 2 | RADE Diagnose and Back up | The PFM approves the function lists in rhope-ops/RADE; an engine release; a lock move | Backup by hand per [backup-and-restore.md](backup-and-restore.md) |
+| R30 | 1, 2 | RADE Restore; Uninstall, then a clean reinstall | R29 | Old solutions removed by hand |
+| R31 | 7 | Canvas app imports; a Read-only user writes through the app | R28; the app build (cloud work); DEC on app writes; the r7 app rules | A flow writes with the PFM's connection |
+| R32 | 7 | Endorsers answer in the app; Restart coordination | R31 | - |
+| R33 | 2, 7 | PFM Office screens; role re-assign; the weekly backup flow and the disabled-account list (screens P13, P14 show them) | R32 | - |
+| R34 | 4, 7 | Accessibility Checker 0 errors; final palette; site home page (preview first) and its header flow | Palette values (Task 12) | - |
+| R35 | 8 | Install from zero by a second account with fewer rights | R28, R30, R34 | The documented fallback for each missing right |
+| R36 | 8 | Rights rows P18 and P19; then the pilot starts | R35 | Fallbacks in [rights-test-plan.md](rights-test-plan.md) |
 
-- **REC** (agent, 15 Nov 26; waits for the PFM): the probe round for the easy paths T2 to T10 ([reviews/2026-11-16-easy-paths.md](reviews/2026-11-16-easy-paths.md); PFM decision of 16 Nov 26) runs next, before the R26 row above. It takes the F03 mail fault as test T9 (every send path at once, read back by a flow). The Settings-row values of R26 wait until the 13-step process has changed F05 (3 waves), so they are built once. The round numbers below then move by one.
-- Critical path: R25, R26, R27, then R30 to R35. R28 and R29 depend on the second repo and can move anywhere before R34.
-- The install record (`marker`) is not in a test round: the engine allows it only in a deploy, and a deploy sends no results e-mail. It moves to the first deploy round (R34). The site address on the clipboard at the import step waits for a later engine release.
+- The probe round is R26 (plan approved by the PFM, 15 Nov 26; built 16 Nov 26). The rounds after it moved by one number (16 Nov 26); their order is as approved.
+- Critical path: R25, R26, R27, R28, then R31 to R36. R29 and R30 depend on the second repo and can move anywhere before R35.
+- The install record (`marker`) is not in a test round: the engine allows it only in a deploy, and a deploy sends no results e-mail. It moves to the first deploy round (R35). The site address on the clipboard at the import step waits for a later engine release.
 - Estimate: 12 rounds if each passes on its first run; **23 to 25 is the expected number**; 27 at the high end. Basis: 29 capabilities in R01 to R23 took a mean of 2.28 rounds each, 14 passed in their first round, and 31 device capabilities remain. **Confidence: low to medium**: no canvas app round is in the history.
 - REC, not in a round before the pilot: the weekly digest, the setup intake and the Task 9 e-Publishing reader (in the pilot); the 107 "Renderer gap" and 152 Partial coverage rows (triage by the PFM, cloud work); Task 7 Part A with fake seals (drop: the real seals passed in R13); rights row S14 (after the pilot).
 
@@ -50,9 +51,9 @@ A round holds only steps that test something not yet verified (PFM, 2026-11-14).
 | Before | Decision |
 |---|---|
 | The next engine change | Mark what differs on the side-by-side page of the built window and the approved Polish pass (R24 note: "old layout") |
-| R26 | Which of the 39 coverage Gap rows close before the pilot ([dafman-coverage/README.md](dafman-coverage/README.md)) |
-| R27 | Flow open points: F05 a to e and open choices 2, 4, 5, 7, 9 to 13, 15 ([flow/solution/README.md](../flow/solution/README.md)) |
-| R28 | RADE maintenance function lists D1 to D8 and R1 to R7 (agent REC in rhope-ops/RADE docs/engine.md) |
-| R30 | How the app writes: list-level Contribute or a flow ([NEXT_PROMPT.md](NEXT_PROMPT.md) item 5) |
-| R33 | Palette values (Task 12) |
+| R27 | Which of the 39 coverage Gap rows close before the pilot ([dafman-coverage/README.md](dafman-coverage/README.md)) |
+| R28 | Flow open points: F05 a to e and open choices 2, 4, 5, 7, 9 to 13, 15 ([flow/solution/README.md](../flow/solution/README.md)) |
+| R29 | RADE maintenance function lists D1 to D8 and R1 to R7 (agent REC in rhope-ops/RADE docs/engine.md) |
+| R31 | How the app writes: list-level Contribute or a flow ([NEXT_PROMPT.md](NEXT_PROMPT.md) item 5) |
+| R34 | Palette values (Task 12) |
 | The pilot | Second-look F1 to F5 and sweep items S8 to S11; which phase 2 flows run in the pilot |

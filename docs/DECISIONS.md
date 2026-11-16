@@ -5,6 +5,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | R26 test app: no importable file (Microsoft Learn: no supported way outside Power Apps Studio); the PFM makes a blank app and pastes code blocks. Scope: round R26. | PFM | go.md |
+| 2026-11-16 | R26 test T9: the Mail connector send (Learn: not in DoD) goes in its own small solution that an import may refuse; a refusal is the result. Scope: round R26. | PFM | go.md |
+| 2026-11-16 | How R26 is built (not approved yet): T6 way a is a look in the flow designer (no documented action definition without a model id); rounds after R26 move by one number. | Agent | docs/phases.md |
 | 2026-11-15 | Probe round (plan approved): the easy-path probe T2 to T10 runs next, before the Settings-row values of the old R26; the F03 mail fault is test T9 (every send path at once, read back by a flow); a second person with Read does T4; build effort approved (3 workers, 1 reviewer, 3 to 5 hours, estimate). Scope: this round. | PFM | docs/reviews/2026-11-15-r25-results.md "Probe plan" |
 | 2026-11-16 | Process 1: an existing publication is triggered for review by itself; the trigger may force a full review. | PFM | docs/process-model.md "Target process" |
 | 2026-11-16 | Process 2-3: the OPR's closest organization mailbox is e-mailed; a person from that box names 1 or 2 AOs in the app (address-list search). The app logs who. | PFM | docs/process-model.md "Target process" |
