@@ -515,11 +515,29 @@ want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] =
 got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
-python3 tests/check_probe_app.py >/dev/null && ok "probe app code file (T21 paste blocks)" || bad "probe app code file"
-# Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16). The steps of the shipped R26 r1 text that fail are in
-# tests/check_guide_text.baseline.json: the PASS line gives their count; they are rewritten after the R26 results.
+# T22 PFM window preview (R26 r2, PFM 16 Nov 26): the cards as text (-PlanOnly; no window here). Each choice and button opens a card
+# that exists, each card has one blue button at most, and the text is fake (every publication and office says FAKE).
+python3 - <<'PYT22' && ok "T22 window preview cards" || bad "T22 window preview cards"
+import re, subprocess, sys
+out = subprocess.run(['pwsh', '-NoProfile', '-File', 'scripts/gov/90161Z-T22-pfm-window-r1.ps1', '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
+assert out and out[-1] == 'PLAN cards=5', out[-3:]
+cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
+for l in out:
+    m = re.match(r'  (CHOICE|BUTTON) (.+) -> (\w+)$', l)
+    if m: assert m.group(3) in cards, l
+blue = {}
+cur = None
+for l in out:
+    if l.startswith('CARD '): cur = l
+    if '(blue)' in l: blue[cur] = blue.get(cur, 0) + 1
+assert all(v == 1 for v in blue.values()), blue
+assert all(ord(c) < 128 for c in '\n'.join(out))
+for l in out:
+    for w in re.findall(r'\b(OI \d\d-\d\d|OFFICE \w)\b', l): assert 'FAKE ' + w in l, l
+PYT22
+# Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
-gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1); known = R26 r1 baseline, reported, not blocking)" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
+gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
 wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }
 echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]

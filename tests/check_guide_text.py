@@ -8,7 +8,8 @@ Reads the steps a person does on the government computer:
 
 A step FAILS when it:
 1. POINTS ELSEWHERE: it sends the reader to another file, section or step for its content
-   ("step 10", "block 1", "items 4 to 6", the part "X", "as the window lists", "in the file", "see ...").
+   ("step 10", "block 1", "items 4 to 6", the part "X", "as the window lists", "in the file", "see ...",
+   "the previous step", "described in the file", "do the same", "repeat ...").
 2. HOLDS 2 ACTIONS: more than one thing to do.
 3. IS LONG: more than 200 characters.
 
@@ -18,7 +19,8 @@ How actions are counted (kept simple on purpose):
 - An action is a lower-case verb from VERBS, or one that starts a sentence. A capitalized word
   inside a sentence is a name on the screen (select Save), not an action. A verb after a word
   such as "the", "to", "not" or "must", or at the end of a sentence, is not an action.
-- A "then" with no verb after it is one more action (select Open, then Next = 2).
+- A "then" with no verb after it is one more action (select Open, then Next = 2); "then wait", "then keep",
+  "then remember" and a "then" at the end add none. A verb right after "then" counts, capitalized or not.
 - A sentence with "if" is a fallback: it may hold 1 action of its own (If one reads Off, turn
   it on). The other sentences of the step may hold 1 action together.
 - A line with no number (the "If it fails" line of a guide) is tested for 1 and 3 only.
@@ -32,17 +34,12 @@ Limits (a pass here is not proof that a step is clear; the fresh-reader check in
 - A verb that is not in VERBS is not counted; a pointer worded in a way POINTERS does not know is not found.
 - Build words (block, way, part, item) are found only when they point (block 1, the part "X").
 
-Baseline: tests/check_guide_text.baseline.json lists the steps of Round R26 r1 that fail. R26 r1
-shipped before this check existed and its text is rewritten in one pass after its results arrive
-(PFM 2026-11-16). A listed step is REPORTED on every run and does not fail the check. An entry
-matches the exact text of a step, so an edited step is checked again; an entry that matches no
-failing step fails the check. Never add an entry to make a new step pass. The file is removed
-when the R26 steps are rewritten.
+No baseline and no exemption: every step must pass (the R26 r1 baseline was removed with R26 r2, 16 Nov 26).
 
-Usage: check_guide_text.py            check; exit 1 on a failure that is not in the baseline
+Usage: check_guide_text.py            check; exit 1 on any failing step
        check_guide_text.py --test     self-test with good and bad sample steps
-       check_guide_text.py --list     Markdown list of every failing step (baseline included)
-Last line: GUIDE TEXT steps=N failed=F known=K
+       check_guide_text.py --list     Markdown list of every failing step
+Last line: GUIDE TEXT steps=N failed=F
 """
 import json
 import re
@@ -52,22 +49,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BUNDLES = ROOT / 'scripts/paste_bundles.json'
 GO = ROOT / 'go.md'
-BASELINE = ROOT / 'tests/check_guide_text.baseline.json'
 MAX_LEN = 200
 
 VERBS = ('select', 'press', 'type', 'paste', 'open', 'click', 'right-click', 'double-click', 'drag', 'tick', 'untick',
          'choose', 'copy', 'cut', 'delete', 'remove', 'close', 'save', 'sign', 'draw', 'add', 'attach', 'return', 'go',
          'turn', 'send', 'ask', 'answer', 'enter', 'import', 'download', 'upload', 'create', 'make', 'look', 'do',
          'use', 'set', 'run', 'start', 'scroll', 'rename')
+WAITS = {'wait', 'keep', 'remember'}
 NOT_AFTER = {'the', 'a', 'an', 'its', 'your', 'my', 'this', 'that', 'last', 'first', 'next', 'to', 'must', 'can',
-             'cannot', 'is', 'are', 'be', 'not', 'no', 'does', 'will', 'which', 'whether', 'every', 'each', 'any'}
+             'cannot', 'is', 'are', 'be', 'not', 'no', 'does', 'will', 'which', 'whether', 'every', 'each', 'any',
+             'should', 'would', 'could', 'may', 'might'}
 THING = r'(?:files?|windows?|guides?|tasks?|rounds?|documents?|sections?|notes?|readme)'
 POINTERS = [
     (r'\b(?:steps?|blocks?|items?|parts?|sections?|paragraphs?|attachments?|ways?) (?:\d+|Q)', 'names a step, block, item or part'),
     (r'\b%s (?:says?|lists?|describes?|tells?|explains?)\b' % THING, 'defers to a file or window'),
     (r'\b(?:in|from|of|under) (?:the|that|this) (?:\w+ )?(?:file|guide|document|section|readme)\b(?! (?:name|path|box|explorer|menu|tab)\b)', 'defers to a file or section'),
     (r'\b(?:previous|earlier|same) steps?\b|\bsteps? (?:above|below|before)\b', 'names another step'),
-    (r'\b(?:described|explained|listed|given|shown) in\b|\b(?:do|does) the same\b|\brepeat\b', 'refers elsewhere'),
+    (r'\b(?:described|explained|listed|given|shown) in (?:the |this |that )?(?:\w+ )?(?:file|guide|document|section|readme|step|window|notes?)\b|\b(?:do|does) the same\b|(?:^|[.;:,] |then )repeat\b', 'refers elsewhere'),
     (r'(?:^|[.;:,] )see\b|\b(?:refer to|according to|as above|as below|as before|as described|same as)\b', 'refers elsewhere'),
 ]
 WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
@@ -86,11 +84,11 @@ def count_actions(sentence):
     n = 0
     for i, w in enumerate(words):
         low = w.lower()
-        if low == 'then' and (i == len(words) - 1 or words[i + 1] not in VERBS):
+        if low == 'then' and i < len(words) - 1 and words[i + 1].lower() not in VERBS and words[i + 1].lower() not in WAITS:
             n += 1  # "then" with no verb after it repeats the last verb (select Open, then Next)
         if low not in VERBS or (i == len(words) - 1 and words[i - 1].lower() != 'then'):
             continue
-        if i and (w[0].isupper() or words[i - 1].lower() in NOT_AFTER):
+        if i and ((w[0].isupper() and words[i - 1].lower() != 'then') or words[i - 1].lower() in NOT_AFTER):
             continue
         n += 1
     return n
@@ -160,6 +158,11 @@ def self_test():
         '14. Tick "90161Z Probe" and "90161Z Probe Files".',
         'If something does not delete: type its name below, then select "It failed".',
         'If a button shows a red line: go on with the next step.',
+        '17. Select Open, then wait.',
+        '18. Select the repeat option.',
+        '19. Select the item shown in the list.',
+        '20. Select Save, then.',
+        '21. Look at the new tab: the draft should open in the browser.',
     ]
     bad = [
         ('1. Set the form as the part "BY HAND for block 6" in the file says, items 4 to 6 (3 short formulas).', 'points'),
@@ -172,6 +175,9 @@ def self_test():
         ('2. Run the script described in the README.', 'points'),
         ('3. Do the same for the second app.', 'points'),
         ('4. Select Save then close.', 'holds 2'),
+        ('5. Select Save, then Select Open.', 'holds 2'),
+        ('6. Select Save. Repeat for the other files.', 'points'),
+        ('7. Select the value shown in the file.', 'points'),
         ('6. Select Import solution, then Browse.', 'holds 2'),
         ('7. Press Ctrl+V, select Open, then Next.', 'holds 3'),
         ('8. Select Save. Select Publish.', 'holds 2'),
@@ -199,18 +205,7 @@ def main():
     if '--test' in sys.argv:
         return self_test()
     steps = list(bundle_steps()) + list(go_steps())
-    known = json.loads(BASELINE.read_text(encoding='utf-8'))['steps'] if BASELINE.exists() else []
-    known_set = {(k['where'], k['text']) for k in known}
-    failed, new, used = [], 0, set()
-    for where, text in steps:
-        f = check_step(text)
-        if not f:
-            continue
-        failed.append((where, text, f))
-        if (where, text) in known_set:
-            used.add((where, text))
-        else:
-            new += 1
+    failed = [(where, text, check_step(text)) for where, text in steps if check_step(text)]
     if '--list' in sys.argv:
         last = None
         for where, text, f in failed:
@@ -220,14 +215,9 @@ def main():
             print('- `%s`: %s' % (text if len(text) <= 70 else text[:67] + '...', '; '.join(f)))
     else:
         for where, text, f in failed:
-            print('%s %s | %s | %s' % ('KNOWN' if (where, text) in known_set else 'FAIL', where, text, '; '.join(f)))
-    stale = known_set - used
-    for where, text in sorted(stale):
-        print('STALE baseline entry (the step changed or passes; remove the entry) %s | %s' % (where, text))
-    if known:
-        print('NOTE %d failing steps of the shipped R26 r1 text are in the baseline: reported, not blocking.' % len(used))
-    print('GUIDE TEXT steps=%d failed=%d known=%d' % (len(steps), len(failed), len(used)))
-    return 1 if new or stale else 0
+            print('FAIL %s | %s | %s' % (where, text, '; '.join(f)))
+    print('GUIDE TEXT steps=%d failed=%d' % (len(steps), len(failed)))
+    return 1 if failed else 0
 
 
 if __name__ == '__main__':

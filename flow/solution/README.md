@@ -66,14 +66,12 @@ Why F02 uses a recurrence: the 6-month review task opens on a date, not on an ed
 14. The publisher is PFM with option value prefix 89127, as in the PFM's R18 export (flow/solution/export-sample); a new environment creates PFM with these values.
 15. Solution XML, operation IDs and the `Publication/Id eq N` filter style are unverified until a first import (see the top of this file).
 
-## T21 probe solutions (R26)
+## T21 probe solution (R26)
 
 Built from `test-defs/90161Z-T21-*.json` by `scripts/build_flow_solution.py` (a def's `solution` block names its variant, title and zip). Unmanaged, every flow On, fake data only, each step's status written to RESULT rows of the list `90161Z Probe`.
 
 | Zip | Holds | Connectors (connection references) | Environment variables |
 |---|---|---|---|
-| `90161Z-T21-probe-r1.zip` (PFM90161ZTESTP) | Probe Files, Probe Mail, Probe App | SharePoint, OneDrive for Business, Office 365 Outlook, Office 365 Users, Office 365 Groups (5) | Site URL, Shared mailbox |
-| `90161Z-T21-probe-word-r1.zip` (PFM90161ZTESTW) | Probe Word | SharePoint, Word Online (Business) | Site URL |
-| `90161Z-T21-probe-mail-r1.zip` (PFM90161ZTESTM) | Probe Mail Notify | SharePoint, Mail | Site URL, Alert e-mail |
+| `90161Z-T21-probe-r2.zip` (PFM90161ZTESTP) | Probe Files r1, Probe Mail r2, Probe App r2 | SharePoint, OneDrive for Business, Office 365 Outlook, Office 365 Users, Office 365 Groups (5) | Site URL, Shared mailbox |
 
-An import may refuse W (Word Online (Business) is a premium connector) and M (the Mail connector's `request/...` keys are unverified; Mail may also be blocked by policy). A refused import costs only that test (T3 a, T9 S4). The solutions share the connection references and environment variables by name; import P first, so W and M reuse them. Remove all three by hand after the round.
+r2 (16 Nov 26): the Word and Mail solutions of r1 are gone (r1 results: Premium licence; the Mail import did not get past the connections page). Probe Mail r2 sends S3 (own mailbox, subject starts with "[TEST]"), S5 (own mailbox, no "[TEST]") and S6 (shared mailbox, no "[TEST]") and reads the folders after 2, 8 and 25 minutes. Probe App r2 starts on a RUN-APP row (no Power App: PFM 16 Nov 26). Remove the solution by hand after the round.

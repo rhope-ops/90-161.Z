@@ -198,11 +198,11 @@ for z in SLICES:
         for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
             if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
-# R26 (task T21, probe flows): three unmanaged test solutions built from flow/solution/test-defs/90161Z-T21-*.json:
-# P (3 flows, 5 connection references), W and M (one flow each). Same file rules as the export (no XML declaration, CRLF, root
+# R26 (task T21, probe flows): one unmanaged test solution built from flow/solution/test-defs/90161Z-T21-*.json:
+# P (3 flows, 5 connection references; r2, 16 Nov 26: the Word and Mail solutions were refused in r1 and are gone). Same file rules as the export (no XML declaration, CRLF, root
 # components), and the data boundary: no ".mil", no mail address, no site host in any file. Every runAfter name exists on the same
 # level; every "@parameters('...')" resolves; each RESULT row runs after every status; a trigger condition is in the F05 shape.
-T21_EXPECT = {"90161Z-T21-probe-r1.zip": (3, 5), "90161Z-T21-probe-word-r1.zip": (1, 2), "90161Z-T21-probe-mail-r1.zip": (1, 2)}
+T21_EXPECT = {"90161Z-T21-probe-r2.zip": (3, 5)}
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
 T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
 
@@ -223,7 +223,7 @@ def check_levels(actions, where, outer=()):
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
 t21_defs = sorted(B.TEST_DEFS.glob("90161Z-T21-*.json"))
-if len(t21_defs) != 5: bad(f"expected 5 T21 test defs, found {len(t21_defs)}")
+if len(t21_defs) != 3: bad(f"expected 3 T21 test defs, found {len(t21_defs)}")
 by_zip = {}
 for src in t21_defs:
     d = json.loads(src.read_text(encoding="utf-8"))

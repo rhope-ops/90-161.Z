@@ -5,6 +5,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | Front end split: the PFM works in a RADE-style window (Windows PowerShell); AOs, OPR mailbox people and endorsers use SharePoint list forms from an e-mail link. Replaces Power Apps for the app (10 Nov). | PFM | docs/reviews/2026-11-16-r26-results.md |
+| 2026-11-16 | No pasted Power Apps code: R26 r1 pasted 5 of 6 blocks but the result did not match the PFM's vision. | PFM | docs/reviews/2026-11-16-r26-results.md |
+| 2026-11-16 | T9 next try: 2 e-mails from the PFM's own mailbox, one subject with "[TEST]" and one without (every "[TEST]" e-mail so far was lost). | PFM | docs/reviews/2026-11-16-r26-results.md |
+| 2026-11-16 | R26 r2: a large round, built overnight; the PFM runs it on 16 Nov ("take as long as you need"). | PFM | docs/phases.md |
 | 2026-11-16 | go.md round steps hold only the steps that start the round; the runner window holds every other step (one place per step; choice 2A). | PFM | AGENTS.md "Gov-device usability" (3) |
 | 2026-11-16 | Guide steps: each names the exact thing to select and holds the exact text; none points elsewhere; tests/check_guide_text.py and a fresh-reader check run before a round ships. | PFM | AGENTS.md "Gov-device usability" (3) |
 | 2026-11-16 | The R26 step text is fixed in one pass after the R26 results arrive, not before; until then its failing steps are a reported baseline. Scope: round R26. | PFM | tests/check_guide_text.baseline.json |
