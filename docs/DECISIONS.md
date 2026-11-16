@@ -5,9 +5,17 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | RADE stays the frame for all projects: each script = RADE + 1 app; RADE opens first (checks, update notice that points to the RADE page), then Start opens the app in its own look. No app list to download from. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-16 | The RADE changes (Start button, desktop icon, update notice) are planned after the R26 r2 results, for the PFM's approval; engine work goes to rhope-ops/RADE. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-16 | The PFM app is its own full-screen 90-161.Z window in the RADE style, installed and updated by RADE (deploy mode); RADE and 90-161.Z stay separate repos (not merged). Other PFMs get it through RADE. | PFM | docs/NEXT_PROMPT.md |
+| 2026-11-16 | R26 r2: the T22 window preview opens at full screen. Scope: round R26. | PFM | scripts/gov/90161Z-T22-pfm-window-r1.ps1 |
+| 2026-11-16 | Front end split: the PFM works in a RADE-style window (Windows PowerShell); AOs, OPR mailbox people and endorsers use SharePoint list forms from an e-mail link. Replaces Power Apps for the app (10 Nov). | PFM | docs/reviews/2026-11-16-r26-results.md |
+| 2026-11-16 | No pasted Power Apps code: R26 r1 pasted 5 of 6 blocks but the result did not match the PFM's vision. | PFM | docs/reviews/2026-11-16-r26-results.md |
+| 2026-11-16 | T9 next try: 2 e-mails from the PFM's own mailbox, one subject with "[TEST]" and one without (every "[TEST]" e-mail so far was lost). | PFM | docs/reviews/2026-11-16-r26-results.md |
+| 2026-11-16 | R26 r2: a large round, built overnight; the PFM runs it on 16 Nov ("take as long as you need"). | PFM | docs/phases.md |
 | 2026-11-16 | go.md round steps hold only the steps that start the round; the runner window holds every other step (one place per step; choice 2A). | PFM | AGENTS.md "Gov-device usability" (3) |
 | 2026-11-16 | Guide steps: each names the exact thing to select and holds the exact text; none points elsewhere; tests/check_guide_text.py and a fresh-reader check run before a round ships. | PFM | AGENTS.md "Gov-device usability" (3) |
-| 2026-11-16 | The R26 step text is fixed in one pass after the R26 results arrive, not before; until then its failing steps are a reported baseline. Scope: round R26. | PFM | tests/check_guide_text.baseline.json |
+| 2026-11-16 | The R26 step text is fixed in one pass after the R26 results arrive, not before; until then its failing steps are a reported baseline (removed with R26 r2, 16 Nov 26). Scope: round R26. | PFM | docs/reviews/2026-11-16-r26-results.md |
 | 2026-11-16 | R26 test app: no importable file (Microsoft Learn: no supported way outside Power Apps Studio); the PFM makes a blank app and pastes code blocks. Scope: round R26. | PFM | go.md |
 | 2026-11-16 | R26 test T9: the Mail connector send (Learn: not in DoD) goes in its own small solution that an import may refuse; a refusal is the result. Scope: round R26. | PFM | go.md |
 | 2026-11-16 | R26: T6 way a is a look in the flow designer with 1 question (no documented action definition without a model id); rounds after R26 move by one number. Scope: round R26. | PFM | docs/phases.md |

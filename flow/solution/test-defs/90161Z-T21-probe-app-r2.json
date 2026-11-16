@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z T21 Probe App r1",
-  "description": "R26 probe (task T21, fake data only). Called from the test app (Power Apps V2 trigger, one text input callerId); runs on the flow owner connections. Tests: T4 b (SharePoint write as the owner), T7 b (Office 365 Users search, counts of filled fields only), T8 a (Office 365 Groups: find the group by the shared mailbox address, list members), T8 b (Graph reach of the shared mailbox folders). Writes RESULT rows with counts and status codes, never values. Returns the text done. Environment variable: Site URL, Shared mailbox.",
+  "displayName": "90161Z T21 Probe App r2",
+  "description": "R26 r2 probe (task T21, fake data only). On a RUN-APP row in the probe list (no Power App in r2: PFM 16 Nov 26), on the flow owner connections. Tests: T7 b (Office 365 Users search, counts of filled fields only), T8 a (Office 365 Groups: find the group by the shared mailbox address, list members), T8 b (Graph reach of the shared mailbox folders). Writes RESULT rows with counts and status codes, never values. Environment variable: Site URL, Shared mailbox.",
   "connections": [
     "shared_sharepointonline",
     "shared_office365users",
@@ -8,97 +8,33 @@
     "shared_office365"
   ],
   "triggers": {
-    "manual": {
-      "type": "Request",
-      "kind": "PowerAppV2",
-      "inputs": {
-        "schema": {
-          "type": "object",
-          "properties": {
-            "text": {
-              "title": "callerId",
-              "type": "string",
-              "x-ms-dynamically-added": true,
-              "description": "Please enter your input",
-              "x-ms-content-hint": "TEXT"
-            }
-          },
-          "required": [
-            "text"
-          ]
+    "When_an_item_is_created": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "conditions": [
+        {
+          "expression": "@startsWith(triggerBody()?['Title'],'RUN-APP')"
         }
+      ],
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnNewItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe"
+        },
+        "authentication": "@parameters('$authentication')"
       }
     }
   },
   "actions": {
-    "Me": {
-      "runAfter": {},
-      "type": "OpenApiConnection",
-      "inputs": {
-        "host": {
-          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365users",
-          "connectionName": "shared_office365users",
-          "operationId": "MyProfile_V2"
-        },
-        "parameters": {
-          "$select": "id"
-        },
-        "authentication": "@parameters('$authentication')"
-      }
-    },
-    "T4b_row": {
-      "runAfter": {
-        "Me": [
-          "Succeeded",
-          "Failed",
-          "Skipped",
-          "TimedOut"
-        ]
-      },
-      "type": "OpenApiConnection",
-      "inputs": {
-        "host": {
-          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-          "connectionName": "shared_sharepointonline",
-          "operationId": "PostItem"
-        },
-        "parameters": {
-          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-          "table": "90161Z Probe",
-          "item/Title": "T4b",
-          "item/ProbeDetail": "@concat('caller-is-owner=', if(not(equals(actions('Me')?['status'], 'Succeeded')), 'unknown', if(equals(triggerBody()?['text'], actions('Me')?['outputs']?['body']?['id']), 'yes', 'no')))"
-        },
-        "authentication": "@parameters('$authentication')"
-      }
-    },
-    "T4b_result": {
-      "runAfter": {
-        "T4b_row": [
-          "Succeeded",
-          "Failed",
-          "Skipped",
-          "TimedOut"
-        ]
-      },
-      "type": "OpenApiConnection",
-      "inputs": {
-        "host": {
-          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
-          "connectionName": "shared_sharepointonline",
-          "operationId": "PostItem"
-        },
-        "parameters": {
-          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
-          "table": "90161Z Probe",
-          "item/Title": "RESULT",
-          "item/ProbeTest": "T4",
-          "item/ProbeWay": "b",
-          "item/ProbeResult": "@if(equals(actions('T4b_row')?['status'], 'Succeeded'), 'PASS', 'FAIL')",
-          "item/ProbeDetail": "@concat('tried=PostItem with the flow owner connection; status=', if(equals(actions('T4b_row')?['outputs']?['statusCode'], null), 'none', string(actions('T4b_row')?['outputs']?['statusCode'])), '; ', concat('Me=', actions('Me')?['status'], '/', if(equals(actions('Me')?['outputs']?['statusCode'], null), 'none', string(actions('Me')?['outputs']?['statusCode']))))"
-        },
-        "authentication": "@parameters('$authentication')"
-      }
-    },
     "T7b_search": {
       "runAfter": {},
       "type": "OpenApiConnection",
@@ -344,57 +280,11 @@
         },
         "authentication": "@parameters('$authentication')"
       }
-    },
-    "Respond_to_the_app": {
-      "runAfter": {
-        "T4b_result": [
-          "Succeeded",
-          "Failed",
-          "Skipped",
-          "TimedOut"
-        ],
-        "T7b_row": [
-          "Succeeded",
-          "Failed",
-          "Skipped",
-          "TimedOut"
-        ],
-        "T8a_row": [
-          "Succeeded",
-          "Failed",
-          "Skipped",
-          "TimedOut"
-        ],
-        "T8b_row": [
-          "Succeeded",
-          "Failed",
-          "Skipped",
-          "TimedOut"
-        ]
-      },
-      "type": "Response",
-      "kind": "PowerApp",
-      "inputs": {
-        "statusCode": 200,
-        "body": {
-          "response": "done"
-        },
-        "schema": {
-          "type": "object",
-          "properties": {
-            "response": {
-              "title": "response",
-              "x-ms-dynamically-added": true,
-              "type": "string"
-            }
-          }
-        }
-      }
     }
   },
   "solution": {
     "variant": "P",
     "title": "90-161.Z probe",
-    "zip": "90161Z-T21-probe-r1.zip"
+    "zip": "90161Z-T21-probe-r2.zip"
   }
 }

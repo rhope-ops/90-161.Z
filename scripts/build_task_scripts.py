@@ -7,10 +7,13 @@ Each scripts/gov/90161Z-T*.ps1 that asks for a DODID holds the block between two
 The text between them is the source from its first "function" line on. Edit only the source, then run this script.
 A script that signs in to the site also holds the site-common block (Get-SiteAddress; PFM 15 Nov 26: the site is entered once),
 between the same kind of markers; a Get-SiteAddress outside that block fails the check.
+A script with the rade-logo markers gets $RadeLogoPng: the RADE logo (assets/logo/logo-K-128.png of the RADE commit pinned in
+scripts/rade.lock.json, SHA-256 checked by scripts/build_paste_bundles.py) as base64 text, for a window in the RADE style
+(T22, PFM 16 Nov 26). The logo has one master copy in rhope-ops/RADE; this repo holds only the generated text.
 Usage: python3 scripts/build_task_scripts.py [--check]
   --check: write nothing; exit 1 when a block is stale, or a task script asks for the DODID outside the block.
 """
-import re, sys
+import base64, json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,9 +22,26 @@ BEGIN = '# >>> task-common: generated from scripts/gov/src/task-common.ps1 by sc
 END = '# <<< task-common'
 ASKS_DODID = "Read-Host 'DODID"
 BLOCKS = [(SRC, BEGIN, END)] + [(ROOT / f'scripts/gov/src/{n}.ps1', BEGIN.replace('task-common', n), END.replace('task-common', n)) for n in ('site-common',)]
+LOGO = 'rade-logo'
+BLOCKS.append((LOGO, '# >>> rade-logo: generated from the pinned RADE logo by scripts/build_task_scripts.py (do not edit)', '# <<< rade-logo'))
+_logo = []
+
+
+def logo_text():
+    # The pinned logo, fetched and hash-checked by the bundle builder (one fetch for every script).
+    if not _logo:
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        import build_paste_bundles as B
+        lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
+        b64 = base64.b64encode((B.fetch(lock) / 'assets/logo/logo-K-128.png').read_bytes()).decode('ascii')
+        rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
+        _logo.append('$RadeLogoPng = @(\n' + ',\n'.join("  '" + r + "'" for r in rows) + "\n) -join ''\n")
+    return _logo[0]
 
 
 def body(src=SRC):
+    if src == LOGO:
+        return logo_text()
     text = src.read_text(encoding='utf-8').replace('\r\n', '\n')
     return text[text.index('\nfunction ') + 1:].rstrip('\n') + '\n'
 
@@ -31,13 +51,13 @@ def main(check):
     for f in sorted((ROOT / 'scripts/gov').glob('90161Z-T*.ps1')):
         text = f.read_text(encoding='utf-8')
         for src, begin, end in BLOCKS:
-            block = body(src)
+            block = body(src) if src != LOGO or begin in text else ''
             m = re.search(re.escape(begin) + r'\n(.*?)' + re.escape(end) + r'\n', text, re.S)
             outside = text if m is None else text[:m.start()] + text[m.end():]
-            if (ASKS_DODID if src == SRC else 'function Get-SiteAddress') in outside:
+            if src != LOGO and (ASKS_DODID if src == SRC else 'function Get-SiteAddress') in outside:
                 unshared.append(f.name)
             if m is None:
-                if src != SRC and 'Get-SiteAddress' in text and f.name not in unshared:
+                if src not in (SRC, LOGO) and 'Get-SiteAddress' in text and f.name not in unshared:
                     unshared.append(f.name)   # uses the site address without the shared block
                 continue
             shared += src == SRC
