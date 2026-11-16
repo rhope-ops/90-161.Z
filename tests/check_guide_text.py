@@ -66,7 +66,7 @@ POINTERS = [
     (r'\b(?:steps?|blocks?|items?|parts?|sections?|paragraphs?|attachments?|ways?) (?:\d+|Q)', 'names a step, block, item or part'),
     (r'\b%s (?:says?|lists?|describes?|tells?|explains?)\b' % THING, 'defers to a file or window'),
     (r'\b(?:in|from|of|under) (?:the|that|this) (?:\w+ )?(?:file|guide|document|section|readme)\b(?! (?:name|path|box|explorer|menu|tab)\b)', 'defers to a file or section'),
-    (r'\b(?:previous|earlier|last|next|same|other) steps?\b|\bsteps? (?:above|below|before)\b', 'names another step'),
+    (r'\b(?:previous|earlier|same) steps?\b|\bsteps? (?:above|below|before)\b', 'names another step'),
     (r'\b(?:described|explained|listed|given|shown) in\b|\b(?:do|does) the same\b|\brepeat\b', 'refers elsewhere'),
     (r'(?:^|[.;:,] )see\b|\b(?:refer to|according to|as above|as below|as before|as described|same as)\b', 'refers elsewhere'),
 ]
@@ -159,6 +159,7 @@ def self_test():
         '13. Return to RADE.',
         '14. Tick "90161Z Probe" and "90161Z Probe Files".',
         'If something does not delete: type its name below, then select "It failed".',
+        'If a button shows a red line: go on with the next step.',
     ]
     bad = [
         ('1. Set the form as the part "BY HAND for block 6" in the file says, items 4 to 6 (3 short formulas).', 'points'),
