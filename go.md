@@ -36,7 +36,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 - E-mail: 3 test e-mails to my own address only, subjects with "90161Z T9". RADE saves one Outlook draft (never sent).
 
 Steps:
-1. Select "Copy script" next to this link.
+1. Select "Copy script" next to the link right under this line.
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R26-round-r2.ps1
 2. Press the Windows key.
 3. Type: ISE
@@ -47,7 +47,7 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 8. Press F5.
 9. In the RADE window, select "90-161.Z: Publications and Forms Management".
 10. If RADE asks to check the site rights: select "Sign in and check site rights".
-11. Select Run.
+11. Select the blue button "Run".
 
 The RADE window shows every other step, one at a time. RADE does the list, the flow tests, the reads and the clean-up; the import, the forms, the signing, the second person, the window and the e-mail check need me.
 

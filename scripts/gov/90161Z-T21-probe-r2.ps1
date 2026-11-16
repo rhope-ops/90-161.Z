@@ -530,11 +530,13 @@ try {
     # The files flow answers a minute or more after a T10 row; the mail flow's third read comes 25 minutes after the run.
     # Wait for them (default 4 minutes here) only when there is something to wait for.
     $hasT10 = @($rows | Where-Object { $_.Title -eq 'T10' }).Count -gt 0
-    $hasRun = @($rows | Where-Object { $_.Title -like 'RUN-MAIL *' }).Count -gt 0
+    # The newest mail run only: older RUN-MAIL runs on the list must not mix in (rows after its command row).
+    $mailFloor = [int](@($rows | Where-Object { $_.Title -like 'RUN-MAIL *' } | ForEach-Object { $_.Id }) + 0 | Measure-Object -Maximum).Maximum
+    $hasRun = $mailFloor -gt 0
     if ($hasT10 -or $hasRun) {
       $ok = Wait-Until {
         $rows = @(Get-ListRow $ListTitle $rf)
-        [bool]((-not $hasT10 -or (Find-Result $rows 'T10' 'a')) -and (-not $hasRun -or (Find-Result $rows 'T9' 'READ3'))) } 'the flows'' last result rows (T10 a, the 25-minute mail read)'
+        [bool]((-not $hasT10 -or (Find-Result $rows 'T10' 'a')) -and (-not $hasRun -or (Find-Result @($rows | Where-Object { $_.Id -gt $mailFloor }) 'T9' 'READ3'))) } 'the flows'' last result rows (T10 a, the 25-minute mail read)'
       $rows = @(Get-ListRow $ListTitle $rf)
       $lines.Add('WAIT last result rows ' + $(if ($ok) { 'there' } else { 'not all there (time ran out; the lines below say which are missing)' }))
     } else { $lines.Add('WAIT none: no T10 row and no mail run on the list') }
@@ -544,7 +546,7 @@ try {
     # T4: a person with Read on the site writes a row through the list form (Contribute on this list only).
     $t4a = @($rows | Where-Object { ([string]$_.Title).Trim() -eq 'T4a' })
     $other = @($t4a | Where-Object { $meId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $meId }).Count
-    Add-Test 'T4' @(('a list form by a second person=' + $(if ($other -ge 1) { 'PASS' } else { 'FAIL' }) + ' (T4a rows=' + $t4a.Count + '; rows by a second person=' + $other + ')'),
+    Add-Test 'T4' @(('a list form by a second person=' + $(if ($other -ge 1) { 'PASS' } else { 'FAIL' }) + ' (T4a rows=' + $t4a.Count + '; rows by a second person=' + $other + '; that the person has only Read rests on your choice of person)'),
       'b flow with the owner connection=not tried (needed only when way a fails)') ($other -ge 1)
 
     # T7 a: the person box of the list form searches the address list. Which fields of the chosen person have a value
@@ -553,16 +555,21 @@ try {
     $aText = 'a list form person box=FAIL (rows with a person=0)'; $aPass = $false
     if ($withPerson.Count) {
       $uid = [int]$withPerson[0].Item['ProbePerson'].LookupId
-      $present = @()
-      try {
-        $u = (Invoke-Rest 'Get' ('_api/web/siteuserinfolist/items(' + $uid + ')') '') | ConvertFrom-Json
-        foreach ($f in 'EMail', 'Department', 'JobTitle', 'Office') {
-          $has = $u.PSObject.Properties.Name -contains $f
-          $present += ($f + '=' + $(if (-not $has) { 'n/a' } elseif ([string]$u.$f) { 'yes' } else { 'no' }))
-        }
-        $aPass = $true
-      } catch { $present += ('fields not read: ' + (Format-Detail ([string]$_.Exception.Message))) ; $aPass = $true }
-      $aText = 'a list form person box=PASS (rows with a person=' + $withPerson.Count + '; fields with a value: ' + ($present -join ' ') + ')'
+      # One request per field with $select (a whole list item holds both "Id" and "ID", which Windows PowerShell 5.1's
+      # ConvertFrom-Json refuses); the raw text is read with a pattern, so no JSON parser sees it. A field the list does
+      # not have answers with an error: n/a. PASS needs the e-mail address to have a value (the easy path: office and mail).
+      $present = @(); $mailYes = $false
+      foreach ($f in 'EMail', 'Department', 'JobTitle', 'Office') {
+        $v = 'n/a'
+        try {
+          $raw = Invoke-Rest 'Get' ('_api/web/siteuserinfolist/items(' + $uid + ')?$select=' + $f) ''
+          if ($raw -match ('"' + $f + '"\s*:\s*"([^"]*)"')) { $v = $(if ($Matches[1]) { 'yes' } else { 'no' }) } elseif ($raw -match ('"' + $f + '"\s*:\s*null')) { $v = 'no' }
+        } catch { $v = 'n/a' }
+        if ($f -eq 'EMail' -and $v -eq 'yes') { $mailYes = $true }
+        $present += ($f + '=' + $v)
+      }
+      $aPass = $mailYes
+      $aText = 'a list form person box=' + $(if ($aPass) { 'PASS' } else { 'FAIL' }) + ' (rows with a person=' + $withPerson.Count + '; fields with a value: ' + ($present -join ' ') + '; that the box searched the address list rests on your answer)'
     }
     $b7 = Format-Way $rows 'T7' 'b' 'flow Office 365 Users search' $false
     Add-Test 'T7' @($aText, $b7.Text) ($aPass -or $b7.Pass)
@@ -591,7 +598,7 @@ try {
     $b10 = Format-Way $rows 'T10' 'b' 'OneDrive Convert on the signed PDF' $false
     Add-Test 'T10' @($a10.Text, $b10.Text, $cText) ($a10.Pass -or $cPass)
 
-    Get-MailLine 'T9' $rows @('READ1', 'READ2', 'READ3')
+    Get-MailLine 'T9' @($rows | Where-Object { $_.Id -gt $mailFloor }) @('READ1', 'READ2', 'READ3')
     $lines.Add('NOTE T2: left to the answers you give in the RADE window (this script does not read them)')
   }
   else {

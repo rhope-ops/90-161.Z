@@ -8,7 +8,7 @@
   read from or written to the site, and no e-mail is sent: every button only moves to another card.
   WHAT IT CHANGES: one text file in the T22 folder, 90161Z-T22-window-r1.txt: the window size and scale, which cards were
   opened, how many buttons were selected, how long the window was open, and the layout self-check (no names, no site).
-  Close the window with its X (or Esc on the first card) to end the step.
+  It opens at full screen (PFM 16 Nov 26). Close the window with its X (or Esc on the first card) to end the step.
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -NoPause. -PlanOnly prints the cards as text and
   opens no window, and -TestDir writes the result file to another folder (both for the tests in tests/run.sh).
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n>. Exit code 0 when the window opened and closed;
@@ -306,6 +306,10 @@ try {
   $form.Font = $ui.F.Small
   $form.ClientSize = New-Object System.Drawing.Size(1020, 760)
   $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true; $form.BackColor = $ui.C.White; $form.ShowInTaskbar = $true
+  $form.WindowState = 'Maximized'   # PFM 16 Nov 26: the 90-161.Z window works at full screen
+  # Parts made after the form has scaled (the card, made in Shown) get their pixel sizes through $ui.Sc (as RADE).
+  $ui.Dpi = 96.0; try { $d = [double]$form.CurrentAutoScaleDimensions.Width; if ($d -gt 0) { $ui.Dpi = $d } } catch { $null = $_ }
+  $ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }
 
   $light = New-Object System.Windows.Forms.Panel; $light.Dock = 'Top'; $light.Height = 6; $light.BackColor = $ui.C.White
   $top = New-Object System.Windows.Forms.FlowLayoutPanel; $top.Dock = 'Top'; $top.Height = 64; $top.WrapContents = $false; $top.Padding = (& $ui.Pad 32 12 32 0); $top.BackColor = $ui.C.White
@@ -329,15 +333,16 @@ try {
   $ui.Place = {
     # The card's left edge at 12 % of the width, 40 % of the spare height above it (as RADE).
     $w = $host1.ClientSize.Width; $h = $host1.ClientSize.Height
-    $x = [int]($w * 0.12); $y = [int][math]::Max(8, ($h - $card.Height) * 0.4)
+    # At full screen the card keeps a readable width and stands in the middle; in a small window it starts at 12 %.
+    $x = [int][math]::Max($w * 0.12, ($w - (& $ui.Width)) / 2); $y = [int][math]::Max(8, ($h - $card.Height) * 0.4)
     $card.Location = New-Object System.Drawing.Point($x, $y) }
-  $ui.Width = { [int][math]::Max(320, $host1.ClientSize.Width * 0.76) }
+  $ui.Width = { [int][math]::Max((& $ui.Sc 320), [math]::Min($host1.ClientSize.Width * 0.76, (& $ui.Sc 960))) }
   $ui.Label = { param([string]$Text, $Font, $Color, [int]$Top)
     $l = New-Object System.Windows.Forms.Label; $l.AutoSize = $true; $l.MaximumSize = New-Object System.Drawing.Size((& $ui.Width), 0); $l.Font = $Font; $l.ForeColor = $Color
-    $l.Text = $Text; $l.UseMnemonic = $false; $l.Margin = (& $ui.Pad 0 $Top 0 0); $l }
+    $l.Text = $Text; $l.UseMnemonic = $false; $l.Margin = (& $ui.Pad 0 (& $ui.Sc $Top) 0 0); $l }
   $ui.Button = { param($B)
-    $x = New-Object System.Windows.Forms.Button; $x.Text = [string]$B.Text; $x.AutoSize = $true; $x.MinimumSize = New-Object System.Drawing.Size(132, 40); $x.Padding = (& $ui.Pad 12 0 12 0)
-    $x.Margin = (& $ui.Pad 4 4 4 4); $x.UseMnemonic = $false; $x.FlatStyle = 'Flat'; $x.FlatAppearance.BorderSize = 1; $x.UseVisualStyleBackColor = $false
+    $x = New-Object System.Windows.Forms.Button; $x.Text = [string]$B.Text; $x.AutoSize = $true; $x.MinimumSize = New-Object System.Drawing.Size((& $ui.Sc 132), (& $ui.Sc 40)); $x.Padding = (& $ui.Pad (& $ui.Sc 12) 0 (& $ui.Sc 12) 0)
+    $x.Margin = (& $ui.Pad (& $ui.Sc 4) (& $ui.Sc 4) (& $ui.Sc 4) (& $ui.Sc 4)); $x.UseMnemonic = $false; $x.FlatStyle = 'Flat'; $x.FlatAppearance.BorderSize = 1; $x.UseVisualStyleBackColor = $false
     if ($B.Kind -eq 'primary') { $x.BackColor = $ui.C.Blue; $x.ForeColor = $ui.C.White; $x.FlatAppearance.BorderColor = $ui.C.Blue; $x.Font = $ui.F.SmallB; $x.FlatAppearance.MouseOverBackColor = $ui.C.Blue; $x.FlatAppearance.MouseDownBackColor = $ui.C.Navy }
     else { $x.BackColor = $ui.C.White; $x.ForeColor = $ui.C.Ink; $x.FlatAppearance.BorderColor = $ui.C.Edge; $x.Font = $ui.F.Small; $x.FlatAppearance.MouseOverBackColor = $ui.C.Hair; $x.FlatAppearance.MouseDownBackColor = $ui.C.Off }
     $x.Tag = [string]$B.Go
@@ -346,7 +351,9 @@ try {
   $ui.Choice = { param($Ch)
     # A choice row: a white button as wide as the card, the title in bold and a gray line under it.
     $x = New-Object System.Windows.Forms.Button; $x.Text = [string]$Ch.Text + "`r`n" + [string]$Ch.Sub; $x.TextAlign = 'MiddleLeft'; $x.UseMnemonic = $false
-    $x.Size = New-Object System.Drawing.Size((& $ui.Width), 64); $x.Margin = (& $ui.Pad 0 8 0 0); $x.Padding = (& $ui.Pad 12 0 12 0)
+    # As wide as the card; as tall as its two lines need (AutoSize), at least 64 px at 100 %.
+    $cw = & $ui.Width; $x.AutoSize = $true; $x.MinimumSize = New-Object System.Drawing.Size($cw, (& $ui.Sc 64)); $x.MaximumSize = New-Object System.Drawing.Size($cw, 0)
+    $x.Margin = (& $ui.Pad 0 (& $ui.Sc 8) 0 0); $x.Padding = (& $ui.Pad (& $ui.Sc 12) (& $ui.Sc 6) (& $ui.Sc 12) (& $ui.Sc 6))
     $x.FlatStyle = 'Flat'; $x.FlatAppearance.BorderSize = 1; $x.FlatAppearance.BorderColor = $ui.C.Edge; $x.UseVisualStyleBackColor = $false
     $x.BackColor = $ui.C.White; $x.ForeColor = $ui.C.Ink; $x.Font = $ui.F.OptV; $x.FlatAppearance.MouseOverBackColor = $ui.C.Hair; $x.FlatAppearance.MouseDownBackColor = $ui.C.Off
     $x.Tag = [string]$Ch.Go; $x.AccessibleName = [string]$Ch.Text + '. ' + [string]$Ch.Sub
@@ -361,15 +368,15 @@ try {
     $first = $true
     foreach ($p in @($c.P)) { if ($p) { [void]$card.Controls.Add((& $ui.Label $p $ui.F.Body $ui.C.Ink $(if ($first) { 12 } else { 8 }))); $first = $false } }
     if (@($c.Rows | Where-Object { $_ }).Count) {
-      $t = New-Object System.Windows.Forms.TableLayoutPanel; $t.ColumnCount = 2; $t.AutoSize = $true; $t.Margin = (& $ui.Pad 0 16 0 0); $t.BackColor = $ui.C.White
+      $t = New-Object System.Windows.Forms.TableLayoutPanel; $t.ColumnCount = 2; $t.AutoSize = $true; $t.Margin = (& $ui.Pad 0 (& $ui.Sc 16) 0 0); $t.BackColor = $ui.C.White
       foreach ($cs in 1, 2) { [void]$t.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::AutoSize))) }
       $i = 0
-      foreach ($r in @($c.Rows)) { $a = & $ui.Label $r[0] $ui.F.Small $ui.C.Gray 4; $a.Margin = (& $ui.Pad 0 4 24 0); $b = & $ui.Label $r[1] $ui.F.BodyB $ui.C.Ink 2; $t.Controls.Add($a, 0, $i); $t.Controls.Add($b, 1, $i); $i++ }
+      foreach ($r in @($c.Rows)) { $a = & $ui.Label $r[0] $ui.F.Small $ui.C.Gray 4; $a.Margin = (& $ui.Pad 0 (& $ui.Sc 4) (& $ui.Sc 24) 0); $b = & $ui.Label $r[1] $ui.F.BodyB $ui.C.Ink 2; $t.Controls.Add($a, 0, $i); $t.Controls.Add($b, 1, $i); $i++ }
       [void]$card.Controls.Add($t)
     }
     foreach ($ch in @($c.Choices)) { if ($ch) { [void]$card.Controls.Add((& $ui.Choice $ch)) } }
     if (@($c.Buttons | Where-Object { $_ }).Count) {
-      $row = New-Object System.Windows.Forms.FlowLayoutPanel; $row.AutoSize = $true; $row.WrapContents = $true; $row.MaximumSize = New-Object System.Drawing.Size((& $ui.Width), 0); $row.Margin = (& $ui.Pad 0 20 0 0); $row.BackColor = $ui.C.White
+      $row = New-Object System.Windows.Forms.FlowLayoutPanel; $row.AutoSize = $true; $row.WrapContents = $true; $row.MaximumSize = New-Object System.Drawing.Size((& $ui.Width), 0); $row.Margin = (& $ui.Pad 0 (& $ui.Sc 20) 0 0); $row.BackColor = $ui.C.White
       $btns = @(); foreach ($b in @($c.Buttons)) { if ($b) { $x = & $ui.Button $b; [void]$row.Controls.Add($x); $btns += $x } }
       [void]$card.Controls.Add($row)
       $form.AcceptButton = $btns[0]

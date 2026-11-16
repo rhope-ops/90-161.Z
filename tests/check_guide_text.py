@@ -65,7 +65,7 @@ POINTERS = [
     (r'\b%s (?:says?|lists?|describes?|tells?|explains?)\b' % THING, 'defers to a file or window'),
     (r'\b(?:in|from|of|under) (?:the|that|this) (?:\w+ )?(?:file|guide|document|section|readme)\b(?! (?:name|path|box|explorer|menu|tab)\b)', 'defers to a file or section'),
     (r'\b(?:previous|earlier|same) steps?\b|\bsteps? (?:above|below|before)\b', 'names another step'),
-    (r'\b(?:described|explained|listed|given|shown) in (?:the |this |that )?(?:\w+ )?(?:file|guide|document|section|readme|step|window|notes?)\b|\b(?:do|does) the same\b|(?:^|[.;:,] |then )repeat\b', 'refers elsewhere'),
+    (r'\b(?:described|explained|listed|given|shown) in (?:the |this |that )?(?:\w+ )?(?:file|guide|document|section|readme|step|window|notes?|appendix|attachment)\b|\b(?:do|does) the same\b|(?:^|[.;:,] |then |and )repeat\b', 'refers elsewhere'),
     (r'(?:^|[.;:,] )see\b|\b(?:refer to|according to|as above|as below|as before|as described|same as)\b', 'refers elsewhere'),
 ]
 WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
@@ -178,6 +178,8 @@ def self_test():
         ('5. Select Save, then Select Open.', 'holds 2'),
         ('6. Select Save. Repeat for the other files.', 'points'),
         ('7. Select the value shown in the file.', 'points'),
+        ('8. Select Save and repeat for the other files.', 'points'),
+        ('9. Select the code listed in Appendix B.', 'points'),
         ('6. Select Import solution, then Browse.', 'holds 2'),
         ('7. Press Ctrl+V, select Open, then Next.', 'holds 3'),
         ('8. Select Save. Select Publish.', 'holds 2'),

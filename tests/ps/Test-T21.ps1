@@ -35,7 +35,7 @@ function New-FakeDocx([string]$Path, [bool]$Demoted) {
 
 # ---- the fake site and its cmdlets ----
 function New-Site {
-  $global:F = @{ Signed = $true; Lists = (New-Object System.Collections.ArrayList); Connected = $false; NextId = 1; Created = 0; Uploads = 0; Rests = 0; Recycled = (New-Object System.Collections.ArrayList); Demoted = $true; OnAdd = $null; Visitors = 7; RowId = 100 }
+  $global:F = @{ PersonMail = 'fake.person@fake.example'; Signed = $true; Lists = (New-Object System.Collections.ArrayList); Connected = $false; NextId = 1; Created = 0; Uploads = 0; Rests = 0; Recycled = (New-Object System.Collections.ArrayList); Demoted = $true; OnAdd = $null; Visitors = 7; RowId = 100 }
   $null = Add-SiteList 'Documents' 'Shared Documents' 101
   $null = Add-SiteList 'Other probe list' 'Lists/OtherProbe' 100
 }
@@ -120,7 +120,13 @@ function Invoke-PnPSPRestMethod {
     if ($path -eq 'web/associatedvisitorgroup') { return (@{ Id = $global:F.Visitors } | ConvertTo-Json -Compress) }
     if ($path -eq 'web/roledefinitions') { return (@{ value = @(@{ Id = 1073741827 }) } | ConvertTo-Json -Compress) }
     if ($path -eq 'web/currentuser') { return (@{ Id = 11 } | ConvertTo-Json -Compress) }
-    if ($path -match '^web/siteuserinfolist/items\((\d+)\)$') { return (@{ Id = [int]$Matches[1]; Title = 'FAKE PERSON'; EMail = 'fake.person@fake.example'; Department = ''; JobTitle = 'FAKE TITLE' } | ConvertTo-Json -Compress) }
+    if ($path -match '^web/siteuserinfolist/items\((\d+)\)$') {
+      # The script must ask for one field at a time; the fake answers like SharePoint (an unknown field is a 400).
+      $sel = ''; if ($Url -match '\$select=(\w+)$') { $sel = $Matches[1] } else { throw 'FAKE: the person read must use $select with one field' }
+      $u = @{ EMail = $global:F.PersonMail; Department = ''; JobTitle = 'FAKE TITLE' }
+      if (-not $u.ContainsKey($sel)) { throw ('FAKE 400: the field ' + $sel + ' does not exist') }
+      return ('{"' + $sel + '":' + $(if ($null -eq $u[$sel]) { 'null' } else { '"' + $u[$sel] + '"' }) + '}')
+    }
     if ($path -match "^web/lists\(guid'([^']+)'\)/items\((\d+)\)/AttachmentFiles$") {
       $l = Get-FakeList $Matches[1]; $iid = [int]$Matches[2]
       $it = @($l.Items | Where-Object { $_.Id -eq $iid })
@@ -282,6 +288,7 @@ $lst = Get-Probe '90161ZProbe'
 Add-Row $lst 'T4a' 11; Add-Row $lst 'T4a ' 12
 Add-Row $lst 'T7a' 11 ([pscustomobject]@{ LookupId = 21 })
 Add-Row $lst 'T10' 11 $null @('90161Z-T21-fake-sign-r1-signed.pdf')
+Add-Res $lst 'T9' 'READ3' 'INFO' 'S3=inbox S5=inbox S6=inbox ; OLDER RUN, MUST NOT COUNT'
 Add-Row $lst 'RUN-MAIL R26abcdef12' 11
 Add-Res $lst 'T7' 'b' 'PASS' 'rows=5 displayName=5 department=0 officeLocation=0 mail=5'
 Add-Res $lst 'T10' 'a' 'PASS' 'attachments=1 byteRange=yes sig=yes'
@@ -292,10 +299,14 @@ Add-Res $lst 'T9' 'READ3' 'INFO' 'S3=junk+sent S5=inbox+sent S6=none ; http=200/
 $r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r
 $tl = @($r.Out | Where-Object { $_ -match '^T\d+ (PASSED|FAILED):' })
 Test-That 'Read: 4 lines (T4, T7, T10, T9) and the last line' ($r.Code -eq 0 -and $tl.Count -eq 4 -and (@($tl | ForEach-Object { ($_ -split ' ')[0] }) -join ',') -eq 'T4,T7,T10,T9' -and $r.Out[-1] -eq 'PROBE Read done: passed=4 failed=0') $r.Text
-Test-That 'Read: T4 counts rows and other people''s rows (a title with a space counts)' ($tl[0] -match '^T4 PASSED: a list form by a second person=PASS \(T4a rows=2; rows by a second person=1\); b flow with the owner connection=not tried') $tl[0]
-Test-That 'Read: T7 a says which fields have a value, never the value' ($tl[1] -match '^T7 PASSED: a list form person box=PASS \(rows with a person=1; fields with a value: EMail=yes Department=no JobTitle=yes Office=n/a\); b flow Office 365 Users search=PASS' -and $r.Text -notmatch 'FAKE PERSON|FAKE TITLE|fake\.person') $tl[1]
+Test-That 'Read: T4 counts rows and other people''s rows (a title with a space counts)' ($tl[0] -match '^T4 PASSED: a list form by a second person=PASS \(T4a rows=2; rows by a second person=1; that the person has only Read rests on your choice of person\); b flow with the owner connection=not tried') $tl[0]
+Test-That 'Read: T7 a says which fields have a value, never the value' ($tl[1] -match '^T7 PASSED: a list form person box=PASS \(rows with a person=1; fields with a value: EMail=yes Department=no JobTitle=yes Office=n/a; that the box searched the address list rests on your answer\); b flow Office 365 Users search=PASS' -and $r.Text -notmatch 'FAKE PERSON|FAKE TITLE|fake\.person') $tl[1]
 Test-That 'Read: T10 reads the attachment itself (way c) beside the flow ways' ($tl[2] -match '^T10 PASSED: a signature markers by the flow=PASS .*; b OneDrive Convert on the signed PDF=FAIL .*; c signature markers read here=PASS \(attachments=1 byteRange=yes sig=yes\)$') $tl[2]
-Test-That 'Read: T9 uses the 25-minute read; junk counts as arrived' ($tl[3] -match '^T9 PASSED: .*READ3=junk\+sent' -and $r.Text -match 'NOTE T9 cause: both own-mailbox e-mails arrived') $tl[3]
+Test-That 'Read: T9 uses the 25-minute read of the newest run only; junk counts as arrived' ($tl[3] -match '^T9 PASSED: .*READ3=junk\+sent' -and $tl[3] -notmatch 'OLDER' -and $r.Text -match 'NOTE T9 cause: both own-mailbox e-mails arrived' -and $tl[3] -match 'S6 \(shared mailbox, no \[TEST\]\) no result row; found READ3=none') $tl[3]
+$global:F.PersonMail = ''
+$r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r
+Test-That 'Read: T7 a FAILS when the person has no e-mail address value' ($r.Text -match 'T7 PASSED: a list form person box=FAIL \(rows with a person=1; fields with a value: EMail=no ' ) $r.Text
+$global:F.PersonMail = 'fake.person@fake.example'
 Test-That 'Read: T2 is left to the window answers; the wait found the rows' ($r.Text -match 'NOTE T2: left to the answers' -and $r.Text -match 'WAIT last result rows there') $r.Text
 
 New-Site; $null = Invoke-T21 'Make'; $global:F.Signed = $false
