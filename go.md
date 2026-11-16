@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 16 Nov 26 (Round R26 r2 is open: the big test of the split front end).
+Updated: 16 Nov 26 (Round R26 r2 is done; no round is open).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,38 +24,14 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Round R26 r2: the big test (open, 16 Nov 26)
+## Open tasks
 
-**For:** R26 r2 tries the split front end I chose on 16 Nov 26, with fake data on the test site: the list forms other people will use (T2 the draft in the browser, T4 a person with Read adds a row, T7 the person box searches the address list, T10 a signed PDF attached), a first preview of my own 90-161.Z window, the flows again (T3, T5, T6, T8), and 2 e-mails from my own mailbox, one with "[TEST]" in the subject and one without (T9).
-**Time:** about 70 minutes (estimate), about 50 of them at the keyboard: checks 2, probe list 2, import 8, flow tests 15 (waiting), draft 5, person row 3, sign and attach 7, second person 5, window 7, read 3, e-mail check 3, remove 6.
-**Changes:**
-- On my computer: RADE writes into T17, T21, T22 and Rounds\R26, and moves the R26 r1 files and older round files to the Recycle Bin. T21 gets a test page with links to the test site; it stays on my computer.
-- On the test site: 1 list "90161Z Probe" and 1 library "90161Z Probe Files" with fake files and rows. The site's visitors get Contribute on that list only. Both go to the site Recycle Bin at the end.
-- In Power Automate: 1 small solution "90-161.Z probe" (3 flows). I delete it in the last step.
-- In my OneDrive: a folder "90161Z-probe" with temporary fake files (the flows delete the files).
-- E-mail: 3 test e-mails to my own address only, subjects with "90161Z T9". RADE saves one Outlook draft (never sent).
-
-Steps:
-1. Select "Copy script" next to the link right under this line.
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R26-round-r2.ps1
-2. Press the Windows key.
-3. Type: ISE
-4. Select "Windows PowerShell ISE".
-5. Select File > New.
-6. Select the white script pane.
-7. Press Ctrl+V.
-8. Press F5.
-9. In the RADE window, select "90-161.Z: Publications and Forms Management".
-10. If RADE asks to check the site rights: select "Sign in and check site rights".
-11. Select the blue button "Run".
-
-The RADE window shows every other step, one at a time. RADE does the list, the flow tests, the reads and the clean-up; the import, the forms, the signing, the second person, the window and the e-mail check need me.
-
-**Report:** the draft itself, subject "90161Z R26". It holds the report file and the result files of T21 (make, run, read, clean), T22 (window) and, if the import failed, T17. The files hold field names, counts and status codes only.
-**If it fails:** read the "What to do" line in the window. If a step fails, send the draft as it is: the failed line is the result. Every RADE step can be run again. If the round stops before the last steps, run it again and tick only "T21 Remove the probe list and library r2" and "T21 Remove the probe solution r2".
+No round is open. The next round comes after the R26 results are reviewed.
 
 ## Done
 
+- Round R26 r2 (16 Nov 26): passed. Checks 14 of 14, probe list 8 of 8, import confirmed, clean-up 2 of 2, shared files 4 of 4, Window OK. Passed: T2 (draft in Word for the web), T3, T5, T6, T7 (person box), T9 (e-mails without "[TEST]" arrive at once), T10 (signed PDF attached). Failed: T4 (the second person saw "No permission"), T8 (a flow cannot list the people of a shared mailbox). My window: close, with small changes. Details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-16-r26-results.md
 - Round R26 r1 (15 Nov 26): needs review. Probe list made 7 of 7, probe solution imported, flow tests ran. Passed: T3 (forms by a flow), T5 (final copy by a flow), T6 (fields to columns). Failed: T9 (3 sends worked, no e-mail seen in the Inbox). Refused: the Word solution (Premium licence), the Mail solution, AI Builder. Not run: T2, T4, T7, T8, T10, because the PDF viewer block was refused and the app steps were skipped. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-16-r26-results.md
 - Round R25 r1 and "Clean the test site" (15 Nov 26): the clean install passed. Clean check 7 of 7, 12 lists by PnP 15 of 15, site setup 6 of 6, import confirmed, test part 1 7 of 7, test part 2 12 of 12, shared files 4 of 4, Window OK. Did not pass: the F03 test e-mail (not found, fifth round), the failure e-mail (it arrived late), restore after minimize, alignment on the first card. Details:
