@@ -9,7 +9,7 @@ AGENTS.md "Delivery" and "Checks" point here. The rules are there; this file hol
 
 ## Steps
 
-1. Commit on a branch (the branch the host requires, else `claude/<topic>`), with a noreply identity.
+1. Commit on a branch (the branch the host requires, else `claude/<topic>`), with a noreply identity. Write a commit message that names a blocked git form (stash, restore, hooksPath, the hook-skip flag) to a file and commit with `git commit -F <file>`; the deny rules match the whole command.
 2. Push. The pre-push hook runs the fast lane; do not run it by hand first.
 3. When the work is ready to merge: run the full lane one time on the head commit (`scripts/check.sh`). A change to code, checks or scripts also needs the fresh review of AGENTS.md "Delegation" on that head commit.
 4. Merge to main by merge, never rebase. Push main: the hook needs a green full lane on that commit (the run of step 3 counts when the tree is clean and the commit is the same).
