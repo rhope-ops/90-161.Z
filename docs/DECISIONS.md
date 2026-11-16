@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | Port kit PII hook (archimedes_lever#27): `--hook` on outgoing tool calls, `--stdin`, linear patterns; guard bullet names the hook (exact text approved by PFM) | PFM | docs/reviews/2026-11-16-rule-conflict-kit-port-3.md |
 | 2026-11-16 | Deliver skill step 1: commit messages that name a blocked git form go in a file (`git commit -F <file>`), as the deny rules match the whole command. Suggest text approved as shown. | PFM | .claude/skills/deliver/SKILL.md |
 | 2026-11-16 | Port the kit's 22 extra deny rules into .claude/settings.json (discard, forced and hook-bypass git forms, also with git options before the verb); adds protection only. | PFM | .claude/settings.json |
 | 2026-11-16 | Kit port 2 review items: keep "one line per rule" as approved (1A); remove "The current request overrides an older handoff." from the AGENTS.md Handoff line, as Order of authority says it (2B). | PFM | docs/reviews/2026-11-16-rule-conflict-kit-port-2.md |
