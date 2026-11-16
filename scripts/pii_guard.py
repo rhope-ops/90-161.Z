@@ -75,22 +75,30 @@ import time
 import unicodedata
 
 ZERO = re.compile(r"^0+$")
-# The lookbehind lets a match start only where a run of local-part characters starts: without it, a long run with
-# no "@" costs time in the square of its length (200 KB took 26 s, longer than the hook timeout).
-EMAIL = re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
-_EMAIL_AT = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")  # for a fixed start only
+# EMAIL is the pattern; emails() finds its matches. A plain EMAIL.finditer tries every start of a long run of
+# local-part characters, so its time grows with the square of the run (200 KB took 26 s, longer than the hook timeout).
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+_LOCAL = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._%+-")
 
 
 def emails(line):
-    """EMAIL matches, plus an address that starts right where the one before it ends (two addresses joined by "-")."""
-    reach = 0  # end of the last match: a finditer match inside a chain already walked is skipped (else quadratic)
-    for m in EMAIL.finditer(line):
-        if m.end() <= reach:
-            continue
-        while m:
+    """The matches of EMAIL.finditer (leftmost, non-overlapping) in linear time. A local part cannot hold an "@", so
+    each match ends its local part at one "@": walk the "@" signs in order, start the local part at the start of its
+    run (not before the end of the last match), and match once from there."""
+    pos, at = 0, line.find("@")
+    while at != -1:
+        start = at
+        while start > pos and line[start - 1] in _LOCAL:
+            start -= 1
+        m = EMAIL.match(line, start) if start < at else None
+        if m:
             yield m
-            reach = m.end()
-            m = _EMAIL_AT.match(line, reach) if reach < len(line) else None
+            pos = m.end()
+            at = line.find("@", pos)
+        else:
+            at = line.find("@", at + 1)
+
+
 PHONE = [
     re.compile(r"(?<![\w./-])\(?\d{3}\)?[-. ]\d{3}[-.]\d{4}(?![\w-])"),
     re.compile(r"(?<![\w./-])\(\d{3}\) ?\d{3}[-. ]\d{4}(?![\w-])"),
@@ -489,11 +497,19 @@ def _hook(stdin_text):
     except (ValueError, AttributeError) as e:
         print(f"pii-guard hook: blocked: cannot read the hook input ({e.__class__.__name__}); fail closed.", file=sys.stderr)
         return 2
-    cwd = event.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or "."
-    try:
-        root = git("rev-parse", "--show-toplevel", root=cwd).strip()
-    except (subprocess.CalledProcessError, FileNotFoundError, NotADirectoryError):
-        root = cwd
+    project = os.environ.get("CLAUDE_PROJECT_DIR") or ""
+    cwd = event.get("cwd") or project or "."  # relative paths in the call resolve here
+    if not isinstance(cwd, str):
+        raise TypeError("cwd is not text")  # bad input blocks (hook() turns any error into exit 2)
+    root = None  # the repo whose .pii-guard sets the tier: the project folder first, so a cwd outside it cannot
+    for where in (project, cwd):  # drop the tier (fail-open)
+        if where and os.path.isdir(where):
+            try:
+                root = git("rev-parse", "--show-toplevel", root=where).strip()
+                break
+            except (subprocess.CalledProcessError, FileNotFoundError, NotADirectoryError):
+                pass
+    root = root or project or cwd
     allow = load_allow(root)
     prof = profile_of(allow)
     if prof == "unknown":
@@ -559,10 +575,12 @@ def self_test():
     expect("a DoD Teams host with a subdomain", "see https://" + teams + "/x", ["milhost"], dod=True)
     t0 = time.time()
     many = "".join("a" + str(i) + at + "b" + dot + "cc " for i in range(17_600))  # 200 KB of distinct addresses
-    scan_text(many, "t", [], set(), True)
+    many += "".join("h" + str(i) + dot + "mil " for i in range(5_000)) + "Jane Doe" * 18_000  # hosts, allowed names
+    scan_text(many, "t", ["jane"], {"Jane Doe"}, True)
     good = time.time() - t0 < 2
-    print(("ok   " if good else "FAIL ") + f"200 KB of distinct addresses: linear ({time.time() - t0:.2f} s)")
+    print(("ok   " if good else "FAIL ") + f"200 KB of distinct addresses, hosts and allowed names: linear ({time.time() - t0:.2f} s)")
     ok = ok and good
+    expect("third address of a chain of allowed ones", "-" + at + "example" + dot + "com+" + at + "example" + dot + "com" + at + "example" + dot + "com" + at + "jane" + dot + "io", ["email"])
     expect("address joined to the end of an allowed one", "x" + at + "example" + dot + "com+bob" + at + "corp" + dot + "org", ["email"])
     expect("github noreply allowed", "123+x" + at + "users.noreply.github" + dot + "com", [])
     expect("noreply allowed", "noreply" + at + "anthropic" + dot + "com", [])
@@ -894,6 +912,7 @@ def self_test():
             ("hook: files map source {from} is read", ["--hook"], {"tool_name": "Artifact", "cwd": d, "tool_input": {"file_path": "clean.html", "files": {"p/x.html": {"from": os.path.join(d, "page.html")}}}}, 2),
             ("hook: file_paths list is read", ["--hook"], {"tool_name": "SendUserFile", "cwd": d, "tool_input": {"file_paths": ["clean.html", "page.html"]}}, 2),
             ("hook: bad JSON blocks", ["--hook"], "{not json", 2),
+            ("hook: the project's DoD tier holds with a cwd outside it", ["--hook"], {"tool_name": "Agent", "cwd": "/", "tool_input": {"prompt": "see " + "x" + dot + "af" + dot + "mi" + "l"}}, "dod"),
             ("hook: a crash blocks (deep nesting)", ["--hook"], '{"tool_input": {"prompt": "x", "a": ' + "[" * 3000 + "]" * 3000 + "}}", 2),
             ("hook: a crash blocks (cwd of a wrong type)", ["--hook"], {"tool_name": "Agent", "cwd": 5, "tool_input": {"prompt": "x"}}, 2),
             ("hook: mail recipients are not scanned, the body is", ["--hook"], {"tool_name": "mcp__Gmail__send_message", "cwd": d, "tool_input": {"to": [mail], "cc": mail, "subject": "hi", "body": "fix the bug"}}, 0),
@@ -911,11 +930,15 @@ def self_test():
             ("file: missing path fails", [os.path.join(d, "no-such.md")], "", 1),
             ("file: /dev/stdin is not a regular file: fails", ["/dev/stdin"], "x " + mail, 1),
         ]
-        saved = {k: os.environ.pop(k) for k in list(os.environ) if k.startswith("PII_GUARD_DENYLIST")}
+        saved = {k: os.environ.pop(k) for k in list(os.environ) if k.startswith("PII_GUARD_DENYLIST") or k == "CLAUDE_PROJECT_DIR"}
         os.environ["PII_GUARD_DENYLIST_FILE"] = env["PII_GUARD_DENYLIST_FILE"]
+        os.environ["CLAUDE_PROJECT_DIR"] = d
         try:
             for name, args, data, want in cases:
                 text = data if isinstance(data, str) else json.dumps(data)
+                if want == "dod":  # a DoD-tier project folder for this case only
+                    pathlib.Path(d, ".pii-guard").write_text("profile: dod\n")
+                    subprocess.run(["git", "init", "-q"], cwd=d, capture_output=True)
                 if args == ["--hook"]:  # in-process: a new Python per case would double the test time
                     global HOOK_MAX_BYTES
                     cap, HOOK_MAX_BYTES = HOOK_MAX_BYTES, (150_000 if want == "cap" else HOOK_MAX_BYTES)
@@ -926,7 +949,9 @@ def self_test():
                     finally:
                         HOOK_MAX_BYTES = cap
                     out = err.getvalue()
-                    want = 2 if want == "cap" else want
+                    if want == "dod":
+                        pathlib.Path(d, ".pii-guard").unlink()
+                    want = 2 if want in ("cap", "dod") else want
                     if time.time() - t0 > 5:
                         out += " too slow"
                         code = -1
@@ -938,6 +963,7 @@ def self_test():
                 ok = ok and good
         finally:
             os.environ.pop("PII_GUARD_DENYLIST_FILE", None)
+            os.environ.pop("CLAUDE_PROJECT_DIR", None)
             os.environ.update(saved)
     print("PII GUARD TEST " + ("PASS" if ok else "FAIL"))
     return 0 if ok else 1
