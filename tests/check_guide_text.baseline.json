@@ -282,59 +282,6 @@
    "fails": [
     "holds 2 actions"
    ]
-  },
-  {
-   "where": "go.md / Round R26 r1: the easy-path probe (open, 16 Nov 26)",
-   "text": "2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.",
-   "fails": [
-    "holds 7 actions"
-   ]
-  },
-  {
-   "where": "go.md / Round R26 r1: the easy-path probe (open, 16 Nov 26)",
-   "text": "3. In the RADE window, choose the application, select the button that runs the checks, then select Run.",
-   "fails": [
-    "holds 3 actions"
-   ]
-  },
-  {
-   "where": "go.md / Round R26 r1: the easy-path probe (open, 16 Nov 26)",
-   "text": "5. At each of the 3 import steps: do the steps the window lists. The Word and Mail imports can be refused on our tenant: then type the first line of the error and select \"It failed\". A refusal is a result.",
-   "fails": [
-    "points elsewhere (defers to a file or window: \"window lists\")",
-    "holds 3 actions",
-    "is 205 characters (limit 200)"
-   ]
-  },
-  {
-   "where": "go.md / Round R26 r1: the easy-path probe (open, 16 Nov 26)",
-   "text": "6. At the AI Builder step: look in Power Automate as the window says and answer 1 question.",
-   "fails": [
-    "points elsewhere (defers to a file or window: \"window says\")",
-    "holds 2 actions"
-   ]
-  },
-  {
-   "where": "go.md / Round R26 r1: the easy-path probe (open, 16 Nov 26)",
-   "text": "8. At the app step: make the blank app, add 1 form and paste the 6 code blocks, as the window lists. The code file opens in Notepad.",
-   "fails": [
-    "points elsewhere (defers to a file or window: \"window lists\")",
-    "holds 3 actions"
-   ]
-  },
-  {
-   "where": "go.md / Round R26 r1: the easy-path probe (open, 16 Nov 26)",
-   "text": "9. At the app tests step: select 2 buttons, do 1 search, look at the draft, sign the fake PDF with my CAC and attach it. Answer 3 questions.",
-   "fails": [
-    "holds 6 actions"
-   ]
-  },
-  {
-   "where": "go.md / Round R26 r1: the easy-path probe (open, 16 Nov 26)",
-   "text": "12. At the last step: delete the solutions, the app, the OneDrive folder and the test e-mails, as the window lists.",
-   "fails": [
-    "points elsewhere (defers to a file or window: \"window lists\")"
-   ]
   }
  ]
 }
