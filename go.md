@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 15 Nov 26 (R25: the clean install passed; the F03 test e-mail and 2 window items did not. No task is open: the next round waits for my approval of its plan).
+Updated: 16 Nov 26 (Round R26 is open: the easy-path probe, tests T2 to T10).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -24,9 +24,37 @@ Steps:
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
 Sensitivity label: every render gets the label from Config\90161Z-label.json. Never delete the Config folder: without it, renders print "LABEL not set" and have no label. The file I labeled by hand is no longer needed. If Config is lost, run a round, then capture again from its new render (it is already labeled); label a file by hand again only if renders say LABEL FAIL.
 
-## Next round (not ready yet)
+## Round R26 r1: the easy-path probe (open, 16 Nov 26)
 
-No task is open. Round R25 is done (below). The next round, a probe of the easy paths, waits for my approval of its plan in the Claude chat.
+**For:** R26 tries the easy way for 9 parts of my 13-step process (tests T2 to T10) on the test site with fake data, so that no fallback is designed before its easy way has run once. Each test reports one PASSED or FAILED line that names what was tried. T9 is also the fix path for the F03 test e-mail that was not found in 5 rounds: 4 test e-mails go out at once and a flow reads my Inbox, my Junk folder and the Sent Items of the PFM office mailbox.
+**Time:** about 75 minutes (estimate), about 55 of them at the keyboard: checks 2, probe list 2, 3 imports 16, import log check 1, AI Builder look 3, flow tests 15 (waiting), build the test app 15, app tests 10, second person 5, read 3, remove 5.
+**Changes:**
+- On my computer: RADE writes into T17, T21 and Rounds\R26, and moves old round files to the Recycle Bin.
+- On the test site: 1 list "90161Z Probe" and 1 library "90161Z Probe Files" with fake files and rows. The site's visitors get Contribute on that list only. Both go to the site Recycle Bin at the end.
+- In Power Automate and Power Apps: up to 3 small solutions ("90-161.Z probe", "90-161.Z probe Word", "90-161.Z probe Mail"; 5 flows in all), 1 plain test app "90161Z T21 Probe r1", and up to 4 new connections (OneDrive for Business, Office 365 Users, Office 365 Groups, and Word or Mail if the tenant allows them). I delete them in the last step.
+- In my OneDrive: a folder "90161Z-probe" with temporary fake files (the flows delete the files).
+- E-mail: up to 4 test e-mails, subject "[TEST] 90161Z T9", to my own address only. RADE saves one Outlook draft (never sent).
+
+Steps:
+1. Press Copy script next to this link (if it says blocked: open the link, Ctrl+A, Ctrl+C).
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R26-round-r1.ps1
+2. Start menu: type ISE, open Windows PowerShell ISE. Select File > New, click in the white pane, press Ctrl+V, then F5.
+3. In the RADE window, choose the application, select the button that runs the checks, then select Run.
+4. RADE makes the probe list and library (about 2 minutes, estimate).
+5. At each of the 3 import steps: do the steps the window lists. The Word and Mail imports can be refused on our tenant: then type the first line of the error and select "It failed". A refusal is a result.
+6. At the AI Builder step: look in Power Automate as the window says and answer 1 question.
+7. Wait while RADE runs the flow tests (about 15 minutes, estimate). I do not open Outlook for this.
+8. At the app step: make the blank app and paste the 6 code blocks, as the window lists. The code file opens in Notepad.
+9. At the app tests step: select 2 buttons, do 1 search, look at the draft, sign the fake PDF with my CAC and attach it. Answer 3 questions.
+10. At the second-person step: a person with only Read on the test site opens the app and selects 2 buttons (about 5 minutes for that person). If nobody is free: select Skip.
+11. RADE reads the results and moves the probe list and library to the site Recycle Bin.
+12. At the last step: delete the solutions, the app, the OneDrive folder and the test e-mails, as the window lists.
+13. Wait for DONE. RADE opens an Outlook draft. Send it as it is: every answer is already in it.
+
+RADE does steps 4, 7 and 11 and all checks. Steps 5, 6, 8, 9, 10 and 12 need a person: Microsoft has no supported way to import a canvas app built outside Power Apps, and an import needs my connections.
+
+**Report:** the draft itself, subject "90161Z R26". It holds the report file and the result files of T21 (make, run, app, clean), and the import log file (T17) if an import failed. The files hold field names, counts and status codes only.
+**If it fails:** read the "What to do" line in the window. If a step fails, send the draft as it is: the failed line is the result. Every RADE step can be run again. If the round stops before step 11, run it again and tick only "T21 Remove the probe list and library r1", then do step 12.
 
 ## Done
 
