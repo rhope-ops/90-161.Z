@@ -135,6 +135,7 @@ _MIL_ANY = re.compile(r"(?i)mil|sharepoint-mil\.us|dod\.teams\.microsoft\.us")  
 _MIL_END = re.compile(r"(?i)(?<=\.)mil(?![A-Za-z0-9-]|\.[A-Za-z0-9])")  # where the first branch can end
 _MIL_SPM = re.compile(r"(?i)sharepoint-mil\.us\b")  # where the second branch can end
 _MIL_DOD = re.compile(r"(?i)dod\.teams\.microsoft\.us\b")  # the third branch
+_MIL_SHORT = 24  # a run this short goes to the pattern: its cost per run is small and fixed, below the model's set-up
 
 
 def _milhost_spans(line):
@@ -146,6 +147,9 @@ def _milhost_spans(line):
     the last match. Only anchors (ends) and segment indices are visited, so the time is linear in the line."""
     for region in _MIL_REGION.finditer(line):
         r0, r1 = region.span()
+        if r1 - r0 <= _MIL_SHORT:
+            yield from (m.span() for m in MILHOST.finditer(line, r0, r1 + 2))  # it sees the 2 characters after the run
+            continue
         if not _MIL_ANY.search(line, r0, r1):
             continue
         segs = line[r0:r1].split(".")
@@ -206,14 +210,14 @@ def _milhost_spans(line):
 
 def milhosts(line):
     """The matches of MILHOST.finditer(line) in linear time: each span of _milhost_spans, confirmed by the pattern in
-    a window of the span and the 2 characters its look-aheads read. A span the pattern does not confirm (none in the
-    tests) falls back to the plain pattern from that start."""
+    a window of the span and the 2 characters its look-aheads read. From a span the pattern does not confirm (none in
+    the tests), the plain pattern finds the rest of the line."""
     for s, e in _milhost_spans(line):
         m = MILHOST.match(line, s, e + 2)
         if m is None or m.end() != e:
-            m = MILHOST.match(line, s)
-        if m is not None:
-            yield m
+            yield from MILHOST.finditer(line, s)
+            return
+        yield m
 
 
 MARKING = [re.compile(r) for r in (
@@ -776,11 +780,14 @@ def self_test():
                         ("x- then a host", "x-" * 99_997 + "a" + dot + mi), ("63-character labels", ("b" * 63 + dot) * 3_125),
                         ("a. then a tenant host", "a." * 99_991 + spm), ("meeting hosts", (tms + dot) * 8_695),
                         ("hosts and empty labels", ("a" + dot + mi + dot * 2) * 28_571),
-                        ("short runs", ("a.a.a.a.a.a.a.a.a." + mi + " ") * 9_090)):
-        t0 = time.time()
+                        ("short runs", ("a.a.a.a.a.a.a.a.a." + mi + " ") * 9_090), ("short hosts", ("a" + dot + mi + " ") * 33_333),
+                        ("runs at the short limit", (("a" + dot) * 10 + mi + "- ") * 7_692),
+                        ("runs just over the short limit", (("a" + dot) * 10 + mi + dot + "- ") * 7_692)):
+        t0 = time.perf_counter()
         sum(1 for _ in milhosts(text))
-        good = time.time() - t0 < 0.5
-        print(("ok   " if good else "FAIL ") + f"milhosts: 200 KB of {label}: linear ({time.time() - t0:.3f} s)")
+        took = time.perf_counter() - t0
+        good = took < 0.5
+        print(("ok   " if good else "FAIL ") + f"milhosts: 200 KB of {label}: linear ({took:.3f} s)")
         ok = ok and good
     expect("minimum tier: host not checked", "see " + mil, [])
     expect("dod: mail address is one finding, kind email", "ann" + at + "unit" + dot + "mi" + "l", ["email"], dod=True)
