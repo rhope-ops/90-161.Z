@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | AGENTS.md "Project rules": the 14 lines proposed in the port session, approved as shown (1a); they replace the 21 old rule items. Platform line follows the 16 Nov front-end split. | PFM | AGENTS.md |
 | 2026-11-16 | Kit port by hand (no kit sync; kit ceac0e8): rule gate and caps, kit skills replace .claude/orchestration.md, bloat-audit.md and project-log.md, two check lanes (tests/run.sh --fast). One pull request, not merged by the agent. DECISIONS.md leaves the start read. | PFM | AGENTS.md |
 | 2026-11-16 | Start-read budget stays at the PFM's 13 Nov values (12,000 tokens, warning 6,000), now set in .bloat-audit.json because the kit script defaults to 4,500. Scope: this port; open to change. | Agent | .bloat-audit.json |
 | 2026-11-16 | R27 also tests one tiny cloud-built app file (.msapp) uploaded in 2 places in Power Apps (about 5 minutes); R26 r2 stays as built. Scope: round R27. | PFM | docs/phases.md |
