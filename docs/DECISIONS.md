@@ -6,6 +6,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-16 | Remove the "[TEST]" subject prefix from the F03 and F06 test mode (R26 r2 T9: e-mails without it reached the Inbox at 2 minutes; the "[TEST]" e-mail came later). Scope: F03 and F06; built in the next round. | PFM | docs/reviews/2026-11-16-r26-results.md |
+| 2026-11-16 | The PFM window "deep pass" is lower priority: a note for review; the PFM opens a separate chat to fix the UI. Scope: T22 window. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-16 | Guard bullet: the hook "checks the outgoing tool calls it names (list and gaps: personal-data skill)", replacing "each outgoing tool call" | PFM | docs/reviews/2026-11-16-rule-conflict-kit-port-4.md |
 | 2026-11-16 | Allow list: `Bash(git diff*)` narrowed to `Bash(git diff)` + `Bash(git diff *)` (the wide entry also allowed `git difftool -x`) | PFM | rhope-ops/archimedes_lever docs/DECISIONS.md |
 | 2026-11-16 | Kit round, part 2: skill line on sample addresses; `scan_text` repeat check by set, containment by binary search (same results, 200 KB 13 s -> 0.1 s) | PFM | rhope-ops/archimedes_lever docs/DECISIONS.md |
