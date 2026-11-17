@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | Lock moves to the RADE release with the R28 fixes (N1, N4, N6, N8-N10, answer cut, logo) when it ships; R29 is built on it. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | R29 = the R28 fixes (health flow checks only On, export reader, T22 window, T24 card, notes N2 N3 N6 N7) + full T24 test + logo; RADE Diagnose and Back up move to R30. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T22 checks show inside the test window, one at a time, with Pass and Fail; no list to remember (note N5). Scope: T22 window test. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T4 second-person step stays in R29: a colleague is free. Way C not built yet. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
