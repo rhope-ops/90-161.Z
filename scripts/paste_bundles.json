@@ -109,7 +109,8 @@
           "file": "",
           "note": "You answer 4 questions about the RADE desktop icon, the Start button and the look of the RADE window. About 2 minutes (estimate).",
           "guide": [
-            "1. Select \"Done: answered\"."
+            "1. Answer the 4 questions on this card.",
+            "2. Select \"Done: answered\"."
           ],
           "marker": "90161Z-R28-frame-answered.txt",
           "doneText": "Done: answered",
@@ -211,18 +212,19 @@
           "file": "",
           "note": "You finish the import of \"90-161.Z probe health\" and answer 2 questions. About 5 minutes (estimate).",
           "guide": [
-            "1. In each connection box, select your existing connection.",
+            "1. In each connection box, open the list and pick your connection.",
             "2. If a box has no connection: select \"New connection\" in that box.",
-            "3. If you made a connection: select Create.",
-            "4. If a sign-in window opens: sign in with your CAC.",
-            "5. If you made a connection: select Refresh in the browser tab of the import.",
-            "6. Select Next.",
-            "7. In the box \"1 Site URL\", type the test site address (RADE shows it in its box \"Site address\").",
-            "8. Select Import.",
-            "9. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "10. Select \"Done: imported\".",
-            "Then open the solution: its flow must read On (if Off, select it, then select Turn on).",
-            "If the import fails: select \"Download log file\", then \"It failed\", then type the first red line."
+            "3. If a box has a Refresh button: select it (it reloads the list of connections).",
+            "4. Select Next.",
+            "5. In the box \"1 Site URL\", type the test site address (RADE shows it as \"Site address\").",
+            "6. Select Import.",
+            "7. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "8. Select the solution \"90-161.Z probe health\".",
+            "9. If its flow reads Off in the Status column: select that flow.",
+            "10. If you selected the flow: select \"Turn on\".",
+            "If a sign-in window opens: sign in with your CAC.",
+            "If the import fails: select \"Download log file\", then \"It failed\".",
+            "Then type the first red line of the message."
           ],
           "marker": "90161Z-T21-probe-imported.txt",
           "doneText": "Done: imported",
@@ -323,15 +325,16 @@
           "guide": [
             "1. Open Teams.",
             "2. Select Chat.",
-            "3. Start a chat with the person whose address you typed.",
-            "4. Select the chat box.",
-            "5. In the chat box, press Ctrl+V (the form link is on the clipboard).",
-            "6. In the chat box, type: Open the link, type T4a in Title, select Save, tell me what you saw.",
-            "7. Press Enter.",
-            "8. Wait for the answer of the person in the chat: the row saved, or no permission.",
-            "9. Return to the RADE window.",
+            "3. Select \"New chat\".",
+            "4. In the box \"To\", type the e-mail address you gave RADE for the second person.",
+            "5. Select the chat box.",
+            "6. Press Ctrl+V (the form link is on the clipboard).",
+            "7. In the chat box, type: Open the link, type T4a in Title, select Save, tell me what you saw.",
+            "8. Press Enter.",
+            "9. Wait up to 10 minutes for the reply: the row saved, or no permission.",
             "10. Select \"Done: second person\".",
-            "If nothing was pasted: select Skip. If nobody is free today: select Skip."
+            "If there is no reply in 10 minutes, or nobody is free today: select Skip.",
+            "The card then asks what the second person saw: answer it."
           ],
           "marker": "90161Z-T21-second-person.txt",
           "doneText": "Done: second person",
@@ -384,25 +387,25 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T21 Button flow by hand r4: the trigger",
+          "name": "T21 Button flow by hand r4: make the flow",
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You add a flow with the trigger \"For a selected item\" on the probe list. About 5 minutes (estimate).",
+          "note": "You make a new flow with the trigger \"For a selected item\" in the solution. About 4 minutes (estimate).",
           "guide": [
             "1. Select the solution \"90-161.Z probe button\".",
-            "2. Select New > Automation > Cloud flow > Instant.",
-            "3. In the box \"Flow name\", type: 90161Z T21 Probe Button hand r4",
-            "4. In the search box of the trigger list, type: For a selected item",
-            "5. Select the trigger \"For a selected item\" (SharePoint).",
-            "6. Select Create.",
-            "7. In the box \"Site Address\", select the test site.",
-            "8. In the box \"List Name\", select \"90161Z Probe\".",
-            "9. Select \"Done: trigger set\".",
+            "2. Select New.",
+            "3. Select Automation.",
+            "4. Select \"Cloud flow\".",
+            "5. Select Instant.",
+            "6. In the box \"Flow name\", type: 90161Z T21 Probe Button hand r4",
+            "7. In the search box of the trigger list, type: For a selected item",
+            "8. Select the trigger \"For a selected item\" (SharePoint).",
+            "9. Select Create.",
             "If no trigger \"For a selected item\" is listed: select \"It failed\" and type what the list shows."
           ],
           "marker": "90161Z-T21-button-trigger.txt",
-          "doneText": "Done: trigger set",
+          "doneText": "Done: flow made",
           "needs": [
             "net-flow"
           ],
@@ -413,21 +416,44 @@
           "doneLog": "Confirmed by you: set the trigger."
         },
         {
+          "name": "T21 Button flow by hand r4: site and list",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "You point the trigger at the probe list. About 2 minutes (estimate).",
+          "guide": [
+            "1. In the box \"Site Address\", choose the site address that RADE shows.",
+            "2. In the box \"List Name\", select \"90161Z Probe\".",
+            "3. Look at the trigger: it must show the site and the list.",
+            "If the site or the list cannot be chosen: select \"It failed\" and type what the box shows."
+          ],
+          "marker": "90161Z-T21-button-site-list.txt",
+          "doneText": "Done: site and list",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 5,
+          "after": [
+            "T21 Button flow by hand r4: make the flow"
+          ],
+          "doneLog": "Confirmed by you: set the site and list."
+        },
+        {
           "name": "T21 Button flow by hand r4: the action",
           "kind": "guide",
           "dir": "T21",
           "file": "",
           "note": "You add one action that writes a row, then save the flow. About 5 minutes (estimate).",
           "guide": [
-            "1. Under the trigger, select \"New step\" (or the plus sign, then \"Add an action\").",
+            "1. Under the trigger, select \"New step\".",
             "2. In the search box, type: Create item",
             "3. Select the SharePoint action \"Create item\".",
-            "4. In the box \"Site Address\", select the test site.",
+            "4. In the box \"Site Address\", choose the site address that RADE shows.",
             "5. In the box \"List Name\", select \"90161Z Probe\".",
             "6. In the box \"Title\", type: BTN-HAND",
             "7. Select Save.",
-            "8. Look at the top: the flow must say it was saved.",
-            "9. Select \"Done: flow saved\".",
+            "8. Look at the top for the word Saved.",
+            "If \"Create item\" is not listed: select \"It failed\" and type what the list shows.",
             "If Save shows an error: select \"It failed\" and type the first line of the message."
           ],
           "marker": "90161Z-T21-button-action.txt",
@@ -437,7 +463,7 @@
           ],
           "estimate": 5,
           "after": [
-            "T21 Button flow by hand r4: the trigger"
+            "T21 Button flow by hand r4: site and list"
           ],
           "doneLog": "Confirmed by you: saved the button flow."
         },
@@ -512,11 +538,12 @@
             "1. In the browser, select the tab \"90-161.Z test page\".",
             "2. Select \"Open the new row form\".",
             "3. Look at the top of the form for the text \"90-161.Z test header\".",
-            "4. At the top of the form, select the pencil or \"Edit form\" icon.",
+            "4. At the top of the form, select Edit form (a pencil).",
             "5. Look at the menu that opened for \"Configure layout\".",
             "6. Select Cancel.",
             "7. Return to the RADE window.",
-            "8. Select \"Done: I looked\"."
+            "8. Select \"Done: I looked\".",
+            "If the tab or the form is missing: select Skip."
           ],
           "marker": "90161Z-T21-form-looked.txt",
           "doneText": "Done: I looked",
@@ -598,39 +625,59 @@
           "doneLog": "Confirmed by you: used the button."
         },
         {
-          "name": "T22 Read the list: what to try in the window",
+          "name": "T22 Read list 1 of 2: cards and keyboard",
           "kind": "guide",
           "dir": "T22",
           "file": "",
-          "note": "The next step opens the PFM window with fake data. Read the list, then try each item while it is open. About 15 minutes (estimate).",
+          "note": "Two short lists come before the window. Try list 1 in the window, then list 2. All data is fake; nothing is sent. About 5 minutes (estimate).",
           "guide": [
-            "1. When the window is open, select each card and each button once.",
-            "2. Press Tab and Shift+Tab to move between the buttons, with no mouse.",
-            "3. Look for a clear outline on the button that has the focus.",
-            "4. Press Enter to use the button that has the focus.",
-            "5. Press Ctrl+Windows+Enter to start Narrator.",
-            "6. Press Tab and listen: Narrator should say the name of each control.",
-            "7. Press Ctrl+Windows+Enter again to stop Narrator.",
-            "8. Press Left Alt+Left Shift+Print Screen to turn high contrast on.",
-            "9. Look at each card: every text and button must stay readable.",
-            "10. Press the same keys again to turn high contrast off.",
-            "Close the window with its X when you are done."
+            "1. When the window is open, select a card to open it.",
+            "2. Open every card once.",
+            "3. Select a button on each card (all data is FAKE; nothing is sent).",
+            "4. Press Tab and Shift+Tab to move between the buttons, with no mouse.",
+            "5. Look for a clear outline on the button that has the focus.",
+            "6. Press Enter to use the button that has the focus (safe: all data is FAKE).",
+            "The 90-161.Z window opens full screen after the next list."
           ],
-          "marker": "90161Z-T22-list-read.txt",
-          "doneText": "Done: open the window",
+          "marker": "90161Z-T22-list1-read.txt",
+          "doneText": "Done: next list",
           "estimate": 1,
           "doneLog": "Confirmed by you: read the list."
+        },
+        {
+          "name": "T22 Read list 2 of 2: Narrator and contrast",
+          "kind": "guide",
+          "dir": "T22",
+          "file": "",
+          "note": "Selecting Done opens the 90-161.Z window (fake data) full screen. Try both lists in it, then close it with its X. About 10 minutes (estimate).",
+          "guide": [
+            "1. Press Ctrl+Windows+Enter to start Narrator.",
+            "2. Press Tab and listen: Narrator should say the name of each control.",
+            "3. Press Ctrl+Windows+Enter again to stop Narrator.",
+            "4. Press Left Alt+Left Shift+Print Screen to turn high contrast on.",
+            "5. If Windows asks to turn on high contrast: select Yes.",
+            "6. Look at each card: every text and button must stay readable.",
+            "7. Press the same keys again to turn high contrast off.",
+            "8. Close the window with its X."
+          ],
+          "marker": "90161Z-T22-list2-read.txt",
+          "doneText": "Done: open the window",
+          "estimate": 1,
+          "doneLog": "Confirmed by you: read the list.",
+          "after": [
+            "T22 Read list 1 of 2: cards and keyboard"
+          ]
         },
         {
           "name": "T22 Open the 90-161.Z window r2",
           "dir": "T22",
           "file": "90161Z-T22-pfm-window-r2.ps1",
           "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data. Try what the list said, then close it with its X. Nothing is read, saved or sent. About 15 minutes (estimate).",
+          "note": "Opens your 90-161.Z window with fake data. Try what the two lists said, then close it with its X. Nothing is read, saved or sent. About 15 minutes (estimate).",
           "estimate": 15,
           "help": "Send the results as they are. The step can be run again.",
           "after": [
-            "T22 Read the list: what to try in the window"
+            "T22 Read list 2 of 2: Narrator and contrast"
           ]
         },
         {
@@ -640,7 +687,8 @@
           "file": "",
           "note": "You answer 3 questions about the look of the window. About 2 minutes (estimate).",
           "guide": [
-            "1. Select \"Done: answered\"."
+            "1. Answer the 3 questions on this card.",
+            "2. Select \"Done: answered\"."
           ],
           "marker": "90161Z-T22-judged-look.txt",
           "doneText": "Done: answered",
@@ -680,7 +728,8 @@
           "file": "",
           "note": "You answer 3 questions about keyboard, Narrator and high contrast. About 2 minutes (estimate).",
           "guide": [
-            "1. Select \"Done: answered\"."
+            "1. Answer the 3 questions on this card.",
+            "2. Select \"Done: answered\"."
           ],
           "marker": "90161Z-T22-judged-access.txt",
           "doneText": "Done: answered",
@@ -763,16 +812,18 @@
           "note": "You finish the import of the full flows. It upgrades the flows you imported in R27. About 5 minutes (estimate).",
           "guide": [
             "1. If the page says the solution already exists: select Upgrade.",
-            "2. If the page shows connection boxes: in each box, select your existing connection.",
+            "2. In each connection box, open the list and pick your connection.",
             "3. If a box has no connection: select \"New connection\" in that box.",
-            "4. If a sign-in window opens: sign in with your CAC.",
-            "5. If you made a connection: select Refresh in the browser tab of the import.",
-            "6. Select Next.",
-            "7. If the box \"1 Site URL\" is empty: type the test site address (shown in RADE as \"Site address\").",
-            "8. If the box \"2 Alert e-mail\" is empty: type your own work e-mail address.",
-            "9. Select Import.",
-            "10. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "If the import fails: select \"Download log file\", then \"It failed\", then type the first red line."
+            "4. If a box has a Refresh button: select it (it reloads the list of connections).",
+            "5. Select Next.",
+            "6. If the box \"1 Site URL\" is empty: type the test site address (RADE shows it as \"Site address\").",
+            "7. If the box \"2 Alert e-mail\" is empty: type your own work e-mail address.",
+            "8. Select Import.",
+            "9. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "10. Select \"Done: imported\".",
+            "If a sign-in window opens: sign in with your CAC.",
+            "If the import fails: select \"Download log file\", then \"It failed\".",
+            "Then type the first red line of the message."
           ],
           "marker": "90161Z-T24-imported.txt",
           "doneText": "Done: imported",
@@ -795,9 +846,11 @@
             "1. On this RADE card, select \"Open in browser\".",
             "2. On the left, select Solutions (it can be under More).",
             "3. Select the solution \"90-161.Z flows\".",
-            "4. Look at the Status column: the 6 flows F01 to F06 must read On.",
-            "5. If a flow reads Off: select that flow.",
-            "6. If you selected a flow: select \"Turn on\".",
+            "4. Look at the Status of F03: it answers the question the next card asks.",
+            "5. Look at the other 5 flows: each must read On.",
+            "6. If a flow reads Off: select that flow.",
+            "7. If you selected a flow: select \"Turn on\".",
+            "8. Select \"Done: all On\".",
             "If a flow will not turn on: select \"It failed\" and type the first line of the message."
           ],
           "marker": "90161Z-T24-flows-on.txt",
@@ -856,12 +909,13 @@
             "3. Select the solution \"90-161.Z flows\".",
             "4. Select the flow \"90161Z F02 Next Review Due r3\".",
             "5. Select Run at the top.",
-            "6. If a panel asks you to continue: select Continue.",
+            "6. Select the Back arrow at the top left to return to the solution.",
             "7. Select the flow \"90161Z F04 Status Report r2\".",
             "8. Select Run at the top.",
-            "9. In the box for the recipient, type your own work e-mail address.",
+            "9. In the box that Run shows, type your own work e-mail address.",
             "10. Select \"Run flow\".",
-            "Wait about 2 minutes for both runs to end, then select Done."
+            "If a panel asks you to continue: select Continue. Wait about 2 minutes, then select Done.",
+            "If Run is missing or a run fails: select \"It failed\" and type the first line of the message."
           ],
           "marker": "90161Z-T24-ran-f02-f04.txt",
           "doneText": "Done: both ran",
@@ -904,10 +958,13 @@
           "guide": [
             "1. Open Outlook (on this computer or in the browser).",
             "2. Select the Inbox.",
-            "3. Look for an e-mail whose subject starts with \"TEST MODE\".",
-            "4. Open that e-mail.",
-            "5. Look at the tables in it: each one starts with the word \"Step\" and a number.",
-            "6. Look at the To line."
+            "3. Look for an e-mail whose subject starts with \"TEST MODE\" (question 1).",
+            "4. If it is not in the Inbox: open the folder \"Junk Email\".",
+            "5. Open that e-mail.",
+            "6. Look at its tables: each starts with the word \"Step\" and a number (question 2).",
+            "7. Look at the To line (question 3).",
+            "8. Select \"Done: I looked\".",
+            "Three questions follow: answer each one."
           ],
           "marker": "90161Z-T24-email-looked.txt",
           "doneText": "Done: I looked",
@@ -952,7 +1009,8 @@
             "4. Select the flow \"90161Z F02 Next Review Due r3\".",
             "5. Select Run at the top.",
             "6. If a panel asks you to continue: select Continue.",
-            "Wait about 2 minutes for the run to end, then select Done."
+            "7. Wait about 2 minutes for the run to end.",
+            "8. Select \"Done: F02 ran\"."
           ],
           "marker": "90161Z-T24-f02-again.txt",
           "doneText": "Done: F02 ran",
@@ -1056,7 +1114,8 @@
           "file": "",
           "note": "RADE saves its own copy and a desktop icon when this install ends. Nothing else is installed. About 1 minute (estimate).",
           "guide": [
-            "1. Select \"Done: installed\"."
+            "1. Look at your desktop for the shortcut RADE (it may be there already).",
+            "2. Select \"Done: installed\"."
           ],
           "marker": "90161Z-R28-install-checked.txt",
           "doneText": "Done: installed",
@@ -1759,14 +1818,16 @@
             "T21 Add the second person r4",
             "T21 Second person r4",
             "T21 Button flow by hand r4: make a solution",
-            "T21 Button flow by hand r4: the trigger",
+            "T21 Button flow by hand r4: make the flow",
+            "T21 Button flow by hand r4: site and list",
             "T21 Button flow by hand r4: the action",
             "T21 Button flow by hand r4: export the solution",
             "T21 Read the export r4",
             "T21 Format the form and view r4",
             "T21 Look at the list form r4",
             "T21 Use the list button r4",
-            "T22 Read the list: what to try in the window",
+            "T22 Read list 1 of 2: cards and keyboard",
+            "T22 Read list 2 of 2: Narrator and contrast",
             "T22 Open the 90-161.Z window r2",
             "T22 Answer: look and cards",
             "T22 Answer: keys, Narrator and contrast",

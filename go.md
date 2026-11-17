@@ -30,8 +30,8 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 **For:** tests the RADE desktop icon and Start button, my new 90-161.Z window (cards, keyboard, Narrator, high contrast), the health flow imported alone, the trigger of a list-button flow that I make by hand, the second person (T4) again, and the full 90-161.Z flow solution (F01 to F06, every flow On). It starts by removing the R27 leftovers on the test site.
 **Time:** about 3.5 hours with waits; about 2 hours of my own work (estimate).
-**Changes:** on the test site: the R27 second person in Visitors, probe list and library are removed first; a fresh probe list and library, the second person, fake rows and a list view are made and removed again at the end. In Power Automate: the R27 solution "90-161.Z probe" is deleted; "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me; both are deleted at the end. The 90-161.Z flows solution is upgraded to the full one (F01 to F06) and the flows F02 and F04 are run by hand; F04 sends one test e-mail to me. Two rows of PFM Settings (Flows paused, Test mode) are written and put back, and fake test rows go to the site Recycle Bin. On my computer: my OneDrive folder RADE\90-161.Z, RADE's saved copy RADE\rade-runner.ps1 and one shortcut named RADE on my desktop. Before Run, the window lists every file.
-**Before I start:** a colleague who can open the test site is free for 5 minutes in Teams (optional; I select Skip if nobody is free).
+**Changes:** on the test site: the R27 second person in Visitors, probe list and library are removed first; a fresh probe list and library, the second person, fake rows and a list view are made and removed again at the end. In Power Automate: the R27 solution "90-161.Z probe" is deleted; "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me; both are deleted at the end. The 90-161.Z flows solution is upgraded to the full one (F01 to F06) and the flows F02 and F04 are run by hand; F04 sends one test e-mail to me. Two rows of PFM Settings (Flows paused, Test mode) are written and put back, and fake test rows go to the site Recycle Bin. On my computer: my OneDrive folder RADE\90-161.Z, RADE's saved copy of itself (in my RADE folder) and one shortcut named RADE on my desktop. Before Run, the window lists every file.
+**Before I start:** I ask a colleague who can open the test site for their e-mail address, and for 5 minutes in Teams (optional; I select Skip if nobody is free).
 **Steps:**
 1. Press Copy script next to the link below.
 2. Open the Start menu and type ISE.
@@ -43,22 +43,23 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 8. Select the button "90-161.Z PFM window".
 9. Press Install.
 10. Wait until the card says "90-161.Z PFM window 0.1.0 is installed."
-11. Select Close.
-12. Double-click the shortcut RADE on my desktop.
-13. Select the button "90-161.Z PFM window".
-14. Press "Start 90-161.Z PFM window". The window opens and RADE closes.
-15. Close the window with its X.
-16. Double-click the shortcut RADE on my desktop again.
-17. Select the button "90-161.Z: Publications and Forms Management".
-18. Press Run.
-19. Do each step the window shows, until the log says DONE.
-20. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
-21. At DONE, send the Outlook draft that opens.
+11. Select Close on the Done card.
+12. Close the RADE window with its X, if it is still open.
+13. Double-click the shortcut RADE on my desktop.
+14. Select the button "90-161.Z PFM window".
+15. Press "Start 90-161.Z PFM window". The window opens and RADE closes.
+16. Close the 90-161.Z window with its X.
+17. Double-click the shortcut RADE on my desktop again.
+18. Select the button "90-161.Z: Publications and Forms Management".
+19. Press Run.
+20. Follow each card in the window and select Done on each (about 2 hours, estimate).
+21. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
+22. At DONE, send the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R28-round-r1.ps1
 
-**Report:** send the Outlook draft the round makes (subject "90161Z R28 PASSED" or "90161Z R28 NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If there is no shortcut RADE on my desktop, open the bookmark rhope-ops.github.io/RADE, press Copy script, paste it in ISE and press F5 again; then answer "No icon on the desktop" in the first question. If Power Automate refuses a step, select "It failed" and type the first line of the message: a refusal is a valid result.
+**Report:** the Outlook draft opens already addressed, with every file in the results folder attached; I send it (subject "90161Z R28 PASSED" or "90161Z R28 NEEDS REVIEW"). If no draft opens, the results folder opens and the e-mail text is on the clipboard: I paste it into a new e-mail and drag in every file. Then I tell Claude the e-mail is sent.
+**If it fails:** do the line that starts with "What to do". If there is no shortcut RADE on my desktop, open the bookmark rhope-ops.github.io/RADE, press Copy script, paste it in ISE and press F5 again, and answer "No icon on the desktop" when the first question asks. If Power Automate refuses a step, select "It failed" and type the first line of the message (a refusal is a valid result).
 
 ## Done
 
