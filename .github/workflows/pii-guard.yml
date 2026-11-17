@@ -35,7 +35,7 @@ jobs:
           ref="${BASE_SHA:-HEAD}"
           if ! git cat-file -e "$ref:.pii-guard" 2>/dev/null; then echo "no .pii-guard file on $ref: guard not enabled"; exit 0; fi
           # No secret (not added, or a fork or Dependabot PR) = the check fails: names must be checked (kit default, 2026-11-11), unless the base .pii-guard has "denylist: warn" (starter tier): then pii_guard.py only warns.
-          # Private repo (the PFM, 2026-11-17): the pull request's commits only. The pre-push hook already scanned every
+          # Private repo (kit default, 2026-11-17): the pull request's commits only. The pre-push hook already scanned every
           # tracked file, Actions minutes are limited, and GitHub Free gives a private repo no required check; this scan
           # catches what skipped the hook (a web-UI edit, a clone without core.hooksPath). A manual run scans everything.
           if [ -n "$BASE_SHA" ] && [ "$PRIVATE" = "true" ]; then
