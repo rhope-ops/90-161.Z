@@ -1,0 +1,266 @@
+{
+  "displayName": "90161Z F01 Activity Log r2",
+  "description": "When a PFM Publications row is created or modified, writes a PFM Activity Log row if Action Type, Process Step or Action Status differs from the last state this flow logged (a note edit logs nothing). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused read from PFM Settings, failure e-mail to the alert address; the last logged state is the latest row this flow wrote (title 'Action opened: ' or 'Action updated: '), so a row F06 logs ('Action Held' and others, also Status Changed) is not mistaken for it.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365"
+  ],
+  "triggers": {
+    "When_an_item_is_created_or_modified": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnUpdatedItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "@parameters('List PFM Publications (pfm_ListPublications)')"
+        },
+        "authentication": "@parameters('$authentication')"
+      },
+      "runtimeConfiguration": {
+        "concurrency": {
+          "runs": 1
+        }
+      }
+    }
+  },
+  "actions": {
+    "Try": {
+      "runAfter": {},
+      "type": "Scope",
+      "actions": {
+        "Get_settings": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R28 (PFM 17 Nov 26): the flow values are rows of PFM Settings, read once at the start, as in F03, F05 and F06. A missing or empty row gives the default: Flows paused No, Test mode Yes (fail-safe)."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@outputs('Setting_flows_paused')",
+              true
+            ]
+          },
+          "actions": {
+            "Stop_flows_are_paused": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Get_last_logged_state": {
+          "runAfter": {
+            "If_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+              "$filter": "@concat('Publication/Id eq ', string(triggerBody()?['ID']), ' and EventType eq ''Status Changed''')",
+              "$orderby": "ID desc",
+              "$top": 50
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Current_state": {
+          "runAfter": {
+            "Get_last_logged_state": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@concat(coalesce(triggerBody()?['ActionType']?['Value'], ''), ' | ', coalesce(triggerBody()?['ProcessStep']?['Value'], ''), ' | ', coalesce(triggerBody()?['ActionStatus']?['Value'], ''))"
+        },
+        "Own_log_rows": {
+          "runAfter": {
+            "Current_state": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_last_logged_state')?['value']",
+            "where": "@or(startsWith(item()?['Title'], 'Action opened: '), startsWith(item()?['Title'], 'Action updated: '))"
+          }
+        },
+        "Last_logged_state": {
+          "runAfter": {
+            "Own_log_rows": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(empty(body('Own_log_rows')), '', trim(last(split(coalesce(first(body('Own_log_rows'))?['EventDetails'], ''), 'State: '))))"
+        },
+        "If_state_changed": {
+          "runAfter": {
+            "Last_logged_state": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "not": {
+              "equals": [
+                "@outputs('Last_logged_state')",
+                "@outputs('Current_state')"
+              ]
+            }
+          },
+          "actions": {
+            "Create_activity_log_row": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PostItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                  "item/Title": "@take(concat(if(empty(body('Own_log_rows')), 'Action opened: ', 'Action updated: '), coalesce(triggerBody()?['Title'], '')), 250)",
+                  "item/Publication/Id": "@triggerBody()?['ID']",
+                  "item/EventType/Value": "Status Changed",
+                  "item/EventBy/Claims": "@triggerBody()?['Editor']?['Claims']",
+                  "item/EventDetails": "@concat(if(empty(body('Own_log_rows')), 'Opened. ', 'Changed. '), 'State: ', outputs('Current_state'))"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        }
+      }
+    },
+    "Failed_actions": {
+      "runAfter": {
+        "Try": [
+          "Failed",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@result('Try')",
+        "where": "@or(equals(item()?['status'], 'Failed'), equals(item()?['status'], 'TimedOut'))"
+      }
+    },
+    "Failure_lines": {
+      "runAfter": {
+        "Failed_actions": [
+          "Succeeded"
+        ]
+      },
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Failed_actions')",
+        "select": "@concat('<li><b>', replace(coalesce(item()?['name'], 'step'), '_', ' '), '</b>: ', coalesce(item()?['error']?['message'], item()?['error']?['code'], 'no error text'), '</li>')"
+      }
+    },
+    "E-mail_the_failure": {
+      "runAfter": {
+        "Failure_lines": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "authentication": "@parameters('$authentication')",
+        "parameters": {
+          "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "emailMessage/Subject": "@concat('90-161.Z flow failed: F01 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
+          "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F01'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '<br><b>Publication row:</b> ', string(triggerBody()?['ID']), '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. Open the failed run: <a href=\"https://make.powerautomate.appsplatform.us/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'], '\">run details</a> (or open this flow and its 28-day run history; the failed run has the start time above). 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and does not repeat what the failed run already did.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+          "emailMessage/Importance": "High"
+        }
+      }
+    },
+    "End_as_failed": {
+      "runAfter": {
+        "E-mail_the_failure": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "Terminate",
+      "inputs": {
+        "runStatus": "Failed",
+        "runError": {
+          "code": "StepFailed",
+          "message": "A step failed; the alert address was e-mailed. Fix the cause, then Resubmit this run."
+        }
+      }
+    }
+  }
+}
