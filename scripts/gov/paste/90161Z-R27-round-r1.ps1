@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R27, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = '8ddc9726'
+$buildId = '47530a27'
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
 $homeUrl = 'https://rhope-ops.github.io/90-161.Z'
@@ -1288,7 +1288,7 @@ try {
 if (-not $NoPause -and $Host.Name -eq 'ConsoleHost') { $null = Read-Host 'Press Enter to close' }
 exit $code
 '@ }
-$files += @{ Dir = 'T21'; Name = '90161Z-T21-probe-r3.ps1'; Kind = 'text'; Sha = '465984f1d227'; Data = @'
+$files += @{ Dir = 'T21'; Name = '90161Z-T21-probe-r3.ps1'; Kind = 'text'; Sha = '26338b56d016'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 21 probe, r3 (round R27). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
@@ -1473,8 +1473,8 @@ $FakeBookBase64 = @(
 function Hide-Site([string]$Text, [string]$Site) {
   # The result is e-mailed: no site, tenant or sign-in address may stay in it (the same rule as T16, T18, T19 and T20).
   # Every address is masked here, so the second person's address cannot reach a result line even through an error text.
-  $Text = $Text -replace '[\w.+-]+@[\w.-]+', '<EMAIL>'
-  $Text = $Text -replace '[\w.+-]+%40[\w.-]+', '<EMAIL>'
+  $Text = $Text -replace '[^\s"<>|,;()\[\]]+@[^\s"<>|,;()\[\]]+', '<EMAIL>'
+  $Text = $Text -replace '[^\s"<>|,;()\[\]]+%40[^\s"<>|,;()\[\]]+', '<EMAIL>'
   if ($Site) {
     $Text = $Text -replace [regex]::Escape($Site.TrimEnd('/')), '<SITE>'
     try {
@@ -1526,8 +1526,8 @@ function Add-Test([string]$Name, [string[]]$Piece, [bool]$Pass) {
 function Format-Detail([string]$Text) {
   # The flow's ProbeDetail (or an error text) for a line: one line, anything that looks like an address or a link masked, cut to 160.
   $t = ($Text -replace '\s+', ' ').Trim()
-  $t = $t -replace '[\w.+-]+@[\w.-]+', '<MASKED>'
-  $t = $t -replace '[\w.+-]+%40[\w.-]+', '<MASKED>'
+  $t = $t -replace '[^\s"<>|,;()\[\]]+@[^\s"<>|,;()\[\]]+', '<MASKED>'
+  $t = $t -replace '[^\s"<>|,;()\[\]]+%40[^\s"<>|,;()\[\]]+', '<MASKED>'
   $t = $t -replace 'https?://\S+', '<MASKED>'
   if ($t.Length -gt 160) { $t = $t.Substring(0, 160) }
   return $t
@@ -1794,16 +1794,27 @@ try {
           Add-Item 'p2-person' 'PASS' 'the person was found on this site (the site user number is saved in the state file, no address and no name)'
           $members = Get-GroupMemberId $visitorId
           $was = $members -contains $userId
-          # The numbers are saved before the change, so Clean can find the person even if this part stops half way.
-          Set-Content -LiteralPath (Join-Path $dir $StateName) -Value @(('UserId=' + $userId), ('GroupId=' + $visitorId), ('WasMember=' + $(if ($was) { 'yes' } else { 'no' }))) -Encoding ASCII
-          if ($was) { $state = 'was'; $why = 'the person was already a member and stays one' }
+          # A state file from an earlier run of this part that added a person is kept (review, 17 Nov 26): a second run must not
+          # turn "added by this test" into "was a member before", or Clean would leave the person in Visitors.
+          $old = Read-State $dir
+          $keep = ($old -and $old['WasMember'] -eq 'no')
+          if ($keep -and [int]$old['UserId'] -ne $userId) {
+            $state = 'other'; $why = 'a person added by an earlier run is still on file: run the Clean part first, then this part again'
+          } else {
+            if ($keep) { $was = $false }
+            # The numbers are saved before the change, so Clean can find the person even if this part stops half way.
+            else { Set-Content -LiteralPath (Join-Path $dir $StateName) -Value @(('UserId=' + $userId), ('GroupId=' + $visitorId), ('WasMember=' + $(if ($was) { 'yes' } else { 'no' }))) -Encoding ASCII }
+          }
+          if ($state -eq 'other') { $null = $state }
+          elseif ($was) { $state = 'was'; $why = 'the person was already a member and stays one' }
+          elseif ($keep -and ((Get-GroupMemberId $visitorId) -contains $userId)) { $state = 'yes'; $why = 'added by an earlier run of this part; Clean removes the person' }
           else {
             try {
               Add-PnPGroupMember -LoginName $loginName -Group $visitorId -ErrorAction Stop
               if ((Get-GroupMemberId $visitorId) -contains $userId) { $state = 'yes' } else { $why = 'the group does not list the person after the add' }
             } catch { $why = 'the add was refused: ' + (Format-Detail ([string]$_.Exception.Message)) }
           }
-          Add-Item 'p3-visitors' $(if ($state -eq 'yes' -or $state -eq 'was') { 'PASS' } else { 'FAIL' }) ('person in the Visitors group=' + $(if ($state -eq 'no') { 'no' } else { 'yes' }) + $(if ($why) { ' (' + $why + ')' } else { '' }))
+          Add-Item 'p3-visitors' $(if ($state -eq 'yes' -or $state -eq 'was') { 'PASS' } else { 'FAIL' }) ('person in the Visitors group=' + $(if ($state -eq 'no' -or $state -eq 'other') { 'no' } else { 'yes' }) + $(if ($why) { ' (' + $why + ')' } else { '' }))
         }
       }
       $personAddr = $null; $loginName = $null; $raw = $null
