@@ -6,6 +6,11 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | PFM Settings TestMode row seeds Yes (a missing row also counts as Yes); the PFM sets No once at go-live. Replaces the 15 Nov "full solution with No" for this value. Scope: F03, F05, F06. | PFM | schemas/lists/PFMSettings.json |
+| 2026-11-17 | One mailbox row: F03 and F06 will read PFMOfficeMailbox; the SharedMailbox row goes away. Built after R27 (R27 flows stay as built). Scope: PFM Settings, F03, F06. | PFM | schemas/lists/PFMSettings.json |
+| 2026-11-17 | R27 Excel look probe: no macro workbook (a script that writes a macro file can set off endpoint security; Excel for the web does not run VBA). Scope: R27. | PFM | docs/phases.md |
+| 2026-11-17 | Logo: Rho Bold (USAF-B) replaces logo K for every app from now on; R27 ships with logo K, the switch comes after R27 (RADE master copy, lock move, bookmark page, site logo). Scope: all apps. | PFM | https://claude.ai/artifact/Qw7iSQaz1FMzZQtycjrZxq |
+| 2026-11-17 | R27 build: full scope (about 5 to 6 h, estimate); the health-flow probe is built in this repo (Management connector, own flows only); the .msapp is packed by the Power Platform CLI. Scope: R27. | PFM | docs/phases.md |
 | 2026-11-17 | Window plan approved: Hybrid (busy) layout with Air Force colors; preview canvas for the PFM first, then RADE engine fixes and T22 r2 in R28; R27 unchanged. Scope: RADE frame + PFM window. | PFM | docs/reviews/2026-11-17-window-plan.md |
 | 2026-11-17 | Start and icon: one desktop icon opens RADE; RADE runs checks and the update notice (RADE page); Start opens the 90-161.Z window. Needs a RADE row that replaces RADE 2026-11-14 "installs apps only". | PFM | docs/reviews/2026-11-17-window-plan.md |
 | 2026-11-17 | PFM window = PFM-only cut of the Hybrid board with a 13-step bar; other people's tasks stay in SharePoint list forms. Below about 1100 logical px the side panel moves under the main column. | PFM | docs/reviews/2026-11-17-window-plan.md |

@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F03 Suspense Reminders r5",
-  "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one (20 working days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26.",
+  "displayName": "90161Z F03 Suspense Reminders r6",
+  "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one (20 working days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26. Reads its settings once at the start from PFM Settings rows (Flows paused, Test mode, Reminder lead days, Escalation lag days, Coordination suspense working days, Shared mailbox); a missing or empty row gives 5, 3, 20 and no shared mailbox, Flows paused No and Test mode Yes. No subject or title prefix in test mode (PFM 16 Nov 26).",
   "workflowKey": "90161Z-F03-suspense-reminders-r2",
   "connections": [
     "shared_sharepointonline",
@@ -37,13 +37,161 @@
       "runAfter": {},
       "type": "Scope",
       "actions": {
-        "If_flows_paused": {
+        "Get_settings": {
           "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R27 (PFM 14 Nov 26): the flow values are rows of PFM Settings, read once at the start. A missing or empty row gives the default: Flows paused No, Test mode Yes (fail-safe), reminder 5, escalation 3, suspense 20, shared mailbox empty."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "Filter_TestMode": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'TestMode')"
+          }
+        },
+        "Test_mode": {
+          "runAfter": {
+            "Filter_TestMode": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@not(equals(toLower(trim(coalesce(if(empty(body('Filter_TestMode')), '', first(body('Filter_TestMode'))?['SettingValue']), ''))), 'no'))"
+        },
+        "Filter_ReminderLeadDays": {
+          "runAfter": {
+            "Test_mode": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'ReminderLeadDays')"
+          }
+        },
+        "Setting_reminder_lead_days": {
+          "runAfter": {
+            "Filter_ReminderLeadDays": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(empty(trim(coalesce(if(empty(body('Filter_ReminderLeadDays')), '', first(body('Filter_ReminderLeadDays'))?['SettingValue']), ''))), '5', trim(coalesce(if(empty(body('Filter_ReminderLeadDays')), '', first(body('Filter_ReminderLeadDays'))?['SettingValue']), '')))"
+        },
+        "Filter_EscalationLagDays": {
+          "runAfter": {
+            "Setting_reminder_lead_days": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'EscalationLagDays')"
+          }
+        },
+        "Setting_escalation_lag_days": {
+          "runAfter": {
+            "Filter_EscalationLagDays": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(empty(trim(coalesce(if(empty(body('Filter_EscalationLagDays')), '', first(body('Filter_EscalationLagDays'))?['SettingValue']), ''))), '3', trim(coalesce(if(empty(body('Filter_EscalationLagDays')), '', first(body('Filter_EscalationLagDays'))?['SettingValue']), '')))"
+        },
+        "Filter_SuspenseDays": {
+          "runAfter": {
+            "Setting_escalation_lag_days": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'CoordinationSuspenseBusinessDays')"
+          }
+        },
+        "Setting_suspense_workdays": {
+          "runAfter": {
+            "Filter_SuspenseDays": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@if(empty(trim(coalesce(if(empty(body('Filter_SuspenseDays')), '', first(body('Filter_SuspenseDays'))?['SettingValue']), ''))), '20', trim(coalesce(if(empty(body('Filter_SuspenseDays')), '', first(body('Filter_SuspenseDays'))?['SettingValue']), '')))"
+        },
+        "Filter_SharedMailbox": {
+          "runAfter": {
+            "Setting_suspense_workdays": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'SharedMailbox')"
+          }
+        },
+        "Setting_shared_mailbox": {
+          "runAfter": {
+            "Filter_SharedMailbox": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@trim(coalesce(if(empty(body('Filter_SharedMailbox')), '', first(body('Filter_SharedMailbox'))?['SettingValue']), ''))"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Setting_shared_mailbox": [
+              "Succeeded"
+            ]
+          },
           "type": "If",
           "expression": {
             "equals": [
-              "@toLower(trim(coalesce(parameters('Flows paused (pfm_FlowsPaused)'), '')))",
-              "yes"
+              "@outputs('Setting_flows_paused')",
+              true
             ]
           },
           "actions": {
@@ -59,18 +207,9 @@
             "actions": {}
           }
         },
-        "Test_mode": {
-          "runAfter": {
-            "If_flows_paused": [
-              "Succeeded"
-            ]
-          },
-          "type": "Compose",
-          "inputs": "@equals(toLower(trim(coalesce(parameters('Test mode (pfm_TestMode)'), ''))), 'yes')"
-        },
         "Today": {
           "runAfter": {
-            "Test_mode": [
+            "If_flows_paused": [
               "Succeeded"
             ]
           },
@@ -131,7 +270,7 @@
             "Working_day_suspense": {
               "runAfter": {},
               "type": "Compose",
-              "inputs": "@addDays(outputs('Today_weekday'), add(mul(7, div(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), add(mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5), if(greater(add(dayOfWeek(outputs('Today_weekday')), mod(int(parameters('Suspense working days (pfm_SuspenseWorkdays)')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+              "inputs": "@addDays(outputs('Today_weekday'), add(mul(7, div(int(outputs('Setting_suspense_workdays')), 5)), add(mod(int(outputs('Setting_suspense_workdays')), 5), if(greater(add(dayOfWeek(outputs('Today_weekday')), mod(int(outputs('Setting_suspense_workdays')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
             },
             "Calendar_30_suspense": {
               "runAfter": {
@@ -229,7 +368,7 @@
                 ]
               },
               "type": "Compose",
-              "inputs": "@addDays(outputs('Due'), mul(-1, add(mul(7, div(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5)), add(mod(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5), if(greaterOrEquals(mod(int(parameters('Reminder lead days (pfm_ReminderLeadDays)')), 5), dayOfWeek(outputs('Due'))), 2, 0)))), 'yyyy-MM-dd')"
+              "inputs": "@addDays(outputs('Due'), mul(-1, add(mul(7, div(int(outputs('Setting_reminder_lead_days')), 5)), add(mod(int(outputs('Setting_reminder_lead_days')), 5), if(greaterOrEquals(mod(int(outputs('Setting_reminder_lead_days')), 5), dayOfWeek(outputs('Due'))), 2, 0)))), 'yyyy-MM-dd')"
             },
             "Escalation_date": {
               "runAfter": {
@@ -238,7 +377,7 @@
                 ]
               },
               "type": "Compose",
-              "inputs": "@addDays(outputs('Due'), add(mul(7, div(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5)), add(mod(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5), if(greater(add(dayOfWeek(outputs('Due')), mod(int(parameters('Escalation lag days (pfm_EscalationLagDays)')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+              "inputs": "@addDays(outputs('Due'), add(mul(7, div(int(outputs('Setting_escalation_lag_days')), 5)), add(mod(int(outputs('Setting_escalation_lag_days')), 5), if(greater(add(dayOfWeek(outputs('Due')), mod(int(outputs('Setting_escalation_lag_days')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
             },
             "Tier": {
               "runAfter": {
@@ -299,7 +438,7 @@
                     "parameters": {
                       "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                       "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                      "$filter": "@concat('Title eq ''', concat(if(outputs('Test_mode'), '[TEST] ', ''), 'Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier')), '''')",
+                      "$filter": "@concat('Title eq ''', concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier')), '''')",
                       "$top": 1
                     },
                     "authentication": "@parameters('$authentication')"
@@ -390,7 +529,7 @@
                             "and": [
                               {
                                 "equals": [
-                                  "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                                  "@empty(outputs('Setting_shared_mailbox'))",
                                   true
                                 ]
                               }
@@ -410,7 +549,7 @@
                                 "parameters": {
                                   "emailMessage/To": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), items('For_each_open_endorsement')?['Endorser']?['Email'])",
                                   "emailMessage/Cc": "@if(outputs('Test_mode'), '', outputs('Copy_to'))",
-                                  "emailMessage/Subject": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), outputs('Tier'), ': coordination response due ', outputs('Due'), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
+                                  "emailMessage/Subject": "@concat(outputs('Tier'), ': coordination response due ', outputs('Due'), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
                                   "emailMessage/Body": "@concat(if(outputs('Test_mode'), concat('<p><b>Test mode.</b> Without test mode this e-mail goes to ', if(empty(coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), '(no endorser on the row)', coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), if(empty(outputs('Copy_to')), '', concat(', copy to ', outputs('Copy_to'))), '.</p>'), ''), '<p>Coordination of ', coalesce(items('For_each_open_endorsement')?['Title'], 'a publication action'), ' is waiting for your response (DAFMAN 90-161, 5.2).</p>', '<p>Your suspense is ', outputs('Due'), if(equals(outputs('Tier'), 'Reminder'), '. This is an advance reminder.', if(equals(outputs('Tier'), 'Warning'), '. The suspense is today or has passed.', concat('. The suspense passed ', string(outputs('Days_past')), ' days ago.'))), '</p>', '<p>Please respond with Concur, Concur With Comment, Nonconcur or No Comment, or ask for an extension before the suspense with your rationale and estimated completion date (5.2.1).</p>', if(equals(outputs('Tier'), 'Escalation'), if(or(equals(items('For_each_open_endorsement')?['CoordinationRole']?['Value'], 'Legal'), equals(items('For_each_open_endorsement')?['CoordinationStage']?['Value'], 'Legal')), '<p>The action officer and requester are copied. Legal coordination cannot be closed as Concur - No Response (5.4.3).</p>', '<p>The action officer and requester are copied. The action officer may record Concur - No Response with an explanation in the staff package (5.4.3.2).</p>'), ''), '<p>This message is sent by the 90-161.Z publications flow.</p>')",
                                   "emailMessage/Importance": "@if(equals(outputs('Tier'), 'Escalation'), 'High', 'Normal')"
                                 }
@@ -430,10 +569,10 @@
                                   },
                                   "authentication": "@parameters('$authentication')",
                                   "parameters": {
-                                    "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                                    "emailMessage/MailboxAddress": "@outputs('Setting_shared_mailbox')",
                                     "emailMessage/To": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), items('For_each_open_endorsement')?['Endorser']?['Email'])",
                                     "emailMessage/Cc": "@if(outputs('Test_mode'), '', outputs('Copy_to'))",
-                                    "emailMessage/Subject": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), outputs('Tier'), ': coordination response due ', outputs('Due'), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
+                                    "emailMessage/Subject": "@concat(outputs('Tier'), ': coordination response due ', outputs('Due'), ' - ', coalesce(items('For_each_open_endorsement')?['Title'], ''))",
                                     "emailMessage/Body": "@concat(if(outputs('Test_mode'), concat('<p><b>Test mode.</b> Without test mode this e-mail goes to ', if(empty(coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), '(no endorser on the row)', coalesce(items('For_each_open_endorsement')?['Endorser']?['Email'], '')), if(empty(outputs('Copy_to')), '', concat(', copy to ', outputs('Copy_to'))), '.</p>'), ''), '<p>Coordination of ', coalesce(items('For_each_open_endorsement')?['Title'], 'a publication action'), ' is waiting for your response (DAFMAN 90-161, 5.2).</p>', '<p>Your suspense is ', outputs('Due'), if(equals(outputs('Tier'), 'Reminder'), '. This is an advance reminder.', if(equals(outputs('Tier'), 'Warning'), '. The suspense is today or has passed.', concat('. The suspense passed ', string(outputs('Days_past')), ' days ago.'))), '</p>', '<p>Please respond with Concur, Concur With Comment, Nonconcur or No Comment, or ask for an extension before the suspense with your rationale and estimated completion date (5.2.1).</p>', if(equals(outputs('Tier'), 'Escalation'), if(or(equals(items('For_each_open_endorsement')?['CoordinationRole']?['Value'], 'Legal'), equals(items('For_each_open_endorsement')?['CoordinationStage']?['Value'], 'Legal')), '<p>The action officer and requester are copied. Legal coordination cannot be closed as Concur - No Response (5.4.3).</p>', '<p>The action officer and requester are copied. The action officer may record Concur - No Response with an explanation in the staff package (5.4.3.2).</p>'), ''), '<p>This message is sent by the 90-161.Z publications flow.</p>')",
                                     "emailMessage/Importance": "@if(equals(outputs('Tier'), 'Escalation'), 'High', 'Normal')"
                                   }
@@ -458,10 +597,10 @@
                             "parameters": {
                               "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                               "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
-                              "item/Title": "@concat(if(outputs('Test_mode'), '[TEST] ', ''), 'Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'))",
+                              "item/Title": "@concat('Reminder Sent: E', string(items('For_each_open_endorsement')?['ID']), ' ', outputs('Tier'))",
                               "item/Publication/Id": "@items('For_each_open_endorsement')?['Publication']?['Id']",
                               "item/EventType/Value": "Reminder Sent",
-                              "item/EventDetails": "@concat(outputs('Tier'), ' e-mail sent for endorsement row ', string(items('For_each_open_endorsement')?['ID']), '; suspense ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), if(empty(parameters('Shared mailbox (pfm_SharedMailbox)')), '; sent from the flow owner mailbox', '; sent from the shared mailbox'))"
+                              "item/EventDetails": "@concat(outputs('Tier'), ' e-mail sent for endorsement row ', string(items('For_each_open_endorsement')?['ID']), '; suspense ', substring(items('For_each_open_endorsement')?['DueDate'], 0, 10), if(empty(outputs('Setting_shared_mailbox')), '; sent from the flow owner mailbox', '; sent from the shared mailbox'))"
                             },
                             "authentication": "@parameters('$authentication')"
                           }

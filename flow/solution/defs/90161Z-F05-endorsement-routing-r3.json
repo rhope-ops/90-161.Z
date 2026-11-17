@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F05 Endorsement Routing r2",
-  "description": "When a PFM Publications row is at process step 6 (Formal coordination) and its Action Status is not On Hold, Cancelled or Complete: adds a Formal Coordination row for each active mandatory office that has none; when every other coordinator has answered and all comments are adjudicated, adds the missing Legal rows and moves the step to 7. At step 7 it adds missing Legal rows. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 3.4, 5.1, 5.1.8.2; PFM S5A and 14 Nov 26.",
+  "displayName": "90161Z F05 Endorsement Routing r3",
+  "description": "When a PFM Publications row is at process step 6 (Formal coordination) and its Action Status is not On Hold, Cancelled or Complete: adds a Formal Coordination row for each active mandatory office that has none; when every other coordinator has answered and all comments are adjudicated, adds the missing Legal rows and moves the step to 7. At step 7 it adds missing Legal rows. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 3.4, 5.1, 5.1.8.2; PFM S5A and 14 Nov 26. Reads Flows paused and Test mode once at the start from PFM Settings rows (missing or empty: No and Yes).",
   "workflowKey": "90161Z-F05-endorsement-routing-r1",
   "connections": [
     "shared_sharepointonline",
@@ -38,13 +38,77 @@
       "runAfter": {},
       "type": "Scope",
       "actions": {
-        "If_flows_paused": {
+        "Get_settings": {
           "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R27 (PFM 14 Nov 26): the flow values are rows of PFM Settings, read once at the start. A missing or empty row gives the default: Flows paused No, Test mode Yes (fail-safe), reminder 5, escalation 3, suspense 20, shared mailbox empty."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "Filter_TestMode": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'TestMode')"
+          }
+        },
+        "Test_mode": {
+          "runAfter": {
+            "Filter_TestMode": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@not(equals(toLower(trim(coalesce(if(empty(body('Filter_TestMode')), '', first(body('Filter_TestMode'))?['SettingValue']), ''))), 'no'))"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Test_mode": [
+              "Succeeded"
+            ]
+          },
           "type": "If",
           "expression": {
             "equals": [
-              "@toLower(trim(coalesce(parameters('Flows paused (pfm_FlowsPaused)'), '')))",
-              "yes"
+              "@outputs('Setting_flows_paused')",
+              true
             ]
           },
           "actions": {
@@ -71,8 +135,8 @@
             "and": [
               {
                 "equals": [
-                  "@toLower(trim(coalesce(parameters('Test mode (pfm_TestMode)'), '')))",
-                  "yes"
+                  "@outputs('Test_mode')",
+                  true
                 ]
               },
               {

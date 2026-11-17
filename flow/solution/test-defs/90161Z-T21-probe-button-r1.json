@@ -1,0 +1,52 @@
+{
+  "displayName": "90161Z T21 Probe Button r1",
+  "description": "R27 probe (task T21, fake data only). Trigger: SharePoint \"For a selected item\" on the probe list (the view button of the look probe starts it). Writes one RESULT row (BTN) that says it ran and whether it read the selected item's Id (yes or no, never the value). Environment variable: Site URL.",
+  "connections": [
+    "shared_sharepointonline"
+  ],
+  "triggers": {
+    "manual": {
+      "type": "OpenApiConnectionNotification",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "OnSelectedItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "B_row": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "BTN",
+          "item/ProbeWay": "a",
+          "item/ProbeResult": "PASS",
+          "item/ProbeDetail": "@concat('the view button started this flow; selected item Id read=', if(empty(string(coalesce(triggerBody()?['ID'], ''))), 'no', 'yes'))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "solution": {
+    "variant": "P",
+    "title": "90-161.Z probe",
+    "zip": "90161Z-T21-probe-r3.zip"
+  }
+}

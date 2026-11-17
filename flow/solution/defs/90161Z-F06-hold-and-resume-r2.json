@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F06 Hold and Resume r1",
-  "description": "When a PFM Publications row goes On Hold: records Held Since, logs it and tells the open endorsers once. When it leaves On Hold: moves each open suspense out by the weekdays held (logged as an extension, DAFMAN 90-161 5.2.1), clears Held Since and tells the endorsers the new date. When it is Cancelled: logs it once and tells the open endorsers no response is needed. Test mode sends every e-mail to the PFM only; a failed step e-mails the PFM. PFM D1-D3, 2026-11-14.",
+  "displayName": "90161Z F06 Hold and Resume r2",
+  "description": "When a PFM Publications row goes On Hold: records Held Since, logs it and tells the open endorsers once. When it leaves On Hold: moves each open suspense out by the weekdays held (logged as an extension, DAFMAN 90-161 5.2.1), clears Held Since and tells the endorsers the new date. When it is Cancelled: logs it once and tells the open endorsers no response is needed. Test mode sends every e-mail to the PFM only; a failed step e-mails the PFM. PFM D1-D3, 2026-11-14. Reads Flows paused, Test mode and Shared mailbox once at the start from PFM Settings rows (missing or empty: No, Yes and none). No subject prefix in test mode (PFM 16 Nov 26).",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
@@ -37,13 +37,98 @@
       "runAfter": {},
       "type": "Scope",
       "actions": {
-        "If_flows_paused": {
+        "Get_settings": {
           "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R27 (PFM 14 Nov 26): the flow values are rows of PFM Settings, read once at the start. A missing or empty row gives the default: Flows paused No, Test mode Yes (fail-safe), reminder 5, escalation 3, suspense 20, shared mailbox empty."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "Filter_TestMode": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'TestMode')"
+          }
+        },
+        "Test_mode": {
+          "runAfter": {
+            "Filter_TestMode": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@not(equals(toLower(trim(coalesce(if(empty(body('Filter_TestMode')), '', first(body('Filter_TestMode'))?['SettingValue']), ''))), 'no'))"
+        },
+        "Filter_SharedMailbox": {
+          "runAfter": {
+            "Test_mode": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'SharedMailbox')"
+          }
+        },
+        "Setting_shared_mailbox": {
+          "runAfter": {
+            "Filter_SharedMailbox": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@trim(coalesce(if(empty(body('Filter_SharedMailbox')), '', first(body('Filter_SharedMailbox'))?['SettingValue']), ''))"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Setting_shared_mailbox": [
+              "Succeeded"
+            ]
+          },
           "type": "If",
           "expression": {
             "equals": [
-              "@toLower(trim(coalesce(parameters('Flows paused (pfm_FlowsPaused)'), '')))",
-              "yes"
+              "@outputs('Setting_flows_paused')",
+              true
             ]
           },
           "actions": {
@@ -194,7 +279,7 @@
                 "Mail_to_paused": {
                   "runAfter": {},
                   "type": "Compose",
-                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('Alert e-mail (pfm_AlertEmail)'), items('Tell_endorsers_paused')?['Endorser']?['Email'])"
+                  "inputs": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), items('Tell_endorsers_paused')?['Endorser']?['Email'])"
                 },
                 "Mail_cc_paused": {
                   "runAfter": {
@@ -203,7 +288,7 @@
                     ]
                   },
                   "type": "Compose",
-                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
+                  "inputs": "@if(outputs('Test_mode'), '', '')"
                 },
                 "Mail_note_paused": {
                   "runAfter": {
@@ -212,7 +297,7 @@
                     ]
                   },
                   "type": "Compose",
-                  "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('Tell_endorsers_paused')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
+                  "inputs": "@if(outputs('Test_mode'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('Tell_endorsers_paused')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
                 },
                 "If_shared_mailbox_paused": {
                   "runAfter": {
@@ -225,7 +310,7 @@
                     "and": [
                       {
                         "equals": [
-                          "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                          "@empty(outputs('Setting_shared_mailbox'))",
                           true
                         ]
                       }
@@ -245,7 +330,7 @@
                         "parameters": {
                           "emailMessage/To": "@outputs('Mail_to_paused')",
                           "emailMessage/Cc": "@outputs('Mail_cc_paused')",
-                          "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                          "emailMessage/Subject": "@concat(concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
                           "emailMessage/Body": "@concat(outputs('Mail_note_paused'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is on hold from ', outputs('Today'), '. You get no reminders while it is on hold. When it resumes, your suspense moves out by the weekdays it was on hold.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                           "emailMessage/Importance": "@'Normal'"
                         }
@@ -265,10 +350,10 @@
                           },
                           "authentication": "@parameters('$authentication')",
                           "parameters": {
-                            "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                            "emailMessage/MailboxAddress": "@outputs('Setting_shared_mailbox')",
                             "emailMessage/To": "@outputs('Mail_to_paused')",
                             "emailMessage/Cc": "@outputs('Mail_cc_paused')",
-                            "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                            "emailMessage/Subject": "@concat(concat('Coordination paused: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
                             "emailMessage/Body": "@concat(outputs('Mail_note_paused'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is on hold from ', outputs('Today'), '. You get no reminders while it is on hold. When it resumes, your suspense moves out by the weekdays it was on hold.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                             "emailMessage/Importance": "@'Normal'"
                           }
@@ -450,7 +535,7 @@
                             "Mail_to_resumed": {
                               "runAfter": {},
                               "type": "Compose",
-                              "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('Alert e-mail (pfm_AlertEmail)'), items('For_each_open_row')?['Endorser']?['Email'])"
+                              "inputs": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), items('For_each_open_row')?['Endorser']?['Email'])"
                             },
                             "Mail_cc_resumed": {
                               "runAfter": {
@@ -459,7 +544,7 @@
                                 ]
                               },
                               "type": "Compose",
-                              "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
+                              "inputs": "@if(outputs('Test_mode'), '', '')"
                             },
                             "Mail_note_resumed": {
                               "runAfter": {
@@ -468,7 +553,7 @@
                                 ]
                               },
                               "type": "Compose",
-                              "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('For_each_open_row')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
+                              "inputs": "@if(outputs('Test_mode'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('For_each_open_row')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
                             },
                             "If_shared_mailbox_resumed": {
                               "runAfter": {
@@ -481,7 +566,7 @@
                                 "and": [
                                   {
                                     "equals": [
-                                      "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                                      "@empty(outputs('Setting_shared_mailbox'))",
                                       true
                                     ]
                                   }
@@ -501,7 +586,7 @@
                                     "parameters": {
                                       "emailMessage/To": "@outputs('Mail_to_resumed')",
                                       "emailMessage/Cc": "@outputs('Mail_cc_resumed')",
-                                      "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                                      "emailMessage/Subject": "@concat(concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
                                       "emailMessage/Body": "@concat(outputs('Mail_note_resumed'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' has resumed. Your new suspense is ', outputs('New_due'), '.</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                                       "emailMessage/Importance": "@'Normal'"
                                     }
@@ -521,10 +606,10 @@
                                       },
                                       "authentication": "@parameters('$authentication')",
                                       "parameters": {
-                                        "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                                        "emailMessage/MailboxAddress": "@outputs('Setting_shared_mailbox')",
                                         "emailMessage/To": "@outputs('Mail_to_resumed')",
                                         "emailMessage/Cc": "@outputs('Mail_cc_resumed')",
-                                        "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                                        "emailMessage/Subject": "@concat(concat('Coordination resumed: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
                                         "emailMessage/Body": "@concat(outputs('Mail_note_resumed'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' has resumed. Your new suspense is ', outputs('New_due'), '.</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                                         "emailMessage/Importance": "@'Normal'"
                                       }
@@ -687,7 +772,7 @@
                     "Mail_to_cancelled": {
                       "runAfter": {},
                       "type": "Compose",
-                      "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), parameters('Alert e-mail (pfm_AlertEmail)'), items('Tell_endorsers_cancelled')?['Endorser']?['Email'])"
+                      "inputs": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), items('Tell_endorsers_cancelled')?['Endorser']?['Email'])"
                     },
                     "Mail_cc_cancelled": {
                       "runAfter": {
@@ -696,7 +781,7 @@
                         ]
                       },
                       "type": "Compose",
-                      "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '', '')"
+                      "inputs": "@if(outputs('Test_mode'), '', '')"
                     },
                     "Mail_note_cancelled": {
                       "runAfter": {
@@ -705,7 +790,7 @@
                         ]
                       },
                       "type": "Compose",
-                      "inputs": "@if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('Tell_endorsers_cancelled')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
+                      "inputs": "@if(outputs('Test_mode'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', items('Tell_endorsers_cancelled')?['Endorser']?['Email'], '; Cc: ', '', '.</p>'), '')"
                     },
                     "If_shared_mailbox_cancelled": {
                       "runAfter": {
@@ -718,7 +803,7 @@
                         "and": [
                           {
                             "equals": [
-                              "@empty(parameters('Shared mailbox (pfm_SharedMailbox)'))",
+                              "@empty(outputs('Setting_shared_mailbox'))",
                               true
                             ]
                           }
@@ -738,7 +823,7 @@
                             "parameters": {
                               "emailMessage/To": "@outputs('Mail_to_cancelled')",
                               "emailMessage/Cc": "@outputs('Mail_cc_cancelled')",
-                              "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                              "emailMessage/Subject": "@concat(concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
                               "emailMessage/Body": "@concat(outputs('Mail_note_cancelled'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is cancelled. No response is needed.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                               "emailMessage/Importance": "@'Normal'"
                             }
@@ -758,10 +843,10 @@
                               },
                               "authentication": "@parameters('$authentication')",
                               "parameters": {
-                                "emailMessage/MailboxAddress": "@parameters('Shared mailbox (pfm_SharedMailbox)')",
+                                "emailMessage/MailboxAddress": "@outputs('Setting_shared_mailbox')",
                                 "emailMessage/To": "@outputs('Mail_to_cancelled')",
                                 "emailMessage/Cc": "@outputs('Mail_cc_cancelled')",
-                                "emailMessage/Subject": "@concat(if(equals(toLower(trim(parameters('Test mode (pfm_TestMode)'))), 'yes'), '[TEST] ', ''), concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
+                                "emailMessage/Subject": "@concat(concat('Coordination cancelled: ', coalesce(triggerBody()?['Title'], 'a publication action')))",
                                 "emailMessage/Body": "@concat(outputs('Mail_note_cancelled'), concat('<p>Coordination of ', coalesce(triggerBody()?['Title'], 'a publication action'), ' is cancelled. No response is needed.</p><p>Reason: ', coalesce(triggerBody()?['StatusReason'], 'not given'), '</p><p>This message is sent by the 90-161.Z publications flow.</p>'))",
                                 "emailMessage/Importance": "@'Normal'"
                               }

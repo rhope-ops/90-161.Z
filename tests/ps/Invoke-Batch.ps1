@@ -20,9 +20,9 @@ $hideGuid = {
   Invoke-Expression ([regex]::Match($src, "(?s)function Hide-Site.*?\n}\n").Value)
   Hide-Site "lists(guid%270a1b2c3d-9999-2222-3333-444455556666%27)/items and %2F0a1b2c3d-9999-2222-3333-444455556666" "https://fakeco.sharepoint.us/sites/pfmtest"
 }
-$t16 = 'scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1', 'scripts/gov/90161Z-T16-site-setup-r11.ps1', 'scripts/gov/90161Z-T18-slice1-test-r4.ps1', 'scripts/gov/90161Z-T19-list-update-r3.ps1', 'scripts/gov/90161Z-T20-provision-lists-r1.ps1'
+$t16 = 'scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1', 'scripts/gov/90161Z-T16-site-setup-r11.ps1', 'scripts/gov/90161Z-T18-slice1-test-r5.ps1', 'scripts/gov/90161Z-T19-list-update-r3.ps1', 'scripts/gov/90161Z-T20-provision-lists-r1.ps1'
 for ($i = 0; $i -lt $t16.Count; $i++) { Add-Member1 "hs$i" $hideSite @($t16[$i]) }
-Add-Member1 'hsg0' $hideGuid @('scripts/gov/90161Z-T18-slice1-test-r4.ps1')
+Add-Member1 'hsg0' $hideGuid @('scripts/gov/90161Z-T18-slice1-test-r5.ps1')
 Add-Member1 'hsg1' $hideGuid @('scripts/gov/90161Z-T20-provision-lists-r1.ps1')
 # R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
 Add-Member1 'hsenc' {

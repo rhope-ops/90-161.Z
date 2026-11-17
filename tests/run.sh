@@ -206,7 +206,7 @@ assert all(f'__{l}_ID__' in body for l in p['lookupPlaceholders'])
 assert d['Add_Rows']['runAfter'] == {'Create_Fields_And_Views': ['Succeeded']} and d['Apply_Updates']['runAfter'] == {'Add_Rows': ['Succeeded']}
 x = json.dumps(p)
 assert x.count('MultiChoice') == 2 and x.count('UserMulti') == 1 and x.count('EnforceUniqueValues') == 2 and x.count('<And>') == 1, 'multi, unique and two-condition views reach the payload'
-assert len(p['rows']) == 88  # 39 series + 7 settings + 29 offices (22 A3.2 + 7 mandatory, Q13 and 4.2A) + 13 process steps
+assert len(p['rows']) == 93  # 39 series + 12 settings + 29 offices (22 A3.2 + 7 mandatory, Q13 and 4.2A) + 13 process steps
 assert 'PFMProductIndex' in p['lookupPlaceholders'] and p['listOrder'][-1] == 'PFMReviews'
 lo = p['listOrder']; assert lo.index('PFMProductIndex') < lo.index('PFMPublications') < lo.index('PFMReviews'), lo
 gv = [r for r in p['fields'] if r['body'].get('Title') == 'PFM - Prescribed Forms by Publication']
@@ -214,7 +214,7 @@ q = gv[0]['body']['ViewQuery']
 assert q.index('<Where>') < q.index('<GroupBy') < q.index('<OrderBy>'), q
 assert [r['body']['__metadata']['type'] for r in p['rows']].count('SP.Data.PFMSeriesListItem') == 39
 st = {r['body']['Title']: r['body']['SettingValue'] for r in p['rows'] if r['body']['__metadata']['type'] == 'SP.Data.PFMSettingsListItem'}
-assert st == {'CoordinationSuspenseBusinessDays': '20', 'GuardReserveApplicabilityCalendarDays': '30', 'PublicationsSiteName': '', 'PublicationsListUrl': '', 'PFMOfficeMailbox': '', 'EscalationWeekdays': '', 'RecordsFreeze': ''}, st
+assert st == {'CoordinationSuspenseBusinessDays': '20', 'GuardReserveApplicabilityCalendarDays': '30', 'PublicationsSiteName': '', 'PublicationsListUrl': '', 'PFMOfficeMailbox': '', 'EscalationWeekdays': '', 'RecordsFreeze': '', 'FlowsPaused': 'No', 'TestMode': 'Yes', 'ReminderLeadDays': '5', 'EscalationLagDays': '3', 'SharedMailbox': ''}, st
 nums = [r['body']['SeriesNumber'] for r in p['rows'] if 'SeriesNumber' in r['body']]
 assert len(set(nums)) == 39 and 16 in nums and 17 in nums
 gets = [a for a in d if a.startswith('Get_') and a.endswith('_ID')]
@@ -265,7 +265,7 @@ assert rv['OPRResponse']['choices'] == ['Certify Current', 'Requires Revision', 
 assert rv['Product']['lookup']['list'] == 'PFMProductIndex' and rv['FollowUpAction']['lookup']['list'] == 'PFMPublications'
 steps = S['PFMProcessSteps']['seed']
 assert [s['StepNumber'] for s in steps] == list(range(0, 13)) and 'Privacy' in steps[5]['Title']
-assert {s['StepNumber']: s.get('TargetBusinessDays') for s in steps if s.get('TargetBusinessDays')} == {2: 60, 6: 20, 7: 20, 8: 10, 9: 10, 11: 15}
+assert {s['StepNumber']: s.get('TargetBusinessDays') for s in steps if s.get('TargetBusinessDays')} == {2: 60, 6: 25, 7: 20, 8: 10, 9: 10, 11: 15}
 PY
 
 python3 - <<'PY' && ok "sample CSVs match schema columns and choices" || bad "sample CSVs"
@@ -295,7 +295,7 @@ PY
 if [ "${on[batch]}" = 1 ]; then
 wait "$batch_pid"   # first use of the batch results
 out=$(bout plan | tail -1)
-[ "$out" = "PLAN lists=12 fields=199 views=18 rows=88 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
+[ "$out" = "PLAN lists=12 fields=199 views=18 rows=93 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
 else sk "lists plan"; fi
 if [ "${on[t20]}" = 1 ]; then
 wait "$t20_pid"; t20rc=$?; out=$(tail -1 "$bg/t20.out")
@@ -304,6 +304,7 @@ else sk "T20 list provisioning on the fake site"; fi
 
 # R26 probe (T21): the 2 fake sample files and the fake PDF block in the script are built by code and match byte for byte; the device script runs on a small fake site.
 python3 scripts/build_probe_samples.py --check && ok "T21 probe samples up to date" || bad "T21 probe samples stale (run python3 scripts/build_probe_samples.py)"
+python3 scripts/build_test_app.py --check >/dev/null && ok "T23 app file parts match their SHA-256" || bad "T23 app file parts differ from their SHA-256 (run scripts/build_test_app.py)"
 if [ "${on[t21]}" = 1 ]; then
 wait "$t21_pid"; t21rc=$?; out=$(tail -1 "$bg/t21.out")
 case "$t21rc $out" in "0 T21 pass="*" fail=0") ok "T21 probe script on the fake site ($out)";; *) grep "T21TEST FAIL" "$bg/t21.out" | cut -c1-300; bad "T21 probe script (exit $t21rc): $out";; esac
@@ -538,7 +539,7 @@ if [ "${on[batch]}" = 1 ]; then
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(bout font | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(bout "hs$n")
 [ -n "$hs" ] && ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
@@ -546,7 +547,7 @@ n=$((n+1))
 done
 # A list id right after URL-encoded characters (guid%27<id>%27) must be masked too (review of 15 Nov 26). The scripts
 # revised on or after 15 Nov 26 have the fix; T16 r4, T16 r11 and T19 r3 get it with their next revision.
-n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r4.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
 hs=$(bout "hsg$n")
 ! echo "$hs" | grep -qiE "0a1b2c3d|9999-2222" && echo "$hs" | grep -q "<GUID>" && ok "$(basename $hsf) hides a list id after URL-encoded characters" || { echo "$hs"; bad "GUID masking after URL-encoded characters: $(basename $hsf)"; }
 n=$((n+1))

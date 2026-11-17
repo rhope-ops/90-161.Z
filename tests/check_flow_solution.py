@@ -117,6 +117,35 @@ for src in sorted(B.DEFS.glob("*.json")):
                 counts["columns"] += 1
                 if u not in cols and u not in {"ID", "Id"}: bad(f"{src.name} {name}: column '{u}' not in {title}")
 
+# R27 (PFM 14 and 16 Nov 26): F03, F05 and F06 read the six moved values from PFM Settings rows and add no "[TEST] " prefix. Fails if a def
+# (or a zip) still holds "[TEST]" or reads a moved variable; every Settings key a flow reads is a seed row; the stage 6 target is 25 (PFM 14 Nov 26).
+settings_seed = {r["Title"]: r for r in json.loads((ROOT / "schemas" / "lists" / "PFMSettings.json").read_text(encoding="utf-8"))["seed"]}
+MOVED_KEYS = {"FlowsPaused": "No", "TestMode": "Yes", "ReminderLeadDays": "5", "EscalationLagDays": "3", "CoordinationSuspenseBusinessDays": "20", "SharedMailbox": ""}
+for k, v in MOVED_KEYS.items():
+    r = settings_seed.get(k)
+    if not r: bad(f"PFMSettings.json seed has no row {k}"); continue
+    if r["SettingValue"] != v: bad(f"PFMSettings.json seed {k}={r['SettingValue']!r}, expected {v!r}")
+    if "DAFMAN" not in r["SettingNotes"] and "PFM 2026-11-1" not in r["SettingNotes"]: bad(f"PFMSettings.json seed {k}: SettingNotes cite no source")
+steps = json.loads((ROOT / "schemas" / "lists" / "PFMProcessSteps.json").read_text(encoding="utf-8"))["seed"]
+if [s["TargetBusinessDays"] for s in steps if s["StepNumber"] == 6] != [25]: bad("PFMProcessSteps.json: stage 6 TargetBusinessDays must be 25 (PFM 14 Nov 26)")
+r27_defs = [s for s in sorted(B.DEFS.glob("*.json")) if re.match(r"90161Z-F0[356]-", s.name)]
+if len(r27_defs) != 3: bad(f"expected F03, F05 and F06 defs, found {[s.name for s in r27_defs]}")
+for src in r27_defs:
+    text = src.read_text(encoding="utf-8")
+    if "[TEST]" in text: bad(f"{src.name}: still holds '[TEST]' (PFM 16 Nov 26: no subject or title prefix)")
+    for s_ in B.MOVED_ENV:
+        if s_ in text: bad(f"{src.name}: still reads {s_}; it is a PFM Settings row now")
+    if "parameters('List PFM Settings (pfm_ListSettings)')" not in text or '"Get_settings"' not in text: bad(f"{src.name}: does not read PFM Settings at the start")
+    for key in set(re.findall(r"item\(\)\?\['Title'\], '(\w+)'", text)):
+        if key not in settings_seed: bad(f"{src.name}: reads Settings key {key}, which is not a seed row in PFMSettings.json")
+    acts = json.loads(text)["actions"]["Try"]["actions"]
+    if next(iter(acts)) != "Get_settings": bad(f"{src.name}: Get_settings is not the first step of the Try scope")
+    if sum(1 for n, _ in walk_actions(json.loads(text)["actions"]) if n == "Get_settings") != 1: bad(f"{src.name}: PFM Settings must be read once")
+for z in [cz] + sorted((ROOT / "flow" / "solution").glob("90161Z-T18-*.zip")):
+    with zipfile.ZipFile(z) as zz:
+        for n in zz.namelist():
+            if re.match(r"Workflows/90161ZF0[356]", n) and "[TEST]" in zz.read(n).decode("utf-8"): bad(f"{z.name} {n}: '[TEST]' in a flow of the zip")
+
 # R17: the import failed with "component {guid} of type 29 is not declared in the solution file as a root component".
 # Every zip (flow solution and test solutions): each WorkflowId is a lowercase GUID and has a RootComponent type 29 with the same id.
 SLICES = sorted((ROOT / "flow" / "solution").glob("90161Z-T18-*.zip"))
@@ -182,27 +211,26 @@ for z in SLICES:
         if set(envs) != roots380: bad(f"{z.name}: environment variable files {sorted(envs)} differ from type 380 roots {sorted(roots380)}")
         for n in zz.namelist():
             if n.startswith("environmentvariabledefinitions/") and zz.read(n).startswith(b"<?xml"): bad(f"{z.name} {n}: XML declaration")
-        defaults = {e: re.search(r"<defaultvalue>([^<]*)</defaultvalue>", zz.read(f"environmentvariabledefinitions/{e}/environmentvariabledefinition.xml").decode()) for e in envs}
-        if (defaults.get("pfm_ReminderLeadDays") or [None, None])[1] != "5" or (defaults.get("pfm_EscalationLagDays") or [None, None])[1] != "3":
-            bad(f"{z.name}: F03 defaults are not 5 and 3 (PFM, 2026-11-14)")
-        # PFM 15 Nov 26: the values a wing sets are first and together (file order and numbered labels); a slice imports Test mode Yes.
-        first = re.findall(r'<RootComponent type="380" schemaName="([^"]+)"', sol)[:4]
+        # R27 (PFM 14 Nov 26): the six flow values are PFM Settings rows, not variables: none in a slice or the flow solution, and the
+        # Settings list name is one (default "PFM Settings"). PFM 15 Nov 26: the values a wing sets are first, with numbered labels.
+        moved = sorted(set(envs) & set(B.MOVED_ENV))
+        if moved: bad(f"{z.name}: environment variables that moved to PFM Settings rows: {moved}")
+        if "pfm_ListSettings" not in envs: bad(f"{z.name}: no pfm_ListSettings variable")
+        first = re.findall(r'<RootComponent type="380" schemaName="([^"]+)"', sol)[:2]
         labels = [re.search(r'displayname default="([^"]+)"', zz.read(f"environmentvariabledefinitions/{e}/environmentvariabledefinition.xml").decode()).group(1) for e in first]
-        if first != ["pfm_SiteUrl", "pfm_AlertEmail", "pfm_SharedMailbox", "pfm_TestMode"] or [x[:2] for x in labels] != ["1 ", "2 ", "3 ", "4 "]:
+        if first != ["pfm_SiteUrl", "pfm_AlertEmail"] or [x[:2] for x in labels] != ["1 ", "2 "]:
             bad(f"{z.name}: the values to set are not first, in order, with numbered labels: {first} {labels}")
-        if (defaults.get("pfm_TestMode") or [None, None])[1] != "Yes": bad(f"{z.name}: a test-round slice must import with Test mode Yes")
-        if b"<isrequired>0</isrequired>" not in zz.read("environmentvariabledefinitions/pfm_SharedMailbox/environmentvariabledefinition.xml"):
-            bad(f"{z.name}: the shared mailbox variable must be optional")
         if len(re.findall(r'<RootComponent type="29"', sol)) != 3: bad(f"{z.name}: slice 1 must hold exactly F03, F05 and F06 (R21)")
         # R21: F03 and F05 keep the workflow IDs R20 imported (seen in the R20 import log), so the import replaces them in place.
         for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
             if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
 # R26 (task T21, probe flows): one unmanaged test solution built from flow/solution/test-defs/90161Z-T21-*.json:
-# P (3 flows, 5 connection references; r2, 16 Nov 26: the Word and Mail solutions were refused in r1 and are gone). Same file rules as the export (no XML declaration, CRLF, root
+# P (r3, R27, 17 Nov 26: 2 flows, 2 connection references: Health with the Power Automate Management connector, and Button with the
+# "For a selected item" trigger; the files, mail and app flows of r2 are gone, their tests passed or failed in R26). Same file rules as the export (no XML declaration, CRLF, root
 # components), and the data boundary: no ".mil", no mail address, no site host in any file. Every runAfter name exists on the same
 # level; every "@parameters('...')" resolves; each RESULT row runs after every status; a trigger condition is in the F05 shape.
-T21_EXPECT = {"90161Z-T21-probe-r2.zip": (3, 5)}
+T21_EXPECT = {"90161Z-T21-probe-r3.zip": (2, 2)}
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
 T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
 
@@ -223,7 +251,7 @@ def check_levels(actions, where, outer=()):
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
 t21_defs = sorted(B.TEST_DEFS.glob("90161Z-T21-*.json"))
-if len(t21_defs) != 3: bad(f"expected 3 T21 test defs, found {len(t21_defs)}")
+if len(t21_defs) != 2: bad(f"expected 2 T21 test defs, found {len(t21_defs)}")
 by_zip = {}
 for src in t21_defs:
     d = json.loads(src.read_text(encoding="utf-8"))
@@ -243,6 +271,10 @@ for src in t21_defs:
     for tn, t in d["triggers"].items():
         if t.get("kind") == "PowerAppV2":
             if "text" not in t["inputs"]["schema"]["properties"]: bad(f"{src.name}: PowerAppV2 trigger has no text input")
+        elif t.get("type") == "OpenApiConnectionNotification":
+            # R27: the SharePoint "For a selected item" trigger (the view button); no polling, no condition.
+            if t["inputs"]["host"]["operationId"] != "OnSelectedItem" or t["inputs"]["parameters"].get("dataset") != "@parameters('Site URL (pfm_SiteUrl)')" or t["inputs"]["parameters"].get("table") != "90161Z Probe":
+                bad(f"{src.name}: a selected-item trigger must be OnSelectedItem on the probe list")
         else:
             c = t.get("conditions")
             if not (isinstance(c, list) and c and all(set(x) == {"expression"} and x["expression"].startswith("@") for x in c)): bad(f"{src.name}: trigger condition not in the form [{{expression}}]")
@@ -293,6 +325,10 @@ for zname, (nwf, ncr) in T21_EXPECT.items():
         if envs != want_env: bad(f"{zname}: environment variables {sorted(envs)} differ from the ones the flows read {sorted(want_env)}")
     if sorted(d["displayName"] for d in by_zip.get(zname, [])) != sorted(set(d["displayName"] for d in by_zip.get(zname, []))): bad(f"{zname}: duplicate flow names")
     if len(by_zip.get(zname, [])) != nwf: bad(f"{zname}: expected {nwf} defs, found {len(by_zip.get(zname, []))}")
+
+# R27: the probe script finds the button flow by its fixed ID (a solution keeps the workflow ID): it must equal the ID the builder gives the def.
+btn_id = B.flow_guid("90161Z-T21-probe-button-r1", True).lower()
+if f"'{btn_id}'" not in (ROOT / "scripts" / "gov" / "90161Z-T21-probe-r3.ps1").read_text(encoding="utf-8"): bad(f"90161Z-T21-probe-r3.ps1 does not hold the button flow ID {btn_id}")
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
