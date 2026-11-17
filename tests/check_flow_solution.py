@@ -59,6 +59,14 @@ zf = zipfile.ZipFile(cz)
 for n in zf.namelist():
     if n.endswith(".xml"): minidom.parseString(zf.read(n))
 cust = zf.read("customizations.xml").decode("utf-8")
+# R29 (note N7): in the full solution a variable with a default is not required (isrequired 0); the 2 empty ones stay required.
+for n in zf.namelist():
+    if n.startswith("environmentvariabledefinitions/"):
+        x = zf.read(n).decode("utf-8"); req = re.search(r"<isrequired>(\d)</isrequired>", x).group(1)
+        if req != ("0" if "<defaultvalue>" in x else "1"): bad(f"{n}: isrequired {req} (want 0 with a default, else 1)")
+for sz in (ROOT / "flow" / "solution").glob("90161Z-T1[78]-*.zip"):
+    for n in zipfile.ZipFile(sz).namelist():
+        if n.startswith("environmentvariabledefinitions/") and "<isrequired>1</isrequired>" not in zipfile.ZipFile(sz).read(n).decode("utf-8"): bad(f"{sz.name} {n}: slice and test solutions keep isrequired 1")
 declared = set(re.findall(r'connectionreferencelogicalname="([^"]+)"', cust))
 declared_ids = set(re.findall(r"<connectorid>/providers/Microsoft.PowerApps/apis/(\w+)</connectorid>", cust))
 for n in zf.namelist():

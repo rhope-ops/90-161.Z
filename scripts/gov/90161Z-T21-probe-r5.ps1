@@ -403,7 +403,7 @@ try {
     $zips = @()
     foreach ($pl in ($places | Select-Object -Unique)) {
       if (-not (Test-Path -LiteralPath $pl -PathType Container)) { continue }
-      $zips += @(Get-ChildItem -LiteralPath $pl -Filter '*.zip' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $since })
+      $zips += @(Get-ChildItem -LiteralPath $pl -Filter '*.zip' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $since -and $_.Name -notlike '90161Z-T*' })   # never the round's own files (the health flow zip)
     }
     $found = $null; $flowCount = 0; $single = $null; $first = $true
     foreach ($z in @($zips | Sort-Object LastWriteTime -Descending)) {
@@ -710,7 +710,7 @@ try {
     $meId = 0
     try { $meId = [int]((Invoke-Rest 'Get' '_api/web/currentuser?$select=Id' '') | ConvertFrom-Json).Id } catch { $meId = 0 }
 
-    # HEALTH: the Power Automate Management connector lists the owner's own flows (this environment only) and reads each probe flow's last run.
+    # HEALTH: the Power Automate Management connector lists the owner's own flows (this environment only) and counts how many are On.
     $h = $null
     if ($healthFloor -gt 0) { $h = Find-Result @($rows | Where-Object { $_.Id -gt $healthFloor }) 'HEALTH' 'a' }
     if (-not $healthFloor) { Add-Test 'HEALTH' @('a Power Automate Management connector, own flows only=FAIL (no command row: run the health step first)') $false }

@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R29, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = '91a88325'
+$buildId = 'ff926d17'
 $engineRelease = 9
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -181,7 +181,7 @@ try {
 if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 exit $code
 '@ }
-$files += @{ Dir = 'T21'; Name = '90161Z-T21-probe-r5.ps1'; Kind = 'text'; Sha = '6910b3444a3f'; Data = @'
+$files += @{ Dir = 'T21'; Name = '90161Z-T21-probe-r5.ps1'; Kind = 'text'; Sha = 'b8585da4d72e'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 21 probe, r5 (round R29). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
@@ -587,7 +587,7 @@ try {
     $zips = @()
     foreach ($pl in ($places | Select-Object -Unique)) {
       if (-not (Test-Path -LiteralPath $pl -PathType Container)) { continue }
-      $zips += @(Get-ChildItem -LiteralPath $pl -Filter '*.zip' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $since })
+      $zips += @(Get-ChildItem -LiteralPath $pl -Filter '*.zip' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $since -and $_.Name -notlike '90161Z-T*' })   # never the round's own files (the health flow zip)
     }
     $found = $null; $flowCount = 0; $single = $null; $first = $true
     foreach ($z in @($zips | Sort-Object LastWriteTime -Descending)) {
@@ -894,7 +894,7 @@ try {
     $meId = 0
     try { $meId = [int]((Invoke-Rest 'Get' '_api/web/currentuser?$select=Id' '') | ConvertFrom-Json).Id } catch { $meId = 0 }
 
-    # HEALTH: the Power Automate Management connector lists the owner's own flows (this environment only) and reads each probe flow's last run.
+    # HEALTH: the Power Automate Management connector lists the owner's own flows (this environment only) and counts how many are On.
     $h = $null
     if ($healthFloor -gt 0) { $h = Find-Result @($rows | Where-Object { $_.Id -gt $healthFloor }) 'HEALTH' 'a' }
     if (-not $healthFloor) { Add-Test 'HEALTH' @('a Power Automate Management connector, own flows only=FAIL (no command row: run the health step first)') $false }
@@ -1167,7 +1167,7 @@ aWY7Y29sb3I6IzFiMjQzMDttYXJnaW46MzJweCI+PGgxIHN0eWxlPSJjb2xvcjojMGIyNTQ1Ij45MC0x
 L2gxPjxwPlRoZSBsaW5rcyBhcmUgbm90IGhlcmUgeWV0LiBJbiBSQURFLCBydW4gdGhlIHN0ZXAgIlQyMSBNYWtlIHRoZSBwcm9i
 ZSBsaXN0IHI0IiBmaXJzdDogaXQgd3JpdGVzIHRoaXMgcGFnZSB3aXRoIHRoZSBsaW5rcy48L3A+PC9ib2R5PjwvaHRtbD4K
 '@ }
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r3.ps1'; Kind = 'text'; Sha = 'c6719f564653'; Data = @'
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r3.ps1'; Kind = 'text'; Sha = 'e804fbc1a2bb'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 22: the PFM window, test window r3 (round R29). Windows PowerShell 5.1 and Windows Forms only (no module).
@@ -2554,7 +2554,7 @@ $x.Add_SizeChanged({ & $wn.Round $this 4 })
 $x.Add_Click({ $r=([string]$this.Tag).ToUpperInvariant(); & $wn.Answer $r })
 [void]$bar.Controls.Add($x); if ($n -eq 'Pass') { $wn.BarPass=$x } else { $wn.BarFail=$x } }
 $wn.Bar=$bar; $wn.BarNo=$no; $wn.BarText=$tx
-$form.Controls.Add($bar)
+$form.Controls.Add($bar); $main.BringToFront()
 & $wn.BarShow; & $wn.BarLayout }
 $wn.Ready=$false; $wn.LastW=0; $wn.LastH=0
 $wn.CheckTimer=New-Object System.Windows.Forms.Timer; $wn.CheckTimer.Interval=350
@@ -2610,7 +2610,7 @@ for ($i=0; $i -lt $Checks.Count; $i++) {
 $a=[string]$wn.Answers[$i]
 if ($a -eq 'PASS') { $cp++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' PASS') }
 elseif ($a -eq 'FAIL') { $cf++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL') }
-else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' SKIP (not answered)') } }
+else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL (not answered)') } }
 $lines.Add('CHECKS passed=' + $cp + ' failed=' + $cf + ' not answered=' + $cs)
 foreach ($t in @($ui.Trash)) { try { $t.Dispose() } catch { $null=$_ } }
 $form.Dispose()
@@ -3510,13 +3510,13 @@ $steps += @{ Name = 'T21 Remove the button flow and solution r5'; Title = 'Delet
 $collect = @()
 $collect += @{ Dir = 'T17'; Name = '90161Z-T17-import-log-r2.txt'; Step = 'T17 Import log reader r2' }
 $collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-clean-first-r5.txt'; Step = 'T21 Check the test site is clean r5' }
-$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-make-r4.txt'; Step = 'T21 Make the probe list r5' }
-$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-run-r4.txt'; Step = 'T21 Start the health flow r5' }
-$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-person-r4.txt'; Step = 'T21 Add the second person r5' }
-$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-export-r4.txt'; Step = 'T21 Read the export r5' }
-$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-look-r4.txt'; Step = 'T21 Format the form and view r5' }
-$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-read-r4.txt'; Step = 'T21 Read the test results r5' }
-$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-clean-last-r4.txt'; Step = 'T21 Remove the person, list and library r5' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-make-r5.txt'; Step = 'T21 Make the probe list r5' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-run-r5.txt'; Step = 'T21 Start the health flow r5' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-person-r5.txt'; Step = 'T21 Add the second person r5' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-export-r5.txt'; Step = 'T21 Read the export r5' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-look-r5.txt'; Step = 'T21 Format the form and view r5' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-read-r5.txt'; Step = 'T21 Read the test results r5' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-clean-last-r5.txt'; Step = 'T21 Remove the person, list and library r5' }
 $collect += @{ Dir = 'T22'; Name = '90161Z-T22-window-r3.txt'; Step = 'T22 Open the 90-161.Z window r3' }
 $collect += @{ Dir = 'T24'; Name = '90161Z-T24-full-test-part1-r1.txt'; Step = 'T24 Full solution test, part 1 r1' }
 $collect += @{ Dir = 'T24'; Name = '90161Z-T24-full-test-part2-r1.txt'; Step = 'T24 Full solution test, part 2 r1' }

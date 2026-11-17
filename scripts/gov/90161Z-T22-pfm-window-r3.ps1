@@ -1384,7 +1384,7 @@ $x.Add_SizeChanged({ & $wn.Round $this 4 })
 $x.Add_Click({ $r=([string]$this.Tag).ToUpperInvariant(); & $wn.Answer $r })
 [void]$bar.Controls.Add($x); if ($n -eq 'Pass') { $wn.BarPass=$x } else { $wn.BarFail=$x } }
 $wn.Bar=$bar; $wn.BarNo=$no; $wn.BarText=$tx
-$form.Controls.Add($bar)
+$form.Controls.Add($bar); $main.BringToFront()
 & $wn.BarShow; & $wn.BarLayout }
 $wn.Ready=$false; $wn.LastW=0; $wn.LastH=0
 $wn.CheckTimer=New-Object System.Windows.Forms.Timer; $wn.CheckTimer.Interval=350
@@ -1440,7 +1440,7 @@ for ($i=0; $i -lt $Checks.Count; $i++) {
 $a=[string]$wn.Answers[$i]
 if ($a -eq 'PASS') { $cp++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' PASS') }
 elseif ($a -eq 'FAIL') { $cf++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL') }
-else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' SKIP (not answered)') } }
+else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL (not answered)') } }
 $lines.Add('CHECKS passed=' + $cp + ' failed=' + $cf + ' not answered=' + $cs)
 foreach ($t in @($ui.Trash)) { try { $t.Dispose() } catch { $null=$_ } }
 $form.Dispose()

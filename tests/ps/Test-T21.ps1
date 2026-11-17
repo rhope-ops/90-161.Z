@@ -290,6 +290,13 @@ $r = Invoke-T21 'Export'; Note $r
 Test-That 'Export: a named flow says name matched=yes' ($r.Text -match 'x1-export PASS .*found=yes; the only flow of the newest export read=no; name matched=yes') $r.Text
 Remove-Item -LiteralPath $idFile
 Remove-Item -LiteralPath $zip
+$own = Join-Path $t21 '90161Z-T21-probe-r5.zip'
+New-FakeExport $own '90161Z T21 Probe Health r5' $exportGuid $trig -Single
+$r = Invoke-T21 'Export'; Note $r
+Test-That 'Export: the round''s own zip (1 flow) is never read as the export (R29 review)' ($r.Code -eq 0 -and $r.Text -match 'x1-export FAIL .*zips from the last 3 hours=0' -and -not (Test-Path -LiteralPath $idFile)) $r.Text
+Remove-Item -LiteralPath $own
+New-FakeExport $zip '90161Z T21 Probe Button hand r5' $exportGuid $trig
+Remove-Item -LiteralPath $zip
 $r = Invoke-T21 'Export'; Note $r
 Test-That 'Export: no zip fails with exit 0' ($r.Code -eq 0 -and $r.Text -match 'x1-export FAIL .*zips from the last 3 hours=0')
 New-Site; $null = Invoke-T21 'Make'

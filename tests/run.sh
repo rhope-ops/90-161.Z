@@ -378,6 +378,22 @@ PYEOF
 # Bundle size limit (PFM 14 Nov 26, raised with the function-complete engine): 600 KB = 614,400 bytes.
 big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 614400 ] || { echo "  $b bytes=$s"; big=$((big+1)); }; done
 [ "$big" -eq 0 ] && ok "paste bundles at most 600 KB" || bad "paste bundles over 600 KB: $big"
+# Collected result names (R29 review: 7 T21 names kept r4 while the script wrote r5): a name -rN.txt of a step that runs a task
+# script with a $Rev line must carry that $Rev, else the round reports the file missing or sends an old one.
+python3 - <<'PYCOL' && ok "collected result names match the task script revisions" || bad "collected result names do not match the task script revisions"
+import json, re, pathlib, sys
+b = json.load(open('scripts/paste_bundles.json'))['bundles']; bad = []
+for r in b:
+    files = {pathlib.Path(f['src']).name: f['src'] for f in r['files']}
+    by = {s['name']: s for s in r['steps']}
+    for c in r['collect']:
+        s = by.get(c['step']); src = files.get(s.get('file', '')) if s else None
+        if not src or not src.endswith('.ps1'): continue
+        m = re.search(r"^\$Rev = '(r\d+)'", pathlib.Path(src).read_text(), re.M)
+        n = re.search(r'-(r\d+)\.txt$', c['name'])
+        if m and n and m.group(1) != n.group(1): bad.append((c['name'], m.group(1)))
+print(bad) if bad else None; sys.exit(1 if bad else 0)
+PYCOL
 
 # Round bundle end to end in pwsh (Linux, text mode: no Windows Forms): profile folder and C:\Users swapped for a temp root.
 # Every written file must equal its source (text: BOM and CR removed); each step must start as a child process (on Linux
