@@ -109,8 +109,8 @@
           "file": "",
           "note": "You answer 4 questions about the RADE desktop icon, the Start button and the look of the RADE window. About 2 minutes (estimate).",
           "guide": [
-            "1. Answer the 4 questions on this card.",
-            "2. Select \"Done: answered\"."
+            "1. Select \"Done: answered\".",
+            "2. Answer each of the 4 questions that follow, one card each."
           ],
           "marker": "90161Z-R28-frame-answered.txt",
           "doneText": "Done: answered",
@@ -687,8 +687,8 @@
           "file": "",
           "note": "You answer 3 questions about the look of the window. About 2 minutes (estimate).",
           "guide": [
-            "1. Answer the 3 questions on this card.",
-            "2. Select \"Done: answered\"."
+            "1. Select \"Done: answered\".",
+            "2. Answer each of the 3 questions that follow, one card each."
           ],
           "marker": "90161Z-T22-judged-look.txt",
           "doneText": "Done: answered",
@@ -728,8 +728,8 @@
           "file": "",
           "note": "You answer 3 questions about keyboard, Narrator and high contrast. About 2 minutes (estimate).",
           "guide": [
-            "1. Answer the 3 questions on this card.",
-            "2. Select \"Done: answered\"."
+            "1. Select \"Done: answered\".",
+            "2. Answer each of the 3 questions that follow, one card each."
           ],
           "marker": "90161Z-T22-judged-access.txt",
           "doneText": "Done: answered",
