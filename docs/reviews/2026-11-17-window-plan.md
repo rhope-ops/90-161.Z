@@ -1,6 +1,13 @@
 <!-- Plan approved by the PFM on 17 Nov 26 (plan mode); revision 2 and the deeper-version task approved the same day. Self-review; not independently reviewed. -->
 # Plan: RADE frame + 90-161.Z PFM window, full UI and function pass (17 Nov 26)
 
+## Status at 17 Nov 26, night (agent)
+
+- Done after this plan was copied here: RADE rule for Start (RADE PR 70, approved text); R28 engine items 3a.1 to 3a.8 (RADE PR 72, two fresh reviews, no MAJOR) and a lint fix (PR 73); releases engine-v7 (619c78b) and engine-v8 (f720098). The saved runner copy is replaced only by a higher engine release (the PFM, 17 Nov 26). Design approved (preview 2), no timed tasks, selectable text (DECISIONS 17 Nov).
+- Stopped: the lock move. `bump_lock.py engine-v8` rebuilds every bundle, and round R27 r1 is open on the PFM's computer, so moving the lock now would change R27. With the move, two tests that grep engine text need updating ("Enter starts the run"; "paste bundles naming another engine").
+- Blocked: the test "RADE engine is behind" (PFM decision 15 Nov) fails the full lane of every pull request here until the lock moves, so no pull request here can merge until the R27 results are on main and the lock has moved.
+- Next session: R27 results, then the lock move to engine-v8 with the test updates, T22 r2 (Phase C), round R28 (Phase D).
+
 ## Context
 
 R26 r2 showed the T22 PFM window preview is "close, with small changes" but needs "a deep pass"; full screen is not proven, and the RADE runner still has 4 "Kick" layout defects on hand cards. The PFM chose a start point on 17 Nov 26: the layout of board "Before · Hybrid (busy)" with the colors of board "Streamlined 1 · Air Force colors" (canvas "90-161.Z App Concepts"). Open decisions of 16 Nov (Start button, desktop icon, update notice) also wait for this plan. This plan changes nothing until the PFM approves it.
