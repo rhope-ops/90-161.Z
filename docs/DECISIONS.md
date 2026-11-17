@@ -6,6 +6,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | Window size: the window keeps the size and place the PFM gives it (Snap too); works from 1280 x 720 logical (24" at 150 %) to a third of a 49" and 2560 x 1440. Replaces the 1100 px rule below. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
+| 2026-11-17 | Step bar: 12 dots; step 13 (Change or Skip) is a button on each action, not a dot. Scope: PFM window. | PFM | docs/reviews/2026-11-17-window-plan.md |
+| 2026-11-17 | Your Work = Needs You Today + Who Has It Now (all open actions) + Chase (late offices, logged contacts, 5.4.3.1); from the PFM's answers. Preview 2; not approved yet. | Agent | docs/reviews/2026-11-17-window-ux-targets.md |
 | 2026-11-17 | PFM Settings TestMode row seeds Yes (a missing row also counts as Yes); the PFM sets No once at go-live. Replaces the 15 Nov "full solution with No" for this value. Scope: F03, F05, F06. | PFM | schemas/lists/PFMSettings.json |
 | 2026-11-17 | One mailbox row: F03 and F06 will read PFMOfficeMailbox; the SharedMailbox row goes away. Built after R27 (R27 flows stay as built). Scope: PFM Settings, F03, F06. | PFM | schemas/lists/PFMSettings.json |
 | 2026-11-17 | R27 Excel look probe: no macro workbook (a script that writes a macro file can set off endpoint security; Excel for the web does not run VBA). Scope: R27. | PFM | docs/phases.md |
