@@ -31,7 +31,7 @@ Updated: 2026-11-17 by Claude (R27 r1 built; window plan approved). Keep this fi
 
 ## Next
 
-- Round build speed (PFM 15 Nov): the steps are in `.claude/skills/round/SKILL.md` section 0. Agent REC, not a decision: target about 60 min for a round build with no engine change. R27 r1 (full scope, 2 workers): about 3 h 30 min of build time. Time record of the R25 session: the audit 3 report, section 1.
+- Round build speed (PFM 15 Nov): the steps are in `.claude/skills/round/SKILL.md` section 0. Agent REC, not a decision: target about 60 min for a round build with no engine change. R27 r1 (full scope, 2 Sonnet workers, 3 fresh reviews): 55 min, 00:12 to 01:07 UTC (pull request 110). Open from its reviews (MINOR): T23 --check counts parts by the same fixed format; masking misses double-encoded and full-width @; untested Person paths (kept record, person gone; different person after WasMember=yes). Time record of the R25 session: the audit 3 report, section 1.
 - Roadmap (PFM 15 Nov): phase states, exit criteria and the rounds from R24 to the pilot are in docs/phases.md (round order approved by the PFM, 1A; exit criteria and estimate = agent REC; evidence docs/reviews/2026-11-15-roadmap-evidence.md). Slice 1 passed in R22; both holds of 14 Nov are lifted (PFM 15 Nov). Not built: the endorser-answer app flow.
 
 ## Do not
