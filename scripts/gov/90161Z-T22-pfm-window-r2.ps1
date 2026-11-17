@@ -252,45 +252,45 @@ $StepNames = @('Review due', 'Box told', 'AOs named', 'AOs told', 'Scope', 'Draf
 # columns of sections. A section is a white card with an optional caption (Cap) and blocks. Block types (T): chips, head, p,
 # steps, check, ck, rows, list, grid, filter, input, radio, err, buttons, progress. A button: Text, Kind ('primary' = blue; at
 # most one on a card), Go (a card, 'back' or '@grid'), Note (a notice shown on the next card), Need ('reason' or 'ck').
-$HomeRows = @'
-FAKE OI 33-101|Key Control|Review|8 PFM check|You|16 Nov|1 d|18 Nov|Your turn|turn|step8
-FAKE OI 21-14|Vehicle Keys|Review|11 Signatures|You|13 Nov|2 d|20 Nov|Your turn|turn|step11
-FAKE Instruction 10-201|Recall|Rewrite|10 Wave 1|FAKE Office 5|23 Oct|17 d|13 Nov|Late|late|waves
-FAKE OI 31-3|Gate Hours|Review|10 Wave 2|FAKE Office 8|26 Oct|16 d|16 Nov|Late|late|waves
-FAKE OI 90-1|Self-Inspection|Review|10 Wave 3, legal|FAKE Legal Office|29 Oct|13 d|19 Nov|Due soon|soon|waves
-FAKE OI 36-2|Recognition|Change|10 Wave 1|2 offices|30 Oct|12 d|20 Nov|Due soon|soon|waves
-FAKE OI 10-5|Recall Roster|Certify current|11 Signatures|FAKE Wing Staff CSS|12 Nov|3 d|19 Nov|On track|ok|pub
-FAKE OI 13-4|Airfield Signs|Review|3 AOs named|FAKE Office 3 box|12 Nov|3 d|26 Nov|On track|ok|pub
-FAKE OI 48-2|Hearing Tests|Review|9 Answers|FAKE AO 6|11 Nov|4 d|25 Nov|On track|ok|pub
-FAKE OI 32-1|Work Orders|Review|5 Scope|FAKE AO 5|10 Nov|5 d|24 Nov|On track|ok|pub
-FAKE OI 91-3|Ladder Safety|New|7 Endorsers|FAKE AO 7|9 Nov|6 d|1 Dec|On track|ok|pub
-FAKE Form 12|Key Log|Form|6 Draft|FAKE AO 1|5 Nov|8 d|3 Dec|On track|ok|pub
-FAKE OI 21-6|Tool Control|Review|6 Draft|FAKE AO 4|2 Nov|11 d|4 Dec|On track|ok|pub
-FAKE OI 23-7|Supply Bins|Rewrite|6 Draft|FAKE AO 8|28 Oct|14 d|18 Dec|On track|ok|pub
-FAKE OI 15-1|Weather Calls|Review|2 Box told|FAKE Office 9 box|16 Nov|1 d|30 Nov|On track|ok|pub
-'@
-$QueueRows = @'
-FAKE OI 33-101|Key Control|Review|8 PFM check|1|You|Your turn|turn|step8|1
-FAKE OI 21-14|Vehicle Keys|Review|11 Signatures|2|You|Due 20 Nov 26|soon|step11|1
-FAKE Instruction 10-201|Recall|Rewrite|10 Waves, wave 1|9|Endorsers|No answer|late|waves|0
-FAKE OI 31-3|Gate Hours|Review|9 Answers|4|Endorsers|On track|ok|waves|0
-FAKE OI 36-2|Recognition|Change|6 Draft|12|AO|On track|ok|pub|0
-FAKE OI 13-4|Airfield Signs|Review|3 AOs named|3|OPR box|Due 19 Nov 26|soon|pub|0
-FAKE OI 90-1|Self-Inspection|Certify current|11 Signatures|6|Approver's CSS|On track|ok|pub|0
-FAKE Form 12|Key Log|Prescribed form|6 Draft|5|AO|On track|ok|pub|0
-FAKE OI 10-5|Recall Roster|Certify current|11 Signatures|3|Wing Staff CSS|On track|ok|pub|0
-FAKE OI 48-2|Hearing Tests|Review|9 Answers|4|FAKE AO 6|On track|ok|pub|0
-FAKE OI 32-1|Work Orders|Review|5 Scope|5|FAKE AO 5|On track|ok|pub|0
-FAKE OI 91-3|Ladder Safety|New|7 Endorsers|6|FAKE AO 7|On track|ok|pub|0
-'@
+$HomeRows = (@(
+  'FAKE OI 33-101|Key Control|Review|8 PFM check|You|16 Nov|1 d|18 Nov|Your turn|turn|step8',
+  'FAKE OI 21-14|Vehicle Keys|Review|11 Signatures|You|13 Nov|2 d|20 Nov|Your turn|turn|step11',
+  'FAKE Instruction 10-201|Recall|Rewrite|10 Wave 1|FAKE Office 5|23 Oct|17 d|13 Nov|Late|late|waves',
+  'FAKE OI 31-3|Gate Hours|Review|10 Wave 2|FAKE Office 8|26 Oct|16 d|16 Nov|Late|late|waves',
+  'FAKE OI 90-1|Self-Inspection|Review|10 Wave 3, legal|FAKE Legal Office|29 Oct|13 d|19 Nov|Due soon|soon|waves',
+  'FAKE OI 36-2|Recognition|Change|10 Wave 1|2 offices|30 Oct|12 d|20 Nov|Due soon|soon|waves',
+  'FAKE OI 10-5|Recall Roster|Certify current|11 Signatures|FAKE Wing Staff CSS|12 Nov|3 d|19 Nov|On track|ok|pub',
+  'FAKE OI 13-4|Airfield Signs|Review|3 AOs named|FAKE Office 3 box|12 Nov|3 d|26 Nov|On track|ok|pub',
+  'FAKE OI 48-2|Hearing Tests|Review|9 Answers|FAKE AO 6|11 Nov|4 d|25 Nov|On track|ok|pub',
+  'FAKE OI 32-1|Work Orders|Review|5 Scope|FAKE AO 5|10 Nov|5 d|24 Nov|On track|ok|pub',
+  'FAKE OI 91-3|Ladder Safety|New|7 Endorsers|FAKE AO 7|9 Nov|6 d|1 Dec|On track|ok|pub',
+  'FAKE Form 12|Key Log|Form|6 Draft|FAKE AO 1|5 Nov|8 d|3 Dec|On track|ok|pub',
+  'FAKE OI 21-6|Tool Control|Review|6 Draft|FAKE AO 4|2 Nov|11 d|4 Dec|On track|ok|pub',
+  'FAKE OI 23-7|Supply Bins|Rewrite|6 Draft|FAKE AO 8|28 Oct|14 d|18 Dec|On track|ok|pub',
+  'FAKE OI 15-1|Weather Calls|Review|2 Box told|FAKE Office 9 box|16 Nov|1 d|30 Nov|On track|ok|pub'
+) -join "`n")
+$QueueRows = (@(
+  'FAKE OI 33-101|Key Control|Review|8 PFM check|1|You|Your turn|turn|step8|1',
+  'FAKE OI 21-14|Vehicle Keys|Review|11 Signatures|2|You|Due 20 Nov 26|soon|step11|1',
+  'FAKE Instruction 10-201|Recall|Rewrite|10 Waves, wave 1|9|Endorsers|No answer|late|waves|0',
+  'FAKE OI 31-3|Gate Hours|Review|9 Answers|4|Endorsers|On track|ok|waves|0',
+  'FAKE OI 36-2|Recognition|Change|6 Draft|12|AO|On track|ok|pub|0',
+  'FAKE OI 13-4|Airfield Signs|Review|3 AOs named|3|OPR box|Due 19 Nov 26|soon|pub|0',
+  'FAKE OI 90-1|Self-Inspection|Certify current|11 Signatures|6|Approver''s CSS|On track|ok|pub|0',
+  'FAKE Form 12|Key Log|Prescribed form|6 Draft|5|AO|On track|ok|pub|0',
+  'FAKE OI 10-5|Recall Roster|Certify current|11 Signatures|3|Wing Staff CSS|On track|ok|pub|0',
+  'FAKE OI 48-2|Hearing Tests|Review|9 Answers|4|FAKE AO 6|On track|ok|pub|0',
+  'FAKE OI 32-1|Work Orders|Review|5 Scope|5|FAKE AO 5|On track|ok|pub|0',
+  'FAKE OI 91-3|Ladder Safety|New|7 Endorsers|6|FAKE AO 7|On track|ok|pub|0'
+) -join "`n")
 function ConvertTo-HomeRow([string[]]$Lines) {
   foreach ($l in $Lines) { if ($l.Trim()) { $f = $l.Split('|'); @{ Publication = ($f[0] + '|' + $f[1]); Action = $f[2]; Step = $f[3]; With = $f[4]; Since = $f[5]; Age = $f[6]; Due = $f[7]; Status = $f[8]; Kind = $f[9]; Go = $f[10] } } }
 }
 function ConvertTo-QueueRow([string[]]$Lines) {
   foreach ($l in $Lines) { if ($l.Trim()) { $f = $l.Split('|'); @{ Publication = ($f[0] + '|' + $f[1]); Action = $f[2]; Step = $f[3]; Weekdays = $f[4]; With = $f[5]; Status = $f[6]; Kind = $f[7]; Go = $f[8]; Me = ($f[9] -eq '1') } } }
 }
-$GridHome = @(ConvertTo-HomeRow ($HomeRows -split "`r?`n"))
-$GridQueue = @(ConvertTo-QueueRow ($QueueRows -split "`r?`n"))
+$GridHome = @(ConvertTo-HomeRow ($HomeRows -split "`n"))
+$GridQueue = @(ConvertTo-QueueRow ($QueueRows -split "`n"))
 $ColsNarrow = @(@{ N = 'Publication'; W = 0; K = 'pub' }, @{ N = 'Step'; W = 128; K = 'plain' }, @{ N = 'With'; W = 170; K = 'with' }, @{ N = 'Since'; W = 64; K = 'since' }, @{ N = 'Due'; W = 72; K = 'plain' }, @{ N = 'Status'; W = 104; K = 'chip' })
 $ColsWide = @(@{ N = 'Publication'; W = 0; K = 'pub' }, @{ N = 'Action'; W = 136; K = 'plain' }, @{ N = 'Step'; W = 136; K = 'plain' }, @{ N = 'With'; W = 184; K = 'with' }, @{ N = 'Since'; W = 120; K = 'since' }, @{ N = 'Due'; W = 72; K = 'plain' }, @{ N = 'Status'; W = 104; K = 'chip' })
 $ColsQueue = @(@{ N = 'Publication'; W = 0; K = 'pub' }, @{ N = 'Action'; W = 130; K = 'plain' }, @{ N = 'Step'; W = 150; K = 'plain' }, @{ N = 'Weekdays'; W = 86; K = 'plain'; H = 'Weekdays in step' }, @{ N = 'With'; W = 140; K = 'with' }, @{ N = 'Status'; W = 124; K = 'chip' })
@@ -543,183 +543,183 @@ function Get-CardPlan {
   return $out
 }
 
-$PfmCs = @'
-using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Windows.Forms;
-namespace Pfm {
-  public static class Gfx {
-    public static GraphicsPath Round(RectangleF r, float rad) {
-      GraphicsPath p = new GraphicsPath();
-      if (rad <= 0.5f) { p.AddRectangle(r); return p; }
-      float d = rad * 2f;
-      p.AddArc(r.X, r.Y, d, d, 180, 90);
-      p.AddArc(r.Right - d, r.Y, d, d, 270, 90);
-      p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
-      p.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
-      p.CloseFigure();
-      return p;
-    }
-    public static void RoundRegion(Control c, int rad) {
-      if (c.Width < 4 || c.Height < 4) { return; }
-      using (GraphicsPath p = Round(new RectangleF(0, 0, c.Width, c.Height), rad)) {
-        Region old = c.Region;
-        c.Region = new Region(p);
-        if (old != null) { old.Dispose(); }
-      }
-    }
-  }
-  public class Chip : Control {
-    public Color Fill = Color.White;
-    public Chip() {
-      SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-      TabStop = false;
-    }
-    protected override void OnPaint(PaintEventArgs e) {
-      Graphics g = e.Graphics;
-      g.Clear(BackColor);
-      g.SmoothingMode = SmoothingMode.AntiAlias;
-      using (GraphicsPath p = Gfx.Round(new RectangleF(0, 0, Width - 1, Height - 1), Height / 2f)) {
-        using (SolidBrush b = new SolidBrush(Fill)) { g.FillPath(b, p); }
-      }
-      TextRenderer.DrawText(g, Text, Font, ClientRectangle, ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
-    }
-  }
-  public class Card : FlowLayoutPanel {
-    public Color Line = Color.Gray;
-    public Color TopFill = Color.Transparent;
-    public Color Outer = Color.White;
-    public int TopH = 0;
-    public int Radius = 6;
-    public Card() { DoubleBuffered = true; ResizeRedraw = true; }
-    protected override void OnPaint(PaintEventArgs e) {
-      base.OnPaint(e);
-      Graphics g = e.Graphics;
-      g.SmoothingMode = SmoothingMode.AntiAlias;
-      using (GraphicsPath p = Gfx.Round(new RectangleF(0.5f, 0.5f, Width - 1.5f, Height - 1.5f), Radius)) {
-        using (Region r = new Region(new Rectangle(0, 0, Width, Height))) {
-          r.Exclude(p);
-          using (SolidBrush b = new SolidBrush(Outer)) { g.FillRegion(b, r); }
-        }
-        if (TopH > 0) {
-          GraphicsState st = g.Save();
-          g.SetClip(p);
-          using (SolidBrush b = new SolidBrush(TopFill)) { g.FillRectangle(b, 0, 0, Width, TopH); }
-          g.Restore(st);
-        }
-        using (Pen pen = new Pen(Line, 1f)) { g.DrawPath(pen, p); }
-      }
-    }
-  }
-  public class Steps : Control {
-    public string[] Labels = new string[0];
-    public int Current = 1;
-    public int Dot = 26;
-    public Color DoneFill = Color.Blue, DoneText = Color.White, NowFill = Color.Yellow, NowLine = Color.Navy, NowText = Color.Black;
-    public Color TodoFill = Color.White, TodoLine = Color.Gray, TodoText = Color.Black, ConnDone = Color.Blue, ConnTodo = Color.Gray;
-    public Color LabelDone = Color.Black, LabelNow = Color.Navy, LabelTodo = Color.Gray;
-    public Font[] Fonts = new Font[0];
-    public Font[] FontsB = new Font[0];
-    public Steps() {
-      SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-      TabStop = false;
-    }
-    protected override void OnPaint(PaintEventArgs e) {
-      Graphics g = e.Graphics;
-      g.Clear(BackColor);
-      int n = Labels.Length;
-      if (n == 0 || Fonts.Length == 0) { return; }
-      g.SmoothingMode = SmoothingMode.AntiAlias;
-      float cell = (float)Width / n;
-      int fi = Fonts.Length - 1;
-      for (int k = 0; k < Fonts.Length; k++) {
-        bool ok = true;
-        for (int i = 0; i < n && ok; i++) {
-          Font f = (i + 1 == Current) ? FontsB[k] : Fonts[k];
-          foreach (string w in Labels[i].Split(' ')) {
-            if (TextRenderer.MeasureText(w, f, new Size(100000, 0), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width > cell - 4) { ok = false; break; }
-          }
-        }
-        if (ok) { fi = k; break; }
-      }
-      float top = 2f;
-      float cy = top + Dot / 2f;
-      for (int i = 1; i < n; i++) {
-        Color c = (i + 1 <= Current) ? ConnDone : ConnTodo;
-        using (Pen p = new Pen(c, 3f)) { g.DrawLine(p, (i - 0.5f) * cell, cy, (i + 0.5f) * cell, cy); }
-      }
-      for (int i = 0; i < n; i++) {
-        int num = i + 1;
-        float cx = (i + 0.5f) * cell;
-        RectangleF rc = new RectangleF(cx - Dot / 2f, top, Dot, Dot);
-        Color fill; Color line; Color tx; float lw;
-        if (num < Current) { fill = DoneFill; line = DoneFill; tx = DoneText; lw = 2f; }
-        else if (num == Current) { fill = NowFill; line = NowLine; tx = NowText; lw = 3f; }
-        else { fill = TodoFill; line = TodoLine; tx = TodoText; lw = 2f; }
-        using (SolidBrush b = new SolidBrush(fill)) { g.FillEllipse(b, rc); }
-        RectangleF ri = rc;
-        ri.Inflate(-lw / 2f, -lw / 2f);
-        using (Pen p = new Pen(line, lw)) { g.DrawEllipse(p, ri); }
-        TextRenderer.DrawText(g, num.ToString(), FontsB[fi], Rectangle.Round(rc), tx, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-        Rectangle lr = new Rectangle((int)(i * cell) + 1, (int)(top + Dot + 4), (int)cell - 2, Height - (int)(top + Dot + 4));
-        Color lc = (num < Current) ? LabelDone : ((num == Current) ? LabelNow : LabelTodo);
-        TextRenderer.DrawText(g, Labels[i], (num == Current) ? FontsB[fi] : Fonts[fi], lr, lc, TextFormatFlags.HorizontalCenter | TextFormatFlags.Top | TextFormatFlags.WordBreak | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-      }
-    }
-  }
-  public class RailItem : Button {
-    public bool On = false;
-    public string Badge = "";
-    public Color Back = Color.Navy, OnBack = Color.White, Fore = Color.White, OnFore = Color.Navy, HotLine = Color.White, FocusLine = Color.Yellow, FocusOn = Color.Navy, BadgeFill = Color.Yellow, BadgeText = Color.Black;
-    public Font BoldFont = null;
-    private bool hot = false;
-    public RailItem() {
-      SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-      FlatStyle = FlatStyle.Flat;
-      TabStop = true;
-    }
-    protected override void OnMouseEnter(EventArgs e) { hot = true; Invalidate(); base.OnMouseEnter(e); }
-    protected override void OnMouseLeave(EventArgs e) { hot = false; Invalidate(); base.OnMouseLeave(e); }
-    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }
-    protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }
-    protected override void OnPaint(PaintEventArgs e) {
-      Graphics g = e.Graphics;
-      g.Clear(Back);
-      g.SmoothingMode = SmoothingMode.AntiAlias;
-      RectangleF rc = new RectangleF(0.5f, 0.5f, Width - 2f, Height - 2f);
-      using (GraphicsPath p = Gfx.Round(rc, 4f)) {
-        if (On) { using (SolidBrush b = new SolidBrush(OnBack)) { g.FillPath(b, p); } }
-        else if (hot) { using (Pen pen = new Pen(HotLine, 1f)) { g.DrawPath(pen, p); } }
-      }
-      if (Focused) {
-        RectangleF f = rc;
-        f.Inflate(-2f, -2f);
-        using (GraphicsPath q = Gfx.Round(f, 3f)) { using (Pen pen = new Pen(On ? FocusOn : FocusLine, 2f)) { g.DrawPath(pen, q); } }
-      }
-      int right = Width - 14;
-      if (Badge.Length > 0) {
-        int d = Height / 2;
-        Rectangle br = new Rectangle(Width - 14 - d, (Height - d) / 2, d, d);
-        using (SolidBrush b = new SolidBrush(BadgeFill)) { g.FillEllipse(b, br); }
-        TextRenderer.DrawText(g, Badge, (BoldFont != null) ? BoldFont : Font, br, BadgeText, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);
-        right = br.Left - 6;
-      }
-      Rectangle tr = new Rectangle(14, 0, Math.Max(1, right - 14), Height);
-      TextRenderer.DrawText(g, Text, (On && BoldFont != null) ? BoldFont : Font, tr, On ? OnFore : Fore, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);
-    }
-  }
-}
-'@
-$NativeCs = @'
-using System;
-using System.Runtime.InteropServices;
-namespace Rade {
-  public static class Native {
-    [DllImport("user32.dll")] public static extern bool HideCaret(IntPtr hWnd);
-  }
-}
-'@
+$PfmCs = (@(
+  'using System;',
+  'using System.Drawing;',
+  'using System.Drawing.Drawing2D;',
+  'using System.Windows.Forms;',
+  'namespace Pfm {',
+  '  public static class Gfx {',
+  '    public static GraphicsPath Round(RectangleF r, float rad) {',
+  '      GraphicsPath p = new GraphicsPath();',
+  '      if (rad <= 0.5f) { p.AddRectangle(r); return p; }',
+  '      float d = rad * 2f;',
+  '      p.AddArc(r.X, r.Y, d, d, 180, 90);',
+  '      p.AddArc(r.Right - d, r.Y, d, d, 270, 90);',
+  '      p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);',
+  '      p.AddArc(r.X, r.Bottom - d, d, d, 90, 90);',
+  '      p.CloseFigure();',
+  '      return p;',
+  '    }',
+  '    public static void RoundRegion(Control c, int rad) {',
+  '      if (c.Width < 4 || c.Height < 4) { return; }',
+  '      using (GraphicsPath p = Round(new RectangleF(0, 0, c.Width, c.Height), rad)) {',
+  '        Region old = c.Region;',
+  '        c.Region = new Region(p);',
+  '        if (old != null) { old.Dispose(); }',
+  '      }',
+  '    }',
+  '  }',
+  '  public class Chip : Control {',
+  '    public Color Fill = Color.White;',
+  '    public Chip() {',
+  '      SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);',
+  '      TabStop = false;',
+  '    }',
+  '    protected override void OnPaint(PaintEventArgs e) {',
+  '      Graphics g = e.Graphics;',
+  '      g.Clear(BackColor);',
+  '      g.SmoothingMode = SmoothingMode.AntiAlias;',
+  '      using (GraphicsPath p = Gfx.Round(new RectangleF(0, 0, Width - 1, Height - 1), Height / 2f)) {',
+  '        using (SolidBrush b = new SolidBrush(Fill)) { g.FillPath(b, p); }',
+  '      }',
+  '      TextRenderer.DrawText(g, Text, Font, ClientRectangle, ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);',
+  '    }',
+  '  }',
+  '  public class Card : FlowLayoutPanel {',
+  '    public Color Line = Color.Gray;',
+  '    public Color TopFill = Color.Transparent;',
+  '    public Color Outer = Color.White;',
+  '    public int TopH = 0;',
+  '    public int Radius = 6;',
+  '    public Card() { DoubleBuffered = true; ResizeRedraw = true; }',
+  '    protected override void OnPaint(PaintEventArgs e) {',
+  '      base.OnPaint(e);',
+  '      Graphics g = e.Graphics;',
+  '      g.SmoothingMode = SmoothingMode.AntiAlias;',
+  '      using (GraphicsPath p = Gfx.Round(new RectangleF(0.5f, 0.5f, Width - 1.5f, Height - 1.5f), Radius)) {',
+  '        using (Region r = new Region(new Rectangle(0, 0, Width, Height))) {',
+  '          r.Exclude(p);',
+  '          using (SolidBrush b = new SolidBrush(Outer)) { g.FillRegion(b, r); }',
+  '        }',
+  '        if (TopH > 0) {',
+  '          GraphicsState st = g.Save();',
+  '          g.SetClip(p);',
+  '          using (SolidBrush b = new SolidBrush(TopFill)) { g.FillRectangle(b, 0, 0, Width, TopH); }',
+  '          g.Restore(st);',
+  '        }',
+  '        using (Pen pen = new Pen(Line, 1f)) { g.DrawPath(pen, p); }',
+  '      }',
+  '    }',
+  '  }',
+  '  public class Steps : Control {',
+  '    public string[] Labels = new string[0];',
+  '    public int Current = 1;',
+  '    public int Dot = 26;',
+  '    public Color DoneFill = Color.Blue, DoneText = Color.White, NowFill = Color.Yellow, NowLine = Color.Navy, NowText = Color.Black;',
+  '    public Color TodoFill = Color.White, TodoLine = Color.Gray, TodoText = Color.Black, ConnDone = Color.Blue, ConnTodo = Color.Gray;',
+  '    public Color LabelDone = Color.Black, LabelNow = Color.Navy, LabelTodo = Color.Gray;',
+  '    public Font[] Fonts = new Font[0];',
+  '    public Font[] FontsB = new Font[0];',
+  '    public Steps() {',
+  '      SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);',
+  '      TabStop = false;',
+  '    }',
+  '    protected override void OnPaint(PaintEventArgs e) {',
+  '      Graphics g = e.Graphics;',
+  '      g.Clear(BackColor);',
+  '      int n = Labels.Length;',
+  '      if (n == 0 || Fonts.Length == 0) { return; }',
+  '      g.SmoothingMode = SmoothingMode.AntiAlias;',
+  '      float cell = (float)Width / n;',
+  '      int fi = Fonts.Length - 1;',
+  '      for (int k = 0; k < Fonts.Length; k++) {',
+  '        bool ok = true;',
+  '        for (int i = 0; i < n && ok; i++) {',
+  '          Font f = (i + 1 == Current) ? FontsB[k] : Fonts[k];',
+  '          foreach (string w in Labels[i].Split('' '')) {',
+  '            if (TextRenderer.MeasureText(w, f, new Size(100000, 0), TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width > cell - 4) { ok = false; break; }',
+  '          }',
+  '        }',
+  '        if (ok) { fi = k; break; }',
+  '      }',
+  '      float top = 2f;',
+  '      float cy = top + Dot / 2f;',
+  '      for (int i = 1; i < n; i++) {',
+  '        Color c = (i + 1 <= Current) ? ConnDone : ConnTodo;',
+  '        using (Pen p = new Pen(c, 3f)) { g.DrawLine(p, (i - 0.5f) * cell, cy, (i + 0.5f) * cell, cy); }',
+  '      }',
+  '      for (int i = 0; i < n; i++) {',
+  '        int num = i + 1;',
+  '        float cx = (i + 0.5f) * cell;',
+  '        RectangleF rc = new RectangleF(cx - Dot / 2f, top, Dot, Dot);',
+  '        Color fill; Color line; Color tx; float lw;',
+  '        if (num < Current) { fill = DoneFill; line = DoneFill; tx = DoneText; lw = 2f; }',
+  '        else if (num == Current) { fill = NowFill; line = NowLine; tx = NowText; lw = 3f; }',
+  '        else { fill = TodoFill; line = TodoLine; tx = TodoText; lw = 2f; }',
+  '        using (SolidBrush b = new SolidBrush(fill)) { g.FillEllipse(b, rc); }',
+  '        RectangleF ri = rc;',
+  '        ri.Inflate(-lw / 2f, -lw / 2f);',
+  '        using (Pen p = new Pen(line, lw)) { g.DrawEllipse(p, ri); }',
+  '        TextRenderer.DrawText(g, num.ToString(), FontsB[fi], Rectangle.Round(rc), tx, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);',
+  '        Rectangle lr = new Rectangle((int)(i * cell) + 1, (int)(top + Dot + 4), (int)cell - 2, Height - (int)(top + Dot + 4));',
+  '        Color lc = (num < Current) ? LabelDone : ((num == Current) ? LabelNow : LabelTodo);',
+  '        TextRenderer.DrawText(g, Labels[i], (num == Current) ? FontsB[fi] : Fonts[fi], lr, lc, TextFormatFlags.HorizontalCenter | TextFormatFlags.Top | TextFormatFlags.WordBreak | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);',
+  '      }',
+  '    }',
+  '  }',
+  '  public class RailItem : Button {',
+  '    public bool On = false;',
+  '    public string Badge = "";',
+  '    public Color Back = Color.Navy, OnBack = Color.White, Fore = Color.White, OnFore = Color.Navy, HotLine = Color.White, FocusLine = Color.Yellow, FocusOn = Color.Navy, BadgeFill = Color.Yellow, BadgeText = Color.Black;',
+  '    public Font BoldFont = null;',
+  '    private bool hot = false;',
+  '    public RailItem() {',
+  '      SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);',
+  '      FlatStyle = FlatStyle.Flat;',
+  '      TabStop = true;',
+  '    }',
+  '    protected override void OnMouseEnter(EventArgs e) { hot = true; Invalidate(); base.OnMouseEnter(e); }',
+  '    protected override void OnMouseLeave(EventArgs e) { hot = false; Invalidate(); base.OnMouseLeave(e); }',
+  '    protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }',
+  '    protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }',
+  '    protected override void OnPaint(PaintEventArgs e) {',
+  '      Graphics g = e.Graphics;',
+  '      g.Clear(Back);',
+  '      g.SmoothingMode = SmoothingMode.AntiAlias;',
+  '      RectangleF rc = new RectangleF(0.5f, 0.5f, Width - 2f, Height - 2f);',
+  '      using (GraphicsPath p = Gfx.Round(rc, 4f)) {',
+  '        if (On) { using (SolidBrush b = new SolidBrush(OnBack)) { g.FillPath(b, p); } }',
+  '        else if (hot) { using (Pen pen = new Pen(HotLine, 1f)) { g.DrawPath(pen, p); } }',
+  '      }',
+  '      if (Focused) {',
+  '        RectangleF f = rc;',
+  '        f.Inflate(-2f, -2f);',
+  '        using (GraphicsPath q = Gfx.Round(f, 3f)) { using (Pen pen = new Pen(On ? FocusOn : FocusLine, 2f)) { g.DrawPath(pen, q); } }',
+  '      }',
+  '      int right = Width - 14;',
+  '      if (Badge.Length > 0) {',
+  '        int d = Height / 2;',
+  '        Rectangle br = new Rectangle(Width - 14 - d, (Height - d) / 2, d, d);',
+  '        using (SolidBrush b = new SolidBrush(BadgeFill)) { g.FillEllipse(b, br); }',
+  '        TextRenderer.DrawText(g, Badge, (BoldFont != null) ? BoldFont : Font, br, BadgeText, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix);',
+  '        right = br.Left - 6;',
+  '      }',
+  '      Rectangle tr = new Rectangle(14, 0, Math.Max(1, right - 14), Height);',
+  '      TextRenderer.DrawText(g, Text, (On && BoldFont != null) ? BoldFont : Font, tr, On ? OnFore : Fore, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix | TextFormatFlags.EndEllipsis);',
+  '    }',
+  '  }',
+  '}'
+) -join "`r`n")
+$NativeCs = (@(
+  'using System;',
+  'using System.Runtime.InteropServices;',
+  'namespace Rade {',
+  '  public static class Native {',
+  '    [DllImport("user32.dll")] public static extern bool HideCaret(IntPtr hWnd);',
+  '  }',
+  '}'
+) -join "`r`n")
 
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))

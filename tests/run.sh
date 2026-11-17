@@ -619,6 +619,7 @@ text = '\n'.join(out)
 assert all(ord(c) < 128 for c in text)
 src = pathlib.Path(f).read_text()
 assert all(ord(c) < 128 for c in src)
+assert not [i + 1 for i, l in enumerate(src.splitlines()) if l.startswith("'@")], 'a line starts with \'@ (here-string)'
 for l in out:   # every publication, office and person name says FAKE
     for w in re.findall(r'(?<!FAKE )(?<!DAF )\b(OI \d\d-\d+|Instruction \d\d-\d+|Form \d+|Office \d|AO \d)\b', l): raise AssertionError(l)
 assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text
