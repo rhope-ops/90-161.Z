@@ -592,28 +592,44 @@ want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] =
 got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
-# T22 PFM window preview (R26 r2, PFM 16 Nov 26): the cards as text (-PlanOnly; no window here). Each choice and button opens a card
-# that exists, each card has one blue button at most, and the text is fake (every publication and office says FAKE).
+# T22 PFM window preview r2 (R28, PFM preview 2 of 17 Nov 26): the cards as text (-PlanOnly; no window here). Every button, link and
+# grid row goes to a card that exists (or 'back', '@grid', '@note'), each card has exactly one blue button, the text is ASCII and
+# FAKE, r1 is gone, the shared UI block is current, and the colors the window paints are the tokens of docs/palette.json.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && ok "T22 window preview cards" || bad "T22 window preview cards"
-import re, subprocess, sys
-out = subprocess.run(['pwsh', '-NoProfile', '-File', 'scripts/gov/90161Z-T22-pfm-window-r1.ps1', '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
-assert out and out[-1] == 'PLAN cards=5', out[-3:]
+python3 - <<'PYT22' && ok "T22 window preview cards (r2)" || bad "T22 window preview cards (r2)"
+import json, re, subprocess, pathlib
+f = 'scripts/gov/90161Z-T22-pfm-window-r2.ps1'
+assert not pathlib.Path('scripts/gov/90161Z-T22-pfm-window-r1.ps1').exists(), 'r1 is still there'
+out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
+m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
 cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
+assert len(cards) == int(m.group(1)) >= 15, cards
+need = {'home', 'empty', 'queue', 'reviews', 'step8', 'confirm', 'waves', 'step11', 'step12', 'step13', 'pub', 'settings', 'loading', 'failed', 'noperm'}
+assert need <= set(cards), need - set(cards)
+ok_extra = {'back', '@grid', '@note'}
 for l in out:
-    m = re.match(r'  (CHOICE|BUTTON) (.+) -> (\w+)$', l)
-    if m: assert m.group(3) in cards, l
-blue = {}
-cur = None
+    t = re.match(r'\s+(?:BUTTON|CHOICE|LINK) .+ -> (\S+)', l) or re.match(r'RAIL .+ -> (\S+)', l)
+    if t: assert t.group(1) in cards or t.group(1) in ok_extra, l
+blue, cur = {}, None
 for l in out:
-    if l.startswith('CARD '): cur = l
-    if '(blue)' in l: blue[cur] = blue.get(cur, 0) + 1
+    if l.startswith('CARD '): cur = l.split(' | ')[0]; blue[cur] = 0
+    if '(blue)' in l: blue[cur] += 1
 assert all(v == 1 for v in blue.values()), blue
-assert all(ord(c) < 128 for c in '\n'.join(out))
-for l in out:
-    for w in re.findall(r'\b(OI \d\d-\d\d|OFFICE \w)\b', l): assert 'FAKE ' + w in l, l
+text = '\n'.join(out)
+assert all(ord(c) < 128 for c in text)
+src = pathlib.Path(f).read_text()
+assert all(ord(c) < 128 for c in src)
+for l in out:   # every publication, office and person name says FAKE
+    for w in re.findall(r'(?<!FAKE )(?<!DAF )\b(OI \d\d-\d+|Instruction \d\d-\d+|Form \d+|Office \d|AO \d)\b', l): raise AssertionError(l)
+assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text
+assert out and len([l for l in out if l.startswith('RAIL ')]) == 5
+# the rade-ui block is not empty, and the colors painted here are the palette tokens
+assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
+pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
+hexes = dict(re.findall(r"(\w+) = '([0-9A-F]{6})'", re.search(r'\$PalHex = @\{(.*?)\}', src, re.S).group(1)))
+for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
 PYT22
-else sk "T22 window preview cards"; fi
+else sk "T22 window preview cards (r2)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
