@@ -25,6 +25,7 @@ REPO_DIR = None
 
 
 def git(*args):
+    """Run git in REPO_DIR; return its output, or raise RuntimeError when it fails."""
     r = subprocess.run(["git", *args], cwd=REPO_DIR, capture_output=True, text=True)
     if r.returncode != 0:
         raise RuntimeError(r.stderr.strip())
@@ -53,6 +54,7 @@ def on_default_branch():
 
 
 def problems():
+    """Return why the turn may not end yet; empty for a clean read-only checkout or work that is on GitHub."""
     found = []
     dirty = git("status", "--porcelain", "--untracked-files=all")
     stashed = git("stash", "list")
@@ -81,6 +83,7 @@ def problems():
 
 
 def main():
+    """Read the Stop hook input on stdin; return 2 (reason on stderr) when work is not on GitHub, else 0."""
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
@@ -105,42 +108,45 @@ def main():
     return 2
 
 
-def self_test():
-    """Build throwaway repos and check each case. Prints one line per case; exit 0 = all pass."""
-    import shutil
-    import tempfile
-    global REPO_DIR
-    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
-    env.update(GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t",
-               GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
-    root = tempfile.mkdtemp(prefix="stop_check_test_")
+class TestRepos:
+    """Throwaway origin and work repos for the self-test, with git run under a clean environment."""
 
-    def run(cwd, *args):
-        subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True)
+    def __init__(self, root):
+        # The host's git config and GIT_ variables must not change the cases.
+        self.root = root
+        self.env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        self.env.update(GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t",
+                        GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
 
-    def commit(cwd, name):
-        with open(os.path.join(cwd, name), "w") as f:
-            f.write(name)
-        run(cwd, "add", name)
-        run(cwd, "commit", "-q", "-m", name)
+    def run(self, cwd, *args):
+        """Run one git command in cwd; fail the test on an error."""
+        subprocess.run(["git", *args], cwd=cwd, env=self.env, check=True, capture_output=True, text=True)
 
-    def fresh(name, default="main"):
-        origin = os.path.join(root, name + ".git")
-        run(root, "init", "-q", "--bare", "-b", default, origin)
-        work = os.path.join(root, name)
-        run(root, "clone", "-q", origin, work)
-        run(work, "checkout", "-q", "-b", default)
-        commit(work, "a")
-        run(work, "push", "-q", "origin", default)
-        run(work, "fetch", "-q", "origin")
+    def commit(self, cwd, name):
+        """Commit a new file called name that holds its own name."""
+        write(os.path.join(cwd, name), name)
+        self.run(cwd, "add", name)
+        self.run(cwd, "commit", "-q", "-m", name)
+
+    def fresh(self, name, default="main"):
+        """A bare origin and a clone with one commit pushed to the default branch; returns the clone's path."""
+        origin = os.path.join(self.root, name + ".git")
+        self.run(self.root, "init", "-q", "--bare", "-b", default, origin)
+        work = os.path.join(self.root, name)
+        self.run(self.root, "clone", "-q", origin, work)
+        self.run(work, "checkout", "-q", "-b", default)
+        self.commit(work, "a")
+        self.run(work, "push", "-q", "origin", default)
+        self.run(work, "fetch", "-q", "origin")
         return work
 
-    def verdict(work, data="{}"):
+    def verdict(self, work, data="{}"):
+        """Run the hook on work with data on stdin; "block" or "pass"."""
+        import io
         global REPO_DIR
         saved_env = dict(os.environ)
-        os.environ.clear(); os.environ.update(env); os.environ["CLAUDE_PROJECT_DIR"] = work
+        os.environ.clear(); os.environ.update(self.env); os.environ["CLAUDE_PROJECT_DIR"] = work
         saved_in, saved_err = sys.stdin, sys.stderr
-        import io
         sys.stdin, sys.stderr = io.StringIO(data), io.StringIO()
         try:
             REPO_DIR = None
@@ -149,43 +155,70 @@ def self_test():
             sys.stdin, sys.stderr = saved_in, saved_err
             os.environ.clear(); os.environ.update(saved_env)
 
-    cases = []
+
+def write(path, text):
+    """Overwrite one file of a test repo."""
+    with open(path, "w") as f:
+        f.write(text)
+
+
+def clean_cases(repos):
+    """Clean checkouts that must pass: at, behind or on the default branch."""
+    run, verdict = repos.run, repos.verdict
+    work = repos.fresh("readonly"); run(work, "checkout", "-q", "-b", "claude/session")
+    out = [("clean session branch at origin/main, never pushed", verdict(work), "pass")]
+    work = repos.fresh("behind"); repos.commit(work, "b"); run(work, "push", "-q", "origin", "main"); run(work, "checkout", "-q", "-b", "s", "HEAD~1")
+    out.append(("clean branch behind origin/main, never pushed", verdict(work), "pass"))
+    work = repos.fresh("master", default="master"); run(work, "checkout", "-q", "-b", "s")
+    out.append(("clean branch at origin/master (no main), never pushed", verdict(work), "pass"))
+    return out
+
+
+def dirty_cases(repos):
+    """Uncommitted work that must block: a modified file, an untracked file, a stash."""
+    run, verdict = repos.run, repos.verdict
+    work = repos.fresh("modified"); run(work, "checkout", "-q", "-b", "s")
+    write(os.path.join(work, "a"), "changed")
+    out = [("modified file", verdict(work), "block")]
+    work = repos.fresh("untracked"); run(work, "checkout", "-q", "-b", "s"); run(work, "config", "status.showUntrackedFiles", "no")
+    write(os.path.join(work, "new"), "x")
+    out.append(("untracked file, untracked hidden by config", verdict(work), "block"))
+    work = repos.fresh("stash"); run(work, "checkout", "-q", "-b", "s")
+    write(os.path.join(work, "a"), "changed")
+    run(work, "stash", "-q")
+    out.append(("stash on a clean branch at origin/main", verdict(work), "block"))
+    return out
+
+
+def commit_cases(repos):
+    """Commits not on GitHub, pushed branches, detached HEAD and the second stop in a row."""
+    run, commit, verdict = repos.run, repos.commit, repos.verdict
+    work = repos.fresh("unpushed"); run(work, "checkout", "-q", "-b", "s"); commit(work, "b")
+    out = [("one unpushed commit, branch never pushed", verdict(work), "block")]
+    work = repos.fresh("ahead"); run(work, "checkout", "-q", "-b", "s"); commit(work, "b"); run(work, "push", "-q", "-u", "origin", "s"); commit(work, "c")
+    out.append(("pushed branch, one commit ahead of upstream", verdict(work), "block"))
+    work = repos.fresh("pushed"); run(work, "checkout", "-q", "-b", "s"); commit(work, "b"); run(work, "push", "-q", "-u", "origin", "s")
+    out.append(("pushed branch, upstream up to date (not on main)", verdict(work), "pass"))
+    write(os.path.join(work, "b"), "changed")
+    run(work, "stash", "-q")
+    out.append(("pushed branch, up to date, plus a stash", verdict(work), "block"))
+    work = repos.fresh("detached_ahead"); run(work, "checkout", "-q", "--detach"); commit(work, "b")
+    out.append(("detached HEAD with a commit not on origin/main", verdict(work), "block"))
+    work = repos.fresh("detached_on"); run(work, "checkout", "-q", "--detach")
+    out.append(("detached HEAD at origin/main, clean", verdict(work), "pass"))
+    work = repos.fresh("active"); run(work, "checkout", "-q", "-b", "s"); commit(work, "b")
+    out.append(("unpushed commit, stop_hook_active", verdict(work, '{"stop_hook_active": true}'), "pass"))
+    return out
+
+
+def self_test():
+    """Build throwaway repos and check each case. Prints one line per case; exit 0 = all pass."""
+    import shutil
+    import tempfile
+    root = tempfile.mkdtemp(prefix="stop_check_test_")
+    repos = TestRepos(root)
     try:
-        w = fresh("readonly"); run(w, "checkout", "-q", "-b", "claude/session")
-        cases.append(("clean session branch at origin/main, never pushed", verdict(w), "pass"))
-        w = fresh("behind"); commit(w, "b"); run(w, "push", "-q", "origin", "main"); run(w, "checkout", "-q", "-b", "s", "HEAD~1")
-        cases.append(("clean branch behind origin/main, never pushed", verdict(w), "pass"))
-        w = fresh("master", default="master"); run(w, "checkout", "-q", "-b", "s")
-        cases.append(("clean branch at origin/master (no main), never pushed", verdict(w), "pass"))
-        w = fresh("modified"); run(w, "checkout", "-q", "-b", "s")
-        with open(os.path.join(w, "a"), "w") as f:
-            f.write("changed")
-        cases.append(("modified file", verdict(w), "block"))
-        w = fresh("untracked"); run(w, "checkout", "-q", "-b", "s"); run(w, "config", "status.showUntrackedFiles", "no")
-        with open(os.path.join(w, "new"), "w") as f:
-            f.write("x")
-        cases.append(("untracked file, untracked hidden by config", verdict(w), "block"))
-        w = fresh("stash"); run(w, "checkout", "-q", "-b", "s")
-        with open(os.path.join(w, "a"), "w") as f:
-            f.write("changed")
-        run(w, "stash", "-q")
-        cases.append(("stash on a clean branch at origin/main", verdict(w), "block"))
-        w = fresh("unpushed"); run(w, "checkout", "-q", "-b", "s"); commit(w, "b")
-        cases.append(("one unpushed commit, branch never pushed", verdict(w), "block"))
-        w = fresh("ahead"); run(w, "checkout", "-q", "-b", "s"); commit(w, "b"); run(w, "push", "-q", "-u", "origin", "s"); commit(w, "c")
-        cases.append(("pushed branch, one commit ahead of upstream", verdict(w), "block"))
-        w = fresh("pushed"); run(w, "checkout", "-q", "-b", "s"); commit(w, "b"); run(w, "push", "-q", "-u", "origin", "s")
-        cases.append(("pushed branch, upstream up to date (not on main)", verdict(w), "pass"))
-        with open(os.path.join(w, "b"), "w") as f:
-            f.write("changed")
-        run(w, "stash", "-q")
-        cases.append(("pushed branch, up to date, plus a stash", verdict(w), "block"))
-        w = fresh("detached_ahead"); run(w, "checkout", "-q", "--detach"); commit(w, "b")
-        cases.append(("detached HEAD with a commit not on origin/main", verdict(w), "block"))
-        w = fresh("detached_on"); run(w, "checkout", "-q", "--detach")
-        cases.append(("detached HEAD at origin/main, clean", verdict(w), "pass"))
-        w = fresh("active"); run(w, "checkout", "-q", "-b", "s"); commit(w, "b")
-        cases.append(("unpushed commit, stop_hook_active", verdict(w, '{"stop_hook_active": true}'), "pass"))
+        cases = clean_cases(repos) + dirty_cases(repos) + commit_cases(repos)
     finally:
         shutil.rmtree(root, ignore_errors=True)
     failed = 0

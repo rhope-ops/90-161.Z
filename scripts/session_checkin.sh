@@ -16,7 +16,8 @@ want_hooks() {  # the absolute scripts/git-hooks of the main clone (of this work
   [ "$(basename "$common")" = .git ] && [ -d "$want" ] || want="$(git rev-parse --show-toplevel)/scripts/git-hooks"
   printf '%s' "$want"
 }
-fix_hooks() {  # sets core.hooksPath where the rule above says; prints the path, and " (installed now)" when it set one
+# sets core.hooksPath where the rule above says; prints the path, and " (installed now)" when it set one
+fix_hooks() {
   local hooks want fix=0
   hooks=$(git config --get core.hooksPath || true)
   want=$(want_hooks)
@@ -39,7 +40,9 @@ if [ "${1:-}" = "--test" ]; then
   t=$(cd "$t" && pwd -P) && [ -n "$t" ] || { echo "CHECKIN TEST FAIL: no temporary folder"; exit 1; }
   trap 'rm -rf "$t"' EXIT
   fails=0
+  # eq NAME GOT WANT: print ok or FAIL, and remember a failure
   eq() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1 (got '$2', want '$3')"; fails=1; fi; }
+  # hp REPO: the core.hooksPath set in that repo
   hp() { git -C "$1" config --get core.hooksPath; }
   git init -q -b main "$t/r"; mkdir -p "$t/r/scripts/git-hooks"; echo '#!/bin/sh' > "$t/r/scripts/git-hooks/pre-push"
   git -C "$t/r" add -A; git -C "$t/r" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -q -m a
