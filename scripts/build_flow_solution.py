@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r1.zip (R28: all six flows, every flow On) from flow/solution/defs/*.json.
+"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r2.zip (R28 r1: all six flows, every flow On; R29 r2: list-name variables not required) from flow/solution/defs/*.json.
 
 Layout (Microsoft's documented unmanaged solution): [Content_Types].xml, solution.xml, customizations.xml (Workflows,
 connectionreferences), Workflows/<name>-<GUID>.json (properties.connectionReferences + properties.definition),
@@ -44,7 +44,7 @@ import argparse, io, json, pathlib, re, sys, uuid, zipfile
 from xml.sax.saxutils import escape, quoteattr
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r1.zip"
+DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r2.zip"
 TEST_DEFS = ROOT / "flow" / "solution" / "test-defs"
 NS = uuid.UUID("6f1c2b4e-9d0a-4c5e-8b7a-90161a000001")
 SCHEMA = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
@@ -80,6 +80,10 @@ ENV = [  # (schema name, display name, default value)
 MOVED_ENV = ("pfm_FlowsPaused", "pfm_TestMode", "pfm_ReminderLeadDays", "pfm_EscalationLagDays", "pfm_SuspenseWorkdays", "pfm_SharedMailbox")
 LABEL = {"pfm_SiteUrl": "1 Site URL (enter)", "pfm_AlertEmail": "2 Alert e-mail (enter)"}
 OPTIONAL = set()   # isrequired 0 for an optional value (none since R27: the shared mailbox is a PFM Settings row)
+# R29 (R28 note N7: "I had to cut and paste almost every default field to get it to unblock import"): in the full solution a
+# variable with a default value (the 8 list names) is not required, so the import page does not wait for it to be typed again;
+# the flows use the default. Agent finding, Confidence low: the cause is not seen in an import log; the round asks which boxes
+# still needed it. The slice and the test solutions keep isrequired 1 (they are built files of earlier rounds).
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 # R22 (PFM 14 Nov 26: "flows added by the solution default to on; i had to turn f03 off"; "ideally the flows will be imported
 # on when this is ready for real deployment"): a test-round slice (SLICE1) imports every flow Off (StateCode 0 / StatusCode 1, the
@@ -202,6 +206,7 @@ def build(test=None, only=None, on=()) -> bytes:
     else:
         v = test_variant(flows[0][1])
         unique, title = UNIQUE + "TEST" + v, flows[0][1].get("solution", {}).get("title") or "90-161.Z solution import test " + v
+    full = test is None and not only
     used_env = {k for _, _, u in flows for k in u}
     env = [e for e in ENV if ENV_KEY[e[0]] in used_env]   # every solution carries only the variables its flows use (R27)
     files, wf_xml, root_components = {}, [], []
@@ -245,7 +250,7 @@ def build(test=None, only=None, on=()) -> bytes:
             + (f"  <defaultvalue>{escape(default)}</defaultvalue>\n" if default else "") +   # no empty element; no XML declaration (r3)
             f'  <displayname default={quoteattr(disp)}>\n    <label description={quoteattr(disp)} languagecode="1033" />\n  </displayname>\n'
             "  <introducedversion>1.0</introducedversion>\n  <iscustomizable>1</iscustomizable>\n"
-            f"  <isrequired>{0 if s in OPTIONAL else 1}</isrequired>\n"
+            f"  <isrequired>{0 if s in OPTIONAL or (full and default) else 1}</isrequired>\n"
             "  <secretstore>0</secretstore>\n  <type>100000000</type>\n</environmentvariabledefinition>\n")
         root_components.append(f'      <RootComponent type="380" schemaName="{s}" behavior="0" />')
     XSI = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'

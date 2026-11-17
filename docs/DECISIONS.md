@@ -6,6 +6,12 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | Site logo, thumbnail and T16 logo check go into R29a now (not a later round): 2 by-hand cards, then T16 r12 -LogoOnly reads the logo back. Scope: round R29a. | PFM | docs/NEXT_PROMPT.md item 4 |
+| 2026-11-17 | RADE lock moves to release engine-v10 (RADE ff92dc4, serial 7) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
+| 2026-11-17 | (1A) R29 ships only on the new RADE engine: if the release is late, keep waiting; no R29 on engine-v9. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
+| 2026-11-17 | (1B) If R29 splits, T4 (second person) goes into R29a with the T21 probe list it needs; R29b holds only the T22 window test. Replaces the T4 part of the split row below. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
+| 2026-11-17 | If R29 on the new engine is over 600 KB, split it: R29a (fixes, T21, T24) and R29b (T22 window, T4), each with its own bundle and e-mail. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
+| 2026-11-17 | Lock moves to the RADE release with the R28 fixes (N1, N4, N6, N8-N10, answer cut, logo) when it ships; R29 is built on it. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | R29 logo places (1A): 90-161.Z logo on the T22 PFM window, index.html band, T16 logo check, site logo and thumbnail; RADE runner keeps Rho Bold. PNGs stay uncommitted, built from the SVG (2A). | PFM | docs/NEXT_PROMPT.md item 4 |
 | 2026-11-17 | 90-161.Z logo = W2 Flap 26: route arc, page with a sliced Z, small folded flap; Rho Bold frame and colors. Master assets/logo/; ships in R29. RADE keeps Rho Bold. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU |
 | 2026-11-17 | R29 = the R28 fixes (health flow checks only On, export reader, T22 window, T24 card, notes N2 N3 N6 N7) + full T24 test + logo; RADE Diagnose and Back up move to R30. | PFM | docs/reviews/2026-11-17-r28-results.md |

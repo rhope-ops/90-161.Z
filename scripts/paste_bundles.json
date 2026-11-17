@@ -24,29 +24,33 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R28-round-r2.ps1",
-      "round": "R28",
-      "title": "Round R28 r2: RADE Start button and desktop icon, probe retry (health flow, button trigger), T4 retry, the PFM window r2, the full flow solution",
+      "out": "scripts/gov/paste/90161Z-R29a-round-r1.ps1",
+      "round": "R29a",
+      "title": "Round R29a r1: the R28 fixes (health flow, export reader, import cards), the new site logo, the second person and the full flow test",
       "files": [
         {
           "dir": "T17",
           "src": "scripts/gov/90161Z-T17-import-log-r2.ps1"
         },
         {
-          "dir": "T21",
-          "src": "scripts/gov/90161Z-T21-probe-r4.ps1"
+          "dir": "T16",
+          "src": "scripts/gov/90161Z-T16-site-setup-r12.ps1"
+        },
+        {
+          "dir": "T16",
+          "src": "assets/logo/build/90161Z-logo-512.png"
         },
         {
           "dir": "T21",
-          "src": "flow/solution/90161Z-T21-probe-r4.zip"
+          "src": "scripts/gov/90161Z-T21-probe-r5.ps1"
         },
         {
           "dir": "T21",
-          "src": "samples/90161Z-T21-links-r4.html"
+          "src": "flow/solution/90161Z-T21-probe-r5.zip"
         },
         {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-pfm-window-r2.ps1"
+          "dir": "T21",
+          "src": "samples/90161Z-T21-links-r5.html"
         },
         {
           "dir": "T24",
@@ -54,18 +58,18 @@
         },
         {
           "dir": "T24",
-          "src": "flow/solution/90161Z-T24-full-flows-r1.zip"
+          "src": "flow/solution/90161Z-T24-full-flows-r2.zip"
         }
       ],
       "steps": [
         {
-          "name": "T21 Remove the R27 person, list and library",
-          "title": "Remove the old test person, list and library",
+          "name": "T21 Check the test site is clean r5",
+          "title": "Check that the last round left nothing on the test site",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Clean -Label first",
           "minutes": 20,
-          "note": "Signs in (CAC). Removes the second person from Visitors, then moves the old test list and library to the site Recycle Bin. Counts only.",
+          "note": "Signs in (CAC). Removes a test person, list or library if one is still there. The last round removed all, so it should find nothing. Counts only.",
           "estimate": 2,
           "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
           "needs": [
@@ -75,119 +79,101 @@
           ]
         },
         {
-          "name": "T21 Remove the R27 probe flows",
-          "title": "Delete the old test flows",
+          "name": "T16 Site logo r12: thumbnail",
+          "title": "Set the site thumbnail to the new logo",
           "kind": "guide",
-          "dir": "T21",
-          "file": "",
-          "note": "You delete the 2 flows inside the solution \"90-161.Z probe\". The next step deletes the solution. About 4 minutes.",
+          "dir": "T16",
+          "file": "90161Z-logo-512.png",
+          "note": "You set the site thumbnail to the new 90-161.Z logo. The next card sets the header logo. About 3 minutes.",
           "guide": [
             "1. Select \"Open in browser\" above.",
-            "2. On the left, select \"Solutions\" (it can be under \"More\").",
-            "3. Select the solution \"90-161.Z probe\".",
-            "4. In the row of the flow \"90161Z T21 Probe Health r1\", select the three dots.",
-            "5. Select \"Delete from this environment\".",
-            "6. Select \"Delete\".",
-            "7. In the row of the flow \"90161Z T21 Probe Button r1\", select the three dots.",
-            "8. Select \"Delete from this environment\".",
-            "9. Select \"Delete\".",
-            "If a flow is not in the list: skip it.",
-            "If one will not delete: select \"It failed\"."
+            "2. At the top right of the site, select the gear \"Settings\".",
+            "3. Select \"Change the look\".",
+            "4. Select \"Header\".",
+            "5. Under \"Site logo thumbnail\", select \"Change\".",
+            "6. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
+            "7. Select \"Open\".",
+            "If the page is not your site: type the address you typed in the RADE box \"Site address\".",
+            "If there is no \"Site logo thumbnail\" box: select \"It failed\"."
           ],
-          "marker": "90161Z-T21-r27-flows-removed.txt",
+          "marker": "90161Z-T16-thumb-set.txt",
           "needs": [
-            "net-flow"
-          ],
-          "estimate": 4,
-          "doneLog": "Confirmed by you: removed the R27 flows.",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt"
-        },
-        {
-          "name": "T21 Remove the R27 probe solution",
-          "title": "Delete the old test solution",
-          "kind": "guide",
-          "dir": "T21",
-          "file": "",
-          "note": "You delete the solution \"90-161.Z probe\" that the last round imported (its flows are gone). About 3 minutes.",
-          "guide": [
-            "1. On the left, select \"Solutions\" (it can be under \"More\").",
-            "2. In the row of \"90-161.Z probe\", select the three dots (not \"probe health\" or \"probe button\").",
-            "3. Select \"Delete from this environment\".",
-            "4. Select \"Delete\".",
-            "If the solution is not in the list: skip it.",
-            "If it does not delete: select \"It failed\"."
-          ],
-          "marker": "90161Z-T21-r27-removed.txt",
-          "needs": [
-            "net-flow"
+            "net-site"
           ],
           "estimate": 3,
-          "doneLog": "Confirmed by you: removed the R27 solution.",
+          "doneLog": "Confirmed by you: set the thumbnail.",
+          "url": "https://usaf.dps.mil/sites/<your-site>",
+          "url_source": "Your site address, saved by RADE in Config\\90161Z-site.txt when you typed it in the RADE box \"Site address\"; the placeholder is never opened when that file exists",
+          "urlConfig": "90161Z-site.txt"
+        },
+        {
+          "name": "T16 Site logo r12: header logo",
+          "title": "Set the site header logo to the new logo",
+          "kind": "guide",
+          "dir": "T16",
+          "file": "90161Z-logo-512.png",
+          "note": "You set the header logo of the site to the new 90-161.Z logo and save both. The next step reads the logo back. About 3 minutes.",
+          "guide": [
+            "1. Under \"Site logo\", select \"Change\".",
+            "2. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
+            "3. Select \"Open\".",
+            "4. Select \"Save\".",
+            "5. Look at the top left of the site: the new logo must show.",
+            "If \"Save\" stays gray: select \"It failed\"."
+          ],
+          "marker": "90161Z-T16-logo-set.txt",
+          "estimate": 3,
           "after": [
-            "T21 Remove the R27 probe flows"
+            "T16 Site logo r12: thumbnail"
+          ],
+          "doneLog": "Confirmed by you: set the header logo.",
+          "answers": [
+            {
+              "key": "logo-header",
+              "prompt": "After Save, what did the site header show at the top left?",
+              "kind": "pick",
+              "choices": [
+                "The new 90-161.Z logo",
+                "The old logo",
+                "No logo",
+                "Save failed"
+              ]
+            },
+            {
+              "key": "logo-thumb",
+              "prompt": "Did the thumbnail take the new logo?",
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No",
+                "There was no thumbnail box"
+              ]
+            }
           ]
         },
         {
-          "name": "R28 Answer: icon, Start and RADE look",
-          "title": "Answer 4 questions about the icon and the RADE window",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 4 questions about the RADE desktop icon, the \"Start\" button and the look of the RADE window. About 2 minutes.",
-          "guide": [
-            "1. Answer each of the next 4 cards."
+          "name": "T16 Read the site logo back r12",
+          "title": "Read the site logo back",
+          "dir": "T16",
+          "file": "90161Z-T16-site-setup-r12.ps1",
+          "args": "-LogoOnly",
+          "minutes": 10,
+          "note": "Signs in (CAC). Reads the header logo of the site back. Changes nothing on the site.",
+          "estimate": 1,
+          "help": "Send the results as they are. The step can be run again.",
+          "needs": [
+            "pnp",
+            "net-site"
           ],
-          "marker": "90161Z-R28-frame-answered.txt",
-          "estimate": 2,
-          "answers": [
-            {
-              "key": "icon",
-              "prompt": "Did the desktop icon RADE open RADE?",
-              "kind": "pick",
-              "choices": [
-                "Yes",
-                "No icon on the desktop",
-                "The icon did nothing",
-                "I did not try it"
-              ]
-            },
-            {
-              "key": "start",
-              "prompt": "Did the Start button open the 90-161.Z window?",
-              "kind": "pick",
-              "choices": [
-                "Yes",
-                "No Start button",
-                "Start did nothing",
-                "I did not try it"
-              ]
-            },
-            {
-              "key": "rade-look",
-              "prompt": "How does the RADE window look at this size?",
-              "kind": "pick",
-              "choices": [
-                "Good as it is",
-                "Small changes",
-                "Many changes",
-                "Hard to read"
-              ]
-            },
-            {
-              "key": "rade-change",
-              "prompt": "What would you change first in the RADE window? One line, no names.",
-              "kind": "text"
-            }
-          ],
-          "doneLog": "Confirmed by you: answered the RADE frame questions."
+          "after": [
+            "T16 Site logo r12: header logo"
+          ]
         },
         {
-          "name": "T21 Make the probe list r4",
+          "name": "T21 Make the probe list r5",
           "title": "Make the test list and library",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Make",
           "minutes": 20,
           "note": "Signs in (CAC). Makes the fake probe list (Visitors get Contribute on this list only) and library, uploads one fake workbook and writes the test page.",
@@ -200,12 +186,12 @@
           ]
         },
         {
-          "name": "T21 Import the health flow r4: choose the file",
+          "name": "T21 Import the health flow r5: choose the file",
           "title": "Start the import of the health flow",
           "kind": "guide",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.zip",
-          "note": "You start the import of the solution \"90-161.Z probe health\" (1 flow). The next step finishes it. About 4 minutes.",
+          "file": "90161Z-T21-probe-r5.zip",
+          "note": "You start the import of the solution \"90-161.Z probe health\" (1 flow). It now checks only that your own flows are On. The next step finishes it. About 4 minutes.",
           "guide": [
             "1. Select \"Open in browser\" above.",
             "2. If Power Automate asks you to sign in: sign in with your CAC.",
@@ -216,6 +202,8 @@
             "7. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
             "8. Select \"Open\".",
             "9. Select \"Next\".",
+            "If the Open window closes before the file is chosen: select \"Browse\" again.",
+            "If the box \"File name\" is empty after Ctrl+V: press Ctrl+V again.",
             "If the page refuses the file: select \"It failed\"."
           ],
           "marker": "90161Z-T21-health-file-chosen.txt",
@@ -225,7 +213,7 @@
           ],
           "estimate": 4,
           "after": [
-            "T21 Make the probe list r4"
+            "T21 Make the probe list r5"
           ],
           "doneLog": "Confirmed by you: chose the file.",
           "url": "https://make.powerautomate.appsplatform.us/",
@@ -233,7 +221,7 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T21 Import the health flow r4: connections",
+          "name": "T21 Import the health flow r5: connections",
           "title": "Finish the import of the health flow",
           "kind": "guide",
           "dir": "T21",
@@ -263,7 +251,7 @@
           ],
           "estimate": 5,
           "after": [
-            "T21 Import the health flow r4: choose the file"
+            "T21 Import the health flow r5: choose the file"
           ],
           "answers": [
             {
@@ -299,27 +287,27 @@
           "estimate": 1
         },
         {
-          "name": "T21 Open the test page r4",
+          "name": "T21 Open the test page r5",
           "title": "Open the test page",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Open",
           "minutes": 5,
           "note": "Opens the test page in your browser (no sign-in). Keep its tab open: the next steps use it.",
           "estimate": 1,
           "help": "Send the results as they are.",
           "after": [
-            "T21 Make the probe list r4"
+            "T21 Make the probe list r5"
           ]
         },
         {
-          "name": "T21 Start the health flow r4",
+          "name": "T21 Start the health flow r5",
           "title": "Start the health flow",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Run",
           "minutes": 20,
-          "note": "Signs in (CAC). Adds one fake row that starts the health flow: it reads your own flows and their last runs, counts only.",
+          "note": "Signs in (CAC). Adds one fake row that starts the health flow: it lists your own flows and counts how many are On. Counts only.",
           "estimate": 1,
           "help": "Send the results as they are.",
           "needs": [
@@ -328,14 +316,14 @@
             "site-rights"
           ],
           "after": [
-            "T21 Import the health flow r4: connections"
+            "T21 Import the health flow r5: connections"
           ]
         },
         {
-          "name": "T21 Add the second person r4",
+          "name": "T21 Add the second person r5",
           "title": "Add the second person to the test site",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Person",
           "minutes": 20,
           "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group and copies the form link.",
@@ -347,16 +335,16 @@
             "site-rights"
           ],
           "after": [
-            "T21 Make the probe list r4"
+            "T21 Make the probe list r5"
           ]
         },
         {
-          "name": "T21 Second person r4",
+          "name": "T21 Second person r5",
           "title": "Ask the second person to add a row",
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You ask the person you added to Visitors to add one row with the form link. About 5 minutes. If nobody is free today, select \"Skip\".",
+          "note": "You ask the person you added to Visitors to add one row with the form link. A colleague is free today. About 5 minutes.",
           "guide": [
             "1. Open Teams.",
             "2. Select \"Chat\".",
@@ -372,7 +360,7 @@
           "marker": "90161Z-T21-second-person.txt",
           "estimate": 5,
           "after": [
-            "T21 Add the second person r4"
+            "T21 Add the second person r5"
           ],
           "answers": [
             {
@@ -390,7 +378,7 @@
           "doneLog": "Confirmed by you: second person."
         },
         {
-          "name": "T21 Button flow by hand r4: make a solution",
+          "name": "T21 Button flow by hand r5: make a solution",
           "title": "Make a solution for the button flow",
           "kind": "guide",
           "dir": "T21",
@@ -418,7 +406,7 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T21 Button flow by hand r4: make the flow",
+          "name": "T21 Button flow by hand r5: make the flow",
           "title": "Make the button flow",
           "kind": "guide",
           "dir": "T21",
@@ -426,14 +414,15 @@
           "note": "You make a new flow in the solution with the trigger \"For a selected item\". About 4 minutes.",
           "guide": [
             "1. Select the solution \"90-161.Z probe button\".",
-            "2. Select \"New\".",
-            "3. Select \"Automation\".",
-            "4. Select \"Cloud flow\".",
-            "5. Select \"Instant\".",
-            "6. In the box \"Flow name\", type: 90161Z T21 Probe Button hand r4",
-            "7. In the search box of the trigger list, type: For a selected item",
-            "8. Select the trigger \"For a selected item\" (SharePoint).",
-            "9. Select \"Create\".",
+            "2. On the left, select \"Objects\".",
+            "3. Select \"New\".",
+            "4. Select \"Automation\".",
+            "5. Select \"Cloud flow\".",
+            "6. Select \"Instant\".",
+            "7. In the box \"Flow name\", type: 90161Z T21 Probe Button hand r5",
+            "8. In the search box of the trigger list, type: For a selected item",
+            "9. Select the trigger \"For a selected item\" (SharePoint).",
+            "10. Select \"Create\".",
             "If no trigger \"For a selected item\" is listed: select \"It failed\"."
           ],
           "marker": "90161Z-T21-button-trigger.txt",
@@ -442,12 +431,12 @@
           ],
           "estimate": 5,
           "after": [
-            "T21 Button flow by hand r4: make a solution"
+            "T21 Button flow by hand r5: make a solution"
           ],
           "doneLog": "Confirmed by you: set the trigger."
         },
         {
-          "name": "T21 Button flow by hand r4: site and list",
+          "name": "T21 Button flow by hand r5: site and list",
           "title": "Point the button flow at the test list",
           "kind": "guide",
           "dir": "T21",
@@ -467,12 +456,12 @@
           ],
           "estimate": 5,
           "after": [
-            "T21 Button flow by hand r4: make the flow"
+            "T21 Button flow by hand r5: make the flow"
           ],
           "doneLog": "Confirmed by you: set the site and list."
         },
         {
-          "name": "T21 Button flow by hand r4: the action",
+          "name": "T21 Button flow by hand r5: the action",
           "title": "Add the action and save the button flow",
           "kind": "guide",
           "dir": "T21",
@@ -498,17 +487,17 @@
           ],
           "estimate": 5,
           "after": [
-            "T21 Button flow by hand r4: site and list"
+            "T21 Button flow by hand r5: site and list"
           ],
           "doneLog": "Confirmed by you: saved the button flow."
         },
         {
-          "name": "T21 Button flow by hand r4: export the solution",
+          "name": "T21 Button flow by hand r5: export the solution",
           "title": "Export the button flow solution",
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You export the solution \"90-161.Z probe button\" as a file in Downloads. The next step reads it. About 5 minutes.",
+          "note": "You export the solution \"90-161.Z probe button\" and save the file in your Downloads folder. The next step reads it there. About 5 minutes.",
           "guide": [
             "1. On the left, select \"Solutions\" (it can be under \"More\").",
             "2. Select the solution \"90-161.Z probe button\".",
@@ -518,8 +507,10 @@
             "6. Select \"Unmanaged\".",
             "7. Select \"Export\".",
             "8. When the page says the export is ready, select \"Download\".",
-            "9. Wait until the file is in Downloads.",
-            "If the export fails: select \"It failed\"."
+            "9. If the browser asks what to do with the file: select \"Save\".",
+            "10. In File Explorer (press Windows+E), select \"Downloads\" on the left.",
+            "Look for the newest .zip file in that folder: it is the export.",
+            "If no .zip file is in Downloads: select \"It failed\"."
           ],
           "marker": "90161Z-T21-button-exported.txt",
           "needs": [
@@ -527,29 +518,29 @@
           ],
           "estimate": 5,
           "after": [
-            "T21 Button flow by hand r4: the action"
+            "T21 Button flow by hand r5: the action"
           ],
           "doneLog": "Confirmed by you: exported the button solution."
         },
         {
-          "name": "T21 Read the export r4",
+          "name": "T21 Read the export r5",
           "title": "Read the exported button flow",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Export",
           "minutes": 20,
-          "note": "Reads the export file in Downloads on this computer. Writes only the trigger's type, kind, operation name and parameter names. No sign-in.",
+          "note": "Reads the newest export file in Downloads. If it holds 1 flow, reads that flow whatever its name. Writes only the trigger's type, kind, operation and parameter names. No sign-in.",
           "estimate": 1,
           "help": "Send the results as they are. No value, site or address is written.",
           "after": [
-            "T21 Button flow by hand r4: export the solution"
+            "T21 Button flow by hand r5: export the solution"
           ]
         },
         {
-          "name": "T21 Format the form and view r4",
+          "name": "T21 Format the form and view r5",
           "title": "Format the list form and make the list view",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Look",
           "minutes": 20,
           "note": "Signs in (CAC). Puts a test header on the probe list form and makes a list view with a button that starts your hand-made flow. Reads both back.",
@@ -561,11 +552,11 @@
             "site-rights"
           ],
           "after": [
-            "T21 Make the probe list r4"
+            "T21 Make the probe list r5"
           ]
         },
         {
-          "name": "T21 Look at the list form r4",
+          "name": "T21 Look at the list form r5",
           "title": "Look at the list form",
           "kind": "guide",
           "dir": "T21",
@@ -583,7 +574,7 @@
           "marker": "90161Z-T21-form-looked.txt",
           "estimate": 3,
           "after": [
-            "T21 Format the form and view r4"
+            "T21 Format the form and view r5"
           ],
           "answers": [
             {
@@ -609,7 +600,7 @@
           "doneLog": "Confirmed by you: looked at the form."
         },
         {
-          "name": "T21 Use the list button r4",
+          "name": "T21 Use the list button r5",
           "title": "Use the button in the list",
           "kind": "guide",
           "dir": "T21",
@@ -629,7 +620,7 @@
           "marker": "90161Z-T21-button-used.txt",
           "estimate": 4,
           "after": [
-            "T21 Format the form and view r4"
+            "T21 Format the form and view r5"
           ],
           "answers": [
             {
@@ -658,163 +649,11 @@
           "doneLog": "Confirmed by you: used the button."
         },
         {
-          "name": "T22 Read list 1 of 2: cards and keyboard",
-          "title": "Read the card and keyboard tests",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "List 1 of 2. Read it now and do it later, in the window that opens after list 2. All data is FAKE and nothing is sent. About 3 minutes.",
-          "guide": [
-            "1. Read these steps now; you do them in the window that opens after the next card.",
-            "2. In the window, select a card in the list on the left.",
-            "3. Select the first button on the card \"Your Work\".",
-            "4. Select each other card once.",
-            "5. Press Tab to move to the next button, with no mouse.",
-            "6. Press Shift+Tab to move back.",
-            "7. Look for a clear outline on the button that has the focus.",
-            "8. Press Enter to use that button (safe: all data is FAKE and nothing is sent)."
-          ],
-          "marker": "90161Z-T22-list1-read.txt",
-          "estimate": 1,
-          "doneLog": "Confirmed by you: read the list."
-        },
-        {
-          "name": "T22 Read list 2 of 2: Narrator and contrast",
-          "title": "Read the Narrator and contrast tests",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "List 2 of 2. Read it now. Then \"Done\" opens the 90-161.Z window (fake data) full screen: do both lists in it, then close it. About 10 minutes.",
-          "guide": [
-            "1. Press Ctrl+Windows+Enter to start Narrator.",
-            "2. Press Tab to move to the next control.",
-            "3. Listen: Narrator should say the name of each control.",
-            "4. Press Ctrl+Windows+Enter again to stop Narrator.",
-            "5. Press Left Alt+Left Shift+Print Screen to turn high contrast on.",
-            "6. If Windows asks to turn on high contrast: select \"Yes\".",
-            "7. Look at each card: every text and button must stay readable.",
-            "8. Press the same keys again to turn high contrast off.",
-            "9. Close the window with its X.",
-            "If the window does not open: select \"It failed\" on the next card."
-          ],
-          "marker": "90161Z-T22-list2-read.txt",
-          "estimate": 1,
-          "doneLog": "Confirmed by you: read the list.",
-          "after": [
-            "T22 Read list 1 of 2: cards and keyboard"
-          ]
-        },
-        {
-          "name": "T22 Open the 90-161.Z window r2",
-          "title": "Open the 90-161.Z window and run the tests",
-          "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r2.ps1",
-          "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data (nothing is read, saved or sent). Do the keyboard, Narrator and contrast tests in it, then close it with its X.",
-          "estimate": 15,
-          "help": "Send the results as they are. The step can be run again.",
-          "after": [
-            "T22 Read list 2 of 2: Narrator and contrast"
-          ]
-        },
-        {
-          "name": "T22 Answer: look and cards",
-          "title": "Answer 3 questions about the window look",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 3 questions about the look of the window. About 2 minutes.",
-          "guide": [
-            "1. Answer each of the next 3 cards."
-          ],
-          "marker": "90161Z-T22-judged-look.txt",
-          "estimate": 2,
-          "after": [
-            "T22 Open the 90-161.Z window r2"
-          ],
-          "answers": [
-            {
-              "key": "w-look",
-              "prompt": "Does the window look like your vision of the 90-161.Z app?",
-              "kind": "pick",
-              "choices": [
-                "Yes, as it is",
-                "Close, with small changes",
-                "Partly",
-                "No"
-              ]
-            },
-            {
-              "key": "w-cards",
-              "prompt": "Did every card open and fit with no scroll bar?",
-              "kind": "yesno"
-            },
-            {
-              "key": "w-change",
-              "prompt": "What would you change first? One line, no names.",
-              "kind": "text"
-            }
-          ],
-          "doneLog": "Confirmed by you: judged the look."
-        },
-        {
-          "name": "T22 Answer: keys, Narrator and contrast",
-          "title": "Answer 3 questions about keys, Narrator and contrast",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 3 questions about keyboard, Narrator and high contrast. About 2 minutes.",
-          "guide": [
-            "1. Select an answer on each of the next 3 cards."
-          ],
-          "marker": "90161Z-T22-judged-access.txt",
-          "estimate": 2,
-          "after": [
-            "T22 Open the 90-161.Z window r2"
-          ],
-          "answers": [
-            {
-              "key": "w-keys",
-              "prompt": "Could you reach and use every button with the keyboard alone?",
-              "kind": "pick",
-              "choices": [
-                "Yes, every button",
-                "Most buttons",
-                "Some buttons",
-                "No"
-              ]
-            },
-            {
-              "key": "w-narrator",
-              "prompt": "Did Narrator say the name of each control?",
-              "kind": "pick",
-              "choices": [
-                "Every control",
-                "Some controls",
-                "None",
-                "I could not start Narrator"
-              ]
-            },
-            {
-              "key": "w-contrast",
-              "prompt": "In high contrast, was every text and button readable?",
-              "kind": "pick",
-              "choices": [
-                "Yes, everything",
-                "Something was hard to see",
-                "Something was missing",
-                "I could not turn it on"
-              ]
-            }
-          ],
-          "doneLog": "Confirmed by you: judged keys, Narrator and contrast."
-        },
-        {
-          "name": "T24 Import the full solution r1: choose the file",
+          "name": "T24 Import the full solution r2: choose the file",
           "title": "Start the import of the full flows",
           "kind": "guide",
           "dir": "T24",
-          "file": "90161Z-T24-full-flows-r1.zip",
+          "file": "90161Z-T24-full-flows-r2.zip",
           "note": "You start the import of the full 90-161.Z flows (every flow On). The next step finishes it. About 4 minutes.",
           "guide": [
             "1. Select \"Open in browser\" above.",
@@ -826,6 +665,8 @@
             "7. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
             "8. Select \"Open\".",
             "9. Select \"Next\".",
+            "If the Open window closes before the file is chosen: select \"Browse\" again.",
+            "If the box \"File name\" is empty after Ctrl+V: press Ctrl+V again.",
             "If the page refuses the file: select \"It failed\"."
           ],
           "marker": "90161Z-T24-file-chosen.txt",
@@ -840,12 +681,12 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T24 Import the full solution r1: finish",
+          "name": "T24 Import the full solution r2: finish",
           "title": "Finish the import of the full flows",
           "kind": "guide",
           "dir": "T24",
           "file": "",
-          "note": "You finish the import of the full flows. It upgrades the flows you imported in the last round. About 5 minutes.",
+          "note": "You finish the import of the full flows. It upgrades the flows of the last rounds, so a message that they were replaced is normal. About 5 minutes.",
           "guide": [
             "1. If the page says the solution already exists: select \"Upgrade\".",
             "2. In each connection box, select the arrow on its right.",
@@ -855,6 +696,9 @@
             "6. If the box \"2 Alert e-mail\" is empty: type your work e-mail address (the one you use in Outlook).",
             "7. Select \"Import\".",
             "8. Wait for the line \"Successfully imported\".",
+            "If you see \"The original workflow definition has been deactivated and replaced\": go on.",
+            "If that message shows a button: select the button \"Done\" on that message.",
+            "If \"Import\" stays gray: in each box that already shows text, press Ctrl+A, Ctrl+X, then Ctrl+V.",
             "If a box has no connection: select \"New connection\" in that box.",
             "If you selected \"New connection\": select \"Create\".",
             "If a box has a \"Refresh\" button: select it.",
@@ -868,9 +712,32 @@
           ],
           "estimate": 5,
           "after": [
-            "T24 Import the full solution r1: choose the file"
+            "T24 Import the full solution r2: choose the file"
           ],
-          "doneLog": "Confirmed by you: imported the full solution."
+          "doneLog": "Confirmed by you: imported the full solution.",
+          "answers": [
+            {
+              "key": "import-boxes",
+              "prompt": "Before \"Import\" could be selected, which boxes did you have to cut and paste?",
+              "kind": "pick",
+              "choices": [
+                "None",
+                "Only the boxes that showed a list name",
+                "The list names and the 2 empty boxes",
+                "The connection boxes too"
+              ]
+            },
+            {
+              "key": "import-replaced",
+              "prompt": "Did the page say that the original workflow definition was deactivated and replaced?",
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No",
+                "I did not see"
+              ]
+            }
+          ]
         },
         {
           "name": "T24 Turn on all 6 flows r1",
@@ -896,7 +763,7 @@
           ],
           "estimate": 3,
           "after": [
-            "T24 Import the full solution r1: finish"
+            "T24 Import the full solution r2: finish"
           ],
           "answers": [
             {
@@ -1082,10 +949,10 @@
           ]
         },
         {
-          "name": "T21 Read the test results r4",
+          "name": "T21 Read the test results r5",
           "title": "Read the health, person and button results",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Read",
           "minutes": 20,
           "note": "Signs in (CAC). Reads counts only: the health flow row, the rows by the second person and the rows of the button flow. Waits up to about 4 minutes for the health row.",
@@ -1097,7 +964,7 @@
             "site-rights"
           ],
           "after": [
-            "T21 Make the probe list r4"
+            "T21 Make the probe list r5"
           ]
         },
         {
@@ -1117,10 +984,10 @@
           ]
         },
         {
-          "name": "T21 Remove the person, list and library r4",
+          "name": "T21 Remove the person, list and library r5",
           "title": "Remove the test person, list and library",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r4.ps1",
+          "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Clean -Label last",
           "minutes": 20,
           "note": "Signs in (CAC). Removes the second person from Visitors, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.",
@@ -1133,7 +1000,7 @@
           ]
         },
         {
-          "name": "T21 Remove the health flow and solution r4",
+          "name": "T21 Remove the health flow and solution r5",
           "title": "Delete the health flow and its solution",
           "kind": "guide",
           "dir": "T21",
@@ -1143,7 +1010,7 @@
             "1. Select \"Open in browser\" above.",
             "2. On the left, select \"Solutions\" (it can be under \"More\").",
             "3. Select the solution \"90-161.Z probe health\".",
-            "4. In the row of the flow \"90161Z T21 Probe Health r4\", select the three dots.",
+            "4. In the row of the flow \"90161Z T21 Probe Health r5\", select the three dots.",
             "5. Select \"Delete from this environment\".",
             "6. Select \"Delete\".",
             "7. Select the Back arrow at the top left to return to the list of solutions.",
@@ -1164,7 +1031,7 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T21 Remove the button flow and solution r4",
+          "name": "T21 Remove the button flow and solution r5",
           "title": "Delete the button flow and its solution",
           "kind": "guide",
           "dir": "T21",
@@ -1173,7 +1040,7 @@
           "guide": [
             "1. On the left, select \"Solutions\" (it can be under \"More\").",
             "2. Select the solution \"90-161.Z probe button\".",
-            "3. In the row of the flow \"90161Z T21 Probe Button hand r4\", select the three dots.",
+            "3. In the row of the flow \"90161Z T21 Probe Button hand r5\", select the three dots.",
             "4. Select \"Delete from this environment\".",
             "5. Select \"Delete\".",
             "6. Select the Back arrow at the top left to return to the list of solutions.",
@@ -1189,18 +1056,6 @@
           ],
           "estimate": 5,
           "doneLog": "Confirmed by you: removed."
-        },
-        {
-          "name": "R28 Install check: RADE copy and desktop icon",
-          "title": "Make the RADE copy and desktop shortcut",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "RADE saves its own copy and makes the desktop shortcut \"RADE\" after you select \"Done\". Nothing else is installed. A question in the test round asks if the shortcut worked. About 1 minute.",
-          "guide": [],
-          "marker": "90161Z-R28-install-checked.txt",
-          "estimate": 1,
-          "doneLog": "Confirmed by you: install check."
         }
       ],
       "collect": [
@@ -1211,48 +1066,43 @@
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-clean-first-r4.txt",
-          "step": "T21 Remove the R27 person, list and library"
+          "name": "90161Z-T21-probe-clean-first-r5.txt",
+          "step": "T21 Check the test site is clean r5"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-make-r4.txt",
-          "step": "T21 Make the probe list r4"
+          "name": "90161Z-T21-probe-make-r5.txt",
+          "step": "T21 Make the probe list r5"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-run-r4.txt",
-          "step": "T21 Start the health flow r4"
+          "name": "90161Z-T21-probe-run-r5.txt",
+          "step": "T21 Start the health flow r5"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-person-r4.txt",
-          "step": "T21 Add the second person r4"
+          "name": "90161Z-T21-probe-person-r5.txt",
+          "step": "T21 Add the second person r5"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-export-r4.txt",
-          "step": "T21 Read the export r4"
+          "name": "90161Z-T21-probe-export-r5.txt",
+          "step": "T21 Read the export r5"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-look-r4.txt",
-          "step": "T21 Format the form and view r4"
+          "name": "90161Z-T21-probe-look-r5.txt",
+          "step": "T21 Format the form and view r5"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-read-r4.txt",
-          "step": "T21 Read the test results r4"
+          "name": "90161Z-T21-probe-read-r5.txt",
+          "step": "T21 Read the test results r5"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-clean-last-r4.txt",
-          "step": "T21 Remove the person, list and library r4"
-        },
-        {
-          "dir": "T22",
-          "name": "90161Z-T22-window-r2.txt",
-          "step": "T22 Open the 90-161.Z window r2"
+          "name": "90161Z-T21-probe-clean-last-r5.txt",
+          "step": "T21 Remove the person, list and library r5"
         },
         {
           "dir": "T24",
@@ -1273,6 +1123,11 @@
           "dir": "T24",
           "name": "90161Z-T24-full-test-part4-r1.txt",
           "step": "T24 Clean up r1"
+        },
+        {
+          "dir": "T16",
+          "name": "90161Z-T16-logo-r12.txt",
+          "step": "T16 Read the site logo back r12"
         }
       ],
       "cleanup": [
@@ -1883,42 +1738,85 @@
         {
           "path": "T23",
           "kind": "dir"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-links-r4.html",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-button-flow-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-list1-read.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-list2-read.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-access.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-R28-frame-answered.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-R28-install-checked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T24\\90161Z-T24-full-flows-r1.zip",
+          "kind": "glob"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R28 r2: clean up the last round, test the RADE icon, the 90-161.Z window, the probe retry, the second person and the full flows. Fake data.",
+          "summary": "Round R29a r1: clean-site check, new site logo, health flow, button flow export, second person and the full flows. Fake data.",
           "steps": [
-            "T21 Remove the R27 person, list and library",
-            "T21 Remove the R27 probe flows",
-            "T21 Remove the R27 probe solution",
-            "R28 Answer: icon, Start and RADE look",
-            "T21 Make the probe list r4",
-            "T21 Import the health flow r4: choose the file",
-            "T21 Import the health flow r4: connections",
+            "T21 Check the test site is clean r5",
+            "T16 Site logo r12: thumbnail",
+            "T16 Site logo r12: header logo",
+            "T16 Read the site logo back r12",
+            "T21 Make the probe list r5",
+            "T21 Import the health flow r5: choose the file",
+            "T21 Import the health flow r5: connections",
             "T17 Import log reader r2",
-            "T21 Open the test page r4",
-            "T21 Start the health flow r4",
-            "T21 Add the second person r4",
-            "T21 Second person r4",
-            "T21 Button flow by hand r4: make a solution",
-            "T21 Button flow by hand r4: make the flow",
-            "T21 Button flow by hand r4: site and list",
-            "T21 Button flow by hand r4: the action",
-            "T21 Button flow by hand r4: export the solution",
-            "T21 Read the export r4",
-            "T21 Format the form and view r4",
-            "T21 Look at the list form r4",
-            "T21 Use the list button r4",
-            "T22 Read list 1 of 2: cards and keyboard",
-            "T22 Read list 2 of 2: Narrator and contrast",
-            "T22 Open the 90-161.Z window r2",
-            "T22 Answer: look and cards",
-            "T22 Answer: keys, Narrator and contrast",
-            "T24 Import the full solution r1: choose the file",
-            "T24 Import the full solution r1: finish",
+            "T21 Open the test page r5",
+            "T21 Start the health flow r5",
+            "T21 Add the second person r5",
+            "T21 Second person r5",
+            "T21 Button flow by hand r5: make a solution",
+            "T21 Button flow by hand r5: make the flow",
+            "T21 Button flow by hand r5: site and list",
+            "T21 Button flow by hand r5: the action",
+            "T21 Button flow by hand r5: export the solution",
+            "T21 Read the export r5",
+            "T21 Format the form and view r5",
+            "T21 Look at the list form r5",
+            "T21 Use the list button r5",
+            "T24 Import the full solution r2: choose the file",
+            "T24 Import the full solution r2: finish",
             "T24 Turn on all 6 flows r1",
             "T24 Full solution test, part 1 r1",
             "T24 Run F02 once and F04 once r1",
@@ -1926,21 +1824,750 @@
             "T24 Find the F04 e-mail r1",
             "T24 Run F02 again r1",
             "T24 Full solution test, part 3 r1",
-            "T21 Read the test results r4",
+            "T21 Read the test results r5",
             "T24 Clean up r1",
-            "T21 Remove the person, list and library r4",
-            "T21 Remove the health flow and solution r4",
-            "T21 Remove the button flow and solution r4"
+            "T21 Remove the person, list and library r5",
+            "T21 Remove the health flow and solution r5",
+            "T21 Remove the button flow and solution r5"
           ]
+        }
+      ]
+    },
+    {
+      "out": "scripts/gov/paste/90161Z-R29b-round-r1.ps1",
+      "round": "R29b",
+      "title": "Round R29b r1: the 90-161.Z window with its 12 checks inside the window",
+      "files": [
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-pfm-window-r3.ps1"
+        }
+      ],
+      "steps": [
+        {
+          "name": "T22 Open the 90-161.Z window r3",
+          "title": "Open the 90-161.Z window and do its 12 checks",
+          "dir": "T22",
+          "file": "90161Z-T22-pfm-window-r3.ps1",
+          "minutes": 30,
+          "note": "Opens your 90-161.Z window with fake data (nothing is read, saved or sent). A bar at the bottom shows 12 checks, one at a time: do each, then select Pass or Fail. Then close the window with its X.",
+          "estimate": 15,
+          "help": "Send the results as they are. The step can be run again."
         },
         {
-          "name": "90-161.Z PFM window",
-          "summary": "Install check for the RADE Start button and desktop icon. It installs nothing but RADE's copy and icon; Start opens the PFM window.",
-          "mode": "deploy",
-          "version": "0.1.0",
-          "start": "T22/90161Z-T22-pfm-window-r2.ps1",
+          "name": "T22 Answer: look and cards",
+          "title": "Answer 3 questions about the window look",
+          "kind": "guide",
+          "dir": "T22",
+          "file": "",
+          "note": "You answer 3 questions about the look of the window. About 2 minutes.",
+          "guide": [
+            "1. Answer each of the next 3 cards."
+          ],
+          "marker": "90161Z-T22-judged-look.txt",
+          "estimate": 2,
+          "after": [
+            "T22 Open the 90-161.Z window r3"
+          ],
+          "answers": [
+            {
+              "key": "w-look",
+              "prompt": "Does the window look like your vision of the 90-161.Z app?",
+              "kind": "pick",
+              "choices": [
+                "Yes, as it is",
+                "Close, with small changes",
+                "Partly",
+                "No"
+              ]
+            },
+            {
+              "key": "w-cards",
+              "prompt": "Did every card open and fit with no scroll bar?",
+              "kind": "yesno"
+            },
+            {
+              "key": "w-change",
+              "prompt": "What would you change first? One line, no names.",
+              "kind": "text"
+            }
+          ],
+          "doneLog": "Confirmed by you: judged the look."
+        }
+      ],
+      "collect": [
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-window-r3.txt",
+          "step": "T22 Open the 90-161.Z window r3"
+        }
+      ],
+      "cleanup": [
+        {
+          "path": "T02",
+          "kind": "dir"
+        },
+        {
+          "path": "T03",
+          "kind": "dir"
+        },
+        {
+          "path": "T04",
+          "kind": "dir"
+        },
+        {
+          "path": "T05",
+          "kind": "dir"
+        },
+        {
+          "path": "T06",
+          "kind": "dir"
+        },
+        {
+          "path": "T13",
+          "kind": "dir"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-test-r*.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T10\\90161Z-T10-brief-check-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T01\\90161Z-T01-renderer-test-r8.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T01\\90161Z-T01-result-r8.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T09\\90161Z-T09-epubs-collect-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-partb-form-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R09",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R10",
+          "kind": "dir"
+        },
+        {
+          "path": "T09\\90161Z-T09-save-pages-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T12\\90161Z-T09-save-pages-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T15\\90161Z-T15-env-inventory-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-pnp-signin-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-pnp-result-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T15\\90161Z-T15-inventory-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-outlook-check-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T10",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R11",
+          "kind": "dir"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-partb-form-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-partb-rows-r1.json",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-result-r2.json",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R12",
+          "kind": "dir"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-r1.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-thumb-r1.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-r2.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-r3.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r7.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r7.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-thumb-r2.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r6.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r6.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R13",
+          "kind": "dir"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-probe-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-result-r3.json",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-flows-solution-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R14",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-probe-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-result-r4.json",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R15",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-r2.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-probe-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-b-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-b-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-b-started.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r8.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r8.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T14",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R16",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-export-read-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r9.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r9.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R17",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-import-log-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-import-log-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-a-started.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r10.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r10.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R18",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R19",
+          "kind": "dir"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publication.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-imported.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-f03-ran.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r2.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R20",
+          "kind": "dir"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publications-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R21",
+          "kind": "dir"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R22",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R23",
+          "kind": "dir"
+        },
+        {
+          "path": "T20",
+          "kind": "dir"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r11.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R24",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R25",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R26",
+          "kind": "dir"
+        },
+        {
+          "path": "T21\\files",
+          "kind": "dir"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe*-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-app-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-*-imported.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-aib-looked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-app-*.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-second-person.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-removed.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-*-r2.*",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-*-r4.*",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publications-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r6.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publications-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-*ed.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-f03-ran.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-resubmitted.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-email-looked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-links-r3.html",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-*-looked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-button-used.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T23",
+          "kind": "dir"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-links-r4.html",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-button-flow-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-list1-read.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-list2-read.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-access.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-R28-frame-answered.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-R28-install-checked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T24\\90161Z-T24-full-flows-r1.zip",
+          "kind": "glob"
+        }
+      ],
+      "fetch": [],
+      "apps": [
+        {
+          "name": "90-161.Z: Publications and Forms Management",
+          "summary": "Round R29b r1: the 90-161.Z window with fake data and its 12 checks, then 3 questions on its look. Fake data.",
           "steps": [
-            "R28 Install check: RADE copy and desktop icon"
+            "T22 Open the 90-161.Z window r3",
+            "T22 Answer: look and cards"
           ]
         }
       ]

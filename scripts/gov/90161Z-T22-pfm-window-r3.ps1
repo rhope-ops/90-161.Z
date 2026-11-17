@@ -1,19 +1,23 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, preview r2 (round R28). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r3 (round R29). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read, saved or sent. The look comes from the RADE shared UI
   file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it; below 1280 x 720
   (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X.
-  WHAT IT CHANGES: 90161Z-T22-window-r2.txt (state, size, scale, cards opened, layout self-check) and
+  WHAT R3 CHANGES (R28 results): the layout self-check no longer stops on every card; the window is DPI aware like RADE (one
+  line "SCALE dpi-aware=yes|no"); every grid fits its columns to its own width and wraps its cells; a check bar at the bottom shows
+  12 checks one at a time with Pass and Fail (PFM 17 Nov 26), so no list has to be read or remembered; each layout defect is
+  one line "FAIL LAYOUT ..." and "PASS layout" is one line when there is none (the runner counts these words).
+  WHAT IT CHANGES: 90161Z-T22-window-r3.txt (state, size, scale, cards opened, layout self-check, check answers) and
   90161Z-T22-window-bounds.json (last size and place) in the T22 folder.
-  Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards as text and opens no window; -TestDir writes the files elsewhere.
-  Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n>. Exit 1 when no window can open.
+  Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 12 checks as text and opens no window; -TestDir writes the files elsewhere.
+  Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir)
 $task = 'T22'
-$Rev = 'r2'
+$Rev = 'r3'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -81,153 +85,150 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
 }
 # <<< task-common
-# >>> rade-logo: generated from the pinned RADE logo by scripts/build_task_scripts.py (do not edit)
-$RadeLogoPng = @(
-  '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',
-  'AG2SrHTUY27uAAAAAElFTkSuQmCC'
+# >>> app-logo: generated from assets/logo/90161Z-logo.svg by scripts/build_task_scripts.py (do not edit)
+$AppLogoPng = @(
+  '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'
 ) -join ''
-# <<< rade-logo
+# <<< app-logo
 $PalHex=@{ ink='1B1F2A'; muted='5B6B7F'; surface='EEF1F5'; line='C9D2DC'; navy='0B2545'; onPrimaryMuted='DDE8F3'; accentFill='FFD520'
 primary='00539F'; track='7F93A8'; redTint='F6D5DA'; amberTint='F8E8C4'; greenTint='D6EBDD'; white='FFFFFF' }
 $mid=[string][char]0x00B7   # the dot between facts (kept out of the file text: a script file is ASCII)
@@ -284,6 +285,20 @@ return @{ Cap='Action Status'; Pad=22; Blocks=$b }
 }
 $FullHistory=@(@{ Text='Full History'; Note='FAKE: the history of this action opens here. Nothing is read.' })
 $OneOf="FAKE OI 33-101, Key Control"
+$Checks=@(
+@{ Key='card-open'; Text='Select a card in the list on the left. Pass if it opened.' },
+@{ Key='first-button'; Text='On the card "Your Work", select the first button. Pass if it did something.' },
+@{ Key='all-cards'; Text='Select each other card in the list on the left once. Pass if every card opened.' },
+@{ Key='tab'; Text='Press Tab about 5 times. Pass if a clear outline moves from button to button.' },
+@{ Key='shift-tab'; Text='Press Shift+Tab. Pass if the outline moves back.' },
+@{ Key='enter'; Text='Press Enter. Pass if the button with the outline worked (all data is FAKE; nothing is sent).' },
+@{ Key='narrator-on'; Text='Press Ctrl+Windows+Enter to start Narrator. Pass if Narrator started.' },
+@{ Key='narrator-names'; Text='Press Tab. Pass if Narrator said the name of the control.' },
+@{ Key='narrator-off'; Text='Press Ctrl+Windows+Enter to stop Narrator. Pass if it stopped.' },
+@{ Key='contrast-on'; Text='Press Left Alt+Left Shift+Print Screen to turn on high contrast (if Windows asks, answer Yes). Pass if the colors changed.' },
+@{ Key='contrast-read'; Text='Select 2 other cards. Pass if every text and button is readable.' },
+@{ Key='contrast-off'; Text='Press Left Alt+Left Shift+Print Screen again. Pass if the window returned to its colors.' }
+)
 $Cards=[ordered]@{}
 $Cards.home=@{ Rail='work'; Title='Your Work'; Sub="Tuesday, 17 Nov 26 $mid 2 items need you $mid 2 offices late"; Side=300
 Cols=@(
@@ -679,14 +694,22 @@ $NativeCs=(@(
 $lines=New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
 $code=0
-$opened=@{}; $presses=0; $defects=New-Object System.Collections.Generic.List[string]
+$cf=0; $opened=@{}; $presses=0; $defects=New-Object System.Collections.Generic.List[string]
 $dir=''
 $who=$null
 try {
 $ErrorActionPreference='Stop'
-if ($PlanOnly) { Get-CardPlan | ForEach-Object { Write-Host $_ }; Write-Host ('PLAN cards=' + $Cards.Count); return }
+if ($PlanOnly) { Get-CardPlan | ForEach-Object { Write-Host $_ }; for ($i=0; $i -lt $Checks.Count; $i++) { Write-Host ('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ': ' + $Checks[$i].Text) }; Write-Host ('PLAN cards=' + $Cards.Count); return }
 $who=Get-TaskId $Id
 if ($TestDir) { $dir=$TestDir } else { $dir=Get-TaskDir $who.Id $task 'Task 22' -Create }
+# The process is DPI aware like RADE, before any form exists (R28: this window ran unscaled while RADE ran at 150 %).
+$dpiAware='no'
+if ($env:OS -eq 'Windows_NT') {
+try {
+Add-Type -Namespace T22 -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();' -ErrorAction Stop
+try { if ([T22.Native]::SetProcessDPIAware()) { $dpiAware='yes' } } catch { $null=$_ }
+} catch { $null=$_ } }
+$lines.Add('SCALE dpi-aware=' + $dpiAware)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
@@ -771,7 +794,15 @@ $ui.Reflow = { param($T)
     $ns = New-Object System.Drawing.Size($bw, ($sz.Height + (& $ui.Sc 2))); if ($T.Width -ne $ns.Width -or $T.Height -ne $ns.Height) { $T.Size = $ns } } catch { $null = $_ } }
 $ui.Menu = New-Object System.Windows.Forms.ContextMenuStrip; $ui.Menu.AccessibleName = 'Text menu'
 $ui.MenuCopy = $ui.Menu.Items.Add('Copy'); $ui.MenuAll = $ui.Menu.Items.Add('Select All')
-$ui.CopyText = { param($C) try { if ($C -is [System.Windows.Forms.TextBox] -and $C.SelectionLength -gt 0) { $C.Copy(); return $true } } catch { $null = $_ }; return $false }
+# Copy gives the text as written (R28 N4): a word that RADE broke to fit a line is whole again (the break is a lone line feed), and the
+# lines of a hand step (a rich text box) lose the tabs of their number column: "1. Open the page." on its own line.
+$ui.CopyText = { param($C)
+  try { if (-not ($C -is [System.Windows.Forms.TextBoxBase]) -or $C.SelectionLength -le 0) { return $false }
+    $s = [string]$C.SelectedText
+    if ($C -is [System.Windows.Forms.RichTextBox]) { $s = ($s -replace '\r?\n', "`n" -replace ([string][char]0x2007), '' -replace '\t', ' ') -replace "`n", "`r`n" }
+    elseif (& $ui.IsCardText $C) { $s = $s -replace '(?<!\r)\n', '' }
+    if ($s) { [System.Windows.Forms.Clipboard]::SetText($s); return $true } } catch { $null = $_ }
+  return $false }
 $ui.MenuCopy.Add_Click({ $null = & $ui.CopyText $ui.Menu.SourceControl })
 $ui.MenuAll.Add_Click({ try { $ui.Menu.SourceControl.SelectAll() } catch { $null = $_ } })
 $ui.Menu.Add_Opening({ try { $ui.MenuCopy.Enabled = [bool]($ui.Menu.SourceControl.SelectionLength -gt 0) } catch { $null = $_ } })
@@ -876,7 +907,7 @@ $ui.Shorten = { param($C, [string]$Full, [int]$W)
 # as its widest line by its own measure, about 1 % narrower than the probe's, so a cut piece that is the widest line would
 # always seem too wide (R28 job: 591/588, 597/591, 592/588).
 $ui.WordBad = { param([string]$Card, [string]$Name, [string]$Text, $F, [int]$W)
-  foreach ($wd in ($Text -split '\s+')) { if ($wd) { $ww = & $ui.WordW $wd $F; if ($ww -gt $W + 1) { return ('LAYOUT ' + $Card + ' ' + $Name + ' text: the word "' + $(if ($wd.Length -gt 20) { $wd.Substring(0, 20) + '...' } else { $wd }) + '" needs ' + $ww + ', the line is ' + $W) } } }
+  foreach ($wd in ($Text -split '\s+')) { if ($wd) { $ww = & $ui.WordW $wd $F; if ($ww -gt $W + 1) { return ('LAYOUT ' + $Card + ' ' + $Name + ' text: the word "' + $(if ($wd -match '[\\/]') { '<a path>' } elseif ($wd.Length -gt 20) { $wd.Substring(0, 20) + '...' } else { $wd }) + '" needs ' + $ww + ', the line is ' + $W) } } }
   return $null }
 # ---- Drawing and measuring
 $ui.Word = { param($G, [string]$Text, $Font, $Color, [int]$X, [int]$Y, [int]$W, [int]$H, [string]$Flags) [System.Windows.Forms.TextRenderer]::DrawText($G, $Text, $Font, (New-Object System.Drawing.Rectangle($X, $Y, [math]::Max(1, $W), $H)), $Color, [System.Windows.Forms.TextFormatFlags]$Flags) }
@@ -938,9 +969,16 @@ $ui.Check = {
         if ($c -is [System.Windows.Forms.Label] -and $c.AutoSize -and $c.MaximumSize.Width -gt 0 -and $c.Text) { $wb = & $ui.WordBad $card (& $ui.NameOf $c) ([string]$c.Text) $c.Font $c.MaximumSize.Width; if ($wb) { $ui.LayBad.Add($wb) } }
         if (& $ui.IsCardText $c) {   # card text boxes are measured as labels are: a word wider than the line, and text that needs more room than the box has
           if ([int](& $ui.GetWrap $c) -gt 0 -and $c.Text) { $wb = & $ui.WordBad $card (& $ui.NameOf $c) ([string]$c.Text) $c.Font ([int](& $ui.GetWrap $c)); if ($wb) { $ui.LayBad.Add($wb) } }
-          $nd = & $ui.TextNeed $c; if ($c.Text -and ($nd.Height -gt $c.ClientSize.Height + 1 -or $nd.Width -gt $c.ClientSize.Width + 1)) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' text: needs ' + $nd.Width + 'x' + $nd.Height + ' has ' + $c.ClientSize.Width + 'x' + $c.ClientSize.Height) } }
+          $nd = & $ui.TextNeed $c; if ($c.Text -and ($nd.Height -gt $c.ClientSize.Height + 1 -or $nd.Width -gt $c.ClientSize.Width + 1)) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' text: needs ' + $nd.Width + 'x' + $nd.Height + ' has ' + $c.ClientSize.Width + 'x' + $c.ClientSize.Height) }
+          $lh1 = [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $c.Font).Height; if ($c.Text -and $c.ClientSize.Height -gt $nd.Height + $lh1) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' dead space: has ' + $c.ClientSize.Height + ' high, the text needs ' + $nd.Height) } }   # more than one empty line under its text
         if ($c -is [System.Windows.Forms.CheckBox] -and $c.Text -and -not $c.AutoEllipsis) {   # a one-line check box whose text alone is wider than it is cut (the Record's step boxes before R24 fix round 3)
           $tw = [System.Windows.Forms.TextRenderer]::MeasureText([string]$c.Text, $c.Font).Width; if ($tw -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' text cut: needs ' + $tw + ' has ' + $c.ClientSize.Width) } }
+        # A cut line (R28 N9: the run card's status line was cut through its middle): a control with text is at least one line of its
+        # font tall, also a label that ends with "..." by rule. A rich text box (the lines of a hand step) is as tall as its text.
+        if ($c.Text -and ($c -is [System.Windows.Forms.Label] -or $c -is [System.Windows.Forms.ButtonBase] -or $c -is [System.Windows.Forms.TextBoxBase])) {
+          $lh = [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $c.Font).Height; if ($c -is [System.Windows.Forms.TextBoxBase]) { $lh = [int][math]::Floor($lh * 0.8) }   # an edit control draws a line with less padding
+          if ($c.ClientSize.Height + 1 -lt $lh) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' line cut: one line needs ' + $lh + ' high, has ' + $c.ClientSize.Height) } }
+        if ($c -is [System.Windows.Forms.RichTextBox] -and $ui.GuideNeed -and [object]::ReferenceEquals($c, $ui.Guide)) { $gn = [int](& $ui.GuideNeed); if ($gn -gt $c.ClientSize.Height + 1) { $ui.LayBad.Add('LAYOUT ' + $card + ' Guide text: needs ' + $gn + ' high, has ' + $c.ClientSize.Height) } }
         $isText = ($c -is [System.Windows.Forms.Label] -or $c -is [System.Windows.Forms.ButtonBase])
         if ($isText -and $c.Text -and -not $c.AutoEllipsis) {   # a label or box that ends with "..." by rule is not a defect
           $want = $c.GetPreferredSize((New-Object System.Drawing.Size($c.Width, 0)))
@@ -951,12 +989,15 @@ $ui.Check = {
         if ($c.Controls.Count) { $todo.Push(@($c, [System.Drawing.Rectangle]::Intersect($clip, $r), ($scroll -or $sc2))) }
       }
     }
+    # Dead space (R28 N9: a large empty area under the run card's text): the card's text panel is as tall as its text when it does not scroll.
+    if ($ui.Scroll -and $ui.Body -and -not $ui.RecOn -and -not $ui.Scrolls -and $ui.Scroll.Visible) { $dead = [int]$ui.Scroll.ClientSize.Height - [int]$ui.Body.Height; if ($dead -gt (& $ui.Sc 2)) { $ui.LayBad.Add('LAYOUT ' + $card + ' Scroll dead space: ' + $dead + ' px under the text') } }
     foreach ($l in @(& $ui.Measure $card)) { $ui.LayBad.Add([string]$l) }
   } catch { $ui.LayBad.Add('LAYOUT ' + $card + ' the self-check stopped: ' + (ConvertTo-Masked ([string]$_.Exception.Message))) } }
 # <<< rade-ui
 $form.BackColor=$pc.surface
 $ui.Trash=@(@($ui.Trash) | Where-Object { $_ }) + @($ui.Menu)
 $ui.Clock=[System.Diagnostics.Stopwatch]::StartNew(); $ui.CardAt=0; $ui.GuardMs=400; $ui.Busy=$false; $ui.Always=@{}; $ui.Boxes=@()
+$ui.B=@(); $ui.P=@()   # the generated NameOf walks these two lists; this window has none (R28: every self-check stopped on a null list)
 $ui.View=''; $ui.Scrolls=$false; $ui.Scroll=$null; $ui.RecOn=$false; $ui.Picked=$false; $ui.Sent=$null; $ui.Kick=$null
 $ui.Measure={ param($Card) $null=$Card; return @() }
 $wn=@{}
@@ -1120,7 +1161,7 @@ $vals=@(foreach ($c in $G.Tag.Cols) { if ($c.K -eq 'since') { $(if ($c.W -ge 100
 [void]$G.Rows.Add([object[]]$vals) } }
 $wn.Grid={ param($Parent, $b, [int]$W, $Ctx)
 $cols=@($b.Cols); if ($wn.Wide -and $b.ColsWide) { $wf=0; foreach ($c in $b.ColsWide) { $wf += (& $wn.Sc $c.W) }; if ($wf + (& $wn.Sc 137) -le $W) { $cols=@($b.ColsWide) } }
-$fixedMin=$false; $rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
+$rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
 $full=$hdrH + $rowH * $rows.Count + 2; $h=$full
 if ($b.Fill) {
 $used=0; try { $used=[int]$Ctx.Col.PreferredSize.Height } catch { $null=$_ }
@@ -1131,15 +1172,21 @@ $g.AllowUserToAddRows=$false; $g.AllowUserToDeleteRows=$false; $g.AllowUserToRes
 $g.ReadOnly=$true; $g.RowHeadersVisible=$false; $g.MultiSelect=$false; $g.SelectionMode='FullRowSelect'; $g.EnableHeadersVisualStyles=$false
 $g.ColumnHeadersHeightSizeMode='DisableResizing'; $g.ColumnHeadersHeight=$hdrH; $g.RowTemplate.Height=$rowH
 $g.CellBorderStyle='None'; $g.ColumnHeadersBorderStyle='None'; $g.BorderStyle='None'; $g.BackgroundColor=$ui.C.White; $g.GridColor=$pc.line
-$g.AutoSizeColumnsMode='None'; $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' }); $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
+$g.AutoSizeColumnsMode='Fill'; $g.ScrollBars='Vertical'; $g.DefaultCellStyle.WrapMode='True'; $g.AutoSizeRowsMode='AllCells'; $g.RowTemplate.MinimumHeight=$rowH
+$g.DefaultCellStyle.Padding=& $ui.Pad (& $ui.Sc 10) (& $ui.Sc 8) (& $ui.Sc 10) (& $ui.Sc 8); $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
 $g.DefaultCellStyle.SelectionBackColor=$pc.surface; $g.DefaultCellStyle.SelectionForeColor=$ui.C.Ink
 $g.ColumnHeadersDefaultCellStyle.BackColor=$ui.C.White; $g.ColumnHeadersDefaultCellStyle.ForeColor=$pc.muted; $g.ColumnHeadersDefaultCellStyle.Font=$ui.F.SmallB; $g.ColumnHeadersDefaultCellStyle.SelectionBackColor=$ui.C.White
-$fixed=0; foreach ($c in $cols) { $fixed += (& $wn.Sc $c.W) }
-$scroll=$(if ($full -gt $h) { & $wn.Sc 17 } else { 0 }); $fixedMin=($W - $fixed - $scroll -lt (& $wn.Sc 60)); $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' })
+# Every column fills the grid's own width: a column keeps at most its own width as its minimum, and all minimums together
+# never exceed the width the grid has, so the sum of the visible columns never exceeds the client width (R28 finding 4).
+$fixed=0; $open=0; foreach ($c in $cols) { if ($c.W -eq 0) { $open++ } else { $fixed += (& $wn.Sc $c.W) } }
+$scroll=$(if ($full -gt $h) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
+$avail=$W - $scroll - 2; $need=$fixed + $open * (& $wn.Sc 60); $k=$(if ($need -gt $avail) { [double]$avail / $need } else { 1.0 })
 $kinds=@{}
 foreach ($c in $cols) {
 $dc=New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name=[string]$c.N; $dc.HeaderText=$(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode='NotSortable'
-$dc.Width=$(if ($c.W -eq 0) { [math]::Max((& $wn.Sc 60), $W - $fixed - $scroll) } else { & $wn.Sc $c.W }); [void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
+$own=$(if ($c.W -eq 0) { & $wn.Sc 60 } else { & $wn.Sc $c.W })
+$dc.AutoSizeMode='Fill'; $dc.MinimumWidth=[math]::Max(2, [int][math]::Floor($own * $k)); $dc.FillWeight=[single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $scroll) } else { $c.W })
+[void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
 $chipKind=@{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status]=[string]$r.Kind } }
 $g.Tag=@{ Kind=$kinds; Chip=$chipKind; Cols=$cols; Shown=$rows }
 & $wn.GridFill $g $rows
@@ -1147,6 +1194,7 @@ $g.Add_CellPainting({ param($s, $e)
 try {
 $tag=$s.Tag; $kind=[string]$tag.Kind[$s.Columns[$e.ColumnIndex].Name]; $bd=$e.CellBounds; $gr=$e.Graphics; $pd=& $ui.Sc 10
 $fl=[Windows.Forms.TextFormatFlags]'Left, VerticalCenter, SingleLine, NoPadding, NoPrefix, EndEllipsis'
+$fw=[Windows.Forms.TextFormatFlags]'Left, VerticalCenter, WordBreak, NoPadding, NoPrefix'
 $tr=New-Object System.Drawing.Rectangle(($bd.X + $pd), $bd.Y, [math]::Max(1, $bd.Width - 2 * $pd), ($bd.Height - 1))
 if ($e.RowIndex -lt 0) {
 $br=New-Object System.Drawing.SolidBrush($ui.C.White); $gr.FillRectangle($br, $bd); $br.Dispose()
@@ -1160,17 +1208,23 @@ $text=[string]$e.Value
 if ($kind -eq 'pub') {
 $pp=$text.Split('|')
 $w1=[Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width
-[Windows.Forms.TextRenderer]::DrawText($gr, $pp[0], $ui.F.Link, $tr, $pc.primary, $fl)
+$w2=0; if ($pp.Count -gt 1) { $w2=[Windows.Forms.TextRenderer]::MeasureText($pp[1], $ui.F.Small, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width }
 $rest=New-Object System.Drawing.Rectangle(($tr.X + $w1 + (& $ui.Sc 6)), $tr.Y, ($tr.Width - $w1 - (& $ui.Sc 6)), $tr.Height)
-if ($rest.Width -gt 4 -and $pp.Count -gt 1) { [Windows.Forms.TextRenderer]::DrawText($gr, $pp[1], $ui.F.Small, $rest, $pc.muted, $fl) } }
-elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fl) }
-elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fl) }
+if ($pp.Count -lt 2 -or $rest.Width -ge $w2) {
+[Windows.Forms.TextRenderer]::DrawText($gr, $pp[0], $ui.F.Link, $tr, $pc.primary, $fl)
+if ($pp.Count -gt 1) { [Windows.Forms.TextRenderer]::DrawText($gr, $pp[1], $ui.F.Small, $rest, $pc.muted, $fl) } }
+else {   # the rest does not fit beside the name: it goes on a second line (the cell wraps)
+$lh=[int][math]::Ceiling($ui.F.Link.GetHeight($gr)); $top=$tr.Y + [int](($tr.Height - 2 * $lh) / 2)
+[Windows.Forms.TextRenderer]::DrawText($gr, $pp[0], $ui.F.Link, (New-Object System.Drawing.Rectangle($tr.X, $top, $tr.Width, $lh)), $pc.primary, $fl)
+[Windows.Forms.TextRenderer]::DrawText($gr, $pp[1], $ui.F.Small, (New-Object System.Drawing.Rectangle($tr.X, ($top + $lh), $tr.Width, $lh)), $pc.muted, $fw) } }
+elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fw) }
+elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fw) }
 elseif ($kind -eq 'chip') {
 $ck=[string]$tag.Chip[$text]; $cwid=[Windows.Forms.TextRenderer]::MeasureText($text, $ui.F.SmallB, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width + (& $ui.Sc 20)
 $chh=& $ui.Sc 26; $cy=$bd.Y + [int](($bd.Height - 1 - $chh) / 2); $rc=New-Object System.Drawing.RectangleF(($bd.X + $pd), $cy, $cwid, $chh)
 $gr.SmoothingMode='AntiAlias'; $path=[Pfm.Gfx]::Round($rc, ($chh / 2.0)); $br=New-Object System.Drawing.SolidBrush($wn.Fills[$ck]); $gr.FillPath($br, $path); $br.Dispose(); $path.Dispose(); $gr.SmoothingMode='Default'
 [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, (New-Object System.Drawing.Rectangle(($bd.X + $pd), $cy, [int]$cwid, $chh)), $pc.ink, [Windows.Forms.TextFormatFlags]'HorizontalCenter, VerticalCenter, SingleLine, NoPadding, NoPrefix') }
-else { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.Small, $tr, $ui.C.Ink, $fl) }
+else { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.Small, $tr, $ui.C.Ink, $fw) }
 $e.Handled=$true
 } catch { $null=$_ } })
 $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
@@ -1210,9 +1264,9 @@ foreach ($x in $wn.RailBtn) { $x.Width=$rw - 2 * (& $wn.Sc 12) } }
 $wn.BuildRail={
 $rail.SuspendLayout()
 try {
-$logo=New-Object System.Windows.Forms.PictureBox; $logo.Size=[Drawing.Size]::new((& $wn.Sc 40), (& $wn.Sc 40)); $logo.SizeMode='Zoom'; $logo.BackColor=$ui.C.White; $logo.AccessibleName='RADE logo'
+$logo=New-Object System.Windows.Forms.PictureBox; $logo.Size=[Drawing.Size]::new((& $wn.Sc 40), (& $wn.Sc 40)); $logo.SizeMode='Zoom'; $logo.BackColor=$ui.C.White; $logo.AccessibleName='90-161.Z logo'
 $logo.Location=[Drawing.Point]::new((& $wn.Sc 16), (& $wn.Sc 16))
-$logo.Image=[Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($RadeLogoPng)))); [void]$rail.Controls.Add($logo)
+$logo.Image=[Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($AppLogoPng)))); [void]$rail.Controls.Add($logo)
 } catch { $lines.Add('NOTE logo not shown: ' + $_.Exception.Message) }
 $nm=& $ui.Label $ui.F.Word $ui.C.White 0; $nm.BackColor=$pc.navy; $nm.Text='90-161.Z'; $nm.Visible=$true; $nm.Location=[Drawing.Point]::new((& $wn.Sc 64), (& $wn.Sc 18)); [void]$rail.Controls.Add($nm)
 $sb=& $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $sb.BackColor=$pc.navy; $sb.Text='Publications and Forms'; $sb.Visible=$true; $sb.Location=[Drawing.Point]::new((& $wn.Sc 16), (& $wn.Sc 66)); [void]$rail.Controls.Add($sb)
@@ -1303,6 +1357,49 @@ $st=$(if ($form.WindowState -eq 'Maximized') { 'Maximized' } else { 'Normal' })
 $o='{ "Left": ' + $r.X + ', "Top": ' + $r.Y + ', "Width": ' + $r.Width + ', "Height": ' + $r.Height + ', "State": "' + $st + '" }'
 Set-Content -LiteralPath $wn.BoundsFile -Value $o -Encoding UTF8
 } catch { $lines.Add('NOTE the window place was not saved: ' + ([string]$_.Exception.Message)) } }
+# The check bar (PFM 17 Nov 26: the checks show inside the test window, one at a time, with Pass and Fail; no list to remember).
+# It sits at the bottom of the window and is always visible. Pass or Fail moves to the next check; the answers go to the result file.
+$wn.CheckAt=0; $wn.Answers=New-Object 'string[]' $Checks.Count
+$wn.BarShow={
+$i=[int]$wn.CheckAt
+if ($i -lt $Checks.Count) {
+$wn.BarNo.Text='Check ' + ($i + 1) + ' of ' + $Checks.Count; $wn.BarText.Text=[string]$Checks[$i].Text
+$wn.BarPass.Visible=$true; $wn.BarFail.Visible=$true }
+else {
+$wn.BarNo.Text='Checks'; $wn.BarText.Text='All checks done. Close this window with its X.'
+$wn.BarPass.Visible=$false; $wn.BarFail.Visible=$false } }
+$wn.Answer={ param([string]$Result)
+if ($wn.CheckAt -ge $Checks.Count) { return }
+$wn.Answers[$wn.CheckAt]=$Result; $wn.CheckAt++
+& $wn.BarShow }
+$wn.BarLayout={
+if (-not $wn.Bar) { return }
+$w=$form.ClientSize.Width; $pad=& $wn.Sc 16; $gap=& $wn.Sc 8
+$pw=[math]::Max($wn.BarPass.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarPass.MinimumSize.Width)
+$fw=[math]::Max($wn.BarFail.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarFail.MinimumSize.Width)
+$bh=[math]::Max($wn.BarPass.Height, $wn.BarFail.Height)
+$tw=[math]::Max((& $wn.Sc 200), $w - 2 * $pad - $pw - $fw - 2 * $gap)
+$th=0; foreach ($c in $Checks) { $m=& $ui.Meas ([string]$c.Text) $ui.F.Body $tw; $th=[math]::Max($th, [int]$m.Height) }
+$th += (& $wn.Sc 6)
+$nh=[int]$wn.BarNo.PreferredSize.Height
+$wn.Bar.Height=[math]::Max($bh + 2 * $pad, $pad + $nh + (& $wn.Sc 2) + $th + $pad)
+$wn.BarNo.Location=[Drawing.Point]::new($pad, $pad)
+$wn.BarText.Location=[Drawing.Point]::new($pad, ($pad + $nh + (& $wn.Sc 2))); & $ui.SetWrap $wn.BarText $tw; $wn.BarText.Size=[Drawing.Size]::new($tw, $th)
+$by=[int](($wn.Bar.Height - $bh) / 2)
+$wn.BarPass.Location=[Drawing.Point]::new(($w - $pad - $fw - $gap - $pw), $by); $wn.BarFail.Location=[Drawing.Point]::new(($w - $pad - $fw), $by) }
+$wn.BuildBar={
+$bar=New-Object System.Windows.Forms.Panel; $bar.Dock='Bottom'; $bar.BackColor=$ui.C.White; $bar.AccessibleName='Check bar'
+$bar.Add_Paint({ try { $pn=New-Object System.Drawing.Pen($pc.line, 1); $_.Graphics.DrawLine($pn, 0, 0, $this.ClientSize.Width, 0); $pn.Dispose() } catch { $null=$_ } })
+$no=& $ui.Label $ui.F.SmallB $ui.C.Gray 0; $no.Visible=$true; $no.AccessibleName='Check number'; [void]$bar.Controls.Add($no)
+$tx=& $ui.Text $ui.F.Body $ui.C.Ink 0 'Check'; $tx.Visible=$true; [void]$bar.Controls.Add($tx)
+foreach ($n in 'Pass', 'Fail') {
+$x=& $ui.Btn 'action'; $x.Text=$n; & $ui.Style $x ''; $x.AccessibleName=$n; $x.Tag=$n
+$x.Add_SizeChanged({ & $wn.Round $this 4 })
+$x.Add_Click({ $r=([string]$this.Tag).ToUpperInvariant(); & $wn.Answer $r })
+[void]$bar.Controls.Add($x); if ($n -eq 'Pass') { $wn.BarPass=$x } else { $wn.BarFail=$x } }
+$wn.Bar=$bar; $wn.BarNo=$no; $wn.BarText=$tx
+$form.Controls.Add($bar); $main.BringToFront()
+& $wn.BarShow; & $wn.BarLayout }
 $wn.Ready=$false; $wn.LastW=0; $wn.LastH=0
 $wn.CheckTimer=New-Object System.Windows.Forms.Timer; $wn.CheckTimer.Interval=350
 $wn.CheckTimer.Add_Tick({ $wn.CheckTimer.Stop(); try { & $ui.Check; & $wn.ScrollCheck } catch { $null=$_ } })
@@ -1322,6 +1419,7 @@ $wn.Start={
 & $ui.FormDpi
 $form.MinimumSize=[Drawing.Size]::new((& $wn.Sc 800), (& $wn.Sc 560))
 $form.BackColor=$pc.surface
+& $wn.BuildBar
 & $wn.BuildRail
 & $wn.State 'shown'
 $wn.LastW=$form.ClientSize.Width; $wn.LastH=$form.ClientSize.Height
@@ -1330,7 +1428,7 @@ $wn.Notice=''; $wn.Err=''; & $wn.Show 'home'
 $wn.Ready=$true; $form.Opacity=1
 try { $form.TopMost=$true; $form.Activate(); $form.TopMost=$false } catch { $null=$_ } }
 $form.Add_Shown({ try { & $wn.Start } catch { $lines.Add('STOPPED: the window could not be built (' + (ConvertTo-Masked ([string]$_.Exception.Message) $who.Secret) + ')'); $script:code=1; try { $form.Close() } catch { $null=$_ } } })
-$form.Add_SizeChanged({ if ($wn.Ready) { $wn.SizeTimer.Stop(); $wn.SizeTimer.Start() } })
+$form.Add_SizeChanged({ if ($wn.Ready) { & $wn.BarLayout; $wn.SizeTimer.Stop(); $wn.SizeTimer.Start() } })
 $form.Add_KeyDown({
 if ($_.KeyCode -eq 'Escape') {
 $up=[string]$Cards[$wn.Cur].Up; if ($up -eq 'back') { $up=$wn.Prev }
@@ -1347,9 +1445,17 @@ $lines.Add('CARDS opened: ' + $(if ($opened.Count) { (@($Cards.Keys | Where-Obje
 $lines.Add('BUTTONS selected=' + $presses)
 $lines.Add('SECONDS open=' + [int]((Get-Date) - $started).TotalSeconds)
 foreach ($d in @($ui.LayBad)) { $defects.Add([string]$d) }
-foreach ($d in $defects) { $lines.Add($d) }
+foreach ($d in $defects) { $lines.Add('FAIL ' + $d) }
+if ($defects.Count -eq 0) { $lines.Add('PASS layout') }
 $lines.Add('SCROLLS vertical: ' + $(if ($wn.Scrolled.Count) { (@($wn.Scrolled.Keys) -join ', ') } else { 'none' }))
 $lines.Add('LAYOUT self-check: ' + $defects.Count + ' defects in ' + $ui.LayCards.Count + ' card views')
+$cp=0; $cf=0; $cs=0
+for ($i=0; $i -lt $Checks.Count; $i++) {
+$a=[string]$wn.Answers[$i]
+if ($a -eq 'PASS') { $cp++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' PASS') }
+elseif ($a -eq 'FAIL') { $cf++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL') }
+else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL (not answered)') } }
+$lines.Add('CHECKS passed=' + $cp + ' failed=' + $cf + ' not answered=' + $cs)
 foreach ($t in @($ui.Trash)) { try { $t.Dispose() } catch { $null=$_ } }
 $form.Dispose()
 } catch {
@@ -1357,7 +1463,7 @@ $code=1
 $lines.Add('STOPPED: no window (' + ([string]$_.Exception.Message).Substring(0, [Math]::Min(200, ([string]$_.Exception.Message).Length)) + ')')
 } finally {
 if ($PlanOnly) { exit 0 }
-$lines.Add('WINDOW done: cards=' + $opened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count)
+$lines.Add('WINDOW done: cards=' + $opened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
 $masked=@($lines | ForEach-Object { $t=[string]$_; if ($who) { $t=ConvertTo-Masked $t $who.Secret }; $t })
 if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T22-window-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null=$_ } }
 $masked | ForEach-Object { Write-Host $_ }
