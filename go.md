@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 16 Nov 26 (Round R26 r2 is done; no round is open).
+Updated: 17 Nov 26 (Round R27 r1 is open).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,7 +26,29 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-No round is open. The next round comes after the R26 results are reviewed.
+### Round R27 r1: flows that read PFM Settings, a second person, look probes, an app file
+
+**For:** tests the new flows (F03, F05 and F06 now read 6 values from the list PFM Settings, and test e-mails have no [TEST] in the subject), test T4 again with the second person in the Visitors group, 3 quick looks (a list form header, a list button that starts a flow, Excel for the web), a flow that reads the health of my own flows, and a tiny app file built outside Power Apps.
+**Time:** about 2 hours with waits; about 60 minutes of my own work (estimate).
+**Changes:** on the test site: 5 rows of PFM Settings (put back at the end), the stage 6 target (25 working days, kept), fake test rows (removed at the end), a fake probe list and library (to the site Recycle Bin at the end), the second person in Visitors (removed at the end). In Power Automate: the 90-161.Z flows solution is upgraded; the 90-161.Z probe solution is imported, then I delete it. On my computer: only my OneDrive folder RADE\90-161.Z. Before Run, the window lists every file.
+**Before I start:** a colleague who can open the test site is free for 5 minutes in Teams (for the second-person step).
+**Steps:**
+1. Press Copy script next to the link below.
+2. Open the Start menu and type ISE.
+3. Open Windows PowerShell ISE (not "Run as administrator").
+4. Select File > New.
+5. Click in the white script pane.
+6. Press Ctrl+V.
+7. Press F5. The RADE window opens.
+8. Press Run.
+9. Do each step the window shows, until the log says DONE.
+10. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
+11. At DONE, send the Outlook draft that opens.
+
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R27-round-r1.ps1
+
+**Report:** send the Outlook draft the round makes (subject "90161Z R27 PASSED" or "90161Z R27 NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
+**If it fails:** do the line that starts with "What to do". If a step is refused by Power Automate or Power Apps, select "It failed" and type the first line of the message: a refusal is a valid result in this round.
 
 ## Done
 
