@@ -10,6 +10,7 @@ What it draws: the subset of SVG that the logo uses, read from the SVG file itse
 Any other element or command stops with an error, so a new logo design cannot be drawn wrong in silence.
 How: each pixel gets each shape's coverage from its signed distance to the shape's edge (one pixel of soft edge), and
 the shapes are painted in order ("over"). Output: 8-bit RGBA PNG, transparent outside the disc, compressed by zlib.
+Limit: the PNG bytes depend on the zlib build (the same with zlib 1.2 and 1.3; zlib-ng may differ); the pixels do not.
 Usage: python3 scripts/logo_draw.py SIZE OUT.png   (or import: draw(svg_text, size) -> PNG bytes; pixels() -> RGBA)
 Run target: Python 3.8+, standard library only.
 """
@@ -19,6 +20,7 @@ import struct
 import sys
 import xml.etree.ElementTree as ET
 import zlib
+from pathlib import Path
 
 NS = '{http://www.w3.org/2000/svg}'
 VIEW = 512.0   # the SVG viewBox is 0 0 512 512 (checked in shapes())
@@ -41,6 +43,7 @@ def shapes(svg_text):
             continue
         if tag not in ('circle', 'path'):
             raise SystemExit('logo_draw: element <%s> is not supported' % tag)
+        refuse_unsupported(el, tag)
         s = {'kind': tag, 'fill': color(el.get('fill', '#000000')), 'stroke': color(el.get('stroke', 'none')),
              'width': float(el.get('stroke-width', '1')), 'dash': [float(x) for x in el.get('stroke-dasharray', '').split()],
              'clip': None}
@@ -53,6 +56,29 @@ def shapes(svg_text):
             s['segs'], s['closed'] = path_segments(el.get('d'))
         out.append(s)
     return out
+
+
+SUPPORTED = {'cx', 'cy', 'r', 'd', 'fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap',
+             'stroke-linejoin', 'clip-path'}
+
+
+def refuse_unsupported(el, tag):
+    """Stop when a shape uses an attribute or value this drawing does not handle: only round caps and joins (the
+    distance method draws them round), a two-value dash and only on a circle, and no opacity or transform."""
+    extra = set(el.attrib) - SUPPORTED
+    if extra:
+        raise SystemExit('logo_draw: attribute(s) %s on <%s> are not supported' % (sorted(extra), tag))
+    if el.get('stroke', 'none') != 'none':
+        d = el.get('d', '').upper()
+        open_end = (tag == 'path' and 'Z' not in d) or bool(el.get('stroke-dasharray'))   # a stroke with free ends
+        corners = tag == 'path' and len(re.findall(r'[LHVA]', d)) > 1                     # a stroke with joins
+        if open_end and el.get('stroke-linecap') != 'round':
+            raise SystemExit('logo_draw: a stroke with free ends needs stroke-linecap="round" (other caps are not drawn)')
+        if corners and el.get('stroke-linejoin') != 'round':
+            raise SystemExit('logo_draw: a stroke with corners needs stroke-linejoin="round" (other joins are not drawn)')
+    dash = el.get('stroke-dasharray', '').split()
+    if dash and (tag != 'circle' or len(dash) != 2):
+        raise SystemExit('logo_draw: stroke-dasharray needs two values and works on a <circle> only')
 
 
 def color(text):
@@ -232,5 +258,6 @@ def draw(svg_text, size):
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         raise SystemExit('usage: python3 scripts/logo_draw.py SIZE OUT.png')
+    svg = Path(__file__).resolve().parent.parent / 'assets/logo/90161Z-logo.svg'
     with open(sys.argv[2], 'wb') as out:
-        out.write(draw(open('assets/logo/90161Z-logo.svg', encoding='utf-8').read(), int(sys.argv[1])))
+        out.write(draw(svg.read_text(encoding='utf-8'), int(sys.argv[1])))
