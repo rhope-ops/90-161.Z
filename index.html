@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>90-161.Z tasks</title>
 <style>
-/* Layout: a navy-to-blue RADE band (logo K, title, open count) over one column of task cards; open tasks first, Done last.
+/* Layout: a navy-to-blue RADE band (the 90-161.Z logo W2, inline from assets/logo/90161Z-logo.svg; title, open count) over one column of task cards; open tasks first, Done last.
    Colors: Wing Master Version II (navy 0B2545, Air Force blue 00539F, AF yellow FFD520 as trim only), as the RADE window. */
 :root{--bg:#f4f6f9;--fg:#16202e;--mut:#526173;--card:#ffffff;--line:#d3dae3;--acc:#00539f;--acc-fg:#ffffff;--navy:#0b2545;--blue:#00539f;--gold:#ffd520;--mist:#dde8f3;
 --open-bg:#dde8f3;--open-fg:#0b2545;--done-bg:#d6ebdd;--done-fg:#1d5534;--note-bg:#fff6d6;--note-fg:#5a4300;--focus:#00539f;--ctl:#8a97a8;--code:#eef1f5;
@@ -68,18 +68,28 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
 .foot{margin-top:24px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 @media print{details.sec>.body{display:block}.bar,.toc,button{display:none}.band{background:none;color:#000;border-bottom:1px solid #000}}
-</style></head><body><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-64 -64 128 128" width="48" height="48" class="logo" aria-hidden="true" focusable="false" aria-label="Logo: Greek letter rho inside a square frame and a square turned 45 degrees, woven, in a blue ring with a thin yellow edge">
-  
-  <defs>
-    <mask id="cut-diamond" maskUnits="userSpaceOnUse" x="-64" y="-64" width="128" height="128"><rect x="-64" y="-64" width="128" height="128" fill="#fff"/><g stroke="#000" stroke-width="11.2"><line x1="-1.76" y1="-29.00" x2="21.76" y2="-29.00"/><line x1="29.00" y1="-1.76" x2="29.00" y2="21.76"/><line x1="1.76" y1="29.00" x2="-21.76" y2="29.00"/><line x1="-29.00" y1="1.76" x2="-29.00" y2="-21.76"/></g></mask>
-    <mask id="cut-frame" maskUnits="userSpaceOnUse" x="-64" y="-64" width="128" height="128"><rect x="-64" y="-64" width="128" height="128" fill="#fff"/><g stroke="#000" stroke-width="11.2"><line x1="-1.69" y1="-37.31" x2="-18.31" y2="-20.69"/><line x1="37.31" y1="-1.69" x2="20.69" y2="-18.31"/><line x1="1.69" y1="37.31" x2="18.31" y2="20.69"/><line x1="-37.31" y1="1.69" x2="-20.69" y2="18.31"/></g></mask>
-  </defs>
-  <circle r="58" fill="#FFFFFF"/>
-  <circle r="62.4" fill="none" stroke="#FFCD00" stroke-width="2.8"/>
-  <circle r="58" fill="none" stroke="#00308F" stroke-width="6"/>
-  <path d="M0 -39.0L39.0 0L0 39.0L-39.0 0Z" fill="none" stroke="#00308F" stroke-width="8.0" mask="url(#cut-diamond)"/>
-  <path d="M-29.0 -29.0H29.0V29.0H-29.0Z" fill="none" stroke="#00308F" stroke-width="8.0" mask="url(#cut-frame)"/>
-  <path d="M272 461Q371 461 429.0 397.0Q487 333 487 233Q487 129 427.5 59.5Q368 -10 266 -10Q197 -10 143 33Q143 12 144.0 -29.0Q145 -70 145 -90Q145 -174 134 -221H50Q51 -212 54.5 -195.0Q58 -178 60.0 -164.0Q62 -150 62 -137Q62 -83 59.5 24.5Q57 132 57 186Q57 239 69.0 286.5Q81 334 105.5 374.0Q130 414 173.0 437.5Q216 461 272 461ZM262 432Q138 432 138 239Q138 205 146.0 168.5Q154 132 170.0 97.5Q186 63 215.0 41.0Q244 19 281 19Q314 19 337.5 35.5Q361 52 373.0 80.0Q385 108 390.0 136.5Q395 165 395 196Q395 232 389.0 268.5Q383 305 369.5 344.0Q356 383 328.0 407.5Q300 432 262 432Z" fill="#00308F" transform="translate(-10.74 6.30) scale(0.04 -0.04)"/>
+</style></head><body><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="48" height="48" class="logo" aria-hidden="true" focusable="false">
+<title>90-161.Z logo</title>
+<circle cx="256" cy="256" r="248" fill="#00308F"/>
+<circle cx="256" cy="256" r="230" fill="none" stroke="#FFFFFF" stroke-width="8"/>
+<circle cx="256" cy="256" r="174" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-dasharray="2 18" stroke-linecap="round"/>
+<path d="M256.0 82.0 A174 174 0 1 1 87.9 301.0" fill="none" stroke="#FFCD00" stroke-width="20" stroke-linecap="round"/>
+<circle cx="256.0" cy="82.0" r="16" fill="#FFCD00"/>
+<circle cx="87.9" cy="301.0" r="30" fill="#FFCD00"/>
+<path d="M172 153 H303 V190 H340 V359 H172 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+<path d="M314 153 V179 H340 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+<defs>
+<clipPath id="s7">
+<rect x="196" y="212.0" width="120" height="11"/>
+<rect x="196" y="230.8" width="120" height="11"/>
+<rect x="196" y="249.7" width="120" height="11"/>
+<rect x="196" y="268.5" width="120" height="11"/>
+<rect x="196" y="287.3" width="120" height="11"/>
+<rect x="196" y="306.2" width="120" height="11"/>
+<rect x="196" y="325.0" width="120" height="11"/>
+</clipPath>
+</defs>
+<path d="M198.0 212.0 L314.0 212.0 L314.0 223.0 L238.0 325.0 L314.0 325.0 L314.0 336.0 L198.0 336.0 L198.0 325.0 L274.0 223.0 L198.0 223.0 Z" fill="#00308F" clip-path="url(#s7)"/>
 </svg><div><h1 id="ht">90-161.Z tasks</h1><p class="sub">RADE rounds and by-hand steps, newest first</p></div><div class="count" id="hc" aria-live="polite"></div></div></header><main id="m"><p class="mut">Loading…</p></main>
 <script>
 (function(){
