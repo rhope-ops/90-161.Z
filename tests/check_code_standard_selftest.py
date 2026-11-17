@@ -171,5 +171,16 @@ def self_test_edges(cs, root, g, config):
     v = cs.measure(config)['violations']
     assert {'q.ps1::Outer', 'q.ps1::Plain'} <= set(v['comment']), 'help must be the function own: %s' % v['comment']
     assert 'r.py::outer2' not in v['comment'], 'an outer comment before a blank line counts: %s' % v['comment']
-    for f in ('m.js', 'n.py', 'o.ps1', 'p.sh', 'q.ps1', 'r.py'):
+    (root / 's.js').write_text('// Sample JavaScript file: a long signature, for the self-test only.\n\n'
+                               'function k(\n' + '  a,\n' * 12 + ') {\n  return 1;\n}\n')
+    (root / 't.ps1').write_text('<#\n  Sample PowerShell file: a block comment first in the body, for the self-test only.\n#>\n\n'
+                                'function Blk {\n  <# Does a thing. #>\n  1\n}\n')
+    (root / 'u.py').write_text('"""Sample module: a decorated nested def, for the self-test only."""\n\n\n'
+                               'def deco(f):\n    # Wraps f.\n    @staticmethod\n    def w():\n        return f\n    return w\n')
+    g('add', '.')
+    v = cs.measure(config)['violations']
+    assert 's.js::k' in v['comment'], 'a long JS signature is still a function: %s' % v['comment']
+    assert 't.ps1::Blk' not in v['comment'], 'a first-line block comment counts: %s' % v['comment']
+    assert 'u.py::deco' in v['comment'], 'a comment above a nested decorator is not the outer one: %s' % v['comment']
+    for f in ('m.js', 'n.py', 'o.ps1', 'p.sh', 'q.ps1', 'r.py', 's.js', 't.ps1', 'u.py'):
         (root / f).unlink()

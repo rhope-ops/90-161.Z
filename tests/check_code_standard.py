@@ -173,7 +173,7 @@ def python_functions(text):
                 first = child.body[0].lineno if child.body else child.lineno + 1
                 lead = [x.strip() for x in lines[child.lineno:first - 1]]   # lines before the first statement
                 if child.body and isinstance(child.body[0], (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                    while lead and lead[-1].startswith('#'):
+                    while lead and lead[-1].startswith(('#', '@')):
                         lead.pop()   # comment lines that touch a nested def are that def's comment
                 inner = bool(ast.get_docstring(child)) or any(x.startswith('#') for x in lead) \
                     or lines[child.lineno - 1].split(':', 1)[-1].strip().startswith('#')
@@ -203,7 +203,7 @@ foreach ($path in [Console]::In.ReadToEnd().Split("`n")) {
     $brace = 0; if ($e -gt $s + 1 -and $lines[$s].Trim() -eq '{') { $brace = 1 }   # `{` on its own line after `function`
     $body = $f.Body.Extent; $first = $body.StartLineNumber + 1; $last = $body.EndLineNumber - 1   # the help is first or last in the body
     $inside = @($help | Where-Object { $_[0] -ge $body.StartLineNumber -and $_[1] -le $body.EndLineNumber -and ($_[0] -eq $first -or $_[1] -eq $last) }).Count -gt 0
-    $list += @{ name = $f.Name; start = $s; end = $e; inner = $inside -or (($e -gt $s + 1 + $brace) -and $lines[$s + $brace].Trim().StartsWith('#')) }
+    $list += @{ name = $f.Name; start = $s; end = $e; inner = $inside -or (($e -gt $s + 1 + $brace) -and $lines[$s + $brace].Trim() -match '^<?#') }
   }
   # A script block kept in a variable or a hashtable key ($ui.Say = { ... }) is a function too: the window code uses
   # them. Any other script block (an argument, such as $b.Add_Click({ ... })) is measured for its length only.
@@ -212,7 +212,7 @@ foreach ($path in [Console]::In.ReadToEnd().Split("`n")) {
     if ($p -is [System.Management.Automation.Language.PipelineAst]) { $p = $p.Parent }
     $s = $b.Extent.StartLineNumber; $e = $b.Extent.EndLineNumber
     if ($p -is [System.Management.Automation.Language.AssignmentStatementAst]) {
-      $list += @{ name = $p.Left.Extent.Text; start = $s; end = $e; inner = ($e -gt $s + 1) -and $lines[$s].Trim().StartsWith('#') }
+      $list += @{ name = $p.Left.Extent.Text; start = $s; end = $e; inner = ($e -gt $s + 1) -and $lines[$s].Trim() -match '^<?#' }
     } elseif ($e - $s -ge 2) {
       $call = ($b.Parent.Extent.Text -split "`n")[0]; $call = $call.Substring(0, [math]::Min(40, $call.Length)).Trim()
       $blocks += @{ name = '{block in ' + $call + '}'; start = $s; end = $e }
@@ -268,7 +268,7 @@ def brace_functions(text, pattern, comment_mark):
         arrow = '=>' in line and m.lastindex == 2   # `const f = (...) =>`: its body must open on this line or the next
         depth, end, opened = 0, i, False
         for j in range(i, len(lines)):
-            if not opened and (j > i + 1 if arrow else j > i + 10):
+            if not opened and (j > i + 1 if arrow else (j > i + 10 and not re.search(r'\bfunction\b', line))):
                 break   # no body opens: not a function (an arrow's body opens on its line or the next)
             depth, opened = count_braces(lines[j], depth, opened, comment_mark)
             if opened and depth <= 0:
