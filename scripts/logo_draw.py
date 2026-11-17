@@ -68,7 +68,7 @@ def refuse_unsupported(el, tag):
     if extra:
         raise SystemExit('logo_draw: attribute(s) %s on <%s> are not supported' % (sorted(extra), tag))
     d = el.get('d', '').upper()
-    if d.count('M') > 1 or ('Z' in d and d.rstrip()[-1:] != 'Z'):
+    if d.count('M') > 1 or d.count('Z') > 1 or ('Z' in d and d.rstrip()[-1:] != 'Z'):
         raise SystemExit('logo_draw: a path must be one sub-path (one M, and Z only as the last command)')
     if el.get('stroke', 'none') != 'none':
         open_end = (tag == 'path' and 'Z' not in d) or bool(el.get('stroke-dasharray'))   # a stroke with free ends
