@@ -6,10 +6,13 @@
     "accentFill (AF yellow) only as a fill under ink text, or as text on primary; never text or thin lines on white (1.42:1)",
     "warning (dark orange) for gates, cautions and step numbers; 5.43:1 on white",
     "red, amber and green only for status and risk levels, one meaning each",
+    "navy is the rail, the focus ring and headline color of the PFM window (T22 r2); track is the not-done part of the step bar (RADE shared UI file Track)",
     "every text pair meets WCAG 2.1 AA (4.5:1, or 3:1 for large text and UI parts); tests/check_palette.py measures it"
   ],
   "tokens": {
     "primary": "00539F",
+    "navy": "0B2545",
+    "track": "7F93A8",
     "onPrimary": "FFFFFF",
     "onPrimaryMuted": "DDE8F3",
     "accentFill": "FFD520",
@@ -36,6 +39,9 @@
     ["onAccentFill", "accentFill", 4.5], ["primary", "white", 4.5], ["primary", "surface", 4.5],
     ["warning", "white", 4.5], ["warning", "surface", 4.5], ["ink", "white", 4.5], ["ink", "surface", 4.5],
     ["muted", "white", 4.5], ["muted", "surface", 4.5], ["red", "white", 4.5], ["amber", "white", 4.5], ["green", "white", 4.5],
-    ["red", "redTint", 3.0], ["amber", "amberTint", 3.0], ["green", "greenTint", 3.0], ["grey", "greyTint", 3.0]
+    ["red", "redTint", 3.0], ["amber", "amberTint", 3.0], ["green", "greenTint", 3.0], ["grey", "greyTint", 3.0],
+    ["navy", "white", 4.5], ["navy", "surface", 4.5], ["white", "navy", 4.5], ["onPrimaryMuted", "navy", 4.5],
+    ["ink", "redTint", 4.5], ["ink", "amberTint", 4.5], ["ink", "greenTint", 4.5],
+    ["navy", "white", 3.0], ["navy", "accentFill", 3.0], ["muted", "white", 3.0], ["primary", "white", 3.0], ["track", "white", 3.0]
   ]
 }
