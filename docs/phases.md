@@ -50,6 +50,19 @@ A round holds only steps that test something not yet verified (PFM, 2026-11-14).
 - Excel (same side chat): REC only for reports and print layouts, as a workbook connected to the lists; not as the app (every person who opens the file sees every row; macros are likely blocked). The R27 look probe says whether Office Scripts exist. A decision for the PFM after R27.
 - REC, not in a round before the pilot: the weekly digest, the setup intake and the Task 9 e-Publishing reader (in the pilot); the 107 "Renderer gap" and 152 Partial coverage rows (triage by the PFM, cloud work); Task 7 Part A with fake seals (drop: the real seals passed in R13); rights row S14 (after the pilot).
 
+## Code standard refactor
+
+Plan for the code-standard debt (docs/code-standard.md; the PFM, 2026-11-17: new code meets the rules, old files shrink by the ratchet). Each stage is an agent **REC** for order; it rides in the round that already changes those files, so it adds no extra round. Exit check of every stage: `python3 scripts/code_standard.py` gives `CODE-STANDARD pass` with a lower baseline in the same pull request; a stage that changes gov-device code also passes its round.
+
+| Stage | What | Debt it removes (17 Nov 26 counts) | Rides with |
+|---|---|---|---|
+| S0 | Done in this change: kit checker ported, C2 full and C1 safety on, first lists adopted | — (starting debt: comment 173, length 9, file size 6, duplicate 9, full docs 211, safety lines 73) | — |
+| S1 | Split the T22 window (1,402 lines), the T21 probe (789) and New-Publication.ps1 (638) into modules under the cap; move the 9 duplicate helpers into `scripts/gov/src/`; full docs and safety lines in every `scripts/gov` file touched | file size 3, duplicate 9, and the comment, full-docs and safety items of those files | R30 (already planned in docs/NEXT_PROMPT.md) |
+| S2 | Full docs and safety lines in the build scripts (`scripts/build_*.py`, `templates/*.js`) | their comment, full-docs and safety items | the next change to each script |
+| S3 | Split `tests/run.sh` (694 lines) by test group | file size 1 | the next test change |
+| S4 | Run-time logo: drop the base64 PNG blocks, `scripts/logo_png.py` and the PNG part of `scripts/logo_draw.py` (spec: rhope-ops/RADE docs/specs/run-time-logo.md, Draft) | — (bundle about 72 KB smaller) | the first round on the RADE release that draws the logo |
+| Kit | `scripts/pii_guard.py` (1,218) and `scripts/bloat_check.py` (847): the kit already split them (rhope-ops/archimedes_lever pull request 34); port by hand | file size 2 | a kit port pull request |
+
 ## The PFM's decisions the rounds wait for
 
 | Before | Decision |
