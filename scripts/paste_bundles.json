@@ -26,7 +26,7 @@
     {
       "out": "scripts/gov/paste/90161Z-R28-round-r1.ps1",
       "round": "R28",
-      "title": "Round R28 r1: RADE Start button and desktop icon, probe retry (health flow, button trigger), T4 retry, the PFM window r2",
+      "title": "Round R28 r1: RADE Start button and desktop icon, probe retry (health flow, button trigger), T4 retry, the PFM window r2, the full flow solution",
       "files": [
         {
           "dir": "T17",
@@ -47,6 +47,14 @@
         {
           "dir": "T22",
           "src": "scripts/gov/90161Z-T22-pfm-window-r2.ps1"
+        },
+        {
+          "dir": "T24",
+          "src": "scripts/gov/90161Z-T24-full-solution-test-r1.ps1"
+        },
+        {
+          "dir": "T24",
+          "src": "flow/solution/90161Z-T24-full-flows-r1.zip"
         }
       ],
       "steps": [
@@ -718,6 +726,267 @@
           "doneLog": "Confirmed by you: judged keys, Narrator and contrast."
         },
         {
+          "name": "T24 Import the full solution r1: choose the file",
+          "kind": "guide",
+          "dir": "T24",
+          "file": "90161Z-T24-full-flows-r1.zip",
+          "note": "You start the import of the full 90-161.Z flows (F01 to F06, every flow On). The next step finishes it. About 4 minutes (estimate).",
+          "guide": [
+            "1. On this RADE card, select \"Open in browser\".",
+            "2. If Power Automate asks you to sign in: sign in with your CAC.",
+            "3. On the left, select Solutions (it can be under More).",
+            "4. Select \"Import solution\".",
+            "5. Select Browse.",
+            "6. Select the box \"File name\".",
+            "7. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
+            "8. Select Open.",
+            "9. Select Next.",
+            "If the page refuses the file: select \"It failed\" and type the first red line (no names)."
+          ],
+          "marker": "90161Z-T24-file-chosen.txt",
+          "doneText": "Done: file chosen",
+          "needs": [
+            "net-flow",
+            "flow-guide"
+          ],
+          "estimate": 4,
+          "doneLog": "Confirmed by you: chose the file.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
+        },
+        {
+          "name": "T24 Import the full solution r1: finish",
+          "kind": "guide",
+          "dir": "T24",
+          "file": "",
+          "note": "You finish the import of the full flows. It upgrades the flows you imported in R27. About 5 minutes (estimate).",
+          "guide": [
+            "1. If the page says the solution already exists: select Upgrade.",
+            "2. If the page shows connection boxes: in each box, select your existing connection.",
+            "3. If a box has no connection: select \"New connection\" in that box.",
+            "4. If a sign-in window opens: sign in with your CAC.",
+            "5. If you made a connection: select Refresh in the browser tab of the import.",
+            "6. Select Next.",
+            "7. If the box \"1 Site URL\" is empty: type the test site address (shown in RADE as \"Site address\").",
+            "8. If the box \"2 Alert e-mail\" is empty: type your own work e-mail address.",
+            "9. Select Import.",
+            "10. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "If the import fails: select \"Download log file\", then \"It failed\", then type the first red line."
+          ],
+          "marker": "90161Z-T24-imported.txt",
+          "doneText": "Done: imported",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 5,
+          "after": [
+            "T24 Import the full solution r1: choose the file"
+          ],
+          "doneLog": "Confirmed by you: imported the full solution."
+        },
+        {
+          "name": "T24 Turn on all 6 flows r1",
+          "kind": "guide",
+          "dir": "T24",
+          "file": "",
+          "note": "You check that all 6 flows F01 to F06 read On and turn on any that do not. About 3 minutes (estimate).",
+          "guide": [
+            "1. On this RADE card, select \"Open in browser\".",
+            "2. On the left, select Solutions (it can be under More).",
+            "3. Select the solution \"90-161.Z flows\".",
+            "4. Look at the Status column: the 6 flows F01 to F06 must read On.",
+            "5. If a flow reads Off: select that flow.",
+            "6. If you selected a flow: select \"Turn on\".",
+            "If a flow will not turn on: select \"It failed\" and type the first line of the message."
+          ],
+          "marker": "90161Z-T24-flows-on.txt",
+          "doneText": "Done: all On",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 3,
+          "after": [
+            "T24 Import the full solution r1: finish"
+          ],
+          "answers": [
+            {
+              "key": "f03-state",
+              "prompt": "Before you changed anything, what did F03 read after the import?",
+              "kind": "pick",
+              "choices": [
+                "On",
+                "Off",
+                "I did not look"
+              ]
+            }
+          ],
+          "doneLog": "Confirmed by you: all flows On.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
+        },
+        {
+          "name": "T24 Full solution test, part 1 r1",
+          "dir": "T24",
+          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "args": "-Part 1",
+          "minutes": 40,
+          "note": "Signs in (CAC). Writes the PFM Settings rows (Test mode Yes) and fake rows; checks F01, then prepares F02 and F04. About 15 minutes (estimate).",
+          "estimate": 15,
+          "help": "Send the results as they are. A FAIL here is a finding about a flow.",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "after": [
+            "T24 Turn on all 6 flows r1"
+          ]
+        },
+        {
+          "name": "T24 Run F02 once and F04 once r1",
+          "kind": "guide",
+          "dir": "T24",
+          "file": "",
+          "note": "You run F02 once and F04 once by hand. F04 sends one test e-mail to you. About 5 minutes (estimate).",
+          "guide": [
+            "1. On this RADE card, select \"Open in browser\".",
+            "2. On the left, select Solutions (it can be under More).",
+            "3. Select the solution \"90-161.Z flows\".",
+            "4. Select the flow \"90161Z F02 Next Review Due r3\".",
+            "5. Select Run at the top.",
+            "6. If a panel asks you to continue: select Continue.",
+            "7. Select the flow \"90161Z F04 Status Report r2\".",
+            "8. Select Run at the top.",
+            "9. In the box for the recipient, type your own work e-mail address.",
+            "10. Select \"Run flow\".",
+            "Wait about 2 minutes for both runs to end, then select Done."
+          ],
+          "marker": "90161Z-T24-ran-f02-f04.txt",
+          "doneText": "Done: both ran",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 5,
+          "after": [
+            "T24 Full solution test, part 1 r1"
+          ],
+          "doneLog": "Confirmed by you: ran F02 and F04.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
+        },
+        {
+          "name": "T24 Full solution test, part 2 r1",
+          "dir": "T24",
+          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "args": "-Part 2",
+          "minutes": 20,
+          "note": "Signs in (CAC). Checks what F02 and F04 did: review dates, review rows and the status-report log row. About 4 minutes (estimate).",
+          "estimate": 4,
+          "help": "Send the results as they are. A FAIL here is a finding about a flow.",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "after": [
+            "T24 Run F02 once and F04 once r1"
+          ]
+        },
+        {
+          "name": "T24 Find the F04 e-mail r1",
+          "kind": "guide",
+          "dir": "T24",
+          "file": "",
+          "note": "You look for the F04 test e-mail and answer 3 questions. About 3 minutes (estimate).",
+          "guide": [
+            "1. Open Outlook (on this computer or in the browser).",
+            "2. Select the Inbox.",
+            "3. Look for an e-mail whose subject starts with \"TEST MODE\".",
+            "4. Open that e-mail.",
+            "5. Look at the tables in it: each one starts with the word \"Step\" and a number.",
+            "6. Look at the To line."
+          ],
+          "marker": "90161Z-T24-email-looked.txt",
+          "doneText": "Done: I looked",
+          "estimate": 3,
+          "after": [
+            "T24 Full solution test, part 2 r1"
+          ],
+          "answers": [
+            {
+              "key": "f04-found",
+              "prompt": "Where is the F04 e-mail whose subject starts with TEST MODE?",
+              "kind": "pick",
+              "choices": [
+                "Inbox",
+                "Junk Email",
+                "Not found"
+              ]
+            },
+            {
+              "key": "f04-tables",
+              "prompt": "Does it show 2 or more tables, each headed Step and a number?",
+              "kind": "yesno"
+            },
+            {
+              "key": "f04-to",
+              "prompt": "Is the To line the alert address you typed (your own address)?",
+              "kind": "yesno"
+            }
+          ],
+          "doneLog": "Confirmed by you: looked at the F04 e-mail."
+        },
+        {
+          "name": "T24 Run F02 again r1",
+          "kind": "guide",
+          "dir": "T24",
+          "file": "",
+          "note": "You run F02 a second time, so the next step can check that it made no second review row. About 2 minutes (estimate).",
+          "guide": [
+            "1. On this RADE card, select \"Open in browser\".",
+            "2. On the left, select Solutions (it can be under More).",
+            "3. Select the solution \"90-161.Z flows\".",
+            "4. Select the flow \"90161Z F02 Next Review Due r3\".",
+            "5. Select Run at the top.",
+            "6. If a panel asks you to continue: select Continue.",
+            "Wait about 2 minutes for the run to end, then select Done."
+          ],
+          "marker": "90161Z-T24-f02-again.txt",
+          "doneText": "Done: F02 ran",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 2,
+          "after": [
+            "T24 Find the F04 e-mail r1"
+          ],
+          "doneLog": "Confirmed by you: ran F02 again.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
+        },
+        {
+          "name": "T24 Full solution test, part 3 r1",
+          "dir": "T24",
+          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "args": "-Part 3",
+          "minutes": 20,
+          "note": "Signs in (CAC). Checks that F02's second run made no second review row, removes every fake row (site Recycle Bin) and puts PFM Settings back. About 3 minutes (estimate).",
+          "estimate": 3,
+          "help": "Send the results as they are. A FAIL here is a finding about a flow.",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "after": [
+            "T24 Run F02 again r1"
+          ]
+        },
+        {
           "name": "T21 Read the test results r4",
           "dir": "T21",
           "file": "90161Z-T21-probe-r4.ps1",
@@ -845,6 +1114,21 @@
           "dir": "T22",
           "name": "90161Z-T22-window-r2.txt",
           "step": "T22 Open the 90-161.Z window r2"
+        },
+        {
+          "dir": "T24",
+          "name": "90161Z-T24-full-test-part1-r1.txt",
+          "step": "T24 Full solution test, part 1 r1"
+        },
+        {
+          "dir": "T24",
+          "name": "90161Z-T24-full-test-part2-r1.txt",
+          "step": "T24 Full solution test, part 2 r1"
+        },
+        {
+          "dir": "T24",
+          "name": "90161Z-T24-full-test-part3-r1.txt",
+          "step": "T24 Full solution test, part 3 r1"
         }
       ],
       "cleanup": [
@@ -1461,7 +1745,7 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R28 r1: the probe retry, the second person (T4), the PFM window r2 and the RADE frame answers. Fake data.",
+          "summary": "Test round R28 r1: probe retry, second person (T4), PFM window r2, full flow solution (F01 to F06) and RADE frame answers. Fake data.",
           "steps": [
             "T21 Remove the R27 person, list and library",
             "T21 Remove the R27 probe solution",
@@ -1486,6 +1770,15 @@
             "T22 Open the 90-161.Z window r2",
             "T22 Answer: look and cards",
             "T22 Answer: keys, Narrator and contrast",
+            "T24 Import the full solution r1: choose the file",
+            "T24 Import the full solution r1: finish",
+            "T24 Turn on all 6 flows r1",
+            "T24 Full solution test, part 1 r1",
+            "T24 Run F02 once and F04 once r1",
+            "T24 Full solution test, part 2 r1",
+            "T24 Find the F04 e-mail r1",
+            "T24 Run F02 again r1",
+            "T24 Full solution test, part 3 r1",
             "T21 Read the test results r4",
             "T21 Remove the person, list and library r4",
             "T21 Remove the probe solutions r4"
