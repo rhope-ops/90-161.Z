@@ -24,9 +24,9 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R29a-round-r1.ps1",
+      "out": "scripts/gov/paste/90161Z-R29a-round-r2.ps1",
       "round": "R29a",
-      "title": "Round R29a r1: the R28 fixes (health flow, export reader, import cards), the new site logo, the second person and the full flow test",
+      "title": "Round R29a r2: the R28 fixes (health flow, export reader, import cards), the new site logo, the second person and the full flow test",
       "files": [
         {
           "dir": "T17",
@@ -1792,7 +1792,7 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R29a r1: clean-site check, new site logo, health flow, button flow export, second person and the full flows. Fake data.",
+          "summary": "Round R29a r2: clean-site check, new site logo, health flow, button flow export, second person and the full flows. Fake data.",
           "steps": [
             "T21 Check the test site is clean r5",
             "T16 Site logo r12: thumbnail",
@@ -1834,9 +1834,9 @@
       ]
     },
     {
-      "out": "scripts/gov/paste/90161Z-R29b-round-r1.ps1",
+      "out": "scripts/gov/paste/90161Z-R29b-round-r2.ps1",
       "round": "R29b",
-      "title": "Round R29b r1: the 90-161.Z window with its 12 checks inside the window",
+      "title": "Round R29b r2: the 90-161.Z window with its 12 checks inside the window",
       "files": [
         {
           "dir": "T22",
@@ -2564,7 +2564,7 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R29b r1: the 90-161.Z window with fake data and its 12 checks, then 3 questions on its look. Fake data.",
+          "summary": "Round R29b r2: the 90-161.Z window with fake data and its 12 checks, then 3 questions on its look. Fake data.",
           "steps": [
             "T22 Open the 90-161.Z window r3",
             "T22 Answer: look and cards"
