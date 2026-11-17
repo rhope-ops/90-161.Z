@@ -1,5 +1,5 @@
 <!-- 90-161.Z logo, master copy (the PFM, 2026-11-17: W2 Flap 26; design canvas https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU round 9).
-     Rho Bold frame and colors: Air Force Blue #00308F disc, white ring, yellow #FFCD00 route arc. Yellow never touches white.
+     Rho Bold frame and colors: Air Force Blue #00308F disc, white ring, yellow #FFCD00 route arc. Yellow never sits on the white page (1.5:1).
      PNGs: node scripts/build_logo.js (written to assets/logo/build/, not committed). -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="90-161.Z logo">
 <title>90-161.Z logo</title>

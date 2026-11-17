@@ -1,7 +1,7 @@
 // Renders assets/logo/90161Z-logo.svg (the master copy; the PFM, 2026-11-17) to PNGs in assets/logo/build/ (git-ignored).
 // Sizes: 512 (site logo and thumbnail), 192 and 128 (app and window), 64, 32 and 16 (icons). Transparent outside the disc.
 // The PNGs are not committed: the personal-data guard does not scan .png files. Change the SVG, never a PNG.
-// Run: node scripts/build_logo.js [out-dir]
+// Run: node scripts/build_logo.js [out-dir]. Needs Playwright with Chromium (preinstalled in cloud sessions; no package.json).
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
