@@ -31,7 +31,7 @@ Updated: 2026-11-17 by Claude (R29 r3 on engine-v12; code standard; 90-161.Z log
 
 ## Next
 
-- Code standard (PFM 17 Nov 26; docs/code-standard.md): R30 build refactors scripts/gov to it (77 uncommented functions, T22 1,473 lines, T21 789, New-Publication 638, 9 duplicate helpers). The lock is on RADE engine-v12 (c1da1e1). Split a round over 600 KB. Kit files: the kit fixes them (port later).
+- Code standard (PFM 17 Nov 26; docs/code-standard.md links the RADE standard): scripts/code_standard.py (kit port) with .code-standard.json; C2 full and C1 safety on (debt: comment 90, length 2, file size 4, duplicate 9, full docs 244, safety lines 78). Refactor stages S1-S4: docs/phases.md "Code standard refactor" (S1 rides in R30). The lock is on RADE engine-v12 (c1da1e1). Split a round over 600 KB.
 - Round build speed (PFM 15 Nov): the steps are in `.claude/skills/round/SKILL.md` section 0. Agent REC, not a decision: target about 60 min for a round build with no engine change. R27 r1 (full scope, 2 Sonnet workers, 3 fresh reviews): 55 min, 00:12 to 01:07 UTC (pull request 110). Open from its reviews (MINOR): T23 --check counts parts by the same fixed format; masking misses double-encoded and full-width @; untested Person paths (kept record, person gone; different person after WasMember=yes). Time record of the R25 session: the audit 3 report, section 1.
 - Roadmap (PFM 15 Nov): phase states, exit criteria and the rounds from R24 to the pilot are in docs/phases.md (round order approved by the PFM, 1A; exit criteria and estimate = agent REC; evidence docs/reviews/2026-11-15-roadmap-evidence.md). Slice 1 passed in R22; both holds of 14 Nov are lifted (PFM 15 Nov). Not built: the endorser-answer app flow.
 ## Do not

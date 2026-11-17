@@ -1,38 +1,42 @@
 #!/usr/bin/env python3
 """Code standard check: measures every source file of this repo against docs/code-standard.md and fails on new debt.
 
-Why: the Administrator/PFM, 2026-11-17: all code is modular, clearly commented and human inspectable, and stays so as
-work continues. A written rule alone is not always obeyed, so this check fails a push or a pull request instead.
+Why: the owner, 2026-11-17: all code is lean, modular, commented and human-editable, and stays so as work continues.
+A written rule alone is not always obeyed, so this check fails a push or a pull request instead. The kit owns this
+file; a project gets it by sync and keeps its own settings (and stricter rules) in its baseline file.
 
 What it measures (the rule numbers are those of docs/code-standard.md):
   C1 header      each source file starts with a header comment that says what the file is for
-  C2 comment     each function has a comment: Python docstring, PowerShell comment-based help, or a comment line
-                 directly above it or as the first line of its body
+  C1 safety      opt-in ("c1_safety": true): the header also has the lines Network:, Writes: and Credentials:
+  C2 comment     each function has a comment: a docstring, comment-based help, or a comment line directly above it
+                 or as the first line of its body (one line is enough)
+  C2 full        opt-in ("c2": "full" in the baseline config): a function longer than 10 lines also documents each
+                 parameter and its return value in its language's help form (scripts/code_standard_docs.py)
   C3 length      each function is at most `max_function_lines` lines long
   C4 file size   each source file is at most `max_file_lines` lines long
   C5 duplicate   no two functions in hand-written files have the same body (a copy must be generated, with a banner)
   C6 generated   each generated file says GENERATED near its top and names its source
-  C10 parse      each PowerShell file parses (the PowerShell parser reports no error)
+  C10 parse      each Python and PowerShell file parses
 A comment that is the file header, or a divider line ("# ----", "# ===="), does not count as a function's comment.
 A script block passed as an argument ($b.Add_Click({ ... })) is measured for C3 too, named by the call it is in.
-The ratchet: tests/code-standard-baseline.json lists the debt that existed when the standard started. A violation that
-is not in that list fails. A listed function that grew fails. A listed item that is fixed fails too, until the baseline
-is lowered in the same change (`--update`), so the list can only shrink and always matches the code. The baseline
-itself is compared with the one on the merge base with origin/main: an added item, a raised value or a changed
-"config" fails, unless the same change adds a row to docs/DECISIONS.md that names tests/code-standard-baseline.json
-(a cap or scope change is the owner's decision).
+The ratchet: .code-standard.json lists the debt that existed when the standard started. A violation that is not in
+that list fails. A listed function that grew fails. A listed item that is fixed fails too, until the baseline is
+lowered in the same change (`--update`), so the list can only shrink and always matches the code. The baseline itself
+is compared with the one on the merge base with origin/main: an added item, a raised value or a changed "config"
+fails, unless the same change adds a row to docs/DECISIONS.md that names .code-standard.json (the owner's decision).
 
 Inputs:  the files git tracks (git ls-files -z): files with a known extension, and files with no extension whose first
          line is a shell or Python shebang (for example scripts/git-hooks/pre-push); filtered by the baseline "config".
 Outputs: one line per problem, then `CODE-STANDARD pass` or `CODE-STANDARD fail`; exit 0 or 1.
-Usage:   python3 tests/check_code_standard.py            check (scripts/check.local.sh runs it in both lanes)
-         python3 tests/check_code_standard.py --report   print every measurement (function lengths, comments)
-         python3 tests/check_code_standard.py --update   lower the baseline to the debt that is left; refuses when
-                                                          there is new debt (fix it instead)
-         python3 tests/check_code_standard.py --self-test  prove the check on a small sample repo
-Needs:   Python 3.8+, git, and pwsh 7 for the PowerShell files (the PowerShell parser gives the function list).
-This file is the same in rhope-ops/RADE and rhope-ops/90-161.Z; each repo's settings are in its baseline file.
+Usage:   python3 scripts/code_standard.py            check (scripts/check.sh runs it in both lanes)
+         python3 scripts/code_standard.py --report   print every measurement (function lengths, comments)
+         python3 scripts/code_standard.py --update   lower the baseline to the debt that is left; refuses new debt
+         python3 scripts/code_standard.py --adopt    add the debt of a rule the baseline does not list yet (a rule just
+                                                     turned on, such as "c2": "full"); needs a DECISIONS row
+         python3 scripts/code_standard.py --test     prove the check on small sample repos (scripts/code_standard_test.py)
+Needs:   Python 3.8+, git, and pwsh 7 only when the repo has PowerShell files (the parser gives the function list).
 """
+
 import argparse
 import ast
 import fnmatch
@@ -44,16 +48,24 @@ import subprocess
 import sys
 from pathlib import Path
 
+import code_standard_docs as docs   # scripts/code_standard_docs.py: the opt-in C2 full rule
+
 ROOT = Path(__file__).resolve().parent.parent
-BASELINE = ROOT / 'tests' / 'code-standard-baseline.json'
+BASELINE_NAME = '.code-standard.json'   # the ratchet file, at the top of the repo
+BASELINE = ROOT / BASELINE_NAME
 LANGS = {'.py': 'python', '.ps1': 'powershell', '.psm1': 'powershell', '.js': 'js', '.mjs': 'js', '.cjs': 'js', '.sh': 'shell'}
 DIVIDER = re.compile(r'^\s*(#|//)\s*(-{4,}|={4,})')   # a section line, not a function's comment
 MIN_HEADER_CHARS = 60      # a header shorter than this does not say what the file is for
+SAFETY_LABELS = ('Network:', 'Writes:', 'Credentials:')   # C1 safety: what a reviewer must find before a run
+# The opt-in rules: the debt kind of each and the config test that turns it on. Only these can be adopted later.
+OPT_IN = {'docs': lambda c: c.get('c2') == 'full', 'safety': lambda c: bool(c.get('c1_safety'))}
 MIN_DUP_LINES = 4          # a body this short (a one-line wrapper) is not counted as a duplicate
-# A block between these two marker lines is a generated copy of a shared source (90-161.Z scripts/build_task_scripts.py):
+# A block between these two marker lines is a generated copy of a shared source (for example a task script bundle):
 # its functions are measured once, in the source, so C2, C3 and C5 skip them here.
 BLOCK_BEGIN = re.compile(r'^\s*# >>> ([\w-]+): generated from ')
 BLOCK_END = '# <<< '
+# The kit's caps and scope (docs/code-standard.md C3, C4), used by --init when a repo has no baseline yet.
+DEFAULT_CONFIG = {'caps': {'max_file_lines': 600, 'max_function_lines': 60}, 'exclude': [], 'generated': [], 'include': ['*']}
 
 
 # ---------------------------------------------------------------- file list -----------------------------------------
@@ -190,6 +202,14 @@ def python_functions(text):
 PS_SCRIPT = r'''
 $ErrorActionPreference = 'Stop'
 $out = @{}
+$full = $env:CODE_STANDARD_FULL -eq '1'   # C2 full is on: read the help of each function longer than 10 lines
+# Doc facts for the opt-in C2 full rule: the parameter names and what the comment-based help documents.
+function Get-DocFacts($node, $help) {
+  $ps = @(); if ($node.Parameters) { $ps = @($node.Parameters) } elseif ($node.Body -and $node.Body.ParamBlock) { $ps = @($node.Body.ParamBlock.Parameters) } elseif ($node.ParamBlock) { $ps = @($node.ParamBlock.Parameters) }
+  $names = @($ps | ForEach-Object { $_.Name.VariablePath.UserPath })
+  $documented = @(); if ($help -and $help.Parameters) { $documented = @($help.Parameters.Keys) }
+  return @{ params = $names; help = $documented; synopsis = [bool]($help -and ($help.Synopsis -or $help.Description)) }
+}
 foreach ($path in [Console]::In.ReadToEnd().Split("`n")) {
   if (-not $path.Trim()) { continue }
   $tokens = $null; $errors = $null
@@ -203,7 +223,7 @@ foreach ($path in [Console]::In.ReadToEnd().Split("`n")) {
     $brace = 0; if ($e -gt $s + 1 -and $lines[$s].Trim() -eq '{') { $brace = 1 }   # `{` on its own line after `function`
     $body = $f.Body.Extent; $first = $body.StartLineNumber + 1; $last = $body.EndLineNumber - 1   # the help is first or last in the body
     $inside = @($help | Where-Object { $_[0] -ge $body.StartLineNumber -and $_[1] -le $body.EndLineNumber -and ($_[0] -eq $first -or $_[1] -eq $last) }).Count -gt 0
-    $list += @{ name = $f.Name; start = $s; end = $e; inner = $inside -or (($e -gt $s + 1 + $brace) -and $lines[$s + $brace].Trim() -match '^<?#') }
+    $list += @{ name = $f.Name; start = $s; end = $e; inner = $inside -or (($e -gt $s + 1 + $brace) -and $lines[$s + $brace].Trim() -match '^<?#'); doc = $(if ($full -and $e - $s -ge 10) { Get-DocFacts $f $f.GetHelpContent() }) }
   }
   # A script block kept in a variable or a hashtable key ($ui.Say = { ... }) is a function too: the window code uses
   # them. Any other script block (an argument, such as $b.Add_Click({ ... })) is measured for its length only.
@@ -212,7 +232,7 @@ foreach ($path in [Console]::In.ReadToEnd().Split("`n")) {
     if ($p -is [System.Management.Automation.Language.PipelineAst]) { $p = $p.Parent }
     $s = $b.Extent.StartLineNumber; $e = $b.Extent.EndLineNumber
     if ($p -is [System.Management.Automation.Language.AssignmentStatementAst]) {
-      $list += @{ name = $p.Left.Extent.Text; start = $s; end = $e; inner = ($e -gt $s + 1) -and $lines[$s].Trim() -match '^<?#' }
+      $list += @{ name = $p.Left.Extent.Text; start = $s; end = $e; inner = ($e -gt $s + 1) -and $lines[$s].Trim() -match '^<?#'; doc = $(if ($full -and $e - $s -ge 10) { Get-DocFacts $b.ScriptBlock $b.ScriptBlock.GetHelpContent() }) }
     } elseif ($e - $s -ge 2) {
       $call = ($b.Parent.Extent.Text -split "`n")[0]; $call = $call.Substring(0, [math]::Min(40, $call.Length)).Trim()
       $blocks += @{ name = '{block in ' + $call + '}'; start = $s; end = $e }
@@ -224,15 +244,16 @@ $out | ConvertTo-Json -Depth 5 -Compress
 '''
 
 
-def powershell_functions(paths):
+def powershell_functions(paths, full=False):
     """Return {path: (functions, blocks, parse errors)} for PowerShell files, from the real PowerShell parser (pwsh).
-    Functions are (name, top, first line, last line, has inner comment, body text): each function (nested ones too)
+    Functions are (name, top, first line, last line, has inner comment, body text, doc facts): each function (nested ones too)
     and each script block assigned to a variable or a hashtable key (named by the left side, for example `$ui.Say`).
     Blocks are (name, first line, last line) of the other script blocks, named by the call they are in."""
     if not paths:
         return {}
+    env = dict(os.environ, CODE_STANDARD_FULL='1' if full else '0')
     run = subprocess.run(['pwsh', '-NoProfile', '-NonInteractive', '-Command', PS_SCRIPT],
-                         input='\n'.join(str(ROOT / p) for p in paths), capture_output=True, text=True)
+                         input='\n'.join(str(ROOT / p) for p in paths), capture_output=True, text=True, env=env)
     if run.returncode != 0:
         raise SystemExit('CODE-STANDARD fail: the PowerShell parser did not run: ' + run.stderr.strip()[:300])
     data = json.loads(run.stdout or '{}')
@@ -241,8 +262,8 @@ def powershell_functions(paths):
         item = data.get(str(ROOT / p), {})
         as_list = lambda x: [x] if isinstance(x, dict) else (x or [])
         lines = (ROOT / p).read_text(encoding='utf-8-sig', errors='replace').split('\n')
-        funcs = [(f['name'], f['start'], f['start'], f['end'], f['inner'], '\n'.join(lines[f['start']:f['end']]))
-                 for f in as_list(item.get('functions'))]
+        funcs = [(f['name'], f['start'], f['start'], f['end'], f['inner'], '\n'.join(lines[f['start']:f['end']]),
+                  f.get('doc')) for f in as_list(item.get('functions'))]
         blocks = [(b['name'], b['start'], b['end']) for b in as_list(item.get('blocks'))]
         errors = item.get('errors') or []
         result[p] = (funcs, blocks, [errors] if isinstance(errors, str) else errors)
@@ -341,7 +362,7 @@ def measure(config):
     files = tracked_files(config)
     generated = [p for p in files if matches(p, config.get('generated', []))]
     source = [p for p in files if p not in generated]
-    ps = powershell_functions([p for p in source if lang_of(p) == 'powershell'])
+    ps = powershell_functions([p for p in source if lang_of(p) == 'powershell'], config.get('c2') == 'full')
     caps = config['caps']
     report, v = {}, {k: {} for k in RULE}
     bodies = {}
@@ -358,11 +379,15 @@ def measure(config):
             v['parse'][p] = len(errors)
         if len(head) < MIN_HEADER_CHARS:
             v['header'][p] = 1
+        if config.get('c1_safety') and not all(x in head for x in SAFETY_LABELS):
+            v['safety'][p] = 1
         if len(lines) > caps['max_file_lines']:
             v['file_size'][p] = len(lines)
         skip = generated_blocks(lines)
         seen = {}
-        for name, top, start, end, inner, body in funcs:
+        full = config.get('c2') == 'full' and not errors
+        py = docs.python_docs(text) if full and lang == 'python' else None
+        for name, top, start, end, inner, body, *extra in funcs:
             if any(a <= start <= b for a, b in skip):
                 continue
             key = unique_key(p, name, seen)
@@ -370,6 +395,10 @@ def measure(config):
             report[p]['functions'].append({'name': name, 'start': start, 'lines': size, 'comment': commented})
             if not commented:
                 v['comment'][key] = 1
+            gaps = docs.missing(lang, lines, (name, top, start, end, inner, body), extra[0] if extra else None, py) if full else []
+            if gaps:
+                v['docs'][key] = 1
+                report[p]['functions'][-1]['docs_missing'] = gaps
             if size > caps['max_function_lines']:
                 v['length'][key] = size
             norm = '\n'.join(x.strip() for x in body.split('\n') if x.strip() and not x.strip().startswith(('#', '//')))
@@ -400,7 +429,9 @@ def unique_key(p, name, seen):
 RULE = {'header': 'C1 no header comment', 'comment': 'C2 function without a comment',
         'length': 'C3 function longer than %d lines', 'file_size': 'C4 file longer than %d lines',
         'duplicate': 'C5 same body as another function', 'generated': 'C6 generated file without a GENERATED banner',
-        'parse': 'C10 PowerShell or Python file that does not parse'}
+        'parse': 'C10 PowerShell or Python file that does not parse',
+        'safety': 'C1 safety: header without the Network:, Writes: and Credentials: lines',
+        'docs': 'C2 full: function without full docs (--report names the missing parts)'}
 
 
 def compare(now, debt, caps):
@@ -430,21 +461,24 @@ def git(*args):
 def against_main(base):
     """Compare this baseline with the one on the merge base with origin/main. Returns (problem lines, note). An item
     added to the debt, a value raised, or a changed "config" is a problem, unless docs/DECISIONS.md gains a line that
-    names tests/code-standard-baseline.json in the same change (the owner's decision)."""
+    names .code-standard.json in the same change (the owner's decision)."""
     mb = git('merge-base', 'HEAD', 'origin/main')
     if mb.returncode != 0:
         if os.environ.get('CI'):
             return ['FAIL  baseline: no merge base with origin/main, so the baseline cannot be compared'], ''
         return [], 'WARN  baseline not compared with main (no origin/main here)'
     ref = mb.stdout.strip()
-    shown = git('show', ref + ':tests/code-standard-baseline.json')
+    shown = git('show', ref + ':' + BASELINE_NAME)
     if shown.returncode != 0:
         return [], 'NOTE  no baseline on main yet: this change starts it'
     old = json.loads(shown.stdout)
-    decided = any(x.startswith('+') and 'code-standard-baseline.json' in x
+    decided = any(x.startswith('+') and BASELINE_NAME in x
                   for x in git('diff', ref, '--', 'docs/DECISIONS.md').stdout.split('\n'))
     problems = []
     for kind, items in base.get('debt', {}).items():
+        if kind in OPT_IN and OPT_IN[kind](base.get('config', {})) and not OPT_IN[kind](old.get('config', {})) \
+                and decided:
+            continue   # an opt-in rule off on main and turned on now (--adopt): its first list is the owner's decision
         was = old.get('debt', {}).get(kind, {})
         for key, value in sorted(items.items()):
             if key not in was:
@@ -453,7 +487,7 @@ def against_main(base):
                 problems.append('FAIL  baseline: %s value raised: %s (%d to %d)' % (kind, key, was[key], value))
     if base.get('config') != old.get('config') and not decided:
         problems.append('FAIL  baseline: "config" (caps or scope) changed with no docs/DECISIONS.md row that names '
-                        'tests/code-standard-baseline.json (a cap or scope change is the owner\'s decision)')
+                        + BASELINE_NAME +' (a cap or scope change is the owner\'s decision)')
     return problems, ''
 
 
@@ -462,26 +496,33 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--report', action='store_true', help='print every measurement as JSON')
     ap.add_argument('--update', action='store_true', help='lower the baseline to the debt that is left')
-    ap.add_argument('--init', action='store_true', help='write the first baseline (only when none has debt yet)')
-    ap.add_argument('--self-test', action='store_true', help='prove the check on a small sample repo')
+    ap.add_argument('--init', action='store_true', help='write the first baseline (only when the repo has none)')
+    ap.add_argument('--adopt', action='store_true', help='add the debt of a rule the baseline does not list yet')
+    ap.add_argument('--test', action='store_true', help='prove the check on small sample repos')
     args = ap.parse_args()
-    if args.self_test:
-        import check_code_standard_selftest   # tests/check_code_standard_selftest.py: kept apart (rule C4)
-        return check_code_standard_selftest.run(sys.modules[__name__])
-    base = json.loads(BASELINE.read_text())
+    if args.test:
+        import code_standard_test   # scripts/code_standard_test.py: kept apart (rule C4)
+        return code_standard_test.run(sys.modules[__name__])
+    existed = BASELINE.exists()
+    if not existed and not args.init:
+        print('CODE-STANDARD fail: no %s; adopt the standard with --init (docs/code-standard.md)' % BASELINE_NAME)
+        return 1
+    base = json.loads(BASELINE.read_text()) if existed else {'config': DEFAULT_CONFIG, 'debt': {}}
     config = base['config']
     m = measure(config)
     if args.report:
         print(json.dumps(m, indent=1))
         return 0
     if args.init:
-        if base.get('debt'):
+        if existed:   # a second --init could write new debt into the list; the baseline only shrinks
             print('CODE-STANDARD fail: a baseline exists; use --update (it can only lower it)')
             return 1
         base['debt'] = m['violations']
         BASELINE.write_text(json.dumps(base, indent=1, sort_keys=True) + '\n')
         print('CODE-STANDARD baseline written: %s' % summary(m['violations']))
         return 0
+    if args.adopt:
+        return adopt(base, m['violations'])
     new, fixed = compare(m['violations'], base.get('debt', {}), config['caps'])
     hand, note = against_main(base)
     new += hand
@@ -496,10 +537,26 @@ def main():
         print('CODE-STANDARD baseline lowered: %s' % summary(m['violations']))
         return 0
     if fixed and not new:
-        print('Debt was fixed: run python3 tests/check_code_standard.py --update and commit the lower baseline.')
+        print('Debt was fixed: run python3 scripts/code_standard.py --update and commit the lower baseline.')
     print('CODE-STANDARD %s (files=%d, debt: %s)' % ('fail' if new or fixed else 'pass', len(m['files']),
                                                     summary(m['violations'])))
     return 1 if new or fixed else 0
+
+
+def adopt(base, now):
+    """Write the first debt list of each opt-in rule (OPT_IN) that the config turns on and the baseline holds no debt
+    for yet; refuse when there is none. A core rule is never adopted, and the comparison with main accepts the list
+    only when that option was off on main, so this cannot add debt to a rule the ratchet already holds."""
+    kinds = [k for k, on in OPT_IN.items() if on(base['config']) and not base.get('debt', {}).get(k) and now.get(k)]
+    if not kinds:
+        print('CODE-STANDARD fail: no opt-in rule to adopt; use --update (it can only lower the baseline)')
+        return 1
+    for k in kinds:
+        base.setdefault('debt', {})[k] = now[k]
+    BASELINE.write_text(json.dumps(base, indent=1, sort_keys=True) + '\n')
+    print('CODE-STANDARD adopted: %s (add a docs/DECISIONS.md row that names %s)' % (
+        ', '.join('%s %d' % (k, len(now[k])) for k in kinds), BASELINE_NAME))
+    return 0
 
 
 def summary(v):
