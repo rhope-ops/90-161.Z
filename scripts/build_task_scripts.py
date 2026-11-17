@@ -9,7 +9,7 @@ A script that signs in to the site also holds the site-common block (Get-SiteAdd
 between the same kind of markers; a Get-SiteAddress outside that block fails the check.
 A script with the app-logo markers gets $AppLogoPng: the 90-161.Z logo (PFM 17 Nov 26: logo W2 on the T22 window, 1A) as a
 128 px PNG in base64 text, rendered from the master assets/logo/90161Z-logo.svg by scripts/build_logo.js (Playwright; the
-PNGs stay uncommitted, PFM 2A). The RADE runner keeps RADE's own logo (Rho Bold) from the pinned engine.
+PNGs stay uncommitted, PFM 2A; with no Playwright, scripts/logo_png.py checks the committed PNG by its recorded hash). The RADE runner keeps RADE's own logo (Rho Bold) from the pinned engine.
 A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1 of the same pinned commit, SHA-256 checked the
 same way) as it is: the window reuses RADE's colors, fonts, buttons, card text boxes and layout self-check (T22 r2, 17 Nov 26).
 Usage: python3 scripts/build_task_scripts.py [--check]
@@ -33,18 +33,22 @@ _logo = []
 _ui = []
 
 
-def logo_png(size):
-    """The 90-161.Z logo at one size, rendered from the SVG master by scripts/build_logo.js into a temporary folder."""
-    import subprocess, tempfile
-    with tempfile.TemporaryDirectory() as d:
-        subprocess.run(['node', str(ROOT / 'scripts/build_logo.js'), d], check=True, capture_output=True)
-        return (Path(d) / f'90161Z-logo-{size}.png').read_bytes()
+CHECK = []   # set by main: a --check run never writes the logo record
+
+
+def committed_logo():
+    # The 128 px PNG the T22 script already holds (used only where no renderer is installed; scripts/logo_png.py checks its hash).
+    text = (ROOT / 'scripts/gov/90161Z-T22-pfm-window-r3.ps1').read_text(encoding='utf-8')
+    m = re.search(r"\$AppLogoPng = @\(\n(.*?)\n\) -join ''", text, re.S)
+    return base64.b64decode(''.join(re.findall(r"'([^']*)'", m.group(1)))) if m else None
 
 
 def logo_text():
-    # The 90-161.Z logo, 128 px (one render for every script).
+    # The 90-161.Z logo, 128 px (one render for every script; scripts/logo_png.py).
     if not _logo:
-        b64 = base64.b64encode(logo_png(128)).decode('ascii')
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        import logo_png
+        b64 = base64.b64encode(logo_png.png(128, bool(CHECK), committed_logo)).decode('ascii')
         rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
         _logo.append('$AppLogoPng = @(\n' + ',\n'.join("  '" + r + "'" for r in rows) + "\n) -join ''\n")
     return _logo[0]
@@ -70,6 +74,8 @@ def body(src=SRC):
 
 
 def main(check):
+    if check:
+        CHECK.append(True)
     stale, unshared, shared = [], [], 0
     for f in sorted((ROOT / 'scripts/gov').glob('90161Z-T*.ps1')):
         text = f.read_text(encoding='utf-8')

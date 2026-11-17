@@ -74,18 +74,33 @@ def engine():
     return fetch(lock) / lock['engine']
 
 
-def render_logo():
+def render_logo(check):
     # R29 (PFM 17 Nov 26, 1A and 2A): a round may carry the 90-161.Z logo PNG (site logo and thumbnail). The PNGs are not
-    # committed; they are rendered from assets/logo/90161Z-logo.svg (scripts/build_logo.js, deterministic) before each build.
+    # committed: scripts/logo_png.py renders them (or, with no renderer, takes the committed bundle's copy and checks its
+    # recorded hash) into assets/logo/build/ before the engine reads them.
+    import base64, re
     man = ROOT / 'scripts/paste_bundles.json'
     if not man.exists():
         return
-    used = any(f['src'].startswith('assets/logo/build/') for b in json.loads(man.read_text(encoding='utf-8'))['bundles'] for f in b['files'])
-    if used:
-        subprocess.run(['node', str(ROOT / 'scripts/build_logo.js')], check=True, stdout=subprocess.DEVNULL)
+    for b in json.loads(man.read_text(encoding='utf-8'))['bundles']:
+        for f in b['files']:
+            m = re.match(r'assets/logo/build/90161Z-logo-(\d+)\.png$', f['src'])
+            if not m:
+                continue
+            name = Path(f['src']).name; out = ROOT / b['out']
+
+            def committed(out=out, name=name):
+                if not out.exists():
+                    return None
+                x = re.search(r"Name = '" + re.escape(name) + r"'; Kind = 'base64'; Sha = '[0-9a-f]+'; Data = @'\r?\n(.*?)\r?\n'@", out.read_text(encoding='utf-8'), re.S)
+                return base64.b64decode(re.sub(r'\s', '', x.group(1))) if x else None
+            sys.path.insert(0, str(ROOT / 'scripts'))
+            import logo_png
+            data = logo_png.png(int(m.group(1)), check, committed)
+            dst = ROOT / f['src']; dst.parent.mkdir(parents=True, exist_ok=True); dst.write_bytes(data)
 
 
 if __name__ == '__main__':
     e = engine()
-    render_logo()
+    render_logo('--check' in sys.argv[1:])
     sys.exit(subprocess.call([sys.executable, '-B', str(e), '--app-root', str(ROOT)] + [a for a in sys.argv[1:] if a == '--check']))
