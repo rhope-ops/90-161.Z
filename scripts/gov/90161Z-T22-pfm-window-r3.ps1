@@ -292,13 +292,13 @@ $Checks=@(
 @{ Key='card-open'; Text='Select a card in the list on the left. Pass if it opened.' },
 @{ Key='first-button'; Text='On the card "Your Work", select the first button. Pass if it did something.' },
 @{ Key='all-cards'; Text='Select each other card in the list on the left once. Pass if every card opened.' },
-@{ Key='tab'; Text='Press Tab a few times. Pass if a clear outline moves from button to button.' },
+@{ Key='tab'; Text='Press Tab about 5 times. Pass if a clear outline moves from button to button.' },
 @{ Key='shift-tab'; Text='Press Shift+Tab. Pass if the outline moves back.' },
 @{ Key='enter'; Text='Press Enter. Pass if the button with the outline worked (all data is FAKE; nothing is sent).' },
 @{ Key='narrator-on'; Text='Press Ctrl+Windows+Enter to start Narrator. Pass if Narrator started.' },
 @{ Key='narrator-names'; Text='Press Tab. Pass if Narrator said the name of the control.' },
 @{ Key='narrator-off'; Text='Press Ctrl+Windows+Enter to stop Narrator. Pass if it stopped.' },
-@{ Key='contrast-on'; Text='Press Left Alt+Left Shift+Print Screen, then select "Yes", to turn on high contrast. Pass if the window changed colors.' },
+@{ Key='contrast-on'; Text='Press Left Alt+Left Shift+Print Screen to turn on high contrast (if Windows asks, answer Yes). Pass if the colors changed.' },
 @{ Key='contrast-read'; Text='Select 2 other cards. Pass if every text and button is readable.' },
 @{ Key='contrast-off'; Text='Press Left Alt+Left Shift+Print Screen again. Pass if the window returned to its colors.' }
 )
