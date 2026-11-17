@@ -598,13 +598,14 @@ want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] =
 got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
-# T22 PFM window preview r2 (R28, PFM preview 2 of 17 Nov 26): the cards as text (-PlanOnly; no window here). Every button, link and
+# T22 PFM window test r3 (R29; R28 results of 17 Nov 26): the cards and the 12 checks as text (-PlanOnly; no window here). Every button, link and
 # grid row goes to a card that exists (or 'back', '@grid', '@note'), each card has exactly one blue button, the text is ASCII and
 # FAKE, r1 is gone, the shared UI block is current, and the colors the window paints are the tokens of docs/palette.json.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && ok "T22 window preview cards (r2)" || bad "T22 window preview cards (r2)"
+python3 - <<'PYT22' && ok "T22 window preview cards (r3)" || bad "T22 window preview cards (r3)"
 import json, re, subprocess, pathlib
-f = 'scripts/gov/90161Z-T22-pfm-window-r2.ps1'
+f = 'scripts/gov/90161Z-T22-pfm-window-r3.ps1'
+assert not pathlib.Path('scripts/gov/90161Z-T22-pfm-window-r2.ps1').exists(), 'r2 is still there'
 assert not pathlib.Path('scripts/gov/90161Z-T22-pfm-window-r1.ps1').exists(), 'r1 is still there'
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
@@ -630,13 +631,25 @@ for l in out:   # every publication, office and person name says FAKE
     for w in re.findall(r'(?<!FAKE )(?<!DAF )\b(OI \d\d-\d+|Instruction \d\d-\d+|Form \d+|Office \d|AO \d)\b', l): raise AssertionError(l)
 assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text
 assert out and len([l for l in out if l.startswith('RAIL ')]) == 5
+# the 12 in-window checks (PFM 17 Nov 26): numbered lines in order, with their keys, each text at most 160 characters
+keys = ['card-open', 'first-button', 'all-cards', 'tab', 'shift-tab', 'enter', 'narrator-on', 'narrator-names', 'narrator-off', 'contrast-on', 'contrast-read', 'contrast-off']
+chk = [re.match(r'CHECK (\d+) ([a-z-]+): (.+)$', l) for l in out if re.match(r'CHECK \d+ ', l)]
+assert len(chk) == 12 and all(chk), chk
+assert [m.group(2) for m in chk] == keys and [int(m.group(1)) for m in chk] == list(range(1, 13)), [m.group(0) for m in chk]
+assert all(len(m.group(3)) <= 160 for m in chk), [len(m.group(3)) for m in chk]
 # the rade-ui block is not empty, and the colors painted here are the palette tokens
 assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
+after = src.split('# <<< rade-ui', 1)[1]
+assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
+assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
+assert "$Rev = 'r3'" in src
+grids = len(re.findall(r'New-Object System.Windows.Forms.DataGridView\b(?!\w)', src))
+assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and src.count("$dc.AutoSizeMode='Fill'") >= 1, 'every grid fills its columns'
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
 hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
 PYT22
-else sk "T22 window preview cards (r2)"; fi
+else sk "T22 window preview cards (r3)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }

@@ -1,19 +1,23 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, preview r2 (round R28). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r3 (round R29). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read, saved or sent. The look comes from the RADE shared UI
   file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it; below 1280 x 720
   (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X.
-  WHAT IT CHANGES: 90161Z-T22-window-r2.txt (state, size, scale, cards opened, layout self-check) and
+  WHAT R3 CHANGES (R28 results): the layout self-check no longer stops on every card; the window is DPI aware like RADE (one
+  line "SCALE dpi-aware=yes|no"); every grid fits its columns to its own width and wraps its cells; a check bar at the bottom shows
+  12 checks one at a time with Pass and Fail (PFM 17 Nov 26), so no list has to be read or remembered; each layout defect is
+  one line "FAIL LAYOUT ..." and "PASS layout" is one line when there is none (the runner counts these words).
+  WHAT IT CHANGES: 90161Z-T22-window-r3.txt (state, size, scale, cards opened, layout self-check, check answers) and
   90161Z-T22-window-bounds.json (last size and place) in the T22 folder.
-  Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards as text and opens no window; -TestDir writes the files elsewhere.
-  Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n>. Exit 1 when no window can open.
+  Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 12 checks as text and opens no window; -TestDir writes the files elsewhere.
+  Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir)
 $task = 'T22'
-$Rev = 'r2'
+$Rev = 'r3'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -284,6 +288,20 @@ return @{ Cap='Action Status'; Pad=22; Blocks=$b }
 }
 $FullHistory=@(@{ Text='Full History'; Note='FAKE: the history of this action opens here. Nothing is read.' })
 $OneOf="FAKE OI 33-101, Key Control"
+$Checks=@(
+@{ Key='card-open'; Text='Select a card in the list on the left. Pass if it opened.' },
+@{ Key='first-button'; Text='On the card "Your Work", select the first button. Pass if it did something.' },
+@{ Key='all-cards'; Text='Select each other card in the list on the left once. Pass if every card opened.' },
+@{ Key='tab'; Text='Press Tab a few times. Pass if a clear outline moves from button to button.' },
+@{ Key='shift-tab'; Text='Press Shift+Tab. Pass if the outline moves back.' },
+@{ Key='enter'; Text='Press Enter. Pass if the button with the outline worked (all data is FAKE; nothing is sent).' },
+@{ Key='narrator-on'; Text='Press Ctrl+Windows+Enter to start Narrator. Pass if Narrator started.' },
+@{ Key='narrator-names'; Text='Press Tab. Pass if Narrator said the name of the control.' },
+@{ Key='narrator-off'; Text='Press Ctrl+Windows+Enter to stop Narrator. Pass if it stopped.' },
+@{ Key='contrast-on'; Text='Press Left Alt+Left Shift+Print Screen, then select "Yes", to turn on high contrast. Pass if the window changed colors.' },
+@{ Key='contrast-read'; Text='Select 2 other cards. Pass if every text and button is readable.' },
+@{ Key='contrast-off'; Text='Press Left Alt+Left Shift+Print Screen again. Pass if the window returned to its colors.' }
+)
 $Cards=[ordered]@{}
 $Cards.home=@{ Rail='work'; Title='Your Work'; Sub="Tuesday, 17 Nov 26 $mid 2 items need you $mid 2 offices late"; Side=300
 Cols=@(
@@ -679,14 +697,22 @@ $NativeCs=(@(
 $lines=New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
 $code=0
-$opened=@{}; $presses=0; $defects=New-Object System.Collections.Generic.List[string]
+$cf=0; $opened=@{}; $presses=0; $defects=New-Object System.Collections.Generic.List[string]
 $dir=''
 $who=$null
 try {
 $ErrorActionPreference='Stop'
-if ($PlanOnly) { Get-CardPlan | ForEach-Object { Write-Host $_ }; Write-Host ('PLAN cards=' + $Cards.Count); return }
+if ($PlanOnly) { Get-CardPlan | ForEach-Object { Write-Host $_ }; for ($i=0; $i -lt $Checks.Count; $i++) { Write-Host ('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ': ' + $Checks[$i].Text) }; Write-Host ('PLAN cards=' + $Cards.Count); return }
 $who=Get-TaskId $Id
 if ($TestDir) { $dir=$TestDir } else { $dir=Get-TaskDir $who.Id $task 'Task 22' -Create }
+# The process is DPI aware like RADE, before any form exists (R28: this window ran unscaled while RADE ran at 150 %).
+$dpiAware='no'
+if ($env:OS -eq 'Windows_NT') {
+try {
+Add-Type -Namespace T22 -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();' -ErrorAction Stop
+try { if ([T22.Native]::SetProcessDPIAware()) { $dpiAware='yes' } } catch { $null=$_ }
+} catch { $null=$_ } }
+$lines.Add('SCALE dpi-aware=' + $dpiAware)
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [Windows.Forms.Application]::EnableVisualStyles()
@@ -957,6 +983,7 @@ $ui.Check = {
 $form.BackColor=$pc.surface
 $ui.Trash=@(@($ui.Trash) | Where-Object { $_ }) + @($ui.Menu)
 $ui.Clock=[System.Diagnostics.Stopwatch]::StartNew(); $ui.CardAt=0; $ui.GuardMs=400; $ui.Busy=$false; $ui.Always=@{}; $ui.Boxes=@()
+$ui.B=@(); $ui.P=@()   # the generated NameOf walks these two lists; this window has none (R28: every self-check stopped on a null list)
 $ui.View=''; $ui.Scrolls=$false; $ui.Scroll=$null; $ui.RecOn=$false; $ui.Picked=$false; $ui.Sent=$null; $ui.Kick=$null
 $ui.Measure={ param($Card) $null=$Card; return @() }
 $wn=@{}
@@ -1120,7 +1147,7 @@ $vals=@(foreach ($c in $G.Tag.Cols) { if ($c.K -eq 'since') { $(if ($c.W -ge 100
 [void]$G.Rows.Add([object[]]$vals) } }
 $wn.Grid={ param($Parent, $b, [int]$W, $Ctx)
 $cols=@($b.Cols); if ($wn.Wide -and $b.ColsWide) { $wf=0; foreach ($c in $b.ColsWide) { $wf += (& $wn.Sc $c.W) }; if ($wf + (& $wn.Sc 137) -le $W) { $cols=@($b.ColsWide) } }
-$fixedMin=$false; $rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
+$rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
 $full=$hdrH + $rowH * $rows.Count + 2; $h=$full
 if ($b.Fill) {
 $used=0; try { $used=[int]$Ctx.Col.PreferredSize.Height } catch { $null=$_ }
@@ -1131,15 +1158,21 @@ $g.AllowUserToAddRows=$false; $g.AllowUserToDeleteRows=$false; $g.AllowUserToRes
 $g.ReadOnly=$true; $g.RowHeadersVisible=$false; $g.MultiSelect=$false; $g.SelectionMode='FullRowSelect'; $g.EnableHeadersVisualStyles=$false
 $g.ColumnHeadersHeightSizeMode='DisableResizing'; $g.ColumnHeadersHeight=$hdrH; $g.RowTemplate.Height=$rowH
 $g.CellBorderStyle='None'; $g.ColumnHeadersBorderStyle='None'; $g.BorderStyle='None'; $g.BackgroundColor=$ui.C.White; $g.GridColor=$pc.line
-$g.AutoSizeColumnsMode='None'; $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' }); $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
+$g.AutoSizeColumnsMode='Fill'; $g.ScrollBars='Vertical'; $g.DefaultCellStyle.WrapMode='True'; $g.AutoSizeRowsMode='AllCells'; $g.RowTemplate.MinimumHeight=$rowH
+$g.DefaultCellStyle.Padding=& $ui.Pad (& $ui.Sc 10) (& $ui.Sc 8) (& $ui.Sc 10) (& $ui.Sc 8); $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
 $g.DefaultCellStyle.SelectionBackColor=$pc.surface; $g.DefaultCellStyle.SelectionForeColor=$ui.C.Ink
 $g.ColumnHeadersDefaultCellStyle.BackColor=$ui.C.White; $g.ColumnHeadersDefaultCellStyle.ForeColor=$pc.muted; $g.ColumnHeadersDefaultCellStyle.Font=$ui.F.SmallB; $g.ColumnHeadersDefaultCellStyle.SelectionBackColor=$ui.C.White
-$fixed=0; foreach ($c in $cols) { $fixed += (& $wn.Sc $c.W) }
-$scroll=$(if ($full -gt $h) { & $wn.Sc 17 } else { 0 }); $fixedMin=($W - $fixed - $scroll -lt (& $wn.Sc 60)); $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' })
+# Every column fills the grid's own width: a column keeps at most its own width as its minimum, and all minimums together
+# never exceed the width the grid has, so the sum of the visible columns never exceeds the client width (R28 finding 4).
+$fixed=0; $open=0; foreach ($c in $cols) { if ($c.W -eq 0) { $open++ } else { $fixed += (& $wn.Sc $c.W) } }
+$scroll=$(if ($full -gt $h) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
+$avail=$W - $scroll - 2; $need=$fixed + $open * (& $wn.Sc 60); $k=$(if ($need -gt $avail) { [double]$avail / $need } else { 1.0 })
 $kinds=@{}
 foreach ($c in $cols) {
 $dc=New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name=[string]$c.N; $dc.HeaderText=$(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode='NotSortable'
-$dc.Width=$(if ($c.W -eq 0) { [math]::Max((& $wn.Sc 60), $W - $fixed - $scroll) } else { & $wn.Sc $c.W }); [void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
+$own=$(if ($c.W -eq 0) { & $wn.Sc 60 } else { & $wn.Sc $c.W })
+$dc.AutoSizeMode='Fill'; $dc.MinimumWidth=[math]::Max(2, [int][math]::Floor($own * $k)); $dc.FillWeight=[single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $scroll) } else { $c.W })
+[void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
 $chipKind=@{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status]=[string]$r.Kind } }
 $g.Tag=@{ Kind=$kinds; Chip=$chipKind; Cols=$cols; Shown=$rows }
 & $wn.GridFill $g $rows
@@ -1147,6 +1180,7 @@ $g.Add_CellPainting({ param($s, $e)
 try {
 $tag=$s.Tag; $kind=[string]$tag.Kind[$s.Columns[$e.ColumnIndex].Name]; $bd=$e.CellBounds; $gr=$e.Graphics; $pd=& $ui.Sc 10
 $fl=[Windows.Forms.TextFormatFlags]'Left, VerticalCenter, SingleLine, NoPadding, NoPrefix, EndEllipsis'
+$fw=[Windows.Forms.TextFormatFlags]'Left, VerticalCenter, WordBreak, NoPadding, NoPrefix'
 $tr=New-Object System.Drawing.Rectangle(($bd.X + $pd), $bd.Y, [math]::Max(1, $bd.Width - 2 * $pd), ($bd.Height - 1))
 if ($e.RowIndex -lt 0) {
 $br=New-Object System.Drawing.SolidBrush($ui.C.White); $gr.FillRectangle($br, $bd); $br.Dispose()
@@ -1160,17 +1194,23 @@ $text=[string]$e.Value
 if ($kind -eq 'pub') {
 $pp=$text.Split('|')
 $w1=[Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width
-[Windows.Forms.TextRenderer]::DrawText($gr, $pp[0], $ui.F.Link, $tr, $pc.primary, $fl)
+$w2=0; if ($pp.Count -gt 1) { $w2=[Windows.Forms.TextRenderer]::MeasureText($pp[1], $ui.F.Small, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width }
 $rest=New-Object System.Drawing.Rectangle(($tr.X + $w1 + (& $ui.Sc 6)), $tr.Y, ($tr.Width - $w1 - (& $ui.Sc 6)), $tr.Height)
-if ($rest.Width -gt 4 -and $pp.Count -gt 1) { [Windows.Forms.TextRenderer]::DrawText($gr, $pp[1], $ui.F.Small, $rest, $pc.muted, $fl) } }
-elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fl) }
-elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fl) }
+if ($pp.Count -lt 2 -or $rest.Width -ge $w2) {
+[Windows.Forms.TextRenderer]::DrawText($gr, $pp[0], $ui.F.Link, $tr, $pc.primary, $fl)
+if ($pp.Count -gt 1) { [Windows.Forms.TextRenderer]::DrawText($gr, $pp[1], $ui.F.Small, $rest, $pc.muted, $fl) } }
+else {   # the rest does not fit beside the name: it goes on a second line (the cell wraps)
+$lh=[int][math]::Ceiling($ui.F.Link.GetHeight($gr)); $top=$tr.Y + [int](($tr.Height - 2 * $lh) / 2)
+[Windows.Forms.TextRenderer]::DrawText($gr, $pp[0], $ui.F.Link, (New-Object System.Drawing.Rectangle($tr.X, $top, $tr.Width, $lh)), $pc.primary, $fl)
+[Windows.Forms.TextRenderer]::DrawText($gr, $pp[1], $ui.F.Small, (New-Object System.Drawing.Rectangle($tr.X, ($top + $lh), $tr.Width, $lh)), $pc.muted, $fw) } }
+elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fw) }
+elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fw) }
 elseif ($kind -eq 'chip') {
 $ck=[string]$tag.Chip[$text]; $cwid=[Windows.Forms.TextRenderer]::MeasureText($text, $ui.F.SmallB, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width + (& $ui.Sc 20)
 $chh=& $ui.Sc 26; $cy=$bd.Y + [int](($bd.Height - 1 - $chh) / 2); $rc=New-Object System.Drawing.RectangleF(($bd.X + $pd), $cy, $cwid, $chh)
 $gr.SmoothingMode='AntiAlias'; $path=[Pfm.Gfx]::Round($rc, ($chh / 2.0)); $br=New-Object System.Drawing.SolidBrush($wn.Fills[$ck]); $gr.FillPath($br, $path); $br.Dispose(); $path.Dispose(); $gr.SmoothingMode='Default'
 [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, (New-Object System.Drawing.Rectangle(($bd.X + $pd), $cy, [int]$cwid, $chh)), $pc.ink, [Windows.Forms.TextFormatFlags]'HorizontalCenter, VerticalCenter, SingleLine, NoPadding, NoPrefix') }
-else { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.Small, $tr, $ui.C.Ink, $fl) }
+else { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.Small, $tr, $ui.C.Ink, $fw) }
 $e.Handled=$true
 } catch { $null=$_ } })
 $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
@@ -1303,6 +1343,49 @@ $st=$(if ($form.WindowState -eq 'Maximized') { 'Maximized' } else { 'Normal' })
 $o='{ "Left": ' + $r.X + ', "Top": ' + $r.Y + ', "Width": ' + $r.Width + ', "Height": ' + $r.Height + ', "State": "' + $st + '" }'
 Set-Content -LiteralPath $wn.BoundsFile -Value $o -Encoding UTF8
 } catch { $lines.Add('NOTE the window place was not saved: ' + ([string]$_.Exception.Message)) } }
+# The check bar (PFM 17 Nov 26: the checks show inside the test window, one at a time, with Pass and Fail; no list to remember).
+# It sits at the bottom of the window and is always visible. Pass or Fail moves to the next check; the answers go to the result file.
+$wn.CheckAt=0; $wn.Answers=New-Object 'string[]' $Checks.Count
+$wn.BarShow={
+$i=[int]$wn.CheckAt
+if ($i -lt $Checks.Count) {
+$wn.BarNo.Text='Check ' + ($i + 1) + ' of ' + $Checks.Count; $wn.BarText.Text=[string]$Checks[$i].Text
+$wn.BarPass.Visible=$true; $wn.BarFail.Visible=$true }
+else {
+$wn.BarNo.Text='Checks'; $wn.BarText.Text='All checks done. Close this window with its X.'
+$wn.BarPass.Visible=$false; $wn.BarFail.Visible=$false } }
+$wn.Answer={ param([string]$Result)
+if ($wn.CheckAt -ge $Checks.Count) { return }
+$wn.Answers[$wn.CheckAt]=$Result; $wn.CheckAt++
+& $wn.BarShow }
+$wn.BarLayout={
+if (-not $wn.Bar) { return }
+$w=$form.ClientSize.Width; $pad=& $wn.Sc 16; $gap=& $wn.Sc 8
+$pw=[math]::Max($wn.BarPass.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarPass.MinimumSize.Width)
+$fw=[math]::Max($wn.BarFail.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarFail.MinimumSize.Width)
+$bh=[math]::Max($wn.BarPass.Height, $wn.BarFail.Height)
+$tw=[math]::Max((& $wn.Sc 200), $w - 2 * $pad - $pw - $fw - 2 * $gap)
+$th=0; foreach ($c in $Checks) { $m=& $ui.Meas ([string]$c.Text) $ui.F.Body $tw; $th=[math]::Max($th, [int]$m.Height) }
+$th += (& $wn.Sc 6)
+$nh=[int]$wn.BarNo.PreferredSize.Height
+$wn.Bar.Height=[math]::Max($bh + 2 * $pad, $pad + $nh + (& $wn.Sc 2) + $th + $pad)
+$wn.BarNo.Location=[Drawing.Point]::new($pad, $pad)
+$wn.BarText.Location=[Drawing.Point]::new($pad, ($pad + $nh + (& $wn.Sc 2))); & $ui.SetWrap $wn.BarText $tw; $wn.BarText.Size=[Drawing.Size]::new($tw, $th)
+$by=[int](($wn.Bar.Height - $bh) / 2)
+$wn.BarPass.Location=[Drawing.Point]::new(($w - $pad - $fw - $gap - $pw), $by); $wn.BarFail.Location=[Drawing.Point]::new(($w - $pad - $fw), $by) }
+$wn.BuildBar={
+$bar=New-Object System.Windows.Forms.Panel; $bar.Dock='Bottom'; $bar.BackColor=$ui.C.White; $bar.AccessibleName='Check bar'
+$bar.Add_Paint({ try { $pn=New-Object System.Drawing.Pen($pc.line, 1); $_.Graphics.DrawLine($pn, 0, 0, $this.ClientSize.Width, 0); $pn.Dispose() } catch { $null=$_ } })
+$no=& $ui.Label $ui.F.SmallB $ui.C.Gray 0; $no.Visible=$true; $no.AccessibleName='Check number'; [void]$bar.Controls.Add($no)
+$tx=& $ui.Text $ui.F.Body $ui.C.Ink 0 'Check'; $tx.Visible=$true; [void]$bar.Controls.Add($tx)
+foreach ($n in 'Pass', 'Fail') {
+$x=& $ui.Btn 'action'; $x.Text=$n; & $ui.Style $x ''; $x.AccessibleName=$n; $x.Tag=$n
+$x.Add_SizeChanged({ & $wn.Round $this 4 })
+$x.Add_Click({ $r=([string]$this.Tag).ToUpperInvariant(); & $wn.Answer $r })
+[void]$bar.Controls.Add($x); if ($n -eq 'Pass') { $wn.BarPass=$x } else { $wn.BarFail=$x } }
+$wn.Bar=$bar; $wn.BarNo=$no; $wn.BarText=$tx
+$form.Controls.Add($bar)
+& $wn.BarShow; & $wn.BarLayout }
 $wn.Ready=$false; $wn.LastW=0; $wn.LastH=0
 $wn.CheckTimer=New-Object System.Windows.Forms.Timer; $wn.CheckTimer.Interval=350
 $wn.CheckTimer.Add_Tick({ $wn.CheckTimer.Stop(); try { & $ui.Check; & $wn.ScrollCheck } catch { $null=$_ } })
@@ -1322,6 +1405,7 @@ $wn.Start={
 & $ui.FormDpi
 $form.MinimumSize=[Drawing.Size]::new((& $wn.Sc 800), (& $wn.Sc 560))
 $form.BackColor=$pc.surface
+& $wn.BuildBar
 & $wn.BuildRail
 & $wn.State 'shown'
 $wn.LastW=$form.ClientSize.Width; $wn.LastH=$form.ClientSize.Height
@@ -1330,7 +1414,7 @@ $wn.Notice=''; $wn.Err=''; & $wn.Show 'home'
 $wn.Ready=$true; $form.Opacity=1
 try { $form.TopMost=$true; $form.Activate(); $form.TopMost=$false } catch { $null=$_ } }
 $form.Add_Shown({ try { & $wn.Start } catch { $lines.Add('STOPPED: the window could not be built (' + (ConvertTo-Masked ([string]$_.Exception.Message) $who.Secret) + ')'); $script:code=1; try { $form.Close() } catch { $null=$_ } } })
-$form.Add_SizeChanged({ if ($wn.Ready) { $wn.SizeTimer.Stop(); $wn.SizeTimer.Start() } })
+$form.Add_SizeChanged({ if ($wn.Ready) { & $wn.BarLayout; $wn.SizeTimer.Stop(); $wn.SizeTimer.Start() } })
 $form.Add_KeyDown({
 if ($_.KeyCode -eq 'Escape') {
 $up=[string]$Cards[$wn.Cur].Up; if ($up -eq 'back') { $up=$wn.Prev }
@@ -1347,9 +1431,17 @@ $lines.Add('CARDS opened: ' + $(if ($opened.Count) { (@($Cards.Keys | Where-Obje
 $lines.Add('BUTTONS selected=' + $presses)
 $lines.Add('SECONDS open=' + [int]((Get-Date) - $started).TotalSeconds)
 foreach ($d in @($ui.LayBad)) { $defects.Add([string]$d) }
-foreach ($d in $defects) { $lines.Add($d) }
+foreach ($d in $defects) { $lines.Add('FAIL ' + $d) }
+if ($defects.Count -eq 0) { $lines.Add('PASS layout') }
 $lines.Add('SCROLLS vertical: ' + $(if ($wn.Scrolled.Count) { (@($wn.Scrolled.Keys) -join ', ') } else { 'none' }))
 $lines.Add('LAYOUT self-check: ' + $defects.Count + ' defects in ' + $ui.LayCards.Count + ' card views')
+$cp=0; $cf=0; $cs=0
+for ($i=0; $i -lt $Checks.Count; $i++) {
+$a=[string]$wn.Answers[$i]
+if ($a -eq 'PASS') { $cp++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' PASS') }
+elseif ($a -eq 'FAIL') { $cf++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL') }
+else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' SKIP (not answered)') } }
+$lines.Add('CHECKS passed=' + $cp + ' failed=' + $cf + ' not answered=' + $cs)
 foreach ($t in @($ui.Trash)) { try { $t.Dispose() } catch { $null=$_ } }
 $form.Dispose()
 } catch {
@@ -1357,7 +1449,7 @@ $code=1
 $lines.Add('STOPPED: no window (' + ([string]$_.Exception.Message).Substring(0, [Math]::Min(200, ([string]$_.Exception.Message).Length)) + ')')
 } finally {
 if ($PlanOnly) { exit 0 }
-$lines.Add('WINDOW done: cards=' + $opened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count)
+$lines.Add('WINDOW done: cards=' + $opened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
 $masked=@($lines | ForEach-Object { $t=[string]$_; if ($who) { $t=ConvertTo-Masked $t $who.Secret }; $t })
 if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T22-window-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null=$_ } }
 $masked | ForEach-Object { Write-Host $_ }
