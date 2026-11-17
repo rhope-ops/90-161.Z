@@ -1,0 +1,121 @@
+{
+  "displayName": "90161Z T21 Probe Health r5",
+  "description": "R29 probe (task T21, fake data only). On a RUN-HEALTH row in the probe list: with the Power Automate Management connector, lists the owner's own flows in this environment only (ListMyFlows) and counts how many are On (state Started). The connector has no run-history action (R28), so failed runs stay with each flow's own failure e-mail. Writes one RESULT row (HEALTH): own flows read, on, off and the status code. No other environment, no other person's flows. Environment variable: Site URL.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_flowmanagement"
+  ],
+  "triggers": {
+    "When_an_item_is_created": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "conditions": [
+        {
+          "expression": "@startsWith(triggerBody()?['Title'],'RUN-HEALTH')"
+        }
+      ],
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnNewItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "H_list": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_flowmanagement",
+          "connectionName": "shared_flowmanagement",
+          "operationId": "ListMyFlows"
+        },
+        "parameters": {
+          "environmentName": "@workflow()?['tags']?['environmentName']"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "H_probe": {
+      "runAfter": {
+        "H_list": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@coalesce(body('H_list')?['value'], json('[]'))",
+        "where": "@startsWith(coalesce(item()?['properties']?['displayName'], item()?['displayName'], ''), '90161Z T21 Probe')"
+      }
+    },
+    "H_on": {
+      "runAfter": {
+        "H_list": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@coalesce(body('H_list')?['value'], json('[]'))",
+        "where": "@equals(coalesce(item()?['properties']?['state'], ''), 'Started')"
+      }
+    },
+    "H_row": {
+      "runAfter": {
+        "H_on": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ],
+        "H_probe": [
+          "Succeeded",
+          "Failed",
+          "Skipped",
+          "TimedOut"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "HEALTH",
+          "item/ProbeWay": "a",
+          "item/ProbeResult": "@if(and(equals(actions('H_list')?['status'], 'Succeeded'), greater(length(coalesce(actions('H_probe')?['outputs']?['body'], json('[]'))), 0), greater(length(coalesce(actions('H_on')?['outputs']?['body'], json('[]'))), 0)), 'PASS', 'FAIL')",
+          "item/ProbeDetail": "@concat('own flows read=', string(length(coalesce(actions('H_list')?['outputs']?['body']?['value'], json('[]')))), '; on=', string(length(coalesce(actions('H_on')?['outputs']?['body'], json('[]')))), '; off=', string(sub(length(coalesce(actions('H_list')?['outputs']?['body']?['value'], json('[]'))), length(coalesce(actions('H_on')?['outputs']?['body'], json('[]'))))), '; probe flows=', string(length(coalesce(actions('H_probe')?['outputs']?['body'], json('[]')))), '; status=', if(equals(actions('H_list')?['outputs']?['statusCode'], null), 'none', string(actions('H_list')?['outputs']?['statusCode'])))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "solution": {
+    "variant": "Q",
+    "title": "90-161.Z probe health",
+    "zip": "90161Z-T21-probe-r5.zip"
+  }
+}

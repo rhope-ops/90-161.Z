@@ -54,7 +54,7 @@ def expr_ok(s, where):
 
 counts = dict(defs=0, actions=0, columns=0, strings=0)
 connrefs_declared = set()
-cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r1.zip"
+cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r2.zip"
 zf = zipfile.ZipFile(cz)
 for n in zf.namelist():
     if n.endswith(".xml"): minidom.parseString(zf.read(n))
@@ -246,7 +246,7 @@ with zipfile.ZipFile(cz) as zz:
 # "For a selected item" trigger; the files, mail and app flows of r2 are gone, their tests passed or failed in R26). Same file rules as the export (no XML declaration, CRLF, root
 # components), and the data boundary: no ".mil", no mail address, no site host in any file. Every runAfter name exists on the same
 # level; every "@parameters('...')" resolves; each RESULT row runs after every status; a trigger condition is in the F05 shape.
-T21_EXPECT = {"90161Z-T21-probe-r4.zip": (1, 2)}
+T21_EXPECT = {"90161Z-T21-probe-r5.zip": (1, 2)}
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
 T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
 

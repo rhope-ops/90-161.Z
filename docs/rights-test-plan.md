@@ -85,7 +85,7 @@ Write down only what each check shows (allowed, blocked, error text without name
 
 | # | Do | Write down |
 |---|---|---|
-| M04 | Power Apps: Solutions, Import solution, choose 90161Z-T24-full-flows-r1.zip (the round saves it in T11; the T05 sample is gone). Under Advanced settings, clear "Enable plug-in steps and flows" so its flows stay off | Imported, or the error |
+| M04 | Power Apps: Solutions, Import solution, choose 90161Z-T24-full-flows-r2.zip (the round saves it in T11; the T05 sample is gone). Under Advanced settings, clear "Enable plug-in steps and flows" so its flows stay off | Imported, or the error |
 | M05 | In a new solution: New, More, Environment variable, Data type Data source, Connector SharePoint, Parameter type Site | Allowed, or not offered |
 | M06 | Power Apps: create a blank canvas app, save it as "90161Z TEST" | Saved |
 | M07 | Share "90161Z TEST": type the wing's AD group, an M365 group name, a SharePoint group name, and look for "Everyone". Do not press Share | Which kinds show up |

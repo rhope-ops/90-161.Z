@@ -1,9 +1,10 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe, r4 (round R28). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 21 probe, r5 (round R29). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  What it is for: the device side of the R28 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10 passed);
-  R28 keeps what R27 could not run: T4 again (a second person writes a row), the health flow (now imported alone), the trigger of a
+  What it is for: the device side of the R29 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10 passed);
+  R29 repeats what R28 could not finish: T4 again (a second person writes a row), the health flow r5 (imported alone; it checks only
+  that your own flows are On, because the Power Automate Management connector has no run-history action), the trigger of a
   "For a selected item" flow that the PFM made by hand (read from the export file), and 2 looks (a list form with a header, a view
   with a button that starts that flow). Excel is not repeated (R27: no Automate tab). This script makes the list and library the tests need,
   adds the second person to the site's Visitors group (and removes the person again), formats the list form and a view, starts the
@@ -12,7 +13,7 @@
   Parts (-Part):
     Make   (about 1 minute, an estimate)  Makes the library "90161Z Probe Files" and the list "90161Z Probe" (columns ProbeTest,
            ProbeWay, ProbeResult, ProbeDetail; its own permissions: the site's copied, then Contribute for the site's Visitors group
-           on this list only), saves the fake workbook from a text block in this script, uploads it and writes the test page 90161Z-T21-links-r4.html (4 links).
+           on this list only), saves the fake workbook from a text block in this script, uploads it and writes the test page 90161Z-T21-links-r5.html (4 links).
            Run it twice and the second run changes nothing on the site.
     Person (about 1 minute, an estimate)  Opens a small window and asks for the e-mail address of the second person (test T4). The
            address stays in memory: it is never written to a file, to the screen or to the results. With your own sign-in it adds that
@@ -24,8 +25,10 @@
            the view "ProbeButton" with a button that starts the hand-made button flow (a view formatting with the action executeFlow;
            the flow's ID comes from the file the Export part saved on this computer).
     Export (a few seconds; no sign-in)  Reads the newest solution export zip (last 3 hours; Downloads, Desktop, Documents or the T21
-           folder) whose customizations.xml names a flow "... Probe Button ...". Writes to the result only the trigger's type, kind, connector
-           operationId and parameter NAMES (never a value, site, list ID or address). Saves the flow's ID in 90161Z-T21-button-flow-r4.txt
+           folder) whose customizations.xml names a flow "... Probe Button ...". R29 (R28 finding 3): if no flow has that name and the
+           newest export holds exactly 1 flow, it reads that flow whatever its name and writes "name matched=no". Writes to the result
+           only the trigger's type, kind, connector operationId and parameter NAMES (never a value, site, list ID or address). Saves the
+           flow's ID in 90161Z-T21-button-flow-r5.txt
            in the T21 folder (stays on this computer; not a result file).
     Open   (a few seconds; no sign-in)  Writes the test page again and opens it in the browser.
     Read   (about 1 to 5 minutes, an estimate)  Waits up to -WaitMinutes (default 4) for the health flow's row, then prints one line
@@ -33,13 +36,14 @@
     Clean  (about 1 minute, an estimate)  Removes the second person from the Visitors group again (found by the saved number; then
            deletes the state file), then moves the list and the library to the site Recycle Bin (restorable for 93 days). Each
            step runs even if an earlier one failed, and the part can be run again. The solutions are removed by hand (the part says so).
-           R28 runs it twice: first (-Label first) for the R27 leftovers, last (-Label last) for what R28 made.
+           R29 runs it twice: first (-Label first) to check that R28 left nothing, last (-Label last) for what R29 made.
   WHAT IT CHANGES ON THE SITE: Make adds the two objects, their columns, their permissions and two files. Person adds one person to
   the Visitors group. Run adds 1 row. Look sets one form formatting and adds one view. Read, Open and Export change nothing on the site. Clean undoes
   Person and recycles the two objects. On this computer: the T21 folder (the test page, the state file). Every output line shows the
   site as <SITE> and the DODID as <DODID>; the test page holds the site address and stays on this computer (it is not a result file).
-  Output: 90161Z-T21-probe-make-r4.txt, -person-r4.txt, -run-r4.txt, -look-r4.txt, -export-r4.txt, -read-r4.txt or -clean-<label>-r4.txt in the T21 folder
-  (send them back). Last line of each part: PROBE <part> done: passed=<n> failed=<n>. Exit code 0 when the part ran to its end (a
+  Output: 90161Z-T21-probe-make-r5.txt, -person-r5.txt, -run-r5.txt, -look-r5.txt, -export-r5.txt, -read-r5.txt or -clean-<label>-r5.txt in the T21 folder
+  (send them back). Each test line (HEALTH, T4, BUTTON, FORM, VIEW) is followed by "RESULT <test> PASS" or "RESULT <test> FAIL", so
+  the RADE step counts what the part read (R28 finding 7). Last line of each part: PROBE <part> done: passed=<n> failed=<n>. Exit code 0 when the part ran to its end (a
   FAILED test is a result); exit 1 only when the part could not run (sign-in, missing list).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part, -Label, -WaitMinutes, -NoPause. -PollSeconds,
   -TestDir and -NoLaunch are for the tests in tests/run.sh.
@@ -52,13 +56,13 @@ $LibFolder = '90161ZProbeFiles'
 $ListTitle = '90161Z Probe'
 $ListFolder = '90161ZProbe'
 $BookName = '90161Z-T21-fake-book-r1.xlsx'
-$LinksName = '90161Z-T21-links-r4.html'
-# The state file keeps its r3 name: the R27 round saved it, and the first Clean of R28 finds the R27 person through it.
+$LinksName = '90161Z-T21-links-r5.html'
+# The state file keeps its r3 name: Clean finds a person that an earlier round added through it.
 $StateName = '90161Z-T21-person-state-r3.txt'
-$ButtonIdName = '90161Z-T21-button-flow-r4.txt'
+$ButtonIdName = '90161Z-T21-button-flow-r5.txt'
 $ViewTitle = 'ProbeButton'
 $HeaderText = '90-161.Z test header'
-$Rev = 'r4'
+$Rev = 'r5'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -237,6 +241,9 @@ function Add-Item([string]$Name, [string]$Status, [string]$Text) {
 function Add-Test([string]$Name, [string[]]$Piece, [bool]$Pass) {
   # One summary line per test: "T4 PASSED: a ...; next ...".
   $script:lines.Add($Name + ' ' + $(if ($Pass) { 'PASSED' } else { 'FAILED' }) + ': ' + ($Piece -join '; '))
+  # The runner counts a line as passed or failed only by the separate word PASS or FAIL (R28 finding 7: this part read PASSED
+  # while its 3 tests failed), so each test also gets one RESULT line.
+  $script:lines.Add('RESULT ' + $Name + ' ' + $(if ($Pass) { 'PASS' } else { 'FAIL' }))
   if ($Pass) { $script:passed++ } else { $script:failed++ }
 }
 function Format-Detail([string]$Text) {
@@ -298,12 +305,12 @@ function Write-LinksPage([string]$Dir, [string]$Site) {
     @('Open the list with the button', ($s + '/Lists/' + $ListFolder + '/' + $ViewTitle + '.aspx'), 'The view look: a button that starts a flow.'),
     @('Open the fake workbook', ($s + '/' + $LibFolder + '/' + $BookName + '?web=1'), 'The Excel look: a workbook in Excel for the web.'))
   $body = New-Object System.Text.StringBuilder
-  [void]$body.Append('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>90-161.Z test page r4</title><style>')
+  [void]$body.Append('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>90-161.Z test page r5</title><style>')
   [void]$body.Append('body{font-family:"Segoe UI",Arial,sans-serif;color:#1b2430;background:#fff;margin:0}.light{height:6px;background:#ffd520}')
   [void]$body.Append('main{max-width:760px;padding:24px 32px}h1{font-family:"Segoe UI Semibold","Segoe UI",Arial,sans-serif;font-weight:600;font-size:29px;color:#0b2545;margin:8px 0 4px}')
   [void]$body.Append('p{font-size:15px;color:#5a6573;margin:0 0 24px}a.go{display:block;border:1px solid #00539f;background:#00539f;color:#fff;text-decoration:none;font-size:17px;font-weight:700;padding:14px 18px;margin:0 0 4px}')
   [void]$body.Append('a.go:focus{outline:2px solid #0b2545;outline-offset:2px}span.why{display:block;font-size:14px;color:#5a6573;margin:0 0 20px}</style></head><body><div class="light"></div><main>')
-  [void]$body.Append('<h1>90-161.Z test page</h1><p>Round R28. Fake data only. Open each link when the RADE window says so.</p>')
+  [void]$body.Append('<h1>90-161.Z test page</h1><p>Round R29. Fake data only. Open each link when the RADE window says so.</p>')
   foreach ($l in $links) { [void]$body.Append('<a class="go" href="' + (Get-HtmlText $l[1]) + '">' + (Get-HtmlText $l[0]) + '</a><span class="why">' + (Get-HtmlText $l[2]) + '</span>') }
   [void]$body.Append('</main></body></html>')
   Set-Content -LiteralPath (Join-Path $Dir $LinksName) -Value $body.ToString() -Encoding UTF8
@@ -398,7 +405,7 @@ try {
       if (-not (Test-Path -LiteralPath $pl -PathType Container)) { continue }
       $zips += @(Get-ChildItem -LiteralPath $pl -Filter '*.zip' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $since })
     }
-    $found = $null; $flowCount = 0
+    $found = $null; $flowCount = 0; $single = $null; $first = $true
     foreach ($z in @($zips | Sort-Object LastWriteTime -Descending)) {
       $za = $null
       try {
@@ -412,6 +419,9 @@ try {
         try { $xml = [xml]$rd.ReadToEnd() } finally { $rd.Dispose() }
         $wnodes = @($xml.SelectNodes('//Workflow'))
         $flowCount += $wnodes.Count
+        # R28 finding 3: the export of the hand-made flow did not show the name typed on the card. The newest solution export
+        # with exactly 1 flow is kept as the fallback; it is read only when no export names a "Probe Button" flow.
+        if ($first) { $first = $false; if ($wnodes.Count -eq 1) { $single = @{ Zip = $z.FullName; Node = $wnodes[0] } } }
         foreach ($w in $wnodes) {
           if ([string]$w.GetAttribute('Name') -notlike '*Probe Button*') { continue }
           $leaf = ([string]$w.JsonFileName -split '/')[-1]
@@ -421,13 +431,28 @@ try {
           try { $txt = $rd.ReadToEnd() } finally { $rd.Dispose() }
           $j = $txt | ConvertFrom-Json
           $null = $e[0].FullName -match $guidRx
-          $found = @{ Id = $Matches[1].ToLowerInvariant(); Json = $j }
+          $found = @{ Id = $Matches[1].ToLowerInvariant(); Json = $j; Named = $true }
           break
         }
       } catch { $null = $_ } finally { if ($za) { $za.Dispose() } }
       if ($found) { break }
     }
-    Add-Item 'x1-export' $(if ($found) { 'PASS' } else { 'FAIL' }) ('solution export zips from the last 3 hours=' + @($zips).Count + '; flows read=' + $flowCount + '; a flow named "Probe Button" found=' + $(if ($found) { 'yes' } else { 'no' }))
+    if (-not $found -and $single) {
+      $za = $null
+      try {
+        $za = [System.IO.Compression.ZipFile]::OpenRead($single.Zip)
+        $leaf = ([string]$single.Node.JsonFileName -split '/')[-1]
+        $e = @($za.Entries | Where-Object { $_.FullName -match '^[Ww]orkflows/.+\.json$' -and $_.FullName -match $guidRx -and ($_.FullName -split '/')[-1] -ieq $leaf })
+        if ($e.Count) {
+          $rd = New-Object System.IO.StreamReader($e[0].Open())
+          try { $txt = $rd.ReadToEnd() } finally { $rd.Dispose() }
+          $j = $txt | ConvertFrom-Json
+          $null = $e[0].FullName -match $guidRx
+          $found = @{ Id = $Matches[1].ToLowerInvariant(); Json = $j; Named = $false }
+        }
+      } catch { $null = $_ } finally { if ($za) { $za.Dispose() } }
+    }
+    Add-Item 'x1-export' $(if ($found) { 'PASS' } else { 'FAIL' }) ('solution export zips from the last 3 hours=' + @($zips).Count + '; flows read=' + $flowCount + '; a flow named "Probe Button" found=' + $(if ($found -and $found.Named) { 'yes' } else { 'no' }) + '; the only flow of the newest export read=' + $(if ($found -and -not $found.Named) { 'yes' } else { 'no' }) + '; name matched=' + $(if ($found -and $found.Named) { 'yes' } else { 'no' }))
     if ($found) {
       $tok = { param($v) $t = [string]$v; if (-not $t) { 'none' } elseif ($t -match '^[A-Za-z0-9_.$/-]{1,64}$') { $t } else { '<other>' } }
       $trigs = @()
@@ -605,7 +630,7 @@ try {
   elseif ($Part -eq 'Run') {
     $lst = Find-ByFolder $ListFolder
     if (-not $lst) { throw 'LIST not found: run -Part Make first.' }
-    $tag = 'R28' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+    $tag = 'R29' + [guid]::NewGuid().ToString('N').Substring(0, 8)
     $null = Add-PnPListItem -List $ListTitle -Values @{ Title = ('RUN-HEALTH ' + $tag) } -ErrorAction Stop
     Add-Item 'r1-command' 'INFO' ('command row made: RUN-HEALTH, tag ' + $tag + '; the health flow answers within a few minutes (the Read part waits for it)')
   }
