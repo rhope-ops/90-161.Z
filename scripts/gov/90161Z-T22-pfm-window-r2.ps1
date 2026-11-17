@@ -19,6 +19,7 @@ function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
   return $Text
 }
+
 function Get-TaskId([string]$Id) {
   # Returns @{ Id; Leaf (profile folder name); Secret (longest first, so a longer name is masked before a shorter one inside it) }.
   $leaf = ''
@@ -31,6 +32,7 @@ function Get-TaskId([string]$Id) {
     Where-Object { $_ -and $_.Length -ge 4 } | Sort-Object -Unique | Sort-Object Length -Descending)
   return @{ Id = $value; Leaf = $leaf; Secret = $secret }
 }
+
 function Get-TaskDir([string]$Id, [string]$Task, [string]$Label, [switch]$Create) {
   # The task folder C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z\<Task> (PFM 14 Nov 26: RADE holds
   # the app folder). Until RADE has moved the old folder ...\90-161.Z, that one is used. -Create makes it when missing.
@@ -45,15 +47,18 @@ function Get-TaskDir([string]$Id, [string]$Task, [string]$Label, [switch]$Create
   }
   return $dir
 }
+
 function Assert-TaskFile([string]$Dir, [string[]]$Name, [string]$Message) {
   # Throws $Message + the missing names when a file in $Name is not in $Dir.
   $missing = @($Name | Where-Object { -not (Test-Path -LiteralPath (Join-Path $Dir $_) -PathType Leaf) })
   if ($missing.Count -gt 0) { throw ($Message + ($missing -join ', ')) }
 }
+
 function Unblock-TaskScript([string]$Dir) {
   # Files pasted into Notepad and saved locally need no unblock; a failed unblock is not an error here.
   Get-ChildItem -LiteralPath $Dir -Filter *.ps1 | ForEach-Object { Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
 }
+
 function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret, $Lines, [string]$Log) {
   # Runs $Step.File from $ScriptDir in a child powershell.exe with $Step.Args, masks and records its output and exit
   # code in $Lines, and saves $Lines to $Log after the step.
@@ -708,6 +713,7 @@ function Test-Deploy { return $false }
 # $ui.Form exists, and fills $ui. An app window can reuse it: same $ui, same names. ASCII only (a bundle is ASCII).
 # Needs from the window: $ui (a hashtable), $ui.Form, the globals $apps, $dot, $round and the engine function
 # ConvertTo-Masked and Test-Deploy (only the self-check uses them).
+
 # ---- Scale and colors
 # One scale source (R24: the screen dpi said 96 while Windows Forms scaled every control 1.5 x): $ui.Dpi is the dpi the
 # form scales to (its auto-scale dimensions; the form's sizes are given at 96). Every size RADE sets or draws after the
