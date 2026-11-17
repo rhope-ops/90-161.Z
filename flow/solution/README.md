@@ -75,12 +75,18 @@ Why F02 uses a recurrence: the 6-month review task opens on a date, not on an ed
 14. The publisher is PFM with option value prefix 89127, as in the PFM's R18 export (flow/solution/export-sample); a new environment creates PFM with these values.
 15. Solution XML, operation IDs and the `Publication/Id eq N` filter style are unverified until a first import (see the top of this file).
 
-## T21 probe solution (R26)
+## T21 probe solution (R27)
 
 Built from `test-defs/90161Z-T21-*.json` by `scripts/build_flow_solution.py` (a def's `solution` block names its variant, title and zip). Unmanaged, every flow On, fake data only, each step's status written to RESULT rows of the list `90161Z Probe`.
 
 | Zip | Holds | Connectors (connection references) | Environment variables |
 |---|---|---|---|
-| `90161Z-T21-probe-r2.zip` (PFM90161ZTESTP) | Probe Files r1, Probe Mail r2, Probe App r2 | SharePoint, OneDrive for Business, Office 365 Outlook, Office 365 Users, Office 365 Groups (5) | Site URL, Shared mailbox |
+| `90161Z-T21-probe-r3.zip` (PFM90161ZTESTP) | Probe Health r1, Probe Button r1 | SharePoint, Power Automate Management (2) | Site URL |
 
-r2 (16 Nov 26): the Word and Mail solutions of r1 are gone (r1 results: Premium licence; the Mail import did not get past the connections page). Probe Mail r2 sends S3 (own mailbox, subject starts with "[TEST]"), S5 (own mailbox, no "[TEST]") and S6 (shared mailbox, no "[TEST]") and reads the folders after 2, 8 and 25 minutes. Probe App r2 starts on a RUN-APP row (no Power App: PFM 16 Nov 26). Remove the solution by hand after the round.
+r3 (R27, 17 Nov 26): the files, mail and app flows of r2 are gone (T2, T3, T5, T6, T7, T9 and T10 passed in R26; T8 failed and is not tried again).
+
+- Probe Health r1: starts on a RUN-HEALTH row. The Power Automate Management connector (standard) lists the owner's own flows in this environment only (`ListMyFlows`, environment from `workflow()`), reads the last run of each flow named "90161Z T21 Probe ..." (`ListFlowRuns`, top 1) and writes one RESULT row (HEALTH) with counts and the status code. Nothing from other environments or other people's flows. The operation names and the shape of their answers are unverified until the first import.
+- Probe Button r1: the SharePoint "For a selected item" trigger on `90161Z Probe` (operation `OnSelectedItem`, unverified until the first import); the view button of the R27 look probe starts it with the flow's ID, and it writes one RESULT row (BTN). Its workflow ID (`260790dd-beca-5206-83f7-e6aab40c894e`) is fixed by the builder and held in `scripts/gov/90161Z-T21-probe-r3.ps1` (tests/check_flow_solution.py compares them).
+
+Remove the solution by hand after the round.
+

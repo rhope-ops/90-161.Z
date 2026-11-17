@@ -55,7 +55,7 @@ OPTION_PREFIX = 89127   # the publisher PFM in this environment (R18 export, r5)
 CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Office 365 Outlook",
               "shared_onedriveforbusiness": "OneDrive for Business", "shared_office365users": "Office 365 Users",
               "shared_office365groups": "Office 365 Groups", "shared_wordonlinebusiness": "Word Online (Business)",
-              "shared_sendmail": "Mail"}   # the last five: the T21 probe flows (R26, 16 Nov 26)
+              "shared_sendmail": "Mail", "shared_flowmanagement": "Power Automate Management"}   # the last six: the T21 probe flows (R26, 16 Nov 26; R27: Management)
 # Environment variables (type Text, 100000000). Defaults are list titles from schemas/lists; the site URL and the two day counts stay empty.
 # Order and labels (PFM 15 Nov 26: "sort the fields when importing a solution so the ones i need to modify are sequential and on
 # top"): the values a wing must set come first here (the RootComponent order in solution.xml) and their import-page labels (LABEL)

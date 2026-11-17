@@ -1,125 +1,268 @@
 #!/usr/bin/env python3
-"""Build the three fake sample files for the R26 easy-path probe (Task 21), standard library only.
+"""Build the two fake workbooks for the R27 look probe (Task 21, Excel in the browser), standard library only.
 
-Output (never hand-edit; change this script and rebuild):
-  samples/90161Z-T21-fake-draft-r1.docx  2 pages of fake text, core Title "FAKE DRAFT R26", two plain-text content
-                                         controls ProbeSubject (w:id 916101) and ProbeOPR (w:id 916102), each data-bound
-                                         without storeItemID by a local-name() XPath so SharePoint property demotion can fill them
-  samples/90161Z-T21-fake-form-r1.html   one-page fake form, 4 labelled fields, fake values
-  1-page PDF 1.4, hand-written, text "FAKE - 90161Z R26 - sign here": not a file in the repo (the PII guard skips no .pdf);
-                                         written as base64 text into scripts/gov/90161Z-T21-probe-r2.ps1 between the fake-sign-pdf markers;
-                                         part Make saves it as 90161Z-T21-fake-sign-r1.pdf in the T21 folder
+Output (never hand-edit; change this script and rebuild): the repo holds no .xlsx or .xlsm (the personal-data scan cannot read a
+binary file, and its skip rules are the PFM's), so both files are written as base64 text into scripts/gov/90161Z-T21-probe-r3.ps1
+between the fake-workbooks markers; part Make saves them in the T21 folder and uploads them:
+  90161Z-T21-fake-book-r1.xlsx   one sheet, 3 fake rows ("FAKE ... R27"); no macro
+  90161Z-T21-fake-macro-r1.xlsm  the same sheet plus a tiny VBA project (xl/vbaProject.bin) that writes "FAKE MACRO RAN R27"
+                                 into cell A6 when the workbook opens and holds one sub, FakeMacro, that does the same.
+                                 The VBA project is built here from source text (MS-OVBA streams in an MS-CFB container);
+                                 no Office program makes it, so the R27 look probe also says whether the file opens at all.
 All content is invented. Timestamps are fixed and the zip is stored (not deflated), so the bytes are stable.
 
 Usage: python3 scripts/build_probe_samples.py [--check]
-  --check  write nothing; exit 1 when a committed file or the PDF block in the script differs from what this script builds.
+  --check  write nothing; exit 1 when the blocks in the script differ from what this script builds.
 """
 import base64
 import re
+import struct
 import sys
 import zipfile
 from io import BytesIO
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / 'samples'
-STAMP = (2026, 11, 16, 0, 0, 0)
-W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-XPATH = "/*[local-name()='properties'][1]/*[local-name()='documentManagement'][1]/*[local-name()='%s'][1]"
+STAMP = (2026, 11, 17, 0, 0, 0)
+MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+PROJECT_ID = '{9016A0B1-2B3C-4D5E-8F70-1A2B3C4D5E6F}'   # a made-up GUID (not a real project)
 
 
-def para(text):
-    return '<w:p><w:r><w:t xml:space="preserve">%s</w:t></w:r></w:p>' % text
+# ---- the workbook ----
+
+def sheet_xml():
+    rows = [('FAKE book R27', 'Invented numbers, nothing real'), ('Fake item one', '11'), ('Fake item two', '22')]
+    out = []
+    for i, (a, b) in enumerate(rows, 1):
+        out.append('<row r="%d"><c r="A%d" t="inlineStr"><is><t>%s</t></is></c><c r="B%d" t="inlineStr"><is><t>%s</t></is></c></row>' % (i, i, a, i, b))
+    return ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="%s"><sheetData>%s</sheetData></worksheet>' % (MAIN, ''.join(out)))
 
 
-def control(name, ident, value):
-    return ('<w:sdt><w:sdtPr><w:alias w:val="%s"/><w:tag w:val="%s"/><w:id w:val="%d"/><w:text/>'
-            '<w:dataBinding w:xpath="%s"/></w:sdtPr>'
-            '<w:sdtContent><w:p><w:r><w:t>%s</w:t></w:r></w:p></w:sdtContent></w:sdt>'
-            % (name, name, ident, XPATH % name, value))
-
-
-def docx():
-    page1 = [para('FAKE DRAFT R26 - fake wing instruction for the 90-161.Z probe. Nothing here is real.'),
-             control('ProbeSubject', 916101, 'FAKE SUBJECT PLACEHOLDER'),
-             control('ProbeOPR', 916102, 'FAKE OPR PLACEHOLDER')]
-    page1 += [para('Fake paragraph %d. This sentence is invented test text and has no meaning.' % i) for i in range(1, 9)]
-    page1.append('<w:p><w:r><w:br w:type="page"/></w:r></w:p>')
-    page2 = [para('FAKE page two. Invented text for the probe, nothing else.')]
-    page2 += [para('Fake paragraph %d on page two. Invented test text only.' % i) for i in range(9, 17)]
-    body = ''.join(page1 + page2) + ('<w:sectPr><w:pgSz w:w="12240" w:h="15840"/>'
-                                     '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>')
-    document = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="%s"><w:body>%s</w:body></w:document>' % (W, body))
+def package(macro):
+    wb_type = 'application/vnd.ms-excel.sheet.macroEnabled.main+xml' if macro else 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml'
     types = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
              '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
              '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
              '<Default Extension="xml" ContentType="application/xml"/>'
-             '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
-             '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>')
+             + ('<Default Extension="bin" ContentType="application/vnd.ms-office.vbaProject"/>' if macro else '') +
+             '<Override PartName="/xl/workbook.xml" ContentType="%s"/>'
+             '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>' % wb_type)
     rels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
             '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
-            '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>')
-    core = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-            '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '
-            'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" '
-            'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-            '<dc:title>FAKE DRAFT R26</dc:title><dc:creator>FAKE</dc:creator>'
-            '<dcterms:created xsi:type="dcterms:W3CDTF">2026-11-16T00:00:00Z</dcterms:created>'
-            '<dcterms:modified xsi:type="dcterms:W3CDTF">2026-11-16T00:00:00Z</dcterms:modified></cp:coreProperties>')
+            '<Relationship Id="rId1" Type="%s/officeDocument" Target="xl/workbook.xml"/></Relationships>' % REL)
+    workbook = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+                '<workbook xmlns="%s" xmlns:r="%s"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>' % (MAIN, REL))
+    wb_rels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+               '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+               '<Relationship Id="rId1" Type="%s/worksheet" Target="worksheets/sheet1.xml"/>' % REL
+               + ('<Relationship Id="rId2" Type="http://schemas.microsoft.com/office/2006/relationships/vbaProject" Target="vbaProject.bin"/>' if macro else '')
+               + '</Relationships>')
+    parts = [('[Content_Types].xml', types.encode()), ('_rels/.rels', rels.encode()), ('xl/workbook.xml', workbook.encode()),
+             ('xl/_rels/workbook.xml.rels', wb_rels.encode()), ('xl/worksheets/sheet1.xml', sheet_xml().encode())]
+    if macro:
+        parts.append(('xl/vbaProject.bin', vba_project()))
     buf = BytesIO()
     with zipfile.ZipFile(buf, 'w', zipfile.ZIP_STORED) as z:
-        for name, data in (('[Content_Types].xml', types), ('_rels/.rels', rels), ('word/document.xml', document), ('docProps/core.xml', core)):
+        for name, data in parts:
             info = zipfile.ZipInfo(name, STAMP)
             info.compress_type = zipfile.ZIP_STORED
             info.external_attr = 0o644 << 16
-            z.writestr(info, data.encode('utf-8'))
+            z.writestr(info, data)
     return buf.getvalue()
 
 
-def html():
-    rows = [('Fake name', 'FAKE PERSON ONE'), ('Fake office', 'FAKE/OFFICE'), ('Fake request', 'FAKE REQUEST R26'), ('Fake date', '1 Jan 2000')]
-    out = ['<!DOCTYPE html>', '<html lang="en"><head><meta charset="utf-8"><title>FAKE FORM R26</title></head>', '<body>',
-           '<h1>FAKE FORM - 90161Z R26</h1>', '<p>Invented form for the probe. Nothing here is real.</p>', '<form>']
-    for label, value in rows:
-        out.append('<p><label>%s: <input type="text" value="%s"></label></p>' % (label, value))
-    out += ['</form>', '</body></html>', '']
-    return '\n'.join(out).encode('utf-8')
+# ---- the VBA project (MS-OVBA 2.3 and 2.4) ----
+
+def ovba_compress(data):
+    """MS-OVBA 2.4.1 container with literal tokens only (valid, not small): one chunk of up to 3600 bytes."""
+    assert len(data) <= 3600
+    chunk = bytearray()
+    for i in range(0, len(data), 8):
+        group = data[i:i + 8]
+        chunk.append(0)
+        chunk += group
+    header = ((len(chunk) + 2 - 3) & 0x0FFF) | (0b011 << 12) | 0x8000
+    return b'\x01' + struct.pack('<H', header) + bytes(chunk)
 
 
-def pdf():
-    stream = b'BT /F1 18 Tf 72 700 Td (FAKE - 90161Z R26 - sign here) Tj ET'
-    objs = [b'<< /Type /Catalog /Pages 2 0 R >>',
-            b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-            b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
-            b'<< /Length %d >>\nstream\n' % len(stream) + stream + b'\nendstream',
-            b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
-    out = bytearray(b'%PDF-1.4\n%\xe2\xe3\xcf\xd3\n')
-    offsets = []
-    for i, o in enumerate(objs, 1):
-        offsets.append(len(out))
-        out += b'%d 0 obj\n' % i + o + b'\nendobj\n'
-    xref = len(out)
-    out += b'xref\n0 %d\n0000000000 65535 f \n' % (len(objs) + 1)
-    for off in offsets:
-        out += b'%010d 00000 n \n' % off
-    out += b'trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n' % (len(objs) + 1, xref)
-    return bytes(out)
+def encrypt(data, project_key, seed=0x5A, ignored=1):
+    """MS-OVBA 2.4.3.2 data encryption (version 2), as used for the CMG, DPB and GC values of the PROJECT stream."""
+    out = bytearray([seed, seed ^ 2, seed ^ project_key])
+    unenc1, enc1, enc2 = project_key, project_key, seed ^ 2
+    body = bytes([0x00] * ignored) + struct.pack('<I', len(data)) + data
+    res = bytearray()
+    for b in body:
+        e = b ^ ((enc2 + unenc1) & 0xFF)
+        res.append(e)
+        enc2, enc1, unenc1 = enc1, e, b
+    return bytes(out) + bytes(res)
 
 
-FILES = {'90161Z-T21-fake-draft-r1.docx': docx, '90161Z-T21-fake-form-r1.html': html}
+def rec(rid, payload=b''):
+    return struct.pack('<HI', rid, len(payload)) + payload
 
 
-SCRIPT = ROOT / 'scripts/gov/90161Z-T21-probe-r2.ps1'
-BEGIN = '# >>> fake-sign-pdf: generated by scripts/build_probe_samples.py (do not edit)'
-END = '# <<< fake-sign-pdf'
+MODULES = [
+    ('ThisWorkbook', True, 'Attribute VB_Name = "ThisWorkbook"\r\nAttribute VB_Base = "0{00020819-0000-0000-C000-000000000046}"\r\nAttribute VB_GlobalNameSpace = False\r\n'
+     'Attribute VB_Creatable = False\r\nAttribute VB_PredeclaredId = True\r\nAttribute VB_Exposed = True\r\nAttribute VB_TemplateDerived = False\r\nAttribute VB_Customizable = True\r\n'
+     'Private Sub Workbook_Open()\r\n    ThisWorkbook.Worksheets(1).Range("A6").Value = "FAKE MACRO RAN R27"\r\nEnd Sub\r\n'),
+    ('Sheet1', True, 'Attribute VB_Name = "Sheet1"\r\nAttribute VB_Base = "0{00020820-0000-0000-C000-000000000046}"\r\nAttribute VB_GlobalNameSpace = False\r\n'
+     'Attribute VB_Creatable = False\r\nAttribute VB_PredeclaredId = True\r\nAttribute VB_Exposed = True\r\nAttribute VB_TemplateDerived = False\r\nAttribute VB_Customizable = True\r\n'),
+    ('Module1', False, 'Attribute VB_Name = "Module1"\r\nSub FakeMacro()\r\n    ThisWorkbook.Worksheets(1).Range("A6").Value = "FAKE MACRO RAN R27"\r\nEnd Sub\r\n'),
+]
+REFERENCES = [
+    ('stdole', '*\\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\\Windows\\System32\\stdole2.tlb#OLE Automation'),
+    ('Office', '*\\G{2DF8D04C-5BFA-101B-BDE5-00AA0044DE52}#2.0#0#C:\\Program Files\\Common Files\\Microsoft Shared\\OFFICE16\\MSO.DLL#Microsoft Office 16.0 Object Library'),
+]
 
 
-def pdf_block():
-    b64 = base64.b64encode(pdf()).decode('ascii')
-    rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
+def dir_stream():
+    d = bytearray()
+    d += rec(0x0001, struct.pack('<I', 1)) + rec(0x0002, struct.pack('<I', 0x409)) + rec(0x0014, struct.pack('<I', 0x409))
+    d += rec(0x0003, struct.pack('<H', 1252)) + rec(0x0004, b'VBAProject')
+    d += rec(0x0005) + rec(0x0040) + rec(0x0006) + rec(0x003D) + rec(0x0007, struct.pack('<I', 0)) + rec(0x0008, struct.pack('<I', 0))
+    d += struct.pack('<HIIH', 0x0009, 4, 1, 0)
+    d += rec(0x000C) + rec(0x003C)
+    for name, libid in REFERENCES:
+        n = name.encode('ascii')
+        d += rec(0x0016, n) + rec(0x003E, name.encode('utf-16-le'))
+        lib = libid.encode('ascii')
+        d += rec(0x000D, struct.pack('<I', len(lib)) + lib + struct.pack('<IH', 0, 0))
+    d += rec(0x000F, struct.pack('<H', len(MODULES))) + rec(0x0013, struct.pack('<H', 0xFFFF))
+    for name, document, _ in MODULES:
+        n = name.encode('ascii'); u = name.encode('utf-16-le')
+        d += rec(0x0019, n) + rec(0x0047, u) + rec(0x001A, n) + rec(0x0032, u) + rec(0x001C) + rec(0x0048)
+        d += rec(0x0031, struct.pack('<I', 0)) + rec(0x001E, struct.pack('<I', 0)) + rec(0x002C, struct.pack('<H', 0xFFFF))
+        d += rec(0x0022 if document else 0x0021) + rec(0x002B)
+    d += rec(0x0010)
+    return bytes(d)
+
+
+def project_stream():
+    key = sum(PROJECT_ID.encode('ascii')) & 0xFF
+    lines = ['ID="%s"' % PROJECT_ID, 'Document=ThisWorkbook/&H00000000', 'Document=Sheet1/&H00000000', 'Module=Module1', 'Name="VBAProject"',
+             'HelpContextID="0"', 'VersionCompatible32="393222000"',
+             'CMG="%s"' % encrypt(b'\x00\x00\x00\x00', key, 0x5A, 1).hex().upper(),
+             'DPB="%s"' % encrypt(b'\x00', key, 0x5A, 2).hex().upper(),
+             'GC="%s"' % encrypt(b'\xff', key, 0x5A, 1).hex().upper(), '',
+             '[Host Extender Info]', '&H00000001={3832D640-CF90-11CF-8E43-00A0C911005A};VBE;&H00000000', '',
+             '[Workspace]', 'ThisWorkbook=0, 0, 0, 0, C', 'Sheet1=0, 0, 0, 0, C', 'Module1=0, 0, 0, 0, C', '']
+    return '\r\n'.join(lines).encode('ascii')
+
+
+def projectwm_stream():
+    out = bytearray()
+    for name, _, _ in MODULES:
+        out += name.encode('ascii') + b'\x00' + name.encode('utf-16-le') + b'\x00\x00'
+    return bytes(out) + b'\x00\x00'
+
+
+def cfb(entries):
+    """MS-CFB version 3 file. entries: list of (path, bytes); path 'A' is a root stream, 'VBA/B' a stream in the storage VBA.
+    Every stream is below 4096 bytes, so all of them live in the mini stream."""
+    names = ['Root Entry']
+    for p, _ in entries:
+        if '/' in p and p.split('/')[0] not in names:
+            names.append(p.split('/')[0])
+    # directory entries: (name, type, stream bytes or None, parent storage)
+    dents = [('Root Entry', 5, None, None)]
+    storages = [n for n in names if n != 'Root Entry']
+    for s in storages:
+        dents.append((s, 1, None, 'Root Entry'))
+    for p, data in entries:
+        parent, leaf = p.split('/') if '/' in p else ('Root Entry', p)
+        assert len(data) < 4096
+        dents.append((leaf, 2, data, parent))
+    # mini stream
+    ministream = bytearray(); minifat = []; start = {}
+    for i, (n, t, data, par) in enumerate(dents):
+        if t == 2:
+            start[i] = len(ministream) // 64
+            nsec = max(1, (len(data) + 63) // 64) if data else 0
+            if not data:
+                start[i] = 0xFFFFFFFE
+                continue
+            ministream += data + b'\x00' * (nsec * 64 - len(data))
+            minifat += [start[i] + k + 1 for k in range(nsec - 1)] + [0xFFFFFFFE]
+    n_dir = (len(dents) + 3) // 4
+    n_minifat = max(1, (len(minifat) * 4 + 511) // 512)
+    n_mini = len(ministream) // 512 + (1 if len(ministream) % 512 else 0)
+    n_fat = 1
+    while n_fat * 128 < n_fat + n_dir + n_minifat + n_mini:
+        n_fat += 1
+    fat_start, dir_start = 0, n_fat
+    minifat_start = dir_start + n_dir
+    mini_start = minifat_start + n_minifat
+    total = mini_start + n_mini
+    fat = [0xFFFFFFFD] * n_fat
+    def chain(first, count):
+        return [first + k + 1 for k in range(count - 1)] + [0xFFFFFFFE]
+    fat += chain(dir_start, n_dir) + chain(minifat_start, n_minifat) + (chain(mini_start, n_mini) if n_mini else [])
+    fat += [0xFFFFFFFF] * (n_fat * 128 - len(fat))
+    # red-black tree: all black; siblings of one storage form a balanced tree ordered by (length, upper-case name)
+    key = lambda n: (len(n), n.upper())
+    left = {}; right = {}; child = {}
+    def build(idxs):
+        if not idxs:
+            return 0xFFFFFFFF
+        idxs = sorted(idxs, key=lambda i: key(dents[i][0]))
+        mid = len(idxs) // 2
+        root = idxs[mid]
+        left[root] = build(idxs[:mid]); right[root] = build(idxs[mid + 1:])
+        return root
+    for si, (n, t, data, par) in enumerate(dents):
+        if t in (1, 5):
+            kids = [i for i, d in enumerate(dents) if d[3] == n and i != si]
+            child[si] = build(kids)
+    out_dir = bytearray()
+    for i, (n, t, data, par) in enumerate(dents):
+        nm = n.encode('utf-16-le') + b'\x00\x00'
+        if t == 5:
+            st, size = (mini_start if n_mini else 0xFFFFFFFE), len(ministream)
+        elif t == 2:
+            st, size = start[i], len(data)
+        else:
+            st, size = 0, 0
+        e = nm + b'\x00' * (64 - len(nm)) + struct.pack('<H', len(nm)) + bytes([t, 1])
+        e += struct.pack('<III', left.get(i, 0xFFFFFFFF), right.get(i, 0xFFFFFFFF), child.get(i, 0xFFFFFFFF))
+        e += b'\x00' * 16 + struct.pack('<I', 0) + b'\x00' * 16 + struct.pack('<IQ', st, size)
+        assert len(e) == 128, len(e)
+        out_dir += e
+    while len(out_dir) < n_dir * 512:   # unused entries: no name, type 0, all links NOSTREAM
+        out_dir += b'\x00' * 66 + bytes([0, 0]) + struct.pack('<III', 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) + b'\x00' * 36 + struct.pack('<IQ', 0, 0)
+    minifat_bytes = struct.pack('<%dI' % (n_minifat * 128), *(minifat + [0xFFFFFFFF] * (n_minifat * 128 - len(minifat))))
+    header = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1' + b'\x00' * 16 + struct.pack('<HHHHH', 0x3E, 3, 0xFFFE, 9, 6) + b'\x00' * 6
+    header += struct.pack('<IIIIIIIII', 0, n_fat, dir_start, 0, 4096, minifat_start, n_minifat, 0xFFFFFFFE, 0)
+    difat = [fat_start + k for k in range(n_fat)]
+    header += struct.pack('<109I', *(difat + [0xFFFFFFFF] * (109 - len(difat))))
+    body = struct.pack('<%dI' % (n_fat * 128), *fat) + bytes(out_dir) + minifat_bytes + bytes(ministream) + b'\x00' * (n_mini * 512 - len(ministream))
+    assert len(body) == total * 512, (len(body), total)
+    return header + body
+
+
+def vba_project():
+    entries = [('PROJECT', project_stream()), ('PROJECTwm', projectwm_stream()),
+               ('VBA/_VBA_PROJECT', b'\xcc\x61\xff\xff\x00\x00\x00'), ('VBA/dir', ovba_compress(dir_stream()))]
+    for name, _, src in MODULES:
+        entries.append(('VBA/' + name, ovba_compress(src.encode('ascii'))))
+    return cfb(entries)
+
+
+SCRIPT = ROOT / 'scripts/gov/90161Z-T21-probe-r3.ps1'
+BEGIN = '# >>> fake-workbooks: generated by scripts/build_probe_samples.py (do not edit)'
+END = '# <<< fake-workbooks'
+BLOCKS = (('FakeBookBase64', lambda: package(False)), ('FakeMacroBase64', lambda: package(True)))
+
+
+def block():
     # No here-string: the RADE engine embeds this script in its own here-string and refuses a line that starts with '@.
-    return "$FakeSignPdfBase64 = @(\n" + ',\n'.join("  '%s'" % r for r in rows) + "\n) -join ' '\n"
+    out = ''
+    for name, make in BLOCKS:
+        b64 = base64.b64encode(make()).decode('ascii')
+        rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
+        out += '$' + name + " = @(\n" + ',\n'.join("  '%s'" % r for r in rows) + "\n) -join ' '\n"
+    return out
 
 
 def main(check):
@@ -128,22 +271,14 @@ def main(check):
     m = re.search(re.escape(BEGIN) + r'\n(.*?)' + re.escape(END), text, re.S)
     if m is None:
         stale.append(SCRIPT.name + ' (markers missing)')
-    elif m.group(1) != pdf_block():
+    elif m.group(1) != block():
         stale.append(SCRIPT.name)
         if not check:
-            SCRIPT.write_text(text[:m.start(1)] + pdf_block() + text[m.end(1):], encoding='utf-8')
+            SCRIPT.write_text(text[:m.start(1)] + block() + text[m.end(1):], encoding='utf-8')
             stale.pop()
-    for name, make in FILES.items():
-        data = make()
-        path = OUT / name
-        if check:
-            if not path.is_file() or path.read_bytes() != data:
-                stale.append(name)
-        else:
-            path.write_bytes(data)
     for n in stale:
         print('STALE ' + n)
-    print('PROBESAMPLES files=%d pdf-block=1 stale=%d' % (len(FILES), len(stale)))
+    print('PROBESAMPLES blocks=%d stale=%d' % (len(BLOCKS), len(stale)))
     return 1 if stale else 0
 
 
