@@ -67,10 +67,10 @@ def refuse_unsupported(el, tag):
     extra = set(el.attrib) - SUPPORTED
     if extra:
         raise SystemExit('logo_draw: attribute(s) %s on <%s> are not supported' % (sorted(extra), tag))
+    d = el.get('d', '').upper()
+    if d.count('M') > 1 or ('Z' in d and d.rstrip()[-1:] != 'Z'):
+        raise SystemExit('logo_draw: a path must be one sub-path (one M, and Z only as the last command)')
     if el.get('stroke', 'none') != 'none':
-        d = el.get('d', '').upper()
-        if d.count('M') > 1:
-            raise SystemExit('logo_draw: a path with more than one sub-path (a second M) is not supported')
         open_end = (tag == 'path' and 'Z' not in d) or bool(el.get('stroke-dasharray'))   # a stroke with free ends
         corners = tag == 'path' and len(re.findall(r'[LHVAZ]', d)) > 1                    # a stroke with joins (Z draws one)
         if open_end and el.get('stroke-linecap') != 'round':
@@ -84,6 +84,8 @@ def refuse_unsupported(el, tag):
 
 def refuse_clip(clip):
     """Stop when a <clipPath> holds anything but plain <rect> elements or has attributes other than its id; True."""
+    if not len(clip):
+        raise SystemExit('logo_draw: an empty <clipPath> is not supported (it would hide the shape)')
     if set(clip.attrib) - {'id'}:
         raise SystemExit('logo_draw: <clipPath> attribute(s) %s are not supported' % sorted(set(clip.attrib) - {'id'}))
     for r in clip:
@@ -94,7 +96,10 @@ def refuse_clip(clip):
 
 def clip_rect(r):
     """Return (x, y, width, height) of a clip <rect>."""
-    return tuple(float(r.get(k)) for k in ('x', 'y', 'width', 'height'))
+    try:
+        return tuple(float(r.get(k)) for k in ('x', 'y', 'width', 'height'))
+    except (TypeError, ValueError):
+        raise SystemExit('logo_draw: a clip <rect> needs x, y, width and height as plain numbers')
 
 
 def color(text):
