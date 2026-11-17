@@ -79,18 +79,16 @@ R28 (PFM 17 Nov 26: every agent recommendation and the draft values below are ap
 14. The publisher is PFM with option value prefix 89127, as in the PFM's R18 export (flow/solution/export-sample); a new environment creates PFM with these values.
 15. Solution XML, operation IDs and the `Publication/Id eq N` filter style are unverified until a first import (see the top of this file).
 
-## T21 probe solution (R27)
+## T21 probe solution (R28)
 
 Built from `test-defs/90161Z-T21-*.json` by `scripts/build_flow_solution.py` (a def's `solution` block names its variant, title and zip). Unmanaged, every flow On, fake data only, each step's status written to RESULT rows of the list `90161Z Probe`.
 
 | Zip | Holds | Connectors (connection references) | Environment variables |
 |---|---|---|---|
-| `90161Z-T21-probe-r3.zip` (PFM90161ZTESTP) | Probe Health r1, Probe Button r1 | SharePoint, Power Automate Management (2) | Site URL |
+| `90161Z-T21-probe-r4.zip` (PFM90161ZTESTP, title "90-161.Z probe health") | Probe Health r1 | SharePoint, Power Automate Management (2) | Site URL |
 
-r3 (R27, 17 Nov 26): the files, mail and app flows of r2 are gone (T2, T3, T5, T6, T7, T9 and T10 passed in R26; T8 failed and is not tried again).
+r4 (R28, 17 Nov 26): the health flow only. The button flow left the builder: R27 showed that `OnSelectedItem` is not an operation of the SharePoint connector (R27 results, finding 4). The PFM makes one "For a selected item" flow by hand on the probe list in R28 and exports it; the builder does not copy its trigger. `scripts/gov/90161Z-T21-probe-r4.ps1 -Part Export` (the round worker owns it) reads the trigger shape from that export. r3 (R27) held Probe Health r1 and Probe Button r1; its files, mail and app flows were gone since r3 (T2, T3, T5, T6, T7, T9 and T10 passed in R26; T8 failed and is not tried again).
 
-- Probe Health r1: starts on a RUN-HEALTH row. The Power Automate Management connector (standard) lists the owner's own flows in this environment only (`ListMyFlows`, environment from `workflow()`), reads the last run of each flow named "90161Z T21 Probe ..." (`ListFlowRuns`, top 1) and writes one RESULT row (HEALTH) with counts and the status code. Nothing from other environments or other people's flows. The operation names and the shape of their answers are unverified until the first import.
-- Probe Button r1: the SharePoint "For a selected item" trigger on `90161Z Probe` (operation `OnSelectedItem`, unverified until the first import); the view button of the R27 look probe starts it with the flow's ID, and it writes one RESULT row (BTN). Its workflow ID (`260790dd-beca-5206-83f7-e6aab40c894e`) is fixed by the builder and held in `scripts/gov/90161Z-T21-probe-r3.ps1` (tests/check_flow_solution.py compares them).
+- Probe Health r1: starts on a RUN-HEALTH row. The Power Automate Management connector (standard) lists the owner's own flows in this environment only (`ListMyFlows`, environment from `workflow()`), reads the last run of each flow named "90161Z T21 Probe ..." (`ListFlowRuns`, top 1) and writes one RESULT row (HEALTH) with counts and the status code. Nothing from other environments or other people's flows. The operation names and the shape of their answers are unverified (the R27 import did not show whether this flow saved).
 
 Remove the solution by hand after the round.
-
