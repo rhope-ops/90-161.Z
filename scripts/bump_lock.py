@@ -59,6 +59,7 @@ def tag_commit(tag):
 
 
 def main_serial():
+    """Read the serial in scripts/rade.lock.json on origin/main (after a fetch). Takes nothing; returns the number."""
     subprocess.run(["git", "fetch", "-q", "origin", "main"], cwd=ROOT, check=True)
     shown = subprocess.run(["git", "show", "origin/main:scripts/rade.lock.json"], cwd=ROOT,
                            capture_output=True, text=True, check=True).stdout
@@ -74,6 +75,7 @@ def traced_build(cache_root, engine):
     seen = set()
 
     def hook(event, args):
+        """Audit hook: record each file the engine opens under the cache folder (relative path with forward slashes)."""
         if event == "open" and isinstance(args[0], (str, os.PathLike)):
             p = os.path.abspath(os.fspath(args[0]))
             if p.startswith(cache_root + os.sep):
@@ -91,6 +93,7 @@ def traced_build(cache_root, engine):
 
 
 def bump(tag):
+    """Move the RADE lock to a release tag: check the release, rewrite the lock, add the DECISIONS row, prove by trace which engine files are read, then run the checks. Takes the tag (engine-v<N>); exits on any failure."""
     if not re.fullmatch(TAG_RE, tag):
         sys.exit("FAIL tag must look like engine-v3, got: " + tag)
     lock = json.load(open(LOCK))
@@ -132,6 +135,7 @@ def bump(tag):
 
 
 def self_test():
+    """Check check_release and the tag pattern against fixed good and bad cases. Takes nothing; returns 1 when any case fails, else 0."""
     lock = {"repo": "rhope-ops/RADE"}
     c, h = "a" * 40, "b" * 64
     good = {"repo": "rhope-ops/RADE", "commit": c, "engine": "engine/x.py", "files": {"engine/x.py": h}}
@@ -154,6 +158,7 @@ def self_test():
 
 
 def changed_files():
+    """List the changed files from git status. Takes nothing; returns the text, or "(none)"."""
     out = subprocess.run(["git", "status", "--short"], cwd=ROOT, capture_output=True, text=True).stdout
     return out.strip() or "(none)"
 

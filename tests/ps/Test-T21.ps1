@@ -5,6 +5,7 @@
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
+# Record one test result and print PASS or FAIL. Takes the test name, the condition and optional detail text; returns nothing.
 function Test-That([string]$Name, [bool]$Ok, [string]$Detail = '') {
   if ($Ok) { $script:pass++; Write-Host ('T21TEST PASS ' + $Name) } else { $script:fail++; Write-Host ('T21TEST FAIL ' + $Name + ' ' + $Detail) }
 }
@@ -23,6 +24,7 @@ $fakeAddr = 'second.person@fake.example'
 $buttonId = '260790dd-beca-5206-83f7-e6aab40c894e'
 
 # ---- the fake site and its cmdlets ----
+# Reset the fake site: two lists (a library and another probe list) and all switches off. Takes nothing; returns nothing.
 function New-Site {
   if (Test-Path -LiteralPath $state) { Remove-Item -LiteralPath $state }
   $global:F = @{ Lists = (New-Object System.Collections.ArrayList); Connected = $false; Created = 0; Uploads = 0; Rests = 0; Recycled = (New-Object System.Collections.ArrayList)
@@ -32,6 +34,7 @@ function New-Site {
   $null = Add-SiteList 'Documents' 'Shared Documents' 101
   $null = Add-SiteList 'Other probe list' 'Lists/OtherProbe' 100
 }
+# Add a fake list with its content type. Takes the title, folder URL and template number (101 library, 100 list); returns the list object.
 function Add-SiteList([string]$Title, [string]$Folder, [int]$Template) {
   $ct = [pscustomobject]@{ Id = '0x0100FAKE'; ClientFormCustomFormatter = '' }
   $ct | Add-Member -MemberType ScriptMethod -Name Update -Value { param($x) }
@@ -41,16 +44,22 @@ function Add-SiteList([string]$Title, [string]$Folder, [int]$Template) {
   $null = $global:F.Lists.Add($l)
   return $l
 }
+# Find a fake list by id. Takes the id text; returns the list or throws a 404 message.
 function Get-FakeList([string]$Id) { $h = @($global:F.Lists | Where-Object { $_.Id -eq $Id }); if (-not $h.Count) { throw ('FAKE 404 list ' + $Id) }; return $h[0] }
+# Find a fake list by title. Takes the title; returns the list or throws.
 function Get-FakeListByTitle([string]$Title) { $h = @($global:F.Lists | Where-Object { $_.Title -eq $Title }); if (-not $h.Count) { throw ('FAKE: no list titled ' + $Title) }; return $h[0] }
+# Fake Connect-PnPOnline: accepts only -UseWebLogin, as on the gov device, and records the address.
 function Connect-PnPOnline { [CmdletBinding()] param([string]$Url, [switch]$UseWebLogin) if (-not $UseWebLogin) { throw 'FAKE: -UseWebLogin only' }; $global:F.Connected = $true; $global:F.Url = $Url }
+# Fake Disconnect-PnPOnline: marks the fake site as not connected.
 function Disconnect-PnPOnline { [CmdletBinding()] param() $global:F.Connected = $false }
+# Fake New-PnPList: creates a list or library; throws when the title or folder exists. Counts the creation.
 function New-PnPList {
   [CmdletBinding()] param([string]$Title, [string]$Template, [string]$Url)
   if (@($global:F.Lists | Where-Object { $_.Title -eq $Title -or $_.Folder -eq ($Url -split '/')[-1] }).Count) { throw 'FAKE 500: list exists' }
   $global:F.Created++
   $null = Add-SiteList $Title $Url $(if ($Template -eq 'DocumentLibrary') { 101 } else { 100 })
 }
+# Fake Get-PnPContext: the CSOM route (GetById on lists, content types and views) that gives an object whose property can be set.
 function Get-PnPContext {
   # The CSOM route: GetById(list).ContentTypes.GetById(id) and .Views.GetById(guid) give an object whose property can be set.
   [CmdletBinding()] param()
@@ -68,12 +77,14 @@ function Get-PnPContext {
   $ctx | Add-Member -MemberType ScriptMethod -Name ExecuteQuery -Value { }
   return $ctx
 }
+# Fake Add-PnPFile: puts a file name into the library with that folder name; counts the upload.
 function Add-PnPFile {
   [CmdletBinding()] param([string]$Path, [string]$Folder)
   $lib = @($global:F.Lists | Where-Object { $_.Folder -eq $Folder })
   if (-not $lib.Count) { throw 'FAKE 404 folder' }
   $null = $lib[0].Files.Add((Split-Path -Leaf $Path)); $global:F.Uploads++
 }
+# Fake Add-PnPListItem: adds a row to a list by title and returns it; runs the OnAdd hook when set.
 function Add-PnPListItem {
   [CmdletBinding()] param([string]$List, [hashtable]$Values)
   $l = Get-FakeListByTitle $List
@@ -84,12 +95,14 @@ function Add-PnPListItem {
   if ($global:F.OnAdd) { & $global:F.OnAdd $l $item }
   return $item
 }
+# Fake Get-PnPListItem: returns the rows of a list by title; counts the read and runs the OnGet hook when set.
 function Get-PnPListItem {
   [CmdletBinding()] param([string]$List, [string[]]$Fields, [int]$PageSize)
   $global:F.Gets++
   if ($global:F.OnGet) { & $global:F.OnGet }
   return @((Get-FakeListByTitle $List).Items)
 }
+# Fake Add-PnPView: adds a view to a list by title and counts it.
 function Add-PnPView {
   [CmdletBinding()] param([string]$List, [string]$Title, [string[]]$Fields)
   $l = Get-FakeListByTitle $List
@@ -98,6 +111,7 @@ function Add-PnPView {
   $v | Add-Member -MemberType ScriptMethod -Name Update -Value { }
   $null = $global:F.Views.Add($v)
 }
+# Fake Add-PnPGroupMember: adds a known user (by login name) to a group; throws when refused or unknown.
 function Add-PnPGroupMember {
   [CmdletBinding()] param([string]$LoginName, $Group)
   if ($global:F.AddRefused) { throw ('FAKE 403: access denied for ' + $LoginName + ' (getbyemail(''' + ($LoginName -replace '^.*\|', '' -replace '@', '%40') + '''))') }
@@ -107,78 +121,61 @@ function Add-PnPGroupMember {
   $global:F.GroupUsers[$g] = @($global:F.GroupUsers[$g]) + $global:F.Users[$Matches[1]]
   $global:F.Added++
 }
+# Fake Remove-PnPList: moves a list to the fake recycle bin; throws when -Recycle is missing (never a permanent delete).
 function Remove-PnPList {
   [CmdletBinding()] param([string]$Identity, [switch]$Recycle, [switch]$Force)
   if (-not $Recycle) { throw 'FAKE: the script must use -Recycle (never a permanent delete)' }
   $l = Get-FakeList $Identity
   $global:F.Lists.Remove($l); $null = $global:F.Recycled.Add($l.Title)
 }
-function Invoke-PnPSPRestMethod {
-  [CmdletBinding()] param([string]$Method = 'Get', [string]$Url, $Content, [string]$ContentType = 'application/json', [string]$Accept = 'application/json;odata=nometadata', [switch]$Raw)
-  if (-not $global:F.Connected) { throw 'FAKE: not connected' }
-  if (-not $Raw) { throw 'FAKE: the script must use -Raw' }
-  $prefix = $global:F.Url.TrimEnd('/') + '/_api/'
-  if (-not $Url.StartsWith($prefix)) { throw 'FAKE: the address must be the site address + /_api/...' }
-  $path = $Url.Substring($prefix.Length)
-  $q = $path.IndexOf('?'); if ($q -ge 0) { $path = $path.Substring(0, $q) }
-  $global:F.Rests++
-  if ($Method -eq 'Get') {
-    if ($path -eq 'web/lists') {
-      return (@{ value = @($global:F.Lists | ForEach-Object { @{ Id = $_.Id; Title = $_.Title; ItemCount = $_.Items.Count; BaseTemplate = $_.Template; Hidden = $_.Hidden; HasUniqueRoleAssignments = $_.Unique; RootFolder = @{ Name = $_.Folder } } }) } | ConvertTo-Json -Depth 6 -Compress)
-    }
-    if ($path -eq 'web/associatedvisitorgroup') { return (@{ Id = $global:F.Visitors } | ConvertTo-Json -Compress) }
-    if ($path -eq 'web/roledefinitions') { return (@{ value = @(@{ Id = 1073741827 }) } | ConvertTo-Json -Compress) }
-    if ($path -eq 'web/currentuser') { return (@{ Id = 11 } | ConvertTo-Json -Compress) }
-    if ($path -match '^web/sitegroups/getbyid\((\d+)\)/users$') { return (@{ value = @(@($global:F.GroupUsers[[int]$Matches[1]]) | Where-Object { $_ } | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Compress) }
-    if ($path -match "^web/siteusers/getbyemail\('([^']+)'\)$") {
-      $a = [uri]::UnescapeDataString($Matches[1])
-      if (-not $global:F.Users.ContainsKey($a) -or $global:F.NoGetByEmail) { throw ('FAKE 404 user ' + $a) }
-      return ('{"Id":' + $global:F.Users[$a] + ',"LoginName":"i:0#.f|membership|' + $a + '"}')
-    }
-    if ($path -match "^web/lists\(guid'([^']+)'\)/(fields|rootfolder/files|contenttypes|views)$") {
-      $l = Get-FakeList $Matches[1]
-      switch ($Matches[2]) {
-        'fields' { return (@{ value = @($l.Fields | ForEach-Object { @{ InternalName = $_ } }) } | ConvertTo-Json -Compress) }
-        'contenttypes' { return (@{ value = @(@{ Id = @{ StringValue = $l.CT.Id }; Name = 'Item' }) } | ConvertTo-Json -Compress -Depth 4) }
-        'views' { return (@{ value = @($global:F.Views | Where-Object { $_.ListId -eq $l.Id } | ForEach-Object { @{ Id = $_.Id; Title = $_.Title } }) } | ConvertTo-Json -Compress -Depth 4) }
-        default { return (@{ value = @($l.Files | ForEach-Object { @{ Name = $_; ServerRelativeUrl = ('/sites/FakeWing/' + $l.Folder + '/' + $_); Length = 1000 } }) } | ConvertTo-Json -Compress) }
-      }
-    }
-    if ($path -match "^web/lists\(guid'([^']+)'\)/contenttypes\('([^']+)'\)$") { return (@{ ClientFormCustomFormatter = (Get-FakeList $Matches[1]).CT.ClientFormCustomFormatter } | ConvertTo-Json -Compress) }
-    if ($path -match "^web/lists\(guid'([^']+)'\)/views\(guid'([^']+)'\)$") {
-      $vid = $Matches[2]; $v = @($global:F.Views | Where-Object { $_.Id -eq $vid })
-      if (-not $v.Count) { throw 'FAKE 404 view' }
-      return (@{ CustomFormatter = $v[0].CustomFormatter } | ConvertTo-Json -Compress)
-    }
-    if ($path -match "^web/lists\(guid'([^']+)'\)/roleassignments/getbyprincipalid\((\d+)\)/roledefinitionbindings$") {
-      $l = Get-FakeList $Matches[1]; $p = [int]$Matches[2]
-      if (-not $l.Roles.ContainsKey($p)) { throw 'FAKE 404: no such principal' }
-      return (@{ value = @($l.Roles[$p] | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Compress)
-    }
-    throw ('FAKE 404 GET ' + $path)
+# Answer a REST GET of the fake site. Takes the path after /_api/ (no query); returns JSON text, or throws a 404 message.
+function Get-FakeRestAnswer([string]$path) {
+  if ($path -eq 'web/lists') {
+    return (@{ value = @($global:F.Lists | ForEach-Object { @{ Id = $_.Id; Title = $_.Title; ItemCount = $_.Items.Count; BaseTemplate = $_.Template; Hidden = $_.Hidden; HasUniqueRoleAssignments = $_.Unique; RootFolder = @{ Name = $_.Folder } } }) } | ConvertTo-Json -Depth 6 -Compress)
   }
-  if ($Method -notin 'Post', 'Merge') { throw 'FAKE: only GET, POST and MERGE' }
-  if ($ContentType -ne 'application/json;odata=verbose') { throw 'FAKE 415' }
-  if ($Content -isnot [string]) { throw 'FAKE: the body must be a string' }
-  if ($path -eq 'web/ensureuser') {
-    $b = $Content | ConvertFrom-Json
-    if ($b.logonName -notmatch '^i:0#\.f\|membership\|(.+)$' -or -not $global:F.Users.ContainsKey($Matches[1])) { throw 'FAKE 404: ensureuser found no one' }
-    return ('{"Id":' + $global:F.Users[$Matches[1]] + ',"IsHiddenInUI":false,"LoginName":"' + $b.logonName + '","Title":"FAKE NAME","Email":"' + $Matches[1] + '"}')
+  if ($path -eq 'web/associatedvisitorgroup') { return (@{ Id = $global:F.Visitors } | ConvertTo-Json -Compress) }
+  if ($path -eq 'web/roledefinitions') { return (@{ value = @(@{ Id = 1073741827 }) } | ConvertTo-Json -Compress) }
+  if ($path -eq 'web/currentuser') { return (@{ Id = 11 } | ConvertTo-Json -Compress) }
+  if ($path -match '^web/sitegroups/getbyid\((\d+)\)/users$') { return (@{ value = @(@($global:F.GroupUsers[[int]$Matches[1]]) | Where-Object { $_ } | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Compress) }
+  if ($path -match "^web/siteusers/getbyemail\('([^']+)'\)$") {
+    $a = [uri]::UnescapeDataString($Matches[1])
+    if (-not $global:F.Users.ContainsKey($a) -or $global:F.NoGetByEmail) { throw ('FAKE 404 user ' + $a) }
+    return ('{"Id":' + $global:F.Users[$a] + ',"LoginName":"i:0#.f|membership|' + $a + '"}')
   }
-  if ($path -match '^web/sitegroups/getbyid\((\d+)\)/users/removebyid\((\d+)\)$') {
-    if ($global:F.RemoveRefused) { throw 'FAKE 403: not allowed' }
-    $g = [int]$Matches[1]; $u = [int]$Matches[2]
-    $global:F.GroupUsers[$g] = @(@($global:F.GroupUsers[$g]) | Where-Object { $_ -ne $u }); return ''
+  if ($path -match "^web/lists\(guid'([^']+)'\)/(fields|rootfolder/files|contenttypes|views)$") {
+    $l = Get-FakeList $Matches[1]
+    switch ($Matches[2]) {
+      'fields' { return (@{ value = @($l.Fields | ForEach-Object { @{ InternalName = $_ } }) } | ConvertTo-Json -Compress) }
+      'contenttypes' { return (@{ value = @(@{ Id = @{ StringValue = $l.CT.Id }; Name = 'Item' }) } | ConvertTo-Json -Compress -Depth 4) }
+      'views' { return (@{ value = @($global:F.Views | Where-Object { $_.ListId -eq $l.Id } | ForEach-Object { @{ Id = $_.Id; Title = $_.Title } }) } | ConvertTo-Json -Compress -Depth 4) }
+      default { return (@{ value = @($l.Files | ForEach-Object { @{ Name = $_; ServerRelativeUrl = ('/sites/FakeWing/' + $l.Folder + '/' + $_); Length = 1000 } }) } | ConvertTo-Json -Compress) }
+    }
   }
-  if ($path -notmatch "^web/lists\(guid'([^']+)'\)/(.+)$") { throw ('FAKE 404 POST ' + $path) }
-  $l = Get-FakeList $Matches[1]; $rest = $Matches[2]
-  if ($Method -eq 'Merge') {
-    if (-not $global:F.MergeWorks) { throw 'FAKE 405: merge refused' }
-    $b = $Content | ConvertFrom-Json
-    if ($rest -match "^contenttypes\('([^']+)'\)$" -and $b.__metadata.type -eq 'SP.ContentType') { $l.CT.ClientFormCustomFormatter = [string]$b.ClientFormCustomFormatter; return '' }
-    if ($rest -match "^views\(guid'([^']+)'\)$" -and $b.__metadata.type -eq 'SP.View') { $vid = $Matches[1]; @($global:F.Views | Where-Object { $_.Id -eq $vid })[0].CustomFormatter = [string]$b.CustomFormatter; return '' }
-    throw ('FAKE 404 MERGE ' + $path)
+  if ($path -match "^web/lists\(guid'([^']+)'\)/contenttypes\('([^']+)'\)$") { return (@{ ClientFormCustomFormatter = (Get-FakeList $Matches[1]).CT.ClientFormCustomFormatter } | ConvertTo-Json -Compress) }
+  if ($path -match "^web/lists\(guid'([^']+)'\)/views\(guid'([^']+)'\)$") {
+    $vid = $Matches[2]; $v = @($global:F.Views | Where-Object { $_.Id -eq $vid })
+    if (-not $v.Count) { throw 'FAKE 404 view' }
+    return (@{ CustomFormatter = $v[0].CustomFormatter } | ConvertTo-Json -Compress)
   }
+  if ($path -match "^web/lists\(guid'([^']+)'\)/roleassignments/getbyprincipalid\((\d+)\)/roledefinitionbindings$") {
+    $l = Get-FakeList $Matches[1]; $p = [int]$Matches[2]
+    if (-not $l.Roles.ContainsKey($p)) { throw 'FAKE 404: no such principal' }
+    return (@{ value = @($l.Roles[$p] | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Compress)
+  }
+  throw ('FAKE 404 GET ' + $path)
+}
+
+# Answer a MERGE on a list (the content type or view formatter). Takes the list, the route after the list, the body text and the path; returns an empty string or throws.
+function Merge-FakeRest($l, [string]$rest, [string]$Content, [string]$path) {
+  if (-not $global:F.MergeWorks) { throw 'FAKE 405: merge refused' }
+  $b = $Content | ConvertFrom-Json
+  if ($rest -match "^contenttypes\('([^']+)'\)$" -and $b.__metadata.type -eq 'SP.ContentType') { $l.CT.ClientFormCustomFormatter = [string]$b.ClientFormCustomFormatter; return '' }
+  if ($rest -match "^views\(guid'([^']+)'\)$" -and $b.__metadata.type -eq 'SP.View') { $vid = $Matches[1]; @($global:F.Views | Where-Object { $_.Id -eq $vid })[0].CustomFormatter = [string]$b.CustomFormatter; return '' }
+  throw ('FAKE 404 MERGE ' + $path)
+}
+
+# Answer a POST on a list (create a column, break inheritance, add a role). Takes the list, the route after the list, the body text and the path; returns an empty string or throws.
+function Send-FakeListRest($l, [string]$rest, [string]$Content, [string]$path) {
   if ($rest -eq 'fields/createfieldasxml') {
     $b = $Content | ConvertFrom-Json
     $xml = [xml][string]$b.parameters.SchemaXml
@@ -196,6 +193,42 @@ function Invoke-PnPSPRestMethod {
   throw ('FAKE 404 POST ' + $path)
 }
 
+# Answer a POST or MERGE of the fake site: ensure a user, remove a group user, or route to a list. Takes the method, the path after /_api/ and the body text; returns an empty string, JSON text, or throws.
+function Send-FakeRest([string]$Method, [string]$path, [string]$Content) {
+  if ($path -eq 'web/ensureuser') {
+    $b = $Content | ConvertFrom-Json
+    if ($b.logonName -notmatch '^i:0#\.f\|membership\|(.+)$' -or -not $global:F.Users.ContainsKey($Matches[1])) { throw 'FAKE 404: ensureuser found no one' }
+    return ('{"Id":' + $global:F.Users[$Matches[1]] + ',"IsHiddenInUI":false,"LoginName":"' + $b.logonName + '","Title":"FAKE NAME","Email":"' + $Matches[1] + '"}')
+  }
+  if ($path -match '^web/sitegroups/getbyid\((\d+)\)/users/removebyid\((\d+)\)$') {
+    if ($global:F.RemoveRefused) { throw 'FAKE 403: not allowed' }
+    $g = [int]$Matches[1]; $u = [int]$Matches[2]
+    $global:F.GroupUsers[$g] = @(@($global:F.GroupUsers[$g]) | Where-Object { $_ -ne $u }); return ''
+  }
+  if ($path -notmatch "^web/lists\(guid'([^']+)'\)/(.+)$") { throw ('FAKE 404 POST ' + $path) }
+  $l = Get-FakeList $Matches[1]; $rest = $Matches[2]
+  if ($Method -eq 'Merge') { return (Merge-FakeRest $l $rest $Content $path) }
+  return (Send-FakeListRest $l $rest $Content $path)
+}
+
+# Fake Invoke-PnPSPRestMethod: checks the call as the gov device needs it (connected, -Raw, address, headers), then answers a GET or routes a POST or MERGE.
+function Invoke-PnPSPRestMethod {
+  [CmdletBinding()] param([string]$Method = 'Get', [string]$Url, $Content, [string]$ContentType = 'application/json', [string]$Accept = 'application/json;odata=nometadata', [switch]$Raw)
+  if (-not $global:F.Connected) { throw 'FAKE: not connected' }
+  if (-not $Raw) { throw 'FAKE: the script must use -Raw' }
+  $prefix = $global:F.Url.TrimEnd('/') + '/_api/'
+  if (-not $Url.StartsWith($prefix)) { throw 'FAKE: the address must be the site address + /_api/...' }
+  $path = $Url.Substring($prefix.Length)
+  $q = $path.IndexOf('?'); if ($q -ge 0) { $path = $path.Substring(0, $q) }
+  $global:F.Rests++
+  if ($Method -eq 'Get') { return (Get-FakeRestAnswer $path) }
+  if ($Method -notin 'Post', 'Merge') { throw 'FAKE: only GET, POST and MERGE' }
+  if ($ContentType -ne 'application/json;odata=verbose') { throw 'FAKE 415' }
+  if ($Content -isnot [string]) { throw 'FAKE: the body must be a string' }
+  return (Send-FakeRest $Method $path $Content)
+}
+
+# Run one part of the T21 probe script against the fake site. Takes the part name, extra script parameters and a label; returns a hashtable with Code (exit code), Out (lines), Text (joined) and File (the result file text, or empty).
 function Invoke-T21([string]$Part, [hashtable]$Extra = @{}, [string]$Label = '') {
   $Extra2 = @{} + $Extra; if ($Label) { $Extra2['Label'] = $Label }
   $global:LASTEXITCODE = 0
@@ -207,9 +240,13 @@ function Invoke-T21([string]$Part, [hashtable]$Extra = @{}, [string]$Label = '')
   return $r
 }
 $allText = New-Object System.Text.StringBuilder
+# Keep the screen text and the result file of one run for the later checks. Takes the run hashtable; returns nothing.
 function Note([hashtable]$R) { [void]$allText.AppendLine($R.Text); [void]$allText.AppendLine($R.File) }
+# Find a probe list or library by folder name. Takes the folder; returns the fake list.
 function Get-Probe([string]$Folder) { return @($global:F.Lists | Where-Object { $_.Folder -eq $Folder })[0] }
+# Add a RESULT row to a fake probe list. Takes the list and the test, way, result and detail text; returns nothing.
 function Add-Res($l, [string]$T, [string]$W, [string]$R, [string]$D) { $global:F.RowId++; $null = $l.Items.Add(@{ Id = $global:F.RowId; Title = 'RESULT'; ProbeTest = $T; ProbeWay = $W; ProbeResult = $R; ProbeDetail = $D; Author = [pscustomobject]@{ LookupId = 11 } }) }
+# Add a row with a title and an author id (0 = no author) to a fake probe list. Returns nothing.
 function Add-Row($l, [string]$Title, [int]$Author) { $global:F.RowId++; $null = $l.Items.Add(@{ Id = $global:F.RowId; Title = $Title; ProbeTest = ''; ProbeWay = ''; ProbeResult = ''; ProbeDetail = ''; Author = $(if ($Author) { [pscustomobject]@{ LookupId = $Author } } else { $null }) }) }
 $links = Join-Path $t21 '90161Z-T21-links-r5.html'
 $state = Join-Path $t21 '90161Z-T21-person-state-r3.txt'
@@ -237,6 +274,7 @@ $r = Invoke-T21 'Make'; Note $r
 Test-That 'Make without a Visitors group: NOTE line, still exit 0' ($r.Code -eq 0 -and $r.Text -match 'NOTE m4: no associated Visitors group' -and $r.Out[-1] -match 'failed=0')
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $bookPath = Join-Path $t21 '90161Z-T21-fake-book-r1.xlsx'
+# List the entry names of a zip file. Takes the path; returns an array of names.
 function Get-ZipNames([string]$Path) { $z = [System.IO.Compression.ZipFile]::OpenRead($Path); try { return @($z.Entries | ForEach-Object { $_.FullName }) } finally { $z.Dispose() } }
 Test-That 'Make: saves the workbook from the text block; it opens as a package with no VBA project' ((Test-Path -LiteralPath $bookPath) -and -not (Test-Path -LiteralPath (Join-Path $t21 '90161Z-T21-fake-macro-r1.xlsm')) -and ((Get-ZipNames $bookPath) -contains 'xl/workbook.xml') -and -not ((Get-ZipNames $bookPath) -contains 'xl/vbaProject.bin') -and $r.Text -match 'm5a-workbooks INFO fake workbook saved to the T21 folder now=0')
 (Get-Item -LiteralPath $bookPath).LastWriteTime = [datetime]'2001-01-01'
@@ -412,6 +450,7 @@ New-Site; $null = Invoke-T21 'Make'
 $lst = Get-Probe '90161ZProbe'
 Add-Row $lst 'RUN-HEALTH R29abcdef12' 11
 $global:Lst21 = $lst; $global:F.Gets = 0
+# Hook run on each list read: from the fourth read of the round on, it clears itself and adds a failing HEALTH result row.
 $global:F.OnGet = { if ($global:F.Gets -ge 4) { $global:F.OnGet = $null; Add-Res $global:Lst21 'HEALTH' 'a' 'FAIL' 'own flows read=0; on=0; off=0; probe flows=0; status=403' } }
 $sw.Restart()
 $r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r

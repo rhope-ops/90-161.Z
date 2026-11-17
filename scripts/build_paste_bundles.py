@@ -21,6 +21,7 @@ RAW = 'https://raw.githubusercontent.com/%s/%s/%s'
 
 
 def sha256(path):
+    """Return the SHA-256 hex digest of a file. Takes the path."""
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
@@ -62,6 +63,7 @@ def fetch(lock, cache=CACHE, opener=urllib.request.urlopen):
 
 
 def engine():
+    """Find the RADE engine file to build with. Takes nothing; returns its path: the RADE_DIR copy when set (with a warning), else the locked download."""
     lock = json.loads(LOCK_FILE.read_text())
     over = os.environ.get('RADE_DIR')
     if over:
@@ -75,6 +77,7 @@ def engine():
 
 
 def render_logo(check):
+    """Render or fetch the logo PNGs that the bundles list (assets/logo/build/90161Z-logo-<size>.png). Takes check (True = fail when the recorded hashes are stale, not rewrite them; see logo_png.png); returns nothing."""
     # R29 (PFM 17 Nov 26, 1A and 2A): a round may carry the 90-161.Z logo PNG (site logo and thumbnail). The PNGs are not
     # committed: scripts/logo_png.py renders them (or, with no renderer, takes the committed bundle's copy and checks its
     # recorded hash) into assets/logo/build/ before the engine reads them.

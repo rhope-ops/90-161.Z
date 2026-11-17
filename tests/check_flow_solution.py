@@ -9,7 +9,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_flow_solution as B  # noqa: E402
 
 errs = []
-def bad(m): errs.append(m)
+def bad(m):
+    """Record one failure message. Takes the text; returns nothing."""
+    errs.append(m)
 
 # Hosts allowed in any string: Logic Apps schema (as in build_flow_package.py) and the XML/OPC namespaces the solution format needs.
 # make.powerautomate.appsplatform.us: the public DoD Power Automate portal, for the run link in the failure e-mail (PFM 1A, 14 Nov 26).
@@ -29,6 +31,7 @@ for key, title in env_list.items():
     if title not in schemas: bad(f"environment variable {key}: default '{title}' is not a list title in schemas/lists")
 
 def walk_actions(actions):
+    """Walk a flow's actions depth first, including the actions inside "actions" and "else" blocks. Takes the actions dict; yields (name, action)."""
     for name, a in actions.items():
         yield name, a
         for k in ("actions",):
@@ -36,6 +39,7 @@ def walk_actions(actions):
         yield from walk_actions(a.get("else", {}).get("actions", {}))
 
 def strings(o):
+    """Walk a JSON value. Takes any JSON value; yields every string in it, keys included."""
     if isinstance(o, dict):
         for k, v in o.items(): yield from strings(k); yield from strings(v)
     elif isinstance(o, list):
@@ -43,6 +47,7 @@ def strings(o):
     elif isinstance(o, str): yield o
 
 def expr_ok(s, where):
+    """Check one string of a flow definition: no "@@" escape, and an expression has balanced quotes, parentheses and brackets. Takes the string and a place label; reports through bad()."""
     if "@@" in s: bad(f"{where}: '@@' escape in a def string")
     if s.startswith("@"):
         body = re.sub(r"''", "", s)  # '' is an escaped quote inside an expression string
@@ -177,8 +182,10 @@ FREE_TEXT = {"UniqueName", "JsonFileName", "connectionreferencedisplayname"}   #
 FREE_ATTR = {"description", "id", "WorkflowId", "Name", "connectionreferencelogicalname"}
 
 def layout(xml_bytes):
+    """Flatten an XML document into (path, attributes, text) rows, with the free values masked, so two files can be compared. Takes the XML bytes; returns a list."""
     out = []
     def walk(e, path):
+        """Add one element and its children to the list (path of the parent, then the element)."""
         tag = e.tag.split("}")[-1]; p = path + "/" + tag
         pub = "/Publisher/" in p + "/"   # the publisher must match the export exactly, apart from its masked display name
         attrs = tuple((k, "*" if k in FREE_ATTR and not (pub and k != "description") else v) for k, v in e.attrib.items())

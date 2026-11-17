@@ -91,10 +91,12 @@ exit $code
 
 
 def pack(pac, out):
+    """Pack the Power Apps sources into a .msapp file with the pac tool. Takes the pac command and the output path."""
     subprocess.run([pac, 'canvas', 'pack', '--sources', str(SRC), '--msapp', str(out)], check=True, stdout=subprocess.DEVNULL)
 
 
 def check():
+    """Check that the committed test app script is complete and each part matches its recorded SHA-256. Takes nothing; returns 0 on pass, else 1."""
     text = OUT.read_text()
     parts = re.findall(r"@\{ Name = '([^']+)'; Sha = '([0-9a-f]{64})'; Text = \(@\(\n(.*?)\n  \) -join", text, re.S)
     bad = [n for n, sha, rows in parts
@@ -106,6 +108,7 @@ def check():
 
 
 def main():
+    """Command line: with --check run check(); otherwise pack the app and write it into the paste script. Returns nothing."""
     if '--check' in sys.argv[1:]:
         sys.exit(check())
     pac = os.environ.get('PAC', 'pac')

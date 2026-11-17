@@ -37,6 +37,7 @@ CHECK = []   # set by main: a --check run never writes the logo record
 
 
 def committed_logo():
+    """Read the 128 px logo PNG already inside the committed T22 script. Takes nothing; returns the bytes, or None when it is not found."""
     # The 128 px PNG the T22 script already holds (used only where no renderer is installed; scripts/logo_png.py checks its hash).
     text = (ROOT / 'scripts/gov/90161Z-T22-pfm-window-r3.ps1').read_text(encoding='utf-8')
     m = re.search(r"\$AppLogoPng = @\(\n(.*?)\n\) -join ''", text, re.S)
@@ -44,6 +45,7 @@ def committed_logo():
 
 
 def logo_text():
+    """Build the PowerShell text of the logo block, once per run. Takes nothing; returns text."""
     # The 90-161.Z logo, 128 px (one render for every script; scripts/logo_png.py).
     if not _logo:
         sys.path.insert(0, str(ROOT / 'scripts'))
@@ -55,6 +57,7 @@ def logo_text():
 
 
 def ui_text():
+    """Read the pinned shared UI file from the locked engine, once per run. Takes nothing; returns text with LF line ends."""
     # The pinned shared UI file, fetched and hash-checked by the bundle builder (one fetch for every script).
     if not _ui:
         sys.path.insert(0, str(ROOT / 'scripts'))
@@ -65,6 +68,7 @@ def ui_text():
 
 
 def body(src=SRC):
+    """Get the text that a shared block in the task scripts must hold. Takes the source (a script file, or the LOGO or UI marker); returns text."""
     if src == LOGO:
         return logo_text()
     if src == UI:
@@ -74,6 +78,7 @@ def body(src=SRC):
 
 
 def main(check):
+    """Command line: refresh the shared blocks in every task script, or with check only report stale ones. Takes check; returns 1 on an unshared or stale block, else 0."""
     if check:
         CHECK.append(True)
     stale, unshared, shared = [], [], 0

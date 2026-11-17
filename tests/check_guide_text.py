@@ -86,6 +86,7 @@ def strip(text):
 
 
 def count_actions(sentence):
+    """Count the actions in one sentence (the verbs in VERBS that start an action; see the header for the rules). Takes the sentence text; returns a number."""
     words = WORD.findall(sentence)
     n = 0
     for i, w in enumerate(words):
@@ -169,12 +170,14 @@ def check_step_rules(s):
 
 
 def manifest_steps():
+    """Walk the steps of every bundle in scripts/paste_bundles.json. Takes nothing; yields (round / step name, step dict)."""
     for b in json.loads(BUNDLES.read_text(encoding='utf-8'))['bundles']:
         for s in b.get('steps', []):
             yield '%s / %s' % (b.get('round', '?'), s['name']), s
 
 
 def bundle_steps():
+    """Walk every guide line of every step in scripts/paste_bundles.json. Takes nothing; yields (round / step name, line)."""
     for b in json.loads(BUNDLES.read_text(encoding='utf-8'))['bundles']:
         for s in b.get('steps', []):
             for line in s.get('guide', []):
@@ -182,6 +185,7 @@ def bundle_steps():
 
 
 def go_steps(text=None):
+    """Walk the numbered lines under "Steps:" of each open round or task in go.md. Takes optional text to read instead of the file; yields (go.md / task title, line)."""
     task, on = None, False
     for line in (GO.read_text(encoding='utf-8') if text is None else text).split('\n'):
         if line.startswith('## '):
@@ -196,104 +200,131 @@ def go_steps(text=None):
             on = False
 
 
-def self_test():
-    good = [
-        '1. Select "Open in browser".',
-        '2. Select Solutions.',
-        '3. In the File name box, press Ctrl+V.',
-        '4. Select Create > Blank app > Blank canvas app.',
-        '5. In Tree view, double-click the name of the form.',
-        '6. Type: frmProbe',
-        '7. In the formula bar, type: Notify("T10: row saved"); NewForm(frmProbe)',
-        '8. Select Save (Ctrl+S).',
-        '9. Open the solution. The 3 flows must read On. If one reads Off, turn it on.',
-        '10. Select the button "T4 a". A green line must say the row was written.',
-        '11. Power Automate opens. Sign in with your CAC if asked.',
-        '12. Keep Notepad open.',
-        '13. Return to RADE.',
-        '14. Tick "90161Z Probe" and "90161Z Probe Files".',
-        'If something does not delete: type its name below, then select "It failed".',
-        'If a button shows a red line: go on with the next step.',
-        '17. Select Open, then wait.',
-        '18. Select the repeat option.',
-        '19. Select the item shown in the list.',
-        '20. Select Save, then.',
-        '21. Look at the new tab: the draft should open in the browser.',
-    ]
-    bad = [
-        ('1. Set the form as the part "BY HAND for block 6" in the file says, items 4 to 6 (3 short formulas).', 'points'),
-        ('2. Do step 10 again for the other code.', 'points'),
-        ('3. In Notepad, copy block 1.', 'points'),
-        ('4. Look in Power Automate as the window says.', 'points'),
-        ('5. Fill in the values. See the setup document.', 'points'),
-        ('If a paste is refused: use the lines under it in the file.', 'points'),
-        ('1. Paste the text from the previous step.', 'points'),
-        ('2. Run the script described in the README.', 'points'),
-        ('3. Do the same for the second app.', 'points'),
-        ('4. Select Save then close.', 'holds 2'),
-        ('5. Select Save, then Select Open.', 'holds 2'),
-        ('6. Select Save. Repeat for the other files.', 'points'),
-        ('7. Select the value shown in the file.', 'points'),
-        ('8. Select Save and repeat for the other files.', 'points'),
-        ('9. Select the code listed in Appendix B.', 'points'),
-        ('6. Select Import solution, then Browse.', 'holds 2'),
-        ('7. Press Ctrl+V, select Open, then Next.', 'holds 3'),
-        ('8. Select Save. Select Publish.', 'holds 2'),
-        ('9. Return to RADE and select "Done: imported".', 'holds 2'),
-        ('10. If it is offered: select it, open its Prompt list and look at the names.', 'holds 3'),
-        ('11. Select the field. ' + 'The field is the one with the long name. ' * 5, 'characters'),
-    ]
+# Steps that must pass check_step (the self-test).
+GOOD_STEPS = [
+    '1. Select "Open in browser".',
+    '2. Select Solutions.',
+    '3. In the File name box, press Ctrl+V.',
+    '4. Select Create > Blank app > Blank canvas app.',
+    '5. In Tree view, double-click the name of the form.',
+    '6. Type: frmProbe',
+    '7. In the formula bar, type: Notify("T10: row saved"); NewForm(frmProbe)',
+    '8. Select Save (Ctrl+S).',
+    '9. Open the solution. The 3 flows must read On. If one reads Off, turn it on.',
+    '10. Select the button "T4 a". A green line must say the row was written.',
+    '11. Power Automate opens. Sign in with your CAC if asked.',
+    '12. Keep Notepad open.',
+    '13. Return to RADE.',
+    '14. Tick "90161Z Probe" and "90161Z Probe Files".',
+    'If something does not delete: type its name below, then select "It failed".',
+    'If a button shows a red line: go on with the next step.',
+    '17. Select Open, then wait.',
+    '18. Select the repeat option.',
+    '19. Select the item shown in the list.',
+    '20. Select Save, then.',
+    '21. Look at the new tab: the draft should open in the browser.',
+]
+
+# (step, text its failure must contain) pairs that must fail check_step (the self-test).
+BAD_STEPS = [
+    ('1. Set the form as the part "BY HAND for block 6" in the file says, items 4 to 6 (3 short formulas).', 'points'),
+    ('2. Do step 10 again for the other code.', 'points'),
+    ('3. In Notepad, copy block 1.', 'points'),
+    ('4. Look in Power Automate as the window says.', 'points'),
+    ('5. Fill in the values. See the setup document.', 'points'),
+    ('If a paste is refused: use the lines under it in the file.', 'points'),
+    ('1. Paste the text from the previous step.', 'points'),
+    ('2. Run the script described in the README.', 'points'),
+    ('3. Do the same for the second app.', 'points'),
+    ('4. Select Save then close.', 'holds 2'),
+    ('5. Select Save, then Select Open.', 'holds 2'),
+    ('6. Select Save. Repeat for the other files.', 'points'),
+    ('7. Select the value shown in the file.', 'points'),
+    ('8. Select Save and repeat for the other files.', 'points'),
+    ('9. Select the code listed in Appendix B.', 'points'),
+    ('6. Select Import solution, then Browse.', 'holds 2'),
+    ('7. Press Ctrl+V, select Open, then Next.', 'holds 3'),
+    ('8. Select Save. Select Publish.', 'holds 2'),
+    ('9. Return to RADE and select "Done: imported".', 'holds 2'),
+    ('10. If it is offered: select it, open its Prompt list and look at the names.', 'holds 3'),
+    ('11. Select the field. ' + 'The field is the one with the long name. ' * 5, 'characters'),
+]
+
+# (manifest step, text its failure must contain) pairs that must fail check_step_rules (the self-test).
+BAD_RULES = [
+    ({'guide': ['1. Select Run.']}, 'has no title'),
+    ({'title': 'x' * 57}, 'title is 57'),
+    ({'title': 'Import the T21 flow'}, 'title has a code'),
+    ({'title': 'Make the probe solution'}, 'title has a code or build word'),
+    ({'title': 'a', 'note': 'About 3 minutes (estimate).'}, 'note has a code'),
+    ({'title': 'a', 'guide': ['%d. Select Run.' % i for i in range(1, 12)]}, '11 numbered lines'),
+    ({'title': 'a', 'guide': ['1. Select ' + 'x' * 100]}, 'line over 100'),
+    ({'title': 'a', 'guide': ['1. Select A.', 'If x: select B.', '2. Select C.']}, 'unnumbered line sits'),
+    ({'title': 'a', 'doneText': 'Done: x'}, 'sets doneText'),
+    ({'title': 'a', 'guide': ['1. Select the Grey box.']}, '"grey"'),
+    ({'title': 'a', 'note': 'The greyed box.'}, '"grey"'),
+    ({'title': 'a', 'help': 'A grey box.'}, '"grey"'),
+    ({'title': 'a', 'answers': [{'prompt': 'Is it grey?', 'choices': ['Yes']}]}, '"grey"'),
+    ({'title': 'a', 'answers': [{'prompt': 'Is it?', 'choices': ['Grey']}]}, '"grey"'),
+    ({'title': 'a', 'help': 'Send T21 results.'}, 'help has a code'),
+    ({'title': 'a', 'note': 'The t21 step.'}, 'note has a code'),
+    ({'title': 'Do T21a now'}, 'title has a code'),
+    ({'title': 'a', 'note': 'Run F03.'}, 'note has a code'),
+    ({'title': '   '}, 'has no title'),
+    ({'title': 'a', 'guide': ['If it is gone: select "done".']}, 'line to drop'),
+    ({'title': 'a', 'guide': ['1. Return to the RADE window.']}, 'line to drop'),
+    ({'title': 'a', 'guide': ['1. Select "Done: x".']}, 'line to drop'),
+    ({'title': 'a', 'guide': ['If it is gone: select "Done".']}, 'line to drop'),
+    ({'title': 'a', 'url': 'https://x', 'guide': ['1. On this RADE card, select "Open in browser".']}, 'line 1 of a card'),
+]
+
+
+def self_test_steps():
+    """Run check_step on the good and bad sample steps. Takes nothing; returns a list of error messages (empty = pass)."""
     errs = []
-    for s in good:
+    for s in GOOD_STEPS:
         if check_step(s):
             errs.append('good step failed: %s -> %s' % (s, check_step(s)))
-    for s, want in bad:
+    for s, want in BAD_STEPS:
         if not any(want in f for f in check_step(s)):
             errs.append('bad step not found (%s): %s -> %s' % (want, s, check_step(s)))
+    return errs
+
+
+def self_test_go():
+    """Check that go_steps reads only the numbered lines under "Steps:" of open tasks. Takes nothing; returns a list of error messages."""
+    errs = []
     got = list(go_steps('## How\nSteps:\n1. no\n## Round A\nSteps:\n1. Select Run.\nhttps://x\n2. Select Done.\n\nNote\n3. no\n## Done\nSteps:\n1. no\n'))
     if [g[1] for g in got] != ['1. Select Run.', '2. Select Done.']:
         errs.append('go.md reader: %s' % got)
+    return errs
+
+
+def self_test_rules():
+    """Run check_step_rules on one good and many bad sample manifest steps. Takes nothing; returns a list of error messages."""
+    errs = []
     ok_step = {'name': 'R1 x', 'title': 'Remove the old flows', 'note': 'You delete 2 flows. About 4 minutes.',
                'url': 'https://x', 'guide': ['1. Select "Open in browser" above.', '2. Select "Delete".', 'If it fails: select "It failed".']}
     ok_step['help'] = 'Press F5 to run it.'
     if check_step_rules(ok_step):
         errs.append('good rules step failed: %s' % check_step_rules(ok_step))
-    bad_rules = [
-        ({'guide': ['1. Select Run.']}, 'has no title'),
-        ({'title': 'x' * 57}, 'title is 57'),
-        ({'title': 'Import the T21 flow'}, 'title has a code'),
-        ({'title': 'Make the probe solution'}, 'title has a code or build word'),
-        ({'title': 'a', 'note': 'About 3 minutes (estimate).'}, 'note has a code'),
-        ({'title': 'a', 'guide': ['%d. Select Run.' % i for i in range(1, 12)]}, '11 numbered lines'),
-        ({'title': 'a', 'guide': ['1. Select ' + 'x' * 100]}, 'line over 100'),
-        ({'title': 'a', 'guide': ['1. Select A.', 'If x: select B.', '2. Select C.']}, 'unnumbered line sits'),
-        ({'title': 'a', 'doneText': 'Done: x'}, 'sets doneText'),
-        ({'title': 'a', 'guide': ['1. Select the Grey box.']}, '"grey"'),
-        ({'title': 'a', 'note': 'The greyed box.'}, '"grey"'),
-        ({'title': 'a', 'help': 'A grey box.'}, '"grey"'),
-        ({'title': 'a', 'answers': [{'prompt': 'Is it grey?', 'choices': ['Yes']}]}, '"grey"'),
-        ({'title': 'a', 'answers': [{'prompt': 'Is it?', 'choices': ['Grey']}]}, '"grey"'),
-        ({'title': 'a', 'help': 'Send T21 results.'}, 'help has a code'),
-        ({'title': 'a', 'note': 'The t21 step.'}, 'note has a code'),
-        ({'title': 'Do T21a now'}, 'title has a code'),
-        ({'title': 'a', 'note': 'Run F03.'}, 'note has a code'),
-        ({'title': '   '}, 'has no title'),
-        ({'title': 'a', 'guide': ['If it is gone: select "done".']}, 'line to drop'),
-        ({'title': 'a', 'guide': ['1. Return to the RADE window.']}, 'line to drop'),
-        ({'title': 'a', 'guide': ['1. Select "Done: x".']}, 'line to drop'),
-        ({'title': 'a', 'guide': ['If it is gone: select "Done".']}, 'line to drop'),
-        ({'title': 'a', 'url': 'https://x', 'guide': ['1. On this RADE card, select "Open in browser".']}, 'line 1 of a card'),
-    ]
-    for s, want in bad_rules:
+    for s, want in BAD_RULES:
         if not any(want in f for f in check_step_rules(s)):
             errs.append('bad rules step not found (%s): %s -> %s' % (want, s, check_step_rules(s)))
+    return errs
+
+
+def self_test():
+    """Run all the self-tests and print the result. Takes nothing; returns 1 when any test fails, else 0."""
+    errs = self_test_steps() + self_test_go() + self_test_rules()
     for e in errs:
         print('SELF-TEST FAIL ' + e)
-    print('GUIDE TEXT self-test good=%d bad=%d errors=%d' % (len(good), len(bad), len(errs)))
+    print('GUIDE TEXT self-test good=%d bad=%d errors=%d' % (len(GOOD_STEPS), len(BAD_STEPS), len(errs)))
     return 1 if errs else 0
 
 
 def main():
+    """Command line: check every step (--test self-test, --list Markdown list of failures). Prints the last line; returns 1 when a step fails, else 0."""
     if '--test' in sys.argv:
         return self_test()
     steps = list(bundle_steps()) + list(go_steps())

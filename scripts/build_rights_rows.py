@@ -14,6 +14,7 @@ OUT = ROOT / 'scripts/gov/data/90161Z-T11-partb-rows-r1.json'
 
 
 def rows():
+    """Read the manual check rows (M01, M02, ...) from section 6 of docs/rights-test-plan.md. Takes nothing; returns a list of {id, do, note}. Exits when there are none."""
     text = SRC.read_text(encoding='utf-8')
     sec = text[text.index('## 6. Manual checks'):]
     sec = sec[:sec.index('\n## ', 5)]
@@ -28,6 +29,7 @@ def rows():
 
 
 def main():
+    """Command line: write the rows JSON, or with --check report whether it is stale. Returns the exit code (1 when stale)."""
     text = json.dumps({'source': 'docs/rights-test-plan.md section 6', 'rows': rows()}, indent=2, ensure_ascii=True) + '\n'
     if '--check' in sys.argv:
         ok = OUT.exists() and OUT.read_text(encoding='utf-8') == text

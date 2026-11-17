@@ -98,15 +98,27 @@ SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip", ("90161
 SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
 
 
+XSI = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+ORG = f'OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}"'
+# The publisher's two empty addresses list these elements, as in the R18 export (r5): ADDR_FIELDS, the shipping method code, then ADDR_TAIL.
+ADDR_FIELDS = ["City", "County", "Country", "Fax", "FreightTermsCode", "ImportSequenceNumber", "Latitude", "Line1", "Line2",
+               "Line3", "Longitude", "Name", "PostalCode", "PostOfficeBox", "PrimaryContactName"]
+ADDR_TAIL = ["StateOrProvince", "Telephone1", "Telephone2", "Telephone3", "TimeZoneRuleVersionNumber", "UPSZone", "UTCOffset",
+             "UTCConversionTimeZoneCode"]
+
+
 def dumps(o):
+    """Turn a value into JSON text (2-space indent, non-ASCII kept, final line end). Takes any JSON value; returns a string."""
     return json.dumps(o, indent=2, ensure_ascii=False) + "\n"
 
 
 def conn_logical(c):
+    """Name a connection reference. Takes a connector name such as shared_office365; returns its logical name (stable, from the name)."""
     return f"{PREFIX}_{c.replace('_', '')}_{uuid.uuid5(NS, 'connref:' + c).hex[:6]}"
 
 
 def guid(kind, name):
+    """Make a stable upper-case GUID. Takes a kind word and a name; the same pair always gives the same GUID."""
     return str(uuid.uuid5(NS, f"{kind}:{name}")).upper()
 
 
@@ -116,6 +128,8 @@ def flow_guid(stem, test=False):
 
 
 def load(defs=DEFS):
+    """Read and check every flow definition in a folder. Takes the folder (default: the flow defs); returns a sorted list of
+    (path, definition, sorted environment keys the flow uses). A missing key, unknown connector or unknown variable raises ValueError."""
     out = []
     for src in sorted(defs.glob("*.json")):
         d = json.loads(src.read_text(encoding="utf-8"))
@@ -135,6 +149,7 @@ def load(defs=DEFS):
 
 
 def workflow_json(d, used):
+    """Build the workflow JSON file of one flow. Takes the flow definition and its used environment keys; returns a dict."""
     params = {"$connections": {"defaultValue": {}, "type": "Object"}, "$authentication": {"defaultValue": {}, "type": "SecureObject"}}
     for s, disp, default in ENV:
         if ENV_KEY[s] in used:
@@ -176,6 +191,7 @@ def exported_text(path, text):
 
 
 def test_variant(d):
+    """Return the variant letter of a test def (its "solution" block, else its own "variant"). Takes the definition; returns a string."""
     return d.get("solution", {}).get("variant") or d["variant"]
 
 
@@ -195,9 +211,9 @@ def test_jobs():
     return jobs
 
 
-def build(test=None, only=None, on=()) -> bytes:
-    """test: None for the flow solution, else a list of test def paths (one test solution). only: def name prefixes (a slice).
-    on: in a slice, the def name prefixes that import On; the slice's other flows import Off."""
+def select_flows(test, only):
+    """Pick the flow definitions for one solution. Takes test (None, or a list of test def paths) and only (name prefixes or None).
+    Returns (flows, unique name, title), where flows is a list of (path, definition, used environment keys)."""
     flows = load(DEFS) if test is None else [f for f in load(TEST_DEFS) if f[0] in test]
     if only:
         flows = [f for f in flows if f[0].name.startswith(only)]
@@ -206,10 +222,13 @@ def build(test=None, only=None, on=()) -> bytes:
     else:
         v = test_variant(flows[0][1])
         unique, title = UNIQUE + "TEST" + v, flows[0][1].get("solution", {}).get("title") or "90-161.Z solution import test " + v
-    full = test is None and not only
-    used_env = {k for _, _, u in flows for k in u}
-    env = [e for e in ENV if ENV_KEY[e[0]] in used_env]   # every solution carries only the variables its flows use (R27)
-    files, wf_xml, root_components = {}, [], []
+    return flows, unique, title
+
+
+def workflow_entries(flows, test, only, on, files, root_components):
+    """Add each flow to the solution. Takes the flows, test, only and on (as in build), the files dict (gets one JSON file per flow)
+    and the root_components list (gets one line per flow). Returns the list of <Workflow> XML blocks for customizations.xml."""
+    wf_xml = []
     for src, d, used in flows:
         # R21: "workflowKey" names the stem whose ID the flow kept when it was first imported (R20 imported F03 r2 and F05 r1,
         # with the revision in the ID), so this import replaces those flows in place; F05 r1 is on and would double the rows.
@@ -234,6 +253,11 @@ def build(test=None, only=None, on=()) -> bytes:
             f"      <LocalizedNames>\n        <LocalizedName languagecode=\"1033\" description={quoteattr(d['displayName'])} />\n      </LocalizedNames>\n"
             "    </Workflow>")
         root_components.append(f'      <RootComponent type="29" id="{{{wid.lower()}}}" behavior="0" />')   # lowercase (r4)
+    return wf_xml
+
+
+def connection_reference_xml(flows):
+    """Build the <connectionreference> XML blocks. Takes the flows; returns one block per connector the flows use (sorted)."""
     used_conns = sorted({c for _, d, _ in flows for c in d["connections"]})
     cr_xml = []
     for c in used_conns:
@@ -243,6 +267,12 @@ def build(test=None, only=None, on=()) -> bytes:
             f"      <connectorid>/providers/Microsoft.PowerApps/apis/{c}</connectorid>\n"
             "      <iscustomizable>1</iscustomizable>\n      <promptingbehavior>0</promptingbehavior>\n"
             "      <statecode>0</statecode>\n      <statuscode>1</statuscode>\n    </connectionreference>")
+    return cr_xml
+
+
+def env_definition_files(env, full, files, root_components):
+    """Add one environment variable definition file and one root component per variable. Takes env (list of
+    (schema name, display name, default)), full (True for the full flow solution) and the files and root_components to fill."""
     for s, disp, default in env:
         disp = LABEL.get(s, disp)
         files[f"environmentvariabledefinitions/{s}/environmentvariabledefinition.xml"] = (
@@ -253,24 +283,34 @@ def build(test=None, only=None, on=()) -> bytes:
             f"  <isrequired>{0 if s in OPTIONAL or (full and default) else 1}</isrequired>\n"
             "  <secretstore>0</secretstore>\n  <type>100000000</type>\n</environmentvariabledefinition>\n")
         root_components.append(f'      <RootComponent type="380" schemaName="{s}" behavior="0" />')
-    XSI = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
-    ORG = f'OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}"'
-    files["customizations.xml"] = (   # no XML declaration (r5, as exported)
+
+
+def customizations_xml(wf_xml, cr_xml):
+    """Build customizations.xml. Takes the <Workflow> blocks and the <connectionreference> blocks; returns the text."""
+    return (   # no XML declaration (r5, as exported)
         f"<ImportExportXml {XSI} {ORG}>\n  <Entities></Entities>\n  <Roles></Roles>\n  <Workflows>\n" + "\n".join(wf_xml) + "\n  </Workflows>\n"
         "  <FieldSecurityProfiles></FieldSecurityProfiles>\n  <Templates />\n  <EntityMaps />\n  <EntityRelationships />\n"
         "  <OrganizationSettings />\n  <optionsets />\n  <CustomControls />\n  <EntityDataProviders />\n"
         "  <connectionreferences>\n" + "\n".join(cr_xml) + "\n  </connectionreferences>\n  <Languages>\n    <Language>1033</Language>\n  </Languages>\n"
         "</ImportExportXml>\n")
-    nil = lambda tag: f'{tag} xsi:nil="true"></{tag[1:]}'   # noqa: E731
-    addr_fields = ["City", "County", "Country", "Fax", "FreightTermsCode", "ImportSequenceNumber", "Latitude", "Line1", "Line2",
-                   "Line3", "Longitude", "Name", "PostalCode", "PostOfficeBox", "PrimaryContactName"]
-    addr_tail = ["StateOrProvince", "Telephone1", "Telephone2", "Telephone3", "TimeZoneRuleVersionNumber", "UPSZone", "UTCOffset",
-                 "UTCConversionTimeZoneCode"]
-    def address(n):
-        return ("        <Address>\n" f"          <AddressNumber>{n}</AddressNumber>\n          <AddressTypeCode>1</AddressTypeCode>\n"
-                + "".join(f"          {nil('<' + t)}>\n" for t in addr_fields) + "          <ShippingMethodCode>1</ShippingMethodCode>\n"
-                + "".join(f"          {nil('<' + t)}>\n" for t in addr_tail) + "        </Address>\n")
-    files["solution.xml"] = (   # no XML declaration; attributes in the exported order (r5)
+
+
+def nil(tag):
+    """Write an empty XML element marked nil. Takes the opening tag without its closing bracket, such as '<City'; returns text that
+    the caller finishes with '>'."""
+    return f'{tag} xsi:nil="true"></{tag[1:]}'
+
+
+def address(n):
+    """Build one empty <Address> block of the publisher. Takes the address number (1 or 2); returns text."""
+    return ("        <Address>\n" f"          <AddressNumber>{n}</AddressNumber>\n          <AddressTypeCode>1</AddressTypeCode>\n"
+            + "".join(f"          {nil('<' + t)}>\n" for t in ADDR_FIELDS) + "          <ShippingMethodCode>1</ShippingMethodCode>\n"
+            + "".join(f"          {nil('<' + t)}>\n" for t in ADDR_TAIL) + "        </Address>\n")
+
+
+def solution_xml(unique, title, root_components):
+    """Build solution.xml. Takes the solution's unique name, its title and the RootComponent lines; returns the text."""
+    return (   # no XML declaration; attributes in the exported order (r5)
         f'<ImportExportXml version="{PLATFORM}" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" {XSI} OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}">\n'
         f"  <SolutionManifest>\n    <UniqueName>{unique}</UniqueName>\n"
         f'    <LocalizedNames>\n      <LocalizedName description="{title}" languagecode="1033" />\n    </LocalizedNames>\n'
@@ -283,9 +323,11 @@ def build(test=None, only=None, on=()) -> bytes:
         "      <Addresses>\n" + address(1) + address(2) + "      </Addresses>\n"
         "    </Publisher>\n    <RootComponents>\n" + "\n".join(root_components) + "\n    </RootComponents>\n    <MissingDependencies />\n"
         "  </SolutionManifest>\n</ImportExportXml>\n")
-    files["[Content_Types].xml"] = (   # one line with a byte order mark, as exported (r5)
-        '\ufeff<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-        '<Default Extension="xml" ContentType="application/octet-stream" /><Default Extension="json" ContentType="application/octet-stream" /></Types>')
+
+
+def zip_solution(files, test):
+    """Write the solution files into a zip with fixed time stamps, so the bytes repeat. Takes {path: text} and test
+    (None for the flow solution and slice, which are deflated; a list for a test solution, which is stored). Returns bytes."""
     buf = io.BytesIO()
     # R21: the flow solution and slice are deflated, as Dataverse exports are (round bundle under 300 KB); test solutions stay stored as R19 imported.
     method = zipfile.ZIP_STORED if test is not None else zipfile.ZIP_DEFLATED
@@ -299,7 +341,27 @@ def build(test=None, only=None, on=()) -> bytes:
     return buf.getvalue()
 
 
+def build(test=None, only=None, on=()) -> bytes:
+    """test: None for the flow solution, else a list of test def paths (one test solution). only: def name prefixes (a slice).
+    on: in a slice, the def name prefixes that import On; the slice's other flows import Off. Returns the solution zip as bytes."""
+    flows, unique, title = select_flows(test, only)
+    full = test is None and not only
+    used_env = {k for _, _, u in flows for k in u}
+    env = [e for e in ENV if ENV_KEY[e[0]] in used_env]   # every solution carries only the variables its flows use (R27)
+    files, root_components = {}, []
+    wf_xml = workflow_entries(flows, test, only, on, files, root_components)
+    cr_xml = connection_reference_xml(flows)
+    env_definition_files(env, full, files, root_components)
+    files["customizations.xml"] = customizations_xml(wf_xml, cr_xml)
+    files["solution.xml"] = solution_xml(unique, title, root_components)
+    files["[Content_Types].xml"] = (   # one line with a byte order mark, as exported (r5)
+        '\ufeff<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="xml" ContentType="application/octet-stream" /><Default Extension="json" ContentType="application/octet-stream" /></Types>')
+    return zip_solution(files, test)
+
+
 def main():
+    """Command line: build every solution zip; with --check, compare each with the committed zip and exit 1 on the first difference."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="exit 1 if the committed zip differs from a fresh build")
     a = ap.parse_args()

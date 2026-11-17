@@ -19,6 +19,7 @@ SIZES = (512, 192, 128, 64, 32, 16)
 
 
 def sha(data):
+    """Return the SHA-256 hex digest of bytes."""
     return hashlib.sha256(data).hexdigest()
 
 

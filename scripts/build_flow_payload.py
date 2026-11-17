@@ -21,6 +21,7 @@ from xml.sax.saxutils import escape, quoteattr
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def load():
+    """Read every list schema in schemas/lists. Takes nothing; returns {list name: schema dict}."""
     schemas = {}
     for f in sorted(glob.glob(os.path.join(ROOT, 'schemas', 'lists', '*.json'))):
         d = json.load(open(f, encoding='utf-8'))
@@ -28,6 +29,7 @@ def load():
     return schemas
 
 def order(schemas):
+    """Sort the lists so a list comes after the lists it looks up (a list may look up itself). Takes the schemas; returns the list names in build order. Exits on a lookup cycle."""
     deps = {n: {f['lookup']['list'] for f in s['fields'] if f['type'] == 'Lookup'} - {n} for n, s in schemas.items()}  # a list may look up itself
     done, out = set(), []
     while len(out) < len(schemas):
@@ -38,6 +40,7 @@ def order(schemas):
     return out
 
 def field_xml(f):
+    """Build the SharePoint field XML of one schema field. Takes the field dict; returns the <Field ...> text. Exits on an unsupported type."""
     a = [f'Name={quoteattr(f["internalName"])}', f'StaticName={quoteattr(f["internalName"])}',
          f'DisplayName={quoteattr(f["displayName"])}', f'Required="{"TRUE" if f.get("required") else "FALSE"}"']
     if f.get('description'): a.append(f'Description={quoteattr(f["description"])}')  # spells out abbreviations (docs/style-standard.md)
@@ -63,8 +66,10 @@ def field_xml(f):
     return '<Field ' + ' '.join(a) + '>' + inner + '</Field>'
 
 def view_query(v):
+    """Build the CAML query (filter, group, order) of one view. Takes the view dict; returns the query text (may be empty)."""
     q = ''
     def cond(w):
+        """Build one CAML condition from a where entry (op, field, type, value). Returns the text."""
         return f'<{w["op"]}><FieldRef Name={quoteattr(w["field"])}/><Value Type={quoteattr(w["type"])}>{escape(str(w["value"]))}</Value></{w["op"]}>'
     w, w2 = v.get('where'), v.get('andWhere')
     if w and w2:
@@ -81,6 +86,7 @@ def lit(s):  # OData string literal
     return "'" + s.replace("'", "''") + "'"
 
 def build():
+    """Build the whole provisioning payload from the list schemas. Takes nothing; returns the payload dict (the batches of lists, fields, updates, rows and seed requests)."""
     schemas = load()
     lists, fields, updates, rows, seed = [], [], [], [], []
     for name in order(schemas):
