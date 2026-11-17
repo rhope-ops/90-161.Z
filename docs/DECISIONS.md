@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-17 | (1A) milhosts() fallback re-syncs from the end of the last confirmed match, so no skipped match is lost; two self-tests with a wrong model check it. | PFM | scripts/pii_guard.py |
+| 2026-11-17 | (1A) If a span is not confirmed, the milhosts() fallback rescans from the end of the last confirmed match (finds a match skipped before it); 2 self-tests. | PFM | scripts/pii_guard.py |
 | 2026-11-16 | (2A) pii_guard.py finds MILHOST hosts with milhosts(): linear, exactly the matches of MILHOST.finditer; the pattern stays unchanged. | PFM | scripts/pii_guard.py, milhosts() |
 | 2026-11-16 | Remove the "[TEST]" subject prefix from the F03 and F06 test mode (R26 r2 T9: e-mails without it reached the Inbox at 2 minutes; the "[TEST]" e-mail came later). Scope: F03 and F06; built in the next round. | PFM | docs/reviews/2026-11-16-r26-results.md |
 | 2026-11-16 | The PFM window "deep pass" is lower priority: a note for review; the PFM opens a separate chat to fix the UI. Scope: T22 window. | PFM | docs/NEXT_PROMPT.md |
