@@ -395,11 +395,14 @@ echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (o
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
 # domain label. The cloud has no such name, so the bundle tests give it a stand-in name, as RADE's own tests do
 # (rhope-ops/RADE tests/engine_test.sh "swap"); the test after the loop proves the real guard stops this computer.
-swap() { sed -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" -e "s#Url = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/#Url = 'file://$PWD/#" -e "s#Url = 'https://www\.[^']*'#Url = 'file://$tp/fx.bin'#" -e "s#url = 'https://make\.powerautomate[^']*'#url = 'file://$tp/fx.bin'#I" -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#''#" -e "s#Read-Host 'Press Enter when the flow run has started, type F and Enter if it failed, or S and Enter to skip this step'#''#" -e "s#\$checkGate = \$true#\$checkGate = \$false#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$tp/u'#" "$1"; }
+swap() { sed -e "s#Read-Host ('Type the number of the application to deploy (1 to ' + \\\$apps\\.Count + ') and press Enter')#'1'#" -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" -e "s#Url = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/#Url = 'file://$PWD/#" -e "s#Url = 'https://www\.[^']*'#Url = 'file://$tp/fx.bin'#" -e "s#url = 'https://make\.powerautomate[^']*'#url = 'file://$tp/fx.bin'#I" -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#''#" -e "s#Read-Host 'Press Enter when the flow run has started, type F and Enter if it failed, or S and Enter to skip this step'#''#" -e "s#\$checkGate = \$true#\$checkGate = \$false#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$tp/u'#" "$1"; }
 for b in scripts/gov/paste/*.ps1; do
   swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
   # Text mode runs the default steps that need no folder (the optional steps are skipped).
   n=$(grep -c "^\$steps += @{.*Default = \$true; AskParam = '';" "$b")
+  # A bundle with a second (deploy) application: text mode runs only the first one's steps (every R28 step is a default step).
+  na=$(python3 -c "import json;b=[x for x in json.load(open('scripts/paste_bundles.json'))['bundles'] if x['out']=='$b'][0];a=b.get('apps') or [];print(len(a[0]['steps']) if len(a)>1 else -1)")
+  [ "$na" -lt 0 ] || n=$na
   r=$(python3 -c "import json;print([b['round'] for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b'][0])")
   # R17 (PFM 14 Nov 26): the run moves the old 90-161.Z folder (the fixture) into OneDrive/RADE.
   base="$tp/u/test1234/OneDrive - United States Air Force/RADE/90-161.Z"; nb="$base"
@@ -414,7 +417,10 @@ for b in scripts/gov/paste/*.ps1; do
   sk=$(python3 - "$b" "$tp/out.txt" <<'PYS'
 import json, re, sys
 bundle = [b for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out'] == sys.argv[1]][0]
-steps = bundle['steps']; kind = {s['name']: s.get('kind', 'script') for s in steps}
+steps = bundle['steps']
+if bundle.get('apps'):   # text mode runs the first application (the test round); a second (deploy) entry has its own steps
+    first = set(bundle['apps'][0]['steps']); steps = [s for s in steps if s['name'] in first]
+kind = {s['name']: s.get('kind', 'script') for s in steps}
 want = set()
 for s in steps:   # in order: a later step may depend on an earlier skipped one
     if any(kind[a] == 'script' or a in want for a in s.get('after', [])): want.add(s['name'])
@@ -520,7 +526,7 @@ ab=$((ab + $(grep -LF "else { 'off' }); Act = { & \$ui.Run }" scripts/gov/paste/
 python3 -c "import json,sys;d=json.load(open('scripts/paste_bundles.json'));sys.exit(1 if d['application'].get('start') else 0)" || ab=$((ab+1))
 te=$(mktemp -d); mkdir -p "$te/u/test1234/OneDrive - United States Air Force"; tw=0
 for b in scripts/gov/paste/*.ps1; do
-  sed -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#'N'#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#Url = 'https://make\.powerautomate[^']*'#Url = 'file:///dev/null'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$te/u'#" "$b" > "$te/b.ps1"
+  sed -e "s#Read-Host ('Type the number of the application to deploy (1 to ' + \\\$apps\\.Count + ') and press Enter')#'1'#" -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#'N'#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#Url = 'https://make\.powerautomate[^']*'#Url = 'file:///dev/null'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$te/u'#" "$b" > "$te/b.ps1"
   # PFM 14 Nov 26: with the check gate on, a FAILED or NOT RUN check stops the deploy before anything is written.
   # R17: the checks may save RADE/Config/rade-checks.json (shown on the Check screen); nothing else may exist.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out.txt" 2>&1; [ -e "$te/u/test1234/OneDrive - United States Air Force/90-161.Z" ] && tw=$((tw+1))
