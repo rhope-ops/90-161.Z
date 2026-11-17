@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | PFM window uses RADE's shared type scale (4 styles; engine-v9, engine/rade_ui.ps1), not the preview 2 font sizes. Scope: PFM window. | PFM | docs/reviews/2026-11-17-runner-polish.md |
 | 2026-11-17 | R28 r2: a plain title on every step (runner text rule 1) before the PFM runs R28; R28 r1 had 0 of 41 (1A). Scope: round R28. | PFM | docs/reviews/2026-11-17-runner-polish.md |
 | 2026-11-17 | The PFM approved every agent REC and asked for as much as possible in R28: probe retry, T4 retry and full flow solution ride along; order per 1B (16 Nov): clean-up first, final clean-up last. R28. | PFM | docs/reviews/2026-11-17-r27-results.md |
 | 2026-11-16 | R28 removes the R27 test-site leftovers first (second person from Visitors, probe list and library, probe solution); not by hand (1B). Scope: round R28. | PFM | docs/reviews/2026-11-17-r27-results.md |
