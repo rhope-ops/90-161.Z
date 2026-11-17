@@ -1,36 +1,44 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 18 slice 1 end-to-end test, r4 (R24 finding: r3 counted the words "fail title" in a PASS line as a problem, so part 1 said "items with problems=1" with 0 failed; r4 counts only the result word FAIL, and masks a list id that follows URL-encoded characters. r3: PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
+  90-161.Z Task 18 slice 1 end-to-end test, r5 (R27, PFM 14 and 16 Nov 26: the flows read Flows paused, Test mode, reminder lead days, escalation lag days, suspense working days and the shared mailbox from PFM Settings rows, and test mode adds no [TEST] prefix; r4: R24 finding: r3 counted the words "fail title" in a PASS line as a problem, so part 1 said "items with problems=1" with 0 failed; r4 counts only the result word FAIL, and masks a list id that follows URL-encoded characters. r3: PFM 15 Nov 26: the site address comes from RADE or Config, no question; r2 R21, was R20 r2; PFM 14 Nov 26: flow controls, test mode, failure e-mail, lean
   troubleshooting). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  What it is for: proves on the test site that the slice-1 flows (F05 r2 routing, F03 r3 reminders) work end to end, and
-  that a failed run can be found and resumed. Needs Test mode = Yes in the solution (the import step sets it), so every
-  flow e-mail goes to the alert address only.
+  What it is for: proves on the test site that the slice-1 flows (F05 r3 routing, F03 r6 reminders, F06 r2 hold and resume) work end to
+  end, and that a failed run can be found and resumed. Part 1 first writes the PFM Settings rows the flows read, with Test mode =
+  Yes, so every flow e-mail goes to the alert address only; part 2 puts them back to their seed values.
   Part 1 (about 10 minutes, an estimate):
+    0. Writes the PFM Settings rows (Flows paused No, Test mode Yes, Reminder lead days 10 for this test, Escalation lag days 3,
+       Coordination suspense working days 20; the Shared mailbox row is made empty only when it is missing) and sets the
+       stage 6 (Formal coordination) target to 25 working days (DAFMAN 90-161 5.2; PFM 14 Nov 26). Counts only.
     1. Signs in to the site (CAC), reads process steps 6 and 7 and the offices (rows F05 should make).
     2. Creates three fake publications at step 6: A "90161Z TEST R21 A (delete me)" (On Track), H "90161Z TEST R21 H
        (delete me)" (On Hold) and F "90161Z TEST FAIL R21 (delete me)" (test mode makes F05 fail on this title).
     3. Waits for F05 to make A's Formal Coordination rows; checks that H and F have none (hold skipped, F failed).
     4. Renames F to "90161Z TEST R21 F (delete me)" and waits for its rows (a new run after the cause is fixed).
     5. Moves one of A's rows to the Recycle Bin, edits A, and waits until F05 adds back only that row.
-    6. Prepares the F03 check: sets one of A's rows to a suspense 10 weekdays ago (escalation tier) and adds one row to H
-       with a past suspense (H is On Hold, so F03 must skip it).
+    6. Prepares the F03 check: sets one of A's rows to a suspense 10 weekdays ago (escalation tier), another of A's rows to a
+       suspense 8 weekdays ahead (the Reminder tier only while the lead-days row says 10; with the seed value 5 it is None: this
+       proves that F03 reads the Settings row) and adds one row to H with a past suspense (H is On Hold, so F03 must skip it).
   Then the PFM checks the failure e-mail, selects Resubmit on the failed F05 run, and runs F03 once (round guide steps).
   Part 2 (about 12 minutes, an estimate):
     7. Checks that Resubmit made no duplicate rows for F.
     8. Checks F03: default suspense 20 working days (Guard or Reserve Applicability at least 30 calendar days) on the rows
-       without one; an escalation logged for A's past-due row; nothing logged for H's row.
+       without one; an escalation logged for A's past-due row; a Reminder logged for A's row 8 weekdays ahead
+       (the Settings lead days read); nothing logged for H's row. Titles carry no [TEST] prefix.
    8b. F06 on F (R21): sets F On Hold and waits for Held Since; sets Held Since 7 days back (5 weekdays); sets F On Track
        and checks that each open suspense moved out by 5 weekdays; sets F Cancelled and checks one cancel log row.
     9. Answers A's rows "Concur", marks A's comments adjudicated, and waits for the Legal rows and step 7.
    10. Clean-up: moves every row tied to the three fake publications to the site Recycle Bin (restorable for 93 days).
        On a FAIL they stay for review; part 1 of the next run removes them.
-  WHAT IT CHANGES ON THE SITE: only the three fake publications and the rows the flows and this script make for them.
+   11. Puts the Settings rows this test changed back to their seed values (Flows paused No, Test mode Yes, Reminder lead days 5,
+       Escalation lag days 3, Coordination suspense working days 20). The stage 6 target stays 25.
+  WHAT IT CHANGES ON THE SITE: the three fake publications and the rows the flows and this script make for them, five
+  PFM Settings rows (put back in part 2) and the stage 6 target (25 working days, kept).
   E-mail: with Test mode = Yes, F03's escalation for A's row, F05's failure notice and F06's hold, resume and cancel
   notices (offices with an endorser only) go to the alert address only.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this
   computer; every output line shows it as <SITE> and the DODID as <DODID>.
-  Output: 90161Z-T18-slice1-part1-r4.txt or 90161Z-T18-slice1-part2-r4.txt in the T18 folder (send both).
+  Output: 90161Z-T18-slice1-part1-r5.txt or 90161Z-T18-slice1-part2-r5.txt in the T18 folder (send both).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1 or 2, -WaitMinutes (default 10), -NoPause.
 #>
 param([string]$Id, [ValidateSet(1, 2)][int]$Part = 1, [int]$WaitMinutes = 10, [switch]$NoPause)
@@ -39,6 +47,9 @@ $TitleA = '90161Z TEST R21 A (delete me)'
 $TitleH = '90161Z TEST R21 H (delete me)'
 $TitleFail = '90161Z TEST FAIL R21 (delete me)'
 $TitleF = '90161Z TEST R21 F (delete me)'
+$LeadTest = '10'   # the test value of the Reminder lead days row (seed 5)
+# Seed values of the PFM Settings rows this test changes (schemas/lists/PFMSettings.json); part 2 puts them back.
+$SeedSettings = [ordered]@{ FlowsPaused = 'No'; TestMode = 'Yes'; ReminderLeadDays = '5'; EscalationLagDays = '3'; CoordinationSuspenseBusinessDays = '20' }
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -200,6 +211,19 @@ function Get-LogCount([int]$PubId, [string]$Prefix) {
   # F06 log rows are titled "<Prefix>: P<ID>".
   return @(Get-RowsFor 'PFM Activity Log' $PubId | Where-Object { [string]$_['Title'] -eq ($Prefix + ': P' + $PubId) }).Count
 }
+function Save-SettingRow([string]$Key, [string]$Value, [switch]$OnlyIfMissing) {
+  # Upsert by Title in PFM Settings. Returns 'created', 'updated' or 'kept'. Never writes the key or the value to the output.
+  $rows = @(Get-PnPListItem -List 'PFM Settings' -Fields 'Title', 'SettingValue' -ErrorAction Stop | Where-Object { ([string]$_['Title']).Trim() -eq $Key })
+  if (-not $rows.Count) { $null = Add-PnPListItem -List 'PFM Settings' -Values @{ Title = $Key; SettingValue = $Value } -ErrorAction Stop; return 'created' }
+  if ($OnlyIfMissing) { return 'kept' }
+  foreach ($r in $rows) { $null = Set-PnPListItem -List 'PFM Settings' -Identity $r.Id -Values @{ SettingValue = $Value } -ErrorAction Stop }
+  return 'updated'
+}
+function Restore-TestSetting {
+  $n = 0
+  foreach ($k in $SeedSettings.Keys) { $null = Save-SettingRow $k $SeedSettings[$k]; $n++ }
+  return $n
+}
 function Clear-TestPublication([int]$PubId) {
   $n = 0
   foreach ($l in 'PFM Activity Log', 'PFM Endorsements') { foreach ($r in (Get-RowsFor $l $PubId)) { $null = Remove-PnPListItem -List $l -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ } }
@@ -208,6 +232,7 @@ function Clear-TestPublication([int]$PubId) {
 }
 
 $secret = @()
+$script:settingsChanged = $false
 $site = ''
 $lines = New-Object System.Collections.Generic.List[string]
 $dir = ''
@@ -221,8 +246,8 @@ try {
   $root = Split-Path -Parent $dir
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
-  $pubFile = Join-Path $dir '90161Z-T18-test-publications-r3.txt'   # item IDs of A, H, F and the two F03 test rows, for part 2
-  $lines.Add('TASK T18 slice 1 end-to-end r4, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
+  $pubFile = Join-Path $dir '90161Z-T18-test-publications-r5.txt'   # item IDs of A, H, F and the three F03 test rows, for part 2
+  $lines.Add('TASK T18 slice 1 end-to-end r5, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
@@ -240,6 +265,20 @@ try {
   Add-Line 'a-setup' $(if ($wantFormal -gt 1 -and $wantLegal -gt 0) { 'PASS' } else { 'FAIL' }) ('expected formal=' + $wantFormal + ' legal=' + $wantLegal + ' (active mandatory offices; the missing-row check needs 2 or more formal)')
 
   if ($Part -eq 1) {
+    # 0. The Settings rows the flows read (R27). Test mode Yes: every flow e-mail goes to the alert address only. Reminder lead
+    # days is set to the test value; part 2 puts it back. A missing row is made, an existing row is updated.
+    $made = 0; $upd = 0
+    foreach ($k in $SeedSettings.Keys) {
+      $v = $(if ($k -eq 'ReminderLeadDays') { $LeadTest } else { $SeedSettings[$k] })
+      if ((Save-SettingRow $k $v) -eq 'created') { $made++ } else { $upd++ }
+    }
+    if ((Save-SettingRow 'SharedMailbox' '' -OnlyIfMissing) -eq 'created') { $made++ }
+    $s6 = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'StepNumber', 'TargetBusinessDays' -ErrorAction Stop | Where-Object { [int]$_['StepNumber'] -eq 6 })
+    foreach ($r in $s6) { $null = Set-PnPListItem -List 'PFM Process Steps' -Identity $r.Id -Values @{ TargetBusinessDays = 25 } -ErrorAction Stop }
+    $s6now = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'StepNumber', 'TargetBusinessDays' -ErrorAction Stop | Where-Object { [int]$_['StepNumber'] -eq 6 } | ForEach-Object { [int]$_['TargetBusinessDays'] })
+    Add-Line 'a2-settings' 'SET' ('PFM Settings rows made=' + $made + ' updated=' + $upd + '; Test mode Yes; Reminder lead days set to ' + $LeadTest + ' for this test')
+    Add-Line 'a3-stage6-target' $(if ($s6now.Count -eq 1 -and $s6now[0] -eq 25) { 'PASS' } else { 'FAIL' }) ('stage 6 rows=' + $s6now.Count + ' TargetBusinessDays=' + ($s6now -join ',') + ' expected=25 (20 coordination + 5 adjudication)')
+
     # 2. Remove fake publications left by an earlier run (r1 or r2 titles), then create A, H and F at step 6.
     $old = @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -ErrorAction Stop | Where-Object { ([string]$_['Title']).StartsWith('90161Z TEST') -and ([string]$_['Title']).EndsWith('(delete me)') })
     $moved = 0
@@ -284,12 +323,17 @@ try {
     $back = 0; while ($back -lt 10) { $past = $past.AddDays(-1); if ($past.DayOfWeek -ne 'Saturday' -and $past.DayOfWeek -ne 'Sunday') { $back++ } }
     $null = Set-PnPListItem -List 'PFM Endorsements' -Identity $rowsA[0].Id -Values @{ DueDate = $past } -ErrorAction Stop
     $hRow = Add-PnPListItem -List 'PFM Endorsements' -Values @{ Title = ($TitleH + ' - test row'); Publication = $h.Id; CoordinationStage = 'Formal Coordination'; CoordinationRole = 'Other'; EndorsementStatus = 'Not Started'; DueDate = $past } -ErrorAction Stop
-    Set-Content -LiteralPath $pubFile -Value @([string]$a.Id, [string]$h.Id, [string]$f.Id, [string]$rowsA[0].Id, [string]$hRow.Id) -Encoding UTF8
-    Add-Line 'g-f03-prepared' 'SET' ('A row ' + $rowsA[0].Id + ' and H row ' + $hRow.Id + ' set to a suspense 10 weekdays ago')
+    # The Reminder tier starts 10 weekdays before the suspense while the lead-days row says 10, and 5 while it says 5: a suspense
+    # 8 weekdays ahead is in the Reminder tier only if F03 read the row (R27).
+    $ahead = Add-WorkingDay (Get-Date).Date 8
+    $null = Set-PnPListItem -List 'PFM Endorsements' -Identity $rowsA[1].Id -Values @{ DueDate = $ahead } -ErrorAction Stop
+    Set-Content -LiteralPath $pubFile -Value @([string]$a.Id, [string]$h.Id, [string]$f.Id, [string]$rowsA[0].Id, [string]$hRow.Id, [string]$rowsA[1].Id) -Encoding UTF8
+    Add-Line 'g-f03-prepared' 'SET' ('A row ' + $rowsA[0].Id + ' and H row ' + $hRow.Id + ' set to a suspense 10 weekdays ago; A row ' + $rowsA[1].Id + ' set to a suspense 8 weekdays ahead')
   } else {
     if (-not (Test-Path -LiteralPath $pubFile -PathType Leaf)) { throw 'NO TEST PUBLICATIONS: run part 1 first.' }
     $ids = @(Get-Content -LiteralPath $pubFile | ForEach-Object { [int]([string]$_).Trim() })
-    $aId, $hId, $fId, $pastRow, $hRowId = $ids[0], $ids[1], $ids[2], $ids[3], $ids[4]
+    $aId, $hId, $fId, $pastRow, $hRowId, $leadRow = $ids[0], $ids[1], $ids[2], $ids[3], $ids[4], $ids[5]
+    $script:settingsChanged = $true   # part 1 changed the Settings rows; the end of part 2 (or an error) puts them back
 
     # 7. Resubmit of the failed run made no duplicates.
     $fRows = (Get-Formal $fId).Count
@@ -301,18 +345,25 @@ try {
     $cal = $today.AddDays(30); if ($cal.DayOfWeek -eq 'Saturday') { $cal = $cal.AddDays(2) } elseif ($cal.DayOfWeek -eq 'Sunday') { $cal = $cal.AddDays(1) }
     $checked = 0; $right = 0
     foreach ($r in @(Get-Formal $aId) + @(Get-Formal $fId)) {
-      if ($r.Id -eq $pastRow) { continue }
+      if ($r.Id -eq $pastRow -or $r.Id -eq $leadRow) { continue }
       $checked++
       $role = [string]$r['CoordinationRole']
       $want = $(if (($role -eq 'Guard Applicability' -or $role -eq 'Reserve Applicability') -and $cal -gt $work) { $cal } else { $work })
       if ($r['DueDate'] -and ([datetime]$r['DueDate']).ToLocalTime().Date -eq $want) { $right++ }
     }
     Add-Line 'i-f03-suspense' $(if ($checked -and $right -eq $checked) { 'PASS' } else { 'FAIL' }) ('rows with the 20-working-day suspense (' + $work.ToString('dd MMM yy') + ')=' + $right + ' of ' + $checked + $(if ($right -lt $checked) { '. F03 must run the same day as part 2; check its run history' } else { '' }))
-    $logA = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('[TEST] Reminder Sent: E' + $pastRow + ' Escalation') }).Count
-    Add-Line 'j-f03-escalation' $(if ($logA -eq 1) { 'PASS' } else { 'FAIL' }) ('test-mode escalation logged for the past-due A row=' + $logA + ' expected=1 (0 = Test mode was not Yes, or F03 did not run)')
+    $logA = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('Reminder Sent: E' + $pastRow + ' Escalation') }).Count
+    Add-Line 'j-f03-escalation' $(if ($logA -eq 1) { 'PASS' } else { 'FAIL' }) ('escalation logged for the past-due A row=' + $logA + ' expected=1 (0 = Test mode was not Yes, or F03 did not run)')
     # PFM 15 Nov 26 (the escalation e-mail never arrived, 3 rounds): F03 r5 writes in the log row which mailbox sent it.
-    $via = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('[TEST] Reminder Sent: E' + $pastRow + ' Escalation') } | ForEach-Object { if (([string]$_['EventDetails']) -match 'sent from (the shared mailbox|the flow owner mailbox)') { $Matches[1] } else { 'not recorded' } } | Select-Object -First 1)
+    $via = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('Reminder Sent: E' + $pastRow + ' Escalation') } | ForEach-Object { if (([string]$_['EventDetails']) -match 'sent from (the shared mailbox|the flow owner mailbox)') { $Matches[1] } else { 'not recorded' } } | Select-Object -First 1)
     Add-Line 'j2-f03-mailbox' 'INFO' ('the escalation e-mail was sent from: ' + $(if ($via.Count) { $via[0] } else { 'no log row' }) + '. If it is not in your Inbox: look in Junk and in the Sent Items of that mailbox')
+    # R27: the lead-days row was 10 for this run. F03 logs a Reminder for the row 8 weekdays ahead only if it read that row
+    # (with the default 5 the tier is None). The log title has no [TEST] prefix.
+    $leadNow = @(Get-PnPListItem -List 'PFM Settings' -Fields 'Title', 'SettingValue' -ErrorAction Stop | Where-Object { ([string]$_['Title']).Trim() -eq 'ReminderLeadDays' } | ForEach-Object { ([string]$_['SettingValue']).Trim() })
+    $logLead = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']) -eq ('Reminder Sent: E' + $leadRow + ' Reminder') }).Count
+    Add-Line 'j3-f03-reads-settings' $(if ($logLead -eq 1 -and $leadNow -contains $LeadTest) { 'PASS' } else { 'FAIL' }) ('Reminder logged for the row 8 weekdays ahead=' + $logLead + ' expected=1 (needs Reminder lead days = ' + $LeadTest + ' in PFM Settings; rows with that value=' + @($leadNow | Where-Object { $_ -eq $LeadTest }).Count + '). 0 = F03 did not read the Settings row')
+    $logTest = @(Get-RowsFor 'PFM Activity Log' $aId | Where-Object { ([string]$_['Title']).StartsWith('[TEST]') }).Count
+    Add-Line 'j4-no-test-prefix' $(if ($logTest -eq 0) { 'PASS' } else { 'FAIL' }) ('A log rows whose title starts with [TEST]=' + $logTest + ' expected=0 (PFM 16 Nov 26)')
     $logH = @(Get-RowsFor 'PFM Activity Log' $hId | Where-Object { ([string]$_['Title']) -match ('Reminder Sent: E' + $hRowId + ' ') }).Count
     $hFormal = @(Get-Formal $hId | Where-Object { $_.Id -ne $hRowId }).Count
     Add-Line 'k2-hold-still-skipped' $(if ($hFormal -eq 0) { 'PASS' } else { 'FAIL' }) ('F05 rows for H (On Hold) at part 2=' + $hFormal + ' expected=0')
@@ -368,15 +419,23 @@ try {
       Add-Line 'o-clean-up' 'SET' ('rows moved to the site Recycle Bin=' + $n)
     }
   }
+  if ($Part -eq 2) {
+    $nRestored = Restore-TestSetting
+    $script:settingsChanged = $false
+    Add-Line 'p-settings-restored' 'SET' ('PFM Settings rows put back to their seed values=' + $nRestored)
+  }
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
   $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
   $lines.Add('SLICE1 part ' + $Part + ' done, items with problems=' + $nf)
 } catch {
   $m = ConvertTo-Masked (Hide-Site ([string]$_) $site) $secret
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
+  if ($Part -eq 2 -and $script:settingsChanged) {
+    try { $nRestored = Restore-TestSetting; $lines.Add('Settings rows put back to their seed values=' + $nRestored) } catch { $lines.Add('Settings rows NOT put back: set Reminder lead days to 5 by hand') }
+  }
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T18-slice1-part' + $Part + '-r4.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T18-slice1-part' + $Part + '-r5.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }

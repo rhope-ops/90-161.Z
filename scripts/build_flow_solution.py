@@ -65,12 +65,7 @@ CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Offi
 ENV = [  # (schema name, display name, default value)
     ("pfm_SiteUrl", "Site URL", ""),
     ("pfm_AlertEmail", "Alert e-mail", ""),   # failure e-mails and test-mode e-mails go here (PFM, 2026-11-14)
-    ("pfm_SharedMailbox", "Shared mailbox", ""),   # optional: F03 sends from it (Send As); empty = the flow owner's mailbox
-    ("pfm_TestMode", "Test mode", "No"),   # Yes: every flow e-mail goes to the alert address only
-    ("pfm_FlowsPaused", "Flows paused", "No"),   # Yes: every flow stops at its first step (kill switch)
-    ("pfm_ReminderLeadDays", "Reminder lead days", "5"),   # weekdays before the suspense (PFM, 2026-11-14)
-    ("pfm_EscalationLagDays", "Escalation lag days", "3"),   # working days after the suspense (PFM, 2026-11-14)
-    ("pfm_SuspenseWorkdays", "Suspense working days", "20"),   # F03 default suspense (PFM, 2026-11-14: 20 working days)
+    ("pfm_SharedMailbox", "Shared mailbox", ""),   # only the T21 probe flows read it now (R27, PFM 14 Nov 26: F03 and F06 read it from PFM Settings)
     ("pfm_ListPublications", "List PFM Publications", "PFM Publications"),
     ("pfm_ListActivityLog", "List PFM Activity Log", "PFM Activity Log"),
     ("pfm_ListReviews", "List PFM Reviews", "PFM Reviews"),
@@ -78,12 +73,14 @@ ENV = [  # (schema name, display name, default value)
     ("pfm_ListProductIndex", "List PFM Product Index", "PFM Product Index"),
     ("pfm_ListProcessSteps", "List PFM Process Steps", "PFM Process Steps"),
     ("pfm_ListOffices", "List PFM Offices", "PFM Offices"),
+    ("pfm_ListSettings", "List PFM Settings", "PFM Settings"),   # R27: the flows read their six values from rows of this list
 ]
+# R27 (PFM 14 Nov 26, "Flow values move"): Flows paused, Test mode, reminder lead days, escalation lag days, suspense working days and
+# the shared mailbox are rows of PFM Settings (schemas/lists/PFMSettings.json), no longer environment variables here.
+# F03, F05 and F06 read them once at the start of a run. tests/check_flow_solution.py fails if a def still reads one.
+MOVED_ENV = ("pfm_FlowsPaused", "pfm_TestMode", "pfm_ReminderLeadDays", "pfm_EscalationLagDays", "pfm_SuspenseWorkdays", "pfm_SharedMailbox")
 LABEL = {"pfm_SiteUrl": "1 Site URL (enter)", "pfm_AlertEmail": "2 Alert e-mail (enter)",
-         "pfm_SharedMailbox": "3 Shared mailbox (optional)", "pfm_TestMode": "4 Test mode (Yes or No)"}
-# A test-round slice imports with Test mode Yes (PFM 15 Nov 26: "why aren't fields that need to be on, like Test, already on?"),
-# so every flow e-mail of a test goes to the alert address only; the full deployment solution keeps No.
-SLICE_DEFAULT = {"pfm_TestMode": "Yes"}
+         "pfm_SharedMailbox": "3 Shared mailbox (optional)"}   # the third label is read by the T21 probe zip only
 OPTIONAL = {"pfm_SharedMailbox"}   # isrequired 0: a wing without a shared mailbox leaves it empty
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 # R22 (PFM 14 Nov 26: "flows added by the solution default to on; i had to turn f03 off"; "ideally the flows will be imported
@@ -95,7 +92,7 @@ OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r5.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 joins R21; r4 (R22): F03 r4; r5: order, labels, Test mode Yes
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 joins R21; r4 (R22): F03 r4; r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix
 SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
 
 
@@ -208,7 +205,7 @@ def build(test=None, only=None, on=()) -> bytes:
         v = test_variant(flows[0][1])
         unique, title = UNIQUE + "TEST" + v, flows[0][1].get("solution", {}).get("title") or "90-161.Z solution import test " + v
     used_env = {k for _, _, u in flows for k in u}
-    env = ENV if test is None and not only else [e for e in ENV if ENV_KEY[e[0]] in used_env]   # a test or slice carries only what it uses
+    env = [e for e in ENV if ENV_KEY[e[0]] in used_env]   # every solution carries only the variables its flows use (R27)
     files, wf_xml, root_components = {}, [], []
     for src, d, used in flows:
         # R21: "workflowKey" names the stem whose ID the flow kept when it was first imported (R20 imported F03 r2 and F05 r1,
@@ -244,7 +241,7 @@ def build(test=None, only=None, on=()) -> bytes:
             "      <iscustomizable>1</iscustomizable>\n      <promptingbehavior>0</promptingbehavior>\n"
             "      <statecode>0</statecode>\n      <statuscode>1</statuscode>\n    </connectionreference>")
     for s, disp, default in env:
-        disp, default = LABEL.get(s, disp), (SLICE_DEFAULT.get(s, default) if only else default)
+        disp = LABEL.get(s, disp)
         files[f"environmentvariabledefinitions/{s}/environmentvariabledefinition.xml"] = (
             f'<environmentvariabledefinition schemaname="{s}">\n'
             + (f"  <defaultvalue>{escape(default)}</defaultvalue>\n" if default else "") +   # no empty element; no XML declaration (r3)
