@@ -33,28 +33,32 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 **Changes:** on the test site: the R27 second person in Visitors, probe list and library are removed first; a fresh probe list and library, the second person, fake rows and a list view are made and removed again at the end. In Power Automate: the R27 solution "90-161.Z probe" is deleted; "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me; both are deleted at the end. The 90-161.Z flows solution is upgraded to the full one (F01 to F06) and the flows F02 and F04 are run by hand; F04 sends one test e-mail to me. Two rows of PFM Settings (Flows paused, Test mode) are written and put back, and fake test rows go to the site Recycle Bin. On my computer: my OneDrive folder RADE\90-161.Z, RADE's saved copy of itself (in my RADE folder) and one shortcut named RADE on my desktop. Before Run, the window lists every file.
 **Before I start:** I ask a colleague who can open the test site for their e-mail address, and for 5 minutes in Teams (optional; I select Skip if nobody is free).
 **Steps:**
-1. Press Copy script next to the link below.
+1. Press Copy script next to the link under these steps.
 2. Open the Start menu and type ISE.
 3. Open Windows PowerShell ISE (not "Run as administrator").
 4. Select File > New.
 5. Click in the white script pane.
 6. Press Ctrl+V.
 7. Press F5. The RADE window opens.
-8. Select the button "90-161.Z PFM window".
+8. In the RADE window, select the button "90-161.Z PFM window".
 9. Press Install.
 10. Wait until the card says "90-161.Z PFM window 0.1.0 is installed."
 11. Select Close on the Done card.
 12. Close the RADE window with its X, if it is still open.
 13. Double-click the shortcut RADE on my desktop.
 14. Select the button "90-161.Z PFM window".
-15. Press "Start 90-161.Z PFM window". The window opens and RADE closes.
-16. Close the 90-161.Z window with its X.
-17. Double-click the shortcut RADE on my desktop again.
-18. Select the button "90-161.Z: Publications and Forms Management".
-19. Press Run.
-20. On each card, do its numbered steps, then select the button named at the bottom of the card (about 2 hours in all, estimate).
-21. When a small window asks for the second person's e-mail address, type my colleague's address and select OK (it stays on my computer).
-22. At DONE, send the Outlook draft that opens.
+15. Press "Start 90-161.Z PFM window".
+16. Wait until the 90-161.Z window opens and RADE closes.
+17. Close the 90-161.Z window with its X.
+18. Double-click the shortcut RADE on my desktop again.
+19. Select the button "90-161.Z: Publications and Forms Management".
+20. Press Run.
+21. On each card, do its numbered steps (about 2 hours in all).
+22. Then select the button at the bottom of the card.
+23. When the small window asks for the second person's e-mail address, type my colleague's e-mail address.
+24. Then select "OK" in the small window (the address stays on my computer).
+25. At DONE, wait for the Outlook draft to open.
+26. In the draft, select "Send".
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R28-round-r2.ps1
 

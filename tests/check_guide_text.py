@@ -124,7 +124,7 @@ def check_step(text):
     return out
 
 
-CODE = re.compile(r'\b(?:[TFR]\d{1,2}|r\d{1,2})\b')
+CODE = re.compile(r'\b(?:T\d{1,2}|F\d{2}|R\d{1,2}|r\d{1,2})[a-z]?\b', re.I)   # F5 (a key) is no flow code: F + 2 digits
 BUILD = re.compile(r'\b(?:slice|probe solution|estimate)\b', re.I)
 TITLE_MAX, LINE_MAX, LINES_MAX = 56, 100, 10
 NUMBERED = re.compile(r'\s*\d+\.\s')
@@ -134,16 +134,22 @@ def check_step_rules(s):
     """Return the runner text rule failures of one manifest step (empty = pass)."""
     out = []
     title = s.get('title')
-    if not title:
+    if not (title or '').strip():
         out.append('has no title')
     else:
         if len(title) > TITLE_MAX:
             out.append('title is %d characters (limit %d)' % (len(title), TITLE_MAX))
         if CODE.search(re.sub(r'"[^"]*"', '', title)) or BUILD.search(title):
             out.append('title has a code or build word: "%s"' % title)
-    note = re.sub(r'"[^"]*"', '', s.get('note', ''))
-    if CODE.search(note) or BUILD.search(note):
-        out.append('note has a code or build word')
+    for field in ('note', 'help'):
+        text = re.sub(r'"[^"]*"', '', s.get(field, ''))
+        if CODE.search(text) or BUILD.search(text):
+            out.append('%s has a code or build word' % field)
+    shown = [title or '', s.get('note', ''), s.get('help', '')] + list(s.get('guide', []))
+    for a in s.get('answers', []):
+        shown += [a.get('prompt', '')] + list(a.get('choices', []))
+    if any(re.search(r'\bgrey', x, re.I) for x in shown):
+        out.append('"grey": use gray')
     if s.get('doneText'):
         out.append('sets doneText "%s"' % s['doneText'])
     guide = s.get('guide', [])
@@ -157,9 +163,7 @@ def check_step_rules(s):
     for g in guide:
         if len(g) > LINE_MAX:
             out.append('line over %d characters (%d): %s' % (LINE_MAX, len(g), g[:40]))
-        if re.search(r'\bgrey\b', g + ' ' + s.get('note', ''), re.I):
-            out.append('"grey": use gray')
-        if re.search(r'Return to the RADE window|\bSelect\s+\\?"?Done\b', g):
+        if re.search(r'Return to the RADE window|\bselect\s+\\?"?Done\b', g, re.I):
             out.append('line to drop (the engine prints the closing line): %s' % g[:50])
     return out
 
@@ -251,6 +255,7 @@ def self_test():
         errs.append('go.md reader: %s' % got)
     ok_step = {'name': 'R1 x', 'title': 'Remove the old flows', 'note': 'You delete 2 flows. About 4 minutes.',
                'url': 'https://x', 'guide': ['1. Select "Open in browser" above.', '2. Select "Delete".', 'If it fails: select "It failed".']}
+    ok_step['help'] = 'Press F5 to run it.'
     if check_step_rules(ok_step):
         errs.append('good rules step failed: %s' % check_step_rules(ok_step))
     bad_rules = [
@@ -264,8 +269,19 @@ def self_test():
         ({'title': 'a', 'guide': ['1. Select A.', 'If x: select B.', '2. Select C.']}, 'unnumbered line sits'),
         ({'title': 'a', 'doneText': 'Done: x'}, 'sets doneText'),
         ({'title': 'a', 'guide': ['1. Select the Grey box.']}, '"grey"'),
+        ({'title': 'a', 'note': 'The greyed box.'}, '"grey"'),
+        ({'title': 'a', 'help': 'A grey box.'}, '"grey"'),
+        ({'title': 'a', 'answers': [{'prompt': 'Is it grey?', 'choices': ['Yes']}]}, '"grey"'),
+        ({'title': 'a', 'answers': [{'prompt': 'Is it?', 'choices': ['Grey']}]}, '"grey"'),
+        ({'title': 'a', 'help': 'Send T21 results.'}, 'help has a code'),
+        ({'title': 'a', 'note': 'The t21 step.'}, 'note has a code'),
+        ({'title': 'Do T21a now'}, 'title has a code'),
+        ({'title': 'a', 'note': 'Run F03.'}, 'note has a code'),
+        ({'title': '   '}, 'has no title'),
+        ({'title': 'a', 'guide': ['If it is gone: select "done".']}, 'line to drop'),
         ({'title': 'a', 'guide': ['1. Return to the RADE window.']}, 'line to drop'),
         ({'title': 'a', 'guide': ['1. Select "Done: x".']}, 'line to drop'),
+        ({'title': 'a', 'guide': ['If it is gone: select "Done".']}, 'line to drop'),
         ({'title': 'a', 'url': 'https://x', 'guide': ['1. On this RADE card, select "Open in browser".']}, 'line 1 of a card'),
     ]
     for s, want in bad_rules:
