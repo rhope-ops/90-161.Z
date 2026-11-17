@@ -1,6 +1,6 @@
 # 90-161.Z PFM window: usability targets (17 Nov 26)
 
-Deeper pass, step 2 (plan: docs/reviews/2026-11-17-window-plan.md). Inputs: the PFM's answers of 17 Nov 26 (counts and patterns only). Each target has a field source (schemas/lists), a DAFMAN 90-161 paragraph where one applies, and a proof that is not the author's judgment. Targets are agent RECs until the PFM approves them.
+Deeper pass, step 2 (plan: docs/reviews/2026-11-17-window-plan.md). Inputs: the PFM's answers of 17 Nov 26 (counts and patterns only). Each target has a field source (schemas/lists), a DAFMAN 90-161 paragraph where one applies, and a proof that is not the author's judgment. Targets are agent RECs until the PFM approves them. PFM, 17 Nov 26: preview 2 approved for R28; no timed tasks, so U1 to U5 guide the design and are proved by the measured checks and the PFM's rating in R28, not by seconds or clicks.
 
 ## PFM answers (17 Nov 26)
 
