@@ -89,6 +89,7 @@
             "7. Select the three dots beside the flow \"90161Z T21 Probe Button r1\".",
             "8. Select \"Delete from this environment\".",
             "9. Select Delete.",
+            "10. Select \"Done: flows removed\".",
             "If a flow is not in the list: skip it. If one will not delete: select \"It failed\"."
           ],
           "marker": "90161Z-T21-r27-flows-removed.txt",
@@ -213,6 +214,7 @@
             "7. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
             "8. Select Open.",
             "9. Select Next.",
+            "10. Select \"Done: file chosen\".",
             "If the page refuses the file: select \"It failed\" and type the first red line (no names)."
           ],
           "marker": "90161Z-T21-health-file-chosen.txt",
@@ -429,6 +431,7 @@
             "7. In the search box of the trigger list, type: For a selected item",
             "8. Select the trigger \"For a selected item\" (SharePoint).",
             "9. Select Create.",
+            "10. Select \"Done: flow made\".",
             "If no trigger \"For a selected item\" is listed: select \"It failed\" and type what the list shows."
           ],
           "marker": "90161Z-T21-button-trigger.txt",
@@ -452,6 +455,7 @@
             "1. In the box \"Site Address\", open the list and pick the test site.",
             "2. In the box \"List Name\", select \"90161Z Probe\".",
             "3. Look at the trigger: it must show the site and the list.",
+            "4. Select \"Done: site and list\".",
             "If the site or the list cannot be chosen: select \"It failed\" and type what the box shows.",
             "If the test site is not listed: select \"Enter custom value\", type the RADE \"Site address\"."
           ],
@@ -481,6 +485,7 @@
             "6. In the box \"Title\", type: BTN-HAND",
             "7. Select Save.",
             "8. Look at the top for the word Saved.",
+            "9. Select \"Done: flow saved\".",
             "If \"Create item\" is not listed: select \"It failed\" and type what the list shows.",
             "If Save shows an error: select \"It failed\" and type the first line of the message.",
             "If the test site is not listed: select \"Enter custom value\", type the RADE \"Site address\"."
@@ -667,6 +672,7 @@
             "5. Press Shift+Tab to move back.",
             "6. Look for a clear outline on the button that has the focus.",
             "7. Press Enter to use that button (safe: all data is FAKE and nothing is sent).",
+            "8. Select \"Done: next list\".",
             "You do this in the window after list 2: read it now."
           ],
           "marker": "90161Z-T22-list1-read.txt",
@@ -690,6 +696,7 @@
             "7. Look at each card: every text and button must stay readable.",
             "8. Press the same keys again to turn high contrast off.",
             "9. Close the window with its X.",
+            "10. Select \"Done: open the window\".",
             "If the window does not open: RADE says so on the next card; select \"It failed\" there."
           ],
           "marker": "90161Z-T22-list2-read.txt",
@@ -822,6 +829,7 @@
             "7. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
             "8. Select Open.",
             "9. Select Next.",
+            "10. Select \"Done: file chosen\".",
             "If the page refuses the file: select \"It failed\" and type the first red line (no names)."
           ],
           "marker": "90161Z-T24-file-chosen.txt",
@@ -1171,6 +1179,7 @@
             "7. Select the three dots beside \"90-161.Z probe button\".",
             "8. Select \"Delete from this environment\".",
             "9. Select Delete.",
+            "10. Select \"Done: removed\".",
             "If a flow or the solution is not in the list: skip it. If one does not delete: select \"It failed\"."
           ],
           "marker": "90161Z-T21-removed.txt",
