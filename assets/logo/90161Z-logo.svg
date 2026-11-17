@@ -1,0 +1,26 @@
+<!-- 90-161.Z logo, master copy (the PFM, 2026-11-17: W2 Flap 26; design canvas https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU round 9).
+     Rho Bold frame and colors: Air Force Blue #00308F disc, white ring, yellow #FFCD00 route arc. Yellow never sits on the white page (1.5:1).
+     PNGs: node scripts/build_logo.js (written to assets/logo/build/, not committed). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="90-161.Z logo">
+<title>90-161.Z logo</title>
+<circle cx="256" cy="256" r="248" fill="#00308F"/>
+<circle cx="256" cy="256" r="230" fill="none" stroke="#FFFFFF" stroke-width="8"/>
+<circle cx="256" cy="256" r="174" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-dasharray="2 18" stroke-linecap="round"/>
+<path d="M256.0 82.0 A174 174 0 1 1 87.9 301.0" fill="none" stroke="#FFCD00" stroke-width="20" stroke-linecap="round"/>
+<circle cx="256.0" cy="82.0" r="16" fill="#FFCD00"/>
+<circle cx="87.9" cy="301.0" r="30" fill="#FFCD00"/>
+<path d="M172 153 H303 V190 H340 V359 H172 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+<path d="M314 153 V179 H340 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+<defs>
+<clipPath id="s7">
+<rect x="196" y="212.0" width="120" height="11"/>
+<rect x="196" y="230.8" width="120" height="11"/>
+<rect x="196" y="249.7" width="120" height="11"/>
+<rect x="196" y="268.5" width="120" height="11"/>
+<rect x="196" y="287.3" width="120" height="11"/>
+<rect x="196" y="306.2" width="120" height="11"/>
+<rect x="196" y="325.0" width="120" height="11"/>
+</clipPath>
+</defs>
+<path d="M198.0 212.0 L314.0 212.0 L314.0 223.0 L238.0 325.0 L314.0 325.0 L314.0 336.0 L198.0 336.0 L198.0 325.0 L274.0 223.0 L198.0 223.0 Z" fill="#00308F" clip-path="url(#s7)"/>
+</svg>
