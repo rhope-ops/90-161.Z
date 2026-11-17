@@ -627,7 +627,7 @@ assert out and len([l for l in out if l.startswith('RAIL ')]) == 5
 # the rade-ui block is not empty, and the colors painted here are the palette tokens
 assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
-hexes = dict(re.findall(r"(\w+) = '([0-9A-F]{6})'", re.search(r'\$PalHex = @\{(.*?)\}', src, re.S).group(1)))
+hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
 PYT22
 else sk "T22 window preview cards (r2)"; fi
