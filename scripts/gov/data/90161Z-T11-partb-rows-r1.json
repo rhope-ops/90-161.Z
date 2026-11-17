@@ -3,7 +3,7 @@
   "rows": [
     {
       "id": "M04",
-      "do": "Power Apps: Solutions, Import solution, choose 90161Z-T24-full-flows-r1.zip (the round saves it in T11; the T05 sample is gone). Under Advanced settings, clear \"Enable plug-in steps and flows\" so its flows stay off",
+      "do": "Power Apps: Solutions, Import solution, choose 90161Z-T24-full-flows-r2.zip (the round saves it in T11; the T05 sample is gone). Under Advanced settings, clear \"Enable plug-in steps and flows\" so its flows stay off",
       "note": "Imported, or the error"
     },
     {
