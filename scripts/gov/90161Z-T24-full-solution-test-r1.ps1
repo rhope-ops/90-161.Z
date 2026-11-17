@@ -160,7 +160,14 @@ function Get-OwnLogRow([int]$PubId) {
   # The Activity Log rows F01 wrote for a publication, oldest first (F06 and F05 write other titles).
   return @(Get-RowsFor 'PFM Activity Log' 'Publication' $PubId | Where-Object { ([string]$_['Title']).StartsWith('Action opened: ') -or ([string]$_['Title']).StartsWith('Action updated: ') } | Sort-Object Id)
 }
-function Get-LocalDate($Value) { if ($Value) { return ([datetime]$Value).ToLocalTime().Date } else { return $null } }
+function Get-LocalDate($Value) {
+  # The date part of the UTC value: the first 10 characters of the stored value, as the flows read a date-only column (README choice 7). It does not
+  # depend on this computer's time zone (a Central date-only value is 05:00 or 06:00 UTC on the same day).
+  if (-not $Value) { return $null }
+  $d = [datetime]$Value
+  if ($d.Kind -eq [System.DateTimeKind]::Local) { $d = $d.ToUniversalTime() }
+  return $d.Date
+}
 function Wait-Until([scriptblock]$Done, [string]$What) {
   # Checks every 30 seconds for up to $WaitMinutes. Returns $true when $Done returns $true. A failed check (for example a
   # network drop) is retried; 3 failures in a row stop the test.
@@ -264,6 +271,7 @@ function Test-F02Row($State, [bool]$Second) {
 }
 
 $secret = @()
+$stateFile = ''
 $settingsChanged = $false
 $state = @{}
 $site = ''
@@ -297,14 +305,15 @@ try {
     }
     Save-State $stateFile $state
     $settingsChanged = $true
+    if ($state.ContainsKey('settingsRestored')) { $state.Remove('settingsRestored'); Save-State $stateFile $state }   # an earlier stopped run put them back; they change again now
     $made = 0; $upd = 0
     foreach ($k in $SeedSettings.Keys) { if ((Save-SettingRow $k $SeedSettings[$k]) -eq 'created') { $made++ } else { $upd++ } }
     Add-Line 'a0-settings' 'SET' ('PFM Settings rows made=' + $made + ' updated=' + $upd + '; Flows paused No; Test mode Yes')
 
     # a. All 6 flows On after the import: your own flows only, filtered by the 90161Z F0 names. One try; a hand check line when it cannot be read.
     try {
-      $envs = @(Get-PnPPowerPlatformEnvironment -ErrorAction Stop)
-      if (-not $envs.Count) { throw [System.InvalidOperationException]::new('no environment') }
+      $envs = @(Get-PnPPowerPlatformEnvironment -ErrorAction Stop | Where-Object { $_.IsDefault })
+      if ($envs.Count -ne 1) { throw [System.InvalidOperationException]::new('default environment not identified') }
       $mine = @(Get-PnPFlow -Environment $envs[0] -ErrorAction Stop | Where-Object { ([string]$_.Properties.DisplayName) -like '90161Z F0*' })
       $on = @($mine | Where-Object { ([string]$_.Properties.State) -eq 'Started' }).Count
       Add-Line 'a-flows-on' $(if ($mine.Count -eq 6 -and $on -eq 6) { 'PASS' } else { 'FAIL' }) ('flows named 90161Z F01 to F06 found=' + $mine.Count + ' expected=6; On=' + $on + ' expected=6')
@@ -331,7 +340,7 @@ try {
     $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 1 } 'the F01 log row for the new publication'
     $rows = @(Get-OwnLogRow $x.Id)
     $d0 = $(if ($rows.Count) { [string]$rows[0]['EventDetails'] } else { '' })
-    $good = $ok -and $d0.StartsWith('Opened.') -and $d0.Contains('State: New | ' + $titles[0] + ' | On Track') -and ([string]$rows[0]['Title']).StartsWith('Action opened: ')
+    $good = $ok -and $rows.Count -eq 1 -and $d0.StartsWith('Opened.') -and $d0.Contains('State: New | ' + $titles[0] + ' | On Track') -and ([string]$rows[0]['Title']).StartsWith('Action opened: ')
     Add-Line 'f01-open' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the row was opened=' + $rows.Count + ' expected=1 (title Action opened, details Opened. and the state)' + $(if ($ok) { '' } else { '. If 0: check that F01 is On and read its run history' }))
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ StatusNotes = 'R28 test: a note edit' } -ErrorAction Stop
     Write-Host '  A note was edited; waiting 2.5 minutes to see that F01 logs nothing ...'
@@ -384,7 +393,7 @@ try {
   } else {
     if (-not (Test-Path -LiteralPath $stateFile -PathType Leaf)) { throw 'NO TEST STATE: run part 1 first.' }
     $state = Read-State $stateFile
-    $settingsChanged = $true   # part 1 changed the Settings rows; part 3 (or an error in it) puts them back
+    $settingsChanged = -not $state.ContainsKey('settingsRestored')   # part 1 changed the Settings rows; part 3, or a stop in any part, puts them back once
     if ($Part -eq 2) {
       # F02 after the first run, then F04.
       Test-F02Row $state $false
@@ -394,27 +403,24 @@ try {
       if ($none) { $none = -not (Wait-Until { @(Get-ReportLogRow ([int]$state['reportBase'])).Count -ge 1 } 'the F04 log row') }
       $rowsNew = @(Get-ReportLogRow ([int]$state['reportBase']))
       $det = $(if ($rowsNew.Count) { [string]$rowsNew[-1]['EventDetails'] } else { '' })
-      Add-Line 'f04-logged' $(if ($rowsNew.Count -ge 1 -and $det.Contains('Test mode: sent to the alert address only')) { 'PASS' } else { 'FAIL' }) ('new status-report log rows=' + $rowsNew.Count + ' expected=1; the row says test mode=' + $det.Contains('Test mode') + $(if ($rowsNew.Count) { '' } else { '. Start F04 with Run in Power Automate, type any address, and read its run history' }))
+      Add-Line 'f04-logged' $(if ($rowsNew.Count -eq 1 -and $det.Contains('Test mode: sent to the alert address only')) { 'PASS' } else { 'FAIL' }) ('new status-report log rows=' + $rowsNew.Count + ' expected=1 (start F04 once; 2 or more fail); the row says test mode=' + $det.Contains('Test mode') + $(if ($rowsNew.Count) { '' } else { '. Start F04 with Run in Power Automate, type any address, and read its run history' }))
       $nPub = @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -ErrorAction Stop).Count
       $covered = $(if ($det -match 'covered (\d+) actions') { [int]$Matches[1] } else { -1 })
       Add-Line 'f04-count' $(if ($covered -eq $nPub) { 'PASS' } else { 'FAIL' }) ('the report covered ' + $covered + ' actions; Publications rows now=' + $nPub + ' (they differ when a row was added or removed after the run)')
       Add-Line 'f04-hand' 'INFO' 'the e-mail itself (alert address Inbox, 2 tables, test mode line) is checked by you in the next step'
     } else {
       # Part 3: F02 after the second run, clean-up, settings back.
-      Test-F02Row $state $true
-      $fails = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
-      if ($fails) { Add-Line 'g-clean-up' 'SKIP' 'kept for review because a check failed; part 1 of the next run removes the fake rows by title' }
-      else {
-        $n = 0
-        foreach ($k in 'x', 'fa', 'fb') { $n += Clear-TestPublication ([int]$state[$k]) }
-        foreach ($k in 'p1', 'p2', 'p3', 'p4') { $n += Clear-TestProduct ([int]$state[$k]) }
-        foreach ($r in (Get-ReportLogRow ([int]$state['reportBase']))) { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ }
-        Add-Line 'g-clean-up' 'SET' ('rows moved to the site Recycle Bin=' + $n)
-      }
-      $nRestored = Restore-TestSetting $state
+      if ($state.ContainsKey('p1') -and $state.ContainsKey('nrd1')) { Test-F02Row $state $true } else { Add-Line 'f02-not-twice-run2' 'SKIP' 'part 1 stopped before the F02 rows were made' }
+      # The fake rows always go to the Recycle Bin here, also after a failed check (the check lines above keep the evidence). A row already gone is not an error.
+      $n = 0; $gone = 0
+      foreach ($k in 'x', 'fa', 'fb') { if ($state.ContainsKey($k)) { try { $n += Clear-TestPublication ([int]$state[$k]) } catch { $gone++ } } }
+      foreach ($k in 'p1', 'p2', 'p3', 'p4') { if ($state.ContainsKey($k)) { try { $n += Clear-TestProduct ([int]$state[$k]) } catch { $gone++ } } }
+      if ($state.ContainsKey('reportBase')) { foreach ($r in (Get-ReportLogRow ([int]$state['reportBase']))) { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ } }
+      Add-Line 'g-clean-up' 'SET' ('rows moved to the site Recycle Bin=' + $n + '; fake items already gone or not removable=' + $gone)
+      if ($state.ContainsKey('settingsRestored')) { $nRestored = 0; Add-Line 'h-settings-restored' 'SET' 'PFM Settings rows were put back earlier (a part stopped)' }
+      else { $nRestored = Restore-TestSetting $state; Add-Line 'h-settings-restored' 'SET' ('PFM Settings rows put back to their old values=' + $nRestored) }
       $settingsChanged = $false
       Remove-Item -LiteralPath $stateFile -Force
-      Add-Line 'h-settings-restored' 'SET' ('PFM Settings rows put back to their old values=' + $nRestored)
     }
   }
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
@@ -423,9 +429,16 @@ try {
 } catch {
   $m = ConvertTo-Masked (Hide-Site ([string]$_) $site) $secret
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
-  if ($Part -eq 3 -and $settingsChanged) {
-    try { $nRestored = Restore-TestSetting $state; $lines.Add('Settings rows put back to their old values=' + $nRestored) } catch { $lines.Add('Settings rows NOT put back: set Test mode back by hand') }
+  # Any part: put the Settings rows back from the old values in the state file (once; part 3 sees the flag and does not restore again).
+  if ($settingsChanged -and $state.ContainsKey('origFlowsPaused') -and $state.ContainsKey('origTestMode')) {
+    try {
+      $nRestored = Restore-TestSetting $state
+      $state['settingsRestored'] = '1'
+      if ($stateFile) { Save-State $stateFile $state }
+      $lines.Add('Settings rows put back to their old values=' + $nRestored)
+    } catch { $lines.Add('Settings rows NOT put back: set Test mode and Flows paused back by hand') }
   }
+  if ($Part -lt 3 -and $stateFile -and (Test-Path -LiteralPath $stateFile)) { $lines.Add('Run part 3 to move the fake rows to the site Recycle Bin and finish') }
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
   if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T24-full-test-part' + $Part + '-r1.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
