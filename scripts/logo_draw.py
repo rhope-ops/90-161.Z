@@ -34,8 +34,7 @@ def shapes(svg_text):
     root = ET.fromstring(svg_text)
     if root.get('viewBox') != '0 0 512 512':
         raise SystemExit('logo_draw: the viewBox must be 0 0 512 512')
-    clips = {c.get('id'): [tuple(float(r.get(k)) for k in ('x', 'y', 'width', 'height')) for r in c.iter(NS + 'rect')]
-             for c in root.iter(NS + 'clipPath')}
+    clips = {c.get('id'): [clip_rect(r) for r in c] for c in root.iter(NS + 'clipPath') if refuse_clip(c)}
     out = []
     for el in root:
         tag = el.tag.replace(NS, '')
@@ -70,8 +69,10 @@ def refuse_unsupported(el, tag):
         raise SystemExit('logo_draw: attribute(s) %s on <%s> are not supported' % (sorted(extra), tag))
     if el.get('stroke', 'none') != 'none':
         d = el.get('d', '').upper()
+        if d.count('M') > 1:
+            raise SystemExit('logo_draw: a path with more than one sub-path (a second M) is not supported')
         open_end = (tag == 'path' and 'Z' not in d) or bool(el.get('stroke-dasharray'))   # a stroke with free ends
-        corners = tag == 'path' and len(re.findall(r'[LHVA]', d)) > 1                     # a stroke with joins
+        corners = tag == 'path' and len(re.findall(r'[LHVAZ]', d)) > 1                    # a stroke with joins (Z draws one)
         if open_end and el.get('stroke-linecap') != 'round':
             raise SystemExit('logo_draw: a stroke with free ends needs stroke-linecap="round" (other caps are not drawn)')
         if corners and el.get('stroke-linejoin') != 'round':
@@ -79,6 +80,21 @@ def refuse_unsupported(el, tag):
     dash = el.get('stroke-dasharray', '').split()
     if dash and (tag != 'circle' or len(dash) != 2):
         raise SystemExit('logo_draw: stroke-dasharray needs two values and works on a <circle> only')
+
+
+def refuse_clip(clip):
+    """Stop when a <clipPath> holds anything but plain <rect> elements or has attributes other than its id; True."""
+    if set(clip.attrib) - {'id'}:
+        raise SystemExit('logo_draw: <clipPath> attribute(s) %s are not supported' % sorted(set(clip.attrib) - {'id'}))
+    for r in clip:
+        if r.tag != NS + 'rect' or set(r.attrib) - {'x', 'y', 'width', 'height'}:
+            raise SystemExit('logo_draw: a <clipPath> may hold only <rect x y width height> elements')
+    return True
+
+
+def clip_rect(r):
+    """Return (x, y, width, height) of a clip <rect>."""
+    return tuple(float(r.get(k)) for k in ('x', 'y', 'width', 'height'))
 
 
 def color(text):
