@@ -1116,11 +1116,11 @@ $wn.Fills=@{ turn=$pc.accentFill; late=$pc.redTint; soon=$pc.amberTint; ok=$pc.g
 $wn.GridFill={ param($G, $Rows)
 $G.Rows.Clear(); $G.Tag.Shown=@($Rows)
 foreach ($r in @($Rows)) {
-$vals=@(foreach ($c in $G.Tag.Cols) { if ($c.K -eq 'since') { $(if ($wn.Wide -and $c.W -ge 100) { [string]$r.Since + ' ' + $mid + ' ' + [string]$r.Age } else { [string]$r.Age }) } else { [string]$r[$c.N] } })
+$vals=@(foreach ($c in $G.Tag.Cols) { if ($c.K -eq 'since') { $(if ($c.W -ge 100) { [string]$r.Since + ' ' + $mid + ' ' + [string]$r.Age } else { [string]$r.Age }) } else { [string]$r[$c.N] } })
 [void]$G.Rows.Add([object[]]$vals) } }
 $wn.Grid={ param($Parent, $b, [int]$W, $Ctx)
-$cols=$(if ($wn.Wide -and $b.ColsWide) { @($b.ColsWide) } else { @($b.Cols) })
-$rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
+$cols=@($b.Cols); if ($wn.Wide -and $b.ColsWide) { $wf=0; foreach ($c in $b.ColsWide) { $wf += (& $wn.Sc $c.W) }; if ($wf + (& $wn.Sc 137) -le $W) { $cols=@($b.ColsWide) } }
+$fixedMin=$false; $rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
 $full=$hdrH + $rowH * $rows.Count + 2; $h=$full
 if ($b.Fill) {
 $used=0; try { $used=[int]$Ctx.Col.PreferredSize.Height } catch { $null=$_ }
@@ -1131,15 +1131,15 @@ $g.AllowUserToAddRows=$false; $g.AllowUserToDeleteRows=$false; $g.AllowUserToRes
 $g.ReadOnly=$true; $g.RowHeadersVisible=$false; $g.MultiSelect=$false; $g.SelectionMode='FullRowSelect'; $g.EnableHeadersVisualStyles=$false
 $g.ColumnHeadersHeightSizeMode='DisableResizing'; $g.ColumnHeadersHeight=$hdrH; $g.RowTemplate.Height=$rowH
 $g.CellBorderStyle='None'; $g.ColumnHeadersBorderStyle='None'; $g.BorderStyle='None'; $g.BackgroundColor=$ui.C.White; $g.GridColor=$pc.line
-$g.AutoSizeColumnsMode='None'; $g.ScrollBars='Vertical'; $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
+$g.AutoSizeColumnsMode='None'; $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' }); $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
 $g.DefaultCellStyle.SelectionBackColor=$pc.surface; $g.DefaultCellStyle.SelectionForeColor=$ui.C.Ink
 $g.ColumnHeadersDefaultCellStyle.BackColor=$ui.C.White; $g.ColumnHeadersDefaultCellStyle.ForeColor=$pc.muted; $g.ColumnHeadersDefaultCellStyle.Font=$ui.F.SmallB; $g.ColumnHeadersDefaultCellStyle.SelectionBackColor=$ui.C.White
 $fixed=0; foreach ($c in $cols) { $fixed += (& $wn.Sc $c.W) }
-$scroll=$(if ($full -gt $h) { & $wn.Sc 17 } else { 0 })
+$scroll=$(if ($full -gt $h) { & $wn.Sc 17 } else { 0 }); $fixedMin=($W - $fixed - $scroll -lt (& $wn.Sc 60)); $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' })
 $kinds=@{}
 foreach ($c in $cols) {
 $dc=New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name=[string]$c.N; $dc.HeaderText=$(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode='NotSortable'
-$dc.Width=$(if ($c.W -eq 0) { [math]::Max((& $wn.Sc 120), $W - $fixed - $scroll) } else { & $wn.Sc $c.W }); [void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
+$dc.Width=$(if ($c.W -eq 0) { [math]::Max((& $wn.Sc 60), $W - $fixed - $scroll) } else { & $wn.Sc $c.W }); [void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
 $chipKind=@{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status]=[string]$r.Kind } }
 $g.Tag=@{ Kind=$kinds; Chip=$chipKind; Cols=$cols; Shown=$rows }
 & $wn.GridFill $g $rows
@@ -1173,10 +1173,11 @@ $gr.SmoothingMode='AntiAlias'; $path=[Pfm.Gfx]::Round($rc, ($chh / 2.0)); $br=Ne
 else { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.Small, $tr, $ui.C.Ink, $fl) }
 $e.Handled=$true
 } catch { $null=$_ } })
-$g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.OpenRow $s $e.RowIndex } })
-$g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled=$true; $e.SuppressKeyPress=$true; if ($s.CurrentRow) { & $wn.OpenRow $s $s.CurrentRow.Index } } })
+$g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
+$g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled=$true; $e.SuppressKeyPress=$true; if ($s.CurrentRow) { & $wn.Later $s $s.CurrentRow.Index } } })
 [void]$Parent.Controls.Add($g); $g.ClearSelection(); $wn.Gridsel=$g
 if ($b.Count) { $wn.CountText=[string]$b.Count; $wn.CountBox=& $wn.Txt $Parent ($b.Count -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq=$g } }
+$wn.Later={ param($G, [int]$I) $wn.PendG=$G; $wn.PendI=$I; [void]$form.BeginInvoke([Action]{ & $wn.OpenRow $wn.PendG $wn.PendI }) }
 $wn.OpenRow={ param($G, [int]$I)
 $r=@($G.Tag.Shown)[$I]
 if ($r -and $r.Go) { & $wn.Press @{ Go=[string]$r.Go; Text='Open' } } }
@@ -1285,7 +1286,7 @@ try {
 if ($wn.BoundsFile -and (Test-Path -LiteralPath $wn.BoundsFile)) {
 $j=Get-Content -LiteralPath $wn.BoundsFile -Raw | ConvertFrom-Json
 $r=New-Object System.Drawing.Rectangle([int]$j.Left, [int]$j.Top, [int]$j.Width, [int]$j.Height)
-foreach ($sc in [Windows.Forms.Screen]::AllScreens) { $ix=[Drawing.Rectangle]::Intersect($sc.WorkingArea, $r); if ($ix.Width -ge (& $wn.Sc 200) -and $ix.Height -ge (& $wn.Sc 120)) { $ok=$true } }
+$tl=[Drawing.Point]::new($r.X + (& $wn.Sc 40), $r.Y + (& $wn.Sc 10)); foreach ($sc in [Windows.Forms.Screen]::AllScreens) { if ($sc.WorkingArea.Contains($tl)) { $ok=$true } }
 if ($ok -and $r.Width -ge (& $wn.Sc 400) -and $r.Height -ge (& $wn.Sc 300)) { $form.StartPosition='Manual'; $form.Bounds=$r; if ([string]$j.State -eq 'Maximized') { $form.WindowState='Maximized' } } else { $ok=$false } }
 } catch { $ok=$false }
 if (-not $ok) {
@@ -1310,7 +1311,9 @@ $wn.SizeTimer.Add_Tick({ $wn.SizeTimer.Stop()
 if ($form.ClientSize.Width -ne $wn.LastW -or $form.ClientSize.Height -ne $wn.LastH) { $wn.LastW=$form.ClientSize.Width; $wn.LastH=$form.ClientSize.Height; & $wn.RailLayout; & $wn.Show $wn.Cur } })
 $ui.Trash=@($ui.Trash) + @($wn.CheckTimer, $wn.SizeTimer)
 $wn.ScrollCheck={
-$logicalW=[int]($form.ClientSize.Width / ([math]::Max(1, (& $wn.Sc 1))))
+$st=New-Object System.Collections.Stack; $st.Push($page)
+while ($st.Count) { foreach ($c in $st.Pop().Controls) { if ($c -is [Windows.Forms.DataGridView]) { $sum=0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width } }; if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' + $c.ClientSize.Width) } } elseif ($c.Controls.Count) { $st.Push($c) } } }
+$logicalW=[int]($form.ClientSize.Width / ([math]::Max(0.5, $ui.Dpi / 96.0)))
 if ($logicalW -ge 1280 -and $main.HorizontalScroll.Visible) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' the main column scrolls sideways at ' + $form.ClientSize.Width + 'x' + $form.ClientSize.Height) }
 if ($main.VerticalScroll.Visible) { $wn.Scrolled[$wn.Cur]=1 } }
 $wn.Scrolled=@{}
