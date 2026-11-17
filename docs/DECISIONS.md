@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-16 | RADE lock moves to release engine-v8 (RADE f720098, serial 6) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
+| 2026-11-16 | RADE lock moves to release engine-v9 (RADE 28877e7, serial 6) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-17 | RADE runner polish: type option A, plain step titles, 10 lines per hand card, one Done button, word rules; in the R28 round build, not R27. Scope: RADE window text of 90-161.Z rounds. | PFM | docs/reviews/2026-11-17-runner-polish.md |
 | 2026-11-17 | Window design approved for R28: preview 2 (https://claude.ai/artifact/12VVeBiXXD4AQjAWwgCU5H). Replaces the agent row "Your Work = ..." (not approved) below. Scope: PFM window. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
 | 2026-11-17 | No timed tasks: targets U1 to U5 guide the design; proof = measured checks and the PFM's look-and-feel rating in R28. Scope: PFM window. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
