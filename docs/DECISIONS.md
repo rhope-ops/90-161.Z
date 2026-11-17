@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | Code standard: all code modular, clearly commented, human inspectable; shrink-only check; Project rules line approved word for word; staged refactor (scope: all code). | PFM | docs/code-standard.md; docs/reviews/2026-11-17-code-baseline.md |
 | 2026-11-17 | Site logo, thumbnail and T16 logo check go into R29a now (not a later round): 2 by-hand cards, then T16 r12 -LogoOnly reads the logo back. Scope: round R29a. | PFM | docs/NEXT_PROMPT.md item 4 |
 | 2026-11-17 | RADE lock moves to release engine-v10 (RADE ff92dc4, serial 7) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-17 | (1A) R29 ships only on the new RADE engine: if the release is late, keep waiting; no R29 on engine-v9. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
