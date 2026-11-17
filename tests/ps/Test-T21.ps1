@@ -220,11 +220,11 @@ Test-That 'Make: exit 0 and the last line' ($r.Code -eq 0 -and $r.Out[-1] -eq 'P
 Test-That 'Make: 1 library and 1 list with the contract titles and folders' ($lib -and $lib.Title -eq '90161Z Probe Files' -and $lib.Template -eq 101 -and $lst -and $lst.Title -eq '90161Z Probe' -and $lst.Template -eq 100 -and $global:F.Created -eq 2)
 Test-That 'Make: 4 list columns, none in the library' (($lst.Fields -join ',') -eq 'ProbeTest,ProbeWay,ProbeResult,ProbeDetail' -and $lib.Fields.Count -eq 0)
 Test-That 'Make: unique permissions, Visitors keep Read and get Contribute, Full Control kept' ($lst.Unique -and (@($lst.Roles[7]) -join ',') -eq '1073741826,1073741827' -and (@($lst.Roles[5]) -join ',') -eq '1073741829')
-Test-That 'Make: 2 workbooks uploaded' ($global:F.Uploads -eq 2 -and ($lib.Files -join ',') -eq '90161Z-T21-fake-book-r1.xlsx,90161Z-T21-fake-macro-r1.xlsm')
-Test-That 'Make: counts line' ($r.Text -match 'MADE library=1 list=1 columns=4 permission changes=2 files=2')
+Test-That 'Make: 1 workbook uploaded, no macro workbook' ($global:F.Uploads -eq 1 -and ($lib.Files -join ',') -eq '90161Z-T21-fake-book-r1.xlsx')
+Test-That 'Make: counts line' ($r.Text -match 'MADE library=1 list=1 columns=4 permission changes=2 files=1')
 Test-That 'Make: the other lists are untouched' (-not (Get-FakeListByTitle 'Other probe list').Unique -and (Get-FakeListByTitle 'Documents').Files.Count -eq 0)
 $page = Get-Content -LiteralPath $links -Raw
-Test-That 'Make: test page with 5 links to the site' ((@([regex]::Matches($page, 'class="go" href="https://fakehost\.example\.test/sites/FakeWing/')).Count -eq 5) -and $page -match 'Lists/90161ZProbe/NewForm\.aspx' -and $page -match 'Lists/90161ZProbe/ProbeButton\.aspx' -and $page -match '90161Z-T21-fake-book-r1\.xlsx\?web=1' -and $page -match '90161Z-T21-fake-macro-r1\.xlsm\?web=1' -and $r.Text -match 'm6-page PASS test page in the T21 folder, links=5') $r.Text
+Test-That 'Make: test page with 4 links to the site' ((@([regex]::Matches($page, 'class="go" href="https://fakehost\.example\.test/sites/FakeWing/')).Count -eq 4) -and $page -match 'Lists/90161ZProbe/NewForm\.aspx' -and $page -match 'Lists/90161ZProbe/ProbeButton\.aspx' -and $page -match '90161Z-T21-fake-book-r1\.xlsx\?web=1' -and $page -notmatch '\.xlsm' -and $r.Text -match 'm6-page PASS test page in the T21 folder, links=4') $r.Text
 Test-That 'Make: the test page is ASCII and has no script' ($page -notmatch '[^\x00-\x7F]' -and $page -notmatch '<script')
 $created = $global:F.Created; $up = $global:F.Uploads
 $r = Invoke-T21 'Make'; Note $r
@@ -234,9 +234,9 @@ New-Site; $global:F.Visitors = 0
 $r = Invoke-T21 'Make'; Note $r
 Test-That 'Make without a Visitors group: NOTE line, still exit 0' ($r.Code -eq 0 -and $r.Text -match 'NOTE m4: no associated Visitors group' -and $r.Out[-1] -match 'failed=0')
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$bookPath = Join-Path $t21 '90161Z-T21-fake-book-r1.xlsx'; $macroPath = Join-Path $t21 '90161Z-T21-fake-macro-r1.xlsm'
+$bookPath = Join-Path $t21 '90161Z-T21-fake-book-r1.xlsx'
 function Get-ZipNames([string]$Path) { $z = [System.IO.Compression.ZipFile]::OpenRead($Path); try { return @($z.Entries | ForEach-Object { $_.FullName }) } finally { $z.Dispose() } }
-Test-That 'Make: saves the 2 workbooks from the text blocks; both open as packages, only the .xlsm holds a VBA project' ((Test-Path -LiteralPath $bookPath) -and (Test-Path -LiteralPath $macroPath) -and ((Get-ZipNames $bookPath) -contains 'xl/workbook.xml') -and ((Get-ZipNames $macroPath) -contains 'xl/vbaProject.bin') -and -not ((Get-ZipNames $bookPath) -contains 'xl/vbaProject.bin') -and $r.Text -match 'm5a-workbooks INFO fake workbooks saved to the T21 folder now=0')
+Test-That 'Make: saves the workbook from the text block; it opens as a package with no VBA project' ((Test-Path -LiteralPath $bookPath) -and -not (Test-Path -LiteralPath (Join-Path $t21 '90161Z-T21-fake-macro-r1.xlsm')) -and ((Get-ZipNames $bookPath) -contains 'xl/workbook.xml') -and -not ((Get-ZipNames $bookPath) -contains 'xl/vbaProject.bin') -and $r.Text -match 'm5a-workbooks INFO fake workbook saved to the T21 folder now=0')
 (Get-Item -LiteralPath $bookPath).LastWriteTime = [datetime]'2001-01-01'
 $null = Invoke-T21 'Make'
 Test-That 'Make twice: a workbook with the same bytes is not written again' ((Get-Item -LiteralPath $bookPath).LastWriteTime -eq [datetime]'2001-01-01')

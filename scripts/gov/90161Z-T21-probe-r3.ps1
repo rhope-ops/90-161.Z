@@ -11,7 +11,7 @@
   Parts (-Part):
     Make   (about 1 minute, an estimate)  Makes the library "90161Z Probe Files" and the list "90161Z Probe" (columns ProbeTest,
            ProbeWay, ProbeResult, ProbeDetail; its own permissions: the site's copied, then Contribute for the site's Visitors group
-           on this list only), saves the 2 fake workbooks from text blocks in this script, uploads them and writes the test page 90161Z-T21-links-r3.html (5 links).
+           on this list only), saves the fake workbook from a text block in this script, uploads it and writes the test page 90161Z-T21-links-r3.html (4 links).
            Run it twice and the second run changes nothing on the site.
     Person (about 1 minute, an estimate)  Opens a small window and asks for the e-mail address of the second person (test T4). The
            address stays in memory: it is never written to a file, to the screen or to the results. With your own sign-in it adds that
@@ -45,7 +45,6 @@ $LibFolder = '90161ZProbeFiles'
 $ListTitle = '90161Z Probe'
 $ListFolder = '90161ZProbe'
 $BookName = '90161Z-T21-fake-book-r1.xlsx'
-$MacroName = '90161Z-T21-fake-macro-r1.xlsm'
 $LinksName = '90161Z-T21-links-r3.html'
 $StateName = '90161Z-T21-person-state-r3.txt'
 $ViewTitle = 'ProbeButton'
@@ -178,129 +177,6 @@ $FakeBookBase64 = @(
   'b3JrYm9vay54bWwucmVsc1BLAQIUAxQAAAAAAAAAcV0D7Z5uLAIAACwCAAAYAAAAAAAAAAAAAACkAVoGAAB4bC93b3Jrc2hlZXRz',
   'L3NoZWV0MS54bWxQSwUGAAAAAAUABQBFAQAAvAgAAAAA'
 ) -join ' '
-$FakeMacroBase64 = @(
-  'UEsDBBQAAAAAAAAAcV0Hglo7ZQIAAGUCAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbDw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rp',
-  'bmc9IlVURi04IiBzdGFuZGFsb25lPSJ5ZXMiPz4KPFR5cGVzIHhtbG5zPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0cy5v',
-  'cmcvcGFja2FnZS8yMDA2L2NvbnRlbnQtdHlwZXMiPjxEZWZhdWx0IEV4dGVuc2lvbj0icmVscyIgQ29udGVudFR5cGU9ImFwcGxp',
-  'Y2F0aW9uL3ZuZC5vcGVueG1sZm9ybWF0cy1wYWNrYWdlLnJlbGF0aW9uc2hpcHMreG1sIi8+PERlZmF1bHQgRXh0ZW5zaW9uPSJ4',
-  'bWwiIENvbnRlbnRUeXBlPSJhcHBsaWNhdGlvbi94bWwiLz48RGVmYXVsdCBFeHRlbnNpb249ImJpbiIgQ29udGVudFR5cGU9ImFw',
-  'cGxpY2F0aW9uL3ZuZC5tcy1vZmZpY2UudmJhUHJvamVjdCIvPjxPdmVycmlkZSBQYXJ0TmFtZT0iL3hsL3dvcmtib29rLnhtbCIg',
-  'Q29udGVudFR5cGU9ImFwcGxpY2F0aW9uL3ZuZC5tcy1leGNlbC5zaGVldC5tYWNyb0VuYWJsZWQubWFpbit4bWwiLz48T3ZlcnJp',
-  'ZGUgUGFydE5hbWU9Ii94bC93b3Jrc2hlZXRzL3NoZWV0MS54bWwiIENvbnRlbnRUeXBlPSJhcHBsaWNhdGlvbi92bmQub3Blbnht',
-  'bGZvcm1hdHMtb2ZmaWNlZG9jdW1lbnQuc3ByZWFkc2hlZXRtbC53b3Jrc2hlZXQreG1sIi8+PC9UeXBlcz5QSwMEFAAAAAAAAABx',
-  'XQZZx4IoAQAAKAEAAAsAAABfcmVscy8ucmVsczw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04IiBzdGFuZGFsb25l',
-  'PSJ5ZXMiPz4KPFJlbGF0aW9uc2hpcHMgeG1sbnM9Imh0dHA6Ly9zY2hlbWFzLm9wZW54bWxmb3JtYXRzLm9yZy9wYWNrYWdlLzIw',
-  'MDYvcmVsYXRpb25zaGlwcyI+PFJlbGF0aW9uc2hpcCBJZD0icklkMSIgVHlwZT0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1h',
-  'dHMub3JnL29mZmljZURvY3VtZW50LzIwMDYvcmVsYXRpb25zaGlwcy9vZmZpY2VEb2N1bWVudCIgVGFyZ2V0PSJ4bC93b3JrYm9v',
-  'ay54bWwiLz48L1JlbGF0aW9uc2hpcHM+UEsDBBQAAAAAAAAAcV13QP7EHAEAABwBAAAPAAAAeGwvd29ya2Jvb2sueG1sPD94bWwg',
-  'dmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8d29ya2Jvb2sgeG1sbnM9Imh0dHA6Ly9z',
-  'Y2hlbWFzLm9wZW54bWxmb3JtYXRzLm9yZy9zcHJlYWRzaGVldG1sLzIwMDYvbWFpbiIgeG1sbnM6cj0iaHR0cDovL3NjaGVtYXMu',
-  'b3BlbnhtbGZvcm1hdHMub3JnL29mZmljZURvY3VtZW50LzIwMDYvcmVsYXRpb25zaGlwcyI+PHNoZWV0cz48c2hlZXQgbmFtZT0i',
-  'U2hlZXQxIiBzaGVldElkPSIxIiByOmlkPSJySWQxIi8+PC9zaGVldHM+PC93b3JrYm9vaz5QSwMEFAAAAAAAAABxXalvuAejAQAA',
-  'owEAABoAAAB4bC9fcmVscy93b3JrYm9vay54bWwucmVsczw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rpbmc9IlVURi04IiBzdGFu',
-  'ZGFsb25lPSJ5ZXMiPz4KPFJlbGF0aW9uc2hpcHMgeG1sbnM9Imh0dHA6Ly9zY2hlbWFzLm9wZW54bWxmb3JtYXRzLm9yZy9wYWNr',
-  'YWdlLzIwMDYvcmVsYXRpb25zaGlwcyI+PFJlbGF0aW9uc2hpcCBJZD0icklkMSIgVHlwZT0iaHR0cDovL3NjaGVtYXMub3Blbnht',
-  'bGZvcm1hdHMub3JnL29mZmljZURvY3VtZW50LzIwMDYvcmVsYXRpb25zaGlwcy93b3Jrc2hlZXQiIFRhcmdldD0id29ya3NoZWV0',
-  'cy9zaGVldDEueG1sIi8+PFJlbGF0aW9uc2hpcCBJZD0icklkMiIgVHlwZT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9v',
-  'ZmZpY2UvMjAwNi9yZWxhdGlvbnNoaXBzL3ZiYVByb2plY3QiIFRhcmdldD0idmJhUHJvamVjdC5iaW4iLz48L1JlbGF0aW9uc2hp',
-  'cHM+UEsDBBQAAAAAAAAAcV0D7Z5uLAIAACwCAAAYAAAAeGwvd29ya3NoZWV0cy9zaGVldDEueG1sPD94bWwgdmVyc2lvbj0iMS4w',
-  'IiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8d29ya3NoZWV0IHhtbG5zPSJodHRwOi8vc2NoZW1hcy5vcGVu',
-  'eG1sZm9ybWF0cy5vcmcvc3ByZWFkc2hlZXRtbC8yMDA2L21haW4iPjxzaGVldERhdGE+PHJvdyByPSIxIj48YyByPSJBMSIgdD0i',
-  'aW5saW5lU3RyIj48aXM+PHQ+RkFLRSBib29rIFIyNzwvdD48L2lzPjwvYz48YyByPSJCMSIgdD0iaW5saW5lU3RyIj48aXM+PHQ+',
-  'SW52ZW50ZWQgbnVtYmVycywgbm90aGluZyByZWFsPC90PjwvaXM+PC9jPjwvcm93Pjxyb3cgcj0iMiI+PGMgcj0iQTIiIHQ9Imlu',
-  'bGluZVN0ciI+PGlzPjx0PkZha2UgaXRlbSBvbmU8L3Q+PC9pcz48L2M+PGMgcj0iQjIiIHQ9ImlubGluZVN0ciI+PGlzPjx0PjEx',
-  'PC90PjwvaXM+PC9jPjwvcm93Pjxyb3cgcj0iMyI+PGMgcj0iQTMiIHQ9ImlubGluZVN0ciI+PGlzPjx0PkZha2UgaXRlbSB0d288',
-  'L3Q+PC9pcz48L2M+PGMgcj0iQjMiIHQ9ImlubGluZVN0ciI+PGlzPjx0PjIyPC90PjwvaXM+PC9jPjwvcm93Pjwvc2hlZXREYXRh',
-  'Pjwvd29ya3NoZWV0PlBLAwQUAAAAAAAAAHFd+TA98AAYAAAAGAAAEQAAAHhsL3ZiYVByb2plY3QuYmlu0M8R4KGxGuEAAAAAAAAA',
-  'AAAAAAAAAAAAPgADAP7/CQAGAAAAAAAAAAAAAAABAAAAAQAAAAAAAAAAEAAABAAAAAEAAAD+////AAAAAAAAAAD/////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '///////////////////////////////////////////////////////////////9////AgAAAAMAAAD+/////v///wYAAAAHAAAA',
-  'CAAAAAkAAAAKAAAA/v//////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '/////////////////////////////////////////////1IAbwBvAHQAIABFAG4AdAByAHkAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWAAUB//////////8CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'BQAAAAALAAAAAAAAVgBCAEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAgAAQH//////////wgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQAFIATwBKAEUA',
-  'QwBUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAACAQEAAAADAAAA/////wAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADJAQAAAAAAAFAAUgBPAEoARQBDAFQAdwBtAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAAIB////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAACAAAAFYAAAAAAAAAXwBWAEIAQQBfAFAAUgBPAEoARQBDAFQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAABoAAgEGAAAA//////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAAAABwAAAAAAAABk',
-  'AGkAcgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAACAf//////////',
-  '/////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsAAADGAwAAAAAAAFQAaABpAHMAVwBvAHIAawBiAG8AbwBr',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaAAIB////////////////AAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAGwAAANcBAAAAAAAAUwBoAGUAZQB0ADEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAA4AAgEFAAAA//////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAjAAAA',
-  'VAEAAAAAAABNAG8AZAB1AGwAZQAxAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAC',
-  'AQcAAAAEAAAA/////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACkAAACWAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////////////////AAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAP///////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAC',
-  'AAAAAwAAAAQAAAAFAAAABgAAAAcAAAD+////CQAAAP7////+////DAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAA',
-  'FQAAABYAAAAXAAAAGAAAABkAAAAaAAAA/v///xwAAAAdAAAAHgAAAB8AAAAgAAAAIQAAACIAAAD+////JAAAACUAAAAmAAAAJwAA',
-  'ACgAAAD+////KgAAACsAAAD+////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////////////////////////////',
-  '////////////////////////////////////////////////////////////////////////////SUQ9Ins5MDE2QTBCMS0yQjND',
-  'LTRENUUtOEY3MC0xQTJCM0M0RDVFNkZ9Ig0KRG9jdW1lbnQ9VGhpc1dvcmtib29rLyZIMDAwMDAwMDANCkRvY3VtZW50PVNoZWV0',
-  'MS8mSDAwMDAwMDAwDQpNb2R1bGU9TW9kdWxlMQ0KTmFtZT0iVkJBUHJvamVjdCINCkhlbHBDb250ZXh0SUQ9IjAiDQpWZXJzaW9u',
-  'Q29tcGF0aWJsZTMyPSIzOTMyMjIwMDAiDQpDTUc9IjVBNThCMTQzRUY0N0VGNDdFRjQ3RUY0NyINCkRQQj0iNUE1OEIxNDNFQjQy',
-  'RUM0MkVDNDIiDQpHQz0iNUE1OEIxNDNFQTQ0RUE0NDE1Ig0KDQpbSG9zdCBFeHRlbmRlciBJbmZvXQ0KJkgwMDAwMDAwMT17Mzgz',
-  'MkQ2NDAtQ0Y5MC0xMUNGLThFNDMtMDBBMEM5MTEwMDVBfTtWQkU7JkgwMDAwMDAwMA0KDQpbV29ya3NwYWNlXQ0KVGhpc1dvcmti',
-  'b29rPTAsIDAsIDAsIDAsIEMNClNoZWV0MT0wLCAwLCAwLCAwLCBDDQpNb2R1bGUxPTAsIDAsIDAsIDAsIEMNCgAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUaGlzV29ya2Jvb2sAVABoAGkAcwBXAG8AcgBrAGIA',
-  'bwBvAGsAAABTaGVldDEAUwBoAGUAZQB0ADEAAABNb2R1bGUxAE0AbwBkAHUAbABlADEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAMxh//8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAABwrMAAQAEAAAAAQAAAAACAAQAAAAACQQAABQABAAAAAAJBAAAAwAAAgAAAOQEBAAACgAAAFZCQVAAcm9qZWN0',
-  'BQAAAAAAAEAAAAAAAAAGAAAAAAAAPQAAAAAABwAABAAAAAAAAAAACAAEAAAAAAAAAAAJAAQAAAAAAQAAAAAADAAAAAAAADwAAAAA',
-  'AAAWAAYAAAAAc3Rkb2xlPgAADAAAAHMAdAAAZABvAGwAZQAADQBoAAAAXgAAAAAqXEd7MDAAMDIwNDMwLTAAMDAwLTAwMDAALUMw',
-  'MDAtMDAAMDAwMDAwMDAANDZ9IzIuMCMAMCNDOlxXaW4AZG93c1xTeXMAdGVtMzJcc3QAZG9sZTIudGwAYiNPTEUgQXUAdG9tYXRp',
-  'b24AAAAAAAAAFgAABgAAAE9mZmkAY2U+AAwAAAAATwBmAGYAaQAAYwBlAA0AngAAAACUAAAAKlwAR3syREY4RDAANEMtNUJGQS0A',
-  'MTAxQi1CREUANS0wMEFBMDAANDRERTUyfSMAMi4wIzAjQzoAXFByb2dyYW0AIEZpbGVzXEMAb21tb24gRmkAbGVzXE1pY3IAb3Nv',
-  'ZnQgU2gAYXJlZFxPRkYASUNFMTZcTVMATy5ETEwjTWkAY3Jvc29mdCAAT2ZmaWNlIDEANi4wIE9iamUAY3QgTGlicmEAcnkAAAAA',
-  'AAAADwACAAAAAwAAEwACAAAA//8AGQAMAAAAVGgAaXNXb3JrYm8Ab2tHABgAAAAAVABoAGkAcwAAVwBvAHIAawAAYgBvAG8AawAA',
-  'GgAMAAAAVGgAaXNXb3JrYm8Ab2syABgAAAAAVABoAGkAcwAAVwBvAHIAawAAYgBvAG8AawAAHAAAAAAASAAAAAAAADEABAAAAAAA',
-  'AAAAHgAABAAAAAAAAAAALAACAAAA//8AIgAAAAAAKwAAAAAAABkABgAAAABTaGVldDEARwAMAAAAUwAAaABlAGUAdAAAMQAaAAYA',
-  'AAAAU2hlZXQxMgAADAAAAFMAaAAAZQBlAHQAMQAAHAAAAAAASAAAAAAAADEABAAAAAAAAAAAHgAABAAAAAAAAAAALAACAAAA//8A',
-  'IgAAAAAAKwAAAAAAABkABwAAAABNb2R1bGUAMUcADgAAAE0AAG8AZAB1AGwAAGUAMQAaAAcAAAAATW9kdWwAZTEyAA4AAAAATQBv',
-  'AGQAdQAAbABlADEAHAAAAAAAAEgAAAAAAAAxAAQAAAAAAAAAAB4ABAAAAAAAAAAALAAAAgAAAP//IQAAAAAAACsAAAAAAAAQAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAdOxAEF0dHJpYnV0AGUg',
-  'VkJfTmFtAGUgPSAiVGhpAHNXb3JrYm9vAGsiDQpBdHRyAGlidXRlIFZCAF9CYXNlID0gACIwezAwMDIwADgxOS0wMDAwAC0wMDAw',
-  'LUMwADAwLTAwMDAwADAwMDAwNDZ9ACINCkF0dHJpAGJ1dGUgVkJfAEdsb2JhbE5hAG1lU3BhY2UgAD0gRmFsc2UNAApBdHRyaWJ1',
-  'AHRlIFZCX0NyAGVhdGFibGUgAD0gRmFsc2UNAApBdHRyaWJ1AHRlIFZCX1ByAGVkZWNsYXJlAGRJZCA9IFRyAHVlDQpBdHRyAGli',
-  'dXRlIFZCAF9FeHBvc2VkACA9IFRydWUNAApBdHRyaWJ1AHRlIFZCX1RlAG1wbGF0ZURlAHJpdmVkID0gAEZhbHNlDQpBAHR0cmli',
-  'dXRlACBWQl9DdXN0AG9taXphYmxlACA9IFRydWUNAApQcml2YXRlACBTdWIgV29yAGtib29rX09wAGVuKCkNCiAgACAgVGhpc1dv',
-  'AHJrYm9vay5XAG9ya3NoZWV0AHMoMSkuUmFuAGdlKCJBNiIpAC5WYWx1ZSA9ACAiRkFLRSBNAEFDUk8gUkFOACBSMjciDQpFAG5k',
-  'IFN1Yg0KAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABULEAQXR0cmlidXQAZSBWQl9OYW0AZSA9ICJT',
-  'aGUAZXQxIg0KQXQAdHJpYnV0ZSAAVkJfQmFzZSAAPSAiMHswMDAAMjA4MjAtMDAAMDAtMDAwMC0AQzAwMC0wMDAAMDAwMDAwMDQA',
-  'Nn0iDQpBdHQAcmlidXRlIFYAQl9HbG9iYWwATmFtZVNwYWMAZSA9IEZhbHMAZQ0KQXR0cmkAYnV0ZSBWQl8AQ3JlYXRhYmwAZSA9',
-  'IEZhbHMAZQ0KQXR0cmkAYnV0ZSBWQl8AUHJlZGVjbGEAcmVkSWQgPSAAVHJ1ZQ0KQXQAdHJpYnV0ZSAAVkJfRXhwb3MAZWQgPSBU',
-  'cnUAZQ0KQXR0cmkAYnV0ZSBWQl8AVGVtcGxhdGUARGVyaXZlZCAAPSBGYWxzZQ0ACkF0dHJpYnUAdGUgVkJfQ3UAc3RvbWl6YWIA',
-  'bGUgPSBUcnUAZQ0KAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABkrAAQXR0cmlidXQAZSBWQl9O',
-  'YW0AZSA9ICJNb2QAdWxlMSINClMAdWIgRmFrZU0AYWNybygpDQoAICAgIFRoaXMAV29ya2Jvb2sALldvcmtzaGUAZXRzKDEpLlIA',
-  'YW5nZSgiQTYAIikuVmFsdWUAID0gIkZBS0UAIE1BQ1JPIFIAQU4gUjI3Ig0ACkVuZCBTdWIADQoAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUEsBAhQDFAAAAAAAAABxXQeCWjtl',
-  'AgAAZQIAABMAAAAAAAAAAAAAAKQBAAAAAFtDb250ZW50X1R5cGVzXS54bWxQSwECFAMUAAAAAAAAAHFdBlnHgigBAAAoAQAACwAA',
-  'AAAAAAAAAAAApAGWAgAAX3JlbHMvLnJlbHNQSwECFAMUAAAAAAAAAHFdd0D+xBwBAAAcAQAADwAAAAAAAAAAAAAApAHnAwAAeGwv',
-  'd29ya2Jvb2sueG1sUEsBAhQDFAAAAAAAAABxXalvuAejAQAAowEAABoAAAAAAAAAAAAAAKQBMAUAAHhsL19yZWxzL3dvcmtib29r',
-  'LnhtbC5yZWxzUEsBAhQDFAAAAAAAAABxXQPtnm4sAgAALAIAABgAAAAAAAAAAAAAAKQBCwcAAHhsL3dvcmtzaGVldHMvc2hlZXQx',
-  'LnhtbFBLAQIUAxQAAAAAAAAAcV35MD3wABgAAAAYAAARAAAAAAAAAAAAAACkAW0JAAB4bC92YmFQcm9qZWN0LmJpblBLBQYAAAAA',
-  'BgAGAIQBAACcIQAAAAA='
-) -join ' '
 # <<< fake-workbooks
 
 function Hide-Site([string]$Text, [string]$Site) {
@@ -413,8 +289,7 @@ function Write-LinksPage([string]$Dir, [string]$Site) {
     @('Open the new row form', ($s + '/Lists/' + $ListFolder + '/NewForm.aspx'), 'Tests T4 and the list form look: the form other people use.'),
     @('Open the probe list', ($s + '/Lists/' + $ListFolder + '/AllItems.aspx'), 'The rows the tests wrote.'),
     @('Open the list with the button', ($s + '/Lists/' + $ListFolder + '/' + $ViewTitle + '.aspx'), 'The view look: a button that starts a flow.'),
-    @('Open the fake workbook', ($s + '/' + $LibFolder + '/' + $BookName + '?web=1'), 'The Excel look: a workbook in Excel for the web.'),
-    @('Open the fake macro workbook', ($s + '/' + $LibFolder + '/' + $MacroName + '?web=1'), 'The Excel look: a workbook that holds a macro.'))
+    @('Open the fake workbook', ($s + '/' + $LibFolder + '/' + $BookName + '?web=1'), 'The Excel look: a workbook in Excel for the web.'))
   $body = New-Object System.Text.StringBuilder
   [void]$body.Append('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>90-161.Z test page r3</title><style>')
   [void]$body.Append('body{font-family:"Segoe UI",Arial,sans-serif;color:#1b2430;background:#fff;margin:0}.light{height:6px;background:#ffd520}')
@@ -568,26 +443,26 @@ try {
       Add-Item 'm4-permissions' 'PASS' ('own permissions on the list, Visitors group has Contribute (changes now=' + $made.permissions + ')')
     }
 
-    # m5: the two fake workbooks are written from the text blocks in this script (the repo holds no .xlsx or .xlsm: the personal-data
-    # scan cannot read a binary file), then uploaded.
+    # m5: the fake workbook is written from the text block in this script (the repo holds no .xlsx: the personal-data scan cannot
+    # read a binary file), then uploaded. No macro workbook (PFM 17 Nov 26: endpoint security risk).
     $wrote = 0
-    foreach ($w in @(@($BookName, $FakeBookBase64), @($MacroName, $FakeMacroBase64))) {
+    foreach ($w in @(,@($BookName, $FakeBookBase64))) {
       $bytes = [Convert]::FromBase64String((([string]$w[1] -split '\s+') -join ''))
       $path = Join-Path $dir $w[0]
       $same = $false
       if (Test-Path -LiteralPath $path -PathType Leaf) { $cur = [IO.File]::ReadAllBytes($path); $same = ($cur.Length -eq $bytes.Length) -and ([Convert]::ToBase64String($cur) -eq [Convert]::ToBase64String($bytes)) }
       if (-not $same) { [IO.File]::WriteAllBytes($path, $bytes); $wrote++ }
     }
-    $lines.Add('ITEM m5a-workbooks INFO fake workbooks saved to the T21 folder now=' + $wrote)
+    $lines.Add('ITEM m5a-workbooks INFO fake workbook saved to the T21 folder now=' + $wrote)
     $inLib = @(Get-RestValue ("_api/web/lists(guid'" + $lib.Id + "')/rootfolder/files?" + '$select=Name&$top=500') | ForEach-Object { [string]$_.Name })
-    foreach ($n in $BookName, $MacroName) {
+    foreach ($n in @($BookName)) {
       if ($inLib -contains $n) { $skip.files++; continue }
       $null = Add-PnPFile -Path (Join-Path $dir $n) -Folder $LibFolder -ErrorAction Stop
       $made.files++
     }
     $inLib = @(Get-RestValue ("_api/web/lists(guid'" + $lib.Id + "')/rootfolder/files?" + '$select=Name&$top=500') | ForEach-Object { [string]$_.Name })
-    $ok = ($inLib -contains $BookName) -and ($inLib -contains $MacroName)
-    Add-Item 'm5-files' $(if ($ok) { 'PASS' } else { 'FAIL' }) ('files in the library: both workbooks there=' + $(if ($ok) { 'yes' } else { 'no' }) + ' (uploaded now=' + $made.files + ')')
+    $ok = ($inLib -contains $BookName)
+    Add-Item 'm5-files' $(if ($ok) { 'PASS' } else { 'FAIL' }) ('files in the library: the workbook there=' + $(if ($ok) { 'yes' } else { 'no' }) + ' (uploaded now=' + $made.files + ')')
     # m6: the test page (it holds the site address: it stays in the T21 folder).
     $n = Write-LinksPage $dir $site
     Add-Item 'm6-page' 'PASS' ('test page in the T21 folder, links=' + $n)

@@ -65,7 +65,6 @@ CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Offi
 ENV = [  # (schema name, display name, default value)
     ("pfm_SiteUrl", "Site URL", ""),
     ("pfm_AlertEmail", "Alert e-mail", ""),   # failure e-mails and test-mode e-mails go here (PFM, 2026-11-14)
-    ("pfm_SharedMailbox", "Shared mailbox", ""),   # only the T21 probe flows read it now (R27, PFM 14 Nov 26: F03 and F06 read it from PFM Settings)
     ("pfm_ListPublications", "List PFM Publications", "PFM Publications"),
     ("pfm_ListActivityLog", "List PFM Activity Log", "PFM Activity Log"),
     ("pfm_ListReviews", "List PFM Reviews", "PFM Reviews"),
@@ -79,9 +78,8 @@ ENV = [  # (schema name, display name, default value)
 # the shared mailbox are rows of PFM Settings (schemas/lists/PFMSettings.json), no longer environment variables here.
 # F03, F05 and F06 read them once at the start of a run. tests/check_flow_solution.py fails if a def still reads one.
 MOVED_ENV = ("pfm_FlowsPaused", "pfm_TestMode", "pfm_ReminderLeadDays", "pfm_EscalationLagDays", "pfm_SuspenseWorkdays", "pfm_SharedMailbox")
-LABEL = {"pfm_SiteUrl": "1 Site URL (enter)", "pfm_AlertEmail": "2 Alert e-mail (enter)",
-         "pfm_SharedMailbox": "3 Shared mailbox (optional)"}   # the third label is read by the T21 probe zip only
-OPTIONAL = {"pfm_SharedMailbox"}   # isrequired 0: a wing without a shared mailbox leaves it empty
+LABEL = {"pfm_SiteUrl": "1 Site URL (enter)", "pfm_AlertEmail": "2 Alert e-mail (enter)"}
+OPTIONAL = set()   # isrequired 0 for an optional value (none since R27: the shared mailbox is a PFM Settings row)
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 # R22 (PFM 14 Nov 26: "flows added by the solution default to on; i had to turn f03 off"; "ideally the flows will be imported
 # on when this is ready for real deployment"): a test-round slice (SLICE1) imports every flow Off (StateCode 0 / StatusCode 1, the

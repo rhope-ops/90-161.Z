@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R27, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = '36a8e45b'
+$buildId = '5f4525f7'
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
 $homeUrl = 'https://rhope-ops.github.io/90-161.Z'
@@ -1288,22 +1288,989 @@ try {
 if (-not $NoPause -and $Host.Name -eq 'ConsoleHost') { $null = Read-Host 'Press Enter to close' }
 exit $code
 '@ }
+$files += @{ Dir = 'T21'; Name = '90161Z-T21-probe-r3.ps1'; Kind = 'text'; Sha = '465984f1d227'; Data = @'
+<#
+.SYNOPSIS
+  90-161.Z Task 21 probe, r3 (round R27). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+.DESCRIPTION
+  What it is for: the device side of the R27 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10 passed);
+  R27 keeps only what is not yet verified: T4 again (a second person writes a row), the health flow, and 3 looks (a list form with a
+  header, a view with a button that starts a flow, Excel in the browser). This script makes the list and library the tests need,
+  adds the second person to the site's Visitors group (and removes the person again), formats the list form and a view, starts the
+  health flow, reads what the people and the flows wrote, and removes everything it made. Fake data only (the two fake workbooks come
+  from scripts/build_probe_samples.py). Counts, status codes and field names only: no names, addresses or text from the tenant.
+  Parts (-Part):
+    Make   (about 1 minute, an estimate)  Makes the library "90161Z Probe Files" and the list "90161Z Probe" (columns ProbeTest,
+           ProbeWay, ProbeResult, ProbeDetail; its own permissions: the site's copied, then Contribute for the site's Visitors group
+           on this list only), saves the fake workbook from a text block in this script, uploads it and writes the test page 90161Z-T21-links-r3.html (4 links).
+           Run it twice and the second run changes nothing on the site.
+    Person (about 1 minute, an estimate)  Opens a small window and asks for the e-mail address of the second person (test T4). The
+           address stays in memory: it is never written to a file, to the screen or to the results. With your own sign-in it adds that
+           person to the site's Visitors group and saves only the number of the site user (no address, no name) in the state file
+           90161Z-T21-person-state-r3.txt in the T21 folder, so that Clean can find the person. It also puts the link of the new row
+           form on the clipboard. Prints "added to Visitors: yes" or "no" and a status, never who.
+    Run    (a few seconds, an estimate)  Adds 1 command row (RUN-HEALTH) that starts the health flow; the flow answers within minutes.
+    Look   (about 1 minute, an estimate)  Sets a header on the list form (the content type's form formatting, reads it back) and makes
+           the view "ProbeButton" with a button that starts the button flow (a view formatting with the action executeFlow).
+    Open   (a few seconds; no sign-in)  Writes the test page again and opens it in the browser.
+    Read   (about 1 to 5 minutes, an estimate)  Waits up to -WaitMinutes (default 4) for the health flow's row, then prints one line
+           each for HEALTH, T4 and BUTTON (counts only).
+    Clean  (about 1 minute, an estimate)  Removes the second person from the Visitors group again (found by the saved number; then
+           deletes the state file), then moves the list and the library to the site Recycle Bin (restorable for 93 days). Each
+           step runs even if an earlier one failed, and the part can be run again. The solution is removed by hand (the part says so).
+  WHAT IT CHANGES ON THE SITE: Make adds the two objects, their columns, their permissions and two files. Person adds one person to
+  the Visitors group. Run adds 1 row. Look sets one form formatting and adds one view. Read and Open change nothing. Clean undoes
+  Person and recycles the two objects. On this computer: the T21 folder (the test page, the state file). Every output line shows the
+  site as <SITE> and the DODID as <DODID>; the test page holds the site address and stays on this computer (it is not a result file).
+  Output: 90161Z-T21-probe-make-r3.txt, -person-r3.txt, -run-r3.txt, -look-r3.txt, -read-r3.txt or -clean-r3.txt in the T21 folder
+  (send them back). Last line of each part: PROBE <part> done: passed=<n> failed=<n>. Exit code 0 when the part ran to its end (a
+  FAILED test is a result); exit 1 only when the part could not run (sign-in, missing list).
+  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part, -WaitMinutes, -NoPause. -PollSeconds,
+  -TestDir and -NoLaunch are for the tests in tests/run.sh.
+#>
+param([string]$Id, [ValidateSet('Make', 'Person', 'Run', 'Look', 'Open', 'Read', 'Clean')][string]$Part, [double]$WaitMinutes = 14, [switch]$NoPause, [int]$PollSeconds = 20, [string]$TestDir, [switch]$NoLaunch)
+$task = 'T21'
+$pollEvery = $PollSeconds
+$LibTitle = '90161Z Probe Files'
+$LibFolder = '90161ZProbeFiles'
+$ListTitle = '90161Z Probe'
+$ListFolder = '90161ZProbe'
+$BookName = '90161Z-T21-fake-book-r1.xlsx'
+$LinksName = '90161Z-T21-links-r3.html'
+$StateName = '90161Z-T21-person-state-r3.txt'
+$ViewTitle = 'ProbeButton'
+$HeaderText = '90-161.Z test header'
+# The ID of the flow "90161Z T21 Probe Button r1": a solution keeps the workflow ID (tests/check_flow_solution.py checks it against the builder).
+$ButtonFlowId = '260790dd-beca-5206-83f7-e6aab40c894e'
+$Rev = 'r3'
+
+# >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
+function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
+  foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
+  return $Text
+}
+
+function Get-TaskId([string]$Id) {
+  # Returns @{ Id; Leaf (profile folder name); Secret (longest first, so a longer name is masked before a shorter one inside it) }.
+  $leaf = ''
+  if ($env:USERPROFILE) { $leaf = Split-Path -Leaf $env:USERPROFILE }
+  $value = ([string]$Id).Trim()
+  # No DODID question (PFM 13 Nov 26): the Windows profile folder name is used when -Id is not given.
+  if (-not $value) { $value = $leaf }
+  if ($value -notmatch '^[A-Za-z0-9._-]{4,}$') { throw 'DODID not valid: use the folder name under C:\Users (4 or more letters, digits, dot, dash or underscore).' }
+  $secret = @(@($value, $leaf, $env:USERNAME) |
+    Where-Object { $_ -and $_.Length -ge 4 } | Sort-Object -Unique | Sort-Object Length -Descending)
+  return @{ Id = $value; Leaf = $leaf; Secret = $secret }
+}
+
+function Get-TaskDir([string]$Id, [string]$Task, [string]$Label, [switch]$Create) {
+  # The task folder C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z\<Task> (PFM 14 Nov 26: RADE holds
+  # the app folder). Until RADE has moved the old folder ...\90-161.Z, that one is used. -Create makes it when missing.
+  $od = Join-Path (Join-Path 'C:\Users' $Id) 'OneDrive - United States Air Force'
+  $app = 'RADE\90-161.Z'
+  if (-not (Test-Path -LiteralPath (Join-Path $od $app) -PathType Container) -and (Test-Path -LiteralPath (Join-Path $od '90-161.Z') -PathType Container)) { $app = '90-161.Z' }
+  $tail = 'OneDrive - United States Air Force\' + $app + '\' + $Task
+  $dir = Join-Path (Join-Path 'C:\Users' $Id) $tail
+  if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
+    if ($Create) { New-Item -ItemType Directory -Path $dir | Out-Null }
+    else { throw ('FOLDER not found: C:\Users\<DODID>\' + $tail + '. Create it, save the ' + $Label + ' files into it, then run again.') }
+  }
+  return $dir
+}
+
+function Assert-TaskFile([string]$Dir, [string[]]$Name, [string]$Message) {
+  # Throws $Message + the missing names when a file in $Name is not in $Dir.
+  $missing = @($Name | Where-Object { -not (Test-Path -LiteralPath (Join-Path $Dir $_) -PathType Leaf) })
+  if ($missing.Count -gt 0) { throw ($Message + ($missing -join ', ')) }
+}
+
+function Unblock-TaskScript([string]$Dir) {
+  # Files pasted into Notepad and saved locally need no unblock; a failed unblock is not an error here.
+  Get-ChildItem -LiteralPath $Dir -Filter *.ps1 | ForEach-Object { Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue }
+}
+
+function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret, $Lines, [string]$Log) {
+  # Runs $Step.File from $ScriptDir in a child powershell.exe with $Step.Args, masks and records its output and exit
+  # code in $Lines, and saves $Lines to $Log after the step.
+  Write-Host ('STEP ' + $Step.Name + ' running (Word steps can take a few minutes; do not close this window)...')
+  $Lines.Add('STEP ' + $Step.Name)
+  $stepArgs = $Step.Args
+  $global:LASTEXITCODE = $null
+  # PS 5.1: with Stop, a stderr line from the step (2>&1) would end the runner. Record it instead.
+  $ErrorActionPreference = 'Continue'
+  $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $ScriptDir $Step.File) @stepArgs 2>&1
+  $code = $LASTEXITCODE
+  $ErrorActionPreference = 'Stop'
+  foreach ($o in @($out | Where-Object { $null -ne $_ })) {
+    $masked = ConvertTo-Masked ([string]$o) $Secret
+    $Lines.Add($masked)
+    Write-Host $masked
+  }
+  $Lines.Add('STEP ' + $Step.Name + ' exit=' + $code)
+  Write-Host ('STEP ' + $Step.Name + ' exit=' + $code)
+  Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
+}
+# <<< task-common
+# >>> site-common: generated from scripts/gov/src/site-common.ps1 by scripts/build_task_scripts.py (do not edit)
+function Get-SiteAddress([string]$ConfigDir) {
+  # One entry (PFM 15 Nov 26): the address RADE holds (RADE_SITE, from its "Site address" box) is used with no question;
+  # outside RADE the one saved in Config\90161Z-site.txt is used. Only when neither exists does a question open (once).
+  # To change the site, use "Change the site address" in RADE. Kept only on this computer (the repo is public).
+  $ok = '^https://[^/\s]+/sites/[^/\s]+'
+  $v = ([string]$env:RADE_SITE).Trim()
+  if ($v -match $ok) { return $v }
+  $f = Join-Path $ConfigDir '90161Z-site.txt'
+  if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
+  # RADE runs a step with no window, so a question there would wait unseen: stop with the fix instead.
+  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. Complete the "Site address" box in RADE, then run this step again.' }
+  $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
+  if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
+  if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }
+  Set-Content -LiteralPath $f -Value $v -Encoding UTF8
+  return $v
+}
+# <<< site-common
+# >>> fake-workbooks: generated by scripts/build_probe_samples.py (do not edit)
+$FakeBookBase64 = @(
+  'UEsDBBQAAAAAAAAAcV3FLx19LgIAAC4CAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbDw/eG1sIHZlcnNpb249IjEuMCIgZW5jb2Rp',
+  'bmc9IlVURi04IiBzdGFuZGFsb25lPSJ5ZXMiPz4KPFR5cGVzIHhtbG5zPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0cy5v',
+  'cmcvcGFja2FnZS8yMDA2L2NvbnRlbnQtdHlwZXMiPjxEZWZhdWx0IEV4dGVuc2lvbj0icmVscyIgQ29udGVudFR5cGU9ImFwcGxp',
+  'Y2F0aW9uL3ZuZC5vcGVueG1sZm9ybWF0cy1wYWNrYWdlLnJlbGF0aW9uc2hpcHMreG1sIi8+PERlZmF1bHQgRXh0ZW5zaW9uPSJ4',
+  'bWwiIENvbnRlbnRUeXBlPSJhcHBsaWNhdGlvbi94bWwiLz48T3ZlcnJpZGUgUGFydE5hbWU9Ii94bC93b3JrYm9vay54bWwiIENv',
+  'bnRlbnRUeXBlPSJhcHBsaWNhdGlvbi92bmQub3BlbnhtbGZvcm1hdHMtb2ZmaWNlZG9jdW1lbnQuc3ByZWFkc2hlZXRtbC5zaGVl',
+  'dC5tYWluK3htbCIvPjxPdmVycmlkZSBQYXJ0TmFtZT0iL3hsL3dvcmtzaGVldHMvc2hlZXQxLnhtbCIgQ29udGVudFR5cGU9ImFw',
+  'cGxpY2F0aW9uL3ZuZC5vcGVueG1sZm9ybWF0cy1vZmZpY2Vkb2N1bWVudC5zcHJlYWRzaGVldG1sLndvcmtzaGVldCt4bWwiLz48',
+  'L1R5cGVzPlBLAwQUAAAAAAAAAHFdBlnHgigBAAAoAQAACwAAAF9yZWxzLy5yZWxzPD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGlu',
+  'Zz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8UmVsYXRpb25zaGlwcyB4bWxucz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZv',
+  'cm1hdHMub3JnL3BhY2thZ2UvMjAwNi9yZWxhdGlvbnNoaXBzIj48UmVsYXRpb25zaGlwIElkPSJySWQxIiBUeXBlPSJodHRwOi8v',
+  'c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvb2ZmaWNlRG9jdW1lbnQvMjAwNi9yZWxhdGlvbnNoaXBzL29mZmljZURvY3VtZW50',
+  'IiBUYXJnZXQ9InhsL3dvcmtib29rLnhtbCIvPjwvUmVsYXRpb25zaGlwcz5QSwMEFAAAAAAAAABxXXdA/sQcAQAAHAEAAA8AAAB4',
+  'bC93b3JrYm9vay54bWw8P3htbCB2ZXJzaW9uPSIxLjAiIGVuY29kaW5nPSJVVEYtOCIgc3RhbmRhbG9uZT0ieWVzIj8+Cjx3b3Jr',
+  'Ym9vayB4bWxucz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3NwcmVhZHNoZWV0bWwvMjAwNi9tYWluIiB4bWxu',
+  'czpyPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvb2ZmaWNlRG9jdW1lbnQvMjAwNi9yZWxhdGlvbnNoaXBzIj48',
+  'c2hlZXRzPjxzaGVldCBuYW1lPSJTaGVldDEiIHNoZWV0SWQ9IjEiIHI6aWQ9InJJZDEiLz48L3NoZWV0cz48L3dvcmtib29rPlBL',
+  'AwQUAAAAAAAAAHFdmm88fCkBAAApAQAAGgAAAHhsL19yZWxzL3dvcmtib29rLnhtbC5yZWxzPD94bWwgdmVyc2lvbj0iMS4wIiBl',
+  'bmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8UmVsYXRpb25zaGlwcyB4bWxucz0iaHR0cDovL3NjaGVtYXMub3Bl',
+  'bnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAwNi9yZWxhdGlvbnNoaXBzIj48UmVsYXRpb25zaGlwIElkPSJySWQxIiBUeXBlPSJo',
+  'dHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvb2ZmaWNlRG9jdW1lbnQvMjAwNi9yZWxhdGlvbnNoaXBzL3dvcmtzaGVl',
+  'dCIgVGFyZ2V0PSJ3b3Jrc2hlZXRzL3NoZWV0MS54bWwiLz48L1JlbGF0aW9uc2hpcHM+UEsDBBQAAAAAAAAAcV0D7Z5uLAIAACwC',
+  'AAAYAAAAeGwvd29ya3NoZWV0cy9zaGVldDEueG1sPD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxv',
+  'bmU9InllcyI/Pgo8d29ya3NoZWV0IHhtbG5zPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvc3ByZWFkc2hlZXRt',
+  'bC8yMDA2L21haW4iPjxzaGVldERhdGE+PHJvdyByPSIxIj48YyByPSJBMSIgdD0iaW5saW5lU3RyIj48aXM+PHQ+RkFLRSBib29r',
+  'IFIyNzwvdD48L2lzPjwvYz48YyByPSJCMSIgdD0iaW5saW5lU3RyIj48aXM+PHQ+SW52ZW50ZWQgbnVtYmVycywgbm90aGluZyBy',
+  'ZWFsPC90PjwvaXM+PC9jPjwvcm93Pjxyb3cgcj0iMiI+PGMgcj0iQTIiIHQ9ImlubGluZVN0ciI+PGlzPjx0PkZha2UgaXRlbSBv',
+  'bmU8L3Q+PC9pcz48L2M+PGMgcj0iQjIiIHQ9ImlubGluZVN0ciI+PGlzPjx0PjExPC90PjwvaXM+PC9jPjwvcm93Pjxyb3cgcj0i',
+  'MyI+PGMgcj0iQTMiIHQ9ImlubGluZVN0ciI+PGlzPjx0PkZha2UgaXRlbSB0d288L3Q+PC9pcz48L2M+PGMgcj0iQjMiIHQ9Imlu',
+  'bGluZVN0ciI+PGlzPjx0PjIyPC90PjwvaXM+PC9jPjwvcm93Pjwvc2hlZXREYXRhPjwvd29ya3NoZWV0PlBLAQIUAxQAAAAAAAAA',
+  'cV3FLx19LgIAAC4CAAATAAAAAAAAAAAAAACkAQAAAABbQ29udGVudF9UeXBlc10ueG1sUEsBAhQDFAAAAAAAAABxXQZZx4IoAQAA',
+  'KAEAAAsAAAAAAAAAAAAAAKQBXwIAAF9yZWxzLy5yZWxzUEsBAhQDFAAAAAAAAABxXXdA/sQcAQAAHAEAAA8AAAAAAAAAAAAAAKQB',
+  'sAMAAHhsL3dvcmtib29rLnhtbFBLAQIUAxQAAAAAAAAAcV2abzx8KQEAACkBAAAaAAAAAAAAAAAAAACkAfkEAAB4bC9fcmVscy93',
+  'b3JrYm9vay54bWwucmVsc1BLAQIUAxQAAAAAAAAAcV0D7Z5uLAIAACwCAAAYAAAAAAAAAAAAAACkAVoGAAB4bC93b3Jrc2hlZXRz',
+  'L3NoZWV0MS54bWxQSwUGAAAAAAUABQBFAQAAvAgAAAAA'
+) -join ' '
+# <<< fake-workbooks
+
+function Hide-Site([string]$Text, [string]$Site) {
+  # The result is e-mailed: no site, tenant or sign-in address may stay in it (the same rule as T16, T18, T19 and T20).
+  # Every address is masked here, so the second person's address cannot reach a result line even through an error text.
+  $Text = $Text -replace '[\w.+-]+@[\w.-]+', '<EMAIL>'
+  $Text = $Text -replace '[\w.+-]+%40[\w.-]+', '<EMAIL>'
+  if ($Site) {
+    $Text = $Text -replace [regex]::Escape($Site.TrimEnd('/')), '<SITE>'
+    try {
+      $u = [uri]$Site
+      $Text = $Text -replace [regex]::Escape($u.Host), '<SITE-HOST>'
+      $path = $u.AbsolutePath.TrimEnd('/')
+      if ($path.Length -gt 1) {
+        $Text = $Text -replace [regex]::Escape($path), '<SITE-PATH>'
+        $Text = $Text -replace [regex]::Escape([uri]::EscapeDataString($path)), '<SITE-PATH>'
+        $leaf = ($path -split '/')[-1]
+        if ($leaf.Length -ge 3) { $Text = $Text -replace ('\b' + [regex]::Escape($leaf) + '\b'), '<SITE-NAME>' }
+      }
+      $tenant = ($u.Host -split '\.')[0]
+      if ($tenant.Length -ge 3) { $Text = $Text -replace ('\b' + [regex]::Escape($tenant) + '\b'), '<TENANT>' }
+    } catch { $null = $_ }
+  }
+  $Text = $Text -replace 'https?://\S+', '<URL>'
+  $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
+  $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
+  # No word boundary: a GUID right after URL-encoded characters (guid%27...) must be masked too.
+  $Text = $Text -replace '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>'
+  return $Text
+}
+
+function Invoke-Rest([string]$Method, [string]$Uri, [string]$Body) {
+  # One SharePoint REST request through the signed-in PnP connection (the same call T20 uses). Method: Get, Post or Merge.
+  $url = $script:site.TrimEnd('/') + '/' + $Uri
+  if ($Method -eq 'Get') { return [string](Invoke-PnPSPRestMethod -Method Get -Url $url -Raw -ErrorAction Stop) }
+  return [string](Invoke-PnPSPRestMethod -Method $Method -Url $url -Content $Body -ContentType 'application/json;odata=verbose' -Raw -ErrorAction Stop)
+}
+function Get-RestValue([string]$Uri) { return @(((Invoke-Rest 'Get' $Uri '') | ConvertFrom-Json).value) }
+function Get-SiteList {
+  # Every list on the site that is not hidden, with the folder name it was made under (the folder name never changes).
+  return @(Get-RestValue ('_api/web/lists?$select=Id,Title,ItemCount,BaseTemplate,Hidden,EnableAttachments,HasUniqueRoleAssignments,RootFolder/Name&$expand=RootFolder&$top=1000') | Where-Object { -not $_.Hidden })
+}
+function Find-ByFolder([string]$Folder) {
+  foreach ($l in (Get-SiteList)) { if ([string]$l.RootFolder.Name -eq $Folder) { return $l } }
+  return $null
+}
+function Add-Item([string]$Name, [string]$Status, [string]$Text) {
+  $script:lines.Add('ITEM ' + $Name + ' ' + $Status + $(if ($Text) { ' ' + $Text } else { '' }))
+  if ($Status -eq 'PASS') { $script:passed++ } elseif ($Status -eq 'FAIL') { $script:failed++ }
+}
+function Add-Test([string]$Name, [string[]]$Piece, [bool]$Pass) {
+  # One summary line per test: "T4 PASSED: a ...; next ...".
+  $script:lines.Add($Name + ' ' + $(if ($Pass) { 'PASSED' } else { 'FAILED' }) + ': ' + ($Piece -join '; '))
+  if ($Pass) { $script:passed++ } else { $script:failed++ }
+}
+function Format-Detail([string]$Text) {
+  # The flow's ProbeDetail (or an error text) for a line: one line, anything that looks like an address or a link masked, cut to 160.
+  $t = ($Text -replace '\s+', ' ').Trim()
+  $t = $t -replace '[\w.+-]+@[\w.-]+', '<MASKED>'
+  $t = $t -replace '[\w.+-]+%40[\w.-]+', '<MASKED>'
+  $t = $t -replace 'https?://\S+', '<MASKED>'
+  if ($t.Length -gt 160) { $t = $t.Substring(0, 160) }
+  return $t
+}
+function Get-ListRow([string]$Title, [string[]]$Fields) {
+  # Plain rows (Id and the named fields as text); only counts and flags are written from them.
+  $rows = @(Get-PnPListItem -List $Title -Fields $Fields -PageSize 500 -ErrorAction Stop)
+  return @($rows | ForEach-Object {
+    $o = @{ Id = [int]$_.Id; Item = $_ }
+    foreach ($f in $Fields) { $o[$f] = [string]$_[$f] }
+    $o
+  })
+}
+function Find-Result($Rows, [string]$Test, [string]$Way) {
+  # The newest RESULT row for a test and way, or $null.
+  $hit = @($Rows | Where-Object { $_.Title -eq 'RESULT' -and $_.ProbeTest -eq $Test -and $_.ProbeWay -eq $Way } | Sort-Object { $_.Id } -Descending)
+  if ($hit.Count) { return $hit[0] }
+  return $null
+}
+function Wait-Until([scriptblock]$Done, [string]$What) {
+  # Checks every $PollSeconds for up to $WaitMinutes; a progress line a minute. A failed check is retried; 3 in a row stop the part.
+  $start = Get-Date
+  $end = $start.AddMinutes($WaitMinutes)
+  $misses = 0; $nextNote = $start.AddMinutes(1)
+  while ($true) {
+    $isDone = $false
+    try { $isDone = [bool](& $Done); $misses = 0 }
+    catch {
+      $misses++
+      if ($misses -ge 3) { throw }
+      Write-Host ('  A check failed (' + $misses + ' of 3 allowed in a row); trying again ...')
+    }
+    if ($isDone) { return $true }
+    $now = Get-Date
+    if ($now -ge $end) { return $false }
+    if ($now -ge $nextNote) {
+      Write-Host ('  Waiting for ' + $What + ' (' + [int]($now - $start).TotalMinutes + ' of ' + $WaitMinutes + ' minutes) ...')
+      $nextNote = $nextNote.AddMinutes(1)
+    }
+    Start-Sleep -Seconds $pollEvery
+  }
+}
+
+function Get-HtmlText([string]$Text) { return [System.Net.WebUtility]::HtmlEncode($Text) }
+function Write-LinksPage([string]$Dir, [string]$Site) {
+  # The test page: one big link per thing to open. It holds the site address, so it stays in the T21 folder on this computer;
+  # it is never a result file. Colors and font as the RADE window.
+  $s = $Site.TrimEnd('/')
+  $links = @(
+    @('Open the new row form', ($s + '/Lists/' + $ListFolder + '/NewForm.aspx'), 'Tests T4 and the list form look: the form other people use.'),
+    @('Open the probe list', ($s + '/Lists/' + $ListFolder + '/AllItems.aspx'), 'The rows the tests wrote.'),
+    @('Open the list with the button', ($s + '/Lists/' + $ListFolder + '/' + $ViewTitle + '.aspx'), 'The view look: a button that starts a flow.'),
+    @('Open the fake workbook', ($s + '/' + $LibFolder + '/' + $BookName + '?web=1'), 'The Excel look: a workbook in Excel for the web.'))
+  $body = New-Object System.Text.StringBuilder
+  [void]$body.Append('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>90-161.Z test page r3</title><style>')
+  [void]$body.Append('body{font-family:"Segoe UI",Arial,sans-serif;color:#1b2430;background:#fff;margin:0}.light{height:6px;background:#ffd520}')
+  [void]$body.Append('main{max-width:760px;padding:24px 32px}h1{font-family:"Segoe UI Semibold","Segoe UI",Arial,sans-serif;font-weight:600;font-size:29px;color:#0b2545;margin:8px 0 4px}')
+  [void]$body.Append('p{font-size:15px;color:#5a6573;margin:0 0 24px}a.go{display:block;border:1px solid #00539f;background:#00539f;color:#fff;text-decoration:none;font-size:17px;font-weight:700;padding:14px 18px;margin:0 0 4px}')
+  [void]$body.Append('a.go:focus{outline:2px solid #0b2545;outline-offset:2px}span.why{display:block;font-size:14px;color:#5a6573;margin:0 0 20px}</style></head><body><div class="light"></div><main>')
+  [void]$body.Append('<h1>90-161.Z test page</h1><p>Round R27. Fake data only. Open each link when the RADE window says so.</p>')
+  foreach ($l in $links) { [void]$body.Append('<a class="go" href="' + (Get-HtmlText $l[1]) + '">' + (Get-HtmlText $l[0]) + '</a><span class="why">' + (Get-HtmlText $l[2]) + '</span>') }
+  [void]$body.Append('</main></body></html>')
+  Set-Content -LiteralPath (Join-Path $Dir $LinksName) -Value $body.ToString() -Encoding UTF8
+  return $links.Count
+}
+function Get-AuthorId($Row) { $a = $Row.Item['Author']; if ($a -and $a.LookupId) { return [int]$a.LookupId }; return 0 }
+
+function Read-PersonAddress {
+  # The second person's address, typed by the PFM in a small window. It is returned to the caller and used in memory only; this
+  # function writes nothing. In a test run (-TestDir) a fake address may come from the test.
+  if ($TestDir -and $env:T21_TEST_ADDRESS) { return ([string]$env:T21_TEST_ADDRESS).Trim() }
+  $prompt = 'Type the e-mail address of the second person for test T4 (a person who is not you), then select OK. It is used once, stays on this computer and is not saved or sent.'
+  try {
+    Add-Type -AssemblyName Microsoft.VisualBasic -ErrorAction Stop
+    return ([string][Microsoft.VisualBasic.Interaction]::InputBox($prompt, '90-161.Z test T4', '')).Trim()
+  } catch {
+    if ($env:RADE_CONTRACT) { throw 'ADDRESS window not available: the window for the second person could not open on this computer.' }
+    return ([string](Read-Host 'E-mail address of the second person (it is not saved), then press Enter')).Trim()
+  }
+}
+function Get-GroupMemberId([int]$GroupId) {
+  return @(Get-RestValue ('_api/web/sitegroups/getbyid(' + $GroupId + ')/users?$select=Id&$top=5000') | ForEach-Object { [int]$_.Id })
+}
+function Read-State([string]$Dir) {
+  # The saved numbers of the second person (site user Id, group Id, whether the person was a member before): no address, no name.
+  $f = Join-Path $Dir $StateName
+  if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { return $null }
+  $h = @{}
+  foreach ($l in @(Get-Content -LiteralPath $f)) { if ([string]$l -match '^(\w+)=(.*)$') { $h[$Matches[1]] = $Matches[2].Trim() } }
+  if ($h['UserId'] -notmatch '^\d+$') { return $null }
+  return $h
+}
+function Send-Formatter([string]$Kind, [string]$Json, [string]$ListId, [string]$TargetId) {
+  # Sets a formatting JSON on a content type (form header) or a view. Easy path first: the CSOM property; then the REST merge.
+  # Returns 'csom', 'rest' or 'none' (and keeps the last error text in $script:fmtError).
+  $script:fmtError = ''
+  try {
+    $ctx = Get-PnPContext
+    $list = $ctx.Web.Lists.GetById([guid]$ListId)
+    if ($Kind -eq 'form') { $t = $list.ContentTypes.GetById($TargetId); $t.ClientFormCustomFormatter = $Json; $t.Update($false) }
+    else { $t = $list.Views.GetById([guid]$TargetId); $t.CustomFormatter = $Json; $t.Update() }
+    $ctx.ExecuteQuery()
+    return 'csom'
+  } catch { $script:fmtError = [string]$_.Exception.Message }
+  try {
+    $lbase = "_api/web/lists(guid'" + $ListId + "')"
+    if ($Kind -eq 'form') {
+      $body = @{ __metadata = @{ type = 'SP.ContentType' }; ClientFormCustomFormatter = $Json } | ConvertTo-Json -Depth 5 -Compress
+      $null = Invoke-Rest 'Merge' ($lbase + "/contenttypes('" + $TargetId + "')") $body
+    } else {
+      $body = @{ __metadata = @{ type = 'SP.View' }; CustomFormatter = $Json } | ConvertTo-Json -Depth 5 -Compress
+      $null = Invoke-Rest 'Merge' ($lbase + "/views(guid'" + $TargetId + "')") $body
+    }
+    return 'rest'
+  } catch { $script:fmtError = [string]$_.Exception.Message }
+  return 'none'
+}
+
+$secret = @()
+$site = ''
+$lines = New-Object System.Collections.Generic.List[string]
+$dir = ''
+$passed = 0; $failed = 0
+$fatal = $false
+$fmtError = ''
+try {
+  $ErrorActionPreference = 'Stop'
+  if (-not $Part) { throw 'PART not given: use -Part Make, Person, Run, Look, Open, Read or Clean.' }
+  if ($Part -eq 'Read' -and -not $PSBoundParameters.ContainsKey('WaitMinutes')) { $WaitMinutes = 4 }
+  $who = Get-TaskId $Id
+  $id = $who.Id
+  $secret = $who.Secret
+  if ($TestDir) { $dir = $TestDir } else { $dir = Get-TaskDir $id $task 'Task 21' -Create }
+  Set-Location -LiteralPath $dir
+  $configDir = Join-Path (Split-Path -Parent $dir) 'Config'
+  $site = Get-SiteAddress $configDir
+  $lines.Add('TASK T21 probe ' + $Rev + ', part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + $(if ($Part -eq 'Read') { ', wait-minutes=' + $WaitMinutes } else { '' }))
+
+  if ($Part -eq 'Open') {
+    # No sign-in: this part only works on this computer.
+    $n = Write-LinksPage $dir $site
+    Add-Item 'o1-page' 'PASS' ('test page written, links=' + $n)
+    if (-not $NoLaunch) { Start-Process -FilePath (Join-Path $dir $LinksName) }
+    Add-Item 'o2-open' 'PASS' ('test page opened in the browser=' + $(if ($NoLaunch) { 'no (test run)' } else { 'yes' }))
+  } else {
+  $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
+  if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
+  $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
+  Write-Host 'Connecting to the site. If a sign-in window opens, sign in with your CAC.'
+  $null = & { Connect-PnPOnline -Url $site -UseWebLogin -ErrorAction Stop } *>&1
+  $lines.Add('ROUTE web-login PASS')
+  # The first request is a read: it proves the REST route before anything is written.
+  $siteLists = Get-SiteList
+  $lines.Add('ITEM a-rest-read INFO lists read from the site=' + $siteLists.Count)
+
+  if ($Part -eq 'Make') {
+    $made = @{ library = 0; list = 0; columns = 0; permissions = 0; files = 0 }
+    $skip = @{ library = 0; list = 0; columns = 0; permissions = 0; files = 0 }
+
+    # m1, m2: the library and the list (the same cmdlet T16 uses for its library).
+    $lib = Find-ByFolder $LibFolder
+    if ($lib) { $skip.library++ } else { Write-Host ('  Making the library ' + $LibTitle + ' ...'); $null = New-PnPList -Title $LibTitle -Template DocumentLibrary -Url $LibFolder -ErrorAction Stop; $made.library++; $lib = Find-ByFolder $LibFolder }
+    Add-Item 'm1-library' $(if ($lib) { 'PASS' } else { 'FAIL' }) $(if ($lib) { 'library there (made=' + $made.library + ')' } else { 'library not on the site after the create step' })
+    $lst = Find-ByFolder $ListFolder
+    if ($lst) { $skip.list++ } else { Write-Host ('  Making the list ' + $ListTitle + ' ...'); $null = New-PnPList -Title $ListTitle -Template GenericList -Url ('Lists/' + $ListFolder) -ErrorAction Stop; $made.list++; $lst = Find-ByFolder $ListFolder }
+    Add-Item 'm2-list' $(if ($lst) { 'PASS' } else { 'FAIL' }) $(if ($lst) { 'list there (made=' + $made.list + ')' } else { 'list not on the site after the create step' })
+    if (-not $lib -or -not $lst) { throw 'LIST or library missing after the create step; nothing more was done.' }
+
+    # m3: columns (internal name = display name).
+    $want = @(
+      @{ List = $lst; Name = 'ProbeTest'; Type = 'Text' }, @{ List = $lst; Name = 'ProbeWay'; Type = 'Text' },
+      @{ List = $lst; Name = 'ProbeResult'; Type = 'Text' }, @{ List = $lst; Name = 'ProbeDetail'; Type = 'Note' })
+    $have = @{}
+    foreach ($l in @($lst)) { $have[[string]$l.Id] = @(Get-RestValue ("_api/web/lists(guid'" + $l.Id + "')/fields?" + '$select=InternalName&$top=2000') | ForEach-Object { [string]$_.InternalName }) }
+    $bad = 0
+    foreach ($c in $want) {
+      if ($have[[string]$c.List.Id] -contains $c.Name) { $skip.columns++; continue }
+      $extra = $(if ($c.Type -eq 'Note') { ' RichText="FALSE" NumLines="6"' } else { '' })
+      $xml = '<Field Name="' + $c.Name + '" StaticName="' + $c.Name + '" DisplayName="' + $c.Name + '" Required="FALSE" Type="' + $c.Type + '"' + $extra + '></Field>'
+      $body = @{ parameters = @{ __metadata = @{ type = 'SP.XmlSchemaFieldCreationInformation' }; SchemaXml = $xml; Options = 24 } } | ConvertTo-Json -Depth 20 -Compress
+      try { $null = Invoke-Rest 'Post' ("_api/web/lists(guid'" + $c.List.Id + "')/fields/createfieldasxml") $body; $made.columns++ } catch { $bad++ }
+    }
+    Add-Item 'm3-columns' $(if ($bad -eq 0) { 'PASS' } else { 'FAIL' }) ('columns made=' + $made.columns + ' already there=' + $skip.columns + ' refused=' + $bad)
+
+    # m4: the list's own permissions: the site's copied, then Contribute for the associated Visitors group on this list only.
+    $lst = Find-ByFolder $ListFolder
+    $lbase = "_api/web/lists(guid'" + $lst.Id + "')"
+    if (-not $lst.HasUniqueRoleAssignments) {
+      $null = Invoke-Rest 'Post' ($lbase + '/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)') '{}'
+      $made.permissions++
+    }
+    $visitorId = 0
+    try { $visitorId = [int]((Invoke-Rest 'Get' '_api/web/associatedvisitorgroup?$select=Id' '') | ConvertFrom-Json).Id } catch { $visitorId = 0 }
+    if ($visitorId -le 0) {
+      $lines.Add('NOTE m4: no associated Visitors group on this site, so Contribute was not added; the T4 test needs a Visitors group')
+      Add-Item 'm4-permissions' 'PASS' ('own permissions on the list (copied now=' + $made.permissions + '); Visitors group not found')
+    } else {
+      $contribute = 0
+      try { $contribute = [int](Get-RestValue '_api/web/roledefinitions?$filter=RoleTypeKind%20eq%203&$select=Id')[0].Id } catch { $contribute = 0 }
+      if ($contribute -le 0) { throw 'ROLE Contribute not found on the site.' }
+      $has = $false
+      try { $has = @(Get-RestValue ($lbase + '/roleassignments/getbyprincipalid(' + $visitorId + ')/roledefinitionbindings?$select=Id') | Where-Object { [int]$_.Id -eq $contribute }).Count -gt 0 } catch { $has = $false }
+      if (-not $has) { $null = Invoke-Rest 'Post' ($lbase + '/roleassignments/addroleassignment(principalid=' + $visitorId + ',roledefid=' + $contribute + ')') '{}'; $made.permissions++ }
+      Add-Item 'm4-permissions' 'PASS' ('own permissions on the list, Visitors group has Contribute (changes now=' + $made.permissions + ')')
+    }
+
+    # m5: the fake workbook is written from the text block in this script (the repo holds no .xlsx: the personal-data scan cannot
+    # read a binary file), then uploaded. No macro workbook (PFM 17 Nov 26: endpoint security risk).
+    $wrote = 0
+    foreach ($w in @(,@($BookName, $FakeBookBase64))) {
+      $bytes = [Convert]::FromBase64String((([string]$w[1] -split '\s+') -join ''))
+      $path = Join-Path $dir $w[0]
+      $same = $false
+      if (Test-Path -LiteralPath $path -PathType Leaf) { $cur = [IO.File]::ReadAllBytes($path); $same = ($cur.Length -eq $bytes.Length) -and ([Convert]::ToBase64String($cur) -eq [Convert]::ToBase64String($bytes)) }
+      if (-not $same) { [IO.File]::WriteAllBytes($path, $bytes); $wrote++ }
+    }
+    $lines.Add('ITEM m5a-workbooks INFO fake workbook saved to the T21 folder now=' + $wrote)
+    $inLib = @(Get-RestValue ("_api/web/lists(guid'" + $lib.Id + "')/rootfolder/files?" + '$select=Name&$top=500') | ForEach-Object { [string]$_.Name })
+    foreach ($n in @($BookName)) {
+      if ($inLib -contains $n) { $skip.files++; continue }
+      $null = Add-PnPFile -Path (Join-Path $dir $n) -Folder $LibFolder -ErrorAction Stop
+      $made.files++
+    }
+    $inLib = @(Get-RestValue ("_api/web/lists(guid'" + $lib.Id + "')/rootfolder/files?" + '$select=Name&$top=500') | ForEach-Object { [string]$_.Name })
+    $ok = ($inLib -contains $BookName)
+    Add-Item 'm5-files' $(if ($ok) { 'PASS' } else { 'FAIL' }) ('files in the library: the workbook there=' + $(if ($ok) { 'yes' } else { 'no' }) + ' (uploaded now=' + $made.files + ')')
+    # m6: the test page (it holds the site address: it stays in the T21 folder).
+    $n = Write-LinksPage $dir $site
+    Add-Item 'm6-page' 'PASS' ('test page in the T21 folder, links=' + $n)
+    $lines.Add('MADE library=' + $made.library + ' list=' + $made.list + ' columns=' + $made.columns + ' permission changes=' + $made.permissions + ' files=' + $made.files)
+    $lines.Add('SKIPPED (already there) library=' + $skip.library + ' list=' + $skip.list + ' columns=' + $skip.columns + ' files=' + $skip.files)
+  }
+  elseif ($Part -eq 'Person') {
+    # T4 retry (PFM 17 Nov 26): the second person is added to the Visitors group with your sign-in, and removed again by Clean.
+    # The address is read into $personAddr, used in the next calls and cleared; it is never written, printed or saved.
+    $lst = Find-ByFolder $ListFolder
+    if (-not $lst) { throw 'LIST not found: run -Part Make first.' }
+    $visitorId = 0
+    try { $visitorId = [int]((Invoke-Rest 'Get' '_api/web/associatedvisitorgroup?$select=Id' '') | ConvertFrom-Json).Id } catch { $visitorId = 0 }
+    $state = 'no'; $why = ''
+    if ($visitorId -le 0) { Add-Item 'p1-group' 'FAIL' 'the site has no Visitors group'; $why = 'the site has no Visitors group' }
+    else {
+      Add-Item 'p1-group' 'PASS' 'the site has a Visitors group'
+      $personAddr = Read-PersonAddress
+      $addrOk = ($personAddr -match '^[^@\s]+@[^@\s]+\.[^@\s]+$')
+      if (-not $addrOk) { Add-Item 'p2-person' 'FAIL' 'no valid address was given in the window'; $why = 'no valid address was given' }
+      else {
+        $userId = 0; $loginName = ''
+        try {
+          $raw = Invoke-Rest 'Post' '_api/web/ensureuser' (@{ logonName = ('i:0#.f|membership|' + $personAddr) } | ConvertTo-Json -Compress)
+          if ($raw -match '"Id"\s*:\s*(\d+)') { $userId = [int]$Matches[1] }
+          if ($raw -match '"LoginName"\s*:\s*"([^"]+)"') { $loginName = $Matches[1] }
+        } catch { $userId = 0 }
+        if ($userId -le 0) {
+          try {
+            $raw = Invoke-Rest 'Get' ("_api/web/siteusers/getbyemail('" + [uri]::EscapeDataString($personAddr) + "')?" + '$select=Id,LoginName') ''
+            if ($raw -match '"Id"\s*:\s*(\d+)') { $userId = [int]$Matches[1] }
+            if ($raw -match '"LoginName"\s*:\s*"([^"]+)"') { $loginName = $Matches[1] }
+          } catch { $userId = 0 }
+        }
+        if (-not $loginName) { $loginName = 'i:0#.f|membership|' + $personAddr }
+        if ($userId -le 0) { Add-Item 'p2-person' 'FAIL' 'the person was not found on this site'; $why = 'the person was not found on this site' }
+        else {
+          Add-Item 'p2-person' 'PASS' 'the person was found on this site (the site user number is saved in the state file, no address and no name)'
+          $members = Get-GroupMemberId $visitorId
+          $was = $members -contains $userId
+          # The numbers are saved before the change, so Clean can find the person even if this part stops half way.
+          Set-Content -LiteralPath (Join-Path $dir $StateName) -Value @(('UserId=' + $userId), ('GroupId=' + $visitorId), ('WasMember=' + $(if ($was) { 'yes' } else { 'no' }))) -Encoding ASCII
+          if ($was) { $state = 'was'; $why = 'the person was already a member and stays one' }
+          else {
+            try {
+              Add-PnPGroupMember -LoginName $loginName -Group $visitorId -ErrorAction Stop
+              if ((Get-GroupMemberId $visitorId) -contains $userId) { $state = 'yes' } else { $why = 'the group does not list the person after the add' }
+            } catch { $why = 'the add was refused: ' + (Format-Detail ([string]$_.Exception.Message)) }
+          }
+          Add-Item 'p3-visitors' $(if ($state -eq 'yes' -or $state -eq 'was') { 'PASS' } else { 'FAIL' }) ('person in the Visitors group=' + $(if ($state -eq 'no') { 'no' } else { 'yes' }) + $(if ($why) { ' (' + $why + ')' } else { '' }))
+        }
+      }
+      $personAddr = $null; $loginName = $null; $raw = $null
+    }
+    $lines.Add('VISITORS added to Visitors: ' + $(if ($state -eq 'yes') { 'yes' } else { 'no' }) + '; status: ' + $(if ($state -eq 'yes') { 'added and listed in the group' } elseif ($state -eq 'was') { 'already a member (Clean leaves the person in the group)' } else { $why }))
+    $clip = 'no'
+    if ($NoLaunch) { $clip = 'no (test run)' } else { try { Set-Clipboard -Value ($site.TrimEnd('/') + '/Lists/' + $ListFolder + '/NewForm.aspx'); $clip = 'yes' } catch { $clip = 'no' } }
+    $lines.Add('ITEM p4-link INFO the link of the new row form is on the clipboard=' + $clip)
+  }
+  elseif ($Part -eq 'Run') {
+    $lst = Find-ByFolder $ListFolder
+    if (-not $lst) { throw 'LIST not found: run -Part Make first.' }
+    $tag = 'R27' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+    $null = Add-PnPListItem -List $ListTitle -Values @{ Title = ('RUN-HEALTH ' + $tag) } -ErrorAction Stop
+    Add-Item 'r1-command' 'INFO' ('command row made: RUN-HEALTH, tag ' + $tag + '; the health flow answers within a few minutes (the Read part waits for it)')
+  }
+  elseif ($Part -eq 'Look') {
+    $lst = Find-ByFolder $ListFolder
+    if (-not $lst) { throw 'LIST not found: run -Part Make first.' }
+    $lbase = "_api/web/lists(guid'" + $lst.Id + "')"
+
+    # a: the header of the list form (the form formatting of the content type).
+    $ctId = ''
+    try { $cts = @(Get-RestValue ($lbase + '/contenttypes?$select=Id,Name')); if ($cts.Count) { $ctId = [string]$cts[0].Id.StringValue } } catch { $ctId = '' }
+    $formPass = $false; $route = 'none'; $readBack = 'no'
+    if (-not $ctId) { Add-Item 'l1-form' 'FAIL' 'no content type found on the list' }
+    else {
+      $hdr = [ordered]@{ headerJSONFormatter = [ordered]@{ elmType = 'div'; style = [ordered]@{ padding = '12px'; 'font-size' = '18px'; 'font-weight' = '600' }; txtContent = $HeaderText } }
+      $route = Send-Formatter 'form' ($hdr | ConvertTo-Json -Depth 8 -Compress) ([string]$lst.Id) $ctId
+      try {
+        $raw = Invoke-Rest 'Get' ($lbase + "/contenttypes('" + $ctId + "')?" + '$select=ClientFormCustomFormatter') ''
+        if ($raw.Contains($HeaderText)) { $readBack = 'yes' }
+      } catch { $readBack = 'not read' }
+      $formPass = ($readBack -eq 'yes')
+      Add-Item 'l1-form' $(if ($formPass) { 'PASS' } else { 'FAIL' }) ('header formatting set (route=' + $route + ') and read back from the content type=' + $readBack + $(if ($route -eq 'none') { '; ' + (Format-Detail $script:fmtError) } else { '' }))
+    }
+    Add-Test 'FORM' @('a header on the list form (form formatting set by script)=' + $(if ($formPass) { 'PASS' } else { 'FAIL' }) + ' (route=' + $route + '; read back=' + $readBack + '); what the form shows is left to your answers') $formPass
+
+    # b: a view with a button that starts the button flow (customRowAction executeFlow with the flow's ID).
+    $viewId = ''
+    try { $vs = @(Get-RestValue ($lbase + '/views?$select=Id,Title') | Where-Object { [string]$_.Title -eq $ViewTitle }); if ($vs.Count) { $viewId = [string]$vs[0].Id } } catch { $viewId = '' }
+    $viewMade = 0
+    if (-not $viewId) {
+      Write-Host ('  Making the view ' + $ViewTitle + ' ...')
+      $null = Add-PnPView -List $ListTitle -Title $ViewTitle -Fields @('Title', 'ProbeTest', 'ProbeResult') -ErrorAction Stop
+      $viewMade++
+      $vs = @(Get-RestValue ($lbase + '/views?$select=Id,Title') | Where-Object { [string]$_.Title -eq $ViewTitle }); if ($vs.Count) { $viewId = [string]$vs[0].Id }
+    }
+    $viewPass = $false; $vroute = 'none'; $vback = 'no'
+    if (-not $viewId) { Add-Item 'l2-view' 'FAIL' 'the view is not on the list after the create step' }
+    else {
+      $params = '{"id":"' + $ButtonFlowId + '","headerText":"Run the test flow","runFlowButtonText":"Run"}'
+      $fmt = [ordered]@{ '$schema' = 'https://developer.microsoft.com/json-schemas/sp/view-formatting.schema.json'
+        rowFormatter = [ordered]@{ elmType = 'div'; style = [ordered]@{ display = 'flex'; 'align-items' = 'center'; padding = '4px' }
+          children = @([ordered]@{ elmType = 'span'; style = [ordered]@{ flex = '1' }; txtContent = '[$Title]' },
+            [ordered]@{ elmType = 'button'; txtContent = 'Run the test flow'; customRowAction = [ordered]@{ action = 'executeFlow'; actionParams = $params } }) } }
+      $vroute = Send-Formatter 'view' ($fmt | ConvertTo-Json -Depth 10 -Compress) ([string]$lst.Id) $viewId
+      try {
+        $raw = Invoke-Rest 'Get' ($lbase + "/views(guid'" + $viewId + "')?" + '$select=CustomFormatter') ''
+        if ($raw.Contains('executeFlow') -and $raw.Contains($ButtonFlowId)) { $vback = 'yes' }
+      } catch { $vback = 'not read' }
+      $viewPass = ($vback -eq 'yes')
+      Add-Item 'l2-view' $(if ($viewPass) { 'PASS' } else { 'FAIL' }) ('view made now=' + $viewMade + '; formatting set (route=' + $vroute + ') and read back from the view=' + $vback + $(if ($vroute -eq 'none') { '; ' + (Format-Detail $script:fmtError) } else { '' }))
+    }
+    Add-Test 'VIEW' @('b a view formatted by script with a button that starts a flow=' + $(if ($viewPass) { 'PASS' } else { 'FAIL' }) + ' (route=' + $vroute + '; read back=' + $vback + '; flow ID known to the script=yes); whether the button runs is read by the Read part') $viewPass
+  }
+  elseif ($Part -eq 'Read') {
+    $lst = Find-ByFolder $ListFolder
+    if (-not $lst) { throw 'LIST not found: run -Part Make first.' }
+    $rf = @('Title', 'ProbeTest', 'ProbeWay', 'ProbeResult', 'ProbeDetail', 'Author')
+    $rows = @(Get-ListRow $ListTitle $rf)
+    # The health flow answers a minute or more after its command row. Wait for it (default 4 minutes) only when there is one.
+    $healthFloor = [int](@($rows | Where-Object { $_.Title -like 'RUN-HEALTH *' } | ForEach-Object { $_.Id }) + 0 | Measure-Object -Maximum).Maximum
+    if ($healthFloor -gt 0) {
+      $ok = Wait-Until {
+        $rows = @(Get-ListRow $ListTitle $rf)
+        [bool](Find-Result @($rows | Where-Object { $_.Id -gt $healthFloor }) 'HEALTH' 'a') } 'the health flow''s result row'
+      $rows = @(Get-ListRow $ListTitle $rf)
+      $lines.Add('WAIT health row ' + $(if ($ok) { 'there' } else { 'not there (time ran out)' }))
+    } else { $lines.Add('WAIT none: no RUN-HEALTH row on the list') }
+    $meId = 0
+    try { $meId = [int]((Invoke-Rest 'Get' '_api/web/currentuser?$select=Id' '') | ConvertFrom-Json).Id } catch { $meId = 0 }
+
+    # HEALTH: the Power Automate Management connector lists the owner's own flows (this environment only) and reads each probe flow's last run.
+    $h = $null
+    if ($healthFloor -gt 0) { $h = Find-Result @($rows | Where-Object { $_.Id -gt $healthFloor }) 'HEALTH' 'a' }
+    if (-not $healthFloor) { Add-Test 'HEALTH' @('a Power Automate Management connector, own flows only=FAIL (no command row: run the health step first)') $false }
+    elseif (-not $h) { Add-Test 'HEALTH' @('a Power Automate Management connector, own flows only=FAIL (no result row after the wait: the flow did not run; if the import refused the connector or asked for a Premium licence, the import answer says so)') $false }
+    else {
+      $d = Format-Detail $h.ProbeDetail
+      Add-Test 'HEALTH' @('a Power Automate Management connector, own flows only=' + $h.ProbeResult + $(if ($d) { ' (' + $d + ')' } else { '' })) ($h.ProbeResult -eq 'PASS')
+    }
+
+    # T4: a person who is a Visitors member writes a row through the list form (Contribute on this list only).
+    $others = @($rows | Where-Object { $_.Title -ne 'RESULT' -and $meId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $meId })
+    $t4a = @($rows | Where-Object { ([string]$_.Title).Trim() -eq 'T4a' -and $meId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $meId })
+    $st = Read-State $dir
+    $addedText = $(if (-not $st) { 'not tried (no state file)' } elseif ($st['WasMember'] -eq 'yes') { 'already a member' } else { 'yes' })
+    $t4pass = ($others.Count -ge 1)
+    $t4 = @('a list form by a second person (Visitors member)=' + $(if ($t4pass) { 'PASS' } else { 'FAIL' }) + ' (rows=' + $others.Count + '; T4a rows=' + $t4a.Count + '; person in the Visitors group=' + $addedText + ')')
+    if (-not $t4pass) { $t4 += 'next: way C: a flow writes the row with the PFM''s connection (not built)' }
+    Add-Test 'T4' $t4 $t4pass
+
+    # BUTTON: the view button started the button flow (its RESULT row says it ran).
+    $btn = @($rows | Where-Object { $_.Title -eq 'RESULT' -and $_.ProbeTest -eq 'BTN' })
+    $bd = $(if ($btn.Count) { Format-Detail (@($btn | Sort-Object { $_.Id } -Descending)[0].ProbeDetail) } else { '' })
+    Add-Test 'BUTTON' @('b a view button starts a flow=' + $(if ($btn.Count) { 'PASS' } else { 'FAIL' }) + ' (result rows=' + $btn.Count + $(if ($bd) { '; ' + $bd } else { '' }) + ')') ($btn.Count -ge 1)
+    $lines.Add('NOTE FORM, VIEW and EXCEL: what the screen showed is left to the answers you give in the RADE window (this script does not read them)')
+  }
+  else {
+    # Clean: runs each step on its own, even if an earlier one failed. First the person, then the two objects (found by their
+    # folder name), to the site Recycle Bin. The person is found by the saved numbers in the state file.
+    $state = Read-State $dir
+    if (-not $state) { Add-Item 'c1-person' 'PASS' 'no second person on file (nothing to remove)' }
+    elseif ($state['WasMember'] -eq 'yes') {
+      Add-Item 'c1-person' 'PASS' 'the second person was a Visitors member before the test, so the person stays (state file deleted)'
+      try { Remove-Item -LiteralPath (Join-Path $dir $StateName) -ErrorAction Stop } catch { $null = $_ }
+    } else {
+      try {
+        $uid = [int]$state['UserId']; $gid = 0
+        if ($state['GroupId'] -match '^\d+$') { $gid = [int]$state['GroupId'] }
+        if ($gid -le 0) { $gid = [int]((Invoke-Rest 'Get' '_api/web/associatedvisitorgroup?$select=Id' '') | ConvertFrom-Json).Id }
+        $members = Get-GroupMemberId $gid
+        if ($members -contains $uid) {
+          $null = Invoke-Rest 'Post' ('_api/web/sitegroups/getbyid(' + $gid + ')/users/removebyid(' + $uid + ')') '{}'
+          $members = Get-GroupMemberId $gid
+        }
+        $still = $members -contains $uid
+        Add-Item 'c1-person' $(if (-not $still) { 'PASS' } else { 'FAIL' }) $(if (-not $still) { 'the second person is not in the Visitors group (state file deleted)' } else { 'the second person is still in the Visitors group (state file kept; run Clean again)' })
+        if (-not $still) { Remove-Item -LiteralPath (Join-Path $dir $StateName) -ErrorAction Stop }
+      } catch { Add-Item 'c1-person' 'FAIL' ('the second person could not be removed: ' + (Format-Detail ([string]$_.Exception.Message)) + ' (state file kept; run Clean again)') }
+    }
+    foreach ($o in @(@('c2-list', $ListTitle, $ListFolder), @('c3-library', $LibTitle, $LibFolder))) {
+      try {
+        $x = Find-ByFolder $o[2]
+        if (-not $x) { Add-Item $o[0] 'PASS' ('"' + $o[1] + '" was not on the site (nothing to remove)'); continue }
+        Remove-PnPList -Identity ([string]$x.Id) -Recycle -Force -ErrorAction Stop
+        $still = Find-ByFolder $o[2]
+        Add-Item $o[0] $(if (-not $still) { 'PASS' } else { 'FAIL' }) ('"' + $o[1] + '" ' + $(if (-not $still) { 'moved to the site Recycle Bin (restorable for 93 days)' } else { 'is still on the site' }))
+      } catch { Add-Item $o[0] 'FAIL' ('"' + $o[1] + '" could not be removed: ' + (Format-Detail ([string]$_.Exception.Message)) + ' (run Clean again)') }
+    }
+    $lines.Add('NOTE by hand: delete the solution "90-161.Z probe" (Power Automate, Solutions). This script does not touch it')
+  }
+  try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
+  }
+  $lines.Add('PROBE ' + $Part + ' done: passed=' + $passed + ' failed=' + $failed)
+} catch {
+  $fatal = $true
+  $m = ConvertTo-Masked (Hide-Site ([string]$_) $site) $secret
+  $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(400, $m.Length)) + ' (a part that stopped can be run again: Make skips what is there, Clean finishes what is left)')
+  $lines.Add('PROBE ' + $Part + ' done: passed=' + $passed + ' failed=' + $failed)
+} finally {
+  $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
+  if ($dir -and $Part -and $Part -ne 'Open') { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T21-probe-' + $Part.ToLowerInvariant() + '-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  $masked | ForEach-Object { Write-Host $_ }
+  if (-not $NoPause -and -not $env:RADE_CONTRACT) { [void](Read-Host 'Press Enter to close') }
+}
+if ($fatal) { exit 1 }
+exit 0
+'@ }
+$files += @{ Dir = 'T21'; Name = '90161Z-T21-probe-r3.zip'; Kind = 'base64'; Sha = '954d1929acf1'; Data = @'
+UEsDBBQAAAAAAAAAIVzUeunyAgEAAAIBAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbO+7vzw/eG1sIHZlcnNpb249IjEuMCIgZW5j
+b2Rpbmc9InV0Zi04Ij8+PFR5cGVzIHhtbG5zPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvcGFja2FnZS8yMDA2
+L2NvbnRlbnQtdHlwZXMiPjxEZWZhdWx0IEV4dGVuc2lvbj0ieG1sIiBDb250ZW50VHlwZT0iYXBwbGljYXRpb24vb2N0ZXQtc3Ry
+ZWFtIiAvPjxEZWZhdWx0IEV4dGVuc2lvbj0ianNvbiIgQ29udGVudFR5cGU9ImFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbSIgLz48
+L1R5cGVzPlBLAwQUAAAAAAAAACFckS1VI/oJAAD6CQAASgAAAFdvcmtmbG93cy85MDE2MVpUMjFQcm9iZUJ1dHRvbnIxLTI2MDc5
+MERELUJFQ0EtNTIwNi04M0Y3LUU2QUFCNDBDODk0RS5qc29uew0KICAicHJvcGVydGllcyI6IHsNCiAgICAiY29ubmVjdGlvblJl
+ZmVyZW5jZXMiOiB7DQogICAgICAic2hhcmVkX3NoYXJlcG9pbnRvbmxpbmUiOiB7DQogICAgICAgICJydW50aW1lU291cmNlIjog
+ImVtYmVkZGVkIiwNCiAgICAgICAgImNvbm5lY3Rpb24iOiB7DQogICAgICAgICAgImNvbm5lY3Rpb25SZWZlcmVuY2VMb2dpY2Fs
+TmFtZSI6ICJwZm1fc2hhcmVkc2hhcmVwb2ludG9ubGluZV80ZjQwZjUiDQogICAgICAgIH0sDQogICAgICAgICJhcGkiOiB7DQog
+ICAgICAgICAgIm5hbWUiOiAic2hhcmVkX3NoYXJlcG9pbnRvbmxpbmUiDQogICAgICAgIH0NCiAgICAgIH0NCiAgICB9LA0KICAg
+ICJkZWZpbml0aW9uIjogew0KICAgICAgIiRzY2hlbWEiOiAiaHR0cHM6Ly9zY2hlbWEubWFuYWdlbWVudC5henVyZS5jb20vcHJv
+dmlkZXJzL01pY3Jvc29mdC5Mb2dpYy9zY2hlbWFzLzIwMTYtMDYtMDEvd29ya2Zsb3dkZWZpbml0aW9uLmpzb24jIiwNCiAgICAg
+ICJjb250ZW50VmVyc2lvbiI6ICIxLjAuMC4wIiwNCiAgICAgICJwYXJhbWV0ZXJzIjogew0KICAgICAgICAiJGNvbm5lY3Rpb25z
+Ijogew0KICAgICAgICAgICJkZWZhdWx0VmFsdWUiOiB7fSwNCiAgICAgICAgICAidHlwZSI6ICJPYmplY3QiDQogICAgICAgIH0s
+DQogICAgICAgICIkYXV0aGVudGljYXRpb24iOiB7DQogICAgICAgICAgImRlZmF1bHRWYWx1ZSI6IHt9LA0KICAgICAgICAgICJ0
+eXBlIjogIlNlY3VyZU9iamVjdCINCiAgICAgICAgfSwNCiAgICAgICAgIlNpdGUgVVJMIChwZm1fU2l0ZVVybCkiOiB7DQogICAg
+ICAgICAgImRlZmF1bHRWYWx1ZSI6ICIiLA0KICAgICAgICAgICJ0eXBlIjogIlN0cmluZyIsDQogICAgICAgICAgIm1ldGFkYXRh
+Ijogew0KICAgICAgICAgICAgInNjaGVtYU5hbWUiOiAicGZtX1NpdGVVcmwiDQogICAgICAgICAgfQ0KICAgICAgICB9DQogICAg
+ICB9LA0KICAgICAgInRyaWdnZXJzIjogew0KICAgICAgICAibWFudWFsIjogew0KICAgICAgICAgICJ0eXBlIjogIk9wZW5BcGlD
+b25uZWN0aW9uTm90aWZpY2F0aW9uIiwNCiAgICAgICAgICAiaW5wdXRzIjogew0KICAgICAgICAgICAgImhvc3QiOiB7DQogICAg
+ICAgICAgICAgICJhcGlJZCI6ICIvcHJvdmlkZXJzL01pY3Jvc29mdC5Qb3dlckFwcHMvYXBpcy9zaGFyZWRfc2hhcmVwb2ludG9u
+bGluZSIsDQogICAgICAgICAgICAgICJjb25uZWN0aW9uTmFtZSI6ICJzaGFyZWRfc2hhcmVwb2ludG9ubGluZSIsDQogICAgICAg
+ICAgICAgICJvcGVyYXRpb25JZCI6ICJPblNlbGVjdGVkSXRlbSINCiAgICAgICAgICAgIH0sDQogICAgICAgICAgICAicGFyYW1l
+dGVycyI6IHsNCiAgICAgICAgICAgICAgImRhdGFzZXQiOiAiQHBhcmFtZXRlcnMoJ1NpdGUgVVJMIChwZm1fU2l0ZVVybCknKSIs
+DQogICAgICAgICAgICAgICJ0YWJsZSI6ICI5MDE2MVogUHJvYmUiDQogICAgICAgICAgICB9LA0KICAgICAgICAgICAgImF1dGhl
+bnRpY2F0aW9uIjogIkBwYXJhbWV0ZXJzKCckYXV0aGVudGljYXRpb24nKSINCiAgICAgICAgICB9DQogICAgICAgIH0NCiAgICAg
+IH0sDQogICAgICAiYWN0aW9ucyI6IHsNCiAgICAgICAgIkJfcm93Ijogew0KICAgICAgICAgICJydW5BZnRlciI6IHt9LA0KICAg
+ICAgICAgICJ0eXBlIjogIk9wZW5BcGlDb25uZWN0aW9uIiwNCiAgICAgICAgICAiaW5wdXRzIjogew0KICAgICAgICAgICAgImhv
+c3QiOiB7DQogICAgICAgICAgICAgICJhcGlJZCI6ICIvcHJvdmlkZXJzL01pY3Jvc29mdC5Qb3dlckFwcHMvYXBpcy9zaGFyZWRf
+c2hhcmVwb2ludG9ubGluZSIsDQogICAgICAgICAgICAgICJjb25uZWN0aW9uTmFtZSI6ICJzaGFyZWRfc2hhcmVwb2ludG9ubGlu
+ZSIsDQogICAgICAgICAgICAgICJvcGVyYXRpb25JZCI6ICJQb3N0SXRlbSINCiAgICAgICAgICAgIH0sDQogICAgICAgICAgICAi
+cGFyYW1ldGVycyI6IHsNCiAgICAgICAgICAgICAgImRhdGFzZXQiOiAiQHBhcmFtZXRlcnMoJ1NpdGUgVVJMIChwZm1fU2l0ZVVy
+bCknKSIsDQogICAgICAgICAgICAgICJ0YWJsZSI6ICI5MDE2MVogUHJvYmUiLA0KICAgICAgICAgICAgICAiaXRlbS9UaXRsZSI6
+ICJSRVNVTFQiLA0KICAgICAgICAgICAgICAiaXRlbS9Qcm9iZVRlc3QiOiAiQlROIiwNCiAgICAgICAgICAgICAgIml0ZW0vUHJv
+YmVXYXkiOiAiYSIsDQogICAgICAgICAgICAgICJpdGVtL1Byb2JlUmVzdWx0IjogIlBBU1MiLA0KICAgICAgICAgICAgICAiaXRl
+bS9Qcm9iZURldGFpbCI6ICJAY29uY2F0KCd0aGUgdmlldyBidXR0b24gc3RhcnRlZCB0aGlzIGZsb3c7IHNlbGVjdGVkIGl0ZW0g
+SWQgcmVhZD0nLCBpZihlbXB0eShzdHJpbmcoY29hbGVzY2UodHJpZ2dlckJvZHkoKT9bJ0lEJ10sICcnKSkpLCAnbm8nLCAneWVz
+JykpIg0KICAgICAgICAgICAgfSwNCiAgICAgICAgICAgICJhdXRoZW50aWNhdGlvbiI6ICJAcGFyYW1ldGVycygnJGF1dGhlbnRp
+Y2F0aW9uJykiDQogICAgICAgICAgfQ0KICAgICAgICB9DQogICAgICB9DQogICAgfSwNCiAgICAidGVtcGxhdGVOYW1lIjogbnVs
+bA0KICB9LA0KICAic2NoZW1hVmVyc2lvbiI6ICIxLjAuMC4wIg0KfVBLAwQUAAAAAAAAACFcmqBQCS4cAAAuHAAASgAAAFdvcmtm
+bG93cy85MDE2MVpUMjFQcm9iZUhlYWx0aHIxLUI5OEVBQUEwLUUwODMtNTNCQi1BQTFGLThEMjJDNUJGRURDOS5qc29uew0KICAi
+cHJvcGVydGllcyI6IHsNCiAgICAiY29ubmVjdGlvblJlZmVyZW5jZXMiOiB7DQogICAgICAic2hhcmVkX3NoYXJlcG9pbnRvbmxp
+bmUiOiB7DQogICAgICAgICJydW50aW1lU291cmNlIjogImVtYmVkZGVkIiwNCiAgICAgICAgImNvbm5lY3Rpb24iOiB7DQogICAg
+ICAgICAgImNvbm5lY3Rpb25SZWZlcmVuY2VMb2dpY2FsTmFtZSI6ICJwZm1fc2hhcmVkc2hhcmVwb2ludG9ubGluZV80ZjQwZjUi
+DQogICAgICAgIH0sDQogICAgICAgICJhcGkiOiB7DQogICAgICAgICAgIm5hbWUiOiAic2hhcmVkX3NoYXJlcG9pbnRvbmxpbmUi
+DQogICAgICAgIH0NCiAgICAgIH0sDQogICAgICAic2hhcmVkX2Zsb3dtYW5hZ2VtZW50Ijogew0KICAgICAgICAicnVudGltZVNv
+dXJjZSI6ICJlbWJlZGRlZCIsDQogICAgICAgICJjb25uZWN0aW9uIjogew0KICAgICAgICAgICJjb25uZWN0aW9uUmVmZXJlbmNl
+TG9naWNhbE5hbWUiOiAicGZtX3NoYXJlZGZsb3dtYW5hZ2VtZW50XzQ4YjE2NSINCiAgICAgICAgfSwNCiAgICAgICAgImFwaSI6
+IHsNCiAgICAgICAgICAibmFtZSI6ICJzaGFyZWRfZmxvd21hbmFnZW1lbnQiDQogICAgICAgIH0NCiAgICAgIH0NCiAgICB9LA0K
+ICAgICJkZWZpbml0aW9uIjogew0KICAgICAgIiRzY2hlbWEiOiAiaHR0cHM6Ly9zY2hlbWEubWFuYWdlbWVudC5henVyZS5jb20v
+cHJvdmlkZXJzL01pY3Jvc29mdC5Mb2dpYy9zY2hlbWFzLzIwMTYtMDYtMDEvd29ya2Zsb3dkZWZpbml0aW9uLmpzb24jIiwNCiAg
+ICAgICJjb250ZW50VmVyc2lvbiI6ICIxLjAuMC4wIiwNCiAgICAgICJwYXJhbWV0ZXJzIjogew0KICAgICAgICAiJGNvbm5lY3Rp
+b25zIjogew0KICAgICAgICAgICJkZWZhdWx0VmFsdWUiOiB7fSwNCiAgICAgICAgICAidHlwZSI6ICJPYmplY3QiDQogICAgICAg
+IH0sDQogICAgICAgICIkYXV0aGVudGljYXRpb24iOiB7DQogICAgICAgICAgImRlZmF1bHRWYWx1ZSI6IHt9LA0KICAgICAgICAg
+ICJ0eXBlIjogIlNlY3VyZU9iamVjdCINCiAgICAgICAgfSwNCiAgICAgICAgIlNpdGUgVVJMIChwZm1fU2l0ZVVybCkiOiB7DQog
+ICAgICAgICAgImRlZmF1bHRWYWx1ZSI6ICIiLA0KICAgICAgICAgICJ0eXBlIjogIlN0cmluZyIsDQogICAgICAgICAgIm1ldGFk
+YXRhIjogew0KICAgICAgICAgICAgInNjaGVtYU5hbWUiOiAicGZtX1NpdGVVcmwiDQogICAgICAgICAgfQ0KICAgICAgICB9DQog
+ICAgICB9LA0KICAgICAgInRyaWdnZXJzIjogew0KICAgICAgICAiV2hlbl9hbl9pdGVtX2lzX2NyZWF0ZWQiOiB7DQogICAgICAg
+ICAgInR5cGUiOiAiT3BlbkFwaUNvbm5lY3Rpb24iLA0KICAgICAgICAgICJyZWN1cnJlbmNlIjogew0KICAgICAgICAgICAgImZy
+ZXF1ZW5jeSI6ICJNaW51dGUiLA0KICAgICAgICAgICAgImludGVydmFsIjogMQ0KICAgICAgICAgIH0sDQogICAgICAgICAgInNw
+bGl0T24iOiAiQHRyaWdnZXJPdXRwdXRzKCk/Wydib2R5L3ZhbHVlJ10iLA0KICAgICAgICAgICJjb25kaXRpb25zIjogWw0KICAg
+ICAgICAgICAgew0KICAgICAgICAgICAgICAiZXhwcmVzc2lvbiI6ICJAc3RhcnRzV2l0aCh0cmlnZ2VyQm9keSgpP1snVGl0bGUn
+XSwnUlVOLUhFQUxUSCcpIg0KICAgICAgICAgICAgfQ0KICAgICAgICAgIF0sDQogICAgICAgICAgImlucHV0cyI6IHsNCiAgICAg
+ICAgICAgICJob3N0Ijogew0KICAgICAgICAgICAgICAiYXBpSWQiOiAiL3Byb3ZpZGVycy9NaWNyb3NvZnQuUG93ZXJBcHBzL2Fw
+aXMvc2hhcmVkX3NoYXJlcG9pbnRvbmxpbmUiLA0KICAgICAgICAgICAgICAiY29ubmVjdGlvbk5hbWUiOiAic2hhcmVkX3NoYXJl
+cG9pbnRvbmxpbmUiLA0KICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiR2V0T25OZXdJdGVtcyINCiAgICAgICAgICAgIH0s
+DQogICAgICAgICAgICAicGFyYW1ldGVycyI6IHsNCiAgICAgICAgICAgICAgImRhdGFzZXQiOiAiQHBhcmFtZXRlcnMoJ1NpdGUg
+VVJMIChwZm1fU2l0ZVVybCknKSIsDQogICAgICAgICAgICAgICJ0YWJsZSI6ICI5MDE2MVogUHJvYmUiDQogICAgICAgICAgICB9
+LA0KICAgICAgICAgICAgImF1dGhlbnRpY2F0aW9uIjogIkBwYXJhbWV0ZXJzKCckYXV0aGVudGljYXRpb24nKSINCiAgICAgICAg
+ICB9DQogICAgICAgIH0NCiAgICAgIH0sDQogICAgICAiYWN0aW9ucyI6IHsNCiAgICAgICAgIkhfaW5pdCI6IHsNCiAgICAgICAg
+ICAicnVuQWZ0ZXIiOiB7fSwNCiAgICAgICAgICAidHlwZSI6ICJJbml0aWFsaXplVmFyaWFibGUiLA0KICAgICAgICAgICJpbnB1
+dHMiOiB7DQogICAgICAgICAgICAidmFyaWFibGVzIjogWw0KICAgICAgICAgICAgICB7DQogICAgICAgICAgICAgICAgIm5hbWUi
+OiAiU3RhdGVzIiwNCiAgICAgICAgICAgICAgICAidHlwZSI6ICJhcnJheSIsDQogICAgICAgICAgICAgICAgInZhbHVlIjogW10N
+CiAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgXQ0KICAgICAgICAgIH0NCiAgICAgICAgfSwNCiAgICAgICAgIkhfbGlzdCI6
+IHsNCiAgICAgICAgICAicnVuQWZ0ZXIiOiB7DQogICAgICAgICAgICAiSF9pbml0IjogWw0KICAgICAgICAgICAgICAiU3VjY2Vl
+ZGVkIg0KICAgICAgICAgICAgXQ0KICAgICAgICAgIH0sDQogICAgICAgICAgInR5cGUiOiAiT3BlbkFwaUNvbm5lY3Rpb24iLA0K
+ICAgICAgICAgICJpbnB1dHMiOiB7DQogICAgICAgICAgICAiaG9zdCI6IHsNCiAgICAgICAgICAgICAgImFwaUlkIjogIi9wcm92
+aWRlcnMvTWljcm9zb2Z0LlBvd2VyQXBwcy9hcGlzL3NoYXJlZF9mbG93bWFuYWdlbWVudCIsDQogICAgICAgICAgICAgICJjb25u
+ZWN0aW9uTmFtZSI6ICJzaGFyZWRfZmxvd21hbmFnZW1lbnQiLA0KICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiTGlzdE15
+Rmxvd3MiDQogICAgICAgICAgICB9LA0KICAgICAgICAgICAgInBhcmFtZXRlcnMiOiB7DQogICAgICAgICAgICAgICJlbnZpcm9u
+bWVudE5hbWUiOiAiQHdvcmtmbG93KCk/Wyd0YWdzJ10/WydlbnZpcm9ubWVudE5hbWUnXSINCiAgICAgICAgICAgIH0sDQogICAg
+ICAgICAgICAiYXV0aGVudGljYXRpb24iOiAiQHBhcmFtZXRlcnMoJyRhdXRoZW50aWNhdGlvbicpIg0KICAgICAgICAgIH0NCiAg
+ICAgICAgfSwNCiAgICAgICAgIkhfcHJvYmUiOiB7DQogICAgICAgICAgInJ1bkFmdGVyIjogew0KICAgICAgICAgICAgIkhfbGlz
+dCI6IFsNCiAgICAgICAgICAgICAgIlN1Y2NlZWRlZCINCiAgICAgICAgICAgIF0NCiAgICAgICAgICB9LA0KICAgICAgICAgICJ0
+eXBlIjogIlF1ZXJ5IiwNCiAgICAgICAgICAiaW5wdXRzIjogew0KICAgICAgICAgICAgImZyb20iOiAiQGNvYWxlc2NlKGJvZHko
+J0hfbGlzdCcpP1sndmFsdWUnXSwganNvbignW10nKSkiLA0KICAgICAgICAgICAgIndoZXJlIjogIkBzdGFydHNXaXRoKGNvYWxl
+c2NlKGl0ZW0oKT9bJ3Byb3BlcnRpZXMnXT9bJ2Rpc3BsYXlOYW1lJ10sIGl0ZW0oKT9bJ2Rpc3BsYXlOYW1lJ10sICcnKSwgJzkw
+MTYxWiBUMjEgUHJvYmUnKSINCiAgICAgICAgICB9DQogICAgICAgIH0sDQogICAgICAgICJIX2VhY2giOiB7DQogICAgICAgICAg
+InJ1bkFmdGVyIjogew0KICAgICAgICAgICAgIkhfcHJvYmUiOiBbDQogICAgICAgICAgICAgICJTdWNjZWVkZWQiDQogICAgICAg
+ICAgICBdDQogICAgICAgICAgfSwNCiAgICAgICAgICAidHlwZSI6ICJGb3JlYWNoIiwNCiAgICAgICAgICAiZm9yZWFjaCI6ICJA
+Ym9keSgnSF9wcm9iZScpIiwNCiAgICAgICAgICAicnVudGltZUNvbmZpZ3VyYXRpb24iOiB7DQogICAgICAgICAgICAiY29uY3Vy
+cmVuY3kiOiB7DQogICAgICAgICAgICAgICJyZXBldGl0aW9ucyI6IDENCiAgICAgICAgICAgIH0NCiAgICAgICAgICB9LA0KICAg
+ICAgICAgICJhY3Rpb25zIjogew0KICAgICAgICAgICAgIkhfcnVucyI6IHsNCiAgICAgICAgICAgICAgInJ1bkFmdGVyIjoge30s
+DQogICAgICAgICAgICAgICJ0eXBlIjogIk9wZW5BcGlDb25uZWN0aW9uIiwNCiAgICAgICAgICAgICAgImlucHV0cyI6IHsNCiAg
+ICAgICAgICAgICAgICAiaG9zdCI6IHsNCiAgICAgICAgICAgICAgICAgICJhcGlJZCI6ICIvcHJvdmlkZXJzL01pY3Jvc29mdC5Q
+b3dlckFwcHMvYXBpcy9zaGFyZWRfZmxvd21hbmFnZW1lbnQiLA0KICAgICAgICAgICAgICAgICAgImNvbm5lY3Rpb25OYW1lIjog
+InNoYXJlZF9mbG93bWFuYWdlbWVudCIsDQogICAgICAgICAgICAgICAgICAib3BlcmF0aW9uSWQiOiAiTGlzdEZsb3dSdW5zIg0K
+ICAgICAgICAgICAgICAgIH0sDQogICAgICAgICAgICAgICAgInBhcmFtZXRlcnMiOiB7DQogICAgICAgICAgICAgICAgICAiZW52
+aXJvbm1lbnROYW1lIjogIkB3b3JrZmxvdygpP1sndGFncyddP1snZW52aXJvbm1lbnROYW1lJ10iLA0KICAgICAgICAgICAgICAg
+ICAgImZsb3dOYW1lIjogIkBpdGVtKCk/WyduYW1lJ10iLA0KICAgICAgICAgICAgICAgICAgIiR0b3AiOiAxDQogICAgICAgICAg
+ICAgICAgfSwNCiAgICAgICAgICAgICAgICAiYXV0aGVudGljYXRpb24iOiAiQHBhcmFtZXRlcnMoJyRhdXRoZW50aWNhdGlvbicp
+Ig0KICAgICAgICAgICAgICB9DQogICAgICAgICAgICB9LA0KICAgICAgICAgICAgIkhfYXBwZW5kIjogew0KICAgICAgICAgICAg
+ICAicnVuQWZ0ZXIiOiB7DQogICAgICAgICAgICAgICAgIkhfcnVucyI6IFsNCiAgICAgICAgICAgICAgICAgICJTdWNjZWVkZWQi
+LA0KICAgICAgICAgICAgICAgICAgIkZhaWxlZCIsDQogICAgICAgICAgICAgICAgICAiU2tpcHBlZCIsDQogICAgICAgICAgICAg
+ICAgICAiVGltZWRPdXQiDQogICAgICAgICAgICAgICAgXQ0KICAgICAgICAgICAgICB9LA0KICAgICAgICAgICAgICAidHlwZSI6
+ICJBcHBlbmRUb0FycmF5VmFyaWFibGUiLA0KICAgICAgICAgICAgICAiaW5wdXRzIjogew0KICAgICAgICAgICAgICAgICJuYW1l
+IjogIlN0YXRlcyIsDQogICAgICAgICAgICAgICAgInZhbHVlIjogIkBjb2FsZXNjZShmaXJzdChjb2FsZXNjZShhY3Rpb25zKCdI
+X3J1bnMnKT9bJ291dHB1dHMnXT9bJ2JvZHknXT9bJ3ZhbHVlJ10sIGpzb24oJ1tdJykpKT9bJ3Byb3BlcnRpZXMnXT9bJ3N0YXR1
+cyddLCAndW5yZWFkJykiDQogICAgICAgICAgICAgIH0NCiAgICAgICAgICAgIH0NCiAgICAgICAgICB9DQogICAgICAgIH0sDQog
+ICAgICAgICJIX2ZhaWxlZCI6IHsNCiAgICAgICAgICAicnVuQWZ0ZXIiOiB7DQogICAgICAgICAgICAiSF9lYWNoIjogWw0KICAg
+ICAgICAgICAgICAiU3VjY2VlZGVkIiwNCiAgICAgICAgICAgICAgIkZhaWxlZCIsDQogICAgICAgICAgICAgICJTa2lwcGVkIiwN
+CiAgICAgICAgICAgICAgIlRpbWVkT3V0Ig0KICAgICAgICAgICAgXQ0KICAgICAgICAgIH0sDQogICAgICAgICAgInR5cGUiOiAi
+UXVlcnkiLA0KICAgICAgICAgICJpbnB1dHMiOiB7DQogICAgICAgICAgICAiZnJvbSI6ICJAdmFyaWFibGVzKCdTdGF0ZXMnKSIs
+DQogICAgICAgICAgICAid2hlcmUiOiAiQGVxdWFscyhpdGVtKCksICdGYWlsZWQnKSINCiAgICAgICAgICB9DQogICAgICAgIH0s
+DQogICAgICAgICJIX3JvdyI6IHsNCiAgICAgICAgICAicnVuQWZ0ZXIiOiB7DQogICAgICAgICAgICAiSF9mYWlsZWQiOiBbDQog
+ICAgICAgICAgICAgICJTdWNjZWVkZWQiLA0KICAgICAgICAgICAgICAiRmFpbGVkIiwNCiAgICAgICAgICAgICAgIlNraXBwZWQi
+LA0KICAgICAgICAgICAgICAiVGltZWRPdXQiDQogICAgICAgICAgICBdDQogICAgICAgICAgfSwNCiAgICAgICAgICAidHlwZSI6
+ICJPcGVuQXBpQ29ubmVjdGlvbiIsDQogICAgICAgICAgImlucHV0cyI6IHsNCiAgICAgICAgICAgICJob3N0Ijogew0KICAgICAg
+ICAgICAgICAiYXBpSWQiOiAiL3Byb3ZpZGVycy9NaWNyb3NvZnQuUG93ZXJBcHBzL2FwaXMvc2hhcmVkX3NoYXJlcG9pbnRvbmxp
+bmUiLA0KICAgICAgICAgICAgICAiY29ubmVjdGlvbk5hbWUiOiAic2hhcmVkX3NoYXJlcG9pbnRvbmxpbmUiLA0KICAgICAgICAg
+ICAgICAib3BlcmF0aW9uSWQiOiAiUG9zdEl0ZW0iDQogICAgICAgICAgICB9LA0KICAgICAgICAgICAgInBhcmFtZXRlcnMiOiB7
+DQogICAgICAgICAgICAgICJkYXRhc2V0IjogIkBwYXJhbWV0ZXJzKCdTaXRlIFVSTCAocGZtX1NpdGVVcmwpJykiLA0KICAgICAg
+ICAgICAgICAidGFibGUiOiAiOTAxNjFaIFByb2JlIiwNCiAgICAgICAgICAgICAgIml0ZW0vVGl0bGUiOiAiUkVTVUxUIiwNCiAg
+ICAgICAgICAgICAgIml0ZW0vUHJvYmVUZXN0IjogIkhFQUxUSCIsDQogICAgICAgICAgICAgICJpdGVtL1Byb2JlV2F5IjogImEi
+LA0KICAgICAgICAgICAgICAiaXRlbS9Qcm9iZVJlc3VsdCI6ICJAaWYoYW5kKGVxdWFscyhhY3Rpb25zKCdIX2xpc3QnKT9bJ3N0
+YXR1cyddLCAnU3VjY2VlZGVkJyksIGVxdWFscyhhY3Rpb25zKCdIX2VhY2gnKT9bJ3N0YXR1cyddLCAnU3VjY2VlZGVkJyksIGdy
+ZWF0ZXIobGVuZ3RoKGNvYWxlc2NlKGFjdGlvbnMoJ0hfcHJvYmUnKT9bJ291dHB1dHMnXT9bJ2JvZHknXSwganNvbignW10nKSkp
+LCAwKSksICdQQVNTJywgJ0ZBSUwnKSIsDQogICAgICAgICAgICAgICJpdGVtL1Byb2JlRGV0YWlsIjogIkBjb25jYXQoJ293biBm
+bG93cyByZWFkPScsIHN0cmluZyhsZW5ndGgoY29hbGVzY2UoYWN0aW9ucygnSF9saXN0Jyk/WydvdXRwdXRzJ10/Wydib2R5J10/
+Wyd2YWx1ZSddLCBqc29uKCdbXScpKSkpLCAnOyBwcm9iZSBmbG93cz0nLCBzdHJpbmcobGVuZ3RoKGNvYWxlc2NlKGFjdGlvbnMo
+J0hfcHJvYmUnKT9bJ291dHB1dHMnXT9bJ2JvZHknXSwganNvbignW10nKSkpKSwgJzsgbGFzdCBydW5zIHJlYWQ9Jywgc3RyaW5n
+KGxlbmd0aCh2YXJpYWJsZXMoJ1N0YXRlcycpKSksICc7IGxhc3QgcnVuIGZhaWxlZD0nLCBzdHJpbmcobGVuZ3RoKGNvYWxlc2Nl
+KGFjdGlvbnMoJ0hfZmFpbGVkJyk/WydvdXRwdXRzJ10/Wydib2R5J10sIGpzb24oJ1tdJykpKSksICc7IHN0YXR1cz0nLCBpZihl
+cXVhbHMoYWN0aW9ucygnSF9saXN0Jyk/WydvdXRwdXRzJ10/WydzdGF0dXNDb2RlJ10sIG51bGwpLCAnbm9uZScsIHN0cmluZyhh
+Y3Rpb25zKCdIX2xpc3QnKT9bJ291dHB1dHMnXT9bJ3N0YXR1c0NvZGUnXSkpKSINCiAgICAgICAgICAgIH0sDQogICAgICAgICAg
+ICAiYXV0aGVudGljYXRpb24iOiAiQHBhcmFtZXRlcnMoJyRhdXRoZW50aWNhdGlvbicpIg0KICAgICAgICAgIH0NCiAgICAgICAg
+fQ0KICAgICAgfQ0KICAgIH0sDQogICAgInRlbXBsYXRlTmFtZSI6IG51bGwNCiAgfSwNCiAgInNjaGVtYVZlcnNpb24iOiAiMS4w
+LjAuMCINCn1QSwMEFAAAAAAAAAAhXM8WWFBLDwAASw8AABIAAABjdXN0b21pemF0aW9ucy54bWw8SW1wb3J0RXhwb3J0WG1sIHht
+bG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiIE9yZ2FuaXphdGlvblZlcnNpb249Ijku
+Mi4yNjEwMS4xODgiIE9yZ2FuaXphdGlvblNjaGVtYVR5cGU9IlN0YW5kYXJkIiBDUk1TZXJ2ZXJTZXJ2aWNlYWJpbGl0eVZlcnNp
+b249IjkuMi4yNjEwMS4wMDE4OCI+DQogIDxFbnRpdGllcz48L0VudGl0aWVzPg0KICA8Um9sZXM+PC9Sb2xlcz4NCiAgPFdvcmtm
+bG93cz4NCiAgICA8V29ya2Zsb3cgV29ya2Zsb3dJZD0iezI2MDc5MGRkLWJlY2EtNTIwNi04M2Y3LWU2YWFiNDBjODk0ZX0iIE5h
+bWU9IjkwMTYxWiBUMjEgUHJvYmUgQnV0dG9uIHIxIj4NCiAgICAgIDxKc29uRmlsZU5hbWU+L1dvcmtmbG93cy85MDE2MVpUMjFQ
+cm9iZUJ1dHRvbnIxLTI2MDc5MERELUJFQ0EtNTIwNi04M0Y3LUU2QUFCNDBDODk0RS5qc29uPC9Kc29uRmlsZU5hbWU+DQogICAg
+ICA8VHlwZT4xPC9UeXBlPg0KICAgICAgPFN1YnByb2Nlc3M+MDwvU3VicHJvY2Vzcz4NCiAgICAgIDxDYXRlZ29yeT41PC9DYXRl
+Z29yeT4NCiAgICAgIDxNb2RlPjA8L01vZGU+DQogICAgICA8U2NvcGU+NDwvU2NvcGU+DQogICAgICA8T25EZW1hbmQ+MDwvT25E
+ZW1hbmQ+DQogICAgICA8VHJpZ2dlck9uQ3JlYXRlPjA8L1RyaWdnZXJPbkNyZWF0ZT4NCiAgICAgIDxUcmlnZ2VyT25EZWxldGU+
+MDwvVHJpZ2dlck9uRGVsZXRlPg0KICAgICAgPEFzeW5jQXV0b2RlbGV0ZT4wPC9Bc3luY0F1dG9kZWxldGU+DQogICAgICA8U3lu
+Y1dvcmtmbG93TG9nT25GYWlsdXJlPjA8L1N5bmNXb3JrZmxvd0xvZ09uRmFpbHVyZT4NCiAgICAgIDxTdGF0ZUNvZGU+MTwvU3Rh
+dGVDb2RlPg0KICAgICAgPFN0YXR1c0NvZGU+MjwvU3RhdHVzQ29kZT4NCiAgICAgIDxSdW5Bcz4xPC9SdW5Bcz4NCiAgICAgIDxJ
+c1RyYW5zYWN0ZWQ+MTwvSXNUcmFuc2FjdGVkPg0KICAgICAgPEludHJvZHVjZWRWZXJzaW9uPjEuMC4wLjA8L0ludHJvZHVjZWRW
+ZXJzaW9uPg0KICAgICAgPElzQ3VzdG9taXphYmxlPjE8L0lzQ3VzdG9taXphYmxlPg0KICAgICAgPEJ1c2luZXNzUHJvY2Vzc1R5
+cGU+MDwvQnVzaW5lc3NQcm9jZXNzVHlwZT4NCiAgICAgIDxJc0N1c3RvbVByb2Nlc3NpbmdTdGVwQWxsb3dlZEZvck90aGVyUHVi
+bGlzaGVycz4xPC9Jc0N1c3RvbVByb2Nlc3NpbmdTdGVwQWxsb3dlZEZvck90aGVyUHVibGlzaGVycz4NCiAgICAgIDxNb2Rlcm5G
+bG93VHlwZT4wPC9Nb2Rlcm5GbG93VHlwZT4NCiAgICAgIDxQcmltYXJ5RW50aXR5Pm5vbmU8L1ByaW1hcnlFbnRpdHk+DQogICAg
+ICA8TG9jYWxpemVkTmFtZXM+DQogICAgICAgIDxMb2NhbGl6ZWROYW1lIGxhbmd1YWdlY29kZT0iMTAzMyIgZGVzY3JpcHRpb249
+IjkwMTYxWiBUMjEgUHJvYmUgQnV0dG9uIHIxIiAvPg0KICAgICAgPC9Mb2NhbGl6ZWROYW1lcz4NCiAgICA8L1dvcmtmbG93Pg0K
+ICAgIDxXb3JrZmxvdyBXb3JrZmxvd0lkPSJ7Yjk4ZWFhYTAtZTA4My01M2JiLWFhMWYtOGQyMmM1YmZlZGM5fSIgTmFtZT0iOTAx
+NjFaIFQyMSBQcm9iZSBIZWFsdGggcjEiPg0KICAgICAgPEpzb25GaWxlTmFtZT4vV29ya2Zsb3dzLzkwMTYxWlQyMVByb2JlSGVh
+bHRocjEtQjk4RUFBQTAtRTA4My01M0JCLUFBMUYtOEQyMkM1QkZFREM5Lmpzb248L0pzb25GaWxlTmFtZT4NCiAgICAgIDxUeXBl
+PjE8L1R5cGU+DQogICAgICA8U3VicHJvY2Vzcz4wPC9TdWJwcm9jZXNzPg0KICAgICAgPENhdGVnb3J5PjU8L0NhdGVnb3J5Pg0K
+ICAgICAgPE1vZGU+MDwvTW9kZT4NCiAgICAgIDxTY29wZT40PC9TY29wZT4NCiAgICAgIDxPbkRlbWFuZD4wPC9PbkRlbWFuZD4N
+CiAgICAgIDxUcmlnZ2VyT25DcmVhdGU+MDwvVHJpZ2dlck9uQ3JlYXRlPg0KICAgICAgPFRyaWdnZXJPbkRlbGV0ZT4wPC9Ucmln
+Z2VyT25EZWxldGU+DQogICAgICA8QXN5bmNBdXRvZGVsZXRlPjA8L0FzeW5jQXV0b2RlbGV0ZT4NCiAgICAgIDxTeW5jV29ya2Zs
+b3dMb2dPbkZhaWx1cmU+MDwvU3luY1dvcmtmbG93TG9nT25GYWlsdXJlPg0KICAgICAgPFN0YXRlQ29kZT4xPC9TdGF0ZUNvZGU+
+DQogICAgICA8U3RhdHVzQ29kZT4yPC9TdGF0dXNDb2RlPg0KICAgICAgPFJ1bkFzPjE8L1J1bkFzPg0KICAgICAgPElzVHJhbnNh
+Y3RlZD4xPC9Jc1RyYW5zYWN0ZWQ+DQogICAgICA8SW50cm9kdWNlZFZlcnNpb24+MS4wLjAuMDwvSW50cm9kdWNlZFZlcnNpb24+
+DQogICAgICA8SXNDdXN0b21pemFibGU+MTwvSXNDdXN0b21pemFibGU+DQogICAgICA8QnVzaW5lc3NQcm9jZXNzVHlwZT4wPC9C
+dXNpbmVzc1Byb2Nlc3NUeXBlPg0KICAgICAgPElzQ3VzdG9tUHJvY2Vzc2luZ1N0ZXBBbGxvd2VkRm9yT3RoZXJQdWJsaXNoZXJz
+PjE8L0lzQ3VzdG9tUHJvY2Vzc2luZ1N0ZXBBbGxvd2VkRm9yT3RoZXJQdWJsaXNoZXJzPg0KICAgICAgPE1vZGVybkZsb3dUeXBl
+PjA8L01vZGVybkZsb3dUeXBlPg0KICAgICAgPFByaW1hcnlFbnRpdHk+bm9uZTwvUHJpbWFyeUVudGl0eT4NCiAgICAgIDxMb2Nh
+bGl6ZWROYW1lcz4NCiAgICAgICAgPExvY2FsaXplZE5hbWUgbGFuZ3VhZ2Vjb2RlPSIxMDMzIiBkZXNjcmlwdGlvbj0iOTAxNjFa
+IFQyMSBQcm9iZSBIZWFsdGggcjEiIC8+DQogICAgICA8L0xvY2FsaXplZE5hbWVzPg0KICAgIDwvV29ya2Zsb3c+DQogIDwvV29y
+a2Zsb3dzPg0KICA8RmllbGRTZWN1cml0eVByb2ZpbGVzPjwvRmllbGRTZWN1cml0eVByb2ZpbGVzPg0KICA8VGVtcGxhdGVzIC8+
+DQogIDxFbnRpdHlNYXBzIC8+DQogIDxFbnRpdHlSZWxhdGlvbnNoaXBzIC8+DQogIDxPcmdhbml6YXRpb25TZXR0aW5ncyAvPg0K
+ICA8b3B0aW9uc2V0cyAvPg0KICA8Q3VzdG9tQ29udHJvbHMgLz4NCiAgPEVudGl0eURhdGFQcm92aWRlcnMgLz4NCiAgPGNvbm5l
+Y3Rpb25yZWZlcmVuY2VzPg0KICAgIDxjb25uZWN0aW9ucmVmZXJlbmNlIGNvbm5lY3Rpb25yZWZlcmVuY2Vsb2dpY2FsbmFtZT0i
+cGZtX3NoYXJlZGZsb3dtYW5hZ2VtZW50XzQ4YjE2NSI+DQogICAgICA8Y29ubmVjdGlvbnJlZmVyZW5jZWRpc3BsYXluYW1lPlBv
+d2VyIEF1dG9tYXRlIE1hbmFnZW1lbnQ8L2Nvbm5lY3Rpb25yZWZlcmVuY2VkaXNwbGF5bmFtZT4NCiAgICAgIDxjb25uZWN0b3Jp
+ZD4vcHJvdmlkZXJzL01pY3Jvc29mdC5Qb3dlckFwcHMvYXBpcy9zaGFyZWRfZmxvd21hbmFnZW1lbnQ8L2Nvbm5lY3RvcmlkPg0K
+ICAgICAgPGlzY3VzdG9taXphYmxlPjE8L2lzY3VzdG9taXphYmxlPg0KICAgICAgPHByb21wdGluZ2JlaGF2aW9yPjA8L3Byb21w
+dGluZ2JlaGF2aW9yPg0KICAgICAgPHN0YXRlY29kZT4wPC9zdGF0ZWNvZGU+DQogICAgICA8c3RhdHVzY29kZT4xPC9zdGF0dXNj
+b2RlPg0KICAgIDwvY29ubmVjdGlvbnJlZmVyZW5jZT4NCiAgICA8Y29ubmVjdGlvbnJlZmVyZW5jZSBjb25uZWN0aW9ucmVmZXJl
+bmNlbG9naWNhbG5hbWU9InBmbV9zaGFyZWRzaGFyZXBvaW50b25saW5lXzRmNDBmNSI+DQogICAgICA8Y29ubmVjdGlvbnJlZmVy
+ZW5jZWRpc3BsYXluYW1lPlNoYXJlUG9pbnQ8L2Nvbm5lY3Rpb25yZWZlcmVuY2VkaXNwbGF5bmFtZT4NCiAgICAgIDxjb25uZWN0
+b3JpZD4vcHJvdmlkZXJzL01pY3Jvc29mdC5Qb3dlckFwcHMvYXBpcy9zaGFyZWRfc2hhcmVwb2ludG9ubGluZTwvY29ubmVjdG9y
+aWQ+DQogICAgICA8aXNjdXN0b21pemFibGU+MTwvaXNjdXN0b21pemFibGU+DQogICAgICA8cHJvbXB0aW5nYmVoYXZpb3I+MDwv
+cHJvbXB0aW5nYmVoYXZpb3I+DQogICAgICA8c3RhdGVjb2RlPjA8L3N0YXRlY29kZT4NCiAgICAgIDxzdGF0dXNjb2RlPjE8L3N0
+YXR1c2NvZGU+DQogICAgPC9jb25uZWN0aW9ucmVmZXJlbmNlPg0KICA8L2Nvbm5lY3Rpb25yZWZlcmVuY2VzPg0KICA8TGFuZ3Vh
+Z2VzPg0KICAgIDxMYW5ndWFnZT4xMDMzPC9MYW5ndWFnZT4NCiAgPC9MYW5ndWFnZXM+DQo8L0ltcG9ydEV4cG9ydFhtbD5QSwME
+FAAAAAAAAAAhXPe6w2WCAQAAggEAAEwAAABlbnZpcm9ubWVudHZhcmlhYmxlZGVmaW5pdGlvbnMvcGZtX1NpdGVVcmwvZW52aXJv
+bm1lbnR2YXJpYWJsZWRlZmluaXRpb24ueG1sPGVudmlyb25tZW50dmFyaWFibGVkZWZpbml0aW9uIHNjaGVtYW5hbWU9InBmbV9T
+aXRlVXJsIj4KICA8ZGlzcGxheW5hbWUgZGVmYXVsdD0iMSBTaXRlIFVSTCAoZW50ZXIpIj4KICAgIDxsYWJlbCBkZXNjcmlwdGlv
+bj0iMSBTaXRlIFVSTCAoZW50ZXIpIiBsYW5ndWFnZWNvZGU9IjEwMzMiIC8+CiAgPC9kaXNwbGF5bmFtZT4KICA8aW50cm9kdWNl
+ZHZlcnNpb24+MS4wPC9pbnRyb2R1Y2VkdmVyc2lvbj4KICA8aXNjdXN0b21pemFibGU+MTwvaXNjdXN0b21pemFibGU+CiAgPGlz
+cmVxdWlyZWQ+MTwvaXNyZXF1aXJlZD4KICA8c2VjcmV0c3RvcmU+MDwvc2VjcmV0c3RvcmU+CiAgPHR5cGU+MTAwMDAwMDAwPC90
+eXBlPgo8L2Vudmlyb25tZW50dmFyaWFibGVkZWZpbml0aW9uPgpQSwMEFAAAAAAAAAAhXHvTlXKZEAAAmRAAAAwAAABzb2x1dGlv
+bi54bWw8SW1wb3J0RXhwb3J0WG1sIHZlcnNpb249IjkuMi4yNjEwMS4xODgiIFNvbHV0aW9uUGFja2FnZVZlcnNpb249IjkuMiIg
+bGFuZ3VhZ2Vjb2RlPSIxMDMzIiBnZW5lcmF0ZWRCeT0iQ3JtTGl2ZSIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAx
+L1hNTFNjaGVtYS1pbnN0YW5jZSIgT3JnYW5pemF0aW9uVmVyc2lvbj0iOS4yLjI2MTAxLjE4OCIgT3JnYW5pemF0aW9uU2NoZW1h
+VHlwZT0iU3RhbmRhcmQiIENSTVNlcnZlclNlcnZpY2VhYmlsaXR5VmVyc2lvbj0iOS4yLjI2MTAxLjAwMTg4Ij4NCiAgPFNvbHV0
+aW9uTWFuaWZlc3Q+DQogICAgPFVuaXF1ZU5hbWU+UEZNOTAxNjFaVEVTVFA8L1VuaXF1ZU5hbWU+DQogICAgPExvY2FsaXplZE5h
+bWVzPg0KICAgICAgPExvY2FsaXplZE5hbWUgZGVzY3JpcHRpb249IjkwLTE2MS5aIHByb2JlIiBsYW5ndWFnZWNvZGU9IjEwMzMi
+IC8+DQogICAgPC9Mb2NhbGl6ZWROYW1lcz4NCiAgICA8RGVzY3JpcHRpb25zIC8+DQogICAgPFZlcnNpb24+MS4wLjAuMTwvVmVy
+c2lvbj4NCiAgICA8TWFuYWdlZD4wPC9NYW5hZ2VkPg0KICAgIDxQdWJsaXNoZXI+DQogICAgICA8VW5pcXVlTmFtZT5QRk08L1Vu
+aXF1ZU5hbWU+DQogICAgICA8TG9jYWxpemVkTmFtZXM+DQogICAgICAgIDxMb2NhbGl6ZWROYW1lIGRlc2NyaXB0aW9uPSI5MC0x
+NjEuWiIgbGFuZ3VhZ2Vjb2RlPSIxMDMzIiAvPg0KICAgICAgPC9Mb2NhbGl6ZWROYW1lcz4NCiAgICAgIDxEZXNjcmlwdGlvbnMg
+Lz4NCiAgICAgIDxFTWFpbEFkZHJlc3MgeHNpOm5pbD0idHJ1ZSI+PC9FTWFpbEFkZHJlc3M+DQogICAgICA8U3VwcG9ydGluZ1dl
+YnNpdGVVcmwgeHNpOm5pbD0idHJ1ZSI+PC9TdXBwb3J0aW5nV2Vic2l0ZVVybD4NCiAgICAgIDxDdXN0b21pemF0aW9uUHJlZml4
+PnBmbTwvQ3VzdG9taXphdGlvblByZWZpeD4NCiAgICAgIDxDdXN0b21pemF0aW9uT3B0aW9uVmFsdWVQcmVmaXg+ODkxMjc8L0N1
+c3RvbWl6YXRpb25PcHRpb25WYWx1ZVByZWZpeD4NCiAgICAgIDxBZGRyZXNzZXM+DQogICAgICAgIDxBZGRyZXNzPg0KICAgICAg
+ICAgIDxBZGRyZXNzTnVtYmVyPjE8L0FkZHJlc3NOdW1iZXI+DQogICAgICAgICAgPEFkZHJlc3NUeXBlQ29kZT4xPC9BZGRyZXNz
+VHlwZUNvZGU+DQogICAgICAgICAgPENpdHkgeHNpOm5pbD0idHJ1ZSI+PC9DaXR5Pg0KICAgICAgICAgIDxDb3VudHkgeHNpOm5p
+bD0idHJ1ZSI+PC9Db3VudHk+DQogICAgICAgICAgPENvdW50cnkgeHNpOm5pbD0idHJ1ZSI+PC9Db3VudHJ5Pg0KICAgICAgICAg
+IDxGYXggeHNpOm5pbD0idHJ1ZSI+PC9GYXg+DQogICAgICAgICAgPEZyZWlnaHRUZXJtc0NvZGUgeHNpOm5pbD0idHJ1ZSI+PC9G
+cmVpZ2h0VGVybXNDb2RlPg0KICAgICAgICAgIDxJbXBvcnRTZXF1ZW5jZU51bWJlciB4c2k6bmlsPSJ0cnVlIj48L0ltcG9ydFNl
+cXVlbmNlTnVtYmVyPg0KICAgICAgICAgIDxMYXRpdHVkZSB4c2k6bmlsPSJ0cnVlIj48L0xhdGl0dWRlPg0KICAgICAgICAgIDxM
+aW5lMSB4c2k6bmlsPSJ0cnVlIj48L0xpbmUxPg0KICAgICAgICAgIDxMaW5lMiB4c2k6bmlsPSJ0cnVlIj48L0xpbmUyPg0KICAg
+ICAgICAgIDxMaW5lMyB4c2k6bmlsPSJ0cnVlIj48L0xpbmUzPg0KICAgICAgICAgIDxMb25naXR1ZGUgeHNpOm5pbD0idHJ1ZSI+
+PC9Mb25naXR1ZGU+DQogICAgICAgICAgPE5hbWUgeHNpOm5pbD0idHJ1ZSI+PC9OYW1lPg0KICAgICAgICAgIDxQb3N0YWxDb2Rl
+IHhzaTpuaWw9InRydWUiPjwvUG9zdGFsQ29kZT4NCiAgICAgICAgICA8UG9zdE9mZmljZUJveCB4c2k6bmlsPSJ0cnVlIj48L1Bv
+c3RPZmZpY2VCb3g+DQogICAgICAgICAgPFByaW1hcnlDb250YWN0TmFtZSB4c2k6bmlsPSJ0cnVlIj48L1ByaW1hcnlDb250YWN0
+TmFtZT4NCiAgICAgICAgICA8U2hpcHBpbmdNZXRob2RDb2RlPjE8L1NoaXBwaW5nTWV0aG9kQ29kZT4NCiAgICAgICAgICA8U3Rh
+dGVPclByb3ZpbmNlIHhzaTpuaWw9InRydWUiPjwvU3RhdGVPclByb3ZpbmNlPg0KICAgICAgICAgIDxUZWxlcGhvbmUxIHhzaTpu
+aWw9InRydWUiPjwvVGVsZXBob25lMT4NCiAgICAgICAgICA8VGVsZXBob25lMiB4c2k6bmlsPSJ0cnVlIj48L1RlbGVwaG9uZTI+
+DQogICAgICAgICAgPFRlbGVwaG9uZTMgeHNpOm5pbD0idHJ1ZSI+PC9UZWxlcGhvbmUzPg0KICAgICAgICAgIDxUaW1lWm9uZVJ1
+bGVWZXJzaW9uTnVtYmVyIHhzaTpuaWw9InRydWUiPjwvVGltZVpvbmVSdWxlVmVyc2lvbk51bWJlcj4NCiAgICAgICAgICA8VVBT
+Wm9uZSB4c2k6bmlsPSJ0cnVlIj48L1VQU1pvbmU+DQogICAgICAgICAgPFVUQ09mZnNldCB4c2k6bmlsPSJ0cnVlIj48L1VUQ09m
+ZnNldD4NCiAgICAgICAgICA8VVRDQ29udmVyc2lvblRpbWVab25lQ29kZSB4c2k6bmlsPSJ0cnVlIj48L1VUQ0NvbnZlcnNpb25U
+aW1lWm9uZUNvZGU+DQogICAgICAgIDwvQWRkcmVzcz4NCiAgICAgICAgPEFkZHJlc3M+DQogICAgICAgICAgPEFkZHJlc3NOdW1i
+ZXI+MjwvQWRkcmVzc051bWJlcj4NCiAgICAgICAgICA8QWRkcmVzc1R5cGVDb2RlPjE8L0FkZHJlc3NUeXBlQ29kZT4NCiAgICAg
+ICAgICA8Q2l0eSB4c2k6bmlsPSJ0cnVlIj48L0NpdHk+DQogICAgICAgICAgPENvdW50eSB4c2k6bmlsPSJ0cnVlIj48L0NvdW50
+eT4NCiAgICAgICAgICA8Q291bnRyeSB4c2k6bmlsPSJ0cnVlIj48L0NvdW50cnk+DQogICAgICAgICAgPEZheCB4c2k6bmlsPSJ0
+cnVlIj48L0ZheD4NCiAgICAgICAgICA8RnJlaWdodFRlcm1zQ29kZSB4c2k6bmlsPSJ0cnVlIj48L0ZyZWlnaHRUZXJtc0NvZGU+
+DQogICAgICAgICAgPEltcG9ydFNlcXVlbmNlTnVtYmVyIHhzaTpuaWw9InRydWUiPjwvSW1wb3J0U2VxdWVuY2VOdW1iZXI+DQog
+ICAgICAgICAgPExhdGl0dWRlIHhzaTpuaWw9InRydWUiPjwvTGF0aXR1ZGU+DQogICAgICAgICAgPExpbmUxIHhzaTpuaWw9InRy
+dWUiPjwvTGluZTE+DQogICAgICAgICAgPExpbmUyIHhzaTpuaWw9InRydWUiPjwvTGluZTI+DQogICAgICAgICAgPExpbmUzIHhz
+aTpuaWw9InRydWUiPjwvTGluZTM+DQogICAgICAgICAgPExvbmdpdHVkZSB4c2k6bmlsPSJ0cnVlIj48L0xvbmdpdHVkZT4NCiAg
+ICAgICAgICA8TmFtZSB4c2k6bmlsPSJ0cnVlIj48L05hbWU+DQogICAgICAgICAgPFBvc3RhbENvZGUgeHNpOm5pbD0idHJ1ZSI+
+PC9Qb3N0YWxDb2RlPg0KICAgICAgICAgIDxQb3N0T2ZmaWNlQm94IHhzaTpuaWw9InRydWUiPjwvUG9zdE9mZmljZUJveD4NCiAg
+ICAgICAgICA8UHJpbWFyeUNvbnRhY3ROYW1lIHhzaTpuaWw9InRydWUiPjwvUHJpbWFyeUNvbnRhY3ROYW1lPg0KICAgICAgICAg
+IDxTaGlwcGluZ01ldGhvZENvZGU+MTwvU2hpcHBpbmdNZXRob2RDb2RlPg0KICAgICAgICAgIDxTdGF0ZU9yUHJvdmluY2UgeHNp
+Om5pbD0idHJ1ZSI+PC9TdGF0ZU9yUHJvdmluY2U+DQogICAgICAgICAgPFRlbGVwaG9uZTEgeHNpOm5pbD0idHJ1ZSI+PC9UZWxl
+cGhvbmUxPg0KICAgICAgICAgIDxUZWxlcGhvbmUyIHhzaTpuaWw9InRydWUiPjwvVGVsZXBob25lMj4NCiAgICAgICAgICA8VGVs
+ZXBob25lMyB4c2k6bmlsPSJ0cnVlIj48L1RlbGVwaG9uZTM+DQogICAgICAgICAgPFRpbWVab25lUnVsZVZlcnNpb25OdW1iZXIg
+eHNpOm5pbD0idHJ1ZSI+PC9UaW1lWm9uZVJ1bGVWZXJzaW9uTnVtYmVyPg0KICAgICAgICAgIDxVUFNab25lIHhzaTpuaWw9InRy
+dWUiPjwvVVBTWm9uZT4NCiAgICAgICAgICA8VVRDT2Zmc2V0IHhzaTpuaWw9InRydWUiPjwvVVRDT2Zmc2V0Pg0KICAgICAgICAg
+IDxVVENDb252ZXJzaW9uVGltZVpvbmVDb2RlIHhzaTpuaWw9InRydWUiPjwvVVRDQ29udmVyc2lvblRpbWVab25lQ29kZT4NCiAg
+ICAgICAgPC9BZGRyZXNzPg0KICAgICAgPC9BZGRyZXNzZXM+DQogICAgPC9QdWJsaXNoZXI+DQogICAgPFJvb3RDb21wb25lbnRz
+Pg0KICAgICAgPFJvb3RDb21wb25lbnQgdHlwZT0iMjkiIGlkPSJ7MjYwNzkwZGQtYmVjYS01MjA2LTgzZjctZTZhYWI0MGM4OTRl
+fSIgYmVoYXZpb3I9IjAiIC8+DQogICAgICA8Um9vdENvbXBvbmVudCB0eXBlPSIyOSIgaWQ9IntiOThlYWFhMC1lMDgzLTUzYmIt
+YWExZi04ZDIyYzViZmVkYzl9IiBiZWhhdmlvcj0iMCIgLz4NCiAgICAgIDxSb290Q29tcG9uZW50IHR5cGU9IjM4MCIgc2NoZW1h
+TmFtZT0icGZtX1NpdGVVcmwiIGJlaGF2aW9yPSIwIiAvPg0KICAgIDwvUm9vdENvbXBvbmVudHM+DQogICAgPE1pc3NpbmdEZXBl
+bmRlbmNpZXMgLz4NCiAgPC9Tb2x1dGlvbk1hbmlmZXN0Pg0KPC9JbXBvcnRFeHBvcnRYbWw+UEsBAhQDFAAAAAAAAAAhXNR66fIC
+AQAAAgEAABMAAAAAAAAAAAAAAKQBAAAAAFtDb250ZW50X1R5cGVzXS54bWxQSwECFAMUAAAAAAAAACFckS1VI/oJAAD6CQAASgAA
+AAAAAAAAAAAApAEzAQAAV29ya2Zsb3dzLzkwMTYxWlQyMVByb2JlQnV0dG9ucjEtMjYwNzkwREQtQkVDQS01MjA2LTgzRjctRTZB
+QUI0MEM4OTRFLmpzb25QSwECFAMUAAAAAAAAACFcmqBQCS4cAAAuHAAASgAAAAAAAAAAAAAApAGVCwAAV29ya2Zsb3dzLzkwMTYx
+WlQyMVByb2JlSGVhbHRocjEtQjk4RUFBQTAtRTA4My01M0JCLUFBMUYtOEQyMkM1QkZFREM5Lmpzb25QSwECFAMUAAAAAAAAACFc
+zxZYUEsPAABLDwAAEgAAAAAAAAAAAAAApAErKAAAY3VzdG9taXphdGlvbnMueG1sUEsBAhQDFAAAAAAAAAAhXPe6w2WCAQAAggEA
+AEwAAAAAAAAAAAAAAKQBpjcAAGVudmlyb25tZW50dmFyaWFibGVkZWZpbml0aW9ucy9wZm1fU2l0ZVVybC9lbnZpcm9ubWVudHZh
+cmlhYmxlZGVmaW5pdGlvbi54bWxQSwECFAMUAAAAAAAAACFce9OVcpkQAACZEAAADAAAAAAAAAAAAAAApAGSOQAAc29sdXRpb24u
+eG1sUEsFBgAAAAAGAAYAJQIAAFVKAAAAAA==
+'@ }
+$files += @{ Dir = 'T21'; Name = '90161Z-T21-links-r3.html'; Kind = 'base64'; Sha = '4695192b9872'; Data = @'
+PCFET0NUWVBFIGh0bWw+PGh0bWwgbGFuZz0iZW4iPjxoZWFkPjxtZXRhIGNoYXJzZXQ9InV0Zi04Ij48dGl0bGU+OTAtMTYxLlog
+dGVzdCBwYWdlIHIzPC90aXRsZT48L2hlYWQ+PGJvZHkgc3R5bGU9ImZvbnQtZmFtaWx5OlNlZ29lIFVJLEFyaWFsLHNhbnMtc2Vy
+aWY7Y29sb3I6IzFiMjQzMDttYXJnaW46MzJweCI+PGgxIHN0eWxlPSJjb2xvcjojMGIyNTQ1Ij45MC0xNjEuWiB0ZXN0IHBhZ2U8
+L2gxPjxwPlRoZSBsaW5rcyBhcmUgbm90IGhlcmUgeWV0LiBJbiBSQURFLCBydW4gdGhlIHN0ZXAgIlQyMSBNYWtlIHRoZSBwcm9i
+ZSBsaXN0IGFuZCBsaWJyYXJ5IHIzIiBmaXJzdDogaXQgd3JpdGVzIHRoaXMgcGFnZSB3aXRoIHRoZSBsaW5rcy48L3A+PC9ib2R5
+PjwvaHRtbD4K
+'@ }
 $fetch = @()
 
 $steps = @()
 $steps += @{ Name = 'T18 Import the slice flows r6'; Dir = 'T18'; File = '90161Z-T18-slice1-flows-r6.zip'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You import the new 90-161.Z flows (F03 r6, F05 r3, F06 r2). They now read 6 values from the list PFM Settings, and test e-mails have no [TEST] in the subject. About 8 minutes (estimate).'; Kind = 'guide'; Guide = @('1. On this RADE card, select "Open in browser".', '2. If Power Automate asks you to sign in: sign in with your CAC.', '3. On the left, select Solutions (it can be under More).', '4. Select "Import solution".', '5. Select Browse.', '6. Select the box "File name".', '7. In the box "File name", press Ctrl+V (the file path is on the clipboard).', '8. Select Open.', '9. Select Next.', '10. If the page says the solution already exists: select Upgrade.', '11. If the page shows connection boxes: in each box, select your existing connection.', '12. Select Next.', '13. If the box "1 Site URL" is empty: type the test site address (RADE shows it in its box "Site address").', '14. If the box "2 Alert e-mail" is empty: type your own work e-mail address.', 'There is no box for Test mode any more: the test step writes Test mode Yes into the list PFM Settings.', '15. Select Import.', '16. Wait for the line "Successfully imported" (1 to 3 minutes, estimate).', '17. Select the solution "90-161.Z flows".', '18. Look at the Status column: F05 and F06 must read On, and F03 must read Off.', '19. If one of them differs: select that flow.', '20. If you selected a flow: select "Turn on" for F05 or F06, or "Turn off" for F03.', '21. Return to the RADE window.', '22. Select "Done: imported".', 'If the import fails: select "Download log file", then select "It failed" and type the first red error line (no names).'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T18-slice1-imported.txt'; Estimate = 480; DoneText = 'Done: imported'; DoneLog = 'Confirmed by you: imported.'; Makes = @(@{ kind = 'solution'; name = '90-161.Z flows (F03 r6, F05 r3, F06 r2; upgrade)' }); After = @(); Optional = $false; Help = 'Send the results as they are; the import log step reads the log if you downloaded it.' }
 $steps += @{ Name = 'T17 Import log reader r2'; Dir = 'T17'; File = '90161Z-T17-import-log-r2.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 5; Args = ''; Note = 'Runs only if an import failed: copies the error rows of an import log saved in the last 3 hours to T17, addresses masked. Otherwise it reports SKIPPED.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = '' }
-$steps += @{ Name = 'T18 Slice test, part 1 r5'; Dir = 'T18'; File = '90161Z-T18-slice1-test-r5.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = '-Part 1'; Note = 'Signs in (CAC). Writes the PFM Settings rows the flows read (Test mode Yes) and the stage 6 target of 25 working days. Creates three fake publications at step 6 and checks F05. Sets rows for the F03 check.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 720; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T18 Import the slice flows r6'); Optional = $false; Help = 'Send the results as they are. A FAIL here is a finding about the Settings rows or the flows.' }
+$steps += @{ Name = 'T18 Slice test, part 1 r5'; Dir = 'T18'; File = '90161Z-T18-slice1-test-r5.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = '-Part 1'; Note = 'Signs in (CAC). Writes the PFM Settings rows the flows read (Test mode Yes) and the stage 6 target of 25 working days. Makes 3 fake publications at step 6 and checks F05.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 720; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T18 Import the slice flows r6'); Optional = $false; Help = 'Send the results as they are. A FAIL here is a finding about the Settings rows or the flows.' }
 $steps += @{ Name = 'T18 Failure e-mail and Resubmit r2'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You check that F05 e-mailed you about a planned test failure, and you select Resubmit on that failed run. About 4 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Open Outlook (the program on your computer).', '2. Select the folder Inbox.', '3. Find the e-mail "90-161.Z flow failed: F05" from the last few minutes (it is a planned test failure; do not reply).', '4. Return to the RADE window.', '5. On this RADE card, select "Open in browser".', '6. On the left, select Solutions (it can be under More).', '7. Select the solution "90-161.Z flows".', '8. Select the flow "90161Z F05 Endorsement Routing r3".', '9. Under "28-day run history", select the run marked Failed.', '10. At the top of the run, select Resubmit.', '11. Wait until the new run reads Succeeded (under 1 minute, estimate).', '12. Return to the RADE window.', '13. Select "Done: resubmitted".', 'If no failure e-mail arrived, or there is no failed run: select "It failed" and type what you see (no names or site address).'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T18-resubmitted.txt'; Estimate = 240; DoneText = 'Done: resubmitted'; DoneLog = 'Confirmed by you: resubmitted.'; Makes = @(); After = @('T18 Slice test, part 1 r5'); Optional = $false; Help = ''; Answers = @(@{ Key = 'fail-mail'; Prompt = 'When did the failure e-mail reach your Inbox?'; Kind = 'pick'; Choices = @('Within 5 minutes', 'After 5 minutes', 'Not in the Inbox') }) }
 $steps += @{ Name = 'T18 Run F03 once r6'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You run F03 once by hand. Test mode is Yes in the list PFM Settings, so its e-mails go only to you. About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. On this RADE card, select "Open in browser".', '2. On the left, select Solutions (it can be under More).', '3. Select the solution "90-161.Z flows".', '4. Select the flow "90161Z F03 Suspense Reminders r6".', '5. At the top, select Test.', '6. Select Manually.', '7. Select Test.', '8. Select "Run flow".', '9. Select Done.', '10. Wait until the run ends (under 1 minute, estimate).', '11. Read the status at the top of the run: Succeeded or Failed. Grey (skipped) steps are normal.', '12. Write down the time on your computer clock. The e-mail step later asks how long the e-mail took.', '13. Return to the RADE window.', '14. If the status is Succeeded: select "Done: F03 ran".', 'If the status is Failed: select "It failed" and type the name of the first step with a red mark and the first line of its error (no names or site address).'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T18-f03-ran.txt'; Estimate = 180; DoneText = 'Done: F03 ran'; DoneLog = 'Confirmed by you: F03 ran.'; Makes = @(); After = @('T18 Failure e-mail and Resubmit r2'); Optional = $false; Help = '' }
 $steps += @{ Name = 'T18 Slice test, part 2 r5'; Dir = 'T18'; File = '90161Z-T18-slice1-test-r5.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 40; Args = '-Part 2'; Note = 'Checks: no duplicates after Resubmit; F03 read the Settings row; one escalation; no [TEST] in titles; F06 hold, resume, cancel; Legal rows. Puts Settings back, removes test rows.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 720; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T18 Run F03 once r6'); Optional = $false; Help = 'Send the results as they are. The test rows stay on the site for review when a check fails.' }
 $steps += @{ Name = 'T18 Find the test e-mails r2'; Dir = 'T18'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You look for the F03 test e-mails, which now have no [TEST] in the subject, and answer 2 questions. About 2 minutes (estimate).'; Kind = 'guide'; Guide = @('1. Open Outlook (the program on your computer).', '2. Select the folder Inbox.', '3. In the search box at the top, type: Escalation: coordination response due', '4. Press Enter.', '5. Look for an e-mail received today, after the time you wrote down at the F03 run.', '6. If it is not in the Inbox: select the folder "Junk Email".', '7. If it is not in the Inbox: look for the same subject there.', '8. Return to the RADE window.', '9. Select "Done: I looked".', 'If Outlook does not open: select "It failed" and type what you see (no names or addresses).'); Url = ''; UrlConfig = ''; Marker = '90161Z-T18-email-looked.txt'; Estimate = 120; DoneText = 'Done: I looked'; DoneLog = 'Confirmed by you: looked for the e-mails.'; Makes = @(); After = @('T18 Run F03 once r6'); Optional = $false; Help = ''; Answers = @(@{ Key = 'f03-email'; Prompt = 'Where is the F03 e-mail "Escalation: coordination response due ..." from this round?'; Kind = 'pick'; Choices = @('Inbox', 'Junk Email', 'Not found') }, @{ Key = 'f03-minutes'; Prompt = 'How many minutes after the F03 run did it arrive? Type a number, or 0 if not found.'; Kind = 'text'; Choices = @() }) }
 $steps += @{ Name = 'T23 Make the app file r1'; Dir = 'T23'; File = '90161Z-T23-app-file-r1.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 5; Args = ''; Note = 'Makes one tiny Power Apps app file (one screen with the text "90-161.Z test app") in the T23 folder and puts its path on the clipboard. No sign-in.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are.' }
 $steps += @{ Name = 'T23 Upload the app file r1'; Dir = 'T23'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You try to open a tiny app file that was built outside Power Apps, in 2 places in Power Apps. A refusal is the expected result and a valid answer. Nothing is saved. About 5 minutes (estimate).'; Kind = 'guide'; Guide = @('1. On this RADE card, select "Open in browser".', '2. If Power Apps asks you to sign in: sign in with your CAC.', '3. On the left, select Create.', '4. Select "Blank app".', '5. Under "Blank canvas app", select Create.', '6. In the box "App name", type: 90161Z T23 test', '7. Select Create. The app editor opens.', '8. On the left, select Insert (the plus sign).', '9. At the bottom of the Insert pane, select "Get more components".', '10. Select Import component, or the Upload or Import button that the panel shows.', '11. Select the box "File name".', '12. In the box "File name", press Ctrl+V (the file path is on the clipboard).', '13. Select Open.', '14. Write down what the panel says.', '15. Close the panel.', '16. At the top left, select the back arrow or File.', '17. Select Open.', '18. Select Browse (or "Browse files").', '19. In the box "File name", press Ctrl+V.', '20. Select Open.', '21. Look at the editor: a screen with the text "90-161.Z test app", or an error.', '22. Close the app editor tab. If it asks to save: select "Don''t save".', '23. Return to the RADE window.', '24. Select "Done: tried".', 'If Power Apps does not open: select "It failed" and type what you see (no names or site address).'); Url = 'https://make.apps.appsplatform.us/'; UrlConfig = '90161Z-apps-portal.txt'; Marker = '90161Z-T23-tried.txt'; Estimate = 300; DoneText = 'Done: tried'; DoneLog = 'Confirmed by you: tried the app file.'; Makes = @(); After = @('T23 Make the app file r1'); Optional = $false; Help = ''; Answers = @(@{ Key = 'app-import'; Prompt = 'Get more components, import: what happened?'; Kind = 'pick'; Choices = @('The component was added', 'It was refused', 'No import button', 'Something else') }, @{ Key = 'app-open'; Prompt = 'File > Open > Browse: what happened?'; Kind = 'pick'; Choices = @('The screen "90-161.Z test app" opened', 'It was refused', 'No Browse button', 'Something else') }, @{ Key = 'app-error'; Prompt = 'If there was an error, type its first line (no names or site address). Else type none.'; Kind = 'text'; Choices = @() }) }
+$steps += @{ Name = 'T21 Make the probe list r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Make'; Note = 'Signs in (CAC). Makes the fake probe list (Visitors get Contribute on this list only) and library, uploads one fake workbook and writes the test page.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(@{ kind = 'list'; name = '90161Z Probe (fake rows only)' }, @{ kind = 'library'; name = '90161ZProbeFiles (1 fake workbook)' }); After = @(); Optional = $false; Help = 'Send the results as they are. A second run changes nothing.' }
+$steps += @{ Name = 'T21 Import the probe solution r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.zip'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You import the solution "90-161.Z probe" (2 flows: health and button) and answer 2 questions. About 8 minutes (estimate).'; Kind = 'guide'; Guide = @('1. On this RADE card, select "Open in browser".', '2. If Power Automate asks you to sign in: sign in with your CAC.', '3. On the left, select Solutions (it can be under More).', '4. Select "Import solution".', '5. Select Browse.', '6. Select the box "File name".', '7. In the box "File name", press Ctrl+V (the file path is on the clipboard).', '8. Select Open.', '9. Select Next.', '10. Look at the connection boxes: there should be one for SharePoint and one for "Power Automate Management".', '11. In each connection box, select the arrow.', '12. In each list that opens, select your existing connection.', '13. If a box has no connection: select "New connection" in that box.', '14. If you selected "New connection": select Create.', '15. If a sign-in window opens: sign in with your CAC.', '16. If you made a new connection: return to the browser tab where you started the import.', '17. If you made a new connection: select Refresh.', '18. Select Next.', '19. In the box "1 Site URL", type the test site address (RADE shows it in its box "Site address").', '20. Select Import.', '21. Wait for the line "Successfully imported" (1 to 3 minutes, estimate).', '22. Select the solution "90-161.Z probe".', '23. Look at the Status column: the 2 flows "90161Z T21 Probe ..." must read On.', '24. If a flow reads Off: select that flow.', '25. If you selected a flow that reads Off: select "Turn on".', '26. Return to the RADE window.', '27. Select "Done: imported".', 'If the import fails: select "Download log file", then select "It failed" and type the first red error line (no names).'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T21-probe-imported.txt'; Estimate = 480; DoneText = 'Done: imported'; DoneLog = 'Confirmed by you: imported.'; Makes = @(@{ kind = 'solution'; name = '90-161.Z probe (2 flows: health, button)' }); After = @('T21 Make the probe list r3'); Optional = $false; Help = 'Send the results as they are; the import log step reads the log if you downloaded it.'; Answers = @(@{ Key = 'mgmt-connector'; Prompt = 'Did the import page show a connection box for "Power Automate Management"?'; Kind = 'pick'; Choices = @('Yes, and I selected a connection', 'Yes, but no connection could be made', 'No such box', 'The import was refused') }, @{ Key = 'mgmt-premium'; Prompt = 'Did any page say a Premium licence is needed?'; Kind = 'pick'; Choices = @('No', 'Yes') }) }
+$steps += @{ Name = 'T21 Open the test page r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 5; Args = '-Part Open'; Note = 'Opens the test page in your browser (no sign-in). Keep its tab open: the next steps use it.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T21 Make the probe list r3'); Optional = $false; Help = 'Send the results as they are.' }
+$steps += @{ Name = 'T21 Start the health flow r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Run'; Note = 'Signs in (CAC). Adds one fake row that starts the health flow: it reads your own flows and their last runs, counts only.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T21 Import the probe solution r3'); Optional = $false; Help = 'Send the results as they are.' }
+$steps += @{ Name = 'T21 Add the second person r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Person'; Note = 'A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site''s Visitors group and copies the form link.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T21 Make the probe list r3'); Optional = $false; Help = 'Send the results as they are. The address is never written to a file; the results show only yes or no.' }
+$steps += @{ Name = 'T21 Second person r3'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'Test T4 again. The person you added to Visitors adds one row with the form link. About 5 minutes (estimate). If nobody is free today, select Skip.'; Kind = 'guide'; Guide = @('1. Open Teams.', '2. Select Chat.', '3. Start a chat with the person whose address you typed.', '4. Select the chat box.', '5. In the chat box, press Ctrl+V (the form link is on the clipboard).', '6. In the chat box, type: Please open this link, type T4a in Title, select Save, and tell me what you saw.', '7. Press Enter.', '8. Wait for the answer of the person in the chat: the row saved, or no permission.', '9. Return to the RADE window.', '10. Select "Done: second person".', 'If nothing was pasted: select Skip. If nobody is free today: select Skip.'); Url = ''; UrlConfig = ''; Marker = '90161Z-T21-second-person.txt'; Estimate = 300; DoneText = 'Done: second person'; DoneLog = 'Confirmed by you: second person.'; Makes = @(); After = @('T21 Add the second person r3'); Optional = $false; Help = ''; Answers = @(@{ Key = 't4-second'; Prompt = 'What did the second person see?'; Kind = 'pick'; Choices = @('The row was saved', 'No permission', 'The link did not open', 'Something else') }) }
+$steps += @{ Name = 'T21 Format the form and view r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Look'; Note = 'Signs in (CAC). Puts a test header on the probe list form and makes a list view with a button that starts the test flow. Reads both back.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T21 Import the probe solution r3'); Optional = $false; Help = 'Send the results as they are.' }
+$steps += @{ Name = 'T21 Look at the list form r3'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You look at the probe list form: does the test header show, and does its menu have "Configure layout". About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. In the browser, select the tab "90-161.Z test page".', '2. Select "Open the new row form".', '3. Look at the top of the form for the text "90-161.Z test header".', '4. At the top of the form, select the pencil or "Edit form" icon.', '5. Look at the menu that opened for "Configure layout".', '6. Select Cancel.', '7. Return to the RADE window.', '8. Select "Done: I looked".'); Url = ''; UrlConfig = ''; Marker = '90161Z-T21-form-looked.txt'; Estimate = 180; DoneText = 'Done: I looked'; DoneLog = 'Confirmed by you: looked at the form.'; Makes = @(); After = @('T21 Format the form and view r3'); Optional = $false; Help = ''; Answers = @(@{ Key = 'form-header'; Prompt = 'Did the form show the text "90-161.Z test header" at its top?'; Kind = 'pick'; Choices = @('Yes', 'No') }, @{ Key = 'form-layout'; Prompt = 'Does the form menu list "Configure layout"?'; Kind = 'pick'; Choices = @('Yes', 'No', 'I found no form menu') }) }
+$steps += @{ Name = 'T21 Use the list button r3'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You select a button in a list view that starts a test flow for that row. About 4 minutes (estimate).'; Kind = 'guide'; Guide = @('1. In the browser, select the tab "90-161.Z test page".', '2. Select "Open the list with the button".', '3. Look at the first row for a button "Run the test flow".', '4. In the first row, select "Run the test flow".', '5. Look at the panel that opened for a button "Run".', '6. Select "Run".', '7. If the panel asks you to continue or to allow a connection: select "Continue".', '8. Wait until the panel says the flow ran, or shows an error.', '9. Return to the RADE window.', '10. Select "Done: I clicked".'); Url = ''; UrlConfig = ''; Marker = '90161Z-T21-button-used.txt'; Estimate = 240; DoneText = 'Done: I clicked'; DoneLog = 'Confirmed by you: used the button.'; Makes = @(); After = @('T21 Format the form and view r3'); Optional = $false; Help = ''; Answers = @(@{ Key = 'btn-show'; Prompt = 'What did the list show in each row?'; Kind = 'pick'; Choices = @('A button Run the test flow', 'No button', 'The plain list', 'An error') }, @{ Key = 'btn-panel'; Prompt = 'What did the panel say after you selected Run?'; Kind = 'pick'; Choices = @('The flow ran', 'The flow was not found', 'Another error', 'No panel opened') }) }
+$steps += @{ Name = 'T21 Look at Excel in the browser r3'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You open a fake workbook in Excel for the web and look for an Automate tab. About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. In the browser, select the tab "90-161.Z test page".', '2. Select "Open the fake workbook".', '3. Look at the tabs at the top of Excel for a tab named "Automate".', '4. If there is an Automate tab: select it.', '5. If you selected Automate: look whether its buttons can be selected or are grey.', '6. Close the Excel tab.', '7. Return to the RADE window.', '8. Select "Done: I looked".'); Url = ''; UrlConfig = ''; Marker = '90161Z-T21-excel-looked.txt'; Estimate = 180; DoneText = 'Done: I looked'; DoneLog = 'Confirmed by you: looked at Excel.'; Makes = @(); After = @('T21 Make the probe list r3'); Optional = $false; Help = ''; Answers = @(@{ Key = 'xl-auto'; Prompt = 'Is there a tab named "Automate" in Excel for the web?'; Kind = 'pick'; Choices = @('Yes, with buttons I can select', 'Yes, but the buttons are grey', 'No Automate tab', 'The workbook did not open') }) }
+$steps += @{ Name = 'T21 Read the test results r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Read'; Note = 'Signs in (CAC). Reads counts only: the health flow row, the rows by the second person (T4) and the button flow row. Waits up to 4 minutes for the health row.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 180; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T21 Start the health flow r3'); Optional = $false; Help = 'Send the results as they are.' }
+$steps += @{ Name = 'T21 Remove the probe list r3'; Dir = 'T21'; File = '90161Z-T21-probe-r3.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Clean'; Note = 'Signs in (CAC). Removes the second person from Visitors again (only if this round added the person), and moves the probe list and library to the site Recycle Bin.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T21 Read the test results r3'); Optional = $false; Help = 'Send the results as they are. Each removal runs even when an earlier one fails.' }
+$steps += @{ Name = 'T21 Remove the probe solution r3'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You delete the solution "90-161.Z probe" that this round imported. About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. On this RADE card, select "Open in browser".', '2. On the left, select Solutions (it can be under More).', '3. Select the three dots beside "90-161.Z probe".', '4. Select "Delete from this environment".', '5. Select Delete.', '6. Return to the RADE window.', '7. Select "Done: removed".', 'If the solution does not delete: select "It failed" and type the first line of the message.'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T21-removed.txt'; Estimate = 180; DoneText = 'Done: removed'; DoneLog = 'Confirmed by you: removed.'; Makes = @(); After = @('T21 Remove the probe list r3'); Optional = $false; Help = '' }
 $collect = @()
 $collect += @{ Dir = 'T18'; Name = '90161Z-T18-slice1-part1-r5.txt'; Step = 'T18 Slice test, part 1 r5' }
 $collect += @{ Dir = 'T18'; Name = '90161Z-T18-slice1-part2-r5.txt'; Step = 'T18 Slice test, part 2 r5' }
 $collect += @{ Dir = 'T17'; Name = '90161Z-T17-import-log-r2.txt'; Step = 'T17 Import log reader r2' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-make-r3.txt'; Step = 'T21 Make the probe list r3' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-person-r3.txt'; Step = 'T21 Add the second person r3' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-run-r3.txt'; Step = 'T21 Start the health flow r3' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-look-r3.txt'; Step = 'T21 Format the form and view r3' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-read-r3.txt'; Step = 'T21 Read the test results r3' }
+$collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-clean-r3.txt'; Step = 'T21 Remove the probe list r3' }
 $cleanup = @()
 $cleanup += @{ Path = 'T02'; Kind = 'dir' }
 $cleanup += @{ Path = 'T03'; Kind = 'dir' }
@@ -1439,9 +2406,9 @@ $cleanup += @{ Path = 'T21\90161Z-T21-*-r2.*'; Kind = 'glob' }
 $cleanup += @{ Path = 'T18\90161Z-T18-slice1-*-r4.*'; Kind = 'glob' }
 $cleanup += @{ Path = 'T18\90161Z-T18-slice1-flows-r5.zip'; Kind = 'glob' }
 $cleanup += @{ Path = 'T18\90161Z-T18-test-publications-r4.txt'; Kind = 'glob' }
-$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r11.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r5.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', '90161Z-T21-fake-draft-r1.docx', '90161Z-T21-fake-form-r1.html', '90161Z-T21-links-r2.html', '90161Z-T21-probe-r2.ps1', '90161Z-T22-pfm-window-r1.ps1', '90161Z-T23-app-file-r1.ps1', '90161Z-T23-app-file-src-r1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
+$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r11.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r5.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', '90161Z-T21-links-r3.html', '90161Z-T21-probe-r3.ps1', '90161Z-T22-pfm-window-r1.ps1', '90161Z-T23-app-file-r1.ps1', '90161Z-T23-app-file-src-r1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
 $apps = @()
-$apps += @{ Name = '90-161.Z: Publications and Forms Management'; Summary = 'Test round R27 r1: flows that read PFM Settings, e-mails without [TEST], a second person (T4), look probes, the health flow and an app file. Fake data only.'; Steps = @(0, 1, 2, 3, 4, 5, 6, 7, 8); Checks = @('nipr', 'ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'pnp', 'net-bookmark', 'net-site', 'net-flow', 'site-rights', 'flow-guide'); Mode = 'test'; Version = ''; Marker = $null }
+$apps += @{ Name = '90-161.Z: Publications and Forms Management'; Summary = 'Test round R27 r1: flows that read PFM Settings, e-mails without [TEST], a second person (T4), look probes, health flow, app file. Fake data.'; Steps = @(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21); Checks = @('nipr', 'ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'pnp', 'net-bookmark', 'net-site', 'net-flow', 'site-rights', 'flow-guide'); Mode = 'test'; Version = ''; Marker = $null }
 
 # ---------------- RADE, the Redacted Application Deployment Engine (generated; same engine in every round bundle) ----------------
 function Get-Secret([string]$Id, [string]$Leaf) {

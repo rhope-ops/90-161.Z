@@ -8,7 +8,7 @@ Slice 1 (R21, was R20 r2; PFM 14 Nov 26): `90161Z-T18-slice1-flows-r6.zip` (r5 i
 
 ## Environment variables (type Text, so no site address is in the repo)
 
-R27 (PFM 14 Nov 26, "Flow values move"): Flows paused, Test mode, reminder lead days, escalation lag days, suspense working days and the shared mailbox are no longer variables; they are rows of the list PFM Settings (table below), read by F03, F05 and F06 once at the start of a run. The site address, the alert e-mail and the list names stay variables. A solution carries only the variables its flows use. Order on the import page (PFM 15 Nov 26): the two values a wing sets come first in the zip and their labels start with 1 and 2 (`LABEL` in scripts/build_flow_solution.py). Seen in R24 (15 Nov 26): the page showed the labels in the order 1, 3, 4, then 2 lower, so the page follows neither the file order nor the label text; guides must not promise an order. `pfm_SharedMailbox` stays in the builder only for the T21 probe zip.
+R27 (PFM 14 Nov 26, "Flow values move"): Flows paused, Test mode, reminder lead days, escalation lag days, suspense working days and the shared mailbox are no longer variables; they are rows of the list PFM Settings (table below), read by F03, F05 and F06 once at the start of a run. The site address, the alert e-mail and the list names stay variables. A solution carries only the variables its flows use. Order on the import page (PFM 15 Nov 26): the two values a wing sets come first in the zip and their labels start with 1 and 2 (`LABEL` in scripts/build_flow_solution.py). Seen in R24 (15 Nov 26): the page showed the labels in the order 1, 3, 4, then 2 lower, so the page follows neither the file order nor the label text; guides must not promise an order.
 
 | Schema name | Meaning | Default in the zip |
 |---|---|---|
@@ -64,7 +64,7 @@ Why F02 uses a recurrence: the 6-month review task opens on a date, not on an ed
 3. Decided (PFM, 2026-11-14): 20 working days (weekdays only), no holiday list, no hand edits (the CoordinationSuspenseBusinessDays setting).
 4. Suspense start: the draft starts it on the first weekday run after the row exists. Options: start when the step moves to Formal Coordination (needs routing); use the row's Created date. Legal rows get no default suspense yet (F05 creates them; their start could be the row's Created date). Privacy Review rows do get one.
 5. 5.2.2 (30 calendar days) is applied to the Guard Applicability and Reserve Applicability roles only; the process model says whether it covers wing-to-unit coordination is open (gap check).
-6. Decided (PFM, 2026-11-14): reminder 5 weekdays before, escalation 3 working days after, copied to the AO and Requester; sent from the shared mailbox in pfm_SharedMailbox (Send As), else from the flow owner's mailbox (the fallback for wings without Send As).
+6. Decided (PFM, 2026-11-14): reminder 5 weekdays before, escalation 3 working days after, copied to the AO and Requester; sent from the shared mailbox in the PFM Settings row SharedMailbox (Send As; R27), else from the flow owner's mailbox (the fallback for wings without Send As).
 7. Run time of F02 (draft: same as F03) and whether Date columns are date-only (the flows read the first 10 characters; a date-time column in Central could shift a day).
 8. Done in F03 r3: the tiers use the later of DueDate and ExtensionDate (5.2.1).
 9. "Open action" for F04 and for stage counts: PFM Publications has no closed flag, so F04 lists every row. Options: exclude rows at the last step; add a closed status or date.
