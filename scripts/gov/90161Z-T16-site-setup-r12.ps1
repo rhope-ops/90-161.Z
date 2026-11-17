@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 16 site setup, r11 (PFM 15 Nov 26: the site address comes from RADE or Config, no question; r10 R19, PFM 14 Nov 26: collects the solution test A r5 result; r9 (R18) collected A r4, masked; test B is dropped; the PFM sets logo K by hand outside the round and this script still checks it read-only; RADE folder). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 16 site setup, r12 (R29, PFM 17 Nov 26: -LogoOnly runs only the read-only logo check, for the 90-161.Z logo W2; r11 PFM 15 Nov 26: the site address comes from RADE or Config, no question; r10 R19, PFM 14 Nov 26: collects the solution test A r5 result; r9 (R18) collected A r4, masked; test B is dropped; the PFM sets logo K by hand outside the round and this script still checks it read-only; RADE folder). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: sets up the new SharePoint site in one run, so the PFM does not click it by hand (DECISIONS 14 Nov 26:
   optional Deployer PnP write steps, allowed because the read-only PnP test passed). About 5 minutes (an estimate).
@@ -10,7 +10,8 @@
     a. Lists "PFM Publications" and "PFM Endorsements": item-level permissions. Sets read = all items (1) and edit =
        only the person's own items (2) when they are not already so.
     b. Site time zone: sets (UTC-06:00) Central Time (US and Canada), id 11, when it is another.
-    c. Site logo check (only with -Logo, which the round passes; read-only). r6 (R17, PFM 14 Nov 26): the logo calls failed in
+    c. Site logo check (only with -Logo or -LogoOnly; read-only). r12 (R29): the logo file is 90161Z-logo-512.png (the 90-161.Z
+       logo W2, rendered from assets/logo/90161Z-logo.svg); -LogoOnly runs this item alone and changes nothing on the site. r6 (R17, PFM 14 Nov 26): the logo calls failed in
        R15 and R16 (not supported on this group-connected site), so the PFM sets the header logo by hand (Change the look >
        Header) in the round's guide step, and this item reads the header logo back: PASS when it shows a logo file that
        Change the look saved (__sitelogo__) or the logo file; else FAIL with the by-hand steps. The thumbnail cannot be
@@ -28,12 +29,13 @@
   FAIL; one item never stops the others. Counts only: no list, seal or file names are written (seal names are unit names).
   The site address is kept only on this computer in Config\90161Z-site.txt; every output line shows it as <SITE> and the DODID
   as <DODID>. Error text is cut to 160 characters.
-  Output: 90161Z-T16-setup-r11.txt in the T16 folder (send this).
-  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Logo, -ProbeWaitMinutes (default 15), -NoPause.
+  Output: 90161Z-T16-setup-r12.txt in the T16 folder (send this); with -LogoOnly: 90161Z-T16-logo-r12.txt.
+  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Logo, -LogoOnly, -ProbeWaitMinutes (default 15), -NoPause.
 #>
-param([string]$Id, [switch]$Logo, [int]$ProbeWaitMinutes = 15, [switch]$NoPause)
+param([string]$Id, [switch]$Logo, [switch]$LogoOnly, [int]$ProbeWaitMinutes = 15, [switch]$NoPause)
+if ($LogoOnly) { $Logo = [switch]$true }
 $task = 'T16'
-$LogoName = '90161Z-T14-site-logo-r4.png'
+$LogoName = '90161Z-logo-512.png'
 $Images = @('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tif', '.tiff')
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -228,7 +230,7 @@ try {
   $root = Split-Path -Parent $dir
   $configDir = Join-Path $root 'Config'
   $site = Get-SiteAddress $configDir
-  $lines.Add('TASK T16 site setup r11, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', probe-wait-minutes=' + $ProbeWaitMinutes)
+  $lines.Add('TASK T16 site setup r12, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', logo-switch=' + [bool]$Logo + ', logo-only=' + [bool]$LogoOnly + ', probe-wait-minutes=' + $ProbeWaitMinutes)
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
@@ -248,7 +250,8 @@ try {
     $m = $m -replace '(?i)\bfail', 'fault'
     $lines.Add('ROUTE web-login not connected ' + $_.Exception.GetType().Name + ': ' + $m.Substring(0, [Math]::Min(160, $m.Length)))
   }
-  if ($connected) {
+  if ($connected -and $LogoOnly) { $lines.Add('ITEMS a, b, d, e and f not run: -LogoOnly (nothing on the site is changed)') }
+  if ($connected -and -not $LogoOnly) {
     # a. Item-level permissions on the two lists.
     Add-Item 'a1-permissions-publications' $ListSecurity @('a1-permissions-publications', 'PFM Publications')
     Add-Item 'a2-permissions-endorsements' $ListSecurity @('a2-permissions-endorsements', 'PFM Endorsements')
@@ -265,18 +268,6 @@ try {
       $w2 = Get-PnPWeb -Includes RegionalSettings, RegionalSettings.TimeZone -ErrorAction Stop
       if ([int]$w2.RegionalSettings.TimeZone.Id -eq 11) { Add-Line 'b-time-zone' 'SET' ('was id=' + $id0 + ', now id=11 (read back)') }
       else { Add-Line 'b-time-zone' 'FAIL' ('now id=' + $w2.RegionalSettings.TimeZone.Id + '. Fallback: Site settings > Regional settings > Time zone') }
-    }
-    # c. Site logo check (read-only, r6; r8 names the logo K file).
-    if (-not $Logo) { Add-Line 'c-logo' 'SKIP' 'switch -Logo not given' }
-    else {
-      Add-Item 'c-logo' {
-        $logoNow = [string](Get-PnPWeb -Includes SiteLogoUrl -ErrorAction Stop).SiteLogoUrl
-        $leaf = ''; if ($logoNow) { $leaf = [IO.Path]::GetFileName(($logoNow -split '\?')[0]) }
-        $stem = [IO.Path]::GetFileNameWithoutExtension($LogoName)
-        $seen = if (-not $logoNow) { 'empty' } elseif ($leaf -like '__sitelogo__*') { 'a logo saved by Change the look' } elseif ($leaf -like ('*' + $stem + '*')) { 'the logo file' } elseif ($logoNow -match 'GroupService|GetGroupImage') { 'the group image' } else { 'another file' }
-        if ($seen -in 'a logo saved by Change the look', 'the logo file') { Add-Line 'c-logo' 'PASS' ('header logo reads back ' + $seen + '; thumbnail not read back: look at a site card') }
-        else { Add-Line 'c-logo' 'FAIL' ('header logo reads back ' + $seen + '. By hand: site Settings > Change the look > Header > Site logo > Change, pick T14\' + $LogoName + ', Save') }
-      }
     }
     # d. Seals library, folders and uploads.
     Add-Item 'd-seals' {
@@ -316,6 +307,20 @@ try {
       else { Add-Line 'f-task2-lists' 'FAIL' ('lists=' + $pl.Count + ' (expected 12) rows=' + $rows) }
     }
   }
+  if ($connected) {
+    # c. Site logo check (read-only, r6; r12: the 90-161.Z logo W2 file, and the only item with -LogoOnly).
+    if (-not $Logo) { Add-Line 'c-logo' 'SKIP' 'switch -Logo not given' }
+    else {
+      Add-Item 'c-logo' {
+        $logoNow = [string](Get-PnPWeb -Includes SiteLogoUrl -ErrorAction Stop).SiteLogoUrl
+        $leaf = ''; if ($logoNow) { $leaf = [IO.Path]::GetFileName(($logoNow -split '\?')[0]) }
+        $stem = [IO.Path]::GetFileNameWithoutExtension($LogoName)
+        $seen = if (-not $logoNow) { 'empty' } elseif ($leaf -like '__sitelogo__*') { 'a logo saved by Change the look' } elseif ($leaf -like ('*' + $stem + '*')) { 'the logo file' } elseif ($logoNow -match 'GroupService|GetGroupImage') { 'the group image' } else { 'another file' }
+        if ($seen -in 'a logo saved by Change the look', 'the logo file') { Add-Line 'c-logo' 'PASS' ('header logo reads back ' + $seen + '; thumbnail not read back: look at a site card') }
+        else { Add-Line 'c-logo' 'FAIL' ('header logo reads back ' + $seen + '. By hand: site Settings > Change the look > Header > Site logo > Change, pick T16\' + $LogoName + ', Save') }
+      }
+    }
+  }
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
   $nf = @($lines | Where-Object { $_ -match '^ITEM .* FAIL' }).Count
   $lines.Add('SETUP items done, items with problems=' + $nf)
@@ -324,7 +329,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  try { Set-Content -LiteralPath (Join-Path $dir '90161Z-T16-setup-r11.txt') -Value $masked -Encoding UTF8 } catch { $null = $_ }
+  try { Set-Content -LiteralPath (Join-Path $dir $(if ($LogoOnly) { '90161Z-T16-logo-r12.txt' } else { '90161Z-T16-setup-r12.txt' })) -Value $masked -Encoding UTF8 } catch { $null = $_ }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }

@@ -378,6 +378,20 @@ PYEOF
 # Bundle size limit (PFM 14 Nov 26, raised with the function-complete engine): 600 KB = 614,400 bytes.
 big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 614400 ] || { echo "  $b bytes=$s"; big=$((big+1)); }; done
 [ "$big" -eq 0 ] && ok "paste bundles at most 600 KB" || bad "paste bundles over 600 KB: $big"
+# T16 r12 -LogoOnly (R29, PFM 17 Nov 26 logo places 1A): items a, b, d, e and f sit inside "if ($connected -and -not $LogoOnly)",
+# only c-logo runs outside it, and the logo item uses read-only PnP calls (no Set-, Add-, New-, Remove- or Invoke-).
+python3 - <<'PYT16' && ok "T16 r12 -LogoOnly runs only the read-only logo check" || bad "T16 r12 -LogoOnly runs more than the read-only logo check"
+import re, pathlib
+s = pathlib.Path('scripts/gov/90161Z-T16-site-setup-r12.ps1').read_text()
+i = s.index('if ($connected -and -not $LogoOnly) {'); j = s.index("\n  if ($connected) {\n    # c. Site logo check")
+inner, rest = s[i:j], s[j:s.index('Disconnect-PnPOnline', j)]
+for k in ('a1-permissions-publications', 'a2-permissions-endorsements', 'b-time-zone', 'd-seals', 'e-probe-result', 'e2-solution-result-a', 'f-task2-lists'):
+    assert "Add-Item '%s'" % k in inner, k
+items = re.findall(r"Add-Item '([^']+)'", s)
+assert [x for x in items if "Add-Item '%s'" % x not in inner] == ['c-logo'], items
+assert not re.search(r'\b(Set|Add|New|Remove|Invoke)-PnP', rest), 'a write call in the logo item'
+assert "$(if ($LogoOnly) { '90161Z-T16-logo-r12.txt' }" in s and "if ($LogoOnly) { $Logo = [switch]$true }" in s
+PYT16
 # Collected result names (R29 review: 7 T21 names kept r4 while the script wrote r5): a name -rN.txt of a step that runs a task
 # script with a $Rev line must carry that $Rev, else the round reports the file missing or sends an old one.
 python3 - <<'PYCOL' && ok "collected result names match the task script revisions" || bad "collected result names do not match the task script revisions"
@@ -573,7 +587,7 @@ if [ "${on[batch]}" = 1 ]; then
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(bout font | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
+n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r12.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(bout "hs$n")
 [ -n "$hs" ] && ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }

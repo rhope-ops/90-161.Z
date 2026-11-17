@@ -7,9 +7,9 @@ Each scripts/gov/90161Z-T*.ps1 that asks for a DODID holds the block between two
 The text between them is the source from its first "function" line on. Edit only the source, then run this script.
 A script that signs in to the site also holds the site-common block (Get-SiteAddress; PFM 15 Nov 26: the site is entered once),
 between the same kind of markers; a Get-SiteAddress outside that block fails the check.
-A script with the rade-logo markers gets $RadeLogoPng: the RADE logo (the one assets/logo/*.png of the RADE commit pinned in
-scripts/rade.lock.json, SHA-256 checked by scripts/build_paste_bundles.py) as base64 text, for a window in the RADE style
-(T22, PFM 16 Nov 26). The logo has one master copy in rhope-ops/RADE; this repo holds only the generated text.
+A script with the app-logo markers gets $AppLogoPng: the 90-161.Z logo (PFM 17 Nov 26: logo W2 on the T22 window, 1A) as a
+128 px PNG in base64 text, rendered from the master assets/logo/90161Z-logo.svg by scripts/build_logo.js (Playwright; the
+PNGs stay uncommitted, PFM 2A). The RADE runner keeps RADE's own logo (Rho Bold) from the pinned engine.
 A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1 of the same pinned commit, SHA-256 checked the
 same way) as it is: the window reuses RADE's colors, fonts, buttons, card text boxes and layout self-check (T22 r2, 17 Nov 26).
 Usage: python3 scripts/build_task_scripts.py [--check]
@@ -24,27 +24,29 @@ BEGIN = '# >>> task-common: generated from scripts/gov/src/task-common.ps1 by sc
 END = '# <<< task-common'
 ASKS_DODID = "Read-Host 'DODID"
 BLOCKS = [(SRC, BEGIN, END)] + [(ROOT / f'scripts/gov/src/{n}.ps1', BEGIN.replace('task-common', n), END.replace('task-common', n)) for n in ('site-common',)]
-LOGO = 'rade-logo'
-BLOCKS.append((LOGO, '# >>> rade-logo: generated from the pinned RADE logo by scripts/build_task_scripts.py (do not edit)', '# <<< rade-logo'))
+LOGO = 'app-logo'
+BLOCKS.append((LOGO, '# >>> app-logo: generated from assets/logo/90161Z-logo.svg by scripts/build_task_scripts.py (do not edit)', '# <<< app-logo'))
 UI = 'rade-ui'
 BLOCKS.append((UI, '# >>> rade-ui: generated from the pinned RADE shared UI file by scripts/build_task_scripts.py (do not edit)', '# <<< rade-ui'))
-GENERATED = (LOGO, UI)   # blocks made from the pinned RADE files (not from a source file here); written only into a script that has the markers
+GENERATED = (LOGO, UI)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
 _logo = []
 _ui = []
 
 
+def logo_png(size):
+    """The 90-161.Z logo at one size, rendered from the SVG master by scripts/build_logo.js into a temporary folder."""
+    import subprocess, tempfile
+    with tempfile.TemporaryDirectory() as d:
+        subprocess.run(['node', str(ROOT / 'scripts/build_logo.js'), d], check=True, capture_output=True)
+        return (Path(d) / f'90161Z-logo-{size}.png').read_bytes()
+
+
 def logo_text():
-    # The pinned logo, fetched and hash-checked by the bundle builder (one fetch for every script).
+    # The 90-161.Z logo, 128 px (one render for every script).
     if not _logo:
-        sys.path.insert(0, str(ROOT / 'scripts'))
-        import build_paste_bundles as B
-        lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
-        # The one logo file the lock pins under assets/logo/ (engine-v10: logo-rho-128.png, Rho Bold; PFM 17 Nov 26).
-        logo = [k for k in lock['files'] if k.startswith('assets/logo/') and k.endswith('.png')]
-        if len(logo) != 1: raise SystemExit('LOGO: the lock must pin exactly 1 assets/logo/*.png, found ' + str(logo))
-        b64 = base64.b64encode((B.fetch(lock) / logo[0]).read_bytes()).decode('ascii')
+        b64 = base64.b64encode(logo_png(128)).decode('ascii')
         rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
-        _logo.append('$RadeLogoPng = @(\n' + ',\n'.join("  '" + r + "'" for r in rows) + "\n) -join ''\n")
+        _logo.append('$AppLogoPng = @(\n' + ',\n'.join("  '" + r + "'" for r in rows) + "\n) -join ''\n")
     return _logo[0]
 
 

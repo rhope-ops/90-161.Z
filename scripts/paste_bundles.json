@@ -26,11 +26,19 @@
     {
       "out": "scripts/gov/paste/90161Z-R29a-round-r1.ps1",
       "round": "R29a",
-      "title": "Round R29a r1: the R28 fixes (health flow, export reader, import cards), the second person and the full flow test",
+      "title": "Round R29a r1: the R28 fixes (health flow, export reader, import cards), the new site logo, the second person and the full flow test",
       "files": [
         {
           "dir": "T17",
           "src": "scripts/gov/90161Z-T17-import-log-r2.ps1"
+        },
+        {
+          "dir": "T16",
+          "src": "scripts/gov/90161Z-T16-site-setup-r12.ps1"
+        },
+        {
+          "dir": "T16",
+          "src": "assets/logo/build/90161Z-logo-512.png"
         },
         {
           "dir": "T21",
@@ -68,6 +76,97 @@
             "pnp",
             "net-site",
             "site-rights"
+          ]
+        },
+        {
+          "name": "T16 Site logo r12: thumbnail",
+          "title": "Set the site thumbnail to the new logo",
+          "kind": "guide",
+          "dir": "T16",
+          "file": "90161Z-logo-512.png",
+          "note": "You set the site thumbnail to the new 90-161.Z logo. The next card sets the header logo. About 3 minutes.",
+          "guide": [
+            "1. Select \"Open in browser\" above.",
+            "2. At the top right of the site, select the gear \"Settings\".",
+            "3. Select \"Change the look\".",
+            "4. Select \"Header\".",
+            "5. Under \"Site logo thumbnail\", select \"Change\".",
+            "6. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
+            "7. Select \"Open\".",
+            "If the page is not your site: type your site address in the browser address bar.",
+            "If there is no \"Site logo thumbnail\" box: select \"It failed\"."
+          ],
+          "marker": "90161Z-T16-thumb-set.txt",
+          "needs": [
+            "net-site"
+          ],
+          "estimate": 3,
+          "doneLog": "Confirmed by you: set the thumbnail.",
+          "url": "https://usaf.dps.mil/sites/<your-site>",
+          "url_source": "Your site address, saved by RADE in Config\\90161Z-site.txt when you typed it in the RADE box \"Site address\"; the placeholder is never opened when that file exists",
+          "urlConfig": "90161Z-site.txt"
+        },
+        {
+          "name": "T16 Site logo r12: header logo",
+          "title": "Set the site header logo to the new logo",
+          "kind": "guide",
+          "dir": "T16",
+          "file": "90161Z-logo-512.png",
+          "note": "You set the header logo of the site to the new 90-161.Z logo and save both. The next step reads the logo back. About 3 minutes.",
+          "guide": [
+            "1. Under \"Site logo\", select \"Change\".",
+            "2. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
+            "3. Select \"Open\".",
+            "4. Select \"Save\".",
+            "5. Look at the top left of the site: the new logo must show.",
+            "If \"Save\" stays gray: select \"It failed\"."
+          ],
+          "marker": "90161Z-T16-logo-set.txt",
+          "estimate": 3,
+          "after": [
+            "T16 Site logo r12: thumbnail"
+          ],
+          "doneLog": "Confirmed by you: set the header logo.",
+          "answers": [
+            {
+              "key": "logo-header",
+              "prompt": "After Save, what did the site header show at the top left?",
+              "kind": "pick",
+              "choices": [
+                "The new 90-161.Z logo",
+                "The old logo",
+                "No logo",
+                "Save failed"
+              ]
+            },
+            {
+              "key": "logo-thumb",
+              "prompt": "Did the thumbnail take the new logo?",
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No",
+                "There was no thumbnail box"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "T16 Read the site logo back r12",
+          "title": "Read the site logo back",
+          "dir": "T16",
+          "file": "90161Z-T16-site-setup-r12.ps1",
+          "args": "-LogoOnly",
+          "minutes": 10,
+          "note": "Signs in (CAC). Reads the header logo of the site back. Changes nothing on the site.",
+          "estimate": 1,
+          "help": "Send the results as they are. The step can be run again.",
+          "needs": [
+            "pnp",
+            "net-site"
+          ],
+          "after": [
+            "T16 Site logo r12: header logo"
           ]
         },
         {
@@ -1024,6 +1123,11 @@
           "dir": "T24",
           "name": "90161Z-T24-full-test-part4-r1.txt",
           "step": "T24 Clean up r1"
+        },
+        {
+          "dir": "T16",
+          "name": "90161Z-T16-logo-r12.txt",
+          "step": "T16 Read the site logo back r12"
         }
       ],
       "cleanup": [
@@ -1688,9 +1792,12 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R29a r1: clean-site check, health flow, button flow export, second person and the full flows. Fake data.",
+          "summary": "Round R29a r1: clean-site check, new site logo, health flow, button flow export, second person and the full flows. Fake data.",
           "steps": [
             "T21 Check the test site is clean r5",
+            "T16 Site logo r12: thumbnail",
+            "T16 Site logo r12: header logo",
+            "T16 Read the site logo back r12",
             "T21 Make the probe list r5",
             "T21 Import the health flow r5: choose the file",
             "T21 Import the health flow r5: connections",

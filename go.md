@@ -26,11 +26,11 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R29a r1 (run first): the R28 fixes, the second person and the full flow test
+### Round R29a r1 (run first): the R28 fixes, the new site logo, the second person and the full flow test
 
-**For:** repeats what failed or was skipped in R28: the health flow (it now checks only that my own flows are On), the reader of my button flow export, the import of the full flows and the full flow test, and the second person (T4). My 90-161.Z window is in Round R29b. It starts by checking that the test site is clean.
-**Time:** about 2.5 hours with waits; about 70 minutes of my own work (estimate).
-**Changes:** on the test site: a probe list and library, the second person in Visitors, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end; the solution "90-161.Z flows" is upgraded and stays. On my computer: my OneDrive folder RADE\90-161.Z and one export file in Downloads. Before Run, the window lists every file.
+**For:** repeats what failed or was skipped in R28: the health flow (it now checks only that my own flows are On), the reader of my button flow export, the import of the full flows and the full flow test, and the second person (T4). My 90-161.Z window is in Round R29b. It starts by checking that the test site is clean, then I set the new 90-161.Z logo as the site logo and thumbnail.
+**Time:** about 2.5 hours with waits; about 75 minutes of my own work (estimate).
+**Changes:** on the site: the header logo and thumbnail become the new 90-161.Z logo (they stay). On the test site: a probe list and library, the second person in Visitors, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end; the solution "90-161.Z flows" is upgraded and stays. On my computer: my OneDrive folder RADE\90-161.Z and one export file in Downloads. Before Run, the window lists every file.
 **Before I start:** a colleague who can open the test site is free for 5 minutes in Teams.
 **Steps:**
 1. Press Copy script next to the link below.

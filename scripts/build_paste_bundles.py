@@ -74,6 +74,18 @@ def engine():
     return fetch(lock) / lock['engine']
 
 
+def render_logo():
+    # R29 (PFM 17 Nov 26, 1A and 2A): a round may carry the 90-161.Z logo PNG (site logo and thumbnail). The PNGs are not
+    # committed; they are rendered from assets/logo/90161Z-logo.svg (scripts/build_logo.js, deterministic) before each build.
+    man = ROOT / 'scripts/paste_bundles.json'
+    if not man.exists():
+        return
+    used = any(f['src'].startswith('assets/logo/build/') for b in json.loads(man.read_text(encoding='utf-8'))['bundles'] for f in b['files'])
+    if used:
+        subprocess.run(['node', str(ROOT / 'scripts/build_logo.js')], check=True, stdout=subprocess.DEVNULL)
+
+
 if __name__ == '__main__':
     e = engine()
+    render_logo()
     sys.exit(subprocess.call([sys.executable, '-B', str(e), '--app-root', str(ROOT)] + [a for a in sys.argv[1:] if a == '--check']))
