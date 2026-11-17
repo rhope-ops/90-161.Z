@@ -40,5 +40,5 @@ The window keeps the size and place the PFM gives it (Windows Snap included) and
 ## Data gaps (agent RECs, not decisions)
 
 - G1 "With since": no field holds the date an action entered its step. REC: derive from PFM Activity Log (EventType = step change); a new Publications field only if the read is too slow in an app round.
-- G2 Reminder log: nothing records a reminder to an office. REC: an Activity Log row per contact (EventType = Reminder, the office in EventDetails); it is also the 5.4.3.1 good-faith record. Show "last reminded" and the contact count on each late office.
+- G2 Reminder log (decided by the PFM, 17 Nov 26: an Activity Log row per contact): nothing records a reminder to an office. Was REC: an Activity Log row per contact (EventType = Reminder, the office in EventDetails); it is also the 5.4.3.1 good-faith record. Show "last reminded" and the contact count on each late office.
 - Citation fix: the 15-business-day suspense is DAFMAN 90-161 5.2, not 5.1.4.3 (the preview canvas and the Thirteen Steps artifact cite 5.1.4.3).
