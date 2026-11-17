@@ -268,8 +268,8 @@ def brace_functions(text, pattern, comment_mark):
         arrow = '=>' in line and m.lastindex == 2   # `const f = (...) =>`: its body must open on this line or the next
         depth, end, opened = 0, i, False
         for j in range(i, len(lines)):
-            if not opened and (j > i + 1 if arrow else (j > i + 10 and not re.search(r'\bfunction\b', line))):
-                break   # no body opens: not a function (an arrow's body opens on its line or the next)
+            if not opened and j > (i + 1 if arrow else i + 40):
+                break   # no body opens: not a function (an arrow's opens on its line or the next; others within 40 lines)
             depth, opened = count_braces(lines[j], depth, opened, comment_mark)
             if opened and depth <= 0:
                 end = j
