@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | .pii-guard skip line (added by the PFM): PNG files in a folder named spike inside a Claude session scratchpad pass the hook unscanned, so real-window spike pictures can go on the private canvas. | PFM | .pii-guard |
 | 2026-11-17 | Reminder record (gap G2): one PFM Activity Log row per reminder to an office (EventType Reminder); it is the good-faith contact record of DAFMAN 90-161 5.4.3.1. Scope: PFM window, flows. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
 | 2026-11-17 | RADE Start button: the agent drafts the replacement for RADE's rule "installs apps and does not start them" when the R28 engine work starts; the PFM approves the exact text. | PFM | docs/reviews/2026-11-17-window-plan.md |
 | 2026-11-17 | Window size: the window keeps the size and place the PFM gives it (Snap too); works from 1280 x 720 logical (24" at 150 %) to a third of a 49" and 2560 x 1440. Replaces the 1100 px rule below. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |

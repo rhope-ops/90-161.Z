@@ -1,6 +1,6 @@
 # PFM window: WinForms fidelity spike (17 Nov 26)
 
-Deeper pass, steps 4, 5 and 7 (plan: docs/reviews/2026-11-17-window-plan.md; targets: docs/reviews/2026-11-17-window-ux-targets.md). Worker (standard tier) built a throwaway spike in rhope-ops/RADE (pull request 69, closed, not merged; changed tests/ only). The RADE "window" job (windows-latest, Windows PowerShell 5.1) drew two preview-2 boards in real WinForms with fake data. Run: https://github.com/rhope-ops/RADE/actions/runs/43995640085 (job artifact "window", folder spike/, kept 14 days). Self-review of the pictures by the orchestrator; not an independent review.
+Deeper pass, steps 4, 5 and 7 (plan: docs/reviews/2026-11-17-window-plan.md; targets: docs/reviews/2026-11-17-window-ux-targets.md). Worker (standard tier) built a throwaway spike in rhope-ops/RADE (pull request 69, closed, not merged; changed tests/ only). The RADE "window" job (windows-latest, Windows PowerShell 5.1) drew two preview-2 boards in real WinForms with fake data. Run: https://github.com/rhope-ops/RADE/actions/runs/43995640085 (job artifact "window", folder spike/, kept 14 days). Self-review of the pictures by the orchestrator; not an independent review. The 3 pictures are also on the private preview canvas, row "Real window" (boards 1b real, 1d real, 4 real), after the PFM's .pii-guard skip line of 17 Nov 26.
 
 ## Result
 
