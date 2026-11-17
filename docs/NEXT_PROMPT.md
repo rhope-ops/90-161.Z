@@ -1,6 +1,6 @@
 # Next prompt: 90-161.Z
 
-Updated: 2026-11-17 by Claude (R27 r1 results; lock at engine-v9). Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
+Updated: 2026-11-17 by Claude (R28 r1 shipped, pull request 121; lock at engine-v9). Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
 
 ## Open now
 
@@ -21,7 +21,7 @@ Updated: 2026-11-17 by Claude (R27 r1 results; lock at engine-v9). Keep this fil
 
 ## Waiting on the PFM (go.md)
 
-1. R27 r1 done (16 Nov; results docs/reviews/2026-11-17-r27-results.md): slice r6 passed (flows read PFM Settings, no [TEST], F03 e-mail in the Inbox at 1 min); FAILED: probe flows did not save (button trigger `OnSelectedItem` does not exist; health error cut off), T23 app file refused, Excel has no Automate tab; T4 not retried (skipped). The test site still holds the probe list, library, solution and the second person in Visitors: the next round removes them first. Lock moved to engine-v9 (RADE 28877e7: R28 engine PR 72, 73 and runner polish PR 71; in the R27 results pull request; tests "paste bundles" and "Enter starts the run" follow it). Next: T22 r2 and round R28 (docs/reviews/2026-11-17-window-plan.md; runner text rules docs/reviews/2026-11-17-runner-polish.md; engine-v9 adds step `title` and new guide-line WARNINGs); after R27: F03 and F06 read PFMOfficeMailbox, the SharedMailbox row goes (DECISIONS 17 Nov). T8 fallback "named people on the office row" and the test-mode "Reminder Sent" row before go-live stay design items. Then the front-end plan and rewrites of docs/ARCHITECTURE.md, screen-map.md, roles-and-permissions.md.
+1. R28 r1 ready (17 Nov; pull request 121; build notes and open review items: docs/reviews/2026-11-17-r28-build.md): R27 leftovers removed first (1B), T21 probe r4 (health flow alone; button flow by hand, trigger shape read from the export), T4 retry, T22 window r2 (preview 2), RADE Start and desktop icon (deploy entry), T24 full flow solution (F01 r2, F02 r3, F04 r2; all 6 On), clean-ups always run. Next: the PFM runs R28; then results file, fallbacks only for FAILED tests. R27 results: docs/reviews/2026-11-17-r27-results.md. After R28: F03 and F06 read PFMOfficeMailbox (DECISIONS 17 Nov); front-end plan and doc rewrites.
 2. Task 6 prompt r2 follow-up: list AFI (validator F-032/F-039 fixed 13 Nov).
 3. Seals: done in R13 (all 17 prepared and uploaded); detail: docs/reviews/2026-11-15-handoff-detail.md.
 4. Logo (PFM 17 Nov, DECISIONS): Rho Bold (USAF-B) replaces logo K for every app after R27 (source: the Rho canvas https://claude.ai/artifact/Qw7iSQaz1FMzZQtycjrZxq). To do: RADE master copy and release (RADE session), lock move, index.html band, T16 logo check, site logo by hand. After T11 results: design the site home page as a preview, then a page/header flow (DECISIONS 2026-11-13).
