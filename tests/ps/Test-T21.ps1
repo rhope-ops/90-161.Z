@@ -255,10 +255,15 @@ Test-That 'Open: writes the test page again, no sign-in, no result file' ($r.Cod
 # ---- Export (no sign-in) ----
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 function New-FakeExport([string]$Path, [string]$Name, [string]$Guid, [string]$TriggerJson) {
+  # The real layout: the flow's name is only in customizations.xml; the flow JSON has no displayName.
   if (Test-Path -LiteralPath $Path) { Remove-Item -LiteralPath $Path }
   $z = [System.IO.Compression.ZipFile]::Open($Path, 'Create')
   try {
-    foreach ($e in @(@('solution.xml', '<ImportExportXml/>'), @(('Workflows/FakeFlow-' + $Guid.ToUpperInvariant() + '.json'), ('{"properties":{"displayName":"' + $Name + '","definition":{"triggers":{"manual":' + $TriggerJson + '}}},"schemaVersion":"1.0.0.0"}')))) {
+    $jf = 'Workflows/FakeFlow-' + $Guid.ToUpperInvariant() + '.json'
+    $cust = '<ImportExportXml><Workflows><Workflow WorkflowId="{' + $Guid + '}" Name="' + $Name + '"><JsonFileName>/' + $jf + '</JsonFileName><Type>1</Type></Workflow></Workflows></ImportExportXml>'
+    $other = 'Workflows/Other-AAAAAAAA-1111-2222-3333-444455556666.json'
+    $cust = $cust.Replace('</Workflows>', '<Workflow WorkflowId="{aaaaaaaa-1111-2222-3333-444455556666}" Name="Another flow"><JsonFileName>/' + $other + '</JsonFileName></Workflow></Workflows>')
+    foreach ($e in @(@('solution.xml', '<ImportExportXml/>'), @('customizations.xml', $cust), @($other, '{"properties":{"definition":{"triggers":{"manual":{"type":"Request"}}}}}'), @($jf, ('{"properties":{"definition":{"triggers":{"manual":' + $TriggerJson + '}}},"schemaVersion":"1.0.0.0"}')))) {
       $en = $z.CreateEntry($e[0]); $w = New-Object System.IO.StreamWriter($en.Open()); $w.Write($e[1]); $w.Dispose()
     }
   } finally { $z.Dispose() }
@@ -272,7 +277,7 @@ $r = Invoke-T21 'Export'; Note $r
 Test-That 'Export: finds the flow, writes only type, kind, operationId and parameter names' ($r.Code -eq 0 -and $r.Out[-1] -eq 'PROBE Export done: passed=3 failed=0' -and $r.Text -match 'TRIGGER 1 type=OpenApiConnection; kind=Button; operationId=FakeOperationName; parameter names=dataset,table,id') $r.Text
 Test-That 'Export: no value, address or flow ID in the result' ($r.Text -notmatch 'abc|fakehost|FakeWing|x@fake|1a2b3c4d' -and $r.File -notmatch 'abc|fakehost|FakeWing|x@fake|1a2b3c4d')
 Test-That 'Export: the flow ID is saved on this computer only' ((Get-Content -LiteralPath $idFile -Raw).Trim() -eq $exportGuid)
-New-FakeExport $zip '90161Z T21 Probe Health r1' $exportGuid $trig
+New-FakeExport $zip '90161Z T21 Probe Health r4' $exportGuid $trig
 Remove-Item -LiteralPath $idFile
 $r = Invoke-T21 'Export'; Note $r
 Test-That 'Export: a zip with no "Probe Button" flow fails, no ID file' ($r.Code -eq 0 -and $r.Text -match 'x1-export FAIL' -and -not (Test-Path -LiteralPath $idFile))

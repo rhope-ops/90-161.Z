@@ -52,8 +52,8 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 17. Double-click the shortcut RADE on my desktop again.
 18. Select the button "90-161.Z: Publications and Forms Management".
 19. Press Run.
-20. Follow each card in the window and select Done on each (about 2 hours, estimate).
-21. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
+20. On each card, do its numbered steps, then select the button named at the bottom of the card (about 2 hours in all, estimate).
+21. When a small window asks for the second person's e-mail address, type my colleague's address and select OK (it stays on my computer).
 22. At DONE, send the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R28-round-r1.ps1

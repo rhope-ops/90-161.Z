@@ -1,5 +1,5 @@
 {
-  "displayName": "90161Z T21 Probe Health r1",
+  "displayName": "90161Z T21 Probe Health r4",
   "description": "R27 probe (task T21, fake data only). On a RUN-HEALTH row in the probe list: with the Power Automate Management connector, lists the owner's own flows in this environment only, reads the last run of each probe flow, and writes one RESULT row (HEALTH): the number of own flows read, the number of probe flows, the number whose last run failed, and the status code. No other environment, no other person's flows. Environment variable: Site URL.",
   "connections": [
     "shared_sharepointonline",
@@ -170,7 +170,7 @@
     }
   },
   "solution": {
-    "variant": "P",
+    "variant": "Q",
     "title": "90-161.Z probe health",
     "zip": "90161Z-T21-probe-r4.zip"
   }

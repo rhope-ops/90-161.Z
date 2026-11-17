@@ -74,20 +74,45 @@
           ]
         },
         {
+          "name": "T21 Remove the R27 probe flows",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "You delete the 2 flows inside the R27 solution \"90-161.Z probe\", then the next step deletes the solution. About 4 minutes (estimate).",
+          "guide": [
+            "1. On this RADE card, select \"Open in browser\".",
+            "2. On the left, select Solutions (it can be under More).",
+            "3. Select the solution \"90-161.Z probe\".",
+            "4. Select the three dots beside the flow \"90161Z T21 Probe Health r1\".",
+            "5. Select \"Delete from this environment\".",
+            "6. Select Delete.",
+            "7. Select the three dots beside the flow \"90161Z T21 Probe Button r1\".",
+            "8. Select \"Delete from this environment\".",
+            "9. Select Delete.",
+            "If a flow is not in the list: skip it. If one will not delete: select \"It failed\"."
+          ],
+          "marker": "90161Z-T21-r27-flows-removed.txt",
+          "doneText": "Done: flows removed",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 4,
+          "doneLog": "Confirmed by you: removed the R27 flows.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
+        },
+        {
           "name": "T21 Remove the R27 probe solution",
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You delete the solution \"90-161.Z probe\" that R27 imported (both flows were off). About 4 minutes (estimate).",
+          "note": "You delete the solution \"90-161.Z probe\" that R27 imported (its flows are gone). About 3 minutes (estimate).",
           "guide": [
-            "1. On this RADE card, select \"Open in browser\".",
-            "2. If Power Automate asks you to sign in: sign in with your CAC.",
-            "3. On the left, select Solutions (it can be under More).",
-            "4. Select the three dots beside \"90-161.Z probe\" (not \"probe health\" or \"probe button\").",
-            "5. Select \"Delete from this environment\".",
-            "6. Select Delete.",
-            "7. Return to the RADE window.",
-            "8. Select \"Done: removed\".",
+            "1. On the left, select Solutions (it can be under More).",
+            "2. Select the three dots beside \"90-161.Z probe\" (not \"probe health\" or \"probe button\").",
+            "3. Select \"Delete from this environment\".",
+            "4. Select Delete.",
             "If the solution is not in the list: select \"Done: removed\".",
             "If it does not delete: select \"It failed\" and type the first line of the message."
           ],
@@ -96,11 +121,11 @@
           "needs": [
             "net-flow"
           ],
-          "estimate": 4,
+          "estimate": 3,
           "doneLog": "Confirmed by you: removed the R27 solution.",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt"
+          "after": [
+            "T21 Remove the R27 probe flows"
+          ]
         },
         {
           "name": "R28 Answer: icon, Start and RADE look",
@@ -212,19 +237,21 @@
           "file": "",
           "note": "You finish the import of \"90-161.Z probe health\" and answer 2 questions. About 5 minutes (estimate).",
           "guide": [
-            "1. In each connection box, open the list and pick your connection.",
-            "2. If a box has no connection: select \"New connection\" in that box.",
-            "3. If a box has a Refresh button: select it (it reloads the list of connections).",
+            "1. In the first connection box, select the arrow.",
+            "2. Select your connection.",
+            "3. In each other connection box, select the arrow and pick your connection.",
             "4. Select Next.",
-            "5. In the box \"1 Site URL\", type the test site address (RADE shows it as \"Site address\").",
+            "5. In the box \"1 Site URL\", type the address you typed in the RADE box \"Site address\".",
             "6. Select Import.",
             "7. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
             "8. Select the solution \"90-161.Z probe health\".",
             "9. If its flow reads Off in the Status column: select that flow.",
             "10. If you selected the flow: select \"Turn on\".",
+            "If a box has no connection: select \"New connection\" in that box, then Create.",
+            "If a box has a Refresh button: select it to reload the list of connections.",
             "If a sign-in window opens: sign in with your CAC.",
-            "If the import fails: select \"Download log file\", then \"It failed\".",
-            "Then type the first red line of the message."
+            "If you cannot make a connection: select \"It failed\" and type no connection.",
+            "If the import fails: select \"Download log file\", then \"It failed\"."
           ],
           "marker": "90161Z-T21-probe-imported.txt",
           "doneText": "Done: imported",
@@ -422,10 +449,11 @@
           "file": "",
           "note": "You point the trigger at the probe list. About 2 minutes (estimate).",
           "guide": [
-            "1. In the box \"Site Address\", choose the site address that RADE shows.",
+            "1. In the box \"Site Address\", open the list and pick the test site.",
             "2. In the box \"List Name\", select \"90161Z Probe\".",
             "3. Look at the trigger: it must show the site and the list.",
-            "If the site or the list cannot be chosen: select \"It failed\" and type what the box shows."
+            "If the site or the list cannot be chosen: select \"It failed\" and type what the box shows.",
+            "If the test site is not listed: select \"Enter custom value\", type the RADE \"Site address\"."
           ],
           "marker": "90161Z-T21-button-site-list.txt",
           "doneText": "Done: site and list",
@@ -448,13 +476,14 @@
             "1. Under the trigger, select \"New step\".",
             "2. In the search box, type: Create item",
             "3. Select the SharePoint action \"Create item\".",
-            "4. In the box \"Site Address\", choose the site address that RADE shows.",
+            "4. In the box \"Site Address\", open the list and pick the test site.",
             "5. In the box \"List Name\", select \"90161Z Probe\".",
             "6. In the box \"Title\", type: BTN-HAND",
             "7. Select Save.",
             "8. Look at the top for the word Saved.",
             "If \"Create item\" is not listed: select \"It failed\" and type what the list shows.",
-            "If Save shows an error: select \"It failed\" and type the first line of the message."
+            "If Save shows an error: select \"It failed\" and type the first line of the message.",
+            "If the test site is not listed: select \"Enter custom value\", type the RADE \"Site address\"."
           ],
           "marker": "90161Z-T21-button-action.txt",
           "doneText": "Done: flow saved",
@@ -629,15 +658,16 @@
           "kind": "guide",
           "dir": "T22",
           "file": "",
-          "note": "Two short lists come before the window. Try list 1 in the window, then list 2. All data is fake; nothing is sent. About 5 minutes (estimate).",
+          "note": "Read this list now; you do it later in the window that opens after list 2. All data is FAKE and nothing is sent. About 3 minutes (estimate).",
           "guide": [
-            "1. When the window is open, select a card to open it.",
-            "2. Open every card once.",
-            "3. Select a button on each card (all data is FAKE; nothing is sent).",
-            "4. Press Tab and Shift+Tab to move between the buttons, with no mouse.",
-            "5. Look for a clear outline on the button that has the focus.",
-            "6. Press Enter to use the button that has the focus (safe: all data is FAKE).",
-            "The 90-161.Z window opens full screen after the next list."
+            "1. In the window, select a card in the list on the left.",
+            "2. Select the first button on the card \"Your Work\".",
+            "3. Select each other card once.",
+            "4. Press Tab to move to the next button, with no mouse.",
+            "5. Press Shift+Tab to move back.",
+            "6. Look for a clear outline on the button that has the focus.",
+            "7. Press Enter to use that button (safe: all data is FAKE and nothing is sent).",
+            "You do this in the window after list 2: read it now."
           ],
           "marker": "90161Z-T22-list1-read.txt",
           "doneText": "Done: next list",
@@ -649,16 +679,18 @@
           "kind": "guide",
           "dir": "T22",
           "file": "",
-          "note": "Selecting Done opens the 90-161.Z window (fake data) full screen. Try both lists in it, then close it with its X. About 10 minutes (estimate).",
+          "note": "Read this list now. Selecting Done opens the 90-161.Z window (fake data) full screen: do both lists in it, then close it. About 10 minutes (estimate).",
           "guide": [
             "1. Press Ctrl+Windows+Enter to start Narrator.",
-            "2. Press Tab and listen: Narrator should say the name of each control.",
-            "3. Press Ctrl+Windows+Enter again to stop Narrator.",
-            "4. Press Left Alt+Left Shift+Print Screen to turn high contrast on.",
-            "5. If Windows asks to turn on high contrast: select Yes.",
-            "6. Look at each card: every text and button must stay readable.",
-            "7. Press the same keys again to turn high contrast off.",
-            "8. Close the window with its X."
+            "2. Press Tab to move to the next control.",
+            "3. Listen: Narrator should say the name of each control.",
+            "4. Press Ctrl+Windows+Enter again to stop Narrator.",
+            "5. Press Left Alt+Left Shift+Print Screen to turn high contrast on.",
+            "6. If Windows asks to turn on high contrast: select Yes.",
+            "7. Look at each card: every text and button must stay readable.",
+            "8. Press the same keys again to turn high contrast off.",
+            "9. Close the window with its X.",
+            "If the window does not open: RADE says so on the next card; select \"It failed\" there."
           ],
           "marker": "90161Z-T22-list2-read.txt",
           "doneText": "Done: open the window",
@@ -673,7 +705,7 @@
           "dir": "T22",
           "file": "90161Z-T22-pfm-window-r2.ps1",
           "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data. Try what the two lists said, then close it with its X. Nothing is read, saved or sent. About 15 minutes (estimate).",
+          "note": "Opens your 90-161.Z window with fake data (nothing is read, saved or sent). Do the keyboard, Narrator and contrast tests in it, then close it with its X.",
           "estimate": 15,
           "help": "Send the results as they are. The step can be run again.",
           "after": [
@@ -812,18 +844,19 @@
           "note": "You finish the import of the full flows. It upgrades the flows you imported in R27. About 5 minutes (estimate).",
           "guide": [
             "1. If the page says the solution already exists: select Upgrade.",
-            "2. In each connection box, open the list and pick your connection.",
-            "3. If a box has no connection: select \"New connection\" in that box.",
-            "4. If a box has a Refresh button: select it (it reloads the list of connections).",
+            "2. In the first connection box, select the arrow.",
+            "3. Select your connection.",
+            "4. In each other connection box, select the arrow and pick your connection.",
             "5. Select Next.",
-            "6. If the box \"1 Site URL\" is empty: type the test site address (RADE shows it as \"Site address\").",
+            "6. If the box \"1 Site URL\" is empty: type the address you typed in the RADE box \"Site address\".",
             "7. If the box \"2 Alert e-mail\" is empty: type your own work e-mail address.",
             "8. Select Import.",
             "9. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
             "10. Select \"Done: imported\".",
+            "If a box has no connection: select \"New connection\" in that box, then Create.",
+            "If a box has a Refresh button: select it to reload the list of connections.",
             "If a sign-in window opens: sign in with your CAC.",
-            "If the import fails: select \"Download log file\", then \"It failed\".",
-            "Then type the first red line of the message."
+            "If the import fails: select \"Download log file\", then \"It failed\"."
           ],
           "marker": "90161Z-T24-imported.txt",
           "doneText": "Done: imported",
@@ -846,7 +879,7 @@
             "1. On this RADE card, select \"Open in browser\".",
             "2. On the left, select Solutions (it can be under More).",
             "3. Select the solution \"90-161.Z flows\".",
-            "4. Look at the Status of F03: it answers the question the next card asks.",
+            "4. Look at the Status of F03 and remember it (On or Off): the next card asks.",
             "5. Look at the other 5 flows: each must read On.",
             "6. If a flow reads Off: select that flow.",
             "7. If you selected a flow: select \"Turn on\".",
@@ -884,7 +917,7 @@
           "dir": "T24",
           "file": "90161Z-T24-full-solution-test-r1.ps1",
           "args": "-Part 1",
-          "minutes": 40,
+          "minutes": 60,
           "note": "Signs in (CAC). Writes the PFM Settings rows (Test mode Yes) and fake rows; checks F01, then prepares F02 and F04. About 15 minutes (estimate).",
           "estimate": 15,
           "help": "Send the results as they are. A FAIL here is a finding about a flow.",
@@ -912,9 +945,9 @@
             "6. Select the Back arrow at the top left to return to the solution.",
             "7. Select the flow \"90161Z F04 Status Report r2\".",
             "8. Select Run at the top.",
-            "9. In the box that Run shows, type your own work e-mail address.",
+            "9. In the box \"Send the report to (e-mail)\", type your own work e-mail address.",
             "10. Select \"Run flow\".",
-            "If a panel asks you to continue: select Continue. Wait about 2 minutes, then select Done.",
+            "If a panel asks you to continue: select Continue. After 2 minutes, select \"Done: both ran\".",
             "If Run is missing or a run fails: select \"It failed\" and type the first line of the message."
           ],
           "marker": "90161Z-T24-ran-f02-f04.txt",
@@ -936,7 +969,7 @@
           "dir": "T24",
           "file": "90161Z-T24-full-solution-test-r1.ps1",
           "args": "-Part 2",
-          "minutes": 20,
+          "minutes": 30,
           "note": "Signs in (CAC). Checks what F02 and F04 did: review dates, review rows and the status-report log row. About 4 minutes (estimate).",
           "estimate": 4,
           "help": "Send the results as they are. A FAIL here is a finding about a flow.",
@@ -1032,8 +1065,8 @@
           "file": "90161Z-T24-full-solution-test-r1.ps1",
           "args": "-Part 3",
           "minutes": 20,
-          "note": "Signs in (CAC). Checks that F02's second run made no second review row, removes every fake row (site Recycle Bin) and puts PFM Settings back. About 3 minutes (estimate).",
-          "estimate": 3,
+          "note": "Signs in (CAC). Checks that F02's second run made no second review row. Nothing is removed here. About 2 minutes (estimate).",
+          "estimate": 2,
           "help": "Send the results as they are. A FAIL here is a finding about a flow.",
           "needs": [
             "pnp",
@@ -1063,6 +1096,21 @@
           ]
         },
         {
+          "name": "T24 Clean up r1",
+          "dir": "T24",
+          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "args": "-Part 4",
+          "minutes": 15,
+          "note": "Signs in (CAC). Moves every fake row of the full test to the site Recycle Bin and puts PFM Settings back. Runs even when earlier steps failed.",
+          "estimate": 3,
+          "help": "Send the results as they are. It can run again.",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ]
+        },
+        {
           "name": "T21 Remove the person, list and library r4",
           "dir": "T21",
           "file": "90161Z-T21-probe-r4.ps1",
@@ -1078,25 +1126,25 @@
           ]
         },
         {
-          "name": "T21 Remove the probe solutions r4",
+          "name": "T21 Remove the health flow and solution r4",
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You delete the solutions \"90-161.Z probe health\" and \"90-161.Z probe button\" that this round made. About 5 minutes (estimate).",
+          "note": "You delete the health flow and the solution \"90-161.Z probe health\". About 3 minutes (estimate).",
           "guide": [
             "1. On this RADE card, select \"Open in browser\".",
             "2. On the left, select Solutions (it can be under More).",
-            "3. Select the three dots beside \"90-161.Z probe health\".",
-            "4. Select \"Delete from this environment\".",
-            "5. Select Delete.",
-            "6. Select the three dots beside \"90-161.Z probe button\".",
-            "7. Select \"Delete from this environment\".",
-            "8. Select Delete.",
-            "9. Return to the RADE window.",
-            "10. Select \"Done: removed\".",
-            "If a solution is not in the list: skip it. If one will not delete: select \"It failed\"."
+            "3. Select the solution \"90-161.Z probe health\".",
+            "4. Select the three dots beside the flow \"90161Z T21 Probe Health r4\".",
+            "5. Select \"Delete from this environment\".",
+            "6. Select Delete.",
+            "7. Select the Back arrow at the top left to return to the list of solutions.",
+            "8. Select the three dots beside \"90-161.Z probe health\".",
+            "9. Select \"Delete from this environment\".",
+            "10. Select Delete.",
+            "If a flow or the solution is not in the list: skip it. If one does not delete: select \"It failed\"."
           ],
-          "marker": "90161Z-T21-removed.txt",
+          "marker": "90161Z-T21-removed-health.txt",
           "doneText": "Done: removed",
           "needs": [
             "net-flow"
@@ -1108,6 +1156,32 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
+          "name": "T21 Remove the button flow and solution r4",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "You delete the button flow you made and the solution \"90-161.Z probe button\". About 3 minutes (estimate).",
+          "guide": [
+            "1. On the left, select Solutions (it can be under More).",
+            "2. Select the solution \"90-161.Z probe button\".",
+            "3. Select the three dots beside the flow \"90161Z T21 Probe Button hand r4\".",
+            "4. Select \"Delete from this environment\".",
+            "5. Select Delete.",
+            "6. Select the Back arrow at the top left to return to the list of solutions.",
+            "7. Select the three dots beside \"90-161.Z probe button\".",
+            "8. Select \"Delete from this environment\".",
+            "9. Select Delete.",
+            "If a flow or the solution is not in the list: skip it. If one does not delete: select \"It failed\"."
+          ],
+          "marker": "90161Z-T21-removed.txt",
+          "doneText": "Done: removed",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 5,
+          "doneLog": "Confirmed by you: removed."
+        },
+        {
           "name": "R28 Install check: RADE copy and desktop icon",
           "kind": "guide",
           "dir": "T22",
@@ -1115,7 +1189,8 @@
           "note": "RADE saves its own copy and a desktop icon when this install ends. Nothing else is installed. About 1 minute (estimate).",
           "guide": [
             "1. Look at your desktop for the shortcut RADE (it may be there already).",
-            "2. Select \"Done: installed\"."
+            "2. Select \"Done: installed\".",
+            "If there is no shortcut RADE on the desktop: select It failed and type No shortcut."
           ],
           "marker": "90161Z-R28-install-checked.txt",
           "doneText": "Done: installed",
@@ -1188,6 +1263,11 @@
           "dir": "T24",
           "name": "90161Z-T24-full-test-part3-r1.txt",
           "step": "T24 Full solution test, part 3 r1"
+        },
+        {
+          "dir": "T24",
+          "name": "90161Z-T24-full-test-part4-r1.txt",
+          "step": "T24 Clean up r1"
         }
       ],
       "cleanup": [
@@ -1807,6 +1887,7 @@
           "summary": "Test round R28 r1: probe retry, second person (T4), PFM window r2, full flow solution (F01 to F06) and RADE frame answers. Fake data.",
           "steps": [
             "T21 Remove the R27 person, list and library",
+            "T21 Remove the R27 probe flows",
             "T21 Remove the R27 probe solution",
             "R28 Answer: icon, Start and RADE look",
             "T21 Make the probe list r4",
@@ -1841,8 +1922,10 @@
             "T24 Run F02 again r1",
             "T24 Full solution test, part 3 r1",
             "T21 Read the test results r4",
+            "T24 Clean up r1",
             "T21 Remove the person, list and library r4",
-            "T21 Remove the probe solutions r4"
+            "T21 Remove the health flow and solution r4",
+            "T21 Remove the button flow and solution r4"
           ]
         },
         {

@@ -6,7 +6,7 @@
   What it is for: proves on the test site that F01 (activity log), F02 (next review due and periodic review task) and F04 (status report e-mail)
   work, and that the full solution imported with every flow On. It runs in 3 parts with hand steps between them (round guide).
   Part 1 (about 15 minutes, an estimate):
-    0. Writes the PFM Settings rows Flows paused = No and Test mode = Yes (their old values are kept in a state file and put back in part 3).
+    0. Writes the PFM Settings rows Flows paused = No and Test mode = Yes (their old values are kept in a state file and put back in part 4).
     a. Reads your own flows in Power Automate and counts the 6 flows F01 to F06 that are On (one try; if it cannot be read, a hand check line).
     1. F01 (no DAFMAN paragraph; PFM design): makes one fake publication and changes it one step at a time: the row is opened (1 log row),
        a note is edited (no log row), Action Type, Process Step and Action Status are changed (1 log row each). Total 4 log rows.
@@ -16,22 +16,24 @@
   Then you start F02 and F04 once each with Run (round guide).
   Part 2 (about 4 minutes, an estimate): checks what F02 did (Next Review Due 4 years after the later date; the review row 6 months before; none
     for B and D; the open one kept for C) and what F04 logged (1 row; test mode; the count of actions). Then you start F02 a second time.
-  Part 3 (about 3 minutes, an estimate): checks that F02's second run made no second review row, then moves every fake row to the site Recycle
-    Bin (restorable for 93 days) and puts the PFM Settings rows back to their old values.
+  Part 3 (about 2 minutes, an estimate): checks that F02's second run made no second review row. Nothing is removed here.
+  Part 4 (Clean, about 3 minutes, an estimate; R28 review): moves every fake row to the site Recycle Bin (restorable for 93 days) and puts the
+    PFM Settings rows back to their old values. The round runs it with no dependence on the earlier parts, so a failed or skipped part cannot
+    leave the Settings changed or the fake rows on the site. It can run again: with no state file it reports that there is nothing to clean.
   WHAT IT CHANGES ON THE SITE: the fake rows (publications, product index rows, review rows and the log rows the flows write for them), two
-  PFM Settings rows (put back in part 3). With Test mode = Yes the F04 e-mail goes to the alert address only.
+  PFM Settings rows (put back in part 4). With Test mode = Yes the F04 e-mail goes to the alert address only.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this computer; every output
   line shows it as <SITE> and the DODID as <DODID>.
-  Output: 90161Z-T24-full-test-part1-r1.txt, part2 and part3 in the T24 folder (send all three).
-  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1, 2 or 3, -WaitMinutes (default 10), -NoPause.
+  Output: 90161Z-T24-full-test-part1-r1.txt, part2, part3 and part4 in the T24 folder (send all four).
+  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1, 2, 3 or 4, -WaitMinutes (default 6), -NoPause.
 #>
-param([string]$Id, [ValidateSet(1, 2, 3)][int]$Part = 1, [int]$WaitMinutes = 10, [switch]$NoPause)
+param([string]$Id, [ValidateSet(1, 2, 3, 4)][int]$Part = 1, [int]$WaitMinutes = 6, [switch]$NoPause)
 $task = 'T24'
 $Prefix = '90161Z TEST R28 '
 $TitleX = $Prefix + 'X (delete me)'
 $TitleF4A = $Prefix + 'F04 A (delete me)'
 $TitleF4B = $Prefix + 'F04 B (delete me)'
-# Seed values of the two PFM Settings rows this test writes (schemas/lists/PFMSettings.json). Part 3 puts the old values back (these when a row was missing).
+# Seed values of the two PFM Settings rows this test writes (schemas/lists/PFMSettings.json). Part 4 puts the old values back (these when a row was missing).
 $SeedSettings = [ordered]@{ FlowsPaused = 'No'; TestMode = 'Yes' }
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -297,7 +299,7 @@ try {
   $lines.Add('ROUTE web-login PASS')
 
   if ($Part -eq 1) {
-    # 0. The Settings rows the flows read. Test mode Yes: the F04 e-mail goes to the alert address only. The old values are kept for part 3
+    # 0. The Settings rows the flows read. Test mode Yes: the F04 e-mail goes to the alert address only. The old values are kept for part 4
     # (an earlier unfinished run keeps its first values).
     $state = Read-State $stateFile
     foreach ($k in $SeedSettings.Keys) {
@@ -391,10 +393,12 @@ try {
     Save-State $stateFile $state
     Add-Line 'e-f04-prepared' 'SET' ('fake publications at 2 process steps made=2; status-report log rows before the run=' + $prior.Count)
   } else {
-    if (-not (Test-Path -LiteralPath $stateFile -PathType Leaf)) { throw 'NO TEST STATE: run part 1 first.' }
-    $state = Read-State $stateFile
-    $settingsChanged = -not $state.ContainsKey('settingsRestored')   # part 1 changed the Settings rows; part 3, or a stop in any part, puts them back once
-    if ($Part -eq 2) {
+    $hasState = Test-Path -LiteralPath $stateFile -PathType Leaf
+    if (-not $hasState -and $Part -ne 4) { throw 'NO TEST STATE: run part 1 first.' }
+    if (-not $hasState) { Add-Line 'g-clean-up' 'SET' 'no test state file: part 1 did not run or part 4 ran before; nothing to clean' }
+    $state = $(if ($hasState) { Read-State $stateFile } else { @{} })
+    $settingsChanged = -not $state.ContainsKey('settingsRestored')   # part 1 changed the Settings rows; part 4, or a stop in any part, puts them back once
+    if ($Part -eq 4 -and -not $hasState) { $null = $state } elseif ($Part -eq 2) {
       # F02 after the first run, then F04.
       Test-F02Row $state $false
       Save-State $stateFile $state
@@ -408,10 +412,11 @@ try {
       $covered = $(if ($det -match 'covered (\d+) actions') { [int]$Matches[1] } else { -1 })
       Add-Line 'f04-count' $(if ($covered -eq $nPub) { 'PASS' } else { 'FAIL' }) ('the report covered ' + $covered + ' actions; Publications rows now=' + $nPub + ' (they differ when a row was added or removed after the run)')
       Add-Line 'f04-hand' 'INFO' 'the e-mail itself (alert address Inbox, 2 tables, test mode line) is checked by you in the next step'
-    } else {
-      # Part 3: F02 after the second run, clean-up, settings back.
+    } elseif ($Part -eq 3) {
+      # Part 3: F02 after the second run (checks only; part 4 cleans up).
       if ($state.ContainsKey('p1') -and $state.ContainsKey('nrd1')) { Test-F02Row $state $true } else { Add-Line 'f02-not-twice-run2' 'SKIP' 'part 1 stopped before the F02 rows were made' }
-      # The fake rows always go to the Recycle Bin here, also after a failed check (the check lines above keep the evidence). A row already gone is not an error.
+    } else {
+      # Part 4: clean-up and settings back. The fake rows always go to the Recycle Bin here, also after a failed check (the check lines above keep the evidence). A row already gone is not an error.
       $n = 0; $gone = 0
       foreach ($k in 'x', 'fa', 'fb') { if ($state.ContainsKey($k)) { try { $n += Clear-TestPublication ([int]$state[$k]) } catch { $gone++ } } }
       foreach ($k in 'p1', 'p2', 'p3', 'p4') { if ($state.ContainsKey($k)) { try { $n += Clear-TestProduct ([int]$state[$k]) } catch { $gone++ } } }
@@ -429,7 +434,7 @@ try {
 } catch {
   $m = ConvertTo-Masked (Hide-Site ([string]$_) $site) $secret
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
-  # Any part: put the Settings rows back from the old values in the state file (once; part 3 sees the flag and does not restore again).
+  # Any part: put the Settings rows back from the old values in the state file (once; part 4 sees the flag and does not restore again).
   if ($settingsChanged -and $state.ContainsKey('origFlowsPaused') -and $state.ContainsKey('origTestMode')) {
     try {
       $nRestored = Restore-TestSetting $state
@@ -438,7 +443,7 @@ try {
       $lines.Add('Settings rows put back to their old values=' + $nRestored)
     } catch { $lines.Add('Settings rows NOT put back: set Test mode and Flows paused back by hand') }
   }
-  if ($Part -lt 3 -and $stateFile -and (Test-Path -LiteralPath $stateFile)) { $lines.Add('Run part 3 to move the fake rows to the site Recycle Bin and finish') }
+  if ($Part -lt 4 -and $stateFile -and (Test-Path -LiteralPath $stateFile)) { $lines.Add('Run part 4 to move the fake rows to the site Recycle Bin and put the Settings back') }
 } finally {
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
   if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T24-full-test-part' + $Part + '-r1.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }

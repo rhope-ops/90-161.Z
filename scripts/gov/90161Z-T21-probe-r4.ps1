@@ -24,7 +24,7 @@
            the view "ProbeButton" with a button that starts the hand-made button flow (a view formatting with the action executeFlow;
            the flow's ID comes from the file the Export part saved on this computer).
     Export (a few seconds; no sign-in)  Reads the newest solution export zip (last 3 hours; Downloads, Desktop, Documents or the T21
-           folder) that holds a flow named "... Probe Button ...". Writes to the result only the trigger's type, kind, connector
+           folder) whose customizations.xml names a flow "... Probe Button ...". Writes to the result only the trigger's type, kind, connector
            operationId and parameter NAMES (never a value, site, list ID or address). Saves the flow's ID in 90161Z-T21-button-flow-r4.txt
            in the T21 folder (stays on this computer; not a result file).
     Open   (a few seconds; no sign-in)  Writes the test page again and opens it in the browser.
@@ -405,16 +405,24 @@ try {
         $za = [System.IO.Compression.ZipFile]::OpenRead($z.FullName)
         $wf = @($za.Entries | Where-Object { $_.FullName -match '^[Ww]orkflows/.+\.json$' -and $_.FullName -match $guidRx })
         if (-not (@($za.Entries | Where-Object { $_.FullName -eq 'solution.xml' }).Count) -or -not $wf.Count) { continue }
-        foreach ($e in $wf) {
-          $rd = New-Object System.IO.StreamReader($e.Open())
+        # A real solution export keeps the flow's name only in customizations.xml (<Workflow WorkflowId=... Name=...> with a JsonFileName).
+        $ce = @($za.Entries | Where-Object { $_.FullName -eq 'customizations.xml' })
+        if (-not $ce.Count) { continue }
+        $rd = New-Object System.IO.StreamReader($ce[0].Open())
+        try { $xml = [xml]$rd.ReadToEnd() } finally { $rd.Dispose() }
+        $wnodes = @($xml.SelectNodes('//Workflow'))
+        $flowCount += $wnodes.Count
+        foreach ($w in $wnodes) {
+          if ([string]$w.GetAttribute('Name') -notlike '*Probe Button*') { continue }
+          $leaf = ([string]$w.JsonFileName -split '/')[-1]
+          $e = @($wf | Where-Object { ($_.FullName -split '/')[-1] -ieq $leaf })
+          if (-not $e.Count) { continue }
+          $rd = New-Object System.IO.StreamReader($e[0].Open())
           try { $txt = $rd.ReadToEnd() } finally { $rd.Dispose() }
           $j = $txt | ConvertFrom-Json
-          $flowCount++
-          if ([string]$j.properties.displayName -like '*Probe Button*') {
-            $null = $e.FullName -match $guidRx
-            $found = @{ Id = $Matches[1].ToLowerInvariant(); Json = $j }
-            break
-          }
+          $null = $e[0].FullName -match $guidRx
+          $found = @{ Id = $Matches[1].ToLowerInvariant(); Json = $j }
+          break
         }
       } catch { $null = $_ } finally { if ($za) { $za.Dispose() } }
       if ($found) { break }
