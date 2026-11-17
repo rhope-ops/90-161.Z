@@ -65,8 +65,8 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 6. Press Ctrl+V.
 7. Press F5. The RADE window opens.
 8. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-9. Press Run.
-10. Do each check in the bar at the bottom of the 90-161.Z window.
+9. In the RADE window, press Run.
+10. For each check in the bar at the bottom of the 90-161.Z window, select Pass or Fail.
 11. Close the 90-161.Z window with its X.
 12. Answer the 3 questions in the RADE window.
 13. At DONE, send the Outlook draft that opens.
