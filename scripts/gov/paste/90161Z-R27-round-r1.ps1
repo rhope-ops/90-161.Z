@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R27, then opens an Outlook draft with them (never sent). No download, no admin rights.
 #>
-$buildId = 'ec0a2203'
+$buildId = 'f67f1bf7'
 $engineRelease = 9
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -2417,7 +2417,7 @@ $cleanup += @{ Path = 'T21\90161Z-T21-*-r2.*'; Kind = 'glob' }
 $cleanup += @{ Path = 'T18\90161Z-T18-slice1-*-r4.*'; Kind = 'glob' }
 $cleanup += @{ Path = 'T18\90161Z-T18-slice1-flows-r5.zip'; Kind = 'glob' }
 $cleanup += @{ Path = 'T18\90161Z-T18-test-publications-r4.txt'; Kind = 'glob' }
-$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r11.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r5.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', '90161Z-T21-links-r3.html', '90161Z-T21-probe-r3.ps1', '90161Z-T22-pfm-window-r1.ps1', '90161Z-T23-app-file-r1.ps1', '90161Z-T23-app-file-src-r1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
+$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r11.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r5.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', '90161Z-T21-links-r3.html', '90161Z-T21-probe-r3.ps1', '90161Z-T22-pfm-window-r1.ps1', '90161Z-T23-app-file-r1.ps1', '90161Z-T23-app-file-src-r1', '90161Z-T24-full-solution-test-r1.ps1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
 $apps = @()
 $apps += @{ Name = '90-161.Z: Publications and Forms Management'; Summary = 'Test round R27 r1: flows that read PFM Settings, e-mails without [TEST], a second person (T4), look probes, health flow, app file. Fake data.'; Steps = @(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21); Checks = @('nipr', 'ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'pnp', 'net-bookmark', 'net-site', 'net-flow', 'site-rights', 'flow-guide'); Mode = 'test'; Version = ''; Marker = $null; Start = '' }
 

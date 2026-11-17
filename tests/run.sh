@@ -171,7 +171,7 @@ python3 scripts/build_flow_solution.py --check >/dev/null && python3 tests/check
 # export values; no environmentvariabledefinition.xml has an XML declaration. R19: only A r5 (no variable, layout of the R18 export).
 python3 - <<'PYEOF' && ok "solution import test zip valid (A r5: no variable, R18 export layout)" || bad "solution import test zips"
 import zipfile, glob, xml.dom.minidom as md
-zips = sorted(glob.glob('flow/solution/90161Z-T17-solution-test-*.zip')) + ['flow/solution/90161Z-flows-solution-r1.zip']
+zips = sorted(glob.glob('flow/solution/90161Z-T17-solution-test-*.zip')) + ['flow/solution/90161Z-T24-full-flows-r1.zip']
 assert len(zips) == 2 and zips[0].endswith('-test-a-r5.zip'), zips
 for path in zips:
     z = zipfile.ZipFile(path); n = z.namelist()
@@ -546,7 +546,7 @@ if [ "${on[batch]}" = 1 ]; then
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(bout font | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(bout "hs$n")
 [ -n "$hs" ] && ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
@@ -554,7 +554,7 @@ n=$((n+1))
 done
 # A list id right after URL-encoded characters (guid%27<id>%27) must be masked too (review of 15 Nov 26). The scripts
 # revised on or after 15 Nov 26 have the fix; T16 r4, T16 r11 and T19 r3 get it with their next revision.
-n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
 hs=$(bout "hsg$n")
 ! echo "$hs" | grep -qiE "0a1b2c3d|9999-2222" && echo "$hs" | grep -q "<GUID>" && ok "$(basename $hsf) hides a list id after URL-encoded characters" || { echo "$hs"; bad "GUID masking after URL-encoded characters: $(basename $hsf)"; }
 n=$((n+1))
@@ -565,7 +565,7 @@ sa=$(bout siteaddr | tail -1)
 # R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
 hs=$(bout hsenc)
 [ -n "$hs" ] && ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
-else sk "RADE fonts in the bundles"; sk "Hide-Site masking of T16, T18, T19, T20 scripts"; sk "list id after URL-encoded characters"; sk "site address: from RADE, then from Config"; sk "site setup r6 masks a URL-encoded e-mail address"; fi
+else sk "RADE fonts in the bundles"; sk "Hide-Site masking of T16, T18, T19, T20, T24 scripts"; sk "list id after URL-encoded characters"; sk "site address: from RADE, then from Config"; sk "site setup r6 masks a URL-encoded e-mail address"; fi
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "
 import json; a = json.load(open('flow/defs/90161Z-T11-rights-probe-r5.json'))['actions']

@@ -54,7 +54,7 @@ def expr_ok(s, where):
 
 counts = dict(defs=0, actions=0, columns=0, strings=0)
 connrefs_declared = set()
-cz = ROOT / "flow" / "solution" / "90161Z-flows-solution-r1.zip"
+cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r1.zip"
 zf = zipfile.ZipFile(cz)
 for n in zf.namelist():
     if n.endswith(".xml"): minidom.parseString(zf.read(n))
@@ -128,8 +128,9 @@ for k, v in MOVED_KEYS.items():
     if "DAFMAN" not in r["SettingNotes"] and "PFM 2026-11-1" not in r["SettingNotes"]: bad(f"PFMSettings.json seed {k}: SettingNotes cite no source")
 steps = json.loads((ROOT / "schemas" / "lists" / "PFMProcessSteps.json").read_text(encoding="utf-8"))["seed"]
 if [s["TargetBusinessDays"] for s in steps if s["StepNumber"] == 6] != [25]: bad("PFMProcessSteps.json: stage 6 TargetBusinessDays must be 25 (PFM 14 Nov 26)")
-r27_defs = [s for s in sorted(B.DEFS.glob("*.json")) if re.match(r"90161Z-F0[356]-", s.name)]
-if len(r27_defs) != 3: bad(f"expected F03, F05 and F06 defs, found {[s.name for s in r27_defs]}")
+# R28 (PFM 17 Nov 26): F01, F02 and F04 read PFM Settings too, so all six flows start the same way.
+r27_defs = [s for s in sorted(B.DEFS.glob("*.json")) if re.match(r"90161Z-F0[1-6]-", s.name)]
+if len(r27_defs) != 6: bad(f"expected the six flow defs F01 to F06, found {[s.name for s in r27_defs]}")
 for src in r27_defs:
     text = src.read_text(encoding="utf-8")
     if "[TEST]" in text: bad(f"{src.name}: still holds '[TEST]' (PFM 16 Nov 26: no subject or title prefix)")
@@ -225,6 +226,21 @@ for z in SLICES:
         for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
             if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
+# R28: the full solution (R28, PFM 17 Nov 26: "the full solution with every flow On") holds F01 to F06, every flow On (StateCode 1), the
+# same unique name as the slice (so it upgrades it), and every environment variable its flows read.
+with zipfile.ZipFile(cz) as zz:
+    c, sol = zz.read("customizations.xml").decode("utf-8"), zz.read("solution.xml").decode("utf-8")
+    if len(re.findall(r'<RootComponent type="29"', sol)) != 6: bad(f"{cz.name}: must hold exactly the six flows F01 to F06")
+    if c.count("<StateCode>1</StateCode>") != 6 or "<StateCode>0</StateCode>" in c: bad(f"{cz.name}: every flow must import On")
+    if "<UniqueName>PFM90161Z</UniqueName>" not in sol: bad(f"{cz.name}: unique name must be PFM90161Z (the slice's), so the import upgrades it")
+    flows_in_zip = sorted(re.findall(r"Workflows/90161ZF(\d\d)[A-Za-z0-9]+-", "\n".join(zz.namelist())))
+    if flows_in_zip != ["01", "02", "03", "04", "05", "06"]: bad(f"{cz.name}: flows in the zip {flows_in_zip}")
+    envs_full = {n.split("/")[1] for n in zz.namelist() if n.startswith("environmentvariabledefinitions/")}
+    if envs_full != {s for s, _, _ in B.ENV}: bad(f"{cz.name}: environment variables {sorted(envs_full)} differ from the list in the builder")
+    slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip").read("solution.xml").decode("utf-8")
+    for wid in re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', slice_sol):
+        if f'id="{{{wid}}}"' not in sol: bad(f"{cz.name}: slice flow {wid} is not in the full solution (the import would not upgrade it)")
+
 # R26 (task T21, probe flows): one unmanaged test solution built from flow/solution/test-defs/90161Z-T21-*.json:
 # P (r3, R27, 17 Nov 26: 2 flows, 2 connection references: Health with the Power Automate Management connector, and Button with the
 # "For a selected item" trigger; the files, mail and app flows of r2 are gone, their tests passed or failed in R26). Same file rules as the export (no XML declaration, CRLF, root
@@ -247,6 +263,28 @@ def check_levels(actions, where, outer=()):
                     bad(f"{where}: {name} writes a row but runs only after {dep} {statuses}; capture every status")
         for sub in (a.get("actions", {}), a.get("else", {}).get("actions", {})):
             check_levels(sub, where)
+
+# R28 (full solution, task T24): the six flow defs share one shape (Try scope, settings read, Flows paused stop, failure e-mail), every
+# runAfter name is a sibling, every expression names an action that exists, and no variable is initialized inside the scope.
+for src in r27_defs:
+    text = src.read_text(encoding="utf-8"); top = json.loads(text)["actions"]
+    for need in ("Try", "Failed_actions", "Failure_lines", "E-mail_the_failure", "End_as_failed"):
+        if need not in top: bad(f"{src.name}: no top-level '{need}' (Try scope with failure e-mail)")
+    if "Try" in top:
+        if "If_flows_paused" not in top["Try"]["actions"]: bad(f"{src.name}: no Flows paused stop in the Try scope")
+        if any(a.get("type") == "InitializeVariable" for _, a in walk_actions(top["Try"]["actions"])): bad(f"{src.name}: a variable is initialized inside the Try scope (initialize at the top level)")
+    check_levels(top, src.name)
+    names = {n for n, _ in walk_actions(top)}
+    for m in re.findall(r"(?:outputs|body|actions|result)\('([^']+)'\)", text):
+        if m not in names: bad(f"{src.name}: an expression names action '{m}', which does not exist")
+# F04 (2.6.8): test mode sends the report to the alert address only and says so; F01 logs only its own rows as "last state" and nothing on a note edit
+# (it reads Action Type, Process Step and Action Status only).
+f04 = next(s for s in r27_defs if "-F04-" in s.name).read_text(encoding="utf-8")
+if "Test_mode" not in f04 or "parameters('Alert e-mail (pfm_AlertEmail)'), triggerBody()?['text']" not in f04: bad("F04: test mode must send to the alert address")
+f01 = json.loads(next(s for s in r27_defs if "-F01-" in s.name).read_text(encoding="utf-8"))
+f01_state = json.dumps(f01["actions"]["Try"]["actions"]["Current_state"]["inputs"])
+if sorted(re.findall(r"\['(\w+)'\]", f01_state)) != sorted(["ActionType", "ProcessStep", "ActionStatus", "Value", "Value", "Value"]): bad(f"F01: the logged state must read exactly Action Type, Process Step and Action Status: {f01_state}")
+if "Own_log_rows" not in f01["actions"]["Try"]["actions"]: bad("F01: the last logged state must come from rows this flow wrote (Own_log_rows)")
 
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")

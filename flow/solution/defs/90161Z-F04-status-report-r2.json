@@ -1,0 +1,382 @@
+{
+  "displayName": "90161Z F04 Status Report r2",
+  "description": "Run on demand. E-mails the person named at run time an HTML table of PFM Publications actions grouped by Process Step (DECISIONS 2026-11-11: status report to anyone at any time; DAFMAN 90-161 2.6.8). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused and Test mode read from PFM Settings; in test mode the report goes to the alert address only and the body names the intended recipient; failure e-mail to the alert address.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365"
+  ],
+  "triggers": {
+    "manual": {
+      "type": "Request",
+      "kind": "Button",
+      "inputs": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "title": "Send the report to (e-mail)",
+              "type": "string",
+              "x-ms-dynamically-added": true,
+              "x-ms-content-hint": "TEXT",
+              "description": "One e-mail address"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        }
+      }
+    }
+  },
+  "actions": {
+    "Report_html": {
+      "runAfter": {},
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "ReportHtml",
+            "type": "string",
+            "value": ""
+          }
+        ]
+      }
+    },
+    "Try": {
+      "runAfter": {
+        "Report_html": [
+          "Succeeded"
+        ]
+      },
+      "type": "Scope",
+      "actions": {
+        "Get_settings": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R28 (PFM 17 Nov 26): the flow values are rows of PFM Settings, read once at the start, as in F03, F05 and F06. A missing or empty row gives the default: Flows paused No, Test mode Yes (fail-safe)."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "Filter_TestMode": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'TestMode')"
+          }
+        },
+        "Test_mode": {
+          "runAfter": {
+            "Filter_TestMode": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@not(equals(toLower(trim(coalesce(if(empty(body('Filter_TestMode')), '', first(body('Filter_TestMode'))?['SettingValue']), ''))), 'no'))"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Test_mode": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@outputs('Setting_flows_paused')",
+              true
+            ]
+          },
+          "actions": {
+            "Stop_flows_are_paused": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Get_process_steps": {
+          "runAfter": {
+            "If_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Process Steps (pfm_ListProcessSteps)')",
+              "$orderby": "StepNumber asc",
+              "$top": 100
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Get_publications": {
+          "runAfter": {
+            "Get_process_steps": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+              "$top": 5000
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "paginationPolicy": {
+              "minimumItemCount": 5000
+            }
+          }
+        },
+        "For_each_process_step": {
+          "runAfter": {
+            "Get_publications": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@body('Get_process_steps')?['value']",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          },
+          "actions": {
+            "Actions_at_this_step": {
+              "runAfter": {},
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Get_publications')?['value']",
+                "where": "@equals(item()?['ProcessStep']?['Id'], items('For_each_process_step')?['ID'])"
+              }
+            },
+            "If_any_actions": {
+              "runAfter": {
+                "Actions_at_this_step": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "greater": [
+                  "@length(body('Actions_at_this_step'))",
+                  0
+                ]
+              },
+              "actions": {
+                "Create_HTML_table": {
+                  "runAfter": {},
+                  "type": "Table",
+                  "inputs": {
+                    "from": "@body('Actions_at_this_step')",
+                    "format": "HTML",
+                    "columns": [
+                      {
+                        "header": "Number",
+                        "value": "@coalesce(item()?['PublicationNumber'], '')"
+                      },
+                      {
+                        "header": "Title",
+                        "value": "@coalesce(item()?['Title'], '')"
+                      },
+                      {
+                        "header": "Action",
+                        "value": "@coalesce(item()?['ActionType']?['Value'], '')"
+                      },
+                      {
+                        "header": "Status",
+                        "value": "@coalesce(item()?['ActionStatus']?['Value'], '')"
+                      },
+                      {
+                        "header": "Coordination suspense",
+                        "value": "@if(empty(item()?['CoordinationSuspense']), '', substring(item()?['CoordinationSuspense'], 0, 10))"
+                      }
+                    ]
+                  }
+                },
+                "Append_stage_section": {
+                  "runAfter": {
+                    "Create_HTML_table": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "AppendToStringVariable",
+                  "inputs": {
+                    "name": "ReportHtml",
+                    "value": "@concat('<h3>Step ', string(items('For_each_process_step')?['StepNumber']), ': ', coalesce(items('For_each_process_step')?['Title'], ''), ' (', string(length(body('Actions_at_this_step'))), ')</h3>', body('Create_HTML_table'))"
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            }
+          }
+        },
+        "Send_the_report_(V2)": {
+          "runAfter": {
+            "For_each_process_step": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+              "connectionName": "shared_office365",
+              "operationId": "SendEmailV2"
+            },
+            "authentication": "@parameters('$authentication')",
+            "parameters": {
+              "emailMessage/To": "@if(outputs('Test_mode'), parameters('Alert e-mail (pfm_AlertEmail)'), triggerBody()?['text'])",
+              "emailMessage/Subject": "@concat('90-161.Z status report ', formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd'))",
+              "emailMessage/Body": "@concat(if(outputs('Test_mode'), concat('<p><b>TEST MODE</b>: this e-mail went to the alert address only. Intended To: ', coalesce(triggerBody()?['text'], ''), '.</p>'), ''), '<p>Open publication actions by process step. Generated ', formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd'), ' (Central).</p>', if(empty(variables('ReportHtml')), '<p>No actions found.</p>', variables('ReportHtml')))"
+            }
+          }
+        },
+        "Log_status_report": {
+          "runAfter": {
+            "Send_the_report_(V2)": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "PostItem"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+              "item/Title": "Status report e-mailed",
+              "item/EventType/Value": "Status Report E-Mailed",
+              "item/EventDetails": "@concat('Report covered ', string(length(body('Get_publications')?['value'])), ' actions.', if(outputs('Test_mode'), ' Test mode: sent to the alert address only.', ''))"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    },
+    "Failed_actions": {
+      "runAfter": {
+        "Try": [
+          "Failed",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@result('Try')",
+        "where": "@or(equals(item()?['status'], 'Failed'), equals(item()?['status'], 'TimedOut'))"
+      }
+    },
+    "Failure_lines": {
+      "runAfter": {
+        "Failed_actions": [
+          "Succeeded"
+        ]
+      },
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Failed_actions')",
+        "select": "@concat('<li><b>', replace(coalesce(item()?['name'], 'step'), '_', ' '), '</b>: ', coalesce(item()?['error']?['message'], item()?['error']?['code'], 'no error text'), '</li>')"
+      }
+    },
+    "E-mail_the_failure": {
+      "runAfter": {
+        "Failure_lines": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "authentication": "@parameters('$authentication')",
+        "parameters": {
+          "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "emailMessage/Subject": "@concat('90-161.Z flow failed: F04 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
+          "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F04'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. Open the failed run: <a href=\"https://make.powerautomate.appsplatform.us/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'], '\">run details</a> (or open this flow and its 28-day run history; the failed run has the start time above). 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and does not repeat what the failed run already did.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+          "emailMessage/Importance": "High"
+        }
+      }
+    },
+    "End_as_failed": {
+      "runAfter": {
+        "E-mail_the_failure": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "Terminate",
+      "inputs": {
+        "runStatus": "Failed",
+        "runError": {
+          "code": "StepFailed",
+          "message": "A step failed; the alert address was e-mailed. Fix the cause, then Resubmit this run."
+        }
+      }
+    }
+  }
+}

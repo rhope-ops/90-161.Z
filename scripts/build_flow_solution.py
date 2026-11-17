@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the DRAFT unmanaged Power Automate solution flow/solution/90161Z-flows-solution-r1.zip from flow/solution/defs/*.json.
+"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r1.zip (R28: all six flows, every flow On) from flow/solution/defs/*.json.
 
 Layout (Microsoft's documented unmanaged solution): [Content_Types].xml, solution.xml, customizations.xml (Workflows,
 connectionreferences), Workflows/<name>-<GUID>.json (properties.connectionReferences + properties.definition),
@@ -44,7 +44,7 @@ import argparse, io, json, pathlib, re, sys, uuid, zipfile
 from xml.sax.saxutils import escape, quoteattr
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-flows-solution-r1.zip"
+DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r1.zip"
 TEST_DEFS = ROOT / "flow" / "solution" / "test-defs"
 NS = uuid.UUID("6f1c2b4e-9d0a-4c5e-8b7a-90161a000001")
 SCHEMA = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
