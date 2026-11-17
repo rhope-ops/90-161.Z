@@ -434,7 +434,7 @@
           "file": "90161Z-T21-probe-r5.ps1",
           "args": "-Part Export",
           "minutes": 20,
-          "note": "Reads the newest export file in Downloads on this computer. If it holds exactly 1 flow, that flow is read whatever its name. Writes only the trigger's type, kind, operation name and parameter names. No sign-in.",
+          "note": "Reads the newest export file in Downloads. If it holds 1 flow, reads that flow whatever its name. Writes only the trigger's type, kind, operation and parameter names. No sign-in.",
           "estimate": 1,
           "help": "Send the results as they are. No value, site or address is written.",
           "after": [
@@ -1747,7 +1747,7 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R29 r1: check the test site is clean, then the health flow, the button flow export, the second person, the 90-161.Z window with checks inside and the full flows. Fake data.",
+          "summary": "Round R29 r1: clean-site check, health flow, button flow export, second person, the 90-161.Z window checks and the full flows. Fake data.",
           "steps": [
             "T21 Check the test site is clean r5",
             "T21 Make the probe list r5",
