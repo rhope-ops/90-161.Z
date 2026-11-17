@@ -93,7 +93,7 @@
             "5. Under \"Site logo thumbnail\", select \"Change\".",
             "6. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
             "7. Select \"Open\".",
-            "If the page is not your site: type your site address in the browser address bar.",
+            "If the page is not your site: type the address you typed in the RADE box \"Site address\".",
             "If there is no \"Site logo thumbnail\" box: select \"It failed\"."
           ],
           "marker": "90161Z-T16-thumb-set.txt",
