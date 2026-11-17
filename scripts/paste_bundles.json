@@ -24,71 +24,34 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R26-round-r2.ps1",
-      "round": "R26",
-      "title": "Round R26 r2: the big test. Tries the split front end with fake data: list forms for other people (T2, T4, T7, T10), your 90-161.Z window preview, the flows (T3, T5, T6, T8), and 2 own-mailbox e-mails with and without [TEST] (T9)",
+      "out": "scripts/gov/paste/90161Z-R27-round-r1.ps1",
+      "round": "R27",
+      "title": "Round R27 r1: the flows read 6 values from PFM Settings, test e-mails without [TEST], a second person in Visitors (T4), 3 look probes, the health flow and a tiny app file",
       "files": [
         {
-          "dir": "T21",
-          "src": "scripts/gov/90161Z-T21-probe-r2.ps1"
+          "dir": "T18",
+          "src": "scripts/gov/90161Z-T18-slice1-test-r5.ps1"
         },
         {
-          "dir": "T21",
-          "src": "flow/solution/90161Z-T21-probe-r2.zip"
-        },
-        {
-          "dir": "T21",
-          "src": "samples/90161Z-T21-fake-draft-r1.docx"
-        },
-        {
-          "dir": "T21",
-          "src": "samples/90161Z-T21-fake-form-r1.html"
-        },
-        {
-          "dir": "T21",
-          "src": "samples/90161Z-T21-links-r2.html"
+          "dir": "T18",
+          "src": "flow/solution/90161Z-T18-slice1-flows-r6.zip"
         },
         {
           "dir": "T17",
           "src": "scripts/gov/90161Z-T17-import-log-r2.ps1"
         },
         {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-pfm-window-r1.ps1"
+          "dir": "T23",
+          "src": "scripts/gov/90161Z-T23-app-file-r1.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T21 Make the probe list and library r2",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r2.ps1",
-          "args": "-Part Make",
-          "minutes": 15,
-          "note": "Signs in (CAC). Makes the list \"90161Z Probe\" and the library \"90161Z Probe Files\", lets site visitors write to that list only, adds 2 fake files and the test page. About 2 minutes (estimate).",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 2,
-          "help": "Send the results as they are. The step can be run again.",
-          "makes": [
-            {
-              "kind": "list",
-              "name": "90161Z Probe"
-            },
-            {
-              "kind": "library",
-              "name": "90161Z Probe Files (2 fake files)"
-            }
-          ]
-        },
-        {
-          "name": "T21 Import the probe solution r2",
+          "name": "T18 Import the slice flows r6",
           "kind": "guide",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r2.zip",
-          "note": "You import the solution \"90-161.Z probe\" (3 flows) and select Done. About 8 minutes (estimate).",
+          "dir": "T18",
+          "file": "90161Z-T18-slice1-flows-r6.zip",
+          "note": "You import the new 90-161.Z flows (F03 r6, F05 r3, F06 r2). They now read 6 values from the list PFM Settings, and test e-mails have no [TEST] in the subject. About 8 minutes (estimate).",
           "guide": [
             "1. On this RADE card, select \"Open in browser\".",
             "2. If Power Automate asks you to sign in: sign in with your CAC.",
@@ -99,48 +62,40 @@
             "7. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
             "8. Select Open.",
             "9. Select Next.",
-            "10. In each of the 5 connection boxes, select the arrow.",
-            "11. In each list that opens, select your existing connection.",
-            "12. If a box has no connection: select \"New connection\" in that box.",
-            "13. If you selected \"New connection\": select Create.",
-            "14. If a sign-in window opens: sign in with your CAC.",
-            "15. If you made a new connection: return to the browser tab where you started the import.",
-            "16. If you made a new connection: select Refresh.",
-            "17. Select Next.",
-            "The page shows 2 boxes, \"1 Site URL\" and \"3 Shared mailbox\". There is no box 2: that is correct.",
-            "18. In the box \"1 Site URL\", type the test site address (it starts with https://; RADE shows it in its box \"Site address\").",
-            "19. In the box \"3 Shared mailbox\", type the e-mail address of your office's shared mailbox (it is not written here: this page is public).",
-            "20. Select Import.",
-            "21. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
-            "22. Select the solution \"90-161.Z probe\".",
-            "23. Look at the Status column: the 3 flows \"90161Z T21 Probe ...\" must read On.",
-            "24. If a flow reads Off: select that flow.",
-            "25. If you selected a flow that reads Off: select \"Turn on\".",
-            "26. Return to the RADE window.",
-            "27. Select \"Done: imported\".",
+            "10. If the page says the solution already exists: select Upgrade.",
+            "11. If the page shows connection boxes: in each box, select your existing connection.",
+            "12. Select Next.",
+            "13. If the box \"1 Site URL\" is empty: type the test site address (RADE shows it in its box \"Site address\").",
+            "14. If the box \"2 Alert e-mail\" is empty: type your own work e-mail address.",
+            "There is no box for Test mode any more: the test step writes Test mode Yes into the list PFM Settings.",
+            "15. Select Import.",
+            "16. Wait for the line \"Successfully imported\" (1 to 3 minutes, estimate).",
+            "17. Select the solution \"90-161.Z flows\".",
+            "18. Look at the Status column: F05 and F06 must read On, and F03 must read Off.",
+            "19. If one of them differs: select that flow.",
+            "20. If you selected a flow: select \"Turn on\" for F05 or F06, or \"Turn off\" for F03.",
+            "21. Return to the RADE window.",
+            "22. Select \"Done: imported\".",
             "If the import fails: select \"Download log file\", then select \"It failed\" and type the first red error line (no names)."
           ],
-          "marker": "90161Z-T21-probe-imported.txt",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
+          "marker": "90161Z-T18-slice1-imported.txt",
           "doneText": "Done: imported",
           "needs": [
             "net-flow",
             "flow-guide"
           ],
           "estimate": 8,
-          "after": [
-            "T21 Make the probe list and library r2"
-          ],
           "help": "Send the results as they are; the import log step reads the log if you downloaded it.",
           "makes": [
             {
               "kind": "solution",
-              "name": "90-161.Z probe (3 flows: Files, Mail, App)"
+              "name": "90-161.Z flows (F03 r6, F05 r3, F06 r2; upgrade)"
             }
           ],
-          "doneLog": "Confirmed by you: imported."
+          "doneLog": "Confirmed by you: imported.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
         },
         {
           "name": "T17 Import log reader r2",
@@ -151,469 +106,270 @@
           "estimate": 1
         },
         {
-          "name": "T21 Run the flow tests r2",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r2.ps1",
-          "args": "-Part Run",
+          "name": "T18 Slice test, part 1 r5",
+          "dir": "T18",
+          "file": "90161Z-T18-slice1-test-r5.ps1",
+          "args": "-Part 1",
           "minutes": 30,
-          "note": "Signs in (CAC). Starts the 3 flows and waits up to 14 minutes: files (T3, T5), fields (T6), search and members (T7, T8), 3 test e-mails (T9). About 15 minutes (estimate).",
+          "note": "Signs in (CAC). Writes the PFM Settings rows the flows read (Test mode Yes) and the stage 6 target of 25 working days. Creates three fake publications at step 6 and checks F05. Sets rows for the F03 check.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 15,
+          "estimate": 12,
           "after": [
-            "T21 Import the probe solution r2"
+            "T18 Import the slice flows r6"
           ],
-          "help": "Send the results as they are. A FAILED line is a result of the probe, not a fault of the round."
+          "help": "Send the results as they are. A FAIL here is a finding about the Settings rows or the flows."
         },
         {
-          "name": "T21 Open the test page r2",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r2.ps1",
-          "args": "-Part Open",
-          "minutes": 5,
-          "note": "Opens the test page in your browser. No sign-in. A few seconds (estimate).",
-          "estimate": 1,
-          "after": [
-            "T21 Make the probe list and library r2"
-          ],
-          "help": "The step can be run again."
-        },
-        {
-          "name": "T21 Look at the draft r2",
+          "name": "T18 Failure e-mail and Resubmit r2",
           "kind": "guide",
-          "dir": "T21",
-          "file": "90161Z-T21-links-r2.html",
-          "note": "Test T2. You open the fake draft and its PDF copy in the browser and post 1 fake comment. About 5 minutes (estimate).",
-          "guide": [
-            "1. In the browser, select the tab \"90-161.Z test page\".",
-            "2. Select \"Open the fake draft\".",
-            "3. If a sign-in window opens: sign in with your CAC.",
-            "4. Look at the new tab: the fake draft should open in Word for the web.",
-            "5. If the draft opened in Word for the web: select the tab Review.",
-            "6. If you selected Review: select \"New Comment\".",
-            "7. In the comment box, type: FAKE COMMENT R26",
-            "8. Press Ctrl+Enter.",
-            "9. In the browser, select the tab \"90-161.Z test page\".",
-            "10. Select \"Open the PDF copy\".",
-            "11. Look at the new tab: the PDF should open in the browser.",
-            "12. Return to the RADE window.",
-            "13. Select \"Done: I looked\".",
-            "If a link opens an error or nothing: that is a result. The questions after Done ask for it.",
-            "If the test page is closed: select \"Show file in folder\", then double-click \"90161Z-T21-links-r2.html\"."
-          ],
-          "marker": "90161Z-T21-draft-looked.txt",
-          "doneText": "Done: I looked",
-          "estimate": 5,
-          "after": [
-            "T21 Open the test page r2",
-            "T21 Run the flow tests r2"
-          ],
-          "answers": [
-            {
-              "key": "t2-word",
-              "prompt": "What did \"Open the fake draft\" open?",
-              "kind": "pick",
-              "choices": [
-                "Word for the web: I could read it",
-                "A download of the file",
-                "An error or a sign-in loop",
-                "Nothing"
-              ]
-            },
-            {
-              "key": "t2-comment",
-              "prompt": "Could you post the fake comment in Word for the web?",
-              "kind": "yesno"
-            },
-            {
-              "key": "t2-pdf",
-              "prompt": "What did \"Open the PDF copy\" open?",
-              "kind": "pick",
-              "choices": [
-                "The PDF in the browser",
-                "A download of the PDF",
-                "Not found",
-                "An error"
-              ]
-            }
-          ],
-          "doneLog": "Confirmed by you: looked at the draft."
-        },
-        {
-          "name": "T21 Add a row with a person r2",
-          "kind": "guide",
-          "dir": "T21",
-          "file": "90161Z-T21-links-r2.html",
-          "note": "Test T7. You add one row in the list form and pick a person in its person box. About 3 minutes (estimate).",
-          "guide": [
-            "1. In the browser, select the tab \"90-161.Z test page\".",
-            "2. Select \"Open the new row form\".",
-            "3. In the box \"Title\", type: T7a",
-            "4. Select the box \"ProbePerson\".",
-            "5. In the box \"ProbePerson\", type the first 3 letters of your own last name.",
-            "6. Look at the list under the box: it should show names.",
-            "7. Select your own name in that list.",
-            "8. Select Save.",
-            "9. Return to the RADE window.",
-            "10. Select \"Done: row added\".",
-            "If no names show, or your name is not there: select Save. The questions after Done ask for it.",
-            "If the test page is closed: select \"Show file in folder\", then double-click \"90161Z-T21-links-r2.html\"."
-          ],
-          "marker": "90161Z-T21-person-added.txt",
-          "doneText": "Done: row added",
-          "estimate": 3,
-          "after": [
-            "T21 Open the test page r2"
-          ],
-          "answers": [
-            {
-              "key": "t7-search",
-              "prompt": "What did the box \"ProbePerson\" show after 3 letters?",
-              "kind": "pick",
-              "choices": [
-                "Names from the address list",
-                "Only people of this site",
-                "No names",
-                "An error"
-              ]
-            },
-            {
-              "key": "t7-details",
-              "prompt": "Did a name show more than the name, such as an office or an e-mail address?",
-              "kind": "yesno"
-            }
-          ],
-          "doneLog": "Confirmed by you: row added."
-        },
-        {
-          "name": "T21 Open the PDF to sign r2",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r2.ps1",
-          "args": "-Part Sign",
-          "minutes": 5,
-          "note": "Opens the fake PDF in your PDF program and puts the path for the signed copy on the clipboard. No sign-in. A few seconds (estimate).",
-          "estimate": 1,
-          "after": [
-            "T21 Make the probe list and library r2"
-          ],
-          "help": "The step can be run again."
-        },
-        {
-          "name": "T21 Sign and attach the PDF r2",
-          "kind": "guide",
-          "dir": "T21",
+          "dir": "T18",
           "file": "",
-          "note": "Test T10. You sign the fake PDF with your CAC and attach the signed copy in the list form. About 7 minutes (estimate).",
-          "guide": [
-            "1. Look at Acrobat: it shows the fake PDF \"FAKE - 90161Z R26 - sign here\".",
-            "2. In Acrobat, select \"All tools\".",
-            "3. Select \"Use a certificate\".",
-            "4. Select \"Digitally sign\".",
-            "5. Draw a box on the page with the mouse, where the signature should go.",
-            "6. In the list, select your CAC certificate for signing (not the one for e-mail).",
-            "7. Select Continue.",
-            "8. Select Sign.",
-            "9. Look at Acrobat: it asks where to save the signed copy.",
-            "10. Select the box \"File name\".",
-            "11. In the box \"File name\", press Ctrl+V (the path for the signed copy is on the clipboard).",
-            "12. Select Save.",
-            "13. If Windows asks for your PIN: type your CAC PIN.",
-            "14. In the browser, select the tab \"90-161.Z test page\".",
-            "15. Select \"Open the new row form\".",
-            "16. In the box \"Title\", type: T10",
-            "17. Select \"Add attachments\".",
-            "18. Select the box \"File name\".",
-            "19. In the box \"File name\", press Ctrl+V (the path of the signed copy is still on the clipboard).",
-            "20. Select Open.",
-            "21. Select Save.",
-            "22. Return to the RADE window.",
-            "23. Select \"Done: attached\".",
-            "If the PDF opened in the browser and not in Acrobat: select \"It failed\" and type: opened in the browser"
-          ],
-          "marker": "90161Z-T21-signed.txt",
-          "doneText": "Done: attached",
-          "estimate": 7,
-          "after": [
-            "T21 Open the PDF to sign r2"
-          ],
-          "answers": [
-            {
-              "key": "t10-signed",
-              "prompt": "Could you sign the fake PDF with your CAC?",
-              "kind": "yesno"
-            },
-            {
-              "key": "t10-attach",
-              "prompt": "Could you attach the signed copy in the form?",
-              "kind": "yesno"
-            }
-          ],
-          "doneLog": "Confirmed by you: signed and attached."
-        },
-        {
-          "name": "T21 Second person r2",
-          "kind": "guide",
-          "dir": "T21",
-          "file": "90161Z-T21-links-r2.html",
-          "note": "Test T4. A person with only Read on the test site adds one row with the form link you send. About 5 minutes (estimate). If nobody is free today, select Skip.",
-          "guide": [
-            "1. In the browser, select the tab \"90-161.Z test page\".",
-            "2. Right-click \"Open the new row form\".",
-            "3. Select \"Copy link\".",
-            "4. Open Teams.",
-            "5. Select Chat.",
-            "6. Start a chat with a person who has only Read on the test site.",
-            "7. Select the chat box.",
-            "8. In the chat box, press Ctrl+V.",
-            "9. In the chat box, type: Please open this link, type T4a in Title, select Save, and tell me what you saw.",
-            "10. Press Enter.",
-            "11. Wait for the answer of the person in the chat: the row saved, or no permission.",
-            "12. Return to the RADE window.",
-            "13. Select \"Done: second person\".",
-            "If nobody is free today: select Skip."
-          ],
-          "marker": "90161Z-T21-second-person.txt",
-          "doneText": "Done: second person",
-          "estimate": 5,
-          "after": [
-            "T21 Open the test page r2"
-          ],
-          "answers": [
-            {
-              "key": "t4-second",
-              "prompt": "What did the second person see?",
-              "kind": "pick",
-              "choices": [
-                "The row was saved",
-                "No permission",
-                "The link did not open",
-                "Something else"
-              ]
-            }
-          ],
-          "doneLog": "Confirmed by you: second person."
-        },
-        {
-          "name": "T22 Open the 90-161.Z window r1",
-          "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r1.ps1",
-          "minutes": 30,
-          "note": "Opens a full-screen preview of your 90-161.Z window with fake data: 5 cards. Select its buttons, then close it with its X. Nothing is read, saved or sent. About 5 minutes (estimate).",
-          "estimate": 5,
-          "help": "Send the results as they are. The step can be run again."
-        },
-        {
-          "name": "T22 Judge the window r1",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 4 questions about the preview window. About 2 minutes (estimate).",
-          "guide": [
-            "1. If the 90-161.Z window is still on the screen: close it with its X.",
-            "2. Select \"Done: I judged\"."
-          ],
-          "marker": "90161Z-T22-judged.txt",
-          "doneText": "Done: I judged",
-          "estimate": 2,
-          "after": [
-            "T22 Open the 90-161.Z window r1"
-          ],
-          "answers": [
-            {
-              "key": "w-look",
-              "prompt": "Does the window look like your vision of the 90-161.Z app?",
-              "kind": "pick",
-              "choices": [
-                "Yes, as it is",
-                "Close, with small changes",
-                "Partly",
-                "No"
-              ]
-            },
-            {
-              "key": "w-clear",
-              "prompt": "Which card was the clearest?",
-              "kind": "pick",
-              "choices": [
-                "Your work",
-                "Start endorsement",
-                "Send for signatures",
-                "Publication"
-              ]
-            },
-            {
-              "key": "w-fit",
-              "prompt": "Did every card fit in the window with no scroll bar?",
-              "kind": "yesno"
-            },
-            {
-              "key": "w-change",
-              "prompt": "What would you change first? One line, no names.",
-              "kind": "text"
-            }
-          ],
-          "doneLog": "Confirmed by you: judged the window."
-        },
-        {
-          "name": "T21 Read the test results r2",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r2.ps1",
-          "args": "-Part Read",
-          "minutes": 15,
-          "note": "Signs in (CAC) and reads what the forms and the flows wrote: T4, T7, T10 and the last e-mail read (T9). Field names and counts only. About 3 minutes (estimate).",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "estimate": 3,
-          "after": [
-            "T21 Run the flow tests r2"
-          ],
-          "help": "Send the results as they are."
-        },
-        {
-          "name": "T21 Check your e-mail r2",
-          "kind": "guide",
-          "dir": "T21",
-          "file": "",
-          "note": "Test T9. You look for the 3 test e-mails in your Inbox and in Junk Email. About 3 minutes (estimate).",
+          "note": "You check that F05 e-mailed you about a planned test failure, and you select Resubmit on that failed run. About 4 minutes (estimate).",
           "guide": [
             "1. Open Outlook (the program on your computer).",
             "2. Select the folder Inbox.",
-            "3. In the search box at the top, type: 90161Z T9",
-            "4. Press Enter.",
-            "5. Look at the subjects found: each one has S3, S5 or S6 in it.",
-            "If nothing is found: that is a result.",
-            "6. Select the folder \"Junk Email\".",
-            "7. In the search box at the top, type: 90161Z T9",
-            "8. Press Enter.",
-            "9. Look at the subjects found.",
-            "10. Return to the RADE window.",
-            "11. Select \"Done: I looked\"."
+            "3. Find the e-mail \"90-161.Z flow failed: F05\" from the last few minutes (it is a planned test failure; do not reply).",
+            "4. Return to the RADE window.",
+            "5. On this RADE card, select \"Open in browser\".",
+            "6. On the left, select Solutions (it can be under More).",
+            "7. Select the solution \"90-161.Z flows\".",
+            "8. Select the flow \"90161Z F05 Endorsement Routing r3\".",
+            "9. Under \"28-day run history\", select the run marked Failed.",
+            "10. At the top of the run, select Resubmit.",
+            "11. Wait until the new run reads Succeeded (under 1 minute, estimate).",
+            "12. Return to the RADE window.",
+            "13. Select \"Done: resubmitted\".",
+            "If no failure e-mail arrived, or there is no failed run: select \"It failed\" and type what you see (no names or site address)."
           ],
-          "marker": "90161Z-T21-mail-looked.txt",
-          "doneText": "Done: I looked",
-          "estimate": 3,
+          "marker": "90161Z-T18-resubmitted.txt",
+          "doneText": "Done: resubmitted",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 4,
           "after": [
-            "T21 Run the flow tests r2"
+            "T18 Slice test, part 1 r5"
           ],
           "answers": [
             {
-              "key": "t9-inbox",
-              "prompt": "Which test e-mails are in your Inbox? Type S3, S5 or S6 (one or more), or none.",
-              "kind": "text"
-            },
-            {
-              "key": "t9-junk",
-              "prompt": "Which test e-mails are in Junk Email? Type S3, S5 or S6 (one or more), or none.",
-              "kind": "text"
-            },
-            {
-              "key": "t9-blocked",
-              "prompt": "Did Outlook or an e-mail tell you that a message was blocked or quarantined?",
-              "kind": "yesno"
+              "key": "fail-mail",
+              "prompt": "When did the failure e-mail reach your Inbox?",
+              "kind": "pick",
+              "choices": [
+                "Within 5 minutes",
+                "After 5 minutes",
+                "Not in the Inbox"
+              ]
             }
           ],
-          "doneLog": "Confirmed by you: looked for the test e-mails."
+          "doneLog": "Confirmed by you: resubmitted.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T21 Remove the probe list and library r2",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r2.ps1",
-          "args": "-Part Clean",
-          "minutes": 10,
-          "note": "Signs in (CAC). Moves the list \"90161Z Probe\" and the library \"90161Z Probe Files\" to the site Recycle Bin (restorable for 93 days). Removes nothing else. About 1 minute (estimate).",
+          "name": "T18 Run F03 once r6",
+          "kind": "guide",
+          "dir": "T18",
+          "file": "",
+          "note": "You run F03 once by hand. Test mode is Yes in the list PFM Settings, so its e-mails go only to you. About 3 minutes (estimate).",
+          "guide": [
+            "1. On this RADE card, select \"Open in browser\".",
+            "2. On the left, select Solutions (it can be under More).",
+            "3. Select the solution \"90-161.Z flows\".",
+            "4. Select the flow \"90161Z F03 Suspense Reminders r6\".",
+            "5. At the top, select Test.",
+            "6. Select Manually.",
+            "7. Select Test.",
+            "8. Select \"Run flow\".",
+            "9. Select Done.",
+            "10. Wait until the run ends (under 1 minute, estimate).",
+            "11. Read the status at the top of the run: Succeeded or Failed. Grey (skipped) steps are normal.",
+            "12. Write down the time on your computer clock. The e-mail step later asks how long the e-mail took.",
+            "13. Return to the RADE window.",
+            "14. If the status is Succeeded: select \"Done: F03 ran\".",
+            "If the status is Failed: select \"It failed\" and type the name of the first step with a red mark and the first line of its error (no names or site address)."
+          ],
+          "marker": "90161Z-T18-f03-ran.txt",
+          "doneText": "Done: F03 ran",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 3,
+          "after": [
+            "T18 Failure e-mail and Resubmit r2"
+          ],
+          "doneLog": "Confirmed by you: F03 ran.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
+        },
+        {
+          "name": "T18 Slice test, part 2 r5",
+          "dir": "T18",
+          "file": "90161Z-T18-slice1-test-r5.ps1",
+          "args": "-Part 2",
+          "minutes": 40,
+          "note": "Checks: no duplicates after Resubmit; F03 read the Settings row; one escalation; no [TEST] in titles; F06 hold, resume, cancel; Legal rows. Puts Settings back, removes test rows.",
           "needs": [
             "pnp",
             "net-site",
             "site-rights"
           ],
-          "estimate": 1,
+          "estimate": 12,
           "after": [
-            "T21 Make the probe list and library r2"
+            "T18 Run F03 once r6"
           ],
-          "help": "Send the results as they are. The step can be run again."
+          "help": "Send the results as they are. The test rows stay on the site for review when a check fails."
         },
         {
-          "name": "T21 Remove the probe solution r2",
+          "name": "T18 Find the test e-mails r2",
           "kind": "guide",
-          "dir": "T21",
+          "dir": "T18",
           "file": "",
-          "note": "You delete what the round made outside the site: 1 solution, 1 OneDrive folder and the test e-mails. About 5 minutes (estimate).",
+          "note": "You look for the F03 test e-mails, which now have no [TEST] in the subject, and answer 2 questions. About 2 minutes (estimate).",
+          "guide": [
+            "1. Open Outlook (the program on your computer).",
+            "2. Select the folder Inbox.",
+            "3. In the search box at the top, type: Escalation: coordination response due",
+            "4. Press Enter.",
+            "5. Look for an e-mail received today, after the time you wrote down at the F03 run.",
+            "6. If it is not in the Inbox: select the folder \"Junk Email\".",
+            "7. If it is not in the Inbox: look for the same subject there.",
+            "8. Return to the RADE window.",
+            "9. Select \"Done: I looked\".",
+            "If Outlook does not open: select \"It failed\" and type what you see (no names or addresses)."
+          ],
+          "marker": "90161Z-T18-email-looked.txt",
+          "doneText": "Done: I looked",
+          "estimate": 2,
+          "after": [
+            "T18 Run F03 once r6"
+          ],
+          "answers": [
+            {
+              "key": "f03-email",
+              "prompt": "Where is the F03 e-mail \"Escalation: coordination response due ...\" from this round?",
+              "kind": "pick",
+              "choices": [
+                "Inbox",
+                "Junk Email",
+                "Not found"
+              ]
+            },
+            {
+              "key": "f03-minutes",
+              "prompt": "How many minutes after the F03 run did it arrive? Type a number, or 0 if not found.",
+              "kind": "text"
+            }
+          ],
+          "doneLog": "Confirmed by you: looked for the e-mails."
+        },
+        {
+          "name": "T23 Make the app file r1",
+          "dir": "T23",
+          "file": "90161Z-T23-app-file-r1.ps1",
+          "minutes": 5,
+          "note": "Makes one tiny Power Apps app file (one screen with the text \"90-161.Z test app\") in the T23 folder and puts its path on the clipboard. No sign-in.",
+          "estimate": 1,
+          "help": "Send the results as they are."
+        },
+        {
+          "name": "T23 Upload the app file r1",
+          "kind": "guide",
+          "dir": "T23",
+          "file": "",
+          "note": "You try to open a tiny app file that was built outside Power Apps, in 2 places in Power Apps. A refusal is the expected result and a valid answer. Nothing is saved. About 5 minutes (estimate).",
           "guide": [
             "1. On this RADE card, select \"Open in browser\".",
-            "2. On the left, select Solutions (it can be under More).",
-            "3. Select the three dots beside \"90-161.Z probe\".",
-            "4. Select \"Delete from this environment\".",
-            "5. Select Delete.",
-            "6. Open File Explorer.",
-            "7. On the left, select \"OneDrive - United States Air Force\".",
-            "8. If the folder \"90161Z-probe\" is there: right-click that folder.",
-            "9. If you right-clicked the folder: select Delete.",
-            "10. Open Outlook (the program on your computer).",
-            "11. Select the folder Inbox.",
-            "12. In the search box at the top, type: 90161Z T9",
-            "13. Press Enter.",
-            "14. If e-mails are found: press Ctrl+A.",
-            "15. If e-mails are found: press Delete.",
-            "16. Select the folder \"Junk Email\".",
-            "17. In the search box at the top, type: 90161Z T9",
-            "18. Press Enter.",
-            "19. If e-mails are found: press Ctrl+A.",
-            "20. If e-mails are found: press Delete.",
-            "21. Return to the RADE window.",
-            "22. Select \"Done: removed\".",
-            "If something does not delete: select \"It failed\" and type its name and the first line of the message."
+            "2. If Power Apps asks you to sign in: sign in with your CAC.",
+            "3. On the left, select Create.",
+            "4. Select \"Blank app\".",
+            "5. Under \"Blank canvas app\", select Create.",
+            "6. In the box \"App name\", type: 90161Z T23 test",
+            "7. Select Create. The app editor opens.",
+            "8. On the left, select Insert (the plus sign).",
+            "9. At the bottom of the Insert pane, select \"Get more components\".",
+            "10. Select Import component, or the Upload or Import button that the panel shows.",
+            "11. Select the box \"File name\".",
+            "12. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
+            "13. Select Open.",
+            "14. Write down what the panel says.",
+            "15. Close the panel.",
+            "16. At the top left, select the back arrow or File.",
+            "17. Select Open.",
+            "18. Select Browse (or \"Browse files\").",
+            "19. In the box \"File name\", press Ctrl+V.",
+            "20. Select Open.",
+            "21. Look at the editor: a screen with the text \"90-161.Z test app\", or an error.",
+            "22. Close the app editor tab. If it asks to save: select \"Don't save\".",
+            "23. Return to the RADE window.",
+            "24. Select \"Done: tried\".",
+            "If Power Apps does not open: select \"It failed\" and type what you see (no names or site address)."
           ],
-          "marker": "90161Z-T21-removed.txt",
-          "url": "https://make.powerautomate.appsplatform.us/",
-          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
-          "doneText": "Done: removed",
+          "marker": "90161Z-T23-tried.txt",
+          "doneText": "Done: tried",
           "needs": [
             "net-flow"
           ],
           "estimate": 5,
           "after": [
-            "T21 Check your e-mail r2"
+            "T23 Make the app file r1"
           ],
-          "doneLog": "Confirmed by you: removed."
+          "answers": [
+            {
+              "key": "app-import",
+              "prompt": "Get more components, import: what happened?",
+              "kind": "pick",
+              "choices": [
+                "The component was added",
+                "It was refused",
+                "No import button",
+                "Something else"
+              ]
+            },
+            {
+              "key": "app-open",
+              "prompt": "File > Open > Browse: what happened?",
+              "kind": "pick",
+              "choices": [
+                "The screen \"90-161.Z test app\" opened",
+                "It was refused",
+                "No Browse button",
+                "Something else"
+              ]
+            },
+            {
+              "key": "app-error",
+              "prompt": "If there was an error, type its first line (no names or site address). Else type none.",
+              "kind": "text"
+            }
+          ],
+          "doneLog": "Confirmed by you: tried the app file.",
+          "url": "https://make.apps.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Apps US Government (https://learn.microsoft.com/power-platform/admin/powerapps-us-government): DoD maker portal; editable in the window, remembered in Config (agent value)",
+          "urlConfig": "90161Z-apps-portal.txt"
         }
       ],
       "collect": [
         {
-          "dir": "T21",
-          "name": "90161Z-T21-probe-make-r2.txt",
-          "step": "T21 Make the probe list and library r2"
+          "dir": "T18",
+          "name": "90161Z-T18-slice1-part1-r5.txt",
+          "step": "T18 Slice test, part 1 r5"
         },
         {
-          "dir": "T21",
-          "name": "90161Z-T21-probe-run-r2.txt",
-          "step": "T21 Run the flow tests r2"
-        },
-        {
-          "dir": "T21",
-          "name": "90161Z-T21-probe-read-r2.txt",
-          "step": "T21 Read the test results r2"
-        },
-        {
-          "dir": "T21",
-          "name": "90161Z-T21-probe-clean-r2.txt",
-          "step": "T21 Remove the probe list and library r2"
+          "dir": "T18",
+          "name": "90161Z-T18-slice1-part2-r5.txt",
+          "step": "T18 Slice test, part 2 r5"
         },
         {
           "dir": "T17",
           "name": "90161Z-T17-import-log-r2.txt",
           "step": "T17 Import log reader r2"
-        },
-        {
-          "dir": "T22",
-          "name": "90161Z-T22-window-r1.txt",
-          "step": "T22 Open the 90-161.Z window r1"
         }
       ],
       "cleanup": [
@@ -1132,30 +888,43 @@
         {
           "path": "T21\\90161Z-T21-removed.txt",
           "kind": "glob"
+        },
+        {
+          "path": "T22",
+          "kind": "dir"
+        },
+        {
+          "path": "T21\\90161Z-T21-*-r2.*",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-*-r4.*",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publications-r4.txt",
+          "kind": "glob"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Test round R26 r2: list forms, your window preview, the probe flows and 3 test e-mails. Fake data only.",
+          "summary": "Test round R27 r1: flows that read PFM Settings, e-mails without [TEST], a second person (T4), look probes, the health flow and an app file. Fake data only.",
           "steps": [
-            "T21 Make the probe list and library r2",
-            "T21 Import the probe solution r2",
+            "T18 Import the slice flows r6",
             "T17 Import log reader r2",
-            "T21 Run the flow tests r2",
-            "T21 Open the test page r2",
-            "T21 Look at the draft r2",
-            "T21 Add a row with a person r2",
-            "T21 Open the PDF to sign r2",
-            "T21 Sign and attach the PDF r2",
-            "T21 Second person r2",
-            "T22 Open the 90-161.Z window r1",
-            "T22 Judge the window r1",
-            "T21 Read the test results r2",
-            "T21 Check your e-mail r2",
-            "T21 Remove the probe list and library r2",
-            "T21 Remove the probe solution r2"
+            "T18 Slice test, part 1 r5",
+            "T18 Failure e-mail and Resubmit r2",
+            "T18 Run F03 once r6",
+            "T18 Slice test, part 2 r5",
+            "T18 Find the test e-mails r2",
+            "T23 Make the app file r1",
+            "T23 Upload the app file r1"
           ]
         }
       ]

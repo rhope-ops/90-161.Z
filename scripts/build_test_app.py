@@ -7,7 +7,7 @@ Step 1: the Power Platform CLI packs the source into a .msapp ("pac canvas pack"
 newer versions have no "canvas pack"; needs the .NET SDK 8):
     dotnet tool install --tool-path <dir> Microsoft.PowerApps.CLI.Tool --version 1.44.2
     <dir>/pac telemetry disable        (the session proxy refuses its telemetry hosts)
-Step 2: this script writes every entry of that .msapp (all ASCII JSON) into the task script as text, with its SHA-256.
+Step 2: this script writes every entry of that .msapp (all ASCII JSON) into the task script as text lines, with its SHA-256.
 On the gov device the task script zips the entries back into 90161Z-T23-app-file-r1.msapp and checks each hash, so the
 file is byte for byte the entries pac made. The .msapp itself is not in the repo: the personal-data guard cannot scan a
 binary file, and its skip list is the PFM's to change.
@@ -65,7 +65,7 @@ try {
     $zip = New-Object System.IO.Compression.ZipArchive($fs, [System.IO.Compression.ZipArchiveMode]::Create)
     try {
       foreach ($p in $parts) {
-        $bytes = [System.Text.Encoding]::ASCII.GetBytes(($p.Text -replace "`r`n", "`n"))
+        $bytes = [System.Text.Encoding]::ASCII.GetBytes([string]$p.Text)
         $hash = -join ($sha.ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') })
         if ($hash -ne $p.Sha) { $bad++; Write-Output ('ITEM app-part FAIL ' + $p.Name + ': the bytes differ from the build') }
         $entry = $zip.CreateEntry($p.Name, [System.IO.Compression.CompressionLevel]::Optimal)
@@ -102,9 +102,12 @@ def main():
         for info in z.infolist():
             b = z.read(info)
             text = b.decode('ascii')
-            if "'@" in text or '\r' in text or text.endswith('\n') or not text:
-                sys.exit('FAIL %s cannot go in a here-string as it is' % info.filename)
-            lines.append("  @{ Name = '%s'; Sha = '%s'; Text = @'\n%s\n'@ }" % (info.filename, hashlib.sha256(b).hexdigest(), text))
+            if "'" in text or '\r' in text or text.endswith('\n') or not text:
+                sys.exit('FAIL %s cannot go in single-quoted lines as it is' % info.filename)
+            # One single-quoted string per line, joined with LF on the gov device (the RADE bundle cannot embed a line that
+            # starts with '@, so no here-strings).
+            rows = ',\n'.join("    '%s'" % ln for ln in text.split('\n'))
+            lines.append("  @{ Name = '%s'; Sha = '%s'; Text = (@(\n%s\n  ) -join \"`n\") }" % (info.filename, hashlib.sha256(b).hexdigest(), rows))
         lines.append(')')
     body = HEAD + '\n'.join(lines) + '\n' + TAIL.replace('__APP__', APP)
     OUT.write_text(body, newline='\n')
