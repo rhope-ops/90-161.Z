@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 17 Nov 26 (Round R27 r1 done; Round R28 r2 is ready).
+Updated: 17 Nov 26 (Round R28 r2 done; Round R29 is not built yet).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,47 +26,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R28 r2: RADE Start button and desktop icon, the PFM window, probe retry, second person
-
-**For:** tests the RADE desktop icon and Start button, my new 90-161.Z window (cards, keyboard, Narrator, high contrast), the health flow imported alone, the trigger of a list-button flow that I make by hand, the second person (T4) again, and the full 90-161.Z flow solution (F01 to F06, every flow On). It starts by removing the R27 leftovers on the test site.
-**Time:** about 3.5 hours with waits; about 2 hours of my own work (estimate).
-**Changes:** on the test site: the R27 second person in Visitors, probe list and library are removed first; a fresh probe list and library, the second person, fake rows and a list view are made and removed again at the end. In Power Automate: the R27 solution "90-161.Z probe" is deleted; "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me; both are deleted at the end. The 90-161.Z flows solution is upgraded to the full one (F01 to F06) and the flows F02 and F04 are run by hand; F04 sends one test e-mail to me. Two rows of PFM Settings (Flows paused, Test mode) are written and put back, and fake test rows go to the site Recycle Bin. On my computer: my OneDrive folder RADE\90-161.Z, RADE's saved copy of itself (in my RADE folder) and one shortcut named RADE on my desktop. Before Run, the window lists every file.
-**Before I start:** I ask a colleague who can open the test site for their e-mail address, and for 5 minutes in Teams (optional; I select Skip if nobody is free).
-**Steps:**
-1. Press Copy script next to the link under these steps.
-2. Open the Start menu and type ISE.
-3. Open Windows PowerShell ISE (not "Run as administrator").
-4. Select File > New.
-5. Click in the white script pane.
-6. Press Ctrl+V.
-7. Press F5. The RADE window opens.
-8. In the RADE window, select the button "90-161.Z PFM window".
-9. Press Install.
-10. Wait until the card says "90-161.Z PFM window 0.1.0 is installed."
-11. Select Close on the Done card.
-12. Close the RADE window with its X, if it is still open.
-13. Double-click the shortcut RADE on my desktop.
-14. Select the button "90-161.Z PFM window".
-15. Press "Start 90-161.Z PFM window".
-16. Wait until the 90-161.Z window opens and RADE closes.
-17. Close the 90-161.Z window with its X.
-18. Double-click the shortcut RADE on my desktop again.
-19. Select the button "90-161.Z: Publications and Forms Management".
-20. Press Run.
-21. On each card, do its numbered steps (about 2 hours in all).
-22. Then select the button at the bottom of the card.
-23. When the small window asks for the second person's e-mail address, type my colleague's e-mail address.
-24. Then select "OK" in the small window (the address stays on my computer).
-25. At DONE, wait for the Outlook draft to open.
-26. In the draft, select "Send".
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R28-round-r2.ps1
-
-**Report:** the Outlook draft opens already addressed, with every file in the results folder attached; I send it (subject "90161Z R28 PASSED" or "90161Z R28 NEEDS REVIEW"). If no draft opens, the results folder opens and the e-mail text is on the clipboard: I paste it into a new e-mail and drag in every file. Then I tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If there is no shortcut RADE on my desktop, open the bookmark rhope-ops.github.io/RADE, press Copy script, paste it in ISE and press F5 again, and answer "No icon on the desktop" when the first question asks. If Power Automate refuses a step, select "It failed" and type the first line of the message (a refusal is a valid result).
+No open task. Round R29 is not built yet.
 
 ## Done
 
+- Round R28 r2 (17 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the R27 and R28 test items are all removed from the test site; the probe list 6 of 6; the second person added to Visitors; I made and exported the button flow; the form header set by script. Failed: the health flow (Power Automate has no action that lists flow runs), the export reader (it did not find the flow name), my 90-161.Z window (its self-check stopped on every card and it ran unscaled), the full flow import (the "deactivated and replaced" message is the normal upgrade message, but the card did not say so). Skipped: the second person's row (T4) and the full flow test. My 7 notes are in the details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-17-r28-results.md
 - Round R27 r1 (16 Nov 26): needs review. Checks 14 of 14, flows import confirmed, slice part 1 8 of 8, part 2 14 of 14, shared files 4 of 4, Window OK. Passed: the flows read PFM Settings, test e-mails have no "[TEST]" and the F03 e-mail was in my Inbox after 1 minute. Failed: the probe flows did not save (one names a trigger SharePoint does not have), the app file ("does not contain any components"), Excel (no Automate tab). Skipped: the second person (T4) and the clean-up, so the probe list, library, solution and the second person in Visitors are still on the test site. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-17-r27-results.md
 - Round R26 r2 (16 Nov 26): passed. Checks 14 of 14, probe list 8 of 8, import confirmed, clean-up 2 of 2, shared files 4 of 4, Window OK. Passed: T2 (draft in Word for the web), T3, T5, T6, T7 (person box), T9 (e-mails without "[TEST]" arrive at once), T10 (signed PDF attached). Failed: T4 (the second person saw "No permission"), T8 (a flow cannot list the people of a shared mailbox). My window: close, with small changes. Details:
