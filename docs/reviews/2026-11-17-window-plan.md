@@ -1,4 +1,4 @@
-<!-- Plan approved by the PFM on 17 Nov 26 (plan mode, question dialog). Self-review; not independently reviewed. -->
+<!-- Plan approved by the PFM on 17 Nov 26 (plan mode); revision 2 and the deeper-version task approved the same day. Self-review; not independently reviewed. -->
 # Plan: RADE frame + 90-161.Z PFM window, full UI and function pass (17 Nov 26)
 
 ## Context
@@ -95,10 +95,37 @@ Usage estimate (heavy work: 6 agents in total, more than 1 hour): 2 workers + 2 
 - A .lnk on the user's own Desktop needs no admin rights and is allowed on the gov device. Source: Windows behaviour; not tested. Confidence: medium; R28 tests it with a fallback (Start from the RADE page bookmark).
 - docs/palette.json is the color source; Streamlined-AF hex values that differ (#B3261E, #5A6573) yield to it. Confidence: high.
 
+## 00. Next task (deeper version, 17 Nov 26; runs only if the PFM approves this plan)
+
+Deeper pass on the 90-161.Z PFM window and the RADE frame (canvas https://claude.ai/artifact/12VVeBiXXD4AQjAWwgCU5H). Same deliverable: an approved canvas, then the R28 build plan.
+1. One question dialog to the PFM, counts and patterns only (no real data): open actions in a busy month, first look each morning, slowest decisions, error points today, both monitors (resolution, scale). Rank top tasks (frequency x importance).
+2. Measurable usability targets (e.g. see what needs me < 5 s; start endorsement <= 3 actions; all tasks by keyboard), each mapped to a DAFMAN 90-161 paragraph and to real list fields (schemas/lists).
+3. Redraw the canvas for an expert daily user: density study (5, 25, 60 actions; comfortable and compact), 120-character titles, many late items, all states, documents on the second monitor; clickable links between boards. Step bar = 12 dots + "Change or Skip" button; no half-screen layout; smallest area 1280 x 720 logical.
+4. Fidelity spike: RADE's Windows test job draws Your Work and the step 8 card in real WinForms (PS 5.1); pictures beside the HTML boards; list each difference.
+5. Measure first: ui-verify, tests/check_palette.py, keyboard-only path per task, screen-reader name on every spike control (script), Windows high contrast on the spike.
+6. 5 timed scenario tasks for the PFM on the prototype; a failed target changes the design before approval.
+7. Update the R28 plan: LAYOUT 0, SCALE line, maximized on the remembered monitor, screenshots compared with the approved boards, Narrator and keyboard-only checks.
+Agents: 1 worker (standard tier) for the WinForms spike in rhope-ops/RADE's test job; the rest by me. Time: about 3 to 5 hours of agent work plus the PFM's dialog and test (confidence: low).
+
+## 0. Revision 2 (17 Nov 26, after the PFM's review of the preview canvas)
+
+PFM answers on the canvas:
+1. Step bar: A, 12 dots plus a "Change or Skip" (step 13) button on each action.
+2. Canvas not approved: the half-screen board (637 x 720) is "comically narrow". Most users have 2 monitors; the window may take a whole screen.
+
+Why the narrow board existed: the T22 r1 close size 638 x 720 was read as a half-screen snap. It is more likely the 150 % scaling fault (finding A.1: sizes reported in 100 % units). An inference became a design target. Corrected below.
+
+Changes to this plan:
+- Answer 3 of section 8 is replaced: the window opens maximized on one whole monitor; no half-screen layout and no "side panel under the list" rule. Smallest supported area = 1280 x 720 logical (a 1920 x 1080 screen at 150 %); below that the main column scrolls, nothing reflows.
+- The window opens on the monitor where it was last closed (its own small settings file in OneDrive\RADE\90-161.Z), else on the monitor that shows RADE. Fallback: the primary monitor.
+- Canvas: remove board 1c (half screen); add board 1c "Your work at 1280 x 720 (1920 x 1080 at 150 %)"; step 13 stays a button (answer 1). Re-measure (contrast, 24 px targets, no cut-off content at each board's size) and publish; then ask the PFM again.
+- Repo (one docs pull request): DECISIONS row of 17 Nov "Below about 1100 logical px the side panel moves under the main column" is replaced by "full screen on one monitor; smallest area 1280 x 720 logical"; step-bar answer recorded; the plan file in docs/reviews updated the same way.
+- R28 checks add: window opens maximized on the remembered monitor; client size at Shown equals that monitor's work area; the layout check runs at 1280 x 720 logical too.
+
 ## 8. PFM answers (17 Nov 26, question dialog; to record in docs/DECISIONS.md on approval)
 1. Start and icon: one desktop icon opens RADE; RADE runs checks and the update notice; Start opens the 90-161.Z window. A new RADE decision replaces RADE 2026-11-14 "RADE installs apps only"; the 90-161.Z row of 2026-11-15 (Power Apps, no desktop window) is marked replaced by the 16 Nov split.
 2. Hybrid cut: PFM-only items, 13-step bar; other people's tasks stay in SharePoint list forms.
-3. Narrow window: adapt the layout (side panel under the main column, narrower menu below about 1100 logical px).
+3. ~~Narrow window: adapt the layout~~ Replaced in revision 2 (section 0): full screen on one monitor, smallest area 1280 x 720 logical.
 4. Timing: preview canvas first; after approval, engine fixes and window r2 ship in R28; R27 unchanged.
 
 ## 9. Verification end to end

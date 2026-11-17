@@ -6,6 +6,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | Window size: the window keeps the size and place the PFM gives it (Snap too); works from 1280 x 720 logical (24" at 150 %) to a third of a 49" and 2560 x 1440. Replaces the 1100 px rule below. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
+| 2026-11-17 | Step bar: 12 dots; step 13 (Change or Skip) is a button on each action, not a dot. Scope: PFM window. | PFM | docs/reviews/2026-11-17-window-plan.md |
+| 2026-11-17 | Your Work = Needs You Today + Who Has It Now (all open actions) + Chase (late offices, logged contacts, 5.4.3.1); from the PFM's answers. Preview 2; not approved yet. | Agent | docs/reviews/2026-11-17-window-ux-targets.md |
 | 2026-11-17 | Window plan approved: Hybrid (busy) layout with Air Force colors; preview canvas for the PFM first, then RADE engine fixes and T22 r2 in R28; R27 unchanged. Scope: RADE frame + PFM window. | PFM | docs/reviews/2026-11-17-window-plan.md |
 | 2026-11-17 | Start and icon: one desktop icon opens RADE; RADE runs checks and the update notice (RADE page); Start opens the 90-161.Z window. Needs a RADE row that replaces RADE 2026-11-14 "installs apps only". | PFM | docs/reviews/2026-11-17-window-plan.md |
 | 2026-11-17 | PFM window = PFM-only cut of the Hybrid board with a 13-step bar; other people's tasks stay in SharePoint list forms. Below about 1100 logical px the side panel moves under the main column. | PFM | docs/reviews/2026-11-17-window-plan.md |
