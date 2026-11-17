@@ -347,7 +347,9 @@ out=$(python3 scripts/bump_lock.py --test 2>&1); [ $? -eq 0 ] && ok "bump_lock r
 out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 esha=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));print(l['files'][l['engine']][:12])")
-nh=$(grep -L "engine/rade_build.py, sha256 $esha)" scripts/gov/paste/*.ps1 | wc -l)
+# engine-v8 on: the header names every engine code file of the lock ("<file>, sha256 <12 hex>"); each must match.
+nh=0; for f in $(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));print(' '.join(k+'='+v[:12] for k,v in l['files'].items() if k.endswith(('.py','.ps1'))))"); do
+  nh=$((nh + $(grep -L "${f%%=*}, sha256 ${f#*=}[;)]" scripts/gov/paste/*.ps1 | wc -l))); done
 [ "$out" = "PASTE bundles=1 stale=0" ] && [ "$nh" -eq 0 ] && ok "paste bundles current and built by the pinned engine ($out; bundles naming another engine: $nh)" || bad "paste bundles: $out; bundles naming another engine: $nh (run python3 scripts/build_paste_bundles.py with RADE_DIR not set)"
 # Lock bump (PFM 2026-11-15): a changed lock has serial = main's serial + 1 and builds on main's last lock commit, so two
 # sessions that move the lock at once collide. Rule on who may change the lock: docs/dev-setup.md "RADE engine".
@@ -510,7 +512,11 @@ else sk "NIPR-only start check"; sk "round bundle text mode"; sk "RADE cleanup";
 if [ "${on[bundle]}" = 1 ]; then
 ab=$(grep -L 'AcceptButton = \$(if (\$c.NoAccept) { \$null } else { \$accept })' scripts/gov/paste/*.ps1 | wc -l)
 # ... and on "Ready" the primary button is Install or Run and starts the run.
-ab=$((ab + $(grep -L "{ 'primary' } else { 'off' }); Act = { & \$ui.Run }" scripts/gov/paste/*.ps1 | wc -l)))
+# engine-v8 on: Run is primary unless RADE's Start button is ($startPrimary: the app has app.start and that version
+# is installed). 90-161.Z has no app.start, so Run stays the primary button on Ready in every round.
+ab=$((ab + $(grep -LF "-and -not \$startPrimary) { 'primary' }" scripts/gov/paste/*.ps1 | wc -l)))
+ab=$((ab + $(grep -LF "else { 'off' }); Act = { & \$ui.Run }" scripts/gov/paste/*.ps1 | wc -l)))
+python3 -c "import json,sys;d=json.load(open('scripts/paste_bundles.json'));sys.exit(1 if d['application'].get('start') else 0)" || ab=$((ab+1))
 te=$(mktemp -d); mkdir -p "$te/u/test1234/OneDrive - United States Air Force"; tw=0
 for b in scripts/gov/paste/*.ps1; do
   sed -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#'N'#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#Url = 'https://make\.powerautomate[^']*'#Url = 'file:///dev/null'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$te/u'#" "$b" > "$te/b.ps1"

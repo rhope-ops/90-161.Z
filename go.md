@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 17 Nov 26 (Round R27 r1 is open).
+Updated: 17 Nov 26 (Round R27 r1 done; R28 is being built).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,32 +26,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R27 r1: flows that read PFM Settings, a second person, look probes, an app file
-
-**For:** tests the new flows (F03, F05 and F06 now read 6 values from the list PFM Settings, and test e-mails have no [TEST] in the subject), test T4 again with the second person in the Visitors group, 3 quick looks (a list form header, a list button that starts a flow, Excel for the web), a flow that reads the health of my own flows, and a tiny app file built outside Power Apps.
-**Time:** about 2 hours with waits; about 60 minutes of my own work (estimate).
-**Changes:** on the test site: 5 rows of PFM Settings (put back at the end), the stage 6 target (25 working days, kept), fake test rows (removed at the end), a fake probe list and library (to the site Recycle Bin at the end), the second person in Visitors (removed at the end). In Power Automate: the 90-161.Z flows solution is upgraded; the 90-161.Z probe solution is imported, then I delete it. On my computer: only my OneDrive folder RADE\90-161.Z. Before Run, the window lists every file.
-**Before I start:** a colleague who can open the test site is free for 5 minutes in Teams (for the second-person step).
-**Steps:**
-1. Press Copy script next to the link below.
-2. Open the Start menu and type ISE.
-3. Open Windows PowerShell ISE (not "Run as administrator").
-4. Select File > New.
-5. Click in the white script pane.
-6. Press Ctrl+V.
-7. Press F5. The RADE window opens.
-8. Press Run.
-9. Do each step the window shows, until the log says DONE.
-10. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
-11. At DONE, send the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R27-round-r1.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R27 PASSED" or "90161Z R27 NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If a step is refused by Power Automate or Power Apps, select "It failed" and type the first line of the message: a refusal is a valid result in this round.
+No open task. Round R28 is being built; reload this page later.
 
 ## Done
 
+- Round R27 r1 (16 Nov 26): needs review. Checks 14 of 14, flows import confirmed, slice part 1 8 of 8, part 2 14 of 14, shared files 4 of 4, Window OK. Passed: the flows read PFM Settings, test e-mails have no "[TEST]" and the F03 e-mail was in my Inbox after 1 minute. Failed: the probe flows did not save (one names a trigger SharePoint does not have), the app file ("does not contain any components"), Excel (no Automate tab). Skipped: the second person (T4) and the clean-up, so the probe list, library, solution and the second person in Visitors are still on the test site. Details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-17-r27-results.md
 - Round R26 r2 (16 Nov 26): passed. Checks 14 of 14, probe list 8 of 8, import confirmed, clean-up 2 of 2, shared files 4 of 4, Window OK. Passed: T2 (draft in Word for the web), T3, T5, T6, T7 (person box), T9 (e-mails without "[TEST]" arrive at once), T10 (signed PDF attached). Failed: T4 (the second person saw "No permission"), T8 (a flow cannot list the people of a shared mailbox). My window: close, with small changes. Details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-16-r26-results.md
 - Round R26 r1 (15 Nov 26): needs review. Probe list made 7 of 7, probe solution imported, flow tests ran. Passed: T3 (forms by a flow), T5 (final copy by a flow), T6 (fields to columns). Failed: T9 (3 sends worked, no e-mail seen in the Inbox). Refused: the Word solution (Premium licence), the Mail solution, AI Builder. Not run: T2, T4, T7, T8, T10, because the PDF viewer block was refused and the app steps were skipped. Details:
