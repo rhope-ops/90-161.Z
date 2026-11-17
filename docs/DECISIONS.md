@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | R29 logo places (1A): 90-161.Z logo on the T22 PFM window, index.html band, T16 logo check, site logo and thumbnail; RADE runner keeps Rho Bold. PNGs stay uncommitted, built from the SVG (2A). | PFM | docs/NEXT_PROMPT.md item 4 |
 | 2026-11-17 | 90-161.Z logo = W2 Flap 26: route arc, page with a sliced Z, small folded flap; Rho Bold frame and colors. Master assets/logo/; ships in R29. RADE keeps Rho Bold. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU |
 | 2026-11-17 | R29 = the R28 fixes (health flow checks only On, export reader, T22 window, T24 card, notes N2 N3 N6 N7) + full T24 test + logo; RADE Diagnose and Back up move to R30. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T22 checks show inside the test window, one at a time, with Pass and Fail; no list to remember (note N5). Scope: T22 window test. | PFM | docs/reviews/2026-11-17-r28-results.md |
