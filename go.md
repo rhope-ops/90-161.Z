@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 17 Nov 26 (Round R27 r1 done; Round R28 r1 is ready).
+Updated: 17 Nov 26 (Round R27 r1 done; Round R28 r2 is ready).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,7 +26,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R28 r1: RADE Start button and desktop icon, the PFM window, probe retry, second person
+### Round R28 r2: RADE Start button and desktop icon, the PFM window, probe retry, second person
 
 **For:** tests the RADE desktop icon and Start button, my new 90-161.Z window (cards, keyboard, Narrator, high contrast), the health flow imported alone, the trigger of a list-button flow that I make by hand, the second person (T4) again, and the full 90-161.Z flow solution (F01 to F06, every flow On). It starts by removing the R27 leftovers on the test site.
 **Time:** about 3.5 hours with waits; about 2 hours of my own work (estimate).
@@ -56,7 +56,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 21. When a small window asks for the second person's e-mail address, type my colleague's address and select OK (it stays on my computer).
 22. At DONE, send the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R28-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R28-round-r2.ps1
 
 **Report:** the Outlook draft opens already addressed, with every file in the results folder attached; I send it (subject "90161Z R28 PASSED" or "90161Z R28 NEEDS REVIEW"). If no draft opens, the results folder opens and the e-mail text is on the clipboard: I paste it into a new e-mail and drag in every file. Then I tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If there is no shortcut RADE on my desktop, open the bookmark rhope-ops.github.io/RADE, press Copy script, paste it in ISE and press F5 again, and answer "No icon on the desktop" when the first question asks. If Power Automate refuses a step, select "It failed" and type the first line of the message (a refusal is a valid result).
