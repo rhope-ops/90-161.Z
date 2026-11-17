@@ -56,12 +56,11 @@ Plan for the code-standard debt (docs/code-standard.md; the PFM, 2026-11-17: new
 
 | Stage | What | Debt it removes (17 Nov 26 counts) | Rides with |
 |---|---|---|---|
-| S0 | Done in this change: kit checker ported, C2 full and C1 safety on, first lists adopted | — (starting debt: comment 173, length 9, file size 6, duplicate 9, full docs 211, safety lines 73) | — |
+| S0 | Done in this change: kit checker ported, C2 full and C1 safety on, first lists adopted | — (starting debt: comment 90, length 2, file size 4, duplicate 9, full docs 244, safety lines 78) | — |
 | S1 | Split the T22 window (1,402 lines), the T21 probe (789) and New-Publication.ps1 (638) into modules under the cap; move the 9 duplicate helpers into `scripts/gov/src/`; full docs and safety lines in every `scripts/gov` file touched | file size 3, duplicate 9, and the comment, full-docs and safety items of those files | R30 (already planned in docs/NEXT_PROMPT.md) |
 | S2 | Full docs and safety lines in the build scripts (`scripts/build_*.py`, `templates/*.js`) | their comment, full-docs and safety items | the next change to each script |
 | S3 | Split `tests/run.sh` (694 lines) by test group | file size 1 | the next test change |
 | S4 | Run-time logo: drop the base64 PNG blocks, `scripts/logo_png.py` and the PNG part of `scripts/logo_draw.py` (spec: rhope-ops/RADE docs/specs/run-time-logo.md, Draft) | — (bundle about 72 KB smaller) | the first round on the RADE release that draws the logo |
-| Kit | `scripts/pii_guard.py` (1,218) and `scripts/bloat_check.py` (847): the kit already split them (rhope-ops/archimedes_lever pull request 34); port by hand | file size 2 | a kit port pull request |
 
 ## The PFM's decisions the rounds wait for
 

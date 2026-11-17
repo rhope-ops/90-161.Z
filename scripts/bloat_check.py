@@ -19,10 +19,11 @@ Usage:
                                               # WARN (exit 0) for a description not starting "Use when"/"Use before",
                                               # over 1024 characters, a file over 150 lines, or an orphan skill
                                               # (name in neither AGENTS.md nor another SKILL.md); last line SKILLS PASS/FAIL
+                                              # (code: scripts/bloat_check_skills.py)
     python3 scripts/bloat_check.py --compare NAME=SECONDS ...   # compare times that a script measured with their
                                               # baselines; one TIME or WARN line; never fails (scripts/check.sh,
                                               # session_checkin.sh and the pre-push hook run it); --record stores them
-    python3 scripts/bloat_check.py --test     # self-test; prints BLOAT TEST PASS
+    python3 scripts/bloat_check.py --test     # self-test (scripts/bloat_check_test.py); prints BLOAT TEST PASS
 
 It measures:
     start read    lines, bytes and ~tokens (bytes / 4) of the files every session reads first
@@ -66,16 +67,12 @@ commit (a new project is not due on day one; an older project synced for the fir
 creates the file. Exit 0, unless --strict and something is over (exit 1). Standard library only. Needs git.
 """
 import argparse
-import contextlib
 import datetime
-import io
 import fnmatch
 import json
-import os
 import re
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -103,6 +100,7 @@ MAX_SCAN = 1_000_000  # bytes; larger files are not scanned for duplicates
 
 
 def git(root, *args):
+    """Run git in root; return its output, or None when git fails or is missing."""
     try:
         r = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
     except OSError:
@@ -111,6 +109,7 @@ def git(root, *args):
 
 
 def load_config(root):
+    """The DEFAULTS merged with .bloat-audit.json (budgets merged key by key); ValueError when it is not an object."""
     cfg = json.loads(json.dumps(DEFAULTS))
     p = root / CONFIG
     if p.exists():
@@ -124,10 +123,12 @@ def load_config(root):
 
 
 def ignored(rel, cfg):
+    """True when rel matches a glob in the config's "ignore" list."""
     return any(fnmatch.fnmatch(rel, g) for g in cfg.get("ignore", []))
 
 
 def start_read(root, cfg):
+    """Return (lines, bytes, ~tokens, [(file, bytes)] largest first) of the files every session reads first."""
     lines = size = 0
     files = []
     for rel in START_READ + cfg.get("start_read", []):
@@ -199,6 +200,7 @@ def rule_lines(text, with_sections=False):
 
 
 def words(line):
+    """The set of lower-case words of 3+ characters in line (for the near-duplicate measure)."""
     return set(re.findall(r"[a-z0-9][a-z0-9'-]{2,}", line.lower()))
 
 
@@ -250,6 +252,7 @@ def conflict_hash(added, removed):
 
 
 def conflict_recorded(root, h):
+    """True when a file in docs/reviews/ holds the line "rule-conflict-check: <h>"."""
     d = root / REVIEWS
     return d.is_dir() and any(f"rule-conflict-check: {h}" in f.read_text(encoding="utf-8", errors="replace")
                               for f in d.rglob("*.md"))
@@ -301,7 +304,7 @@ def rules_report(root, cfg, gate=False):
         for mark, lines in (("+", added), ("-", removed)):
             out += [f"  {mark} {l}" for l in lines]  # the whole line: a change near its end must show
         if was != now:
-            out.append("  (rule lines changed against the default branch: each one needs the owner's approval of its exact text)")
+            out.append("  (rule lines changed against the default branch: each one needs the PFM's approval of its exact text)")
             h = conflict_hash(added, removed)
             if conflict_recorded(root, h):
                 out.append(f"  conflict check: recorded (rule-conflict-check: {h})")
@@ -322,16 +325,19 @@ def rules_report(root, cfg, gate=False):
 
 
 def norm(line):
+    """line without list, quote, heading and table marks, whitespace made single, lower case (for duplicates)."""
     line = re.sub(r"^[\s>#|*\-+0-9.]+", "", line)
     return re.sub(r"\s+", " ", line).strip().lower()
 
 
 def scan_files(root, cfg):
+    """The tracked files that exist and are not ignored by the config."""
     out = git(root, "ls-files")
     return [rel for rel in (out.splitlines() if out else []) if not ignored(rel, cfg) and (root / rel).is_file()]
 
 
 def duplicates(root, files):
+    """Return [(normalized line, [files])] for long lines found in 2+ text files, most files first."""
     seen = {}
     for rel in files:
         p = root / rel
@@ -341,19 +347,7 @@ def duplicates(root, files):
             text = p.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        generated = False
-        for line in text.splitlines():
-            # Text between "# >>> ... generated from ..." and "# <<< ..." is a copy a build script writes and checks
-            # (90-161.Z: bloat audit 3, P2; the PFM, 2026-11-15): it is not counted, so a hand-made duplicate stays visible.
-            mark = line.strip()
-            if mark.startswith("# >>> ") and "generated from" in mark:
-                generated = True
-                continue
-            if mark.startswith("# <<< "):
-                generated = False
-                continue
-            if generated:
-                continue
+        for line in counted_lines(text):
             n = norm(line)
             if len(n) >= MIN_DUP:
                 seen.setdefault(n, set()).add(rel)
@@ -361,12 +355,29 @@ def duplicates(root, files):
     return sorted(dups, key=lambda d: -len(d[1]))
 
 
+def counted_lines(text):
+    """Yield the lines of text that the duplicate count reads. Text between "# >>> ... generated from ..." and
+    "# <<< ..." is a copy a build script writes and checks (90-161.Z: bloat audit 3, P2; the PFM, 2026-11-15): it is not
+    counted, so a hand-made duplicate stays visible."""
+    generated = False
+    for line in text.splitlines():
+        mark = line.strip()
+        if mark.startswith("# >>> ") and "generated from" in mark:
+            generated = True
+        elif mark.startswith("# <<< "):
+            generated = False
+        elif not generated:
+            yield line
+
+
 def big_files(root, files, kb):
+    """Return [(file, KB)] of the files over kb kilobytes, largest first."""
     return sorted(((rel, (root / rel).stat().st_size // 1024) for rel in files
                    if (root / rel).stat().st_size > kb * 1024), key=lambda f: -f[1])
 
 
 def audit_due(root, cfg, today):
+    """Why the full audit is due (days or commits since the last one, or never audited), or "" when it is not."""
     last = cfg.get("last_audit") or {}
     if not last.get("date"):
         # Never audited: due once the repo is every_days or every_commits past its first commit (kit default, 2026-11-13),
@@ -395,6 +406,7 @@ def audit_due(root, cfg, today):
 
 
 def run_timings(root, cfg, record):
+    """Run each timed command that has a cmd; return (report rows, names slower or failed); record stores the new seconds."""
     rows, slow = [], []
     for name, t in cfg.get("timings", {}).items():
         if not t.get("cmd"):
@@ -415,7 +427,7 @@ def run_timings(root, cfg, record):
 
 def compare_times(cfg, pairs, record=False):
     """pairs: [(name, seconds)]; name is a timings key, or "key:step" for one of its "steps". Returns (line, slow).
-    Warn only: a slowdown is reported, never a failure (the owner, 2026-11-16)."""
+    Warn only: a slowdown is reported, never a failure (the PFM, 2026-11-16)."""
     timings = cfg.setdefault("timings", {})
     slow, new, n = [], [], 0
     for name, secs in pairs:
@@ -444,6 +456,7 @@ def compare_times(cfg, pairs, record=False):
 
 
 def main_compare(root, items, record):
+    """--compare: print one TIME or WARN line for NAME=SECONDS items; --record stores them. Always 0."""
     try:
         cfg = load_config(root)
         pairs = [(i.rsplit("=", 1)[0], round(float(i.rsplit("=", 1)[1]), 1)) for i in items]
@@ -452,15 +465,21 @@ def main_compare(root, items, record):
         return 0
     line, _ = compare_times(cfg, pairs, record)
     if record:
-        p = root / CONFIG
-        data = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
-        data["timings"] = cfg["timings"]
-        p.write_text(json.dumps(data, indent=2) + "\n")
+        save_timings(root, cfg["timings"])
     print(line)
     return 0
 
 
+def save_timings(root, timings):
+    """Write timings into .bloat-audit.json and keep its other keys."""
+    p = root / CONFIG
+    data = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+    data["timings"] = timings
+    p.write_text(json.dumps(data, indent=2) + "\n")
+
+
 def report(root, args, today=None):
+    """Print the full report (or the --brief line); return 1 with --strict when something is over or the audit is due."""
     today = today or datetime.date.today()
     try:
         cfg = load_config(root)
@@ -491,11 +510,9 @@ def report(root, args, today=None):
     t_rows, slow = run_timings(root, cfg, args.record) if args.time else ([], [])
     over += [f"timing {n}" for n in slow]
     if args.record and args.time:
-        data = json.loads((root / CONFIG).read_text(encoding="utf-8")) if (root / CONFIG).exists() else {}
-        data["timings"] = cfg.get("timings", {})
-        (root / CONFIG).write_text(json.dumps(data, indent=2) + "\n")
+        save_timings(root, cfg.get("timings", {}))
 
-    tail = (f"AUDIT DUE ({due}): tell the owner and ask whether to run the audit skill (.claude/skills/audit/SKILL.md, "
+    tail = (f"AUDIT DUE ({due}): tell the PFM and ask whether to run the audit skill (.claude/skills/audit/SKILL.md, "
             "about 1 hour of agent time); never start it unasked") if due else "audit not due"
     if args.brief:
         print(f"bloat:       start read ~{s_tok:,} tokens (budget {b['start_read_tokens']:,}) · {r_rows[0][13:]} · duplicate lines "
@@ -522,278 +539,8 @@ def report(root, args, today=None):
     return 1 if args.strict and (over or due) else 0
 
 
-def self_test():
-    # The host's git config (forced signing, -c on the command line) must not change the cases.
-    for k in ("GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT"):
-        os.environ.pop(k, None)
-    os.environ.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
-    with tempfile.TemporaryDirectory() as d:
-        root = Path(d)
-        subprocess.run(["git", "init", "-q", str(root)], check=True)
-        long = "This line is long enough to count as a duplicate when it shows up in two different files of a repo."
-        (root / "AGENTS.md").write_text(f"# A\n- {long}\n")
-        (root / "docs").mkdir()
-        (root / "docs/NEXT_PROMPT.md").write_text(f"{long.upper()}\n" + "x\n" * 45)
-        (root / "big.txt").write_text("y" * 3000)
-        (root / CONFIG).write_text(json.dumps({"budgets": {"file_kb": 2, "start_read_tokens": 10},
-                                               "last_audit": {"date": "2026-01-01"},
-                                               "timings": {"t": {"cmd": "true", "seconds": 5}}}))
-        subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
-        cfg = load_config(root)
-        files = scan_files(root, cfg)
-        assert len(duplicates(root, files)) == 1, "duplicate across files, case and bullets ignored"
-        gen = "x = 1\n# >>> blk: generated from src by build (do not edit)\n" + "g" * 90 + "\n# <<< blk\n"
-        (root / "g1.ps1").write_text(gen)
-        (root / "g2.ps1").write_text(gen + "h" * 90 + "\n")
-        (root / "g3.ps1").write_text("h" * 90 + "\n")
-        subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
-        assert len(duplicates(root, scan_files(root, cfg))) == 2, "generated block not counted; a line after its end marker is counted"
-        for g in ("g1.ps1", "g2.ps1", "g3.ps1"):
-            (root / g).unlink()
-        subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
-        assert [f for f, _ in big_files(root, files, 2)] == ["big.txt"], "big file"
-        assert "days since" in audit_due(root, cfg, datetime.date(2026, 2, 1)), "due by days"
-        assert audit_due(root, cfg, datetime.date(2026, 1, 5)) == "", "not due"
-        never = {**cfg, "last_audit": None}
-        assert audit_due(root, never, datetime.date(2026, 1, 5)) == "never audited", "no commits: due"
-        with tempfile.TemporaryDirectory() as n:
-            subprocess.run(["git", "init", "-q", n], check=True)
-            env = {**os.environ, "GIT_AUTHOR_DATE": "2026-01-01T12:00:00Z", "GIT_COMMITTER_DATE": "2026-01-01T12:00:00Z"}
-            subprocess.run(["git", "-C", n, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty",
-                            "-m", "first"], check=True, env=env)
-            first = datetime.date(2026, 1, 1)
-            assert audit_due(Path(n), never, first) == "", "never audited, new repo: not due yet"
-            assert audit_due(Path(n), never, first + datetime.timedelta(days=14)).startswith("never audited;"), "due by days"
-            assert audit_due(Path(n), {**never, "every_commits": 1}, first).startswith("never audited;"), "due by commits"
-            subprocess.run(["git", "-C", n, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty",
-                            "-m", "second"], check=True, env=env)
-            s = str(Path(n).parent / (Path(n).name + "-shallow"))
-            subprocess.run(["git", "clone", "-q", "--depth", "1", "file://" + n, s], check=True, capture_output=True)
-            try:
-                assert audit_due(Path(s), never, first) == "never audited", "shallow clone: due"
-            finally:
-                subprocess.run(["rm", "-rf", s], check=True)
-        rows, slow = run_timings(root, cfg, record=False)
-        assert not slow and "ok" in rows[0], "fast command is ok"
-        a = argparse.Namespace(brief=False, time=False, record=False, strict=True)
-        with contextlib.redirect_stdout(io.StringIO()):
-            assert report(root, a, datetime.date(2026, 1, 5)) == 1, "strict fails when over budget"
-        # Rules: count by place, caps, changed lines against origin/main, and paths that must exist.
-        sample = ("# T\n\n- Repo: x\n\n## Git safety\n\n- Rule one.\n- Rule two.\n<!-- starter -->\n- Starter only.\n"
-                  "<!-- /starter -->\n```\n- in a fence\n```\n\n## Commands\n\n- Build: none.\n\n## Project rules\n\n"
-                  "<!-- - a comment -->\n- Project rule.\n")
-        kit, project, every = rule_lines(sample)
-        assert kit == ["Rule one.", "Rule two."] and project == ["Project rule."], "header, Commands, fences, comments and starter blocks are not rules"
-        assert "Build: none." in every, "the list of changed lines also covers sections that are not counted"
-        assert rule_lines("## A\n\n- Rule start\n  continues with a | b here.\n")[0] == ["Rule start continues with a | b here."], "a continuation with a pipe stays in its rule (a change to it shows)"
-        kit, project, _ = rule_lines("## A\n\n* Star.\n1. Numbered.\n  - Nested.\nA paragraph.\n\n## Project rules\n\n+ Plus.\n  wrapped.\nA rule as a paragraph.\n")
-        assert kit == ["Star.", "Numbered.", "Nested. A paragraph."] and project == ["Plus. wrapped.", "A rule as a paragraph."], "every list marker counts; in the kit a line right below an item continues it, in Project rules only an indented one"
-        _, project, _ = rule_lines("## Project rules\n\nRule one.\nRule two.\nRule three.\n\n- Bullet.\nAfter a bullet.\n\n#1 priority: never do X.\n")
-        assert project == ["Rule one.", "Rule two.", "Rule three.", "Bullet.", "After a bullet.", "#1 priority: never do X."], "Project rules: unindented lines are rules each; '#1' is text, not a heading"
-        _, project, _ = rule_lines("## Project rules\n\nRule | Why\n--- | ---\nT one | x\nT two | y\n\n| R | W |\n|---|---|\n| T three | z |\n-\n")
-        assert project == ["T one | x", "T two | y", "| T three | z |"], "tables without leading pipes: one rule per row; a lone '-' removes no row"
-        kit, project, every = rule_lines("## Order of authority\n\n1. The owner.\n2. This file.\n- A bullet here counts.\n\n## B\n\n- One rule,\n  wrapped.\n~~~\n- in a tilde fence\n~~~\n* * *\n---\n### Sub\n\n"
-                                         "## Project rules\n\n### Group\n\n- P one,\n  wrapped.\n\nA paragraph rule\nover two lines.\n\n---\n\n| Rule | Why |\n|---|---|\n| T one | x |\n| T two | y |\n")
-        assert kit == ["A bullet here counts.", "One rule, wrapped."], "the ranking is not counted, a bullet in that section is; wraps, fences, rules and sub-headings are not rules"
-        assert project == ["P one, wrapped.", "A paragraph rule", "over two lines.", "| T one | x |", "| T two | y |"], "Project rules: wrapped bullet 1, an unindented paragraph line 1 each, table rows without header and separator"
-        assert "The owner." in every, "ranking lines are still listed when they change"
-        with tempfile.TemporaryDirectory() as o:
-            g = lambda *c: subprocess.run(["git", "-C", o, "-c", "user.email=t@t", "-c", "user.name=t", *c], check=True, capture_output=True)
-            g("init", "-q", "-b", "main")
-            ro = Path(o)
-            (ro / "AGENTS.md").write_text("## A\n\n- Old rule.\n- Kept rule.\n\n## Project rules\n\n")
-            g("add", "-A"); g("commit", "-q", "-m", "a"); g("update-ref", "refs/remotes/origin/main", "HEAD")
-            caps = {"budgets": {**DEFAULTS["budgets"], "rules": 2, "project_rules": 1}}
-            (ro / "AGENTS.md").write_text("## A\n\n- New rule.\n- Kept rule.\n\n## Project rules\n\n- P1.\n")
-            rows, problems = rules_report(ro, caps)
-            assert not problems, "at the cap is not over"
-            assert any(r.startswith("  + New rule.") for r in rows) and any(r.startswith("  - Old rule.") for r in rows), "a swap is listed"
-            (ro / "AGENTS.md").write_text("## A\n\n- New rule.\n- Kept rule.\n- Third.\n\n## Project rules\n\n- P1.\n- P2.\n")
-            rows, problems = rules_report(ro, caps)
-            assert len(problems) == 2 and "rules over the cap (3 > 2)" in problems[0] and "project rules over" in problems[1], "both caps fail"
-            (ro / "AGENTS.md").write_text("## A\n\n- See `.claude/skills/x/SKILL.md` and [doc](docs/gone.md), [web](https://e.example/a), `.claude/skills/<name>/`, `scripts/gone.sh --fast`, `scripts/check.local.sh`, `python3 scripts/gone2.py --test`, `scripts/tool.sh -o docs/out.html`, `scripts/gone2.py:12`, `scripts/gone.sh|tee x`, `bash -x scripts/gone3.sh`, `x --output docs/a.md --out docs/b.md --outline docs/c.md`.\n")
-            rows, problems = rules_report(ro, caps)
-            assert problems == ["missing paths named in AGENTS.md: .claude/skills/x/SKILL.md, docs/gone.md, scripts/gone.sh, scripts/gone2.py, scripts/gone3.sh, scripts/tool.sh"], "missing paths (also after a command word, with a line number or a pipe), not URLs, patterns, optional files or option values"
-            (ro / ".claude/skills/x").mkdir(parents=True); (ro / ".claude/skills/x/SKILL.md").write_text("x")
-            (ro / "docs").mkdir(); (ro / "docs/gone.md").write_text("x")
-            (ro / "scripts").mkdir(); (ro / "scripts/gone.sh").write_text("x"); (ro / "scripts/gone2.py").write_text("x"); (ro / "scripts/tool.sh").write_text("x"); (ro / "scripts/gone3.sh").write_text("x")
-            assert rules_report(ro, caps)[1] == [], "paths exist: pass"
-            # Conflict gate: changed rule lines need a record that names their hash; without --gate only a WARN line.
-            (ro / "AGENTS.md").write_text("## A\n\n- New rule.\n- Kept rule.\n\n## Project rules\n\n")
-            h = conflict_hash(["New rule."], ["Old rule."])
-            assert h == conflict_hash(["New rule."], ["Old rule."]) != conflict_hash(["Old rule."], ["New rule."]), "the hash keeps + and - apart"
-            rows, problems = rules_report(ro, caps)
-            assert not problems and any(r.startswith("WARN") and h in r for r in rows), "no record, no gate: a WARN line with the hash"
-            rows, problems = rules_report(ro, caps, gate=True)
-            assert len(problems) == 1 and h in problems[0], "no record, gate: fails"
-            (ro / "docs").mkdir(exist_ok=True); (ro / "docs/reviews").mkdir()
-            (ro / "docs/reviews/r.md").write_text(f"Result: no conflict.\nrule-conflict-check: {'0' * 12}\n")
-            assert rules_report(ro, caps, gate=True)[1], "a record for other lines does not count"
-            (ro / "docs/reviews/r.md").write_text(f"Result: no conflict.\nrule-conflict-check: {h}\n")
-            rows, problems = rules_report(ro, caps, gate=True)
-            assert not problems and any("conflict check: recorded" in r for r in rows), "a record with the hash passes"
-            (ro / "AGENTS.md").write_text("## A\n\n- Old rule.\n- Kept rule.\n\n## Project rules\n\n")
-            assert not rules_report(ro, caps, gate=True)[1], "no changed lines: no gate"
-            # Lint: near-duplicates, vague words, untested rules (a section with no scenario, no script named).
-            (ro / ".claude").mkdir(exist_ok=True)
-            (ro / ".claude/rule-tests.md").write_text("| # | Rule tested | Section | Prompt |\n|---|---|---|---|\n| 1 | x | Tested; Other | p |\n")
-            rules = [("Tested", "Never push to main without the full check lane passing first."),
-                     ("Tested", "Never push to main without the full check lane passing."),
-                     ("Tested", "Use the right tool where possible."),
-                     ("Untested", "Keep the handoff short."), ("Untested", "The hook enforces it: `scripts/x.sh`."),
-                     ("Other", "Run `git clean` never.")]
-            flags = lint(ro, rules)
-            assert sum("near-duplicate" in f for f in flags) == 1, "one near-duplicate pair"
-            assert [f for f in flags if "vague" in f] == ['WARN  rule lint: vague (where possible): "Use the right tool where possible."'], "vague word; text in backticks is not read"
-            assert [f for f in flags if "untested" in f] == ['WARN  rule lint: untested (no scenario for "Untested" in .claude/rule-tests.md, no script named): "Keep the handoff short."'], "untested: no scenario and no script; a ';' list of sections counts each"
-            assert lint(ro, rules, only={"Keep the handoff short."}) == [f for f in flags if "handoff" in f], "only: the changed lines"
-            (ro / ".claude/rule-tests.md").unlink()
-            assert not [f for f in lint(ro, rules) if "untested" in f], "no rule-tests file (starter tier): no untested flags"
-            (ro / "AGENTS.md").write_text("## A\n\n- New rule.\n- Kept rule.\n\n## Project rules\n\n- See `.claude/skills/x/SKILL.md` and [doc](docs/gone.md), `scripts/gone.sh`, `scripts/gone2.py`, `scripts/tool.sh`.\n")
-            with contextlib.redirect_stdout(io.StringIO()):
-                assert main_rules(ro) == 0, "--rules passes"
-                assert main_lint(ro) == 0, "--lint never fails"
-                (ro / "AGENTS.md").write_text("## A\n\n" + "- r.\n" * 36)
-                assert main_rules(ro) == 1, "--rules fails over the default cap of 35"
-        (root / CONFIG).write_text(json.dumps({"budgets": {"start_read_warn_tokens": 1, "start_read_tokens": 99999},
-                                               "last_audit": {"date": "2026-01-01"}}))
-        w = io.StringIO()
-        with contextlib.redirect_stdout(w):
-            report(root, argparse.Namespace(brief=True, time=False, record=False, strict=False), datetime.date(2026, 1, 5))
-        assert "over warning" in w.getvalue() and "over: start read" not in w.getvalue(), "warning, not over"
-        with contextlib.redirect_stdout(io.StringIO()):
-            assert audit_due(root, {**cfg, "last_audit": {"date": "2026-01-01", "commit": "f" * 40}},
-                             datetime.date(2026, 1, 5)) == "", "unknown commit alone is not due"
-            (root / CONFIG).write_text("{bad")
-            assert report(root, a, datetime.date(2026, 1, 5)) == 1, "bad config: message, no traceback"
-            (root / CONFIG).write_text(json.dumps({"timings": {"f": {"cmd": "false"}, "t": {"cmd": "true"}}}))
-            report(root, argparse.Namespace(brief=True, time=True, record=True, strict=False))
-        saved = json.loads((root / CONFIG).read_text())["timings"]
-        assert "seconds" not in saved["f"] and saved["t"]["seconds"] is not None, "record skips failed commands"
-        tc = {"timings": {"check": {"seconds": 4.0, "steps": {"a": 2.0, "tiny": 0.1}}}}
-        line, slow = compare_times(json.loads(json.dumps(tc)), [("check", 4.4), ("check:a", 2.4), ("check:tiny", 0.3)])
-        assert not slow and line.startswith("TIME  baseline: 3 of 3"), "within +25%, or under 0.5 s slower: ok"
-        line, slow = compare_times(json.loads(json.dumps(tc)), [("check", 5.2), ("check:a", 2.0), ("check:new", 1.0)])
-        assert slow == ["check 5.2 s (baseline 4.0 s, +30%)"] and line.startswith("WARN") and "efficiency" in line, "a slowdown warns and names the skill"
-        line, _ = compare_times(json.loads(json.dumps(tc)), [("check:new", 1.0)])
-        assert "no baseline yet for 1 (check:new)" in line and "Record a baseline" in line, "no baseline: says how to record one"
-        rec = json.loads(json.dumps(tc))
-        compare_times(rec, [("check", 3.0), ("check:new", 1.0), ("other", 0.2)], record=True)
-        assert rec["timings"]["check"]["seconds"] == 3.0 and rec["timings"]["check"]["steps"]["new"] == 1.0 and rec["timings"]["other"]["seconds"] == 0.2, "record stores wall, step and a new key"
-        (root / CONFIG).write_text(json.dumps({"budgets": {}, **tc}))
-        with contextlib.redirect_stdout(io.StringIO()):
-            assert main_compare(root, ["check:a=9", "bad"], False) == 0, "a bad item: no failure"
-            main_compare(root, ["check:a=1.25"], True)
-        assert json.loads((root / CONFIG).read_text())["timings"]["check"]["steps"]["a"] == 1.2 and "budgets" in json.loads((root / CONFIG).read_text()), "--record keeps the other keys"
-        rows, _ = run_timings(root, {"timings": {"nocmd": {"seconds": 1}}}, record=False)
-        assert rows == [], "--time skips a timing with no cmd"
-    with tempfile.TemporaryDirectory() as d:
-        rs = Path(d)
-        (rs / "AGENTS.md").write_text("Skills: ok, nodesc, noname, wrongname, nofm, longone, warnone.\n")
-
-        def mk(folder, body):
-            (rs / ".claude/skills" / folder).mkdir(parents=True, exist_ok=True)
-            (rs / ".claude/skills" / folder / "SKILL.md").write_text(body)
-        good = "---\nname: {}\ndescription: Use when testing.\n---\nbody\n"
-        mk("ok", good.format("ok"))
-        with contextlib.redirect_stdout(io.StringIO()) as w:
-            assert main_skills(rs) == 0, "clean skill passes"
-        assert w.getvalue().strip() == "SKILLS PASS: 1 skills, 0 warnings", "clean pass line"
-        mk("nofm", "no frontmatter\n")
-        mk("nodesc", "---\nname: nodesc\n---\n")
-        mk("noname", "---\ndescription: Use when x.\n---\n")
-        mk("wrongname", "---\nname: other\ndescription: Use when x.\n---\n")
-        rows, fails, _, _ = skills_report(rs)
-        assert fails == 4 and sum(r.startswith("FAIL") for r in rows) == 4, "each FAIL case"
-        with contextlib.redirect_stdout(io.StringIO()) as w:
-            assert main_skills(rs) == 1, "a malformed skill fails"
-        assert w.getvalue().strip().splitlines()[-1].startswith("SKILLS FAIL:"), "fail line"
-        for f in ("nofm", "nodesc", "noname", "wrongname"):
-            (rs / ".claude/skills" / f / "SKILL.md").unlink()
-        mk("warnone", "---\nname: warnone\ndescription: Does things.\n---\n")
-        mk("longone", "---\nname: longone\ndescription: Use before " + "x" * 1030 + "\n---\n" + "l\n" * 150)
-        mk("orphan", good.format("orphan"))
-        rows, fails, warns, n = skills_report(rs)
-        txt = "\n".join(rows)
-        assert fails == 0 and n == 4 and warns == 4, "four WARN cases, no FAIL"
-        assert all(r.startswith("  WARN") for r in rows), "WARN lines are indented"
-        assert 'warnone/SKILL.md: description does not start' in txt, "WARN: description start"
-        assert "longone/SKILL.md: description is 1041 characters" in txt and "longone/SKILL.md: 154 lines" in txt, "WARN: long description and file"
-        assert "orphan/SKILL.md: orphan" in txt, "WARN: orphan"
-        (rs / ".claude/skills/warnone/SKILL.md").write_text("---\nname: warnone\ndescription: Does things.\n---\nSee orphan.\n")
-        assert "orphan/SKILL.md: orphan" not in "\n".join(skills_report(rs)[0]), "a mention in another SKILL.md is no orphan"
-        assert skill_frontmatter("---\nname: f\ndescription: >\n  Use when folded.\n---\n")["description"] == "Use when folded.", "a folded description keeps no > marker"
-    print("BLOAT TEST PASS")
-
-
-def skill_frontmatter(text):
-    """Returns {key: value} of the YAML frontmatter (simple `key: value`, indented continuation lines), or None."""
-    lines = text.splitlines()
-    if not lines or lines[0].strip() != "---":
-        return None
-    try:
-        end = next(i for i in range(1, len(lines)) if lines[i].strip() == "---")
-    except StopIteration:
-        return None
-    fm, key = {}, None
-    for ln in lines[1:end]:
-        m = re.match(r"([A-Za-z_-]+):\s*(.*)$", ln)
-        if m and not ln[0].isspace():
-            key = m.group(1)
-            fm[key] = m.group(2).strip()
-        elif key and ln.strip():
-            head = "" if fm[key] in (">", "|", ">-", "|-") else fm[key]  # a block marker is not part of the text
-            fm[key] = (head + " " + ln.strip()).strip()
-    for k, v in fm.items():
-        fm[k] = "" if v in (">", "|", ">-", "|-") else v.strip("\"'")
-    return fm
-
-
-def skills_report(root):
-    """Returns (lines, fails, warns, count) for .claude/skills/*/SKILL.md."""
-    files = sorted((root / ".claude/skills").glob("*/SKILL.md"))
-    texts = {f.parent.name: f.read_text(encoding="utf-8", errors="replace") for f in files}
-    agents = (root / "AGENTS.md").read_text(encoding="utf-8", errors="replace") if (root / "AGENTS.md").is_file() else ""
-    out, fails, warns = [], 0, 0
-    for name, text in texts.items():
-        rel = f".claude/skills/{name}/SKILL.md"
-        fm = skill_frontmatter(text)
-        if fm is None:
-            out.append(f"FAIL  {rel}: no YAML frontmatter")
-            fails += 1
-            continue
-        bad = [f"no {k}" for k in ("name", "description") if not fm.get(k)]
-        if fm.get("name") and fm["name"] != name:
-            bad.append(f"name \"{fm['name']}\" differs from folder \"{name}\"")
-        if bad:
-            out.append(f"FAIL  {rel}: {', '.join(bad)}")
-            fails += 1
-        desc = fm.get("description", "")
-        warn = []
-        if desc and not desc.startswith(("Use when", "Use before")):
-            warn.append('description does not start with "Use when" or "Use before"')
-        if len(desc) > 1024:
-            warn.append(f"description is {len(desc)} characters (over 1024)")
-        n = len(text.splitlines())
-        if n > 150:
-            warn.append(f"{n} lines (over 150)")
-        pat = r"(?<![\w-])" + re.escape(name) + r"(?![\w-])"
-        if not re.search(pat, agents) and not any(re.search(pat, t) for o, t in texts.items() if o != name):
-            warn.append("orphan: name not mentioned in AGENTS.md or another SKILL.md")
-        for w in warn:
-            out.append(f"  WARN  {rel}: {w}")
-        warns += len(warn)
-    return out, fails, warns, len(texts)
-
-
-def main_skills(root):
-    rows, fails, warns, n = skills_report(root)
-    print("\n".join(rows + [f"SKILLS FAIL: {fails} skill(s) malformed, {n} skills, {warns} warnings" if fails
-                           else f"SKILLS PASS: {n} skills, {warns} warnings"]))
-    return 1 if fails else 0
-
-
 def main_lint(root):
+    """--lint: print the rule lint of every rule line and a LINT count line. Always 0 (warn only)."""
     p = root / RULES_FILE
     rules = rule_lines(p.read_text(encoding="utf-8", errors="replace"), with_sections=True) if p.is_file() else []
     rows = lint(root, rules)
@@ -802,6 +549,7 @@ def main_lint(root):
 
 
 def main_rules(root, gate=False):
+    """--rules: print the rule counts, changed lines and problems, then RULES PASS or RULES FAIL; 1 on a problem."""
     try:
         cfg = load_config(root)
     except (ValueError, TypeError, KeyError) as e:
@@ -814,6 +562,7 @@ def main_rules(root, gate=False):
 
 
 def main():
+    """Parse the options and run the chosen mode; return its exit code."""
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0], allow_abbrev=False)
     ap.add_argument("--rules", action="store_true")
     ap.add_argument("--brief", action="store_true")
@@ -828,13 +577,15 @@ def main():
     ap.add_argument("--project", default=".")
     args = ap.parse_args()
     if args.test:
-        self_test()
+        import bloat_check_test  # scripts/bloat_check_test.py: kept apart (code standard C4)
+        bloat_check_test.run(sys.modules[__name__])
         return 0
     root = Path(git(Path(args.project), "rev-parse", "--show-toplevel") or args.project)
     if args.lint:
         return main_lint(root)
     if args.skills:
-        return main_skills(root)
+        import bloat_check_skills  # scripts/bloat_check_skills.py: kept apart (code standard C4)
+        return bloat_check_skills.main_skills(root)
     if args.rules:
         return main_rules(root, args.gate)
     if args.compare:
