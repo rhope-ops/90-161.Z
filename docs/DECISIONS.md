@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | Code standard: keep tests/check_code_standard.py (named by the rule line); the kit's scripts/code_standard.py is not adopted for now (compare the two first). | PFM | docs/reviews/2026-11-17-kit-port.md |
 | 2026-11-17 | Ported kit PR 34 (8c68566; PFM pre-approved): kit scripts with code-standard debt fixed; kept generated-block duplicates, test packages, milhosts(). Skipped: kit code_standard.py. | PFM | docs/reviews/2026-11-17-kit-port.md |
 | 2026-11-17 | RADE lock moves to release engine-v12 (RADE c1da1e1, serial 8) by scripts/bump_lock.py; bundles rebuilt. Not verified on a device. | PFM | scripts/rade.lock.json |
 | 2026-11-17 | Lock moves now (not in R30): a newer RADE release fails every PR here. R29a/R29b rebuilt as r3 on engine-v12; the gov-script refactor stays in R30. | PFM | Replaces the lock part of the R30 row below |
