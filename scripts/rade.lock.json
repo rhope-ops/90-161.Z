@@ -1,11 +1,12 @@
 {
   "repo": "rhope-ops/RADE",
-  "commit": "67f7681d1ef542ece518528139ab0780ce4b3a63",
-  "tag": "engine-v6",
-  "serial": 5,
+  "commit": "28877e752f50d33338eff4aebfbb00b35a9e895c",
+  "tag": "engine-v9",
+  "serial": 6,
   "engine": "engine/rade_build.py",
   "files": {
     "assets/logo/logo-K-128.png": "ad34dc1aa99074a801a10a8ae0e85a2032516b984a80a614fe8621547d2432ad",
-    "engine/rade_build.py": "b77ff7e5b6e589c98558ae7e0bb846f3fbcc9be8b255f2d0cf5ee6a2c04ea543"
+    "engine/rade_build.py": "206eb1d1f03bde0efc7e936cc40ed0f457540ad6ee5d6d8dc755c59ed46233e5",
+    "engine/rade_ui.ps1": "6b75d3e1cd902379600755f4a78416c3fb8cd5a27dfe6728f095fd4d65c01955"
   }
 }

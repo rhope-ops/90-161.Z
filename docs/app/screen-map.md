@@ -19,6 +19,19 @@ The screens follow the PFM's 13 steps (docs/process-model.md "Target process"). 
 | 12 | Add related e-mail | AO |
 | 13 | Change or skip; Publication and forms (read, details, summary) | PFM; anyone |
 
+### PFM window cards and list forms (the 16 Nov 26 front-end split; PFM preview 2, 17 Nov 26)
+
+The PFM works in the RADE-style window (scripts/gov/90161Z-T22-pfm-window-r2.ps1, FAKE data until the app rounds); everyone else works in SharePoint list forms opened from an e-mail link. The window holds only the PFM's parts of the steps; steps 2 to 7 and the endorser, AO, certifier and approver parts of 9 to 12 stay list forms.
+
+| Where | Cards or forms |
+|---|---|
+| PFM window, rail | Your Work (Needs You Today, Who Has It Now, Chase with Remind), All Actions, Publications, Reviews Due, Settings |
+| PFM window, by step | 1 Reviews Due; 8 review and format, privacy record, Start Endorsement (with confirm); 9 and 10 waves, answers, silent endorser; 11 final copy, then certifier, then approver; 12 Published; 13 Change or Skip (reason required, logged) |
+| PFM window, states | nothing needs you, loading, failed, no permission |
+| SharePoint list forms | 2 to 7 (box told, name the AOs, scope, draft, endorsers); 9 and 10 for endorsers and AOs (read, comment, answer, decide, more time); 11 and 12 for officials, CSS boxes and AOs |
+
+Every action card in the window has the 12-dot step bar and a Change or Skip button (step 13).
+
 ## 1. Rules for every screen
 
 - One screen = one task (docs/guidance/customer-steps.md). Step screens show "Step X of Y", the due date, the heading, the instructions, "Why", and one main button.

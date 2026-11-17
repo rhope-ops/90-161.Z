@@ -1,0 +1,395 @@
+{
+  "displayName": "90161Z F02 Next Review Due r3",
+  "description": "Weekdays 07:00 Central. Sets PFM Product Index Next Review Due = 4 years after the later of Effective Date and Certified Current Date (DAFMAN 90-161 7.4.2); opens a periodic PFM Reviews row 6 months before it (7.4.4) if none is open. r3 (R28, PFM 17 Nov 26): Try scope, Flows paused read from PFM Settings, failure e-mail to the alert address. The PFM can start a run by hand with Run (the same steps as the weekday run).",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365"
+  ],
+  "triggers": {
+    "Recurrence_weekdays_0700_Central": {
+      "type": "Recurrence",
+      "recurrence": {
+        "frequency": "Week",
+        "interval": 1,
+        "timeZone": "Central Standard Time",
+        "schedule": {
+          "weekDays": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+          ],
+          "hours": [
+            "7"
+          ],
+          "minutes": [
+            0
+          ]
+        },
+        "startTime": "2026-11-16T07:00:00"
+      }
+    }
+  },
+  "actions": {
+    "Try": {
+      "runAfter": {},
+      "type": "Scope",
+      "actions": {
+        "Get_settings": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R28 (PFM 17 Nov 26): the flow values are rows of PFM Settings, read once at the start, as in F03, F05 and F06. A missing or empty row gives the default: Flows paused No, Test mode Yes (fail-safe)."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@outputs('Setting_flows_paused')",
+              true
+            ]
+          },
+          "actions": {
+            "Stop_flows_are_paused": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Today": {
+          "runAfter": {
+            "If_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd')"
+        },
+        "Get_active_products": {
+          "runAfter": {
+            "Today": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Product Index (pfm_ListProductIndex)')",
+              "$filter": "ProductStatus eq 'Active'",
+              "$top": 5000
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "runtimeConfiguration": {
+            "paginationPolicy": {
+              "minimumItemCount": 5000
+            }
+          }
+        },
+        "For_each_active_product": {
+          "runAfter": {
+            "Get_active_products": [
+              "Succeeded"
+            ]
+          },
+          "type": "Foreach",
+          "foreach": "@body('Get_active_products')?['value']",
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          },
+          "actions": {
+            "Effective_date": {
+              "runAfter": {},
+              "type": "Compose",
+              "inputs": "@coalesce(items('For_each_active_product')?['EffectiveDate'], '')"
+            },
+            "Certified_current_date": {
+              "runAfter": {
+                "Effective_date": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@coalesce(items('For_each_active_product')?['CertifiedCurrentDate'], '')"
+            },
+            "Later_date": {
+              "runAfter": {
+                "Certified_current_date": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(empty(outputs('Effective_date')), outputs('Certified_current_date'), if(empty(outputs('Certified_current_date')), outputs('Effective_date'), if(greater(ticks(outputs('Effective_date')), ticks(outputs('Certified_current_date'))), outputs('Effective_date'), outputs('Certified_current_date'))))"
+            },
+            "Next_review_due": {
+              "runAfter": {
+                "Later_date": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(empty(outputs('Later_date')), '', addToTime(outputs('Later_date'), 4, 'Year', 'yyyy-MM-dd'))"
+            },
+            "Review_window_start": {
+              "runAfter": {
+                "Next_review_due": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@if(empty(outputs('Next_review_due')), '', addToTime(outputs('Next_review_due'), -6, 'Month', 'yyyy-MM-dd'))"
+            },
+            "If_next_review_due_differs": {
+              "runAfter": {
+                "Review_window_start": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@outputs('Next_review_due')",
+                        ""
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "equals": [
+                        "@if(empty(items('For_each_active_product')?['NextReviewDue']), '', substring(items('For_each_active_product')?['NextReviewDue'], 0, 10))",
+                        "@outputs('Next_review_due')"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "actions": {
+                "Update_next_review_due": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PatchItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                      "table": "@parameters('List PFM Product Index (pfm_ListProductIndex)')",
+                      "id": "@items('For_each_active_product')?['ID']",
+                      "item/Title": "@items('For_each_active_product')?['Title']",
+                      "item/NextReviewDue": "@outputs('Next_review_due')"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            },
+            "Get_open_or_current_cycle_reviews": {
+              "runAfter": {
+                "If_next_review_due_differs": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Reviews (pfm_ListReviews)')",
+                  "$filter": "@concat('Product/Id eq ', string(items('For_each_active_product')?['ID']), ' and ReviewType eq ''Periodic'' and (OPRResponse eq null or ReviewOpened ge ''', if(empty(outputs('Review_window_start')), '1900-01-01', outputs('Review_window_start')), 'T00:00:00Z'')')",
+                  "$top": 1
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "If_review_task_due": {
+              "runAfter": {
+                "Get_open_or_current_cycle_reviews": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "not": {
+                      "equals": [
+                        "@outputs('Next_review_due')",
+                        ""
+                      ]
+                    }
+                  },
+                  {
+                    "greaterOrEquals": [
+                      "@ticks(outputs('Today'))",
+                      "@ticks(if(empty(outputs('Review_window_start')), '9999-12-31', outputs('Review_window_start')))"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@length(body('Get_open_or_current_cycle_reviews')?['value'])",
+                      0
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Create_periodic_review": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PostItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                      "table": "@parameters('List PFM Reviews (pfm_ListReviews)')",
+                      "item/Title": "@take(concat(coalesce(items('For_each_active_product')?['PublicationNumber'], items('For_each_active_product')?['Title']), ' periodic review due ', outputs('Next_review_due')), 250)",
+                      "item/Product/Id": "@items('For_each_active_product')?['ID']",
+                      "item/ReviewType/Value": "Periodic",
+                      "item/ReviewOpened": "@outputs('Today')",
+                      "item/OPRResponseDue": "@addDays(outputs('Today'), 30, 'yyyy-MM-dd')"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "Failed_actions": {
+      "runAfter": {
+        "Try": [
+          "Failed",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@result('Try')",
+        "where": "@or(equals(item()?['status'], 'Failed'), equals(item()?['status'], 'TimedOut'))"
+      }
+    },
+    "Failure_lines": {
+      "runAfter": {
+        "Failed_actions": [
+          "Succeeded"
+        ]
+      },
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Failed_actions')",
+        "select": "@concat('<li><b>', replace(coalesce(item()?['name'], 'step'), '_', ' '), '</b>: ', coalesce(item()?['error']?['message'], item()?['error']?['code'], 'no error text'), '</li>')"
+      }
+    },
+    "E-mail_the_failure": {
+      "runAfter": {
+        "Failure_lines": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "authentication": "@parameters('$authentication')",
+        "parameters": {
+          "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "emailMessage/Subject": "@concat('90-161.Z flow failed: F02 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
+          "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F02'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. Open the failed run: <a href=\"https://make.powerautomate.appsplatform.us/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'], '\">run details</a> (or open this flow and its 28-day run history; the failed run has the start time above). 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and does not repeat what the failed run already did.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+          "emailMessage/Importance": "High"
+        }
+      }
+    },
+    "End_as_failed": {
+      "runAfter": {
+        "E-mail_the_failure": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "Terminate",
+      "inputs": {
+        "runStatus": "Failed",
+        "runError": {
+          "code": "StepFailed",
+          "message": "A step failed; the alert address was e-mailed. Fix the cause, then Resubmit this run."
+        }
+      }
+    }
+  }
+}

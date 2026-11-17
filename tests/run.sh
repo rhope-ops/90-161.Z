@@ -171,7 +171,7 @@ python3 scripts/build_flow_solution.py --check >/dev/null && python3 tests/check
 # export values; no environmentvariabledefinition.xml has an XML declaration. R19: only A r5 (no variable, layout of the R18 export).
 python3 - <<'PYEOF' && ok "solution import test zip valid (A r5: no variable, R18 export layout)" || bad "solution import test zips"
 import zipfile, glob, xml.dom.minidom as md
-zips = sorted(glob.glob('flow/solution/90161Z-T17-solution-test-*.zip')) + ['flow/solution/90161Z-flows-solution-r1.zip']
+zips = sorted(glob.glob('flow/solution/90161Z-T17-solution-test-*.zip')) + ['flow/solution/90161Z-T24-full-flows-r1.zip']
 assert len(zips) == 2 and zips[0].endswith('-test-a-r5.zip'), zips
 for path in zips:
     z = zipfile.ZipFile(path); n = z.namelist()
@@ -346,8 +346,11 @@ unset RADE_DIR
 out=$(python3 scripts/bump_lock.py --test 2>&1); [ $? -eq 0 ] && ok "bump_lock release-lock checks ($out)" || { echo "$out"; bad "bump_lock release-lock checks"; }
 out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
-esha=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));print(l['files'][l['engine']][:12])")
-nh=$(grep -L "engine/rade_build.py, sha256 $esha)" scripts/gov/paste/*.ps1 | wc -l)
+# engine-v8 on: the header names every engine code file of the lock ("<file>, sha256 <12 hex>"); each must match.
+# The engine file itself must be in the list, or nh counts 1 (no loop that passes on an empty list).
+ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1'))];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
+nh=0; [ -n "$ef" ] || nh=1; for f in $ef; do
+  nh=$((nh + $(grep -L "${f%%=*}, sha256 ${f#*=}[;)]" scripts/gov/paste/*.ps1 | wc -l))); done
 [ "$out" = "PASTE bundles=1 stale=0" ] && [ "$nh" -eq 0 ] && ok "paste bundles current and built by the pinned engine ($out; bundles naming another engine: $nh)" || bad "paste bundles: $out; bundles naming another engine: $nh (run python3 scripts/build_paste_bundles.py with RADE_DIR not set)"
 # Lock bump (PFM 2026-11-15): a changed lock has serial = main's serial + 1 and builds on main's last lock commit, so two
 # sessions that move the lock at once collide. Rule on who may change the lock: docs/dev-setup.md "RADE engine".
@@ -392,11 +395,14 @@ echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (o
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
 # domain label. The cloud has no such name, so the bundle tests give it a stand-in name, as RADE's own tests do
 # (rhope-ops/RADE tests/engine_test.sh "swap"); the test after the loop proves the real guard stops this computer.
-swap() { sed -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" -e "s#Url = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/#Url = 'file://$PWD/#" -e "s#Url = 'https://www\.[^']*'#Url = 'file://$tp/fx.bin'#" -e "s#url = 'https://make\.powerautomate[^']*'#url = 'file://$tp/fx.bin'#I" -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#''#" -e "s#Read-Host 'Press Enter when the flow run has started, type F and Enter if it failed, or S and Enter to skip this step'#''#" -e "s#\$checkGate = \$true#\$checkGate = \$false#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$tp/u'#" "$1"; }
+swap() { sed -e "s#Read-Host ('Type the number of the application to deploy (1 to ' + \\\$apps\\.Count + ') and press Enter')#'1'#" -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" -e "s#Url = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/#Url = 'file://$PWD/#" -e "s#Url = 'https://www\.[^']*'#Url = 'file://$tp/fx.bin'#" -e "s#url = 'https://make\.powerautomate[^']*'#url = 'file://$tp/fx.bin'#I" -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#''#" -e "s#Read-Host 'Press Enter when the flow run has started, type F and Enter if it failed, or S and Enter to skip this step'#''#" -e "s#\$checkGate = \$true#\$checkGate = \$false#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$tp/u'#" "$1"; }
 for b in scripts/gov/paste/*.ps1; do
   swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
   # Text mode runs the default steps that need no folder (the optional steps are skipped).
   n=$(grep -c "^\$steps += @{.*Default = \$true; AskParam = '';" "$b")
+  # A bundle with a second (deploy) application: text mode runs only the first one's steps (every R28 step is a default step).
+  na=$(python3 -c "import json;b=[x for x in json.load(open('scripts/paste_bundles.json'))['bundles'] if x['out']=='$b'][0];a=b.get('apps') or [];print(len(a[0]['steps']) if len(a)>1 else -1)")
+  [ "$na" -lt 0 ] || n=$na
   r=$(python3 -c "import json;print([b['round'] for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b'][0])")
   # R17 (PFM 14 Nov 26): the run moves the old 90-161.Z folder (the fixture) into OneDrive/RADE.
   base="$tp/u/test1234/OneDrive - United States Air Force/RADE/90-161.Z"; nb="$base"
@@ -411,7 +417,10 @@ for b in scripts/gov/paste/*.ps1; do
   sk=$(python3 - "$b" "$tp/out.txt" <<'PYS'
 import json, re, sys
 bundle = [b for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out'] == sys.argv[1]][0]
-steps = bundle['steps']; kind = {s['name']: s.get('kind', 'script') for s in steps}
+steps = bundle['steps']
+if bundle.get('apps'):   # text mode runs the first application (the test round); a second (deploy) entry has its own steps
+    first = set(bundle['apps'][0]['steps']); steps = [s for s in steps if s['name'] in first]
+kind = {s['name']: s.get('kind', 'script') for s in steps}
 want = set()
 for s in steps:   # in order: a later step may depend on an earlier skipped one
     if any(kind[a] == 'script' or a in want for a in s.get('after', [])): want.add(s['name'])
@@ -510,10 +519,14 @@ else sk "NIPR-only start check"; sk "round bundle text mode"; sk "RADE cleanup";
 if [ "${on[bundle]}" = 1 ]; then
 ab=$(grep -L 'AcceptButton = \$(if (\$c.NoAccept) { \$null } else { \$accept })' scripts/gov/paste/*.ps1 | wc -l)
 # ... and on "Ready" the primary button is Install or Run and starts the run.
-ab=$((ab + $(grep -L "{ 'primary' } else { 'off' }); Act = { & \$ui.Run }" scripts/gov/paste/*.ps1 | wc -l)))
+# engine-v8 on (dates "d MMM yy" in the saved-checks line): Run is primary unless RADE's Start button is ($startPrimary: the app has app.start and that version
+# is installed). 90-161.Z has no app.start, so Run stays the primary button on Ready in every round.
+ab=$((ab + $(grep -LF -e "-and -not \$startPrimary) { 'primary' }" scripts/gov/paste/*.ps1 | wc -l)))
+ab=$((ab + $(grep -LF "else { 'off' }); Act = { & \$ui.Run }" scripts/gov/paste/*.ps1 | wc -l)))
+python3 -c "import json,sys;d=json.load(open('scripts/paste_bundles.json'));sys.exit(1 if d['application'].get('start') else 0)" || ab=$((ab+1))
 te=$(mktemp -d); mkdir -p "$te/u/test1234/OneDrive - United States Air Force"; tw=0
 for b in scripts/gov/paste/*.ps1; do
-  sed -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#'N'#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#Url = 'https://make\.powerautomate[^']*'#Url = 'file:///dev/null'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$te/u'#" "$b" > "$te/b.ps1"
+  sed -e "s#Read-Host ('Type the number of the application to deploy (1 to ' + \\\$apps\\.Count + ') and press Enter')#'1'#" -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#'N'#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#Url = 'https://make\.powerautomate[^']*'#Url = 'file:///dev/null'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$te/u'#" "$b" > "$te/b.ps1"
   # PFM 14 Nov 26: with the check gate on, a FAILED or NOT RUN check stops the deploy before anything is written.
   # R17: the checks may save RADE/Config/rade-checks.json (shown on the Check screen); nothing else may exist.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out.txt" 2>&1; [ -e "$te/u/test1234/OneDrive - United States Air Force/90-161.Z" ] && tw=$((tw+1))
@@ -525,7 +538,7 @@ for b in scripts/gov/paste/*.ps1; do
   grep -q "^  PASSED: Your OneDrive folder is set up" "$te/out.txt" && grep -q "^  PASSED: Files can be saved in OneDrive" "$te/out.txt" || { echo "fresh install: OneDrive checks"; grep "OneDrive" "$te/out.txt"; tw=$((tw+1)); }
   # Saved checks (R17, PFM 14 Nov 26): a second run uses the PASSED results saved by the first, and still runs the others.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out2.txt" 2>&1
-  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(date +%d-%m-%y)" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
+  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(LC_ALL=C date +"%-d %b %y")" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
 done; rm -rf "$te"
 [ "$ab" -eq 0 ] && [ "$tw" -eq 0 ] && ok "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw; Enter path = round bundle test)" || bad "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw)"
 else sk "Enter starts the run"; fi
@@ -539,7 +552,7 @@ if [ "${on[batch]}" = 1 ]; then
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(bout font | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r11.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
 # T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
 hs=$(bout "hs$n")
 [ -n "$hs" ] && ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
@@ -547,7 +560,7 @@ n=$((n+1))
 done
 # A list id right after URL-encoded characters (guid%27<id>%27) must be masked too (review of 15 Nov 26). The scripts
 # revised on or after 15 Nov 26 have the fix; T16 r4, T16 r11 and T19 r3 get it with their next revision.
-n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1; do
+n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
 hs=$(bout "hsg$n")
 ! echo "$hs" | grep -qiE "0a1b2c3d|9999-2222" && echo "$hs" | grep -q "<GUID>" && ok "$(basename $hsf) hides a list id after URL-encoded characters" || { echo "$hs"; bad "GUID masking after URL-encoded characters: $(basename $hsf)"; }
 n=$((n+1))
@@ -558,7 +571,7 @@ sa=$(bout siteaddr | tail -1)
 # R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
 hs=$(bout hsenc)
 [ -n "$hs" ] && ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
-else sk "RADE fonts in the bundles"; sk "Hide-Site masking of T16, T18, T19, T20 scripts"; sk "list id after URL-encoded characters"; sk "site address: from RADE, then from Config"; sk "site setup r6 masks a URL-encoded e-mail address"; fi
+else sk "RADE fonts in the bundles"; sk "Hide-Site masking of T16, T18, T19, T20, T24 scripts"; sk "list id after URL-encoded characters"; sk "site address: from RADE, then from Config"; sk "site setup r6 masks a URL-encoded e-mail address"; fi
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "
 import json; a = json.load(open('flow/defs/90161Z-T11-rights-probe-r5.json'))['actions']
@@ -585,28 +598,45 @@ want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] =
 got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
-# T22 PFM window preview (R26 r2, PFM 16 Nov 26): the cards as text (-PlanOnly; no window here). Each choice and button opens a card
-# that exists, each card has one blue button at most, and the text is fake (every publication and office says FAKE).
+# T22 PFM window preview r2 (R28, PFM preview 2 of 17 Nov 26): the cards as text (-PlanOnly; no window here). Every button, link and
+# grid row goes to a card that exists (or 'back', '@grid', '@note'), each card has exactly one blue button, the text is ASCII and
+# FAKE, r1 is gone, the shared UI block is current, and the colors the window paints are the tokens of docs/palette.json.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && ok "T22 window preview cards" || bad "T22 window preview cards"
-import re, subprocess, sys
-out = subprocess.run(['pwsh', '-NoProfile', '-File', 'scripts/gov/90161Z-T22-pfm-window-r1.ps1', '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
-assert out and out[-1] == 'PLAN cards=5', out[-3:]
+python3 - <<'PYT22' && ok "T22 window preview cards (r2)" || bad "T22 window preview cards (r2)"
+import json, re, subprocess, pathlib
+f = 'scripts/gov/90161Z-T22-pfm-window-r2.ps1'
+assert not pathlib.Path('scripts/gov/90161Z-T22-pfm-window-r1.ps1').exists(), 'r1 is still there'
+out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
+m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
 cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
+assert len(cards) == int(m.group(1)) >= 15, cards
+need = {'home', 'empty', 'queue', 'reviews', 'step8', 'confirm', 'waves', 'step11', 'step12', 'step13', 'pub', 'settings', 'loading', 'failed', 'noperm'}
+assert need <= set(cards), need - set(cards)
+ok_extra = {'back', '@grid', '@note'}
 for l in out:
-    m = re.match(r'  (CHOICE|BUTTON) (.+) -> (\w+)$', l)
-    if m: assert m.group(3) in cards, l
-blue = {}
-cur = None
+    t = re.match(r'\s+(?:BUTTON|CHOICE|LINK) .+ -> (\S+)', l) or re.match(r'RAIL .+ -> (\S+)', l)
+    if t: assert t.group(1) in cards or t.group(1) in ok_extra, l
+blue, cur = {}, None
 for l in out:
-    if l.startswith('CARD '): cur = l
-    if '(blue)' in l: blue[cur] = blue.get(cur, 0) + 1
+    if l.startswith('CARD '): cur = l.split(' | ')[0]; blue[cur] = 0
+    if '(blue)' in l: blue[cur] += 1
 assert all(v == 1 for v in blue.values()), blue
-assert all(ord(c) < 128 for c in '\n'.join(out))
-for l in out:
-    for w in re.findall(r'\b(OI \d\d-\d\d|OFFICE \w)\b', l): assert 'FAKE ' + w in l, l
+text = '\n'.join(out)
+assert all(ord(c) < 128 for c in text)
+src = pathlib.Path(f).read_text()
+assert all(ord(c) < 128 for c in src)
+assert not [i + 1 for i, l in enumerate(src.splitlines()) if l.startswith("'@")], 'a line starts with \'@ (here-string)'
+for l in out:   # every publication, office and person name says FAKE
+    for w in re.findall(r'(?<!FAKE )(?<!DAF )\b(OI \d\d-\d+|Instruction \d\d-\d+|Form \d+|Office \d|AO \d)\b', l): raise AssertionError(l)
+assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text
+assert out and len([l for l in out if l.startswith('RAIL ')]) == 5
+# the rade-ui block is not empty, and the colors painted here are the palette tokens
+assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
+pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
+hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
+for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
 PYT22
-else sk "T22 window preview cards"; fi
+else sk "T22 window preview cards (r2)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
