@@ -10,6 +10,8 @@ between the same kind of markers; a Get-SiteAddress outside that block fails the
 A script with the rade-logo markers gets $RadeLogoPng: the RADE logo (assets/logo/logo-K-128.png of the RADE commit pinned in
 scripts/rade.lock.json, SHA-256 checked by scripts/build_paste_bundles.py) as base64 text, for a window in the RADE style
 (T22, PFM 16 Nov 26). The logo has one master copy in rhope-ops/RADE; this repo holds only the generated text.
+A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1 of the same pinned commit, SHA-256 checked the
+same way) as it is: the window reuses RADE's colors, fonts, buttons, card text boxes and layout self-check (T22 r2, 17 Nov 26).
 Usage: python3 scripts/build_task_scripts.py [--check]
   --check: write nothing; exit 1 when a block is stale, or a task script asks for the DODID outside the block.
 """
@@ -24,7 +26,11 @@ ASKS_DODID = "Read-Host 'DODID"
 BLOCKS = [(SRC, BEGIN, END)] + [(ROOT / f'scripts/gov/src/{n}.ps1', BEGIN.replace('task-common', n), END.replace('task-common', n)) for n in ('site-common',)]
 LOGO = 'rade-logo'
 BLOCKS.append((LOGO, '# >>> rade-logo: generated from the pinned RADE logo by scripts/build_task_scripts.py (do not edit)', '# <<< rade-logo'))
+UI = 'rade-ui'
+BLOCKS.append((UI, '# >>> rade-ui: generated from the pinned RADE shared UI file by scripts/build_task_scripts.py (do not edit)', '# <<< rade-ui'))
+GENERATED = (LOGO, UI)   # blocks made from the pinned RADE files (not from a source file here); written only into a script that has the markers
 _logo = []
+_ui = []
 
 
 def logo_text():
@@ -39,9 +45,21 @@ def logo_text():
     return _logo[0]
 
 
+def ui_text():
+    # The pinned shared UI file, fetched and hash-checked by the bundle builder (one fetch for every script).
+    if not _ui:
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        import build_paste_bundles as B
+        lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
+        _ui.append((B.fetch(lock) / 'engine/rade_ui.ps1').read_text(encoding='utf-8').replace('\r\n', '\n').rstrip('\n') + '\n')
+    return _ui[0]
+
+
 def body(src=SRC):
     if src == LOGO:
         return logo_text()
+    if src == UI:
+        return ui_text()
     text = src.read_text(encoding='utf-8').replace('\r\n', '\n')
     return text[text.index('\nfunction ') + 1:].rstrip('\n') + '\n'
 
@@ -51,13 +69,13 @@ def main(check):
     for f in sorted((ROOT / 'scripts/gov').glob('90161Z-T*.ps1')):
         text = f.read_text(encoding='utf-8')
         for src, begin, end in BLOCKS:
-            block = body(src) if src != LOGO or begin in text else ''
+            block = body(src) if src not in GENERATED or begin in text else ''
             m = re.search(re.escape(begin) + r'\n(.*?)' + re.escape(end) + r'\n', text, re.S)
             outside = text if m is None else text[:m.start()] + text[m.end():]
-            if src != LOGO and (ASKS_DODID if src == SRC else 'function Get-SiteAddress') in outside:
+            if src not in GENERATED and (ASKS_DODID if src == SRC else 'function Get-SiteAddress') in outside:
                 unshared.append(f.name)
             if m is None:
-                if src not in (SRC, LOGO) and 'Get-SiteAddress' in text and f.name not in unshared:
+                if src not in (SRC,) + GENERATED and 'Get-SiteAddress' in text and f.name not in unshared:
                     unshared.append(f.name)   # uses the site address without the shared block
                 continue
             shared += src == SRC
