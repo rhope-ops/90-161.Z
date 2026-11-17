@@ -8,7 +8,7 @@ Why: a person must be able to read any script and know what it does before they 
 
 - Every file git tracks with the extension `.py`, `.ps1`, `.psm1`, `.js` or `.sh`: the gov-device scripts, the build scripts (Python and JavaScript), the tests and the kit files. The RADE engine code lives in rhope-ops/RADE and has its own copy of this standard.
 - Generated files get rule C6 only (their source gets the other rules). The list is `config.generated` in [tests/code-standard-baseline.json](../tests/code-standard-baseline.json).
-- Kit files (from archimedes_lever: scripts/pii_guard.py, bloat_check.py, timeline.py, log_check.py, stop_check.py, worker_guard.py, first_use_check.py, session_checkin.sh, check.sh, git-hooks/pre-push) are checked the same way. Their debt is fixed in the kit first, then ported (AGENTS.md "Project rules", no kit sync).
+- Kit files (from archimedes_lever: scripts/pii_guard.py, bloat_check.py, timeline.py, log_check.py, stop_check.py, worker_guard.py, first_use_check.py, session_checkin.sh, check.sh; scripts/git-hooks/pre-push has no file extension, so the check does not read it) are checked the same way. Their debt is fixed in the kit first, then ported (AGENTS.md "Project rules", no kit sync). A kit port that adds debt waits until the kit fixes it, or the PFM decides.
 
 ## Rules
 
