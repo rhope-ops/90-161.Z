@@ -512,7 +512,7 @@ else sk "NIPR-only start check"; sk "round bundle text mode"; sk "RADE cleanup";
 if [ "${on[bundle]}" = 1 ]; then
 ab=$(grep -L 'AcceptButton = \$(if (\$c.NoAccept) { \$null } else { \$accept })' scripts/gov/paste/*.ps1 | wc -l)
 # ... and on "Ready" the primary button is Install or Run and starts the run.
-# engine-v8 on: Run is primary unless RADE's Start button is ($startPrimary: the app has app.start and that version
+# engine-v8 on (dates "d MMM yy" in the saved-checks line): Run is primary unless RADE's Start button is ($startPrimary: the app has app.start and that version
 # is installed). 90-161.Z has no app.start, so Run stays the primary button on Ready in every round.
 ab=$((ab + $(grep -LF "-and -not \$startPrimary) { 'primary' }" scripts/gov/paste/*.ps1 | wc -l)))
 ab=$((ab + $(grep -LF "else { 'off' }); Act = { & \$ui.Run }" scripts/gov/paste/*.ps1 | wc -l)))
@@ -531,7 +531,7 @@ for b in scripts/gov/paste/*.ps1; do
   grep -q "^  PASSED: Your OneDrive folder is set up" "$te/out.txt" && grep -q "^  PASSED: Files can be saved in OneDrive" "$te/out.txt" || { echo "fresh install: OneDrive checks"; grep "OneDrive" "$te/out.txt"; tw=$((tw+1)); }
   # Saved checks (R17, PFM 14 Nov 26): a second run uses the PASSED results saved by the first, and still runs the others.
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out2.txt" 2>&1
-  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(date +%d-%m-%y)" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
+  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(LC_ALL=C date +"%-d %b %y")" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
 done; rm -rf "$te"
 [ "$ab" -eq 0 ] && [ "$tw" -eq 0 ] && ok "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw; Enter path = round bundle test)" || bad "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw)"
 else sk "Enter starts the run"; fi
