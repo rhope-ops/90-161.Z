@@ -11,9 +11,11 @@
 # Self-test: bash scripts/git-hooks/pre-push --test
 set -u
 zero=0000000000000000000000000000000000000000
-is_zero() { case "$1" in *[!0]*|'') return 1 ;; esac; return 0; }   # all-zero ID: SHA-1 (40) or SHA-256 (64)
+# true for an all-zero ID: SHA-1 (40) or SHA-256 (64)
+is_zero() { case "$1" in *[!0]*|'') return 1 ;; esac; return 0; }
 
-check() {  # reads "<local ref> <local sha> <remote ref> <remote sha>" lines; prints findings; returns 1 on a block
+# reads "<local ref> <local sha> <remote ref> <remote sha>" lines; prints findings; returns 1 on a block
+check() {
   local blocked=0 lref lsha rref rsha
   while read -r lref lsha rref rsha; do
     [ -z "${rref:-}" ] && continue
@@ -41,7 +43,8 @@ lane_of() {  # lane_of [BRANCH...]: reads the same lines; prints "full" when a p
        NF>=4 && $2 !~ /^0+$/ && ($3 in full) {f=1} END {print (f ? "full" : "fast")}'
 }
 
-default_branches() {  # default_branches REMOTE: the names this clone knows for a default branch, on one line
+# default_branches REMOTE: the names this clone knows for a default branch, on one line
+default_branches() {
   local r="${1:-origin}" d out=""
   d="$(git symbolic-ref -q "refs/remotes/$r/HEAD" 2>/dev/null)" && out="${d#"refs/remotes/$r/"}"
   for d in $(git config --get init.defaultBranch 2>/dev/null) $(git config --get-all check.fullLaneBranch 2>/dev/null); do
@@ -50,8 +53,8 @@ default_branches() {  # default_branches REMOTE: the names this clone knows for 
   printf '%s' "${out# }"
 }
 
-shown() { grep -E '^ *(TIME|WARN|CHECK) '; }  # the lines of a passing check.sh run that a push shows (WARN lines of a
-                                                # passing check are indented)
+# the lines of a passing check.sh run that a push shows (WARN lines of a passing check are indented)
+shown() { grep -E '^ *(TIME|WARN|CHECK) '; }
 
 own_tree() {  # own_tree: prints the top folder when it is this repo's own work tree, else nothing. "git --git-dir=<repo>/.git
              # push" run from another folder makes that folder the work tree: the checks would run there, or not at all.
@@ -70,11 +73,13 @@ if [ "${1:-}" = "--test" ]; then
   unset GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
   t=$(mktemp -d); trap 'rm -rf "$t"' EXIT
   git -C "$t" init -q -b main && cd "$t"
+  # cm MESSAGE: an empty commit with a fixed author and no signing
   cm() { git -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -q --allow-empty -m "$1"; }
   cm a; a=$(git rev-parse HEAD)
   cm b; b=$(git rev-parse HEAD)
   git checkout -q -b side "$a"; cm c; c=$(git rev-parse HEAD)
   set +e; fails=0
+  # run NAME WANT_EXIT INPUT: feed the push lines to check and compare its exit code
   run() { local name=$1 want=$2 input=$3 got; out=$(printf '%s\n' "$input" | check); got=$?
           if [ "$got" = "$want" ]; then echo "ok   $name"; else echo "FAIL $name (exit $got) $out"; fails=1; fi; }
   run "fast-forward passes"      0 "refs/heads/main $b refs/heads/main $a"
@@ -87,6 +92,7 @@ if [ "${1:-}" = "--test" ]; then
   run "sha256: new branch passes"  0 "refs/heads/x $c refs/heads/x $z64"
   run "sha256: delete branch passes" 0 "(delete) $z64 refs/heads/x $c"
   run "sha256: delete main blocked"  1 "(delete) $z64 refs/heads/main $b"
+  # lane NAME WANT INPUT: feed the push lines to lane_of and compare the lane it prints
   lane() { local name=$1 want=$2 got; got=$(printf '%s\n' "$3" | lane_of)
            if [ "$got" = "$want" ]; then echo "ok   $name"; else echo "FAIL $name (got $got)"; fails=1; fi; }
   lane "push to main: full lane"      full "refs/heads/main $b refs/heads/main $a"
@@ -95,6 +101,7 @@ if [ "${1:-}" = "--test" ]; then
   lane "branch and main: full lane"   full "refs/heads/x $c refs/heads/x $zero
 refs/heads/main $b refs/heads/main $a"
   lane "delete only: fast lane"       fast "(delete) $zero refs/heads/main $b"
+  # eq NAME GOT WANT: print ok or FAIL, and remember a failure
   eq() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1 (got '$2', want '$3')"; fails=1; fi; }
   eq "no origin/HEAD, no config: no extra default branch" "$(default_branches origin)" ""
   eq "a branch named trunk is fast then" "$(printf '%s\n' "refs/heads/x $c refs/heads/trunk $a" | lane_of $(default_branches origin))" fast

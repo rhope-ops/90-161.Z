@@ -36,6 +36,7 @@ COMMIT_PHRASE_RE = re.compile(r"\bCommits? ((?:[0-9a-f]{7,40})(?:(?:, | and )[0-
 
 
 def parse_spec(spec):
+    """Split a LABEL=PATH@OWNER/REPO argument into (label, path, repo); the label defaults to the log's title."""
     label, repo, path = None, None, spec
     if "=" in path:
         label, path = path.split("=", 1)
@@ -50,6 +51,7 @@ def parse_spec(spec):
 
 
 def load(label, path, repo):
+    """The (arcs, events) of one project log, each tagged with its project label."""
     t = log_check.tables(path.read_text(encoding="utf-8"))
     arcs = [dict(zip(log_check.ARC_COLS, c)) for _, c in t.get("Arcs", (0, [], []))[2]]
     events = []
@@ -67,6 +69,7 @@ def load(label, path, repo):
 
 
 def link_evidence(text, repo):
+    """Escape evidence text and link each hash in a "Commit x" phrase to the log's GitHub repo."""
     out = html.escape(text)
     if not repo:
         return out
@@ -154,6 +157,7 @@ def zone_note(zones):
 
 
 def render(title, arcs, events, zones=()):
+    """The self-contained HTML timeline page: arcs, filters and event cards, newest first."""
     e = html.escape
     events = sorted(events, key=lambda x: (x["sort"], x["project"], int(x["num"]) if x["num"].isdigit() else 0), reverse=True)
     projects = sorted({x["project"] for x in events} | {a["project"] for a in arcs})
@@ -232,6 +236,7 @@ def outline(arcs, events):
 
 
 def build(specs, title, force=False, as_outline=False):
+    """Load each log and return (page or outline, problems); no page when a log fails log_check without --force."""
     arcs, events, problems, zones = [], [], [], []
     for spec in specs:
         label, path, repo = parse_spec(spec)
@@ -249,6 +254,7 @@ def build(specs, title, force=False, as_outline=False):
 
 
 def self_test():
+    """Render a sample log and check escaping, links, order, zones, outline and refusal; print the results."""
     ok = True
     with tempfile.TemporaryDirectory() as d:
         f = pathlib.Path(d, "LOG.md")
@@ -284,6 +290,7 @@ def self_test():
 
 
 def main():
+    """Command line: write the timeline page (or outline), or run --test; return the exit code."""
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("logs", nargs="*", default=["docs/LOG.md"])
     ap.add_argument("-o", "--output", default="timeline.html")

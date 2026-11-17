@@ -12,7 +12,8 @@ It reports:
     FIRST USE       the repo still has template placeholders (a new project made from the template, not set up):
                     follow docs/FIRST_USE.md before any other work.
     KIT             the repo is the kit itself (origin named archimedes_lever), for example a plain `git clone` of it:
-                    when the user asks to initiate or start a project, follow docs/FIRST_USE.md.
+                    when the user asks to initiate or start a project, follow docs/FIRST_USE.md; for project
+                    work, or when it is not clear, ask before changing anything.
     DENYLIST        the repo has a .pii-guard file but this session has no name denylist, so pushes will be blocked.
 The kit repo itself keeps its placeholders on purpose: it gets the KIT line, never FIRST USE.
 Exit 0 always: a session-start hook informs, it never blocks. Standard library only.
@@ -29,6 +30,7 @@ PLACEHOLDER = re.compile(r"\{\{(PROJECT_NAME|REPO|PURPOSE|OWNER|TIMEZONE)\}\}")
 
 
 def origin_name(root):
+    """The repo name of the origin remote, lower case ("" when there is no origin)."""
     r = subprocess.run(["git", "remote", "get-url", "origin"], cwd=root, capture_output=True, text=True)
     url = r.stdout.strip() if r.returncode == 0 else ""
     return re.sub(r"\.git$", "", url.rstrip("/")).rsplit("/", 1)[-1].lower()
@@ -42,6 +44,7 @@ def has_denylist():
 
 
 def messages(root):
+    """The session-start lines this repo needs: KIT, FIRST USE and DENYLIST, plus a note for a check that failed."""
     root = pathlib.Path(root)
     out = []
     try:
@@ -55,7 +58,12 @@ def messages(root):
     if is_kit:
         out.append("KIT: this is the archimedes_lever starter kit itself (origin is the kit repo). If the user asks to "
                    "initiate, start or set up a project, follow docs/FIRST_USE.md: it moves this clone to "
-                   "the user's own repo first. Any other request is work on the kit.")
+                   "the user's own repo first. If the user asks what this repo is or for your thoughts on it, give your view "
+                   "and offer the two takes in README.md \"What you can take from it\" (adopt PREFERENCES.md by "
+                   "interview, or set up a project). A request about the kit's own files (its rules, scripts or docs) "
+                   "is work on the kit. Any other request (project work, or not clear which): before you change "
+                   "anything, ask in one question whether to set up the user's own project from this clone first "
+                   "(docs/FIRST_USE.md, recommended) or to work on the kit.")
     if first_use:
         out.append("FIRST USE: this repo was made from the template and is not set up yet. Before any other work, "
                    "follow docs/FIRST_USE.md: ask the owner its questions (in Claude Code, with the clickable "
@@ -66,8 +74,15 @@ def messages(root):
         guard_without_list = False
         out.append(f"first_use_check: denylist check skipped ({e})")
     if guard_without_list:
+        try:
+            sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+            import pii_guard
+            warn = pii_guard.warn_mode(root)
+        except Exception:
+            warn = False
+        effect = ("names are not checked (starter tier: pushes only warn)" if warn else "pushes will be blocked")
         out.append("DENYLIST: this repo has the personal-data guard on, but this session has no name denylist, so "
-                   "pushes will be blocked. Ask the owner to add the environment variable PII_GUARD_DENYLIST to this "
+                   + effect + ". Ask the owner to add the environment variable PII_GUARD_DENYLIST to this "
                    "cloud environment (environment menu in the session title bar > Edit > Environment variables; "
                    "names comma separated; a new session picks it up), or, on their own computer, the file "
                    "~/.config/pii-guard/denylist.txt. Never ask for the names in chat. Details: docs/FIRST_USE.md.")
@@ -75,9 +90,11 @@ def messages(root):
 
 
 def self_test():
+    """Check the messages on a temporary repo through each state (new, kit clone, guard with and without denylist)."""
     ok = True
 
     def expect(name, got, want):
+        """Print ok or FAIL for one case and remember a failure."""
         nonlocal ok
         good = got == want
         print(("ok   " if good else "FAIL ") + f"{name}: {got}")
@@ -96,6 +113,9 @@ def self_test():
             expect("new project with placeholders", kinds(), ["FIRST USE"])
             run("remote", "set-url", "origin", "https://github.com/someone/Archimedes_Lever.git")
             expect("kit clone: KIT, not FIRST USE", kinds(), ["KIT"])
+            good = any(m.startswith("KIT") and "ask in one question" in m for m in messages(d))
+            print(("ok   " if good else "FAIL ") + "KIT: project work or an unclear request is asked about, not taken as kit work")
+            ok = ok and good
             pathlib.Path(d, ".pii-guard").write_text("# on\n")
             expect("guard on, no denylist", kinds(), ["KIT", "DENYLIST"])
             os.environ["PII_GUARD_DENYLIST"] = "Sam"
@@ -107,6 +127,10 @@ def self_test():
             agents.write_text("# Demo: agent instructions\n")
             run("remote", "set-url", "origin", "https://github.com/someone/demo")
             expect("set-up project, guard on, no denylist", kinds(), ["DENYLIST"])
+            pathlib.Path(d, ".pii-guard").write_text("denylist: warn\n")
+            good = any("pushes only warn" in m for m in messages(d))
+            print(("ok   " if good else "FAIL ") + "starter warn mode: DENYLIST says pushes only warn")
+            ok = ok and good
             pathlib.Path(d, ".pii-guard").unlink()
             expect("set-up project, guard off", kinds(), [])
     finally:
@@ -119,6 +143,7 @@ def self_test():
 
 
 def main():
+    """Print the messages for the current repo, or run --test; return the exit code."""
     if "--test" in sys.argv[1:]:
         return self_test()
     r = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
