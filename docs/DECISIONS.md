@@ -6,6 +6,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | Window design approved for R28: preview 2 (https://claude.ai/artifact/12VVeBiXXD4AQjAWwgCU5H). Replaces the agent row "Your Work = ..." (not approved) below. Scope: PFM window. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
+| 2026-11-17 | No timed tasks: targets U1 to U5 guide the design; proof = measured checks and the PFM's look-and-feel rating in R28. Scope: PFM window. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
+| 2026-11-17 | Text in the RADE window and the 90-161.Z window is selectable (highlight, Ctrl+C, right-click Copy); same look. Engine item 3a.8; built in rhope-ops/RADE for R28. | PFM | docs/reviews/2026-11-17-window-plan.md |
 | 2026-11-17 | .pii-guard skip line (added by the PFM): PNG files in a folder named spike inside a Claude session scratchpad pass the hook unscanned, so real-window spike pictures can go on the private canvas. | PFM | .pii-guard |
 | 2026-11-17 | Reminder record (gap G2): one PFM Activity Log row per reminder to an office (EventType Reminder); it is the good-faith contact record of DAFMAN 90-161 5.4.3.1. Scope: PFM window, flows. | PFM | docs/reviews/2026-11-17-window-ux-targets.md |
 | 2026-11-17 | RADE Start button: the agent drafts the replacement for RADE's rule "installs apps and does not start them" when the R28 engine work starts; the PFM approves the exact text. | PFM | docs/reviews/2026-11-17-window-plan.md |
