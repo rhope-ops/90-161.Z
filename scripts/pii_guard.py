@@ -210,13 +210,13 @@ def _milhost_spans(line):
 
 def milhosts(line):
     """The matches of MILHOST.finditer(line) in linear time: each span of _milhost_spans, confirmed by the pattern in
-    a window of the span and the 2 characters its look-aheads read. If the pattern does not confirm a span (none in the
-    tests), the plain pattern finds the rest of the line from the end of the last confirmed match, so a match the
-    model skipped before that span is found too."""
+    a window of the span and the 2 characters its look-aheads read. If the pattern does not confirm a span, or a span
+    starts before the end of the last confirmed match (no real or random line in the tests does either), the plain
+    pattern finds the rest of the line from that end, so a match the model skipped before that span is found too."""
     done = 0  # the end of the last confirmed match
     for s, e in _milhost_spans(line):
         m = MILHOST.match(line, s, e + 2)
-        if m is None or m.end() != e:
+        if s < done or m is None or m.end() != e:
             yield from MILHOST.finditer(line, done)
             return
         yield m
@@ -773,12 +773,18 @@ def self_test():
     try:  # the fallback, with a model that gives a wrong span: the plain pattern finds the rest from the last good end
         host = "a" + dot + mi
         text = host + " x" + dot + mi + " y" + dot + mi
-        for label, fake in (("a skipped match", [(12, 14)]), ("a wrong end after a good match", [(0, 5), (12, 14)])):
+        for label, fake in (("a skipped match", [(12, 14)]), ("a wrong end after a good match", [(0, 5), (12, 14)]),
+                            ("a repeated span", [(0, 5), (0, 5)])):
             globals()["_milhost_spans"] = lambda line, fake=fake: iter(fake)
             got = [m.span() for m in milhosts(text)]
             good = got == [m.span() for m in MILHOST.finditer(text)] == [(0, 5), (6, 11), (12, 17)]
             print(("ok   " if good else "FAIL ") + f"milhosts fallback: {label}: {got}")
             ok = ok and good
+        globals()["_milhost_spans"] = lambda line: iter([(6, 11), (0, 5)])  # a span before the last: no repeat, in order
+        got = [m.span() for m in milhosts(text)]
+        good = got == [(6, 11), (12, 17)]
+        print(("ok   " if good else "FAIL ") + f"milhosts fallback: a span out of order: {got}")
+        ok = ok and good
     finally:
         globals()["_milhost_spans"] = real_spans
     rnd = random.Random(2)

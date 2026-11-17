@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | (1A) The milhosts() fallback also takes over when a span starts before the end of the last confirmed match: output in order, no repeats; 2 self-tests. | PFM | scripts/pii_guard.py |
 | 2026-11-17 | (1A) If a span is not confirmed, the milhosts() fallback rescans from the end of the last confirmed match (finds a match skipped before it); 2 self-tests. | PFM | scripts/pii_guard.py |
 | 2026-11-17 | T4 retry in R27 (1A): a script step asks the PFM for the second person's e-mail in the RADE window (it stays on the gov device), adds that person to the test site's Visitors group with the PFM's sign-in, the person adds one row by the form link, the script reads counts only; clean-up removes the person from Visitors again (2A). If "No permission" again: way C, a flow writes the row with the PFM's connection. Scope: round R27, test T4. | PFM | docs/reviews/2026-11-16-r26-results.md |
 | 2026-11-16 | (2A) pii_guard.py finds MILHOST hosts with milhosts(): linear, exactly the matches of MILHOST.finditer; the pattern stays unchanged. | PFM | scripts/pii_guard.py, milhosts() |
