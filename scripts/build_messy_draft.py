@@ -101,6 +101,7 @@ EXPECTED = {
 
 
 def _run(par, text, font, size, bold, italic):
+    """Add one text run to a paragraph with a font, size, bold and italic. Takes the paragraph and those values; returns the run."""
     r = par.add_run(text)
     r.font.name = font
     r.font.size = Pt(size)
@@ -110,6 +111,7 @@ def _run(par, text, font, size, bold, italic):
 
 
 def build(path):
+    """Write the fake messy draft Word file (typed header, mixed fonts, a table). Takes the output path; returns nothing."""
     doc = Document()
     cp = doc.core_properties
     cp.author = "Sample Author"
@@ -131,6 +133,7 @@ def build(path):
 
 
 def text_of(path):
+    """Read the text of a Word file (header, paragraphs, table rows) so two files can be compared. Takes the path; returns one string."""
     d = Document(path)
     parts = [p.text for p in d.sections[0].header.paragraphs] + [p.text for p in d.paragraphs]
     for t in d.tables:
@@ -140,6 +143,7 @@ def text_of(path):
 
 
 def main():
+    """Command line: write the draft to --out, or with --check compare a fresh build with the committed file. Returns the exit code (1 when stale)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--check", action="store_true")

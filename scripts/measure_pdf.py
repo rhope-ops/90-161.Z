@@ -16,6 +16,7 @@ WANT = {'number': 1.50, 'text': 2.00, 'pitch': 0.272}
 
 
 def line_words(page):
+    """Group the words of a PDF page into text lines. Takes the page; returns a list of lines (top to bottom), each a list of words left to right."""
     rows = {}
     for w in page.extract_words(keep_blank_chars=False, use_text_flow=True):
         rows.setdefault(round(w['top'], 1), []).append(w)
@@ -23,12 +24,14 @@ def line_words(page):
 
 
 def check(name, got, want, tol):
+    """Print one measurement and whether it is within tolerance. Takes a name, the measured and wanted inches and the tolerance; returns True when it passes."""
     ok = abs(got - want) <= tol
     print(f'MEASURE {name} got={got:.3f}in want={want}in tol={tol} {"PASS" if ok else "FAIL"}')
     return ok
 
 
 def main(path):
+    """Measure the table of contents of a PDF (number and text left edges, line pitch) and report the first-page links. Takes the path; returns 1 when a measurement fails, else 0."""
     fails = 0
     with pdfplumber.open(path) as pdf:
         toc2, toc_tops = None, []

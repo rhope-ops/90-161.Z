@@ -31,6 +31,7 @@ bad = []
 
 
 def title_case(s, atoms=()):
+    """Check that a name is in title case (the T&Q chapter 27 rules: small words lower, hyphenated parts capitalized). Takes the name and quoted choice values to ignore; returns True when it follows the rules."""
     for a in atoms:  # a choice value quoted inside a view name keeps its own capitals (whole words only)
         s = re.sub(r"(?<![\w-])" + re.escape(a) + r"(?![\w-])", "X", s)
     words = [w for w in re.split(r"( - |\u2014|: | |/)", s) if w and w not in (" ", "/")]
@@ -61,15 +62,18 @@ assert title_case("PFM - Stalled or On Hold", ["On Hold"]) and not title_case("P
 
 
 def abbrs(s):
+    """Find abbreviations (two or more capitals or digits) in a text. Takes the text; returns a list, leaving out plain numbers such as A5."""
     return [t for t in re.findall(r"\b[A-Z][A-Z0-9]+\b", s) if not re.fullmatch(r"[A-Z]?\d+", t)]  # A5 in "Table A5.2" is a number
 
 
 def spelled_out(text, t):
+    """Check that an abbreviation is spelled out once as "Full name (ABBR)". Takes the text and the abbreviation; returns a truthy value when it is."""
     exp = ABBR.get(t, "")
     return bool(exp) and re.search(re.escape(exp) + r"\s*\(" + re.escape(t) + r"\)", text, re.I)
 
 
 def product_text(where, s):
+    """Check one text a user sees for the banned terms in BAD_TERMS. Takes a place label and the text; appends a message to bad for each hit."""
     for rx, fix in BAD_TERMS:
         if re.search(rx, s):
             bad.append(f"{where}: {s[:60]!r} -> {fix}")

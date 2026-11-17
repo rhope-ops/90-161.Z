@@ -3,6 +3,7 @@
 param([Parameter(Mandatory = $true)][string]$OutDir)
 $root = (Get-Location).Path
 $members = [ordered]@{}
+# Register one batch member. Takes its name, the script block to run and its arguments; stores them for the run loop below.
 function Add-Member1([string]$Name, [scriptblock]$Code, [object[]]$Arguments = @()) { $members[$Name] = @{ Code = $Code.ToString(); Args = $Arguments } }
 
 # Hide-Site masking (T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host).
@@ -45,6 +46,7 @@ Add-Member1 'opening' {
 Add-Member1 'siteaddr' {
   $src = Get-Content scripts/gov/src/site-common.ps1 -Raw
   Invoke-Expression ([regex]::Match($src, "(?s)function Get-SiteAddress.*?\n}\n").Value)
+  # Stand-in for Read-Host: fails the test if the code under test asks a question.
   function Read-Host { throw "ASKED" }
   $d = Join-Path ([IO.Path]::GetTempPath()) ("sa" + [guid]::NewGuid().ToString("N")); $null = New-Item -ItemType Directory $d
   $env:RADE_SITE = "https://fakeco.example/sites/one"; $a = Get-SiteAddress $d

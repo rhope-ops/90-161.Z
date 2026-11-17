@@ -155,6 +155,7 @@ _J = "join(coalesce(body('E05_how'), json('[]')), ',')"
 
 
 def _e05(tag):
+    """Build the expression that tells how the test mail with this tag arrived (from me, as the office, on behalf of the office, other or none). Takes the tag; returns text."""
     how = (f"if(contains({_J}, '{tag}:from-me'), 'from-me', if(contains({_J}, '{tag}:sent-as-office'), 'sent-as-office', "
            f"if(contains({_J}, '{tag}:on-behalf-of-office'), 'on-behalf-of-office', 'other')))")
     return f"concat('{tag} arrived=', contains({_J}, '{tag}:'), ' how=', if(contains({_J}, '{tag}:'), {how}, 'none'))"
@@ -215,6 +216,7 @@ AUTH = {"value": "@json(decodeBase64(triggerOutputs().headers['X-MS-APIM-Tokens'
 
 
 def http(method, uri, body, headers, after):
+    """Build one SharePoint HTTP request action. Takes method, uri, body (or None), extra headers (or None) and runAfter; returns the action dict."""
     h = {"Accept": NM}
     if method == "POST": h["Content-Type"] = J
     h.update(headers or {})
@@ -224,11 +226,13 @@ def http(method, uri, body, headers, after):
 
 
 def op(conn, operation, params, after):
+    """Build one connector operation action (not HTTP). Takes the connector, operation id, parameters and runAfter; returns the action dict."""
     return {"runAfter": after, "type": "OpenApiConnection", "inputs": {"parameters": params, "host": {
         "apiId": f"/providers/Microsoft.PowerApps/apis/{conn}", "connectionName": conn, "operationId": operation}, "authentication": AUTH}}
 
 
 def record(cid, what, keep, hide=False, site=False):
+    """Build the action that appends one check result to the Results variable. Takes the check id, a description, a fixed output (or empty), hide (hide mail details) and site (hide site details); returns the action dict."""
     err = f"if(greaterOrEquals(int(coalesce(outputs('{cid}')?['statusCode'], 0)), 400), take(string(body('{cid}')), 600), '')"
     out = f"take(string(body('{cid}')), 3000)"
     if hide: err, out = HIDE.format(x=err), HIDE.format(x=out)
@@ -239,6 +243,7 @@ def record(cid, what, keep, hide=False, site=False):
 
 
 def build():
+    """Build the whole Rights Probe flow definition: the checks in order, each followed by its record action, then the result file. Takes nothing; returns the definition dict."""
     actions = {"Results": {"runAfter": {}, "type": "InitializeVariable",
                            "inputs": {"variables": [{"name": "Results", "type": "array", "value": []}]}}}
     prev = "Results"

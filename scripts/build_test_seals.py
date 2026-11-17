@@ -28,6 +28,7 @@ EXPECTED = {
 
 
 def make(name):
+    """Draw one fake test seal image (round, tall, soft or tiny). Takes the name; returns a PIL RGBA image. Raises ValueError for another name."""
     if name == "round":    # white background, round seal with white center ring
         im = Image.new("RGBA", (700, 700), (255, 255, 255, 255))
         d = ImageDraw.Draw(im)
@@ -63,6 +64,7 @@ def emblem_box(im):
 
 
 def main():
+    """Command line: write the seal images, or with --check compare them with the committed ones, or with --raw write raw pixel data. Returns the exit code."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--raw")

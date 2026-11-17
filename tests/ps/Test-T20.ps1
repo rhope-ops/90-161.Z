@@ -4,6 +4,7 @@
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
+# Record one test result and print PASS or FAIL. Takes the test name, the condition and optional detail text; returns nothing.
 function Test-That([string]$Name, [bool]$Ok, [string]$Detail = '') {
   if ($Ok) { $script:pass++; Write-Host ('T20TEST PASS ' + $Name) } else { $script:fail++; Write-Host ('T20TEST FAIL ' + $Name + ' ' + $Detail) }
 }
@@ -16,12 +17,14 @@ Copy-Item -LiteralPath (Join-Path $Root 'flow/provisioning-payload.json') -Desti
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
 $script = Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r1.ps1'
+# Run the T20 script against the fake site in one mode (Check, DryRun or empty for a real run). Returns a hashtable with Code (exit code), Out (lines) and Text (joined).
 function Invoke-T20([string]$Mode) {
   $sw = @{}; if ($Mode) { $sw[$Mode] = $true }
   $global:LASTEXITCODE = 0
   $out = & $script -Id 'tester01' -NoPause -TestDir $t20 @sw *>&1 | ForEach-Object { [string]$_ }
   return @{ Code = $LASTEXITCODE; Out = @($out); Text = (@($out) -join "`n") }
 }
+# List the fake lists whose folder name starts with PFM (the ones the script makes). Takes nothing; returns an array.
 function Get-Ours { return @($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -like 'PFM*' }) }
 
 New-FakeSite

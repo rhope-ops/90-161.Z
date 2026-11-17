@@ -5,6 +5,9 @@
 # check.sh shows only the last 25 lines of a failed check, so the failed tests are listed again at the end.
 set -u
 cd "$(dirname "$0")/.."
+# Code standard (the PFM, 2026-11-17; docs/code-standard.md): the check proves itself, then measures every source file
+# against the shrink-only baseline. Both lanes (about 2 s). The same check file runs in rhope-ops/RADE.
+python3 tests/check_code_standard.py --self-test && python3 tests/check_code_standard.py || exit 1
 log=$(mktemp)
 tests/run.sh "$@" >"$log" 2>&1; rc=$?
 cat "$log"

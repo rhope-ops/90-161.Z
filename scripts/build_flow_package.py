@@ -37,6 +37,7 @@ CONNECTORS = {
 
 
 def dumps(o):
+    """Turn a value into JSON text (2-space indent, non-ASCII kept, final line end). Takes any JSON value; returns a string."""
     return json.dumps(o, indent=2, ensure_ascii=False) + "\n"
 
 
@@ -50,7 +51,9 @@ def literal(o):
     return o
 
 
-def build(src: pathlib.Path) -> bytes:
+def read_flow_def(src: pathlib.Path):
+    """Read one flow definition file and check it. Takes the file path; returns (definition dict, list of connector names).
+    The "embed" entries are replaced by the named JSON files (as text values). A missing key or unknown connector raises ValueError."""
     d = json.loads(src.read_text(encoding="utf-8"))
     for act, rel in d.pop("embed", {}).items():
         if act not in d.get("actions", {}):
@@ -63,12 +66,12 @@ def build(src: pathlib.Path) -> bytes:
     for c in conns:
         if c not in CONNECTORS:
             raise ValueError(f"{src.name}: unknown connector {c}")
-    name = src.stem
-    # Matches a real export from the PFM's tenant (2026-11-11): the manifest resource key, the
-    # assetPaths entry and the folder name are one ID (asset_id); definition.json "name" is a
-    # different ID (the flow's own). A key/folder mismatch made the import hang.
-    flow_id = str(uuid.uuid5(NS, "flow:" + name))
-    asset_id = str(uuid.uuid5(NS, "asset:" + name))
+    return d, conns
+
+
+def package_resources(name, d, conns, asset_id):
+    """Build the manifest resources for one flow. Takes the flow name, its definition, its connectors and the asset ID.
+    Returns (resources, apis_map, conns_map, conn_refs): the manifest "resources", the two map files and the flow's connection references."""
     resources = {asset_id: {
         "type": "Microsoft.Flow/flows",
         "suggestedCreationType": "New",
@@ -101,6 +104,59 @@ def build(src: pathlib.Path) -> bytes:
             "source": "Invoker", "id": f"/providers/Microsoft.PowerApps/apis/{c}", "tier": "NotSpecified",
             "apiName": info["apiName"], "isProcessSimpleApiReferenceConversionAlreadyDone": False,
         }
+    return resources, apis_map, conns_map, conn_refs
+
+
+def flow_definition_file(d, flow_id, conn_refs):
+    """Build the content of definition.json. Takes the flow definition, the flow's own ID and its connection references; returns a dict."""
+    return {
+        "name": flow_id,
+        "id": f"/providers/Microsoft.Flow/flows/{flow_id}",
+        "type": "Microsoft.Flow/flows",
+        "properties": {
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
+            "displayName": d["displayName"],
+            "definition": {
+                "$schema": SCHEMA,
+                "contentVersion": "1.0.0.0",
+                "parameters": {
+                    "$connections": {"defaultValue": {}, "type": "Object"},
+                    "$authentication": {"defaultValue": {}, "type": "SecureObject"},
+                },
+                "triggers": d["triggers"],
+                "actions": d["actions"],
+            },
+            "connectionReferences": conn_refs,
+            "flowFailureAlertSubscribed": False,
+            "isManaged": False,
+        },
+    }
+
+
+def zip_files(files):
+    """Write the package files into a stored zip with fixed time stamps, so the bytes repeat. Takes {path: JSON value}; returns bytes."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
+        # Root manifest first, as in a real export.
+        for path in sorted(files, key=lambda x: (x != "manifest.json", x)):
+            info = zipfile.ZipInfo(path, STAMP)
+            info.compress_type = zipfile.ZIP_STORED
+            info.create_system = 3
+            info.external_attr = 0o644 << 16
+            z.writestr(info, dumps(files[path]))
+    return buf.getvalue()
+
+
+def build(src: pathlib.Path) -> bytes:
+    """Build one importable flow package. Takes the path of a flow definition file; returns the zip as bytes."""
+    d, conns = read_flow_def(src)
+    name = src.stem
+    # Matches a real export from the PFM's tenant (2026-11-11): the manifest resource key, the
+    # assetPaths entry and the folder name are one ID (asset_id); definition.json "name" is a
+    # different ID (the flow's own). A key/folder mismatch made the import hang.
+    flow_id = str(uuid.uuid5(NS, "flow:" + name))
+    asset_id = str(uuid.uuid5(NS, "asset:" + name))
+    resources, apis_map, conns_map, conn_refs = package_resources(name, d, conns, asset_id)
     files = {
         "manifest.json": {
             "schema": "1.0",
@@ -118,44 +174,15 @@ def build(src: pathlib.Path) -> bytes:
             "packageSchemaVersion": "1.0",
             "flowAssets": {"assetPaths": [asset_id]},
         },
-        f"Microsoft.Flow/flows/{asset_id}/definition.json": {
-            "name": flow_id,
-            "id": f"/providers/Microsoft.Flow/flows/{flow_id}",
-            "type": "Microsoft.Flow/flows",
-            "properties": {
-                "apiId": "/providers/Microsoft.PowerApps/apis/shared_logicflows",
-                "displayName": d["displayName"],
-                "definition": {
-                    "$schema": SCHEMA,
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "$connections": {"defaultValue": {}, "type": "Object"},
-                        "$authentication": {"defaultValue": {}, "type": "SecureObject"},
-                    },
-                    "triggers": d["triggers"],
-                    "actions": d["actions"],
-                },
-                "connectionReferences": conn_refs,
-                "flowFailureAlertSubscribed": False,
-                "isManaged": False,
-            },
-        },
+        f"Microsoft.Flow/flows/{asset_id}/definition.json": flow_definition_file(d, flow_id, conn_refs),
         f"Microsoft.Flow/flows/{asset_id}/apisMap.json": apis_map,
         f"Microsoft.Flow/flows/{asset_id}/connectionsMap.json": conns_map,
     }
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
-        # Root manifest first, as in a real export.
-        for path in sorted(files, key=lambda x: (x != "manifest.json", x)):
-            info = zipfile.ZipInfo(path, STAMP)
-            info.compress_type = zipfile.ZIP_STORED
-            info.create_system = 3
-            info.external_attr = 0o644 << 16
-            z.writestr(info, dumps(files[path]))
-    return buf.getvalue()
+    return zip_files(files)
 
 
 def main():
+    """Command line: build every flow package in flow/packages; with --check, list stale or orphan zips and exit 1 if any."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="fail if a committed package differs from a fresh build")
     a = ap.parse_args()

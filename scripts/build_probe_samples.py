@@ -28,6 +28,7 @@ REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 # ---- the workbook ----
 
 def sheet_xml():
+    """Build the XML of the sample workbook's one sheet (three fake rows). Takes nothing; returns text."""
     rows = [('FAKE book R27', 'Invented numbers, nothing real'), ('Fake item one', '11'), ('Fake item two', '22')]
     out = []
     for i, (a, b) in enumerate(rows, 1):
@@ -36,6 +37,7 @@ def sheet_xml():
 
 
 def package():
+    """Build the fake sample workbook (.xlsx) as a stored zip with fixed time stamps. Takes nothing; returns bytes."""
     wb_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml'
     types = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
              '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
@@ -71,6 +73,7 @@ BLOCKS = (('FakeBookBase64', package),)
 
 
 def block():
+    """Build the PowerShell text that holds each sample file as base64 lines (BLOCKS). Takes nothing; returns text."""
     # No here-string: the RADE engine embeds this script in its own here-string and refuses a line that starts with '@.
     out = ''
     for name, make in BLOCKS:
@@ -81,6 +84,7 @@ def block():
 
 
 def main(check):
+    """Rewrite the sample block inside the task script, or with check only report it as stale. Takes check; returns 1 when a block is stale, else 0."""
     stale = []
     text = SCRIPT.read_text(encoding='utf-8')
     m = re.search(re.escape(BEGIN) + r'\n(.*?)' + re.escape(END), text, re.S)

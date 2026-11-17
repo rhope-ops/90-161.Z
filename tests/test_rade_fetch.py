@@ -15,13 +15,16 @@ fails = 0
 
 
 def check(name, cond, detail=''):
+    """Record one test result: print ok or FAIL and count failures. Takes a name, the condition and optional detail text."""
     global fails
     print(('ok   ' if cond else 'FAIL ') + name + ('' if cond else ' ' + str(detail)))
     fails += 0 if cond else 1
 
 
 def opener(files, calls):
+    """Make a fake URL opener that serves files from a dict and records each URL asked. Takes {relative path: bytes} and the calls list; returns the opener function."""
     def op(url, timeout=None):
+        """Fake urlopen: record the URL and return the file bytes whose path follows the 40-character commit in the URL."""
         calls.append(url)
         rel = url.split('c' * 40 + '/', 1)[1]
         return io.BytesIO(files[rel])
@@ -29,10 +32,12 @@ def opener(files, calls):
 
 
 def offline(url, timeout=None):
+    """Fake urlopen for a computer with no network: always raises OSError."""
     raise OSError('network is unreachable (test)')
 
 
 def stopped(fn):
+    """Run a function that should call sys.exit. Takes the function; returns the exit message as text, or None when it did not exit."""
     try:
         fn()
     except SystemExit as e:
@@ -41,6 +46,7 @@ def stopped(fn):
 
 
 def files_in(d):
+    """List the files under a folder. Takes the folder; returns sorted relative paths as text."""
     return sorted(str(p.relative_to(d)) for p in Path(d).rglob('*') if p.is_file())
 
 

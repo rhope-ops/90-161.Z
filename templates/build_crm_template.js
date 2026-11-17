@@ -15,9 +15,12 @@ const total = widths.reduce((a, b) => a + b, 0);
 const border = { style: BorderStyle.SINGLE, size: 4, color: '000000' };
 const borders = { top: border, bottom: border, left: border, right: border };
 
+// One text run in the document font and size. Takes the text and bold (default false); returns a TextRun.
 const run = (text, bold = false) => new TextRun({ text, bold, font: FONT, size: SZ });
+// One paragraph. Takes a run or a list of runs, the alignment (default left) and the space after in twips (default 0); returns a Paragraph.
 const para = (runs, align = AlignmentType.LEFT, after = 0) =>
   new Paragraph({ alignment: align, spacing: { before: 0, after }, children: Array.isArray(runs) ? runs : [runs] });
+// One bordered table cell. Takes the child paragraphs, the width in twips and opts (valign, span); returns a TableCell.
 const cell = (children, width, opts = {}) => new TableCell({
   borders, width: { size: width, type: WidthType.DXA }, verticalAlign: opts.valign || VerticalAlign.CENTER,
   margins: { top: 0, bottom: 0, left: 60, right: 60 }, columnSpan: opts.span, children });
