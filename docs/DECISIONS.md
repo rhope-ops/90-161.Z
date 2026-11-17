@@ -6,11 +6,12 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-17 | 90-161.Z logo = W2 Flap 26: route arc, page with a sliced Z, small folded flap; Rho Bold frame and colors. Master assets/logo/; ships in R29. RADE keeps Rho Bold. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU |
 | 2026-11-17 | R29 = the R28 fixes (health flow checks only On, export reader, T22 window, T24 card, notes N2 N3 N6 N7) + full T24 test + logo; RADE Diagnose and Back up move to R30. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T22 checks show inside the test window, one at a time, with Pass and Fail; no list to remember (note N5). Scope: T22 window test. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T4 second-person step stays in R29: a colleague is free. Way C not built yet. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | RADE install asks where to install, with the desktop path filled in; the address row shows only when a card has an address; a step shows elapsed time. Scope: RADE engine. | PFM | docs/reviews/2026-11-17-r28-results.md |
-| 2026-11-17 | Logo (replaces "Rho Bold for every app"): Rho Bold (USAF-B) is RADE's logo; 90-161.Z uses it until it has its own logo (not designed). Switch in R29. Scope: RADE, 90-161.Z. | PFM | https://claude.ai/artifact/Qw7iSQaz1FMzZQtycjrZxq |
+| 2026-11-17 | Replaced (same day, by W2 row): Logo: Rho Bold (USAF-B) is RADE's logo; 90-161.Z uses it until it has its own logo (not designed). Switch in R29. Scope: RADE, 90-161.Z. | PFM | https://claude.ai/artifact/Qw7iSQaz1FMzZQtycjrZxq |
 | 2026-11-17 | PFM window uses RADE's shared type scale (4 styles; engine-v9, engine/rade_ui.ps1), not the preview 2 font sizes. Scope: PFM window. | PFM | docs/reviews/2026-11-17-runner-polish.md |
 | 2026-11-17 | R28 r2: a plain title on every step (runner text rule 1) before the PFM runs R28; R28 r1 had 0 of 41 (1A). Scope: round R28. | PFM | docs/reviews/2026-11-17-runner-polish.md |
 | 2026-11-17 | The PFM approved every agent REC and asked for as much as possible in R28: probe retry, T4 retry and full flow solution ride along; order per 1B (16 Nov): clean-up first, final clean-up last. R28. | PFM | docs/reviews/2026-11-17-r27-results.md |
