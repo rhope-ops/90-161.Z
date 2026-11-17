@@ -1,6 +1,6 @@
 # Next prompt: 90-161.Z
 
-Updated: 2026-11-17 by Claude (R28 r2: step titles and runner text rules; lock at engine-v9). Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
+Updated: 2026-11-17 by Claude (R28 r2 results). Keep this file at 40 lines or fewer and state only: decisions live in docs/DECISIONS.md, design in the docs it links. The current request overrides this file.
 
 ## Open now
 
@@ -21,7 +21,7 @@ Updated: 2026-11-17 by Claude (R28 r2: step titles and runner text rules; lock a
 
 ## Waiting on the PFM (go.md)
 
-1. R28 r2 ready (17 Nov; r1 pull request 121, r2 adds plain step titles and runner text rules 1 to 8, PFM 1A; build notes and open review items: docs/reviews/2026-11-17-r28-build.md): R27 leftovers removed first (1B), T21 probe r4 (health flow alone; button flow by hand, trigger shape read from the export), T4 retry, T22 window r2 (preview 2), RADE Start and desktop icon (deploy entry), T24 full flow solution (F01 r2, F02 r3, F04 r2; all 6 On), clean-ups always run. Next: the PFM runs R28; then results file, fallbacks only for FAILED tests. R27 results: docs/reviews/2026-11-17-r27-results.md. After R28: F03 and F06 read PFMOfficeMailbox (DECISIONS 17 Nov); front-end plan and doc rewrites.
+1. R28 r2 done 17 Nov (results: docs/reviews/2026-11-17-r28-results.md): test site clean (R27 and R28 items removed). Failed: health flow (the Power Automate Management connector has no run-history action; REC: check only that own flows are On), export reader (1 flow, name not matched; REC: take the single flow), T22 window r2 (self-check null-array fault on every card, process not DPI-aware, 2 grids too narrow), T24 import (the normal upgrade message; the card must say to expect it). Skipped: T4 row, full flow test. The PFM's 7 notes N1 to N7 and the cut-off RADE answer are in the results file; RADE items N1, N4, N6 go to rhope-ops/RADE. PFM 17 Nov (DECISIONS): R29 = R28 fixes + full T24 + T4 retry + logo; Diagnose and Back up to R30; T22 checks inside the window. Next: build R29 in a new session (round skill), RADE items in a RADE session. After that: F03 and F06 read PFMOfficeMailbox (DECISIONS 17 Nov); front-end plan and doc rewrites.
 2. Task 6 prompt r2 follow-up: list AFI (validator F-032/F-039 fixed 13 Nov).
 3. Seals: done in R13 (all 17 prepared and uploaded); detail: docs/reviews/2026-11-15-handoff-detail.md.
 4. Logo (PFM 17 Nov, DECISIONS): Rho Bold (USAF-B) is RADE's logo; 90-161.Z uses it until it has its own (not designed). Build it into R29 (R28 r2 missed it): export from RhoBold.dc.html on the Rho canvas https://claude.ai/artifact/Qw7iSQaz1FMzZQtycjrZxq, RADE assets and release (RADE session), lock move, T22 window logo, index.html band, T16 logo check, site logo by hand. Size: the engine already embeds logo K (128 px PNG, 10.7 KB); Rho Bold replaces it, so the bundle (2.6 KB free) should change little; measure at build. After T11 results: site home page preview, then a page/header flow (DECISIONS 2026-11-13).
