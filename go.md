@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 17 Nov 26 (Round R29 r1 is ready).
+Updated: 17 Nov 26 (Rounds R29a and R29b are ready; run R29a first).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,10 +26,10 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R29 r1: the R28 fixes, the full flow test and the second person
+### Round R29a r1 (run first): the R28 fixes, the second person and the full flow test
 
-**For:** repeats what failed or was skipped in R28: the health flow (it now checks only that my own flows are On), the reader of my button flow export, my 90-161.Z window (scaled, with its 12 checks inside the window), the import of the full flows and the full flow test, and the second person (T4). It starts by checking that the test site is clean.
-**Time:** about 2.5 hours with waits; about 80 minutes of my own work (estimate).
+**For:** repeats what failed or was skipped in R28: the health flow (it now checks only that my own flows are On), the reader of my button flow export, the import of the full flows and the full flow test, and the second person (T4). My 90-161.Z window is in Round R29b. It starts by checking that the test site is clean.
+**Time:** about 2.5 hours with waits; about 70 minutes of my own work (estimate).
 **Changes:** on the test site: a probe list and library, the second person in Visitors, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end; the solution "90-161.Z flows" is upgraded and stays. On my computer: my OneDrive folder RADE\90-161.Z and one export file in Downloads. Before Run, the window lists every file.
 **Before I start:** a colleague who can open the test site is free for 5 minutes in Teams.
 **Steps:**
@@ -46,10 +46,35 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 11. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
 12. At DONE, send the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29a-round-r1.ps1
 
-**Report:** send the Outlook draft the round makes (subject "90161Z R29 PASSED" or "90161Z R29 NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
+**Report:** send the Outlook draft the round makes (subject "90161Z R29a PASSED" or "90161Z R29a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If Power Automate refuses a step, select "It failed" and type the first line of the message: a refusal is a valid result.
+
+### Round R29b r1 (run after R29a): my 90-161.Z window with its checks inside
+
+**For:** tests my 90-161.Z window again: it now scales with Windows, its self-check works, the grids fit, and 12 checks show at the bottom of the window, one at a time, with Pass and Fail. Then 3 questions on its look.
+**Time:** about 20 minutes (estimate).
+**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window script and its result file). All data in the window is FAKE; nothing is read, saved or sent. Before Run, the window lists every file.
+**Steps:**
+1. Press Copy script next to the link below.
+2. Open the Start menu and type ISE.
+3. Open Windows PowerShell ISE (not "Run as administrator").
+4. Select File > New.
+5. Click in the white script pane.
+6. Press Ctrl+V.
+7. Press F5. The RADE window opens.
+8. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
+9. Press Run.
+10. Do each check in the bar at the bottom of the 90-161.Z window.
+11. Close the 90-161.Z window with its X.
+12. Answer the 3 questions in the RADE window.
+13. At DONE, send the Outlook draft that opens.
+
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29b-round-r1.ps1
+
+**Report:** send the Outlook draft the round makes (subject "90161Z R29b PASSED" or "90161Z R29b NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
+**If it fails:** do the line that starts with "What to do". If the 90-161.Z window does not open, send the results as they are.
 
 ## Done
 

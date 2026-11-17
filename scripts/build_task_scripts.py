@@ -7,7 +7,7 @@ Each scripts/gov/90161Z-T*.ps1 that asks for a DODID holds the block between two
 The text between them is the source from its first "function" line on. Edit only the source, then run this script.
 A script that signs in to the site also holds the site-common block (Get-SiteAddress; PFM 15 Nov 26: the site is entered once),
 between the same kind of markers; a Get-SiteAddress outside that block fails the check.
-A script with the rade-logo markers gets $RadeLogoPng: the RADE logo (assets/logo/logo-K-128.png of the RADE commit pinned in
+A script with the rade-logo markers gets $RadeLogoPng: the RADE logo (the one assets/logo/*.png of the RADE commit pinned in
 scripts/rade.lock.json, SHA-256 checked by scripts/build_paste_bundles.py) as base64 text, for a window in the RADE style
 (T22, PFM 16 Nov 26). The logo has one master copy in rhope-ops/RADE; this repo holds only the generated text.
 A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1 of the same pinned commit, SHA-256 checked the
@@ -39,7 +39,10 @@ def logo_text():
         sys.path.insert(0, str(ROOT / 'scripts'))
         import build_paste_bundles as B
         lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
-        b64 = base64.b64encode((B.fetch(lock) / 'assets/logo/logo-K-128.png').read_bytes()).decode('ascii')
+        # The one logo file the lock pins under assets/logo/ (engine-v10: logo-rho-128.png, Rho Bold; PFM 17 Nov 26).
+        logo = [k for k in lock['files'] if k.startswith('assets/logo/') and k.endswith('.png')]
+        if len(logo) != 1: raise SystemExit('LOGO: the lock must pin exactly 1 assets/logo/*.png, found ' + str(logo))
+        b64 = base64.b64encode((B.fetch(lock) / logo[0]).read_bytes()).decode('ascii')
         rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
         _logo.append('$RadeLogoPng = @(\n' + ',\n'.join("  '" + r + "'" for r in rows) + "\n) -join ''\n")
     return _logo[0]

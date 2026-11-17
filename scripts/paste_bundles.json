@@ -24,9 +24,9 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R29-round-r1.ps1",
-      "round": "R29",
-      "title": "Round R29 r1: the R28 fixes (health flow, export reader, 90-161.Z window with checks inside, import cards), the full flow test and the second person",
+      "out": "scripts/gov/paste/90161Z-R29a-round-r1.ps1",
+      "round": "R29a",
+      "title": "Round R29a r1: the R28 fixes (health flow, export reader, import cards), the second person and the full flow test",
       "files": [
         {
           "dir": "T17",
@@ -43,10 +43,6 @@
         {
           "dir": "T21",
           "src": "samples/90161Z-T21-links-r5.html"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-pfm-window-r3.ps1"
         },
         {
           "dir": "T24",
@@ -554,56 +550,6 @@
           "doneLog": "Confirmed by you: used the button."
         },
         {
-          "name": "T22 Open the 90-161.Z window r3",
-          "title": "Open the 90-161.Z window and do its 12 checks",
-          "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r3.ps1",
-          "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data (nothing is read, saved or sent). A bar at the bottom shows 12 checks, one at a time: do each, then select Pass or Fail. Then close the window with its X.",
-          "estimate": 15,
-          "help": "Send the results as they are. The step can be run again."
-        },
-        {
-          "name": "T22 Answer: look and cards",
-          "title": "Answer 3 questions about the window look",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 3 questions about the look of the window. About 2 minutes.",
-          "guide": [
-            "1. Answer each of the next 3 cards."
-          ],
-          "marker": "90161Z-T22-judged-look.txt",
-          "estimate": 2,
-          "after": [
-            "T22 Open the 90-161.Z window r3"
-          ],
-          "answers": [
-            {
-              "key": "w-look",
-              "prompt": "Does the window look like your vision of the 90-161.Z app?",
-              "kind": "pick",
-              "choices": [
-                "Yes, as it is",
-                "Close, with small changes",
-                "Partly",
-                "No"
-              ]
-            },
-            {
-              "key": "w-cards",
-              "prompt": "Did every card open and fit with no scroll bar?",
-              "kind": "yesno"
-            },
-            {
-              "key": "w-change",
-              "prompt": "What would you change first? One line, no names.",
-              "kind": "text"
-            }
-          ],
-          "doneLog": "Confirmed by you: judged the look."
-        },
-        {
           "name": "T24 Import the full solution r2: choose the file",
           "title": "Start the import of the full flows",
           "kind": "guide",
@@ -1058,11 +1004,6 @@
           "dir": "T21",
           "name": "90161Z-T21-probe-clean-last-r5.txt",
           "step": "T21 Remove the person, list and library r5"
-        },
-        {
-          "dir": "T22",
-          "name": "90161Z-T22-window-r3.txt",
-          "step": "T22 Open the 90-161.Z window r3"
         },
         {
           "dir": "T24",
@@ -1747,7 +1688,7 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R29 r1: clean-site check, health flow, button flow export, second person, the 90-161.Z window checks and the full flows. Fake data.",
+          "summary": "Round R29a r1: clean-site check, health flow, button flow export, second person and the full flows. Fake data.",
           "steps": [
             "T21 Check the test site is clean r5",
             "T21 Make the probe list r5",
@@ -1767,8 +1708,6 @@
             "T21 Format the form and view r5",
             "T21 Look at the list form r5",
             "T21 Use the list button r5",
-            "T22 Open the 90-161.Z window r3",
-            "T22 Answer: look and cards",
             "T24 Import the full solution r2: choose the file",
             "T24 Import the full solution r2: finish",
             "T24 Turn on all 6 flows r1",
@@ -1783,6 +1722,88 @@
             "T21 Remove the person, list and library r5",
             "T21 Remove the health flow and solution r5",
             "T21 Remove the button flow and solution r5"
+          ]
+        }
+      ]
+    },
+    {
+      "out": "scripts/gov/paste/90161Z-R29b-round-r1.ps1",
+      "round": "R29b",
+      "title": "Round R29b r1: the 90-161.Z window with its 12 checks inside the window",
+      "files": [
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-pfm-window-r3.ps1"
+        }
+      ],
+      "steps": [
+        {
+          "name": "T22 Open the 90-161.Z window r3",
+          "title": "Open the 90-161.Z window and do its 12 checks",
+          "dir": "T22",
+          "file": "90161Z-T22-pfm-window-r3.ps1",
+          "minutes": 30,
+          "note": "Opens your 90-161.Z window with fake data (nothing is read, saved or sent). A bar at the bottom shows 12 checks, one at a time: do each, then select Pass or Fail. Then close the window with its X.",
+          "estimate": 15,
+          "help": "Send the results as they are. The step can be run again."
+        },
+        {
+          "name": "T22 Answer: look and cards",
+          "title": "Answer 3 questions about the window look",
+          "kind": "guide",
+          "dir": "T22",
+          "file": "",
+          "note": "You answer 3 questions about the look of the window. About 2 minutes.",
+          "guide": [
+            "1. Answer each of the next 3 cards."
+          ],
+          "marker": "90161Z-T22-judged-look.txt",
+          "estimate": 2,
+          "after": [
+            "T22 Open the 90-161.Z window r3"
+          ],
+          "answers": [
+            {
+              "key": "w-look",
+              "prompt": "Does the window look like your vision of the 90-161.Z app?",
+              "kind": "pick",
+              "choices": [
+                "Yes, as it is",
+                "Close, with small changes",
+                "Partly",
+                "No"
+              ]
+            },
+            {
+              "key": "w-cards",
+              "prompt": "Did every card open and fit with no scroll bar?",
+              "kind": "yesno"
+            },
+            {
+              "key": "w-change",
+              "prompt": "What would you change first? One line, no names.",
+              "kind": "text"
+            }
+          ],
+          "doneLog": "Confirmed by you: judged the look."
+        }
+      ],
+      "collect": [
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-window-r3.txt",
+          "step": "T22 Open the 90-161.Z window r3"
+        }
+      ],
+      "cleanup": [],
+      "fetch": [],
+      "apps": [
+        {
+          "name": "90-161.Z: Publications and Forms Management",
+          "summary": "Round R29b r1: the 90-161.Z window with fake data and its 12 checks, then 3 questions on its look. Fake data.",
+          "steps": [
+            "T22 Open the 90-161.Z window r3",
+            "T22 Answer: look and cards"
           ]
         }
       ]
