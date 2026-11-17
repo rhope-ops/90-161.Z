@@ -402,18 +402,22 @@ PYCOL
 # needs <bundle>: the check ids the bundle's steps list in the manifest, space-separated.
 needs() { python3 -c "import json,sys;print(' '.join(sorted({n for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']==sys.argv[1] for s in b['steps'] for n in s.get('needs',[])})))" "$1"; }
 if [ "${on[bundle]}" = 1 ]; then
-tp=$(mktemp -d); mkdir -p "$tp/u/test1234/OneDrive - United States Air Force"; pf=0; pr=0; pc=0
-# R06 cleanup fixture: finished folders with our files and one file 90-161.Z did not make (must stay).
+pf=0; pr=0; pc=0
+# R06 cleanup fixture: finished folders with our files and one file 90-161.Z did not make (must stay). R29 (two bundles):
+# each bundle runs on its own fresh fixture, as each round runs on the device as if it were the first.
+fixture() {
+[ -n "${fx_tp:-}" ] && rm -rf "$fx_tp"; tp=$(mktemp -d); fx_tp=$tp; mkdir -p "$tp/u/test1234/OneDrive - United States Air Force"
 ob="$tp/u/test1234/OneDrive - United States Air Force/90-161.Z"; mkdir -p "$ob/T02" "$ob/T13" "$ob/Rounds/R09" "$ob/T07" "$ob/T09"
 touch "$ob/T02/90161Z-T02-provision-lists-r9.zip" "$ob/T02/Test-Environment.ps1" "$ob/T13/90161Z-T13-label-capture-r2.ps1" "$ob/T13/my-notes.docx" \
   "$ob/Rounds/R09/90161Z-R09-report-r1.txt" "$ob/T07/90161Z-T07-seal-test-r4.ps1" "$ob/T07/90161Z-T07-key-r1.txt" "$ob/T09/90161Z-T09-page-r1.htm"
 echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (open, 1 Jan 26)\n' > "$tp/go.md"
+}
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
 # domain label. The cloud has no such name, so the bundle tests give it a stand-in name, as RADE's own tests do
 # (rhope-ops/RADE tests/engine_test.sh "swap"); the test after the loop proves the real guard stops this computer.
 swap() { sed -e "s#Read-Host ('Type the number of the application to deploy (1 to ' + \\\$apps\\.Count + ') and press Enter')#'1'#" -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" -e "s#Url = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/#Url = 'file://$PWD/#" -e "s#Url = 'https://www\.[^']*'#Url = 'file://$tp/fx.bin'#" -e "s#url = 'https://make\.powerautomate[^']*'#url = 'file://$tp/fx.bin'#I" -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#''#" -e "s#Read-Host 'Press Enter when the flow run has started, type F and Enter if it failed, or S and Enter to skip this step'#''#" -e "s#\$checkGate = \$true#\$checkGate = \$false#" -e "s#Read-Host 'Type the site address[^']*'#''#" -e "s#Read-Host 'Did you see both[^']*'#'Y'#" -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$tp/u'#" "$1"; }
 for b in scripts/gov/paste/*.ps1; do
-  swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
+  fixture; swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
   # Text mode runs the default steps that need no folder (the optional steps are skipped).
   n=$(grep -c "^\$steps += @{.*Default = \$true; AskParam = '';" "$b")
   # A bundle with a second (deploy) application: text mode runs only the first one's steps (every R28 step is a default step).
@@ -473,6 +477,11 @@ PYS
     && grep -qF "Clean-up: moved to the Recycle Bin: 5 files, 2 folders; kept (not made by 90-161.Z): 1 files; failed: 0." "$base/Rounds/$r/90161Z-$r-report-r1.txt" \
     && grep -qF "T13 1 (1 other)" "$base/Rounds/$r/90161Z-$r-report-r1.txt" && head -1 "$base/Rounds/$r/90161Z-$r-report-r1.txt" | tr -d "\r" | grep -q "90161Z $r NEEDS REVIEW$" \
     && grep -q "^\"$r\",\"ROUND\"," "$base/Config/90161Z-history.csv" && pc=$((pc+1)) || { echo "cleanup/summary"; grep -E "^(Clean-up|Files left|90161Z)" "$base/Rounds/$r/90161Z-$r-report-r1.txt"; ls -R "$nb" | head -30; }
+  # Every file of this bundle equals its source (R29: each bundle in its own fixture, so the check runs per bundle).
+  while IFS=$'\t' read -r dir src; do
+    got="$tp/u/test1234/OneDrive - United States Air Force/RADE/90-161.Z/${dir//\\//}/$(basename "$src")"
+    case "$src" in *.png|*.pptx|*.zip|*.docx|*.html) cmp -s "$got" "$src" || { echo "file differs: $src"; pf=$((pf+1)); };; *) cmp -s <(tail -c +4 "$got" | tr -d '\r') <(swap "$src") || { echo "file differs: $src"; pf=$((pf+1)); };; esac
+  done < <(python3 -c "import json;[print(f['dir']+'\t'+f['src']) for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b' for f in b['files']]")
 done
 fi
 # Newest RADE (the PFM, 15 Nov 26: "there needs to be a check if RADE has upgraded every time we do a round"): the lock must
@@ -520,13 +529,9 @@ for b in scripts/gov/paste/*.ps1; do
   go=$(sed -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$g'#" "$b" > "$tp/g.ps1"; USERPROFILE="$g/test1234" timeout 120 pwsh -NoProfile -File "$tp/g.ps1" 2>&1 < /dev/null)
   [ "$go" = "This application cannot be installed in your environment." ] && [ -z "$(find "$g" -type f)" ] && ok "NIPR-only start check: $(basename $b) stops on a computer that is not on NIPR and writes nothing" || { echo "$go" | head -3; bad "NIPR-only start check ($(basename $b))"; }
 done
-while IFS=$'\t' read -r dir src; do
-  got="$tp/u/test1234/OneDrive - United States Air Force/RADE/90-161.Z/${dir//\\//}/$(basename "$src")"
-  case "$src" in *.png|*.pptx|*.zip|*.docx|*.html) cmp -s "$got" "$src" || pf=$((pf+1));; *) cmp -s <(tail -c +4 "$got" | tr -d '\r') <(swap "$src") || pf=$((pf+1));; esac
-done < <(python3 -c "import json;[print(f['dir']+'\t'+f['src']) for b in json.load(open('scripts/paste_bundles.json'))['bundles'] for f in b['files']]")
 rm -rf "$tp"
 nb=$(python3 -c "import json;print(len(json.load(open('scripts/paste_bundles.json'))['bundles']))"); [ $pr -eq "$nb" ] && [ $pf -eq 0 ] && ok "round bundle text mode: files exact, steps run, report in results folder, DODID masked, real path on screen (rounds=$pr mismatches=$pf)" || bad "round bundle: rounds ok=$pr mismatches=$pf"
-[ $pc -eq 1 ] && ok "RADE cleanup: only 90-161.Z files recycled, other files and their folder kept, summary has the clean-up line, files left, subject NEEDS REVIEW, history row" || bad "RADE cleanup and summary (see output above)"
+[ $pc -eq "$nb" ] && ok "RADE cleanup: only 90-161.Z files recycled, other files and their folder kept, summary has the clean-up line, files left, subject NEEDS REVIEW, history row" || bad "RADE cleanup and summary (see output above)"
 else sk "NIPR-only start check"; sk "round bundle text mode"; sk "RADE cleanup"; fi
 
 
