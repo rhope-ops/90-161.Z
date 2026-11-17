@@ -34,6 +34,12 @@ Limits (a pass here is not proof that a step is clear; the fresh-reader check in
 - A verb that is not in VERBS is not counted; a pointer worded in a way POINTERS does not know is not found.
 - Build words (block, way, part, item) are found only when they point (block 1, the part "X").
 
+Runner text rules (docs/reviews/2026-11-17-runner-polish.md, the PFM, 17 Nov 26), checked on every step of the manifest
+(check_step_rules): a step FAILS with no `title`, a title over 56 characters or with a code (T<NN>, r<N>, F<NN>, R<NN>)
+or build word (slice, probe solution, estimate), a note with a code or build word, a guide over 10 numbered lines or a
+line over 100 characters, an unnumbered line between numbered lines, a set `doneText`, the word "grey", a line "Return
+to the RADE window" or "Select Done ...", and a card with an address whose line 1 is not `Select "Open in browser" above.`
+
 No baseline and no exemption: every step must pass (the R26 r1 baseline was removed with R26 r2, 16 Nov 26).
 
 Usage: check_guide_text.py            check; exit 1 on any failing step
@@ -118,6 +124,56 @@ def check_step(text):
     return out
 
 
+CODE = re.compile(r'\b(?:T\d{1,2}|F\d{2}|R\d{1,2}|r\d{1,2})[a-z]?\b', re.I)   # F5 (a key) is no flow code: F + 2 digits
+BUILD = re.compile(r'\b(?:slice|probe solution|estimate)\b', re.I)
+TITLE_MAX, LINE_MAX, LINES_MAX = 56, 100, 10
+NUMBERED = re.compile(r'\s*\d+\.\s')
+
+
+def check_step_rules(s):
+    """Return the runner text rule failures of one manifest step (empty = pass)."""
+    out = []
+    title = s.get('title')
+    if not (title or '').strip():
+        out.append('has no title')
+    else:
+        if len(title) > TITLE_MAX:
+            out.append('title is %d characters (limit %d)' % (len(title), TITLE_MAX))
+        if CODE.search(re.sub(r'"[^"]*"', '', title)) or BUILD.search(title):
+            out.append('title has a code or build word: "%s"' % title)
+    for field in ('note', 'help'):
+        text = re.sub(r'"[^"]*"', '', s.get(field, ''))
+        if CODE.search(text) or BUILD.search(text):
+            out.append('%s has a code or build word' % field)
+    shown = [title or '', s.get('note', ''), s.get('help', '')] + list(s.get('guide', []))
+    for a in s.get('answers', []):
+        shown += [a.get('prompt', '')] + list(a.get('choices', []))
+    if any(re.search(r'\bgrey', x, re.I) for x in shown):
+        out.append('"grey": use gray')
+    if s.get('doneText'):
+        out.append('sets doneText "%s"' % s['doneText'])
+    guide = s.get('guide', [])
+    nums = [i for i, g in enumerate(guide) if NUMBERED.match(g)]
+    if len(nums) > LINES_MAX:
+        out.append('guide has %d numbered lines (limit %d)' % (len(nums), LINES_MAX))
+    if nums and any(not NUMBERED.match(guide[i]) for i in range(nums[0], nums[-1])):
+        out.append('an unnumbered line sits between numbered lines')
+    if s.get('url') and (not guide or guide[0] != '1. Select "Open in browser" above.'):
+        out.append('line 1 of a card with an address is not: 1. Select "Open in browser" above.')
+    for g in guide:
+        if len(g) > LINE_MAX:
+            out.append('line over %d characters (%d): %s' % (LINE_MAX, len(g), g[:40]))
+        if re.search(r'Return to the RADE window|\bselect\s+\\?"?Done\b', g, re.I):
+            out.append('line to drop (the engine prints the closing line): %s' % g[:50])
+    return out
+
+
+def manifest_steps():
+    for b in json.loads(BUNDLES.read_text(encoding='utf-8'))['bundles']:
+        for s in b.get('steps', []):
+            yield '%s / %s' % (b.get('round', '?'), s['name']), s
+
+
 def bundle_steps():
     for b in json.loads(BUNDLES.read_text(encoding='utf-8'))['bundles']:
         for s in b.get('steps', []):
@@ -197,6 +253,40 @@ def self_test():
     got = list(go_steps('## How\nSteps:\n1. no\n## Round A\nSteps:\n1. Select Run.\nhttps://x\n2. Select Done.\n\nNote\n3. no\n## Done\nSteps:\n1. no\n'))
     if [g[1] for g in got] != ['1. Select Run.', '2. Select Done.']:
         errs.append('go.md reader: %s' % got)
+    ok_step = {'name': 'R1 x', 'title': 'Remove the old flows', 'note': 'You delete 2 flows. About 4 minutes.',
+               'url': 'https://x', 'guide': ['1. Select "Open in browser" above.', '2. Select "Delete".', 'If it fails: select "It failed".']}
+    ok_step['help'] = 'Press F5 to run it.'
+    if check_step_rules(ok_step):
+        errs.append('good rules step failed: %s' % check_step_rules(ok_step))
+    bad_rules = [
+        ({'guide': ['1. Select Run.']}, 'has no title'),
+        ({'title': 'x' * 57}, 'title is 57'),
+        ({'title': 'Import the T21 flow'}, 'title has a code'),
+        ({'title': 'Make the probe solution'}, 'title has a code or build word'),
+        ({'title': 'a', 'note': 'About 3 minutes (estimate).'}, 'note has a code'),
+        ({'title': 'a', 'guide': ['%d. Select Run.' % i for i in range(1, 12)]}, '11 numbered lines'),
+        ({'title': 'a', 'guide': ['1. Select ' + 'x' * 100]}, 'line over 100'),
+        ({'title': 'a', 'guide': ['1. Select A.', 'If x: select B.', '2. Select C.']}, 'unnumbered line sits'),
+        ({'title': 'a', 'doneText': 'Done: x'}, 'sets doneText'),
+        ({'title': 'a', 'guide': ['1. Select the Grey box.']}, '"grey"'),
+        ({'title': 'a', 'note': 'The greyed box.'}, '"grey"'),
+        ({'title': 'a', 'help': 'A grey box.'}, '"grey"'),
+        ({'title': 'a', 'answers': [{'prompt': 'Is it grey?', 'choices': ['Yes']}]}, '"grey"'),
+        ({'title': 'a', 'answers': [{'prompt': 'Is it?', 'choices': ['Grey']}]}, '"grey"'),
+        ({'title': 'a', 'help': 'Send T21 results.'}, 'help has a code'),
+        ({'title': 'a', 'note': 'The t21 step.'}, 'note has a code'),
+        ({'title': 'Do T21a now'}, 'title has a code'),
+        ({'title': 'a', 'note': 'Run F03.'}, 'note has a code'),
+        ({'title': '   '}, 'has no title'),
+        ({'title': 'a', 'guide': ['If it is gone: select "done".']}, 'line to drop'),
+        ({'title': 'a', 'guide': ['1. Return to the RADE window.']}, 'line to drop'),
+        ({'title': 'a', 'guide': ['1. Select "Done: x".']}, 'line to drop'),
+        ({'title': 'a', 'guide': ['If it is gone: select "Done".']}, 'line to drop'),
+        ({'title': 'a', 'url': 'https://x', 'guide': ['1. On this RADE card, select "Open in browser".']}, 'line 1 of a card'),
+    ]
+    for s, want in bad_rules:
+        if not any(want in f for f in check_step_rules(s)):
+            errs.append('bad rules step not found (%s): %s -> %s' % (want, s, check_step_rules(s)))
     for e in errs:
         print('SELF-TEST FAIL ' + e)
     print('GUIDE TEXT self-test good=%d bad=%d errors=%d' % (len(good), len(bad), len(errs)))
@@ -208,6 +298,10 @@ def main():
         return self_test()
     steps = list(bundle_steps()) + list(go_steps())
     failed = [(where, text, check_step(text)) for where, text in steps if check_step(text)]
+    for where, s in manifest_steps():
+        steps.append((where, ''))
+        if check_step_rules(s):
+            failed.append((where, '(step rules)', check_step_rules(s)))
     if '--list' in sys.argv:
         last = None
         for where, text, f in failed:
