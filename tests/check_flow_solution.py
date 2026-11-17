@@ -199,10 +199,11 @@ for z in SLICES:
             if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
 # R26 (task T21, probe flows): one unmanaged test solution built from flow/solution/test-defs/90161Z-T21-*.json:
-# P (3 flows, 5 connection references; r2, 16 Nov 26: the Word and Mail solutions were refused in r1 and are gone). Same file rules as the export (no XML declaration, CRLF, root
+# P (r3, R27, 17 Nov 26: 2 flows, 2 connection references: Health with the Power Automate Management connector, and Button with the
+# "For a selected item" trigger; the files, mail and app flows of r2 are gone, their tests passed or failed in R26). Same file rules as the export (no XML declaration, CRLF, root
 # components), and the data boundary: no ".mil", no mail address, no site host in any file. Every runAfter name exists on the same
 # level; every "@parameters('...')" resolves; each RESULT row runs after every status; a trigger condition is in the F05 shape.
-T21_EXPECT = {"90161Z-T21-probe-r2.zip": (3, 5)}
+T21_EXPECT = {"90161Z-T21-probe-r3.zip": (2, 2)}
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
 T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
 
@@ -223,7 +224,7 @@ def check_levels(actions, where, outer=()):
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
 t21_defs = sorted(B.TEST_DEFS.glob("90161Z-T21-*.json"))
-if len(t21_defs) != 3: bad(f"expected 3 T21 test defs, found {len(t21_defs)}")
+if len(t21_defs) != 2: bad(f"expected 2 T21 test defs, found {len(t21_defs)}")
 by_zip = {}
 for src in t21_defs:
     d = json.loads(src.read_text(encoding="utf-8"))
@@ -243,6 +244,10 @@ for src in t21_defs:
     for tn, t in d["triggers"].items():
         if t.get("kind") == "PowerAppV2":
             if "text" not in t["inputs"]["schema"]["properties"]: bad(f"{src.name}: PowerAppV2 trigger has no text input")
+        elif t.get("type") == "OpenApiConnectionNotification":
+            # R27: the SharePoint "For a selected item" trigger (the view button); no polling, no condition.
+            if t["inputs"]["host"]["operationId"] != "OnSelectedItem" or t["inputs"]["parameters"].get("dataset") != "@parameters('Site URL (pfm_SiteUrl)')" or t["inputs"]["parameters"].get("table") != "90161Z Probe":
+                bad(f"{src.name}: a selected-item trigger must be OnSelectedItem on the probe list")
         else:
             c = t.get("conditions")
             if not (isinstance(c, list) and c and all(set(x) == {"expression"} and x["expression"].startswith("@") for x in c)): bad(f"{src.name}: trigger condition not in the form [{{expression}}]")
@@ -293,6 +298,10 @@ for zname, (nwf, ncr) in T21_EXPECT.items():
         if envs != want_env: bad(f"{zname}: environment variables {sorted(envs)} differ from the ones the flows read {sorted(want_env)}")
     if sorted(d["displayName"] for d in by_zip.get(zname, [])) != sorted(set(d["displayName"] for d in by_zip.get(zname, []))): bad(f"{zname}: duplicate flow names")
     if len(by_zip.get(zname, [])) != nwf: bad(f"{zname}: expected {nwf} defs, found {len(by_zip.get(zname, []))}")
+
+# R27: the probe script finds the button flow by its fixed ID (a solution keeps the workflow ID): it must equal the ID the builder gives the def.
+btn_id = B.flow_guid("90161Z-T21-probe-button-r1", True).lower()
+if f"'{btn_id}'" not in (ROOT / "scripts" / "gov" / "90161Z-T21-probe-r3.ps1").read_text(encoding="utf-8"): bad(f"90161Z-T21-probe-r3.ps1 does not hold the button flow ID {btn_id}")
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
