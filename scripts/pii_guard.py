@@ -210,14 +210,17 @@ def _milhost_spans(line):
 
 def milhosts(line):
     """The matches of MILHOST.finditer(line) in linear time: each span of _milhost_spans, confirmed by the pattern in
-    a window of the span and the 2 characters its look-aheads read. From a span the pattern does not confirm (none in
-    the tests), the plain pattern finds the rest of the line."""
+    a window of the span and the 2 characters its look-aheads read. If the pattern does not confirm a span (none in the
+    tests), the plain pattern finds the rest of the line from the end of the last confirmed match, so a match the
+    model skipped before that span is found too."""
+    done = 0  # the end of the last confirmed match
     for s, e in _milhost_spans(line):
         m = MILHOST.match(line, s, e + 2)
         if m is None or m.end() != e:
-            yield from MILHOST.finditer(line, s)
+            yield from MILHOST.finditer(line, done)
             return
         yield m
+        done = e
 
 
 MARKING = [re.compile(r) for r in (
@@ -766,6 +769,18 @@ def self_test():
         good = old == new == want
         print(("ok   " if good else "FAIL ") + f"milhosts: {label}: {len(new)} matches")
         ok = ok and good
+    real_spans = _milhost_spans
+    try:  # the fallback, with a model that gives a wrong span: the plain pattern finds the rest from the last good end
+        host = "a" + dot + mi
+        text = host + " x" + dot + mi + " y" + dot + mi
+        for label, fake in (("a skipped match", [(12, 14)]), ("a wrong end after a good match", [(0, 5), (12, 14)])):
+            globals()["_milhost_spans"] = lambda line, fake=fake: iter(fake)
+            got = [m.span() for m in milhosts(text)]
+            good = got == [m.span() for m in MILHOST.finditer(text)] == [(0, 5), (6, 11), (12, 17)]
+            print(("ok   " if good else "FAIL ") + f"milhosts fallback: {label}: {got}")
+            ok = ok and good
+    finally:
+        globals()["_milhost_spans"] = real_spans
     rnd = random.Random(2)
     tokens = ["-", "--", dot, dot * 2, mi, dot + mi, mi.upper(), "a", "x-", "b" * 63, "c" * 64, spm, spm.upper(), tms, "us",
               "dod" + dot, "teams" + dot, at, "https://", " ", "_", "\u00e9", "\u0131", "\u017f", "\u212a", "a" + dot, "-a" + dot]
