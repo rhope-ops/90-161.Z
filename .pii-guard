@@ -31,3 +31,5 @@ skip: ref/*.pdf
 skip: samples/*.png
 skip: samples/*.docx
 skip: templates/*.docx
+# Real-window spike pictures in a session scratchpad, invented data only (PFM, 2026-11-17).
+skip: /tmp/claude-0/*/scratchpad/spike/*.png
