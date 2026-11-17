@@ -173,7 +173,8 @@ def python_functions(text):
                 first = child.body[0].lineno if child.body else child.lineno + 1
                 lead = [x.strip() for x in lines[child.lineno:first - 1]]   # lines before the first statement
                 if child.body and isinstance(child.body[0], (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                    lead = []   # a comment right above a nested def is that def's comment
+                    while lead and lead[-1].startswith('#'):
+                        lead.pop()   # comment lines that touch a nested def are that def's comment
                 inner = bool(ast.get_docstring(child)) or any(x.startswith('#') for x in lead) \
                     or lines[child.lineno - 1].split(':', 1)[-1].strip().startswith('#')
                 skip = 1 if ast.get_docstring(child) and len(child.body) > 1 else 0   # C5 compares code, not the docstring
@@ -194,15 +195,15 @@ foreach ($path in [Console]::In.ReadToEnd().Split("`n")) {
   $tokens = $null; $errors = $null
   $ast = [System.Management.Automation.Language.Parser]::ParseFile($path.Trim(), [ref]$tokens, [ref]$errors)
   $lines = @([System.IO.File]::ReadAllLines($path.Trim()))
-  $comments = @{}
-  $help = @()   # comment-based help blocks (.SYNOPSIS or .DESCRIPTION), by their first line
-  foreach ($t in $tokens) { if ($t.Kind -eq 'Comment') { for ($l = $t.Extent.StartLineNumber; $l -le $t.Extent.EndLineNumber; $l++) { $comments[$l] = $true }; if ($t.Text -match '\.(SYNOPSIS|DESCRIPTION)') { $help += $t.Extent.StartLineNumber } } }
+  $help = @()   # comment-based help: <# #> blocks with .SYNOPSIS or .DESCRIPTION, by their first and last line
+  foreach ($t in $tokens) { if ($t.Kind -eq 'Comment' -and $t.Text.StartsWith('<#') -and $t.Text -match '\.(SYNOPSIS|DESCRIPTION)') { $help += ,@($t.Extent.StartLineNumber, $t.Extent.EndLineNumber) } }
   $list = @(); $blocks = @()
   foreach ($f in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)) {
     $s = $f.Extent.StartLineNumber; $e = $f.Extent.EndLineNumber
     $brace = 0; if ($e -gt $s + 1 -and $lines[$s].Trim() -eq '{') { $brace = 1 }   # `{` on its own line after `function`
-    $inside = @($help | Where-Object { $_ -gt $s -and $_ -lt $e }).Count -gt 0
-    $list += @{ name = $f.Name; start = $s; end = $e; inner = $inside -or (($e -gt $s + 1 + $brace) -and [bool]$comments[$s + 1 + $brace]) }
+    $body = $f.Body.Extent; $first = $body.StartLineNumber + 1; $last = $body.EndLineNumber - 1   # the help is first or last in the body
+    $inside = @($help | Where-Object { $_[0] -ge $body.StartLineNumber -and $_[1] -le $body.EndLineNumber -and ($_[0] -eq $first -or $_[1] -eq $last) }).Count -gt 0
+    $list += @{ name = $f.Name; start = $s; end = $e; inner = $inside -or (($e -gt $s + 1 + $brace) -and $lines[$s + $brace].Trim().StartsWith('#')) }
   }
   # A script block kept in a variable or a hashtable key ($ui.Say = { ... }) is a function too: the window code uses
   # them. Any other script block (an argument, such as $b.Add_Click({ ... })) is measured for its length only.
@@ -211,7 +212,7 @@ foreach ($path in [Console]::In.ReadToEnd().Split("`n")) {
     if ($p -is [System.Management.Automation.Language.PipelineAst]) { $p = $p.Parent }
     $s = $b.Extent.StartLineNumber; $e = $b.Extent.EndLineNumber
     if ($p -is [System.Management.Automation.Language.AssignmentStatementAst]) {
-      $list += @{ name = $p.Left.Extent.Text; start = $s; end = $e; inner = ($e -gt $s + 1) -and [bool]$comments[$s + 1] }
+      $list += @{ name = $p.Left.Extent.Text; start = $s; end = $e; inner = ($e -gt $s + 1) -and $lines[$s].Trim().StartsWith('#') }
     } elseif ($e - $s -ge 2) {
       $call = ($b.Parent.Extent.Text -split "`n")[0]; $call = $call.Substring(0, [math]::Min(40, $call.Length)).Trim()
       $blocks += @{ name = '{block in ' + $call + '}'; start = $s; end = $e }
@@ -267,8 +268,8 @@ def brace_functions(text, pattern, comment_mark):
         arrow = '=>' in line and m.lastindex == 2   # `const f = (...) =>`: its body must open on this line or the next
         depth, end, opened = 0, i, False
         for j in range(i, len(lines)):
-            if arrow and j > i + 1 and not opened:
-                break
+            if not opened and (j > i + 1 if arrow else j > i + 10):
+                break   # no body opens: not a function (an arrow's body opens on its line or the next)
             depth, opened = count_braces(lines[j], depth, opened, comment_mark)
             if opened and depth <= 0:
                 end = j
@@ -277,7 +278,8 @@ def brace_functions(text, pattern, comment_mark):
             if arrow:   # an arrow with no braces (`const f = x => x + 1;`) is a one-line function
                 found.append((name, i + 1, i + 1, i + 1, False, line))
             continue
-        k = i + 2 if i + 1 < len(lines) and lines[i + 1].strip() == '{' else i + 1   # skip a `{` on its own line
+        own = '{' not in line and i + 1 < len(lines) and lines[i + 1].strip() == '{'
+        k = i + 2 if own else i + 1   # skip the body's `{` when it stands on its own line
         first = lines[k].strip() if end > k else ''   # a one-line function has no inner first line
         found.append((name, i + 1, i + 1, end + 1, first.startswith(comment_mark), '\n'.join(lines[i + 1:end + 1])))
     return found

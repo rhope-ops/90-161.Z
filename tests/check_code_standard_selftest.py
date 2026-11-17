@@ -162,5 +162,14 @@ def self_test_edges(cs, root, g, config):
     assert 'n.py::outer' in v['comment'] and 'n.py::outer.inner' not in v['comment'], 'nested def: %s' % v['comment']
     assert not {'o.ps1::Get-X', 'o.ps1::Get-Y'} & set(v['comment']), 'help in the body counts: %s' % v['comment']
     assert 'p.sh::next' not in v['comment'], 'a shell comment after `{` counts: %s' % v['comment']
-    for f in ('m.js', 'n.py', 'o.ps1', 'p.sh'):
+    (root / 'q.ps1').write_text('<#\n  Sample PowerShell file: help that is not the function own, for the self-test only.\n#>\n\n'
+                                'function Outer {\n  function Inner {\n    <#\n    .SYNOPSIS\n    Inner.\n    #>\n    1\n  }\n  Inner\n}\n\n'
+                                'function Plain {\n  $x = 1  # see .DESCRIPTION of Foo\n  $x\n}\n')
+    (root / 'r.py').write_text('"""Sample module: an outer comment and a nested def, for the self-test only."""\n\n\n'
+                               'def outer2():\n    # Outer does X.\n\n    def inner2():\n        return 1\n    return inner2()\n')
+    g('add', '.')
+    v = cs.measure(config)['violations']
+    assert {'q.ps1::Outer', 'q.ps1::Plain'} <= set(v['comment']), 'help must be the function own: %s' % v['comment']
+    assert 'r.py::outer2' not in v['comment'], 'an outer comment before a blank line counts: %s' % v['comment']
+    for f in ('m.js', 'n.py', 'o.ps1', 'p.sh', 'q.ps1', 'r.py'):
         (root / f).unlink()
