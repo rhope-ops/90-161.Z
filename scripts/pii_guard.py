@@ -212,7 +212,9 @@ def milhosts(line):
     """The matches of MILHOST.finditer(line) in linear time: each span of _milhost_spans, confirmed by the pattern in
     a window of the span and the 2 characters its look-aheads read. If the pattern does not confirm a span, or a span
     starts before the end of the last confirmed match (no real or random line in the tests does either), the plain
-    pattern finds the rest of the line from that end, so a match the model skipped before that span is found too."""
+    pattern finds the rest of the line from that end. It does not recover a match before that end, and it catches no
+    model error that every later span passes (a skipped match, a match that starts too late, a missed last match);
+    the differential tests prove the model."""
     done = 0  # the end of the last confirmed match
     for s, e in _milhost_spans(line):
         m = MILHOST.match(line, s, e + 2)
