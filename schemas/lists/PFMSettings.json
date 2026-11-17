@@ -51,7 +51,7 @@
     {
       "Title": "CoordinationSuspenseBusinessDays",
       "SettingValue": "20",
-      "SettingNotes": "Working days (weekdays) a coordinator gets to respond (DAFMAN 90-161 5.2; PFM 2026-11-14: 20 working days, no holiday list). F03 sets it; Guard and Reserve Applicability get at least 30 calendar days."
+      "SettingNotes": "Working days (weekdays) a coordinator gets to respond (DAFMAN 90-161 5.2; PFM 2026-11-14: 20 working days, no holiday list). F03 reads it each run (an empty or missing row means 20); Guard and Reserve Applicability get at least 30 calendar days."
     },
     {
       "Title": "GuardReserveApplicabilityCalendarDays",
@@ -82,6 +82,31 @@
       "Title": "RecordsFreeze",
       "SettingValue": "",
       "SettingNotes": "Yes or No. While set, stops every closeout deletion of Working Files (PFM 4.6A; AFI 33-322 6.1.1.4.3; List design 2026-11-12 s7). Value entered by the PFM."
+    },
+    {
+      "Title": "FlowsPaused",
+      "SettingValue": "No",
+      "SettingNotes": "Yes or No. Yes: every flow stops at its first step (kill switch). Read by F03, F05 and F06 at the start of each run; an empty or missing row means No (PFM 2026-11-14: flow values move to this list)."
+    },
+    {
+      "Title": "TestMode",
+      "SettingValue": "Yes",
+      "SettingNotes": "Yes or No. Yes: every flow e-mail goes to the alert address only, with the intended recipients named in the body; no real e-mail reaches real people. Read by F03, F05 and F06; an empty or missing row means Yes (fail-safe). The PFM sets No when the flows are ready for real use (PFM 2026-11-14)."
+    },
+    {
+      "Title": "ReminderLeadDays",
+      "SettingValue": "5",
+      "SettingNotes": "Weekdays before the suspense when F03 sends the advance reminder (DAFMAN 90-161 5.2, 5.2.1; PFM 2026-11-14). An empty or missing row means 5."
+    },
+    {
+      "Title": "EscalationLagDays",
+      "SettingValue": "3",
+      "SettingNotes": "Working days after the suspense when F03 sends the escalation, copied to the AO and the Requester (DAFMAN 90-161 5.2, 5.2.1; PFM 2026-11-14). An empty or missing row means 3."
+    },
+    {
+      "Title": "SharedMailbox",
+      "SettingValue": "",
+      "SettingNotes": "Shared mailbox that F03 and F06 send from (Send As). Optional: empty means the flow owner's mailbox sends (PFM 2026-11-14). Value entered by the PFM."
     }
   ]
 }

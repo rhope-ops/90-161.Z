@@ -31,18 +31,18 @@ Test-That 'check writes nothing' ($global:FakeSP.Posts -eq 0)
 Test-That 'check result file' (Test-Path -LiteralPath (Join-Path $t20 '90161Z-T20-clean-check-r1.txt'))
 
 $r = Invoke-T20 'DryRun'
-Test-That 'dry run: counts' ($r.Text -match 'DRYRUN would create lists=12 fields=199 views=18 view-column requests=115 rows=88; set: updates=21 permissions=2') $r.Text
+Test-That 'dry run: counts' ($r.Text -match 'DRYRUN would create lists=12 fields=199 views=18 view-column requests=115 rows=93; set: updates=21 permissions=2') $r.Text
 Test-That 'dry run writes nothing' ($global:FakeSP.Posts -eq 0 -and (Get-Ours).Count -eq 0)
 
 $r = Invoke-T20 ''
 $ours = Get-Ours
 Test-That 'create: exit 0 and no problems' ($r.Code -eq 0 -and $r.Text -match 'PROVISION done, items with problems=0') $r.Text
 Test-That 'create: 12 list lines pass' (@($r.Out | Where-Object { $_ -match '^ITEM L\d\d-PFM\w+ PASS' }).Count -eq 12)
-Test-That 'create: counts line' ($r.Text -match 'CREATED lists=12 fields=199 views=18 view-column requests=115 rows=88')
+Test-That 'create: counts line' ($r.Text -match 'CREATED lists=12 fields=199 views=18 view-column requests=115 rows=93')
 Test-That 'site: 12 lists with display titles' ($ours.Count -eq 12 -and @($ours | Where-Object { $_.Title -like 'PFM *' }).Count -eq 12)
 Test-That 'site: 199 columns' ((($ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199)
 Test-That 'site: 18 views' ((($ours | ForEach-Object { $_.ViewList.Count }) | Measure-Object -Sum).Sum -eq 18)
-Test-That 'site: 88 rows' ((($ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 88)
+Test-That 'site: 93 rows' ((($ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 93)
 Test-That 'site: every view has columns' (@($ours | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0)
 $sec = @($ours | Where-Object { $_.ReadSecurity -eq 1 -and $_.WriteSecurity -eq 2 } | ForEach-Object { $_.Title } | Sort-Object)
 Test-That 'site: edit own rows on 2 lists' (($sec -join '|') -eq 'PFM Endorsements|PFM Publications') ($sec -join '|')
@@ -57,13 +57,13 @@ $pl = Get-Content -LiteralPath (Join-Path $t20 'provisioning-payload.json') -Raw
 $want = @(@($pl.lists) + @($pl.fields) + @($pl.rows) | ForEach-Object { (($_.body | ConvertTo-Json -Depth 20 -Compress) -replace '\{__\w+_ID__\}', '{G}') })
 $got = @($global:FakeSP.Sent | ForEach-Object { ((($_ | ConvertFrom-Json) | ConvertTo-Json -Depth 20 -Compress) -replace '\{[0-9a-f]{8}-[0-9a-f-]{27}\}', '{G}') })
 $diff = @(0..([Math]::Max($want.Count, $got.Count) - 1) | Where-Object { $want[$_] -cne $got[$_] })
-Test-That 'every POST body equals the payload body, in order' ($want.Count -eq 432 -and $got.Count -eq 432 -and $diff.Count -eq 0) ('want ' + $want.Count + ' got ' + $got.Count + ' first diff at ' + $(if ($diff.Count) { $diff[0] } else { '-' }))
+Test-That 'every POST body equals the payload body, in order' ($want.Count -eq 437 -and $got.Count -eq 437 -and $diff.Count -eq 0) ('want ' + $want.Count + ' got ' + $got.Count + ' first diff at ' + $(if ($diff.Count) { $diff[0] } else { '-' }))
 
 $posts = $global:FakeSP.Posts
 $r = Invoke-T20 ''
 Test-That 'second run: creates nothing and passes' ($r.Code -eq 0 -and $r.Text -match 'CREATED lists=0 fields=0 views=0 view-column requests=115 rows=0' -and $r.Text -match 'items with problems=0') $r.Text
 Test-That 'second run: only the 115 view-column requests are sent again' ($global:FakeSP.Posts -eq $posts + 115)
-Test-That 'second run: same site (199 columns, 18 views with columns, 88 rows)' (((Get-Ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199 -and ((Get-Ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 88 -and @(Get-Ours | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0)
+Test-That 'second run: same site (199 columns, 18 views with columns, 93 rows)' (((Get-Ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199 -and ((Get-Ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 93 -and @(Get-Ours | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0)
 
 $r = Invoke-T20 'Check'
 Test-That 'provisioned site: the check fails with 12 lists' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(12\)') $r.Text
@@ -97,7 +97,7 @@ foreach ($stopAt in 20, 300, 351, 400) {
   $global:FakeSP.FailAfter = 0
   $r2 = Invoke-T20 ''
   $o = Get-Ours
-  Test-That ('stopped after ' + $stopAt + ' requests: the next run completes the site') ($r1.Code -eq 1 -and $r2.Code -eq 0 -and $r2.Text -match 'items with problems=0' -and $o.Count -eq 12 -and (($o | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 88 -and (($o | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199 -and @($o | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0) ($r1.Out[-1] + ' / ' + $r2.Out[-1])
+  Test-That ('stopped after ' + $stopAt + ' requests: the next run completes the site') ($r1.Code -eq 1 -and $r2.Code -eq 0 -and $r2.Text -match 'items with problems=0' -and $o.Count -eq 12 -and (($o | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 93 -and (($o | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199 -and @($o | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0) ($r1.Out[-1] + ' / ' + $r2.Out[-1])
 }
 
 # A list a person made and titled like one of ours is never changed, and the check does not ask to delete it.
