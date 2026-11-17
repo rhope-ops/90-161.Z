@@ -6,7 +6,7 @@
   C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z (replacing older copies), runs the steps,
   and saves its results in Rounds\R28, then opens an Outlook draft with them (never sent; a deploy makes no draft). No download, no admin rights.
 #>
-$buildId = 'bf0bbb8b'
+$buildId = '4ebb6c41'
 $engineRelease = 9
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -1163,7 +1163,7 @@ aWY7Y29sb3I6IzFiMjQzMDttYXJnaW46MzJweCI+PGgxIHN0eWxlPSJjb2xvcjojMGIyNTQ1Ij45MC0x
 L2gxPjxwPlRoZSBsaW5rcyBhcmUgbm90IGhlcmUgeWV0LiBJbiBSQURFLCBydW4gdGhlIHN0ZXAgIlQyMSBNYWtlIHRoZSBwcm9i
 ZSBsaXN0IHI0IiBmaXJzdDogaXQgd3JpdGVzIHRoaXMgcGFnZSB3aXRoIHRoZSBsaW5rcy48L3A+PC9ib2R5PjwvaHRtbD4K
 '@ }
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r2.ps1'; Kind = 'text'; Sha = 'da894b125729'; Data = @'
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r2.ps1'; Kind = 'text'; Sha = 'bab177157380'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 22: the PFM window, preview r2 (round R28). Windows PowerShell 5.1 and Windows Forms only (no module).
@@ -2282,11 +2282,11 @@ $wn.Fills=@{ turn=$pc.accentFill; late=$pc.redTint; soon=$pc.amberTint; ok=$pc.g
 $wn.GridFill={ param($G, $Rows)
 $G.Rows.Clear(); $G.Tag.Shown=@($Rows)
 foreach ($r in @($Rows)) {
-$vals=@(foreach ($c in $G.Tag.Cols) { if ($c.K -eq 'since') { $(if ($wn.Wide -and $c.W -ge 100) { [string]$r.Since + ' ' + $mid + ' ' + [string]$r.Age } else { [string]$r.Age }) } else { [string]$r[$c.N] } })
+$vals=@(foreach ($c in $G.Tag.Cols) { if ($c.K -eq 'since') { $(if ($c.W -ge 100) { [string]$r.Since + ' ' + $mid + ' ' + [string]$r.Age } else { [string]$r.Age }) } else { [string]$r[$c.N] } })
 [void]$G.Rows.Add([object[]]$vals) } }
 $wn.Grid={ param($Parent, $b, [int]$W, $Ctx)
-$cols=$(if ($wn.Wide -and $b.ColsWide) { @($b.ColsWide) } else { @($b.Cols) })
-$rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
+$cols=@($b.Cols); if ($wn.Wide -and $b.ColsWide) { $wf=0; foreach ($c in $b.ColsWide) { $wf += (& $wn.Sc $c.W) }; if ($wf + (& $wn.Sc 137) -le $W) { $cols=@($b.ColsWide) } }
+$fixedMin=$false; $rows=@($b.Rows); $hdrH=& $wn.Sc 33; $rowH=& $wn.Sc 41
 $full=$hdrH + $rowH * $rows.Count + 2; $h=$full
 if ($b.Fill) {
 $used=0; try { $used=[int]$Ctx.Col.PreferredSize.Height } catch { $null=$_ }
@@ -2297,15 +2297,15 @@ $g.AllowUserToAddRows=$false; $g.AllowUserToDeleteRows=$false; $g.AllowUserToRes
 $g.ReadOnly=$true; $g.RowHeadersVisible=$false; $g.MultiSelect=$false; $g.SelectionMode='FullRowSelect'; $g.EnableHeadersVisualStyles=$false
 $g.ColumnHeadersHeightSizeMode='DisableResizing'; $g.ColumnHeadersHeight=$hdrH; $g.RowTemplate.Height=$rowH
 $g.CellBorderStyle='None'; $g.ColumnHeadersBorderStyle='None'; $g.BorderStyle='None'; $g.BackgroundColor=$ui.C.White; $g.GridColor=$pc.line
-$g.AutoSizeColumnsMode='None'; $g.ScrollBars='Vertical'; $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
+$g.AutoSizeColumnsMode='None'; $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' }); $g.DefaultCellStyle.Font=$ui.F.Small; $g.DefaultCellStyle.ForeColor=$ui.C.Ink; $g.DefaultCellStyle.BackColor=$ui.C.White
 $g.DefaultCellStyle.SelectionBackColor=$pc.surface; $g.DefaultCellStyle.SelectionForeColor=$ui.C.Ink
 $g.ColumnHeadersDefaultCellStyle.BackColor=$ui.C.White; $g.ColumnHeadersDefaultCellStyle.ForeColor=$pc.muted; $g.ColumnHeadersDefaultCellStyle.Font=$ui.F.SmallB; $g.ColumnHeadersDefaultCellStyle.SelectionBackColor=$ui.C.White
 $fixed=0; foreach ($c in $cols) { $fixed += (& $wn.Sc $c.W) }
-$scroll=$(if ($full -gt $h) { & $wn.Sc 17 } else { 0 })
+$scroll=$(if ($full -gt $h) { & $wn.Sc 17 } else { 0 }); $fixedMin=($W - $fixed - $scroll -lt (& $wn.Sc 60)); $g.ScrollBars=$(if ($fixedMin) { 'Both' } else { 'Vertical' })
 $kinds=@{}
 foreach ($c in $cols) {
 $dc=New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name=[string]$c.N; $dc.HeaderText=$(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode='NotSortable'
-$dc.Width=$(if ($c.W -eq 0) { [math]::Max((& $wn.Sc 120), $W - $fixed - $scroll) } else { & $wn.Sc $c.W }); [void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
+$dc.Width=$(if ($c.W -eq 0) { [math]::Max((& $wn.Sc 60), $W - $fixed - $scroll) } else { & $wn.Sc $c.W }); [void]$g.Columns.Add($dc); $kinds[[string]$c.N]=[string]$c.K }
 $chipKind=@{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status]=[string]$r.Kind } }
 $g.Tag=@{ Kind=$kinds; Chip=$chipKind; Cols=$cols; Shown=$rows }
 & $wn.GridFill $g $rows
@@ -2339,10 +2339,11 @@ $gr.SmoothingMode='AntiAlias'; $path=[Pfm.Gfx]::Round($rc, ($chh / 2.0)); $br=Ne
 else { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.Small, $tr, $ui.C.Ink, $fl) }
 $e.Handled=$true
 } catch { $null=$_ } })
-$g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.OpenRow $s $e.RowIndex } })
-$g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled=$true; $e.SuppressKeyPress=$true; if ($s.CurrentRow) { & $wn.OpenRow $s $s.CurrentRow.Index } } })
+$g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
+$g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled=$true; $e.SuppressKeyPress=$true; if ($s.CurrentRow) { & $wn.Later $s $s.CurrentRow.Index } } })
 [void]$Parent.Controls.Add($g); $g.ClearSelection(); $wn.Gridsel=$g
 if ($b.Count) { $wn.CountText=[string]$b.Count; $wn.CountBox=& $wn.Txt $Parent ($b.Count -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq=$g } }
+$wn.Later={ param($G, [int]$I) $wn.PendG=$G; $wn.PendI=$I; [void]$form.BeginInvoke([Action]{ & $wn.OpenRow $wn.PendG $wn.PendI }) }
 $wn.OpenRow={ param($G, [int]$I)
 $r=@($G.Tag.Shown)[$I]
 if ($r -and $r.Go) { & $wn.Press @{ Go=[string]$r.Go; Text='Open' } } }
@@ -2451,7 +2452,7 @@ try {
 if ($wn.BoundsFile -and (Test-Path -LiteralPath $wn.BoundsFile)) {
 $j=Get-Content -LiteralPath $wn.BoundsFile -Raw | ConvertFrom-Json
 $r=New-Object System.Drawing.Rectangle([int]$j.Left, [int]$j.Top, [int]$j.Width, [int]$j.Height)
-foreach ($sc in [Windows.Forms.Screen]::AllScreens) { $ix=[Drawing.Rectangle]::Intersect($sc.WorkingArea, $r); if ($ix.Width -ge (& $wn.Sc 200) -and $ix.Height -ge (& $wn.Sc 120)) { $ok=$true } }
+$tl=[Drawing.Point]::new($r.X + (& $wn.Sc 40), $r.Y + (& $wn.Sc 10)); foreach ($sc in [Windows.Forms.Screen]::AllScreens) { if ($sc.WorkingArea.Contains($tl)) { $ok=$true } }
 if ($ok -and $r.Width -ge (& $wn.Sc 400) -and $r.Height -ge (& $wn.Sc 300)) { $form.StartPosition='Manual'; $form.Bounds=$r; if ([string]$j.State -eq 'Maximized') { $form.WindowState='Maximized' } } else { $ok=$false } }
 } catch { $ok=$false }
 if (-not $ok) {
@@ -2476,7 +2477,9 @@ $wn.SizeTimer.Add_Tick({ $wn.SizeTimer.Stop()
 if ($form.ClientSize.Width -ne $wn.LastW -or $form.ClientSize.Height -ne $wn.LastH) { $wn.LastW=$form.ClientSize.Width; $wn.LastH=$form.ClientSize.Height; & $wn.RailLayout; & $wn.Show $wn.Cur } })
 $ui.Trash=@($ui.Trash) + @($wn.CheckTimer, $wn.SizeTimer)
 $wn.ScrollCheck={
-$logicalW=[int]($form.ClientSize.Width / ([math]::Max(1, (& $wn.Sc 1))))
+$st=New-Object System.Collections.Stack; $st.Push($page)
+while ($st.Count) { foreach ($c in $st.Pop().Controls) { if ($c -is [Windows.Forms.DataGridView]) { $sum=0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width } }; if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' + $c.ClientSize.Width) } } elseif ($c.Controls.Count) { $st.Push($c) } } }
+$logicalW=[int]($form.ClientSize.Width / ([math]::Max(0.5, $ui.Dpi / 96.0)))
 if ($logicalW -ge 1280 -and $main.HorizontalScroll.Visible) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' the main column scrolls sideways at ' + $form.ClientSize.Width + 'x' + $form.ClientSize.Height) }
 if ($main.VerticalScroll.Visible) { $wn.Scrolled[$wn.Cur]=1 } }
 $wn.Scrolled=@{}
@@ -3414,7 +3417,7 @@ $steps += @{ Name = 'T24 Clean up r1'; Title = ''; Dir = 'T24'; File = '90161Z-T
 $steps += @{ Name = 'T21 Remove the person, list and library r4'; Title = ''; Dir = 'T21'; File = '90161Z-T21-probe-r4.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Clean -Label last'; Note = 'Signs in (CAC). Removes the second person from Visitors, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are. Each removal runs even when an earlier one fails.' }
 $steps += @{ Name = 'T21 Remove the health flow and solution r4'; Title = ''; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You delete the health flow and the solution "90-161.Z probe health". About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. On this RADE card, select "Open in browser".', '2. On the left, select Solutions (it can be under More).', '3. Select the solution "90-161.Z probe health".', '4. Select the three dots beside the flow "90161Z T21 Probe Health r4".', '5. Select "Delete from this environment".', '6. Select Delete.', '7. Select the Back arrow at the top left to return to the list of solutions.', '8. Select the three dots beside "90-161.Z probe health".', '9. Select "Delete from this environment".', '10. Select Delete.', 'If a flow or the solution is not in the list: skip it. If one does not delete: select "It failed".'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T21-removed-health.txt'; Estimate = 300; DoneText = 'Done: removed'; DoneLog = 'Confirmed by you: removed.'; Makes = @(); After = @(); Optional = $false; Help = '' }
 $steps += @{ Name = 'T21 Remove the button flow and solution r4'; Title = ''; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You delete the button flow you made and the solution "90-161.Z probe button". About 3 minutes (estimate).'; Kind = 'guide'; Guide = @('1. On the left, select Solutions (it can be under More).', '2. Select the solution "90-161.Z probe button".', '3. Select the three dots beside the flow "90161Z T21 Probe Button hand r4".', '4. Select "Delete from this environment".', '5. Select Delete.', '6. Select the Back arrow at the top left to return to the list of solutions.', '7. Select the three dots beside "90-161.Z probe button".', '8. Select "Delete from this environment".', '9. Select Delete.', 'If a flow or the solution is not in the list: skip it. If one does not delete: select "It failed".'); Url = ''; UrlConfig = ''; Marker = '90161Z-T21-removed.txt'; Estimate = 300; DoneText = 'Done: removed'; DoneLog = 'Confirmed by you: removed.'; Makes = @(); After = @(); Optional = $false; Help = '' }
-$steps += @{ Name = 'R28 Install check: RADE copy and desktop icon'; Title = ''; Dir = 'T22'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'RADE saves its own copy and a desktop icon when this install ends. Nothing else is installed. About 1 minute (estimate).'; Kind = 'guide'; Guide = @('1. Look at your desktop for the shortcut RADE (it may be there already).', '2. Select "Done: installed".', 'If there is no shortcut RADE on the desktop: select It failed and type No shortcut.'); Url = ''; UrlConfig = ''; Marker = '90161Z-R28-install-checked.txt'; Estimate = 60; DoneText = 'Done: installed'; DoneLog = 'Confirmed by you: install check.'; Makes = @(); After = @(); Optional = $false; Help = '' }
+$steps += @{ Name = 'R28 Install check: RADE copy and desktop icon'; Title = ''; Dir = 'T22'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'RADE saves its own copy and makes the desktop shortcut RADE after you select Done. Nothing else is installed. A question in the test round asks if the shortcut worked. About 1 minute (estimate).'; Kind = 'guide'; Guide = @('1. Select "Done: installed".'); Url = ''; UrlConfig = ''; Marker = '90161Z-R28-install-checked.txt'; Estimate = 60; DoneText = 'Done: installed'; DoneLog = 'Confirmed by you: install check.'; Makes = @(); After = @(); Optional = $false; Help = '' }
 $collect = @()
 $collect += @{ Dir = 'T17'; Name = '90161Z-T17-import-log-r2.txt'; Step = 'T17 Import log reader r2' }
 $collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-clean-first-r4.txt'; Step = 'T21 Remove the R27 person, list and library' }

@@ -1186,11 +1186,9 @@
           "kind": "guide",
           "dir": "T22",
           "file": "",
-          "note": "RADE saves its own copy and a desktop icon when this install ends. Nothing else is installed. About 1 minute (estimate).",
+          "note": "RADE saves its own copy and makes the desktop shortcut RADE after you select Done. Nothing else is installed. A question in the test round asks if the shortcut worked. About 1 minute (estimate).",
           "guide": [
-            "1. Look at your desktop for the shortcut RADE (it may be there already).",
-            "2. Select \"Done: installed\".",
-            "If there is no shortcut RADE on the desktop: select It failed and type No shortcut."
+            "1. Select \"Done: installed\"."
           ],
           "marker": "90161Z-R28-install-checked.txt",
           "doneText": "Done: installed",
