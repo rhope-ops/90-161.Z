@@ -12,9 +12,11 @@ On the gov device the task script zips the entries back into 90161Z-T23-app-file
 file is byte for byte the entries pac made. The .msapp itself is not in the repo: the personal-data guard cannot scan a
 binary file, and its skip list is the PFM's to change.
 Run: PAC=<dir>/pac python3 scripts/build_test_app.py. Never hand-edit the output: change the source and run this again.
+--check (no pac needed; tests/run.sh): each part in the task script must match its SHA-256, and the screen text must be there.
 """
 import hashlib
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -92,7 +94,19 @@ def pack(pac, out):
     subprocess.run([pac, 'canvas', 'pack', '--sources', str(SRC), '--msapp', str(out)], check=True, stdout=subprocess.DEVNULL)
 
 
+def check():
+    text = OUT.read_text()
+    parts = re.findall(r"@\{ Name = '([^']+)'; Sha = '([0-9a-f]{64})'; Text = \(@\(\n(.*?)\n  \) -join", text, re.S)
+    bad = [n for n, sha, rows in parts
+           if hashlib.sha256('\n'.join(r.strip().rstrip(',')[1:-1] for r in rows.split('\n')).encode('ascii')).hexdigest() != sha]
+    ok = len(parts) >= 3 and not bad and '90-161.Z test app' in text
+    print('TESTAPP parts=%d bad=%d%s' % (len(parts), len(bad), '' if ok else ' FAIL ' + ','.join(bad)))
+    return 0 if ok else 1
+
+
 def main():
+    if '--check' in sys.argv[1:]:
+        sys.exit(check())
     pac = os.environ.get('PAC', 'pac')
     with tempfile.TemporaryDirectory() as tmp:
         app = Path(tmp) / APP

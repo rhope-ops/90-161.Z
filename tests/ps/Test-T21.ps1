@@ -259,6 +259,13 @@ Test-That 'Person: added to Visitors yes, exit 0, last line' ($r.Code -eq 0 -and
 Test-That 'Person: the state file holds only 3 numbers or flags (no address, no name)' ($stateText -match '(?m)^UserId=31\r?$' -and $stateText -match '(?m)^GroupId=7\r?$' -and $stateText -match '(?m)^WasMember=no\r?$' -and $stateText -notmatch '@|fake|person') $stateText
 Test-That 'Person: the address is not in the screen lines, the result file or the state file' ($r.Text -notmatch 'second\.person|fake\.example|@' -and $r.File -notmatch 'second\.person|fake\.example|@') $r.Text
 Test-That 'Person: the clipboard step is a test-run note' ($r.Text -match 'p4-link INFO the link of the new row form is on the clipboard=no \(test run\)')
+# Review 17 Nov 26: a second run must keep "added by this test", so Clean still removes the person.
+$r = Invoke-T21 'Person'; Note $r
+Test-That 'Person run again: the state file still says WasMember=no and the person counts as added' ((Get-Content -LiteralPath $state -Raw) -match '(?m)^WasMember=no\r?$' -and $r.Text -match 'added to Visitors: yes') $r.Text
+$env:T21_TEST_ADDRESS = 'member.person@fake.example'; $global:F.GroupUsers[7] = @(3, 4, 31, 32)
+$r = Invoke-T21 'Person'; Note $r
+Test-That 'Person run again with another person: refused, the first record kept' ((Get-Content -LiteralPath $state -Raw) -match '(?m)^UserId=31\r?$' -and $r.Text -match 'added to Visitors: no' -and $r.Text -match 'run the Clean part first') $r.Text
+$env:T21_TEST_ADDRESS = $fakeAddr; $global:F.GroupUsers[7] = @(3, 4, 31)
 $env:T21_TEST_ADDRESS = 'member.person@fake.example'; $global:F.GroupUsers[7] = @(3, 4, 32); Remove-Item -LiteralPath $state
 $r = Invoke-T21 'Person'; Note $r
 Test-That 'Person: a person who is a member already is not added again and is marked' ($r.Text -match 'added to Visitors: no; status: already a member' -and $global:F.Added -eq 1 -and ((Get-Content -LiteralPath $state -Raw) -match 'WasMember=yes') -and $r.Out[-1] -eq 'PROBE Person done: passed=3 failed=0') $r.Text
