@@ -100,7 +100,7 @@ function Add-PnPView {
 }
 function Add-PnPGroupMember {
   [CmdletBinding()] param([string]$LoginName, $Group)
-  if ($global:F.AddRefused) { throw 'FAKE 403: access denied for a person' }
+  if ($global:F.AddRefused) { throw ('FAKE 403: access denied for ' + $LoginName + ' (getbyemail(''' + ($LoginName -replace '^.*\|', '' -replace '@', '%40') + '''))') }
   if ($LoginName -notmatch '^i:0#\.f\|membership\|(.+)$') { throw 'FAKE: the login name has the wrong form' }
   if (-not $global:F.Users.ContainsKey($Matches[1])) { throw 'FAKE 404: no such user' }
   $g = [int]$Group
@@ -276,9 +276,9 @@ $global:F.NoGetByEmail = $true
 $env:T21_TEST_ADDRESS = 'not an address'
 $r = Invoke-T21 'Person'; Note $r
 Test-That 'Person: no valid address: no' ($r.Text -match 'added to Visitors: no; status: no valid address was given' -and -not (Test-Path -LiteralPath $state)) $r.Text
-$env:T21_TEST_ADDRESS = $fakeAddr; $global:F.AddRefused = $true; $global:F.GroupUsers[7] = @(3, 4)
+$env:T21_TEST_ADDRESS = "odd'second.person@fake.example"; $global:F.Users["odd'second.person@fake.example"] = 31; $global:F.AddRefused = $true; $global:F.GroupUsers[7] = @(3, 4)   # an apostrophe: the masking must take the whole address (review 17 Nov 26)
 $r = Invoke-T21 'Person'; Note $r
-Test-That 'Person: a refused add: no, status without identity, state kept for Clean' ($r.Code -eq 0 -and $r.Text -match 'added to Visitors: no; status: the add was refused: ' -and (Test-Path -LiteralPath $state) -and $r.Text -notmatch 'second\.person') $r.Text
+Test-That 'Person: a refused add: no, status without identity, state kept for Clean' ($r.Code -eq 0 -and $r.Text -match 'added to Visitors: no; status: the add was refused: ' -and (Test-Path -LiteralPath $state) -and $r.Text -notmatch "odd'|second\.person|fake\.example|%40|@" -and $r.File -notmatch "odd'|second\.person|fake\.example|%40|@") $r.Text
 $global:F.AddRefused = $false; Remove-Item -LiteralPath $state
 $global:F.Visitors = 0
 $r = Invoke-T21 'Person'; Note $r

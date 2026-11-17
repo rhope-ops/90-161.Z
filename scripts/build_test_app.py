@@ -99,8 +99,9 @@ def check():
     parts = re.findall(r"@\{ Name = '([^']+)'; Sha = '([0-9a-f]{64})'; Text = \(@\(\n(.*?)\n  \) -join", text, re.S)
     bad = [n for n, sha, rows in parts
            if hashlib.sha256('\n'.join(r.strip().rstrip(',')[1:-1] for r in rows.split('\n')).encode('ascii')).hexdigest() != sha]
-    ok = len(parts) >= 3 and not bad and '90-161.Z test app' in text
-    print('TESTAPP parts=%d bad=%d%s' % (len(parts), len(bad), '' if ok else ' FAIL ' + ','.join(bad)))
+    names = len(re.findall(r"@\{ Name = '", text))   # every part must match the pattern, so none is skipped (review 17 Nov 26)
+    ok = len(parts) >= 3 and len(parts) == names and not bad and '90-161.Z test app' in text
+    print('TESTAPP parts=%d of %d bad=%d%s' % (len(parts), names, len(bad), '' if ok else ' FAIL ' + ','.join(bad)))
     return 0 if ok else 1
 
 
