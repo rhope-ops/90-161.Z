@@ -1,6 +1,6 @@
 # Next prompt: 90-161.Z
 
-Updated 2026-11-18 (kit 2026.11.20.1 sync). Short by the session-load cap; full open items: [docs/reviews/2026-11-18-handoff-detail.md](reviews/2026-11-18-handoff-detail.md).
+Updated 2026-11-18 (kit 2026.11.20.2 sync). Short by the session-load cap; full open items: [docs/reviews/2026-11-18-handoff-detail.md](reviews/2026-11-18-handoff-detail.md).
 
 ## Open
 
