@@ -1,24 +1,24 @@
 {
- "commit": "fecf36dc55f5419e3d29a0e03d20dba751287a33",
+ "commit": "7b80101941a72a855992266529cfe6447ef7aee4",
  "files": {
   ".claude/agents/reviewer.md": "f292002028f1cebea6adb82c327d7c73a5730f51baba04d54a9cb081f09c8ecc",
   ".claude/agents/scout.md": "ca159180066f41d534b545518adbbdf357d198e8a680a3396413224b34e84511",
   ".claude/agents/worker.md": "e13b005c668e40459b0c11d718529e83caeae5307282a4c724799f543f523d81",
-  ".claude/rule-tests.md": "3da3838243180bb5c70f9157f60dccd5ea125fbab877b37fd2d2888ec6cd92c5",
+  ".claude/rule-tests.md": "f1ab70d8d6ec9427bc9f2bdef4cbef08d863d246c6b4d085bcb7a0bd1ca645be",
   ".claude/skills/audit/SKILL.md": "b05f37a2a2eb343edb6c3fb8ded8d5de3bb851098c76abbf39da74c833beba6f",
   ".claude/skills/data-change/SKILL.md": "c7f863d4f61c5cb0b9f2d64118ea07cdb460ccb60eeb3cfdbcacf5a8b08d9cd0",
   ".claude/skills/delegate/SKILL.md": "b17176e4bdc154b5634f4762f150202f67d50636f1d024e45d8a03882f01ab2c",
-  ".claude/skills/deliver/SKILL.md": "b784e51e77d102e4b77d6edfb8445c257b25fb52b3cbd8a5ac47cd254528dd8e",
+  ".claude/skills/deliver/SKILL.md": "4fa689e58749809381ec4cb0e6d5adabfdd3230307c05e0cfb8a9d3644a4a987",
   ".claude/skills/efficiency/SKILL.md": "2497e0ea956bce53b5aa663b27a0416f6f9cb550bcc45467da79c8d981b01779",
   ".claude/skills/handoff/SKILL.md": "9dbcfceeb7718e8d8cce7bd2326bb50c9d4480f9642809dc2a337aa6e941d937",
-  ".claude/skills/kit-update/SKILL.md": "d0caad515c0332bd34651cc7296f60b3eaedb6572af4210ac4fabfe9751b22e9",
+  ".claude/skills/kit-update/SKILL.md": "e7fa3574dfc59d50bf2c02c617e7ee90a93b7b9107c03e49e816e5c99a9c4181",
   ".claude/skills/personal-data/SKILL.md": "62e90b92d145ae703bb18406f736b223a0249ed11f57d0c24de50e222de8521c",
   ".claude/skills/project-log/SKILL.md": "35426396c7a260fc26432203345071a0c29e960ed6106116754ad2de1306ca31",
   ".claude/skills/rule-change/SKILL.md": "e822748f5d96f741ac5911ba04a8fe9149f64628ee92cdf5fe0585b70ecf4b3b",
   ".claude/skills/verify/SKILL.md": "1a9df84a627645f21b6470981e4c411ca46afbebaf1b0854ce0702ba05c16d69",
   ".claude/skills/verify/measure.mjs": "7558802e88715bd8624ff2252280ef6c088b70d995422be88d3d8829935eb102",
   ".github/workflows/check.yml": "db8ddfc19a6cedc954e89782416c46e8874602c710c3825264ff5f435b1f32a6",
-  "AGENTS.md (kit sections)": "395fa6c6e81c4d20a1fbc6aad37d93a6c0ef87d3049409aaab968722af01bd17",
+  "AGENTS.md (kit sections)": "a01de145c1e5d3bd23f914cc85ab895e9456a7ed9c841c6f53ec0542ac69efcb",
   "docs/code-standard.md": "cefd7125ce135d7393f0a35fc1d5d4334294129c60373d9c241195e7e59f1b49",
   "scripts/bloat_check.py": "c97a91d0a7bf03940040408b432c6e871e825fad4732bf89f26da530f96d254c",
   "scripts/bloat_check_rules.py": "6ee6dd88b326b6d40b261d16b17e5e83618eef5c19c19a72104cc8ca815dc1ff",
@@ -50,5 +50,5 @@
  },
  "kit": "archimedes_lever",
  "overrides": [],
- "version": "1.0.1"
+ "version": "2.0.0"
 }

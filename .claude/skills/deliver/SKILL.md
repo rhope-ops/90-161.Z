@@ -13,10 +13,11 @@ AGENTS.md "Delivery", "Checks" and "Fresh review" hold the rules; this file hold
 2. Push. The pre-push hook runs the fast lane.
 3. Open a pull request for the branch (one per branch). Name its merge lane in the text.
 4. Make it green: run the full lane one time on the head commit (`scripts/check.sh`), wait for the pull-request Action, and for lanes B and C get the fresh review on that head commit.
-5. Merge by lane, with a merge commit. If the base moved, update the branch by merge first; a conflict with another session's work goes to the PFM.
+5. Before a merge, list the repository's open pull requests; AGENTS.md "Git history" says whose pull request you may merge. Merge by lane, with a merge commit. If the base moved, update the branch by merge first; a conflict with another session's work goes to the PFM.
 6. Verify: `git fetch origin main && git merge-base --is-ancestor <commit> origin/main`.
 7. Republish the affected artifacts. Delete previews after they ship.
 8. Clean up branches (below). Report with the states kept apart: done, published, verified.
+9. In the kit repo, after a kit release merges: the kit owner (named in docs/KIT_HANDOFF.md) opens the sync pull request in each synced repo (`.claude/skills/kit-update/SKILL.md`) and updates that repo's row on the fleet page that KIT_HANDOFF names.
 
 ## Merge lanes
 
