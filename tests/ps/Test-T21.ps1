@@ -380,9 +380,14 @@ Remove-Item Env:T21_TEST_ADDRESS
 New-Site
 $r = Invoke-T21 'Person'; Note $r
 Test-That 'Person without the list: STOPPED and exit 1' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LIST not found') $r.Text
+# The script must stop with a plain line when its address window cannot open. On Windows the window opens and waits for a
+# person, so here the test stands in for a computer where it cannot: a function named Add-Type that fails hides the real
+# command while this one case runs (the script runs in this process), and is removed after it. No task script is changed.
 New-Site; $null = Invoke-T21 'Make'
-$r = Invoke-T21 'Person'; Note $r
-Test-That 'Person in RADE with no window and no test address: STOPPED, nothing added' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: ADDRESS window not available|STOPPED: ' -and $global:F.Added -eq 0 -and -not (Test-Path -LiteralPath $state)) $r.Text
+# Stand-in for the real Add-Type during this one case: it fails, as on a computer that cannot open the window. Takes nothing.
+function Add-Type { throw 'TEST: no window on this computer' }
+try { $r = Invoke-T21 'Person'; Note $r } finally { Remove-Item -LiteralPath Function:\Add-Type }
+Test-That 'Person in RADE with no window and no test address: STOPPED, nothing added' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: ADDRESS window not available' -and $global:F.Added -eq 0 -and -not (Test-Path -LiteralPath $state)) $r.Text
 
 # ---- Run ----
 New-Site; $null = Invoke-T21 'Make'
