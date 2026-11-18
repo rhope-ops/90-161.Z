@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-18 | Dependabot alerts (45, all build/test): Pillow 13.0.0 and npm override image-size 2.0.3 approved (one lane B PR). Scope: requirements.txt, package.json, lockfile. | PFM | [dev-setup](dev-setup.md) |
+| 2026-11-18 | Dependabot alerts (45, build/test only): Pillow 13.0.0 and npm override image-size 2.0.3. Scope: requirements.txt, package.json, lockfile. | PFM | [dev-setup](dev-setup.md) |
 | 2026-11-18 | Bundle revisions (the PFM approved the agent REC "from R30 on, raise the revision on every rebuild"): a bundle on main never changes; scripts/bundle_revision.py checks it and bump_lock.py raises revisions before its rebuild. Cause: two R29 r6 builds (engine-v15, then v16) under one name. | PFM | .claude/skills/round/SKILL.md section 4 |
 | 2026-11-18 | "No kit sync" Project rule removed (exact text shown); the kit Default "Kit files" replaces it. Merge of the kit-sync PR approved (lane C). | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
 | 2026-11-18 | Kit 1.0.1 by sync (tag v1.0.1 = fecf36d, via 2026.11.20.2; first sync). Project code and text moved to extension files and docs. Replaces the 2026-11-15 "No kit sync" row. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
