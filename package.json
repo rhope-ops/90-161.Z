@@ -1,0 +1,10 @@
+{
+  "name": "90-161.z-build",
+  "private": true,
+  "description": "Node packages the builds use (docs/dev-setup.md step 4). Install: npm ci --ignore-scripts",
+  "dependencies": {
+    "docx": "9.7.1",
+    "jszip": "3.10.2",
+    "pptxgenjs": "3.12.0"
+  }
+}

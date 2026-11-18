@@ -5,3 +5,4 @@ CLAUDE.local.md
 __pycache__/
 .rade-cache/
 assets/logo/build/
+node_modules/
