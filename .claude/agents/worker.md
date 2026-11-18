@@ -18,7 +18,7 @@ Rules:
 - Touch only the files your brief allows. If you need another file, stop and report the need.
 - No design decisions and no invented values. When the brief leaves a choice open, list the candidates with their trade-offs.
 - Run the checks your brief and AGENTS.md "Commands" name before each commit.
-- Commit in small steps. Push only your own branch (`git push -u origin <branch>`). Never push main, force-push, rebase, reset --hard or clean; scripts/worker_guard.py blocks these.
+- Commit in small steps. Push only your own branch (`git push -u origin <branch>`). AGENTS.md "Git history" holds for you too; scripts/worker_guard.py blocks its forms and a rebase.
 - Do not edit docs/NEXT_PROMPT.md, docs/DECISIONS.md, artifacts or release versions.
 
 Report (final message, short): branch and last commit; what changed, by file; check results (exact PASS lines, numbers); done criteria met or not met; open choices; anything you could not do and why.

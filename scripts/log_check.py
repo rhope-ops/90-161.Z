@@ -18,6 +18,9 @@ Checks (each failure prints FILE:LINE: message):
 Exit 0 and "LOG CHECK PASS: N rows" when clean, exit 1 with the findings otherwise.
 It does not judge whether a row's type or text is right; that stays a human review.
 Standard library only. It reads files only; it never writes.
+Network: none.
+Writes: none (the self-test: temporary files).
+Credentials: none.
 """
 import argparse
 import datetime as dt
@@ -48,7 +51,14 @@ def cells(line):
 
 
 def tables(text):
-    """Return {heading: (header_line_no, header_cells, [(line_no, cells), ...])} for the first table under each ## heading."""
+    """Return {heading: (header_line_no, header_cells, [(line_no, cells), ...])} for the first table under each ## heading.
+
+    Args:
+        text: the text of a log file.
+
+    Returns:
+        A dict {heading: (header line number, header cells, [(line number, cells)])}.
+    """
     out, heading, i = {}, None, 0
     lines = text.splitlines()
     while i < len(lines):
@@ -72,7 +82,14 @@ def tables(text):
 
 
 def valid_when(value):
-    """True when a When cell is a real date and time, or a range that does not run backwards."""
+    """True when a When cell is a real date and time, or a range that does not run backwards.
+
+    Args:
+        value: the text of a When cell.
+
+    Returns:
+        True or False.
+    """
     m = WHEN_RE.match(value)
     if not m:
         return False
@@ -89,7 +106,16 @@ def valid_when(value):
 
 
 def check_arcs(p, table, found):
-    """Check the Arcs table; return ({arc: line_no}, [(line_no, arc, turning point)]) and add findings to found."""
+    """Check the Arcs table; return ({arc: line_no}, [(line_no, arc, turning point)]) and add findings to found.
+
+    Args:
+        p: the path of the log file, for the findings.
+        table: the Arcs table, as tables() gives it.
+        found: the list of findings, added to in place.
+
+    Returns:
+        ({arc: line number}, [(line number, arc, turning point)]).
+    """
     arcs, turns = {}, []
     ln, head, rows = table
     if head != ARC_COLS:
@@ -111,7 +137,17 @@ def check_arcs(p, table, found):
 
 
 def check_log_rows(p, rows, arcs, found):
-    """Check each Log row; return (arcs used, row numbers) and add findings to found."""
+    """Check each Log row; return (arcs used, row numbers) and add findings to found.
+
+    Args:
+        p: the path of the log file, for the findings.
+        rows: the rows of the Log table, each (line number, cells).
+        arcs: the arcs of the Arcs table {arc: line number}.
+        found: the list of findings, added to in place.
+
+    Returns:
+        (the set of arcs the rows use, the set of row numbers).
+    """
     used, last, nums = set(), None, set()
     for ln, c in rows:
         if len(c) != len(LOG_COLS):
@@ -144,7 +180,14 @@ def check_log_rows(p, rows, arcs, found):
 
 
 def check(path):
-    """Return (row_count, [finding, ...]) for one log file."""
+    """Return (row_count, [finding, ...]) for one log file.
+
+    Args:
+        path: the path of the log file.
+
+    Returns:
+        (the number of Log rows, the list of findings).
+    """
     p = pathlib.Path(path)
     found = []
     try:
@@ -199,11 +242,21 @@ GOOD = """# Project log: Demo
 
 
 def self_test():
-    """Check GOOD and one broken copy per rule; prints one line per case and LOG CHECK TEST PASS or FAIL."""
+    """Check GOOD and one broken copy per rule; prints one line per case and LOG CHECK TEST PASS or FAIL.
+
+    Returns:
+        The exit code: 0 pass, 1 fail.
+    """
     ok = True
 
     def expect(name, text, want):
-        """Check text as a log file: want None = no findings, else a finding that contains want."""
+        """Check text as a log file: want None = no findings, else a finding that contains want.
+
+        Args:
+            name: the name of the case, for its result line.
+            text: the text of the sample log file.
+            want: None for no findings, else a text one finding must contain.
+        """
         nonlocal ok
         with tempfile.TemporaryDirectory() as d:
             f = pathlib.Path(d, "LOG.md")
@@ -228,7 +281,8 @@ def self_test():
     expect("wrong columns", GOOD.replace("| Evidence | Result |", "| Test / evidence | Result |"), "Log columns")
     expect("older header 'When (CT)' passes", GOOD.replace("| # | When |", "| # | When (CT) |"), None)
     expect("no arcs table", GOOD.split("## Arcs")[0] + "## Log" + GOOD.split("## Log")[1], "no table under '## Arcs'")
-    expect("old 4-column Arcs table", GOOD.replace("| Arc | Span | Summary | Problem | Turning point | Outcome | Lesson |", "| Arc | Span | Summary | Outcome |"), "add Problem, Turning point and Lesson")
+    expect("old 4-column Arcs table", GOOD.replace("| Arc | Span | Summary | Problem | Turning point | Outcome | Lesson |",
+                                                   "| Arc | Span | Summary | Outcome |"), "add Problem, Turning point and Lesson")
     expect("short Arcs row", GOOD.replace("| setup | 2026-11-10 | Start. | - | - | Ready | - |", "| setup | 2026-11-10 | Start. | Ready |"), "4 cells in Arcs row")
     expect("turning point names a missing row", GOOD.replace("#2 found", "#9 found"), "Turning point #9 is not a log row")
     expect("turning point without a row", GOOD.replace("#2 found the cause", "found the cause"), "must name a log row")
@@ -237,7 +291,11 @@ def self_test():
 
 
 def main():
-    """Check each log file named (default docs/LOG.md); print the findings and LOG CHECK PASS or FAIL."""
+    """Check each log file named (default docs/LOG.md); print the findings and LOG CHECK PASS or FAIL.
+
+    Returns:
+        The exit code: 0 pass, 1 when a log has findings.
+    """
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("files", nargs="*", default=["docs/LOG.md"])
     ap.add_argument("--test", action="store_true", help="run the self-test")

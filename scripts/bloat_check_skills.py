@@ -5,12 +5,22 @@ check stays under the 600-line cap of docs/code-standard.md C4).
 Input: the repo root; it reads each .claude/skills/*/SKILL.md and AGENTS.md. Output: FAIL lines (no frontmatter, no
 name or description, a name that differs from its folder), indented WARN lines (description start or length, file
 length, orphan skill) and the last line SKILLS PASS or SKILLS FAIL; exit 1 on a FAIL. Standard library only.
+Network: none.
+Writes: none.
+Credentials: none.
 """
 import re
 
 
 def skill_frontmatter(text):
-    """Returns {key: value} of the YAML frontmatter (simple `key: value`, indented continuation lines), or None."""
+    """Returns {key: value} of the YAML frontmatter (simple `key: value`, indented continuation lines), or None.
+
+    Args:
+        text: the text of a SKILL.md file.
+
+    Returns:
+        A dict {key: value}, or None when the file has no frontmatter.
+    """
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return None
@@ -33,7 +43,14 @@ def skill_frontmatter(text):
 
 
 def skills_report(root):
-    """Returns (lines, fails, warns, count) for .claude/skills/*/SKILL.md."""
+    """Returns (lines, fails, warns, count) for .claude/skills/*/SKILL.md.
+
+    Args:
+        root: the repo root (a Path).
+
+    Returns:
+        (lines to print, the number of FAIL lines, the number of WARN lines, the number of skills).
+    """
     files = sorted((root / ".claude/skills").glob("*/SKILL.md"))
     texts = {f.parent.name: f.read_text(encoding="utf-8", errors="replace") for f in files}
     agents = (root / "AGENTS.md").read_text(encoding="utf-8", errors="replace") if (root / "AGENTS.md").is_file() else ""
@@ -75,3 +92,57 @@ def main_skills(root):
     print("\n".join(rows + [f"SKILLS FAIL: {fails} skill(s) malformed, {n} skills, {warns} warnings" if fails
                            else f"SKILLS PASS: {n} skills, {warns} warnings"]))
     return 1 if fails else 0
+
+
+def listing_bytes(root):
+    """Bytes of the names and descriptions of .claude/skills/*/SKILL.md and .claude/agents/*.md: Claude Code puts
+    them in every session's context, so they count toward the session load."""
+    total = 0
+    for f in sorted((root / ".claude/skills").glob("*/SKILL.md")) + sorted((root / ".claude/agents").glob("*.md")):
+        fm = skill_frontmatter(f.read_text(encoding="utf-8", errors="replace")) or {}
+        total += len((fm.get("name", "") + fm.get("description", "")).encode())
+    return total
+
+
+# One home per rule (the PFM, 2026-11-18): a rule that AGENTS.md states must not be stated again, or the other
+# way round, in a skill or an agent file; those files link to it. Each row: (the rule, a pattern that shows a
+# second statement, the files that may hold it). A match in any other skill or agent file fails scripts/check.sh.
+SINGLE_HOME = [
+    ("who merges a pull request", r"only the PFM merges|the PFM merges\b|never merges this pull request|the PFM's merge is the approval", ["AGENTS.md"]),
+    ("no direct push to main", r"merge to main by merge|\bPush main:|git checkout main && git merge|push to main and republish", ["AGENTS.md"]),
+    ("the end-of-turn summary format", r"end-of-turn summary line:", ["AGENTS.md"]),
+    # The hard rules (AGENTS.md "Hard rules", 2026-11-18). A pointer such as (AGENTS.md "Hard rules") or a description
+    # of what a hook blocks has no "never ..." sentence and passes.
+    ("hard rule: git history",
+     r"\bnever (?:force[- ]?push|rebase\b|reset\b|stash\b|(?:git )?clean\b(?! up)|rewrite published history|discard work)"
+     r"|\bnever push\b[^.\n]*(?:--no-verify|\bmain\b|default branch)", ["AGENTS.md"]),
+    ("hard rule: guards and checks",
+     r"\bnever (?:weaken a (?:check|hook|test|guard)|skip a (?:check|test)|repin\b|add an? (?:allow|skip|exemption)"
+     r"|edit a generated report)", ["AGENTS.md"]),
+    ("hard rule: rule text approval", r"\b(?:is|are) not approval\b", ["AGENTS.md"]),
+    ("hard rule: the fresh review tier", r"tier no lower than|never review with a lower tier", ["AGENTS.md"]),
+]
+
+
+def second_homes(root, table=None):
+    """Problems for each SINGLE_HOME rule found in a skill or agent file that is not its home.
+
+    Args:
+        root: the repo root (a folder path).
+        table: the rules to look for, as (label, pattern, home files); None = SINGLE_HOME.
+
+    Returns:
+        One problem line for each place found.
+    """
+    files = sorted((root / ".claude/skills").glob("*/SKILL.md")) + sorted((root / ".claude/agents").glob("*.md"))
+    out = []
+    for label, pattern, homes in (SINGLE_HOME if table is None else table):
+        rx = re.compile(pattern, re.IGNORECASE)
+        for f in files:
+            rel = f.relative_to(root).as_posix()
+            if rel in homes:
+                continue
+            for n, line in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                if rx.search(line):
+                    out.append(f"second home of a rule: {rel}:{n} states \"{label}\"; its home is {homes[0]}: link to it")
+    return out

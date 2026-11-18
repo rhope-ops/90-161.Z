@@ -1,11 +1,11 @@
 ---
 name: delegate
-description: Use before you delegate work to a subagent, run more than one agent, write an agent brief, pick a model for a task, or review and merge a worker's branch. Gives the agents (scout, worker, reviewer), model routing by tier, the brief format, review and merge steps, lanes, and fallbacks for claude.ai chat.
+description: Use before you delegate work to a subagent, run more than one agent, write an agent brief, pick a model for a task, or review and merge a worker's branch. Gives the agents, model routing, the brief format and the merge steps.
 ---
 
 # Orchestration: more than one agent
 
-AGENTS.md "Delegation" points here. Ask each agent for concise findings with evidence paths. The PFM's decisions (2026-11-10): the orchestrator stays on the strongest model; models are chosen per task with the routing table below. Routing names tiers; the table below maps them to Claude models.
+AGENTS.md "Agents" points here. Ask each agent for concise findings with evidence paths. The PFM's decisions (2026-11-10): the orchestrator stays on the strongest model; models are chosen per task with the routing table below. Routing names tiers; the table below maps them to Claude models.
 
 ## Agents (.claude/agents/)
 
@@ -37,7 +37,7 @@ Tiers by host. Model names change often: when a name here is gone, use the curre
 | Claude Code, local or cloud (claude.ai/code) | haiku | sonnet | opus | `.claude/agents/` | Stop, PreToolUse, deny list, git |
 | claude.ai chat | Haiku | Sonnet | Opus | Agent tool when offered | git only |
 
-If the routed tier is not available (not offered, usage limit): for `scout` and `worker` work use the next lower tier and say so in the report; for `reviewer` and orchestrator work use the next higher tier, or wait; never review with a lower tier than the author used.
+If the routed tier is not available (not offered, usage limit): for `scout` and `worker` work use the next lower tier and say so in the report; for `reviewer` and orchestrator work use the next higher tier, or wait; the floor for a reviewer's tier is in AGENTS.md "Fresh review".
 
 Log the model with each delegated task (in the handoff or the project's task log), so first-attempt pass rates can be compared by model.
 
@@ -70,14 +70,14 @@ Branch per worker: the branch the host requires (Claude cloud sessions: `claude/
 ## Review and merge
 
 1. Scope: `git diff --stat origin/main...origin/<branch>`. Flag files outside the brief.
-2. Update by merge, never rebase: `git checkout -B review/<branch> origin/<branch> && git merge origin/main`. When intents conflict, stop and list the choice for the PFM.
+2. Update by merge (AGENTS.md "Git history"): `git checkout -B review/<branch> origin/<branch> && git merge origin/main`. When intents conflict, stop and list the choice for the PFM.
 3. Fresh review: `reviewer` with only the diff and the brief. Verify each finding before you report it.
 4. Checks: the commands in AGENTS.md "Commands". Report before and after numbers.
-5. Merge: `git checkout main && git merge --no-ff review/<branch>`, confirm `git merge-base --is-ancestor origin/main HEAD`, push, verify origin/main. UI or design changes the PFM has not approved wait for the PFM's yes (AGENTS.md "Delivery").
+5. Merge: the steps of `.claude/skills/deliver/SKILL.md`.
 
-## Lanes (fill in per project, in AGENTS.md "Project rules")
+## File areas (fill in per project, in AGENTS.md "Project rules")
 
-| Lane | Owner | Files | May push to |
+| Area | Owner | Files | May push to |
 |---|---|---|---|
-| Orchestrator | strongest available model (default: Claude Opus) | Everything not in another lane | main |
+| Orchestrator | strongest available model (default: Claude Opus) | Everything not in another lane | its own branch; merges by pull request |
 | Worker | `worker` subagent | Only its brief's files | its own branch (see "Branch per worker") |
