@@ -2,7 +2,10 @@
 # Form, View, Open, Export, Read, Clean) against a small fake site (pwsh 7, also Windows PowerShell 5.1 through tests/ps/Invoke-Ps51.ps1).
 # The fake PnP cmdlets are defined here (functions in this file); only an empty PnP.PowerShell 1.12.0 module is put on the
 # module path so the script's "is PnP installed" check passes. It proves the script's logic and output; the real service is
-# proved by the R29 round on the gov device. Last line: "T21 pass=N fail=0".
+# proved by the round on the gov device. Last line: "T21 pass=N fail=0".
+# Network: none (the site is a fake in memory; the fake address host is example.test).
+# Writes: a temporary folder under the system temp folder, removed at the end.
+# Credentials: none (a fake DODID and fake e-mail addresses only).
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
