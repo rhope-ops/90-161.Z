@@ -43,18 +43,18 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
 10. Press Run.
 11. Do each step the window shows, until the log says DONE.
-12. At DONE, send the Outlook draft that opens.
+12. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R30a-round-r1.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R30a PASSED" or "90161Z R30a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If Power Automate shows an error, wait 5 minutes, reload the page and try 1 more time; then select "It failed" and type only the line that starts with "Error".
+**If it fails:** do the line that starts with "What to do". If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error".
 
 ### Round R30b r1 (run after R30a): my 90-161.Z window r4
 
 **For:** tests the fixes from my R29b screenshots (the "Your Work" line, the "See the 0 findings" link, the Action Status card and the Full History button), high contrast through Windows Settings, and a script check that every control has a name for Narrator. Then 5 questions on its look.
 **Time:** about 20 minutes (estimate).
-**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window scripts and their result file). For 2 checks I turn high contrast on and off again in Windows Settings. All data in the window is FAKE; nothing is read, saved or sent. Before Run, the window lists every file.
+**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window scripts and their result file). For 2 checks I turn high contrast on and off again in Windows Settings (Windows+U, Contrast themes); the check bar says each action. All data in the window is FAKE; nothing is read, saved or sent. Before Run, the window lists every file.
 **Steps:**
 1. Press Copy script next to the link below.
 2. Open the Start menu.
@@ -69,7 +69,7 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 11. Do each check in the bar at the bottom of the 90-161.Z window.
 12. Close the 90-161.Z window with its X.
 13. Answer the 5 questions in the RADE window (3 cards, then 2).
-14. At DONE, send the Outlook draft that opens.
+14. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R30b-round-r1.ps1
 
