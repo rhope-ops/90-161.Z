@@ -7,13 +7,15 @@ file; a project gets it by sync and keeps its own settings (and stricter rules) 
 
 What it measures (the rule numbers are those of docs/code-standard.md):
   C1 header      each source file starts with a header comment that says what the file is for
-  C1 safety      opt-in ("c1_safety": true): the header also has the lines Network:, Writes: and Credentials:
+  C1 safety      opt-in ("c1_safety": true): the header also has the labels Network:, Writes: and Credentials:, each
+                 at the start of a header line and followed on it by a value (scripts/code_standard_gate.py)
   C2 comment     each function has a comment: a docstring, comment-based help, or a comment line directly above it
                  or as the first line of its body (one line is enough)
   C2 full        opt-in ("c2": "full" in the baseline config): a function longer than 10 lines also documents each
                  parameter and its return value in its language's help form (scripts/code_standard_docs.py)
   C3 length      each function is at most `max_function_lines` lines long
   C4 file size   each source file is at most `max_file_lines` lines long
+  C4 line        opt-in (caps "max_line_chars"): the longest line of each hand-written file, in characters
   C5 duplicate   no two functions in hand-written files have the same body (a copy must be generated, with a banner)
   C6 generated   each generated file says GENERATED near its top and names its source
   C10 parse      each Python and PowerShell file parses
@@ -23,7 +25,8 @@ The ratchet: .code-standard.json lists the debt that existed when the standard s
 that list fails. A listed function that grew fails. A listed item that is fixed fails too, until the baseline is
 lowered in the same change (`--update`), so the list can only shrink and always matches the code. The baseline itself
 is compared with the one on the merge base with origin/main: an added item, a raised value or a changed "config"
-fails, unless the same change adds a row to docs/DECISIONS.md that names .code-standard.json (the owner's decision).
+fails, unless the same change adds a table row to docs/DECISIONS.md that names .code-standard.json with the owner in
+the By column (never a script or an agent). Debt for a file that is new in the change is always refused.
 
 Inputs:  the files git tracks (git ls-files -z): files with a known extension, and files with no extension whose first
          line is a shell or Python shebang (for example scripts/git-hooks/pre-push); filtered by the baseline "config".
@@ -34,6 +37,9 @@ Usage:   python3 scripts/code_standard.py            check (scripts/check.sh run
          python3 scripts/code_standard.py --adopt    add the debt of a rule the baseline does not list yet (a rule just
                                                      turned on, such as "c2": "full"); needs a DECISIONS row
          python3 scripts/code_standard.py --test     prove the check on small sample repos (scripts/code_standard_test.py)
+Network: none (it runs local git read commands, and pwsh to parse PowerShell files).
+Writes:  .code-standard.json, only with --init, --update or --adopt (and Python's __pycache__ when it imports its modules).
+Credentials: none.
 Needs:   Python 3.8+, git, and pwsh 7 only when the repo has PowerShell files (the parser gives the function list).
 """
 
@@ -49,16 +55,13 @@ import sys
 from pathlib import Path
 
 import code_standard_docs as docs   # scripts/code_standard_docs.py: the opt-in C2 full rule
+import code_standard_gate as gate   # scripts/code_standard_gate.py: safety labels, line length, the ratchet gates
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE_NAME = '.code-standard.json'   # the ratchet file, at the top of the repo
 BASELINE = ROOT / BASELINE_NAME
 LANGS = {'.py': 'python', '.ps1': 'powershell', '.psm1': 'powershell', '.js': 'js', '.mjs': 'js', '.cjs': 'js', '.sh': 'shell'}
 DIVIDER = re.compile(r'^\s*(#|//)\s*(-{4,}|={4,})')   # a section line, not a function's comment
-MIN_HEADER_CHARS = 60      # a header shorter than this does not say what the file is for
-SAFETY_LABELS = ('Network:', 'Writes:', 'Credentials:')   # C1 safety: what a reviewer must find before a run
-# The opt-in rules: the debt kind of each and the config test that turns it on. Only these can be adopted later.
-OPT_IN = {'docs': lambda c: c.get('c2') == 'full', 'safety': lambda c: bool(c.get('c1_safety'))}
 MIN_DUP_LINES = 4          # a body this short (a one-line wrapper) is not counted as a duplicate
 # A block between these two marker lines is a generated copy of a shared source (for example a task script bundle):
 # its functions are measured once, in the source, so C2, C3 and C5 skip them here.
@@ -129,7 +132,7 @@ def header_block(lines, lang):
         if not DIVIDER.match(lines[i]):   # a divider line says nothing about the file
             text.append(lines[i].strip().lstrip(mark + '/').strip())
         i += 1
-    return ' '.join(text), i
+    return '\n'.join(text), i
 
 
 def block_until(lines, start, opener, closer):
@@ -145,7 +148,7 @@ def block_until(lines, start, opener, closer):
             end = k
             break
         out.append(line)
-    return ' '.join(x.strip() for x in out), end
+    return '\n'.join(x.strip() for x in out), end
 
 
 def generated_blocks(lines):
@@ -377,13 +380,8 @@ def measure(config):
         report[p] = {'lines': len(lines), 'header': len(head), 'functions': [], 'blocks': [], 'errors': errors}
         if errors:
             v['parse'][p] = len(errors)
-        if len(head) < MIN_HEADER_CHARS:
-            v['header'][p] = 1
-        if config.get('c1_safety') and not all(x in head for x in SAFETY_LABELS):
-            v['safety'][p] = 1
-        if len(lines) > caps['max_file_lines']:
-            v['file_size'][p] = len(lines)
         skip = generated_blocks(lines)
+        gate.file_rules(v, p, lines, head, config, skip)   # header, safety, file size, line length
         seen = {}
         full = config.get('c2') == 'full' and not errors
         py = docs.python_docs(text) if full and lang == 'python' else None
@@ -430,8 +428,11 @@ RULE = {'header': 'C1 no header comment', 'comment': 'C2 function without a comm
         'length': 'C3 function longer than %d lines', 'file_size': 'C4 file longer than %d lines',
         'duplicate': 'C5 same body as another function', 'generated': 'C6 generated file without a GENERATED banner',
         'parse': 'C10 PowerShell or Python file that does not parse',
-        'safety': 'C1 safety: header without the Network:, Writes: and Credentials: lines',
+        'safety': 'C1 safety: header without the Network:, Writes: and Credentials: lines, each with a value',
+        'line': 'C4 line longer than %d characters',
         'docs': 'C2 full: function without full docs (--report names the missing parts)'}
+# The kinds whose debt value is a size (it may only go down) and the cap each is measured against.
+CAP_OF = {'length': 'max_function_lines', 'file_size': 'max_file_lines', 'line': 'max_line_chars'}
 
 
 def compare(now, debt, caps):
@@ -439,16 +440,15 @@ def compare(now, debt, caps):
     debt item that is gone or smaller (the baseline must be lowered in the same change)."""
     new, fixed = [], []
     for kind, items in now.items():
-        label = RULE[kind] % caps['max_function_lines'] if kind == 'length' else (
-            RULE[kind] % caps['max_file_lines'] if kind == 'file_size' else RULE[kind])
+        label = RULE[kind] % caps.get(CAP_OF[kind], 0) if kind in CAP_OF else RULE[kind]
         old = debt.get(kind, {})
         for key, value in sorted(items.items()):
             if key not in old:
                 new.append('FAIL  %s: %s%s' % (label, key, '' if value == 1 else ' (%d)' % value))
-            elif value > old[key] and kind in ('length', 'file_size'):
+            elif value > old[key] and kind in CAP_OF:
                 new.append('FAIL  %s: %s grew from %d to %d' % (label, key, old[key], value))
         for key, value in sorted(old.items()):
-            if key not in items or (kind in ('length', 'file_size') and items[key] < value):
+            if key not in items or (kind in CAP_OF and items[key] < value):
                 fixed.append('FIXED %s: %s' % (label, key))
     return new, fixed
 
@@ -460,8 +460,9 @@ def git(*args):
 
 def against_main(base):
     """Compare this baseline with the one on the merge base with origin/main. Returns (problem lines, note). An item
-    added to the debt, a value raised, or a changed "config" is a problem, unless docs/DECISIONS.md gains a line that
-    names .code-standard.json in the same change (the owner's decision)."""
+    added to the debt, a value raised, debt for a file that is new in this change, or a changed "config" is a problem.
+    The first two and the last are allowed only with the owner's row: a docs/DECISIONS.md table row added in this
+    change, naming .code-standard.json, with the owner in its By cell (gate.owner_row). A debt key for a new file never is."""
     mb = git('merge-base', 'HEAD', 'origin/main')
     if mb.returncode != 0:
         if os.environ.get('CI'):
@@ -472,23 +473,29 @@ def against_main(base):
     if shown.returncode != 0:
         return [], 'NOTE  no baseline on main yet: this change starts it'
     old = json.loads(shown.stdout)
-    decided = any(x.startswith('+') and BASELINE_NAME in x
-                  for x in git('diff', ref, '--', 'docs/DECISIONS.md').stdout.split('\n'))
+    at_base = lambda path: subprocess.run(['git', '-C', str(ROOT), 'show', ref + ':' + path],
+                                          capture_output=True).stdout.decode('utf-8', 'replace')   # bytes: a lone CR stays in its line
+    here = ROOT / 'docs' / 'DECISIONS.md'
+    decided, refusals = gate.owner_row(here.read_bytes().decode('utf-8', 'replace') if here.is_file() else '', BASELINE_NAME,
+                                       gate.owner_role_in(at_base('AGENTS.md')), at_base('docs/DECISIONS.md'))   # main's owner
     problems = []
     for kind, items in base.get('debt', {}).items():
-        if kind in OPT_IN and OPT_IN[kind](base.get('config', {})) and not OPT_IN[kind](old.get('config', {})) \
-                and decided:
-            continue   # an opt-in rule off on main and turned on now (--adopt): its first list is the owner's decision
+        adopting = gate.level(kind, base.get('config', {})) > gate.level(kind, old.get('config', {}))
         was = old.get('debt', {}).get(kind, {})
         for key, value in sorted(items.items()):
-            if key not in was:
+            if key not in was and not gate.exists_at(ROOT, ref, key.split('::')[0]):
+                problems.append('FAIL  baseline: debt for a file that is new in this change: %s (new files meet the '
+                                'rules)' % key)
+            elif adopting and decided:
+                continue   # an opt-in rule turned on or raised now (--adopt): its list is the owner's decision
+            elif key not in was:
                 problems.append('FAIL  baseline: %s item added by hand: %s' % (kind, key))
             elif value > was[key]:
                 problems.append('FAIL  baseline: %s value raised: %s (%d to %d)' % (kind, key, was[key], value))
     if base.get('config') != old.get('config') and not decided:
-        problems.append('FAIL  baseline: "config" (caps or scope) changed with no docs/DECISIONS.md row that names '
-                        + BASELINE_NAME +' (a cap or scope change is the owner\'s decision)')
-    return problems, ''
+        problems.append('FAIL  baseline: "config" (caps or scope) changed with no docs/DECISIONS.md table row by the owner '
+                        'that names ' + BASELINE_NAME + ' (a cap or scope change is the owner\'s decision)')
+    return problems + (refusals if problems and not decided else []), ''
 
 
 def main():
@@ -543,18 +550,28 @@ def main():
     return 1 if new or fixed else 0
 
 
+def main_config():
+    """Return the baseline "config" on the merge base with origin/main, or None when there is none to read."""
+    mb = git('merge-base', 'HEAD', 'origin/main')
+    shown = git('show', mb.stdout.strip() + ':' + BASELINE_NAME) if mb.returncode == 0 else mb
+    return json.loads(shown.stdout).get('config') if shown.returncode == 0 else None
+
+
 def adopt(base, now):
-    """Write the first debt list of each opt-in rule (OPT_IN) that the config turns on and the baseline holds no debt
-    for yet; refuse when there is none. A core rule is never adopted, and the comparison with main accepts the list
-    only when that option was off on main, so this cannot add debt to a rule the ratchet already holds."""
-    kinds = [k for k, on in OPT_IN.items() if on(base['config']) and not base.get('debt', {}).get(k) and now.get(k)]
+    """Write the debt list of each opt-in rule (gate.OPT_IN) that the config turns on and the baseline holds no debt
+    for yet, or whose level the config raised above the level on main (a stricter form of a rule that is on); refuse
+    when there is none. A core rule is never adopted, and the comparison with main accepts the list only for such a
+    rule, so this cannot add debt to a rule the ratchet already holds."""
+    main, debt = main_config(), base.get('debt', {})
+    kinds = [k for k in gate.OPT_IN if gate.level(k, base['config']) and now.get(k) and (
+        not debt.get(k) or (main is not None and gate.level(k, base['config']) > gate.level(k, main)))]
     if not kinds:
         print('CODE-STANDARD fail: no opt-in rule to adopt; use --update (it can only lower the baseline)')
         return 1
     for k in kinds:
         base.setdefault('debt', {})[k] = now[k]
     BASELINE.write_text(json.dumps(base, indent=1, sort_keys=True) + '\n')
-    print('CODE-STANDARD adopted: %s (add a docs/DECISIONS.md row that names %s)' % (
+    print('CODE-STANDARD adopted: %s (add a docs/DECISIONS.md row that names %s, with the owner in the By column)' % (
         ', '.join('%s %d' % (k, len(now[k])) for k in kinds), BASELINE_NAME))
     return 0
 

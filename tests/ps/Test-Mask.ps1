@@ -1,5 +1,8 @@
 # Tests Hide-Site (scripts/gov/src/site-common.ps1, the one masking function of every gov task script) with invented text only.
-# Network: none. Writes: nothing. Credentials: none. Windows PowerShell 5.1 syntax (also runs on PowerShell 7).
+# Network: none.
+# Writes: nothing.
+# Credentials: none.
+# Windows PowerShell 5.1 syntax (also runs on PowerShell 7).
 # Last line: "MASK pass=N fail=0". Part 1 covers every pattern the function claims; part 2 asserts what it does NOT mask (known limits:
 # display names, office symbols, phone numbers, numeric user ids, computer names); a later change that masks one of these makes a
 # "known limit" line FAIL on purpose, so the limit text in Hide-Site's help and in this file is updated with it. Part 3: each task

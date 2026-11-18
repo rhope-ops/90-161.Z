@@ -62,6 +62,7 @@ def run(cs):
         self_test_main(cs, ROOT, g)
         self_test_init(cs, ROOT)
         self_test_docs(cs, ROOT, g, config)
+    self_test_strict(cs)
     print('code standard self-test: pass')
     return 0
 
@@ -98,6 +99,12 @@ def self_test_kinds(cs, root, g, config):
     g('add', '-A')
 
 
+def owner_row(text, by='the Administrator'):
+    """Return one DECISIONS table row (four cells) whose decision cell is `text` and names the baseline file, and whose
+    By cell is `by`."""
+    return '| 2026-11-17 | %s .code-standard.json | %s | — |\n' % (text, by)
+
+
 def self_test_main(cs, root, g):
     """Self-test of the comparison with main: an item added by hand and a raised cap fail; a cap change with a
     DECISIONS row that names the baseline passes."""
@@ -106,6 +113,7 @@ def self_test_main(cs, root, g):
     cs.BASELINE.write_text(json.dumps(base))
     (root / 'docs').mkdir()
     (root / 'docs' / 'DECISIONS.md').write_text('# Decisions\n')
+    (root / 'AGENTS.md').write_text('- Owner: the Administrator\n')   # the gate reads the owner role from here
     g('add', '.')
     g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'base')
     g('update-ref', 'refs/remotes/origin/main', 'HEAD')
@@ -114,7 +122,7 @@ def self_test_main(cs, root, g):
     assert 'added by hand' in ' '.join(cs.against_main(added)[0]), 'an item added by hand fails'
     raised = {'config': {'caps': {'max_function_lines': 9, 'max_file_lines': 50}}, 'debt': base['debt']}
     assert 'config' in ' '.join(cs.against_main(raised)[0]), 'a raised cap fails'
-    (root / 'docs' / 'DECISIONS.md').write_text('# Decisions\n| cap 9 | .code-standard.json |\n')
+    (root / 'docs' / 'DECISIONS.md').write_text('# Decisions\n' + owner_row('cap 9'))
     assert cs.against_main(raised)[0] == [], 'a cap change with a DECISIONS row passes'
 
 
@@ -249,9 +257,10 @@ def self_test_docs(cs, root, g, config):
     assert not cs.measure(config)['violations']['docs'], 'without "c2": "full" the rule is off'
     safety = cs.measure(dict(full, c1_safety=True))['violations']['safety']
     assert 'f.py' in safety and 'g.js' in safety, 'C1 safety: a header without the three lines fails: %s' % safety
-    text = (root / 'f.py').read_text().replace('a short one."""', 'a short one.\n\nNetwork: none. Writes: none. Credentials: none.\n"""', 1)
+    text = (root / 'f.py').read_text().replace('a short one."""', 'a short one.\n\nNetwork: none.\nWrites: none.\nCredentials: none.\n"""', 1)
     (root / 'f.py').write_text(text)
     assert 'f.py' not in cs.measure(dict(full, c1_safety=True))['violations']['safety'], 'C1 safety: the three lines pass'
+    g('update-ref', '-d', 'refs/remotes/origin/main')   # no main to compare: the first adopt of a rule, then refused
     cs.BASELINE.write_text(json.dumps({'config': full, 'debt': {}}))
     import contextlib
     import io
@@ -300,10 +309,234 @@ def self_test_adopt_ratchet(cs, root, g, full):
     g('-c', 'user.name=t', '-c', 'user.email=t@example.invalid', 'commit', '-q', '-m', 'baseline')
     g('update-ref', 'refs/remotes/origin/main', 'HEAD')
     (root / 'docs').mkdir(exist_ok=True)
-    (root / 'docs' / 'DECISIONS.md').write_text('| row | names %s |\n' % cs.BASELINE_NAME)
+    decisions = root / 'docs' / 'DECISIONS.md'   # the new row goes above the rows main has: the gate needs them as they were
+    decisions.write_text(owner_row('the full function docs rule is on; its first list is adopted, see')
+                         + (decisions.read_text() if decisions.exists() else ''))
     hand = dict(base, debt={'length': {'x.py::f': 99}})
     assert cs.against_main(hand)[0], 'a core rule debt added by hand fails, even with a DECISIONS row'
     on = {'config': full, 'debt': {'docs': {'f.py::bare': 1}}}
     assert not cs.against_main(on)[0], 'an opt-in rule turned on now: its first list passes with a DECISIONS row'
     (root / 'docs' / 'DECISIONS.md').unlink()
     assert cs.against_main(on)[0], 'the same list fails with no DECISIONS row'
+
+
+def self_test_strict(cs):
+    """Self-test of the strict rules: the safety labels, the owner-row gate, debt for a new file and the line cap.
+    Each repo part runs in its own sample repo; the module's repo root is put back at the end.
+
+    Args:
+        cs: the check module.
+    """
+    saved = cs.ROOT, cs.BASELINE
+    try:
+        self_test_safety(cs)
+        self_test_rows(cs)
+        for part in (self_test_lines, self_test_strict_main):
+            with tempfile.TemporaryDirectory() as d:
+                cs.ROOT = Path(d)
+                cs.BASELINE = cs.ROOT / cs.BASELINE_NAME
+                g = lambda *c: subprocess.run(['git', '-C', d, *c], check=True, capture_output=True)
+                g('init', '-q')
+                part(cs, cs.ROOT, g)
+    finally:
+        cs.ROOT, cs.BASELINE = saved
+
+
+def self_test_safety(cs):
+    """Self-test of C1 safety: a label inside prose, in the middle of a line or with no value does not pass; a label at
+    the start of a header line with a value passes in a PowerShell help block and `#` comments, a Python docstring, JS
+    `//` and `*` lines, and shell `#` lines.
+
+    Args:
+        cs: the check module.
+    """
+    lab = ['Network: none.', 'Writes: none.', 'Credentials: none.']
+    what = 'Sample file: what it is for, long enough to be a header of the sample.'
+    prose = 'Sample file. It has Network: none, Writes: none and Credentials: none, all in one sentence of prose.'
+    assert not cs.gate.safety_ok(prose), 'a label inside prose does not pass'
+    assert not cs.gate.safety_ok('\n'.join([what, 'Network:', lab[1], lab[2]])), 'a label with no value does not pass'
+    assert not cs.gate.safety_ok('\n'.join([what, 'Network: none. Writes: none. Credentials: none.'])), \
+        'a label in the middle of a line does not pass'
+    forms = {'powershell': ['<#', what] + lab + ['#>'],
+             'python': ['"""' + what] + lab + ['"""', ''],
+             'js': ['// ' + what] + ['// ' + x for x in lab],
+             'shell': ['#!/bin/sh', '# ' + what] + ['# ' + x for x in lab],
+             'powershell#': ['# ' + what] + ['#   ' + x for x in lab],
+             'js*': ['/*', ' * ' + what] + [' * ' + x for x in lab] + [' */']}
+    for name, lines in forms.items():
+        head = cs.header_block(lines, name.rstrip('#*'))[0]
+        assert cs.gate.safety_ok(head), 'a label at the start of a header line passes (%s): %r' % (name, head)
+
+
+def self_test_rows(cs):
+    """Self-test of the owner-row gate on diff text: a plain line, a row by a script, a row by an agent, a row by
+    another person and a row with too few cells are refused (the refusal names the rule); a row that does not name the
+    file is no decision for it; an owner's row passes; the owner role is read from AGENTS.md.
+
+    Args:
+        cs: the check module.
+    """
+    name, gate = cs.BASELINE_NAME, cs.gate
+    plus = lambda by: owner_row('cap', by).rstrip('\n')
+    ok, why = gate.owner_row('The decision names %s in prose.' % name, name, 'administrator')
+    assert not ok and 'rule 1' in why[0], 'a plain non-table line is refused: %s' % why
+    ok, why = gate.owner_row(plus('scripts/bump_lock.py'), name, 'administrator')
+    assert not ok and 'rule 3' in why[0], 'a row by a script is refused: %s' % why
+    ok, why = gate.owner_row(plus("agent, under the Administrator's delegation"), name, 'administrator')
+    assert not ok and 'rule 3' in why[0], 'a row by an agent is refused: %s' % why
+    ok, why = gate.owner_row(plus('someone else'), name, 'administrator')
+    assert not ok and 'rule 4' in why[0], 'a row by another person is refused: %s' % why
+    assert gate.owner_row('| 2026-11-17 | other | the Administrator | - |', name, 'administrator') == (False, []), \
+        'a row that does not name the file is not a decision for it'
+    assert not gate.owner_row('| 2026-11-17 | names %s | the Administrator |' % name, name, 'administrator')[0], \
+        'a row with fewer than four cells is refused'
+    assert gate.owner_row(plus('the Administrator'), name, 'administrator') == (True, []), 'the owner row passes'
+    self_test_row_tricks(gate, name)
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / 'AGENTS.md').write_text('# Rules\n- Owner: the PFM\n')
+        assert gate.owner_role(d) == 'pfm', 'the owner role is read from AGENTS.md, without "the "'
+        assert gate.owner_role(Path(d) / 'none') == '', 'no AGENTS.md: no owner'
+
+
+def self_test_row_tricks(gate, name):
+    """Self-test of the ways a row could open the gate with no new decision (reviews of 17 Nov 26): an old row that is
+    moved, re-spaced or edited (a word, a full stop, its date, its letter case, only the file name added, an unseen
+    character, cut short); a new owner row beside an old row that the change removes; a spare cell before or after the By
+    cell; the owner's name beside another writer, also inside or after a bracket note. Honest forms pass: a new row,
+    an indented row, an escaped | in the text, one note in brackets after the owner, a new
+    row in the words of an old one that stays. The gate reads no date and compares no text for likeness.
+
+    Args:
+        gate: the gate module.
+        name: the baseline file name.
+    """
+    row = owner_row('the cap of the function length goes from sixty to seventy lines, see').rstrip('\n')
+    short = '| 2026-11-10 | The owner is not a tenant admin. | the Administrator | archive |'
+    head = '# Decisions\n| Date | Decision | By | Replaces |\n|---|---|---|---|\n'
+    old = head + short + '\n' + row + '\n'
+
+    def check(line, old_text='', gone=''):
+        """Return owner_row for a file that is `old_text` with `line` added and, when `gone` is given, without that
+        old line."""
+        return gate.owner_row(line + '\n' + (old_text.replace(gone + '\n', '') if gone else old_text), name, 'administrator', old_text)
+    for what, line in (('moved', row), ('re-spaced', row.replace('| the cap', '|   the cap'))):
+        assert check(line, old, row) == (False, []), 'an old row %s is not a decision' % what
+    edits = (('with a full stop added', row, row.replace(', see', '., see')), ('with a word changed', row, row.replace('sixty', 'fifty')),
+             ('with its date changed', row, row.replace('2026-11-17', '2031-01-01')), ('in capital letters', row, row.upper().replace(name.upper(), name)),
+             ('with only the file name added', short, short.replace('admin.', 'admin. ' + name)),
+             ('with an unseen character added', row, row.replace('cap', 'ca\u200bp')), ('cut short', row, row.replace(' goes from sixty to seventy lines', '')))
+    for what, was, now in edits:
+        ok, why = check(now, old, was)
+        assert not ok and 'rule 5' in why[0], 'an old row %s is refused: %s' % (what, why)
+    assert check(row.replace('sixty to seventy', 'seventy to eighty').replace('2026-11-17', '2026-12-01'), old)[0], \
+        'a new row in the words of an old one passes when the old row stays'
+    ok, why = check(owner_row('new opt-in rule for line length, cap 200, adopted in').rstrip('\n'), old, short)
+    assert not ok and 'rule 5' in why[0], 'a new owner row beside a removed old row is refused: %s' % why
+    assert check(owner_row('new opt-in rule for line length, cap 200, adopted in').rstrip('\n'), old)[0], 'a new row passes'
+    forged = row.replace('sixty', 'fifty') + '\n' + short + '\r' + row   # a lone CR hides the old row from a tool that splits on it
+    ok, why = gate.owner_row(head + forged + '\n', name, 'administrator', old)
+    assert not ok and 'rule 5' in why[0], 'an old row edited in place with a carriage-return trick is refused: %s' % why
+    assert gate.owner_role_in('- Owner: Claude\n') == 'claude' and gate.level('safety', {'c1_safety': '9' * 5000}) == 1, 'odd input'
+    for line in ('| 2026-11-17 | raise the cap in %s (`a | b`) | agent, for the owner | - |' % name,
+                 '| 2026-11-17 | raise the cap in %s | Agent | the Administrator | - |' % name,
+                 '| 2026-11-17 | raise the cap in %s | the Administrator | - | x |' % name):
+        ok, why = check(line)
+        assert not ok and 'rule 1' in why[0], 'a row with a spare cell is refused: %s' % why
+    for by in ('Claude, for the Administrator', 'not the Administrator', 'the Administrator (2A); Claude (drafted it)',
+               'the Administrator (not asked; written by Claude) and others'):
+        ok, why = check(owner_row('cap', by).rstrip('\n'))
+        assert not ok and 'rule 4' in why[0], 'the owner beside another writer is refused (%s): %s' % (by, why)
+    assert check('  ' + row)[0], 'an indented owner row passes'
+    assert check('| 2026-11-17 | a \\| b in %s | the Administrator (answer 2A) | - |' % name)[0], 'an escaped | and a note pass'
+    levels = [gate.level('safety', {'c1_safety': v}) for v in ('yes', 2, '2', True, False, -1, None, '\u00b2')]
+    assert levels == [1, 2, 2, 1, 0, 0, 0, 1], 'safety levels: %s' % levels
+
+
+def self_test_lines(cs, root, g):
+    """Self-test of the line cap (caps.max_line_chars): a line over the cap fails with its length; with no cap the
+    rule is off; a debt value may go down but not up; a generated file and a generated block are skipped.
+
+    Args:
+        cs: the check module.
+        root: the sample repo folder.
+        g: runs git in the sample repo.
+    """
+    head = '"""Sample module for the line-cap self-test: it shows how the longest line is measured."""\n'
+    caps = {'max_function_lines': 60, 'max_file_lines': 600, 'max_line_chars': 200}
+    config = {'caps': caps, 'include': ['*'], 'exclude': [], 'generated': ['gen.py']}
+    (root / 'long.py').write_text(head + 'x = "%s"\n' % ('a' * 250))
+    (root / 'short.py').write_text(head + 'x = 1\n')
+    (root / 'gen.py').write_text('# GENERATED from src/x.py by build.py\nx = "%s"\n' % ('a' * 250))
+    (root / 'blk.py').write_text(head + '# >>> s: generated from src/s.py by b.py\nx = "%s"\n# <<< s\n' % ('a' * 250))
+    g('add', '.')
+    now = cs.measure(config)['violations']['line']
+    assert now == {'long.py': 256}, 'only the hand-written file over the cap fails, with its length: %s' % now
+    off = dict(config, caps={k: v for k, v in caps.items() if k != 'max_line_chars'})
+    assert cs.measure(off)['violations']['line'] == {}, 'a config with no cap measures nothing'
+    new, fixed = cs.compare({'line': {'long.py': 256}}, {'line': {'long.py': 256}}, caps)
+    assert not new and not fixed, 'a debt value that is the same passes'
+    new, _ = cs.compare({'line': {'long.py': 300}}, {'line': {'long.py': 256}}, caps)
+    assert len(new) == 1 and 'grew from 256 to 300' in new[0], 'a debt value may not go up: %s' % new
+    new, fixed = cs.compare({'line': {'long.py': 210}}, {'line': {'long.py': 256}}, caps)
+    assert not new and len(fixed) == 1, 'a debt value that went down is reported as fixed: %s' % fixed
+
+
+def self_test_strict_main(cs, root, g):
+    """Self-test of the ratchet gate against main: an owner row opens it; a row by a script or an agent, a plain line
+    or a row that does not name the file does not, and the refusal names the rule; debt for a file that is new in the
+    change is refused even with an owner row; a raised safety level may list new debt (--adopt), and --adopt at the
+    same level as main is refused.
+
+    Args:
+        cs: the check module.
+        root: the sample repo folder.
+        g: runs git in the sample repo.
+    """
+    import contextlib
+    import io
+    cfg = {'caps': {'max_function_lines': 60, 'max_file_lines': 600}, 'c1_safety': True, 'include': ['*'],
+           'exclude': [], 'generated': []}
+    (root / 'AGENTS.md').write_text('- Owner: the Administrator\n')
+    (root / 'docs').mkdir()
+    old_row = '| 2026-11-01 | The owner is not a tenant admin. | the Administrator | - |\n'
+    (root / 'docs' / 'DECISIONS.md').write_text('# Decisions\n' + old_row)
+    for f in ('a.py', 'b.py'):
+        (root / f).write_text('x = 1\n')
+    cs.BASELINE.write_text(json.dumps({'config': cfg, 'debt': {'safety': {'a.py': 1}}}))
+    g('add', '.')
+    g('-c', 'user.name=t', '-c', 'user.email=t@example.invalid', 'commit', '-q', '-m', 'base')
+    g('update-ref', 'refs/remotes/origin/main', 'HEAD')
+    strict = dict(cfg, c1_safety=2)   # a raised level: the stricter form of a rule that is already on
+    both = {'safety': {'a.py': 1, 'b.py': 1}}
+
+    def problems(config, debt, decisions, keep=old_row):
+        """Return the problem lines of against_main for this baseline, joined; the DECISIONS file gets `decisions` and
+        then `keep` (main's old row as it was, unless a case changes it)."""
+        (root / 'docs' / 'DECISIONS.md').write_text('# Decisions\n' + decisions + keep)
+        return ' | '.join(cs.against_main({'config': config, 'debt': debt})[0])
+    strict_text = 'the stricter form of the safety lines is adopted now and files that newly fail are listed once in'
+    assert not problems(strict, both, owner_row(strict_text)), 'an owner row opens the gate for a raised level'
+    assert 'added by hand' in problems(strict, both, 'no row\n'), 'no row: new debt fails'
+    edited = old_row.replace('admin.', 'admin. .code-standard.json')
+    assert 'rule 5' in problems(strict, both, '', edited), 'main\'s old row with the file name added does not open the gate'
+    assert 'rule 5' in problems(strict, both, owner_row(strict_text), ''), 'a new row beside a removed old row does not either'
+    for by, rule in (('scripts/x.py', 'rule 3'), ("agent, under the Administrator's delegation", 'rule 3'),
+                     ('someone else', 'rule 4')):
+        assert rule in problems(strict, both, owner_row(strict_text, by)), 'a row by %r is refused by %s' % (by, rule)
+    assert 'rule 1' in problems(strict, both, 'Level changes .code-standard.json.\n'), 'a plain line is refused'
+    (root / 'AGENTS.md').write_text('- Owner: Claude\n')   # the owner line changed in the same change: main's owner still counts
+    assert 'rule 4' in problems(strict, both, owner_row(strict_text, 'Claude')), 'a new owner named in this change cannot decide'
+    (root / 'AGENTS.md').write_text('- Owner: the Administrator\n')
+    assert 'config' in problems(strict, both, '| 2026-11-17 | other | the Administrator | - |\n'), 'a row for another thing'
+    new_file = {'safety': {'a.py': 1, 'new.py': 1}}
+    assert 'new files meet the rules' in problems(strict, new_file, owner_row(strict_text)), 'debt for a new file is refused'
+    on = dict(cfg, caps=dict(cfg['caps'], max_line_chars=200))
+    debt = {'safety': {'a.py': 1}, 'line': {'a.py': 300}}
+    assert not problems(on, debt, owner_row('a new opt-in rule, the longest line of a file, is turned on with a cap of 200 characters in')), 'the line cap adopts with an owner row'
+    assert problems(on, debt, 'no row\n'), 'the line cap needs a row'
+    cs.BASELINE.write_text(json.dumps({'config': strict, 'debt': {'safety': {'a.py': 1}}}))
+    with contextlib.redirect_stdout(io.StringIO()):
+        assert cs.adopt(json.loads(cs.BASELINE.read_text()), both) == 0, '--adopt lists debt of a raised level'
+        assert set(json.loads(cs.BASELINE.read_text())['debt']['safety']) == {'a.py', 'b.py'}, '--adopt writes it'
+        cs.BASELINE.write_text(json.dumps({'config': cfg, 'debt': {'safety': {'a.py': 1}}}))
+        assert cs.adopt(json.loads(cs.BASELINE.read_text()), both) == 1, 'the same level as main: --adopt is refused'
