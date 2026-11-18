@@ -1,6 +1,6 @@
 ---
 name: deliver
-description: Use when a change is ready to commit, push, merge or publish, when a push or merge is blocked, when you clean up branches or change a GitHub Actions workflow, and before you report repo work as done. Gives the steps, the merge lanes and the check lanes.
+description: Use when a change is ready to commit, push, merge or publish, when a push or merge is blocked, when you clean up branches or change a GitHub Actions workflow, and before you report repo work as done.
 ---
 
 # Deliver a change

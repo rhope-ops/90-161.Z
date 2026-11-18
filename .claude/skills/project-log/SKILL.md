@@ -1,6 +1,6 @@
 ---
 name: project-log
-description: Use before you write or change a project log row, and when a decision, milestone, breakthrough or miss happens in a turn. Gives the columns, row types, arcs, story fields and the format check.
+description: Use before you write or change a project log row, and when a decision, milestone, breakthrough or miss happens in a turn.
 ---
 
 # Project log: how to write a row

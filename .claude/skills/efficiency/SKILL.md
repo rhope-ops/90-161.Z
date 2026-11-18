@@ -1,6 +1,6 @@
 ---
 name: efficiency
-description: Use when a check run, the check-in or a push prints "slower than the baseline" or SLOWER, when the PFM says something is slow, and before you record a time baseline or add a repeated process. Gives how to confirm, fix and prove a slowdown.
+description: Use when a check run, the check-in or a push prints "slower than the baseline" or SLOWER, when the PFM says something is slow, and before you record a time baseline or add a repeated process.
 ---
 
 # Efficiency: a measured slowdown

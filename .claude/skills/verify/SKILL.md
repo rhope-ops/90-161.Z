@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Use when asked to run, start, open or screenshot this project's app, before you report that a change works or is verified, and before you report a visual or UI change as done. Gives how to find the commands, run the real thing, prove the change, measure a UI change, and the report format.
+description: Use when asked to run, start, open or screenshot this project's app, before you report that a change works or is verified, and before you report a visual or UI change as done.
 ---
 
 # Run, prove and measure

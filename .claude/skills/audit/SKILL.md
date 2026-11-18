@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Use when the PFM asks for a bloat, drift, rule or speed audit, when the check-in says AUDIT DUE and the PFM agrees, and before a release. Gives the full audit: measure, find bloat by category, check assumptions, fix, and deliver removals as one pull request.
+description: Use when the PFM asks for a bloat, drift, rule or speed audit, when the check-in says AUDIT DUE and the PFM agrees, and before a release.
 ---
 
 # Bloat, drift and assumption audit

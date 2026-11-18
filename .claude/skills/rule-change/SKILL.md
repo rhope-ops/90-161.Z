@@ -1,6 +1,6 @@
 ---
 name: rule-change
-description: Use when the PFM asks to add, change or remove a rule, when you think a rule, skill or process change would help, when you write the Suggest part of a turn summary, and when check.sh shows a rule cap, rule lint or conflict-check line. Gives where a rule belongs, the Suggest format, approval, and the checks.
+description: Use when the PFM asks to add, change or remove a rule, when you think a rule, skill or process change would help, when you write the Suggest part of a turn summary, and when check.sh shows a rule cap, rule lint or conflict-check line.
 ---
 
 # Change a rule

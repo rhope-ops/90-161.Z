@@ -1,6 +1,6 @@
 ---
 name: kit-update
-description: Use when a project takes a new release of the archimedes_lever kit, when a kit-update pull request is open, when scripts/drift.py or the kit lock shows a difference, when you want to change a kit file or kit rule from inside a project, and for a project's first sync. Gives the sync steps, where project text goes, and the proof.
+description: Use when a project takes a new release of the archimedes_lever kit, when a kit-update pull request is open, when scripts/drift.py or the kit lock shows a difference, when you want to change a kit file or kit rule from inside a project, and for a project's first sync.
 ---
 
 # Take a kit update
