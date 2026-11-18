@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | Round skill, "Results", new step 2, exact text approved (the PFM: "Add it"): "Before you record a round's results, list the open pull requests and stop if one already holds that round." Cause: two sessions recorded R29a (pull requests 145 and 146). | PFM | .claude/skills/round/SKILL.md |
 | 2026-11-18 | R29a flow steps (health flow, button flow and export reader, view button, full flows r2 import, full T24 test) run again in R30, not in an R29c; the PFM tried the portal more than once. Scope: R30. | PFM | [R29a results](reviews/2026-11-18-r29a-results.md) |
 | 2026-11-18 | RADE lock moves to release engine-v15 (RADE 3d9ee5a, serial 11) by scripts/bump_lock.py; bundles rebuilt and checked; the R29 bundles become r6 because r5 already ran on the work computer (agent, per the bump_lock.py output). Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Logo baseline size: 64 px for the 90-161.Z bookmark page logo and the RADE runner logo (the PFM: "just make it 64px. pass that info to the RADE runner; i'd like this to be the new baseline size"). 64 px is before Windows display scaling (the PFM, 18 Nov 26: it shows as 96 px at 150 %). Scope: index.html here; the RADE runner in rhope-ops/RADE. | PFM | [index.html](../index.html) |
