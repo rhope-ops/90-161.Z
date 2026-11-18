@@ -34,17 +34,18 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 **Before I start:** a colleague who can open the test site is free for 5 minutes in Teams.
 **Steps:**
 1. Press Copy script next to the link below.
-2. Open the Start menu and type ISE.
-3. Open Windows PowerShell ISE (not "Run as administrator").
-4. Select File > New.
-5. Click in the white script pane.
-6. Press Ctrl+V.
-7. Press F5. The RADE window opens.
-8. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-9. Press Run.
-10. Do each step the window shows, until the log says DONE.
-11. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
-12. At DONE, send the Outlook draft that opens.
+2. Open the Start menu.
+3. Type ISE.
+4. Open Windows PowerShell ISE (not "Run as administrator").
+5. Select File > New.
+6. Click in the white script pane.
+7. Press Ctrl+V.
+8. Press F5. The RADE window opens.
+9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
+10. Press Run.
+11. Do each step the window shows, until the log says DONE.
+12. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
+13. At DONE, send the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29a-round-r5.ps1
 

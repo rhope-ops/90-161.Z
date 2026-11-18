@@ -18,7 +18,7 @@ function load() {
   return win.GO_TEST;
 }
 
-/** count(md): the open count and the section-link texts the page shows for go.md text md. */
+/** count(md, t): renders go.md text md with the page functions t; returns {open count, section links (nav), cards (body)}. */
 function count(md, t) {
   const r = t.renderSecs(t.parse(md).secs, {});
   return { open: r.open, nav: r.nav, body: r.body };

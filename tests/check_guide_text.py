@@ -185,14 +185,18 @@ def bundle_steps():
 
 
 def go_steps(text=None):
-    """Walk the numbered lines under "Steps:" of each open round or task in go.md. Takes optional text to read instead of the file; yields (go.md / task title, line)."""
+    """Walk the numbered lines under "Steps:" of each open round or task in go.md. Takes optional text to read instead of the file; yields (go.md / task title, line).
+
+    A task is a "## Round ..." or "## Task ..." section, or (go.md layout since 16 Nov 26, PFM 1B 18 Nov 26) a
+    "### Round ..." or "### Task ..." item under a "## " group; "Steps:" may be bold ("**Steps:**")."""
     task, on = None, False
     for line in (GO.read_text(encoding='utf-8') if text is None else text).split('\n'):
-        if line.startswith('## '):
+        m = re.match(r'#{2,3} ((Round|Task)\b.*)', line)
+        if line.startswith('## ') or line.startswith('### '):
             if line.strip() == '## Done':
                 return
-            task, on = (line[3:].strip() if re.match(r'## (Round|Task)\b', line) else None), False
-        elif task and line.strip() == 'Steps:':
+            task, on = (m.group(1).strip() if m else None), False
+        elif task and line.strip().strip('*') == 'Steps:':
             on = True
         elif on and re.match(r'\d+\.\s', line):
             yield 'go.md / %s' % task, line
@@ -297,6 +301,10 @@ def self_test_go():
     got = list(go_steps('## How\nSteps:\n1. no\n## Round A\nSteps:\n1. Select Run.\nhttps://x\n2. Select Done.\n\nNote\n3. no\n## Done\nSteps:\n1. no\n'))
     if [g[1] for g in got] != ['1. Select Run.', '2. Select Done.']:
         errs.append('go.md reader: %s' % got)
+    # go.md layout since 16 Nov 26: "### Round" items under "## Open tasks", with a bold "**Steps:**" label.
+    got = list(go_steps('## Open tasks\n### Round B\n**Steps:**\n1. Select Run.\n### Note\nSteps:\n1. no\n## Done\n'))
+    if [g[1] for g in got] != ['1. Select Run.']:
+        errs.append('go.md reader, "###" layout: %s' % got)
     return errs
 
 
