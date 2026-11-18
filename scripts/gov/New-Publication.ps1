@@ -8,6 +8,16 @@
   or measured from ref/dafman90-161.pdf (layout IDs L-xxx in docs/format-rules.md).
   The validator (Test-Publication.ps1) runs first; the renderer stops if it reports any FAIL.
   Needs: Windows PowerShell 5.1 and Microsoft Word 16 (COM). Nothing else.
+  Files in the same folder (dot-sourced): Publication.Common.ps1 (shared with the validator: Get-Prop, the fixed
+  statements, two spaces after a sentence) and Publication.Word.ps1 (the Word helpers: paragraph format, inline markup,
+  TOC fields, rules, paragraphs and tables; split out of this file for the code standard, R30). Test-Publication.ps1
+  runs as a child process.
+  Inputs: the content file (-Path), an optional seal PNG named in it, and Config\90161Z-label.json when the label
+  capture step has run. Outputs: <designator>[_DRAFT].docx (and .pdf with -Pdf) in -OutDir, and RENDER, MEASURE,
+  LABEL and FORMAT-FAIL lines; exit 3 when a layout step failed.
+  Network: none by this script (Word runs on this computer; applying the sensitivity label is Word's own work).
+  Writes: the .docx and .pdf in -OutDir (default: the folder of the content file).
+  Credentials: none.
 
 .EXAMPLE
   .\New-Publication.ps1 -Path .\mypub.json -Mode draft
@@ -26,6 +36,9 @@ $ErrorActionPreference = 'Stop'
 $common = Join-Path $PSScriptRoot 'Publication.Common.ps1'
 if (-not (Test-Path -LiteralPath $common)) { throw 'Publication.Common.ps1 is missing. Download it into the same folder as this script.' }
 . $common
+$wordHelpers = Join-Path $PSScriptRoot 'Publication.Word.ps1'
+if (-not (Test-Path -LiteralPath $wordHelpers)) { throw 'Publication.Word.ps1 is missing. Download it into the same folder as this script.' }
+. $wordHelpers
 
 # ---------------- constants (rule / layout IDs in docs/format-rules.md) ----------------
 $PT = 72                       # points per inch
@@ -33,7 +46,7 @@ $FontName = 'Times New Roman'  # F-001 (4.5.3.1)
 $FontSize = 12                 # F-001
 $Margin = 1.0 * $PT            # F-001: one-inch margins
 $HeaderDist = 0.5 * $PT        # L-001: running header top at 0.507 in
-$IndentStep = 0.25 * $PT       # L-002: each paragraph level indents 0.25 in
+$script:IndentStep = 0.25 * $PT       # L-002: each paragraph level indents 0.25 in
 $SpaceAfter = 6                # L-003: 6 pt between paragraphs
 $Gap = '  '                    # L-004: two spaces after paragraph numbers, headings, and in the running header
 $LabelTab = 1.5 * $PT          # L-005: ACCESSIBILITY/RELEASABILITY text starts 1.5 in from the margin
@@ -41,7 +54,7 @@ $SigIndent = 3.0 * $PT         # L-006: signature block starts 4.0 in from the p
 $ShieldWidth = 1.2 * $PT       # L-007: seal/shield box 1.20 in square
 $SealBefore = 6.3              # L-007: seal top at 1.47 in; assumes 2 header lines (BY ORDER OF + unit), which end at 1.383 in (gov T07 r1: seal sat 0.087 in high)
 $SealPx = 360                  # L-007a: prepared seals are 360 x 360 px PNG (Task 7 seal prep), emblem centered (PFM 2A)
-$RuleWidth = 6                 # L-008: cover rules 0.75-0.80 pt measured on 7 covers (wdLineWidth075pt)
+$script:RuleWidth = 6                 # L-008: cover rules 0.75-0.80 pt measured on 7 covers (wdLineWidth075pt)
 # L-008a: cover spacing measured on DAFMAN 90-161 page 1 (baseline/rule gaps, inches): title->compliance 0.417,
 # compliance->rule 0.182, rule->ACCESSIBILITY 0.285, RELEASABILITY->rule 0.264, rule->OPR 0.394,
 # Supersedes->rule 0.415, rule->opening 0.369. Values below reproduce them within 0.02 in.
@@ -66,20 +79,13 @@ $EmDash = [char]0x2014
 
 # Word enums
 $wdAlignLeft = 0; $wdAlignCenter = 1; $wdAlignRight = 2; $wdAlignJustify = 3
-$wdBorderBottom = -3; $wdBorderLeft = -2
+$script:wdBorderBottom = -3; $script:wdBorderLeft = -2
 $wdHeaderPrimary = 1; $wdHeaderFirst = 2; $wdHeaderEven = 3
 $wdFieldPage = 33; $wdStatisticPages = 2
 $wdFormatDocx = 16; $wdFormatPdf = 17
 $wdAlignTabRight = 2; $wdStory = 6; $wdPageBreak = 7
 $wdLineSpaceExactly = 4; $wdStyleTOC1 = -20; $wdStyleTOC2 = -21
 
-function ConvertTo-WordBool([bool]$Value) { if ($Value) { return -1 } return 0 }   # Word True = -1
-function Get-Prop($Obj, [string]$Name) {
-  if ($null -eq $Obj) { return $null }
-  $p = $Obj.PSObject.Properties[$Name]
-  if ($null -eq $p) { return $null }
-  return $p.Value
-}
 
 # ---------------- validate first (L3) ----------------
 $validator = Join-Path $PSScriptRoot 'Test-Publication.ps1'
@@ -112,102 +118,9 @@ if ($shield) {
   if (-not $sealOk) { throw ('SEAL not prepared (L-007a): use the PNG in the "Prepared" folder made by the Task 7 seal prep (' + $SealPx + ' x ' + $SealPx + ' px).') }
 }
 
-# ---------------- Word helpers ----------------
+# ---------------- Word (helpers: Publication.Word.ps1) ----------------
 $word = $null; $doc = $null
-# T06/T07 gov runs 2026-11-11: Word stopped with "Specified cast is not valid" and no line number.
-# Each layout step added after r3 now runs in Use-Format: a failure prints FORMAT-FAIL with the rule and
-# the script line, the build goes on (so the PDF still exists for measurement), and the exit code is 3.
-$script:formatFails = 0
-function Use-Format([string]$Rule, [scriptblock]$Do) {
-  try { & $Do } catch {
-    $script:formatFails++
-    Write-Output ('FORMAT-FAIL ' + $Rule + ' line ' + $_.InvocationInfo.ScriptLineNumber + ': ' + $_.Exception.Message)
-  }
-}
-function Invoke-ComSet($Obj, [string]$Name, $Value) {
-  # Late-bound set: bypasses the PowerShell COM adapter's type conversion.
-  [void]$Obj.GetType().InvokeMember($Name, [Reflection.BindingFlags]::SetProperty, $null, $Obj, @($Value))
-}
-function Invoke-ParaFormat($Style, $Values) {
-  # Sets $Values (name -> value) on $Style.ParagraphFormat; returns the route that worked. Throws if all 3 fail.
-  $errs = @()
-  $k = ''
-  try { $pf = $Style.ParagraphFormat; foreach ($k in $Values.Keys) { $pf.$k = $Values[$k] }; return 'direct' } catch { $errs += ('direct[' + $k + ']: ' + $_.Exception.Message) }
-  try {
-    $copy = $Style.ParagraphFormat.Duplicate
-    foreach ($k in $Values.Keys) { $copy.$k = $Values[$k] }
-    $Style.ParagraphFormat = $copy
-    return 'copy'
-  } catch { $errs += ('copy[' + $k + ']: ' + $_.Exception.Message) }
-  try {
-    $pf = $Style.GetType().InvokeMember('ParagraphFormat', [Reflection.BindingFlags]::GetProperty, $null, $Style, $null)
-    foreach ($k in $Values.Keys) { $v = $Values[$k]; if ($v -is [double]) { $v = [single]$v }; Invoke-ComSet $pf $k $v }   # Word float properties
-    return 'invoke'
-  } catch { $errs += ('invoke[' + $k + ']: ' + $_.Exception.Message) }
-  throw ($errs -join ' | ')
-}
-function Format-Para([int]$Align = 3, [double]$Left = 0, [double]$First = 0, [double]$After = $SpaceAfter, [bool]$KeepNext = $false) {
-  $pf = $script:sel.ParagraphFormat
-  $pf.Alignment = $Align
-  $pf.LeftIndent = $Left
-  $pf.FirstLineIndent = $First
-  $pf.SpaceBefore = 0
-  $pf.SpaceAfter = $After
-  $pf.LineSpacingRule = 0   # single
-  $pf.KeepWithNext = ConvertTo-WordBool $KeepNext
-  $pf.TabStops.ClearAll()
-  $pf.Borders.Enable = 0
-  $script:sel.Font.Bold = 0; $script:sel.Font.Italic = 0
-  $script:sel.Font.Name = $FontName; $script:sel.Font.Size = $FontSize
-}
-function Write-Rich([string]$Text, [bool]$Bold = $false, [bool]$Italic = $false) {
-  # Inline markup: {i}..{/i}, {b}..{/b}. Tier numbers "(T-0..3)" are bold (F-039, 4.5.9.7.4.12).
-  # Two spaces before each new sentence (L-004).
-  if ($null -eq $Text) { return }
-  $Text = ConvertTo-TwoSpaceSentence $Text
-  $tokens = [regex]::Split($Text, '(\{/?[ib]\}|\(T-[0-3]\))')
-  $b = $Bold; $i = $Italic
-  foreach ($t in $tokens) {
-    switch -regex ($t) {
-      '^\{i\}$' { $i = $true; continue }
-      '^\{/i\}$' { $i = $Italic; continue }
-      '^\{b\}$' { $b = $true; continue }
-      '^\{/b\}$' { $b = $Bold; continue }
-      '^\(T-[0-3]\)$' {
-        # Word nonbreaking hyphen (character 30): "(T-3)" never splits across two lines (T01 r3 result, 2.2).
-        $script:sel.Font.Bold = -1; $script:sel.Font.Italic = (ConvertTo-WordBool $i)
-        $nb = $t.Replace('-', [string][char]30)
-        try { $script:sel.TypeText([string]$nb) } catch {
-          $script:formatFails++
-          Write-Output ('FORMAT-FAIL F-039 nonbreaking hyphen line ' + $_.InvocationInfo.ScriptLineNumber + ': ' + $_.Exception.Message)
-          $script:sel.TypeText([string]$t)
-        }
-        continue
-      }
-      default {
-        if ($t -ne '') { $script:sel.Font.Bold = (ConvertTo-WordBool $b); $script:sel.Font.Italic = (ConvertTo-WordBool $i); $script:sel.TypeText($t) }
-      }
-    }
-  }
-  $script:sel.Font.Bold = (ConvertTo-WordBool $Bold); $script:sel.Font.Italic = (ConvertTo-WordBool $Italic)
-}
-function Complete-Para { $script:sel.TypeParagraph() }
-function Add-TocEntry([string]$Entry, [int]$TocLevel) {
-  # Hidden TC field; the TOC is built from these fields only, so entries hold headings, not body text.
-  $clean = ($Entry -replace '"', "'")
-  [int]$wasBold = $script:sel.Font.Bold
-  if ($wasBold -ne 0 -and $wasBold -ne -1) { $wasBold = 0 }   # 9999999 = mixed
-  $script:sel.Font.Bold = 0   # TOC style decides bold (L-012), not the heading run the field sits in
-  $script:sel.Fields.Add($script:sel.Range, -1, ('TC "' + $clean + '" \l ' + $TocLevel), $false) | Out-Null
-  $script:sel.Font.Bold = $wasBold
-}
-function Add-BottomRule([double]$Distance = 1) {
-  # applies to the paragraph just ended; $Distance = points between the text and the rule (L-008a)
-  $p = $script:doc.Paragraphs.Item($script:doc.Paragraphs.Count - 1)
-  $bd = $p.Borders.Item($wdBorderBottom)
-  $bd.LineStyle = 1; $bd.LineWidth = $RuleWidth
-  Use-Format 'L-008a rule distance' { $p.Borders.DistanceFromBottom = [int][math]::Round($Distance) }   # Long in Word
-}
+$script:formatFails = 0   # layout steps that failed (Use-Format); exit code 3 at the end when more than 0
 
 try {
   $word = New-Object -ComObject Word.Application
@@ -320,7 +233,8 @@ try {
   $c = $ot.Cell(1, 1).Range; $c.Text = 'OPR:' + "`t" + [string](Get-Prop $meta 'opr')                           # F-021 (4.5.4.10)
   $c.ParagraphFormat.TabStops.ClearAll(); $c.ParagraphFormat.TabStops.Add($OprTab) | Out-Null
   $c = $ot.Cell(1, 2).Range; $c.Text = 'Certified by: ' + [string](Get-Prop $meta 'certifiedBy'); $c.ParagraphFormat.Alignment = $wdAlignRight   # "by" lower case (PFM, 2026-11-11)
-  $c = $ot.Cell(2, 2).Range; $c.Text = '(' + ([string](Get-Prop $meta 'certifiedByName')).Trim('(', ')', ' ') + ')'; $c.ParagraphFormat.Alignment = $wdAlignRight   # certifier name line (PFM, 2026-11-11)
+  # certifier name line (PFM, 2026-11-11)
+  $c = $ot.Cell(2, 2).Range; $c.Text = '(' + ([string](Get-Prop $meta 'certifiedByName')).Trim('(', ')', ' ') + ')'; $c.ParagraphFormat.Alignment = $wdAlignRight
   if ($sup.Count -gt 0) {   # F-022 (4.5.4.12): line omitted when nothing is superseded
     $c = $ot.Cell(3, 1).Range
     $c.Text = 'Supersedes:' + "`t" + (($sup | ForEach-Object { [string](Get-Prop $_ 'designator') + ', ' + [string](Get-Prop $_ 'date') }) -join '; ')
@@ -365,60 +279,6 @@ try {
   $flat = @(Get-Prop $body 'paragraphs' | Where-Object { $null -ne $_ })
   $script:hasChapters = $chapters.Count -gt 0
   $script:tableCounter = @{}
-
-  function Write-Paragraph($P, [string]$Number, [int]$Level, [string]$Unit) {
-    # Level 1 = main paragraph (bold number and heading, F-028/F-033); deeper levels indent 0.25 in each (L-002), not bold (F-004).
-    $indent = ($Level - 1) * $IndentStep
-    $revised = [bool](Get-Prop $P 'revised')
-    Format-Para $wdAlignJustify $indent 0 $SpaceAfter
-    $isTop = ($Level -eq 1)
-    Write-Rich $Number $isTop
-    $t = [string](Get-Prop $P 'title')
-    $x = [string](Get-Prop $P 'text')
-    if ($t) { $sel.TypeText($Gap); Write-Rich $t $isTop }
-    if ($isTop) { Add-TocEntry ($Number + "`t" + ($t -replace '\{/?[ib]\}', '')) 2 }   # TOC: main paragraph headings only (4.5.8.3); number at 1.50, text at 2.00 (L-012)
-    if ($x) { $sel.TypeText($Gap); Write-Rich $x }
-    foreach ($n in @(Get-Prop $P 'notes' | Where-Object { $null -ne $_ })) { $sel.TypeText($Gap); Write-Rich 'Note:' $true; $sel.TypeText(' '); Write-Rich ([string]$n) }        # F-037 (4.6.2)
-    foreach ($e in @(Get-Prop $P 'exceptions' | Where-Object { $null -ne $_ })) { $sel.TypeText($Gap); Write-Rich 'Exception:' $true; $sel.TypeText(' '); Write-Rich ([string]$e) }  # F-037 (4.6.3)
-    Complete-Para
-    if ($revised) {   # F-026: manual margin bar as a left border for camera-ready ICs (4.5.6.2)
-      $pp = $script:doc.Paragraphs.Item($script:doc.Paragraphs.Count - 1)
-      $lb = $pp.Borders.Item($wdBorderLeft); $lb.LineStyle = 1; $lb.LineWidth = 6
-    }
-    foreach ($b in @(Get-Prop $P 'bullets' | Where-Object { $null -ne $_ })) {   # non-directive only (F-029)
-      Format-Para $wdAlignJustify ($indent + $IndentStep) 0 $SpaceAfter
-      $sel.Range.ListFormat.ApplyBulletDefault() | Out-Null
-      Write-Rich ([string]$b); Complete-Para
-      $sel.Range.ListFormat.RemoveNumbers() | Out-Null
-    }
-    $tbl = Get-Prop $P 'table'
-    if ($null -ne $tbl) { Write-Table $tbl $Unit }
-    $kids = @(Get-Prop $P 'children' | Where-Object { $null -ne $_ })
-    for ($i = 0; $i -lt $kids.Count; $i++) { Write-Paragraph $kids[$i] ("$Number$($i + 1).") ($Level + 1) $Unit }
-  }
-
-  function Write-Table($T, [string]$Unit) {
-    # F-038 (4.6.4): number and title directly above, bold (4.5.9.7.4.7); numbering per Table 4.1
-    if (-not $script:tableCounter.ContainsKey($Unit)) { $script:tableCounter[$Unit] = 0 }
-    $script:tableCounter[$Unit]++
-    $num = $script:tableCounter[$Unit]
-    if ($Unit -ne '') { $num = "$Unit.$num" }
-    Format-Para $wdAlignLeft 0 0 0 $true
-    Write-Rich ("Table $num." + $Gap + [string](Get-Prop $T 'title')) $true; Complete-Para
-    $cols = @(Get-Prop $T 'columns'); $rows = @(Get-Prop $T 'rows')
-    Format-Para $wdAlignLeft 0 0 0
-    $wt = $script:doc.Tables.Add($script:sel.Range, $rows.Count + 1, $cols.Count)
-    $wt.Borders.Enable = 1
-    for ($c = 0; $c -lt $cols.Count; $c++) { $wt.Cell(1, $c + 1).Range.Text = (([string]$cols[$c]) -replace '\{/?[ib]\}', '') }
-    for ($r = 0; $r -lt $rows.Count; $r++) {
-      $cells = @($rows[$r])
-      for ($c = 0; $c -lt $cols.Count; $c++) { $wt.Cell($r + 2, $c + 1).Range.Text = (([string]$cells[$c]) -replace '\{/?[ib]\}', '') }
-    }
-    $wt.Range.Font.Name = $FontName; $wt.Range.Font.Size = $FontSize
-    $wt.Range.ParagraphFormat.SpaceAfter = 0
-    $script:sel.EndKey($wdStory) | Out-Null
-    Format-Para $wdAlignLeft 0 0 $SpaceAfter; Complete-Para
-  }
 
   if ($script:hasChapters) {
     for ($c = 0; $c -lt $chapters.Count; $c++) {
@@ -541,7 +401,8 @@ try {
         $st = $doc.Styles.Item($styleId)
         $route = Invoke-ParaFormat $st $tocPf
         $got = $doc.Styles.Item($styleId).ParagraphFormat   # read back: a route that reports success must also take effect
-        Write-Output ('L-012 TOC indent ' + $styleId + ' route=' + $route + ' left=' + $got.LeftIndent + ' first=' + $got.FirstLineIndent + ' (want ' + $tocPf.LeftIndent + ' / ' + $tocPf.FirstLineIndent + ')')
+        Write-Output ('L-012 TOC indent ' + $styleId + ' route=' + $route + ' left=' + $got.LeftIndent + ' first=' + $got.FirstLineIndent +
+            ' (want ' + $tocPf.LeftIndent + ' / ' + $tocPf.FirstLineIndent + ')')
       }
     }
     $doc.TablesOfContents.Add($tocRange, $false, 1, 2, $true, '', $true, $true, '', $true, $true, $false) | Out-Null   # UseFields = TC entries only
@@ -557,6 +418,7 @@ try {
   # L-012 TOC line pitch 0.272 in (docs/format-rules.md). Tolerance 0.03 in (0.01 in for pitch).
   try {
     try { $doc.ActiveWindow.View.Type = 3 } catch { Write-Output ('MEASURE-ERROR print layout view: ' + $_.Exception.Message) }   # wdPrintView: Information() needs layout
+    # Formats one MEASURE line: the value in inches against the wanted value and tolerance, PASS or FAIL.
     $measure = {
       param([string]$What, [double]$GotPt, [double]$WantIn, [double]$TolIn)
       if ($GotPt -lt 0) { return ('MEASURE-ERROR ' + $What + ' not laid out (Information returned ' + $GotPt + ')') }
@@ -622,8 +484,9 @@ try {
     Write-Output ("RENDER pdf=" + (Split-Path -Leaf $outPdf))
   }
 } catch {
-  # Name the line, so a gov-device result shows where Word stopped.
-  Write-Output ('RENDER-ERROR line ' + $_.InvocationInfo.ScriptLineNumber + ': ' + ([string]$_.InvocationInfo.Line).Trim() + ' :: ' + $_.Exception.Message)
+  # Name the line and its file (this one or Publication.Word.ps1), so a gov-device result shows where Word stopped.
+  $where = [string]$_.InvocationInfo.ScriptName; if ($where) { $where = ' (' + (Split-Path -Leaf $where) + ')' }
+  Write-Output ('RENDER-ERROR line ' + $_.InvocationInfo.ScriptLineNumber + $where + ': ' + ([string]$_.InvocationInfo.Line).Trim() + ' :: ' + $_.Exception.Message)
   throw
 } finally {
   # Each cleanup step on its own, so a cleanup error never hides the real one or leaves WINWORD.EXE running.

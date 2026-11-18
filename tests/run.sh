@@ -132,7 +132,7 @@ except ImportError:
 jsonschema.validate(json.load(open('samples/publication.sample.json')), json.load(open('schemas/publication.schema.json')))
 PY
 
-grep -q "\$nb = \$t.Replace('-', \[string\]\[char\]30)" scripts/gov/New-Publication.ps1 && ok "tier numbers use a Word nonbreaking hyphen (T01 r4)" || bad "tier nonbreaking hyphen"
+grep -q "\$nb = \$t.Replace('-', \[string\]\[char\]30)" scripts/gov/Publication.Word.ps1 && ok "tier numbers use a Word nonbreaking hyphen (T01 r4)" || bad "tier nonbreaking hyphen"
 [ "$(ls scripts/gov/90161Z-T01-renderer-test-r*.ps1 | wc -l)" -eq 1 ] && ok "one T01 runner revision" || bad "more than one T01 runner"
 
 if [ "${on[val]}" = 1 ]; then
@@ -624,15 +624,15 @@ want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] =
 got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
 assert [c.strip().strip("'") for c in got.split(',')] == want, got
 PYEOF
-# T22 PFM window test r3 (R29; R28 results of 17 Nov 26): the cards and the 12 checks as text (-PlanOnly; no window here). Every button, link and
-# grid row goes to a card that exists (or 'back', '@grid', '@note'), each card has exactly one blue button, the text is ASCII and
-# FAKE, r1 is gone, the shared UI block is current, and the colors the window paints are the tokens of docs/palette.json.
+# T22 PFM window test r4 (R30; R29b results of 18 Nov 26): the cards and the 12 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
+# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), each card has one blue button, the text is ASCII and FAKE,
+# r1 to r3 are gone, r4 is the main file and its parts (no other), no '0 findings' link (V3), the UI block is current, the colors are docs/palette.json tokens.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && ok "T22 window preview cards (r3)" || bad "T22 window preview cards (r3)"
+python3 - <<'PYT22' && ok "T22 window preview cards (r4)" || bad "T22 window preview cards (r4)"
 import json, re, subprocess, pathlib
-f = 'scripts/gov/90161Z-T22-pfm-window-r3.ps1'
-assert not pathlib.Path('scripts/gov/90161Z-T22-pfm-window-r2.ps1').exists(), 'r2 is still there'
-assert not pathlib.Path('scripts/gov/90161Z-T22-pfm-window-r1.ps1').exists(), 'r1 is still there'
+f = 'scripts/gov/90161Z-T22-pfm-window-r4.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r4.ps1' % n)
+assert not [x.name for x in g.glob('90161Z-T22-*-r[123].ps1')], 'an older revision is still there'
+parts = [x.strip().strip("'") for x in re.search(r"\$Parts = @\(([^)]*)\)", pathlib.Path(f).read_text()).group(1).split(',')]
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
 cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
@@ -643,39 +643,37 @@ ok_extra = {'back', '@grid', '@note'}
 for l in out:
     t = re.match(r'\s+(?:BUTTON|CHOICE|LINK) .+ -> (\S+)', l) or re.match(r'RAIL .+ -> (\S+)', l)
     if t: assert t.group(1) in cards or t.group(1) in ok_extra, l
-blue, cur = {}, None
-for l in out:
-    if l.startswith('CARD '): cur = l.split(' | ')[0]; blue[cur] = 0
-    if '(blue)' in l: blue[cur] += 1
-assert all(v == 1 for v in blue.values()), blue
-text = '\n'.join(out)
-assert all(ord(c) < 128 for c in text)
-src = pathlib.Path(f).read_text()
+blue = [b.count('(blue)') for b in '\n'.join(out).split('\nCARD ')]; assert len(blue) == len(cards) and set(blue) == {1}, blue   # one blue button per card
+text = '\n'.join(out); assert all(ord(c) < 128 for c in text)
+src = ''.join(x.read_text() for x in [pp(n) for n in parts[:3]] + [pathlib.Path(f)] + [pp(n) for n in parts[3:]])   # load order
 assert all(ord(c) < 128 for c in src)
 assert not [i + 1 for i, l in enumerate(src.splitlines()) if l.startswith("'@")], 'a line starts with \'@ (here-string)'
 for l in out:   # every publication, office and person name says FAKE
     for w in re.findall(r'(?<!FAKE )(?<!DAF )\b(OI \d\d-\d+|Instruction \d\d-\d+|Form \d+|Office \d|AO \d)\b', l): raise AssertionError(l)
-assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text
-assert out and len([l for l in out if l.startswith('RAIL ')]) == 5
+assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text and 'See the 0 findings' not in text and len([l for l in out if l.startswith('RAIL ')]) == 5
 # the 12 in-window checks (PFM 17 Nov 26): numbered lines in order, with their keys, each text at most 160 characters
 keys = ['card-open', 'first-button', 'all-cards', 'tab', 'shift-tab', 'enter', 'narrator-on', 'narrator-names', 'narrator-off', 'contrast-on', 'contrast-read', 'contrast-off']
 chk = [re.match(r'CHECK (\d+) ([a-z-]+): (.+)$', l) for l in out if re.match(r'CHECK \d+ ', l)]
-assert len(chk) == 12 and all(chk), chk
-assert [m.group(2) for m in chk] == keys and [int(m.group(1)) for m in chk] == list(range(1, 13)), [m.group(0) for m in chk]
+assert len(chk) == 12 and all(chk) and [m.group(2) for m in chk] == keys and [int(m.group(1)) for m in chk] == list(range(1, 13)), [m.group(0) for m in chk]
 assert all(len(m.group(3)) <= 160 for m in chk), [len(m.group(3)) for m in chk]
 # the rade-ui block is not empty, and the colors painted here are the palette tokens
 assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
 after = src.split('# <<< rade-ui', 1)[1]
 assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
 assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
-assert "$Rev = 'r3'" in src
+assert "$Rev = 'r4'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r4.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window']), parts
 grids = len(re.findall(r'New-Object System.Windows.Forms.DataGridView\b(?!\w)', src))
 assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and src.count("$dc.AutoSizeMode='Fill'") >= 1, 'every grid fills its columns'
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
 hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
+# -Opened (the look questions' gate in the round): fake result files opened / not opened / STOPPED / 4 hours old; one line, no other file
+import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r4.txt'); got = {}
+for k, body in {'open': 'CARDS opened: home, step8 (17 of 17)\nPASS layout', 'none': 'CARDS opened: none (0 of 17)', 'stop': 'CARDS opened: home (1 of 17)\nSTOPPED: no window (x)', 'old': 'CARDS opened: home, step8 (17 of 17)'}.items():
+    w.write_text(body + '\n'); k == 'old' and os.utime(w, (time.time() - 4 * 3600,) * 2); r = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-Opened', '-TestDir', d], capture_output=True, text=True, timeout=60); got[k] = (r.stdout.strip(), r.returncode)
+assert got == {'open': ('PASS the window opened (17 of 17 cards)', 0), 'none': ('FAIL the window did not open', 1), 'stop': ('FAIL the window did not open', 1), 'old': ('FAIL the window did not open (no result from this round)', 1)} and len(list(pathlib.Path(d).iterdir())) == 1, got
 PYT22
-else sk "T22 window preview cards (r3)"; fi
+else sk "T22 window preview cards (r4)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }

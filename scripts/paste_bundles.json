@@ -24,25 +24,41 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R29a-round-r7.ps1",
-      "round": "R29a",
-      "title": "Round R29a r7: the R28 fixes (health flow, export reader, import cards), the new site logo, the second person and the full flow test",
+      "out": "scripts/gov/paste/90161Z-R30a-round-r1.ps1",
+      "round": "R30a",
+      "title": "Round R30a r1: the flow steps again (health flow, button flow and export reader, view button, full flows and the full flow test), with a Power Automate check first",
       "files": [
         {
           "dir": "T17",
           "src": "scripts/gov/90161Z-T17-import-log-r2.ps1"
         },
         {
-          "dir": "T16",
-          "src": "scripts/gov/90161Z-T16-site-setup-r12.ps1"
-        },
-        {
-          "dir": "T16",
-          "src": "assets/logo/build/90161Z-logo-512.png"
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-probe-r6.ps1"
         },
         {
           "dir": "T21",
-          "src": "scripts/gov/90161Z-T21-probe-r5.ps1"
+          "src": "scripts/gov/90161Z-T21-common-r6.ps1"
+        },
+        {
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-make-r6.ps1"
+        },
+        {
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-person-r6.ps1"
+        },
+        {
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-look-r6.ps1"
+        },
+        {
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-export-r6.ps1"
+        },
+        {
+          "dir": "T21",
+          "src": "scripts/gov/90161Z-T21-read-r6.ps1"
         },
         {
           "dir": "T21",
@@ -54,7 +70,7 @@
         },
         {
           "dir": "T24",
-          "src": "scripts/gov/90161Z-T24-full-solution-test-r1.ps1"
+          "src": "scripts/gov/90161Z-T24-full-solution-test-r2.ps1"
         },
         {
           "dir": "T24",
@@ -63,10 +79,10 @@
       ],
       "steps": [
         {
-          "name": "T21 Check the test site is clean r5",
+          "name": "T21 Check the test site is clean r6",
           "title": "Check that the last round left nothing on the test site",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
+          "file": "90161Z-T21-probe-r6.ps1",
           "args": "-Part Clean -Label first",
           "minutes": 20,
           "note": "Signs in (CAC). Removes a test person, list or library if one is still there. The last round removed all, so it should find nothing. Counts only.",
@@ -79,101 +95,10 @@
           ]
         },
         {
-          "name": "T16 Site logo r12: thumbnail",
-          "title": "Set the site thumbnail to the new logo",
-          "kind": "guide",
-          "dir": "T16",
-          "file": "90161Z-logo-512.png",
-          "note": "You set the site thumbnail to the new 90-161.Z logo. The next card sets the header logo. About 3 minutes.",
-          "guide": [
-            "1. Select \"Open in browser\" above.",
-            "2. At the top right of the site, select the gear \"Settings\".",
-            "3. Select \"Change the look\".",
-            "4. Select \"Header\".",
-            "5. Under \"Site logo thumbnail\", select \"Change\".",
-            "6. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
-            "7. Select \"Open\".",
-            "If the page is not your site: type the address you typed in the RADE box \"Site address\".",
-            "If there is no \"Site logo thumbnail\" box: select \"It failed\"."
-          ],
-          "marker": "90161Z-T16-thumb-set.txt",
-          "needs": [
-            "net-site"
-          ],
-          "estimate": 3,
-          "doneLog": "Confirmed by you: set the thumbnail.",
-          "url": "https://usaf.dps.mil/sites/<your-site>",
-          "url_source": "Your site address, saved by RADE in Config\\90161Z-site.txt when you typed it in the RADE box \"Site address\"; the placeholder is never opened when that file exists",
-          "urlConfig": "90161Z-site.txt"
-        },
-        {
-          "name": "T16 Site logo r12: header logo",
-          "title": "Set the site header logo to the new logo",
-          "kind": "guide",
-          "dir": "T16",
-          "file": "90161Z-logo-512.png",
-          "note": "You set the header logo of the site to the new 90-161.Z logo and save both. The next step reads the logo back. About 3 minutes.",
-          "guide": [
-            "1. Under \"Site logo\", select \"Change\".",
-            "2. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
-            "3. Select \"Open\".",
-            "4. Select \"Save\".",
-            "5. Look at the top left of the site: the new logo must show.",
-            "If \"Save\" stays gray: select \"It failed\"."
-          ],
-          "marker": "90161Z-T16-logo-set.txt",
-          "estimate": 3,
-          "after": [
-            "T16 Site logo r12: thumbnail"
-          ],
-          "doneLog": "Confirmed by you: set the header logo.",
-          "answers": [
-            {
-              "key": "logo-header",
-              "prompt": "After Save, what did the site header show at the top left?",
-              "kind": "pick",
-              "choices": [
-                "The new 90-161.Z logo",
-                "The old logo",
-                "No logo",
-                "Save failed"
-              ]
-            },
-            {
-              "key": "logo-thumb",
-              "prompt": "Did the thumbnail take the new logo?",
-              "kind": "pick",
-              "choices": [
-                "Yes",
-                "No",
-                "There was no thumbnail box"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "T16 Read the site logo back r12",
-          "title": "Read the site logo back",
-          "dir": "T16",
-          "file": "90161Z-T16-site-setup-r12.ps1",
-          "args": "-LogoOnly",
-          "minutes": 10,
-          "note": "Signs in (CAC). Reads the header logo of the site back. Changes nothing on the site.",
-          "estimate": 1,
-          "help": "Send the results as they are. The step can be run again.",
-          "needs": [
-            "pnp",
-            "net-site"
-          ],
-          "after": [
-            "T16 Site logo r12: header logo"
-          ]
-        },
-        {
-          "name": "T21 Make the probe list r5",
+          "name": "T21 Make the probe list r6",
           "title": "Make the test list and library",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
+          "file": "90161Z-T21-probe-r6.ps1",
           "args": "-Part Make",
           "minutes": 20,
           "note": "Signs in (CAC). Makes the fake probe list (Visitors get Contribute on this list only) and library, uploads one fake workbook and writes the test page.",
@@ -184,6 +109,44 @@
             "net-site",
             "site-rights"
           ]
+        },
+        {
+          "name": "T21 Power Automate shows your connections r6",
+          "title": "Check that Power Automate shows your connections",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "You check that Power Automate can show your connections before the flow steps. About 3 minutes.",
+          "guide": [
+            "1. Select \"Open in browser\" above.",
+            "2. If Power Automate asks you to sign in: sign in with your CAC.",
+            "3. On the left, select \"Connections\" (it can be under \"More\" or \"Data\").",
+            "4. Wait until the list of connections shows.",
+            "5. Look in the list for a SharePoint connection.",
+            "If the page says the connections could not be loaded: wait 5 minutes, then reload the page.",
+            "If the list still does not show after the reload: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
+          ],
+          "marker": "90161Z-T21-pa-ready.txt",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 3,
+          "answers": [
+            {
+              "key": "pa-sharepoint",
+              "prompt": "Is there a SharePoint connection in the list?",
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No"
+              ]
+            }
+          ],
+          "doneLog": "Confirmed by you: Power Automate shows the connections.",
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+          "urlConfig": "90161Z-flow-portal.txt"
         },
         {
           "name": "T21 Import the health flow r5: choose the file",
@@ -204,7 +167,9 @@
             "9. Select \"Next\".",
             "If the Open window closes before the file is chosen: select \"Browse\" again.",
             "If the box \"File name\" is empty after Ctrl+V: press Ctrl+V again.",
-            "If the page refuses the file: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If the page refuses the file: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-health-file-chosen.txt",
           "needs": [
@@ -213,7 +178,8 @@
           ],
           "estimate": 4,
           "after": [
-            "T21 Make the probe list r5"
+            "T21 Make the probe list r6",
+            "T21 Power Automate shows your connections r6"
           ],
           "doneLog": "Confirmed by you: chose the file.",
           "url": "https://make.powerautomate.appsplatform.us/",
@@ -241,9 +207,11 @@
             "If you selected \"New connection\": select \"Create\".",
             "If a box has a \"Refresh\" button: select it.",
             "If a sign-in window opens: sign in with your CAC.",
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
             "If you cannot make a connection: select \"It failed\".",
             "If the import fails: select \"Download log file\".",
-            "If the log file is saved: select \"It failed\"."
+            "If the log file is saved: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-probe-imported.txt",
           "needs": [
@@ -287,24 +255,24 @@
           "estimate": 1
         },
         {
-          "name": "T21 Open the test page r5",
+          "name": "T21 Open the test page r6",
           "title": "Open the test page",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
+          "file": "90161Z-T21-probe-r6.ps1",
           "args": "-Part Open",
           "minutes": 5,
           "note": "Opens the test page in your browser (no sign-in). Keep its tab open: the next steps use it.",
           "estimate": 1,
           "help": "Send the results as they are.",
           "after": [
-            "T21 Make the probe list r5"
+            "T21 Make the probe list r6"
           ]
         },
         {
-          "name": "T21 Start the health flow r5",
+          "name": "T21 Start the health flow r6",
           "title": "Start the health flow",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
+          "file": "90161Z-T21-probe-r6.ps1",
           "args": "-Part Run",
           "minutes": 20,
           "note": "Signs in (CAC). Adds one fake row that starts the health flow: it lists your own flows and counts how many are On. Counts only.",
@@ -318,64 +286,6 @@
           "after": [
             "T21 Import the health flow r5: connections"
           ]
-        },
-        {
-          "name": "T21 Add the second person r5",
-          "title": "Add the second person to the test site",
-          "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
-          "args": "-Part Person",
-          "minutes": 20,
-          "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group and copies the form link.",
-          "estimate": 2,
-          "help": "Send the results as they are. The address is never written to a file; the results show only yes or no.",
-          "needs": [
-            "pnp",
-            "net-site",
-            "site-rights"
-          ],
-          "after": [
-            "T21 Make the probe list r5"
-          ]
-        },
-        {
-          "name": "T21 Second person r5",
-          "title": "Ask the second person to add a row",
-          "kind": "guide",
-          "dir": "T21",
-          "file": "",
-          "note": "You ask the person you added to Visitors to add one row with the form link. A colleague is free today. About 5 minutes.",
-          "guide": [
-            "1. Open Teams.",
-            "2. Select \"Chat\".",
-            "3. Select \"New chat\".",
-            "4. In the box \"To\", type the e-mail address you gave RADE for the second person.",
-            "5. Select the chat box.",
-            "6. Press Ctrl+V (the form link is on the clipboard).",
-            "7. In the chat box, type: Open the link, type T4a in Title, select Save, tell me what you saw.",
-            "8. Press Enter.",
-            "9. Wait for the reply: the row saved, or no permission.",
-            "If nobody replies: select \"Skip\"."
-          ],
-          "marker": "90161Z-T21-second-person.txt",
-          "estimate": 5,
-          "after": [
-            "T21 Add the second person r5"
-          ],
-          "answers": [
-            {
-              "key": "t4-second",
-              "prompt": "What did the second person see?",
-              "kind": "pick",
-              "choices": [
-                "The row was saved",
-                "No permission",
-                "The link did not open",
-                "Something else"
-              ]
-            }
-          ],
-          "doneLog": "Confirmed by you: second person."
         },
         {
           "name": "T21 Button flow by hand r5: make a solution",
@@ -393,7 +303,10 @@
             "6. In the box \"Publisher\", select any publisher in the list.",
             "7. Select \"Create\".",
             "8. Look at the list: the solution \"90-161.Z probe button\" must be there.",
-            "If a box or button is missing: select \"It failed\"."
+            "If Power Automate says the name is in use: the solution is already there; select \"Cancel\".",
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If a box or button is missing: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-button-solution.txt",
           "needs": [
@@ -403,7 +316,10 @@
           "doneLog": "Confirmed by you: made the button solution.",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt"
+          "urlConfig": "90161Z-flow-portal.txt",
+          "after": [
+            "T21 Power Automate shows your connections r6"
+          ]
         },
         {
           "name": "T21 Button flow by hand r5: make the flow",
@@ -423,7 +339,9 @@
             "8. In the search box of the trigger list, type: For a selected item",
             "9. Select the trigger \"For a selected item\" (SharePoint).",
             "10. Select \"Create\".",
-            "If no trigger \"For a selected item\" is listed: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If no trigger \"For a selected item\" is listed: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-button-trigger.txt",
           "needs": [
@@ -446,9 +364,11 @@
             "1. In the box \"Site Address\", select the site whose address matches the one you typed in RADE.",
             "2. In the box \"List Name\", select \"90161Z Probe\".",
             "3. Look at the trigger: it must show the site and the list.",
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
             "If the site or the list cannot be chosen: select \"It failed\".",
             "If that site is not listed: select \"Enter custom value\".",
-            "If a box opens for the value: type the same address as in the RADE box \"Site address\"."
+            "If a box opens for the value: type the same address as in the RADE box \"Site address\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-button-site-list.txt",
           "needs": [
@@ -476,10 +396,12 @@
             "6. In the box \"Title\", type: BTN-HAND",
             "7. Select \"Save\".",
             "8. Look at the top for the word \"Saved\".",
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
             "If \"Create item\" is not listed: select \"It failed\".",
             "If \"Save\" shows an error: select \"It failed\".",
             "If that site is not listed: select \"Enter custom value\".",
-            "If a box opens for the value: type the same address as in the RADE box \"Site address\"."
+            "If a box opens for the value: type the same address as in the RADE box \"Site address\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-button-action.txt",
           "needs": [
@@ -510,7 +432,9 @@
             "9. If the browser asks what to do with the file: select \"Save\".",
             "10. In File Explorer (press Windows+E), select \"Downloads\" on the left.",
             "Look for the newest .zip file in that folder: it is the export.",
-            "If no .zip file is in Downloads: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If no .zip file is in Downloads: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-button-exported.txt",
           "needs": [
@@ -523,10 +447,10 @@
           "doneLog": "Confirmed by you: exported the button solution."
         },
         {
-          "name": "T21 Read the export r5",
+          "name": "T21 Read the export r6",
           "title": "Read the exported button flow",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
+          "file": "90161Z-T21-probe-r6.ps1",
           "args": "-Part Export",
           "minutes": 20,
           "note": "Reads the newest export file in Downloads. If it holds 1 flow, reads that flow whatever its name. Writes only the trigger's type, kind, operation and parameter names. No sign-in.",
@@ -537,13 +461,13 @@
           ]
         },
         {
-          "name": "T21 Format the form and view r5",
-          "title": "Format the list form and make the list view",
+          "name": "T21 Put a test header on the list form r6",
+          "title": "Put a test header on the list form",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
-          "args": "-Part Look",
+          "file": "90161Z-T21-probe-r6.ps1",
+          "args": "-Part Form",
           "minutes": 20,
-          "note": "Signs in (CAC). Puts a test header on the probe list form and makes a list view with a button that starts your hand-made flow. Reads both back.",
+          "note": "Signs in (CAC). Puts a test header on the probe list form and reads it back.",
           "estimate": 2,
           "help": "Send the results as they are.",
           "needs": [
@@ -552,11 +476,31 @@
             "site-rights"
           ],
           "after": [
-            "T21 Make the probe list r5"
+            "T21 Make the probe list r6"
           ]
         },
         {
-          "name": "T21 Look at the list form r5",
+          "name": "T21 Make the list view with the flow button r6",
+          "title": "Make the list view with the flow button",
+          "dir": "T21",
+          "file": "90161Z-T21-probe-r6.ps1",
+          "args": "-Part View",
+          "minutes": 20,
+          "note": "Signs in (CAC). Makes a list view with a button that starts your hand-made flow, and reads it back.",
+          "estimate": 2,
+          "help": "Send the results as they are.",
+          "needs": [
+            "pnp",
+            "net-site",
+            "site-rights"
+          ],
+          "after": [
+            "T21 Make the probe list r6",
+            "T21 Read the export r6"
+          ]
+        },
+        {
+          "name": "T21 Look at the list form r6",
           "title": "Look at the list form",
           "kind": "guide",
           "dir": "T21",
@@ -574,7 +518,7 @@
           "marker": "90161Z-T21-form-looked.txt",
           "estimate": 3,
           "after": [
-            "T21 Format the form and view r5"
+            "T21 Put a test header on the list form r6"
           ],
           "answers": [
             {
@@ -600,7 +544,7 @@
           "doneLog": "Confirmed by you: looked at the form."
         },
         {
-          "name": "T21 Use the list button r5",
+          "name": "T21 Use the list button r6",
           "title": "Use the button in the list",
           "kind": "guide",
           "dir": "T21",
@@ -615,12 +559,14 @@
             "6. Select \"Run\".",
             "7. If the panel asks you to continue or to allow a connection: select \"Continue\".",
             "8. Wait until the panel says the flow ran, or shows an error.",
-            "If the panel shows an error: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the list page, and try 1 more time.",
+            "If the panel still shows an error: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-button-used.txt",
           "estimate": 4,
           "after": [
-            "T21 Format the form and view r5"
+            "T21 Make the list view with the flow button r6"
           ],
           "answers": [
             {
@@ -667,7 +613,9 @@
             "9. Select \"Next\".",
             "If the Open window closes before the file is chosen: select \"Browse\" again.",
             "If the box \"File name\" is empty after Ctrl+V: press Ctrl+V again.",
-            "If the page refuses the file: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If the page refuses the file: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T24-file-chosen.txt",
           "needs": [
@@ -678,7 +626,10 @@
           "doneLog": "Confirmed by you: chose the file.",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt"
+          "urlConfig": "90161Z-flow-portal.txt",
+          "after": [
+            "T21 Power Automate shows your connections r6"
+          ]
         },
         {
           "name": "T24 Import the full solution r2: finish",
@@ -704,7 +655,9 @@
             "If a box has a \"Refresh\" button: select it.",
             "If a sign-in window opens: sign in with your CAC.",
             "If the import fails: select \"Download log file\".",
-            "If the log file is saved: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If the log file is saved: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T24-imported.txt",
           "needs": [
@@ -740,7 +693,7 @@
           ]
         },
         {
-          "name": "T24 Turn on all 6 flows r1",
+          "name": "T24 Turn on all 6 flows r2",
           "title": "Turn on all 6 flows",
           "kind": "guide",
           "dir": "T24",
@@ -755,7 +708,9 @@
             "6. Look at the other 5 flows: each must read On.",
             "7. If a flow reads Off: select that flow.",
             "8. If you selected a flow: select \"Turn on\".",
-            "If a flow will not turn on: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If a flow will not turn on: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T24-flows-on.txt",
           "needs": [
@@ -783,10 +738,10 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T24 Full solution test, part 1 r1",
+          "name": "T24 Full solution test, part 1 r2",
           "title": "Prepare the full flow test",
           "dir": "T24",
-          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "file": "90161Z-T24-full-solution-test-r2.ps1",
           "args": "-Part 1",
           "minutes": 60,
           "note": "Signs in (CAC). Writes the PFM Settings rows (Test mode Yes) and fake rows, checks the first flow, then prepares two more. About 15 minutes.",
@@ -798,11 +753,11 @@
             "site-rights"
           ],
           "after": [
-            "T24 Turn on all 6 flows r1"
+            "T24 Turn on all 6 flows r2"
           ]
         },
         {
-          "name": "T24 Run F02 once and F04 once r1",
+          "name": "T24 Run F02 once and F04 once r2",
           "title": "Run two of the flows by hand",
           "kind": "guide",
           "dir": "T24",
@@ -821,7 +776,9 @@
             "10. Select \"Run flow\".",
             "If a panel asks you to continue: select \"Continue\".",
             "After the second run, wait 2 minutes.",
-            "If \"Run\" is missing or a run fails: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If \"Run\" is missing or a run fails: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T24-ran-f02-f04.txt",
           "needs": [
@@ -829,7 +786,7 @@
           ],
           "estimate": 5,
           "after": [
-            "T24 Full solution test, part 1 r1"
+            "T24 Full solution test, part 1 r2"
           ],
           "doneLog": "Confirmed by you: ran F02 and F04.",
           "url": "https://make.powerautomate.appsplatform.us/",
@@ -837,10 +794,10 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T24 Full solution test, part 2 r1",
+          "name": "T24 Full solution test, part 2 r2",
           "title": "Check what the two flows did",
           "dir": "T24",
-          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "file": "90161Z-T24-full-solution-test-r2.ps1",
           "args": "-Part 2",
           "minutes": 30,
           "note": "Signs in (CAC). Checks what the two flows did: review dates, review rows and the status-report log row. About 4 minutes.",
@@ -852,11 +809,11 @@
             "site-rights"
           ],
           "after": [
-            "T24 Run F02 once and F04 once r1"
+            "T24 Run F02 once and F04 once r2"
           ]
         },
         {
-          "name": "T24 Find the F04 e-mail r1",
+          "name": "T24 Find the F04 e-mail r2",
           "title": "Find the test e-mail of the status report",
           "kind": "guide",
           "dir": "T24",
@@ -874,7 +831,7 @@
           "marker": "90161Z-T24-email-looked.txt",
           "estimate": 3,
           "after": [
-            "T24 Full solution test, part 2 r1"
+            "T24 Full solution test, part 2 r2"
           ],
           "answers": [
             {
@@ -901,7 +858,7 @@
           "doneLog": "Confirmed by you: looked at the F04 e-mail."
         },
         {
-          "name": "T24 Run F02 again r1",
+          "name": "T24 Run F02 again r2",
           "title": "Run the review flow a second time",
           "kind": "guide",
           "dir": "T24",
@@ -914,7 +871,10 @@
             "4. Select the flow \"90161Z F02 Next Review Due r3\".",
             "5. Select \"Run\" at the top.",
             "6. If a panel asks you to continue: select \"Continue\".",
-            "7. Wait until the run shows \"Succeeded\" or \"Failed\"."
+            "7. Wait until the run shows \"Succeeded\" or \"Failed\".",
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If the run shows \"Failed\": select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T24-f02-again.txt",
           "needs": [
@@ -922,7 +882,7 @@
           ],
           "estimate": 2,
           "after": [
-            "T24 Find the F04 e-mail r1"
+            "T24 Find the F04 e-mail r2"
           ],
           "doneLog": "Confirmed by you: ran F02 again.",
           "url": "https://make.powerautomate.appsplatform.us/",
@@ -930,10 +890,10 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T24 Full solution test, part 3 r1",
+          "name": "T24 Full solution test, part 3 r2",
           "title": "Check that the second run added no row",
           "dir": "T24",
-          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "file": "90161Z-T24-full-solution-test-r2.ps1",
           "args": "-Part 3",
           "minutes": 20,
           "note": "Signs in (CAC). Checks that the second run of the review flow made no second review row. Nothing is removed here. About 2 minutes.",
@@ -945,14 +905,14 @@
             "site-rights"
           ],
           "after": [
-            "T24 Run F02 again r1"
+            "T24 Run F02 again r2"
           ]
         },
         {
-          "name": "T21 Read the test results r5",
+          "name": "T21 Read the test results r6",
           "title": "Read the health, person and button results",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
+          "file": "90161Z-T21-probe-r6.ps1",
           "args": "-Part Read",
           "minutes": 20,
           "note": "Signs in (CAC). Reads counts only: the health flow row, the rows by the second person and the rows of the button flow. Waits up to about 4 minutes for the health row.",
@@ -964,14 +924,14 @@
             "site-rights"
           ],
           "after": [
-            "T21 Make the probe list r5"
+            "T21 Make the probe list r6"
           ]
         },
         {
-          "name": "T24 Clean up r1",
+          "name": "T24 Clean up r2",
           "title": "Remove the full test rows",
           "dir": "T24",
-          "file": "90161Z-T24-full-solution-test-r1.ps1",
+          "file": "90161Z-T24-full-solution-test-r2.ps1",
           "args": "-Part 4",
           "minutes": 15,
           "note": "Signs in (CAC). Moves every fake row of the full test to the site Recycle Bin and puts PFM Settings back. Runs even when earlier steps failed.",
@@ -984,10 +944,10 @@
           ]
         },
         {
-          "name": "T21 Remove the person, list and library r5",
+          "name": "T21 Remove the test list and library r6",
           "title": "Remove the test person, list and library",
           "dir": "T21",
-          "file": "90161Z-T21-probe-r5.ps1",
+          "file": "90161Z-T21-probe-r6.ps1",
           "args": "-Part Clean -Label last",
           "minutes": 20,
           "note": "Signs in (CAC). Removes the second person from Visitors, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.",
@@ -1000,7 +960,7 @@
           ]
         },
         {
-          "name": "T21 Remove the health flow and solution r5",
+          "name": "T21 Remove the health flow and solution r6",
           "title": "Delete the health flow and its solution",
           "kind": "guide",
           "dir": "T21",
@@ -1018,7 +978,9 @@
             "9. Select \"Delete from this environment\".",
             "10. Select \"Delete\".",
             "If a flow or the solution is not in the list: skip it.",
-            "If one does not delete: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If one does not delete: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-removed-health.txt",
           "needs": [
@@ -1031,7 +993,7 @@
           "urlConfig": "90161Z-flow-portal.txt"
         },
         {
-          "name": "T21 Remove the button flow and solution r5",
+          "name": "T21 Remove the button flow and solution r6",
           "title": "Delete the button flow and its solution",
           "kind": "guide",
           "dir": "T21",
@@ -1048,7 +1010,9 @@
             "8. Select \"Delete from this environment\".",
             "9. Select \"Delete\".",
             "If a flow or the solution is not in the list: skip it.",
-            "If one does not delete: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If one does not delete: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-removed.txt",
           "needs": [
@@ -1066,68 +1030,63 @@
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-clean-first-r5.txt",
-          "step": "T21 Check the test site is clean r5"
+          "name": "90161Z-T21-probe-clean-first-r6.txt",
+          "step": "T21 Check the test site is clean r6"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-make-r5.txt",
-          "step": "T21 Make the probe list r5"
+          "name": "90161Z-T21-probe-make-r6.txt",
+          "step": "T21 Make the probe list r6"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-run-r5.txt",
-          "step": "T21 Start the health flow r5"
+          "name": "90161Z-T21-probe-run-r6.txt",
+          "step": "T21 Start the health flow r6"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-person-r5.txt",
-          "step": "T21 Add the second person r5"
+          "name": "90161Z-T21-probe-export-r6.txt",
+          "step": "T21 Read the export r6"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-export-r5.txt",
-          "step": "T21 Read the export r5"
+          "name": "90161Z-T21-probe-form-r6.txt",
+          "step": "T21 Put a test header on the list form r6"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-look-r5.txt",
-          "step": "T21 Format the form and view r5"
+          "name": "90161Z-T21-probe-view-r6.txt",
+          "step": "T21 Make the list view with the flow button r6"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-read-r5.txt",
-          "step": "T21 Read the test results r5"
+          "name": "90161Z-T21-probe-read-r6.txt",
+          "step": "T21 Read the test results r6"
         },
         {
           "dir": "T21",
-          "name": "90161Z-T21-probe-clean-last-r5.txt",
-          "step": "T21 Remove the person, list and library r5"
+          "name": "90161Z-T21-probe-clean-last-r6.txt",
+          "step": "T21 Remove the test list and library r6"
         },
         {
           "dir": "T24",
           "name": "90161Z-T24-full-test-part1-r1.txt",
-          "step": "T24 Full solution test, part 1 r1"
+          "step": "T24 Full solution test, part 1 r2"
         },
         {
           "dir": "T24",
           "name": "90161Z-T24-full-test-part2-r1.txt",
-          "step": "T24 Full solution test, part 2 r1"
+          "step": "T24 Full solution test, part 2 r2"
         },
         {
           "dir": "T24",
           "name": "90161Z-T24-full-test-part3-r1.txt",
-          "step": "T24 Full solution test, part 3 r1"
+          "step": "T24 Full solution test, part 3 r2"
         },
         {
           "dir": "T24",
           "name": "90161Z-T24-full-test-part4-r1.txt",
-          "step": "T24 Clean up r1"
-        },
-        {
-          "dir": "T16",
-          "name": "90161Z-T16-logo-r12.txt",
-          "step": "T16 Read the site logo back r12"
+          "step": "T24 Clean up r2"
         }
       ],
       "cleanup": [
@@ -1786,76 +1745,152 @@
         {
           "path": "T24\\90161Z-T24-full-flows-r1.zip",
           "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T24\\90161Z-T24-full-solution-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-look.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r12.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r12.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-logo-r12.txt",
+          "kind": "glob"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R29a r5: clean-site check, new site logo, health flow, button flow export, second person and the full flows. Fake data.",
+          "summary": "Round R30a r1: Power Automate check, health flow, button flow and export, list form and view button, full flows and the full flow test. Fake data.",
           "steps": [
-            "T21 Check the test site is clean r5",
-            "T16 Site logo r12: thumbnail",
-            "T16 Site logo r12: header logo",
-            "T16 Read the site logo back r12",
-            "T21 Make the probe list r5",
+            "T21 Check the test site is clean r6",
+            "T21 Make the probe list r6",
+            "T21 Power Automate shows your connections r6",
             "T21 Import the health flow r5: choose the file",
             "T21 Import the health flow r5: connections",
             "T17 Import log reader r2",
-            "T21 Open the test page r5",
-            "T21 Start the health flow r5",
-            "T21 Add the second person r5",
-            "T21 Second person r5",
+            "T21 Open the test page r6",
+            "T21 Start the health flow r6",
             "T21 Button flow by hand r5: make a solution",
             "T21 Button flow by hand r5: make the flow",
             "T21 Button flow by hand r5: site and list",
             "T21 Button flow by hand r5: the action",
             "T21 Button flow by hand r5: export the solution",
-            "T21 Read the export r5",
-            "T21 Format the form and view r5",
-            "T21 Look at the list form r5",
-            "T21 Use the list button r5",
+            "T21 Read the export r6",
+            "T21 Put a test header on the list form r6",
+            "T21 Make the list view with the flow button r6",
+            "T21 Look at the list form r6",
+            "T21 Use the list button r6",
             "T24 Import the full solution r2: choose the file",
             "T24 Import the full solution r2: finish",
-            "T24 Turn on all 6 flows r1",
-            "T24 Full solution test, part 1 r1",
-            "T24 Run F02 once and F04 once r1",
-            "T24 Full solution test, part 2 r1",
-            "T24 Find the F04 e-mail r1",
-            "T24 Run F02 again r1",
-            "T24 Full solution test, part 3 r1",
-            "T21 Read the test results r5",
-            "T24 Clean up r1",
-            "T21 Remove the person, list and library r5",
-            "T21 Remove the health flow and solution r5",
-            "T21 Remove the button flow and solution r5"
+            "T24 Turn on all 6 flows r2",
+            "T24 Full solution test, part 1 r2",
+            "T24 Run F02 once and F04 once r2",
+            "T24 Full solution test, part 2 r2",
+            "T24 Find the F04 e-mail r2",
+            "T24 Run F02 again r2",
+            "T24 Full solution test, part 3 r2",
+            "T21 Read the test results r6",
+            "T24 Clean up r2",
+            "T21 Remove the test list and library r6",
+            "T21 Remove the health flow and solution r6",
+            "T21 Remove the button flow and solution r6"
           ]
         }
       ]
     },
     {
-      "out": "scripts/gov/paste/90161Z-R29b-round-r7.ps1",
-      "round": "R29b",
-      "title": "Round R29b r7: the 90-161.Z window with its 12 checks inside the window",
+      "out": "scripts/gov/paste/90161Z-R30b-round-r1.ps1",
+      "round": "R30b",
+      "title": "Round R30b r1: the 90-161.Z window r4 (look fixes, contrast through Windows Settings, a control-name check), then the look questions",
       "files": [
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-pfm-window-r3.ps1"
+          "src": "scripts/gov/90161Z-T22-pfm-window-r4.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-cards-r4.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-types-r4.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-ui-r4.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-parts-r4.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-grid-r4.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-window-r4.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-measure-r4.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T22 Open the 90-161.Z window r3",
+          "name": "T22 Open the 90-161.Z window r4",
           "title": "Open the 90-161.Z window and do its 12 checks",
           "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r3.ps1",
+          "file": "90161Z-T22-pfm-window-r4.ps1",
           "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data (nothing is read, saved or sent). A bar at the bottom shows 12 checks, one at a time: do each, then select Pass or Fail. Then close the window with its X.",
+          "note": "Opens your 90-161.Z window with fake data. Do each of the 12 checks in the bar at the bottom, then select Pass or Fail. Contrast now uses Windows+U. Then close the window.",
           "estimate": 15,
           "help": "Send the results as they are. The step can be run again."
         },
         {
-          "name": "T22 Answer: look and cards",
+          "name": "T22 Did the window open r4",
+          "title": "Check that the window opened",
+          "dir": "T22",
+          "file": "90161Z-T22-pfm-window-r4.ps1",
+          "args": "-Opened",
+          "minutes": 2,
+          "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
+          "estimate": 1,
+          "help": "Send the results as they are."
+        },
+        {
+          "name": "T22 Answer: look and cards r4",
           "title": "Answer 3 questions about the window look",
           "kind": "guide",
           "dir": "T22",
@@ -1867,7 +1902,7 @@
           "marker": "90161Z-T22-judged-look.txt",
           "estimate": 2,
           "after": [
-            "T22 Open the 90-161.Z window r3"
+            "T22 Did the window open r4"
           ],
           "answers": [
             {
@@ -1893,13 +1928,42 @@
             }
           ],
           "doneLog": "Confirmed by you: judged the look."
+        },
+        {
+          "name": "T22 Answer: the screenshot fixes r4",
+          "title": "Answer 2 questions about the fixes from your screenshots",
+          "kind": "guide",
+          "dir": "T22",
+          "file": "",
+          "note": "You answer 2 questions about the fixes from your screenshots. About 1 minute.",
+          "guide": [
+            "1. Answer each of the next 2 cards."
+          ],
+          "marker": "90161Z-T22-judged-fixes.txt",
+          "estimate": 2,
+          "after": [
+            "T22 Did the window open r4"
+          ],
+          "answers": [
+            {
+              "key": "w-crumb",
+              "prompt": "On the card FAKE OI 33-101: does the line \"Your Work > FAKE OI 33-101\" read as one line?",
+              "kind": "yesno"
+            },
+            {
+              "key": "w-status",
+              "prompt": "On the same card: does the Action Status card end level with the main card?",
+              "kind": "yesno"
+            }
+          ],
+          "doneLog": "Confirmed by you: judged the fixes."
         }
       ],
       "collect": [
         {
           "dir": "T22",
-          "name": "90161Z-T22-window-r3.txt",
-          "step": "T22 Open the 90-161.Z window r3"
+          "name": "90161Z-T22-window-r4.txt",
+          "step": "T22 Open the 90-161.Z window r4"
         }
       ],
       "cleanup": [
@@ -2558,16 +2622,58 @@
         {
           "path": "T24\\90161Z-T24-full-flows-r1.zip",
           "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T24\\90161Z-T24-full-solution-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-look.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r12.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r12.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-logo-r12.txt",
+          "kind": "glob"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R29b r5: the 90-161.Z window with fake data and its 12 checks, then 3 questions on its look. Fake data.",
+          "summary": "Round R30b r1: the 90-161.Z window r4 with fake data and its 12 checks, then 5 questions on its look. Fake data.",
           "steps": [
-            "T22 Open the 90-161.Z window r3",
-            "T22 Answer: look and cards"
+            "T22 Open the 90-161.Z window r4",
+            "T22 Did the window open r4",
+            "T22 Answer: look and cards r4",
+            "T22 Answer: the screenshot fixes r4"
           ]
         }
       ]

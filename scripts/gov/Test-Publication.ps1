@@ -6,6 +6,14 @@
 .OUTPUTS
   One line per finding: "FAIL <rule> <where>: <message>" or "WARN <rule> <where>: <message>".
   Last line: "VALIDATE fails=<n> warns=<m>". Exit code 1 when fails > 0.
+.DESCRIPTION
+  Dot-sources Publication.Common.ps1 from the same folder (Get-Prop, the fixed statements, two spaces after a sentence).
+  Run: .\Test-Publication.ps1 -Path .\mypub.json (New-Publication.ps1 runs it first).
+  Network: none.
+  Writes: none (read-only).
+  Credentials: none.
+.PARAMETER Path
+  The publication content file (JSON).
 #>
 [CmdletBinding()]
 param(
@@ -19,19 +27,16 @@ if (-not (Test-Path -LiteralPath $common)) { throw 'Publication.Common.ps1 is mi
 . $common
 
 $script:Findings = New-Object System.Collections.Generic.List[object]
+# Records one finding (FAIL or WARN) for the report.
 function Add-Finding([string]$Level, [string]$Rule, [string]$Where, [string]$Message) {
   $script:Findings.Add([pscustomobject]@{ Level = $Level; Rule = $Rule; Where = $Where; Message = $Message })
 }
-function Get-Prop($Obj, [string]$Name) {
-  if ($null -eq $Obj) { return $null }
-  $p = $Obj.PSObject.Properties[$Name]
-  if ($null -eq $p) { return $null }
-  return $p.Value
-}
+# The text without the inline markup {i} {/i} {b} {/b} ('' for $null).
 function Get-PlainText([string]$Text) {
   if ($null -eq $Text) { return '' }
   return ($Text -replace '\{/?[ib]\}', '')
 }
+# The sentences of a text (markup removed), for the sentence rules.
 function Get-Sentence([string]$Text) {
   $plain = (Get-PlainText $Text).Trim()
   if ($plain -eq '') { return @() }
@@ -169,6 +174,19 @@ if ($chapters.Count -eq 0 -and $flatParas.Count -eq 0) { Add-Finding 'FAIL' 'SCH
 if ($chapters.Count -gt 0 -and $flatParas.Count -gt 0) { Add-Finding 'FAIL' 'SCHEMA' 'body' 'use chapters or paragraphs, not both' }
 
 $script:RevisedCount = 0
+<#
+.SYNOPSIS
+  Checks one numbered paragraph and, through recursion, its children: levels (F-006), headings (F-028, F-031), notes and
+  exceptions (F-037), bullets (F-029), tables (F-038) and the revised flag; collects its text for the text rules.
+.PARAMETER P
+  The paragraph object of the content file.
+.PARAMETER Number
+  The paragraph number, for example "1.2.".
+.PARAMETER Parts
+  The number of parts of the paragraph number (its level).
+.PARAMETER TopLevel
+  $true for a main paragraph.
+#>
 function Test-Paragraph($P, [string]$Number, [int]$Parts, [bool]$TopLevel) {
   $where = "para $Number"
   if ($Parts -gt 7) { Add-Finding 'FAIL' 'F-006' $where 'more than seven paragraph levels (4.5.3.5)' }

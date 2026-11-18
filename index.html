@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>90-161.Z tasks</title>
 <style>
-/* Layout: a navy-to-blue RADE band (the 90-161.Z logo W2, inline from assets/logo/90161Z-logo.svg; the name only, and the open count: the PFM, 18 Nov 26) over one column of task cards; open tasks first, Done last.
+/* Layout: a navy-to-blue RADE band (the 90-161.Z logo W2, inline from assets/logo/90161Z-logo.svg; the name, the subtitle "Publications and Forms Management" under it, and the open count: the PFM, 18 Nov 26) over one column of task cards; open tasks first, Done last.
    Colors: Wing Master Version II (navy 0B2545, Air Force blue 00539F, AF yellow FFD520 as trim only), as the RADE window. */
 :root{--bg:#f4f6f9;--fg:#16202e;--mut:#526173;--card:#ffffff;--line:#d3dae3;--acc:#00539f;--acc-fg:#ffffff;--navy:#0b2545;--blue:#00539f;--gold:#ffd520;--mist:#dde8f3;
 --open-bg:#dde8f3;--open-fg:#0b2545;--done-bg:#d6ebdd;--done-fg:#1d5534;--note-bg:#fff6d6;--note-fg:#5a4300;--focus:#00539f;--ctl:#8a97a8;--code:#eef1f5;
@@ -16,6 +16,9 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 var(--ui)}
 .band-in{display:flex;align-items:center;gap:14px;padding-block:18px}
 .logo{flex:none;width:64px;height:64px} /* 64 px: the baseline logo size for 90-161.Z and RADE (PFM 18 Nov 26; docs/DECISIONS.md) */
 .band h1{font-size:1.375rem;line-height:1.2;margin:0;text-wrap:balance;font-weight:650}
+/* Subtitle under the name, in the style of the RADE page tagline (PFM 18 Nov 26; docs/DECISIONS.md). */
+.band .ttl{min-width:0}
+.band .sub{margin:2px 0 0;color:var(--mist);font-size:.875rem}
 .band .count{margin-left:auto;text-align:right;color:var(--mist);font-size:.8125rem;font-variant-numeric:tabular-nums}
 .band .count b{display:block;color:#fff;font-size:1.5rem;line-height:1.1}
 main{padding-block:20px 48px}
@@ -92,7 +95,7 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
 </clipPath>
 </defs>
 <path d="M198.0 212.0 L314.0 212.0 L314.0 223.0 L238.0 325.0 L314.0 325.0 L314.0 336.0 L198.0 336.0 L198.0 325.0 L274.0 223.0 L198.0 223.0 Z" fill="#00308F" clip-path="url(#s7)"/>
-</svg><h1>90-161.Z</h1><div class="count" id="hc" aria-live="polite"></div></div></header><main id="m"><p class="mut">Loading…</p></main>
+</svg><div class="ttl"><h1>90-161.Z</h1><p class="sub">Publications and Forms Management</p></div><div class="count" id="hc" aria-live="polite"></div></div></header><main id="m"><p class="mut">Loading…</p></main>
 <script>
 (function(){
 var SRC='https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md';

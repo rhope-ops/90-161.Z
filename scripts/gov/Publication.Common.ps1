@@ -1,6 +1,11 @@
 # 90-161.Z shared functions, dot-sourced by Test-Publication.ps1 and New-Publication.ps1.
 # Windows PowerShell 5.1 and pwsh 7. No external modules.
 # Fixed statements are verbatim DAFMAN 90-161 text; paragraph numbers are given with each.
+# Inputs: the publication content object of the caller. Outputs: functions (Get-Prop, Get-OpeningParagraph,
+# ConvertTo-TwoSpaceSentence) and the statement texts in $script:Stmt.
+# Network: none.
+# Writes: none.
+# Credentials: none.
 
 $script:Stmt = @{
   # 4.5.5.8 (records management statement)
@@ -20,52 +25,69 @@ $script:Stmt = @{
   TradeNames = 'The use of the name or mark of any specific manufacturer, commercial product, commodity, or service in this publication does not imply endorsement by the Department of the Air Force.'
 }
 
-function Get-PartValue($Obj, [string]$Name) {
+# The value of the property $Name of an object from the content file, or $null when the object or the property is missing
+# (one copy for the validator and the renderer; code standard S1, rule C5).
+function Get-Prop($Obj, [string]$Name) {
   if ($null -eq $Obj) { return $null }
   $p = $Obj.PSObject.Properties[$Name]
   if ($null -eq $p) { return $null }
   return $p.Value
 }
 
+<#
+.SYNOPSIS
+  Returns the opening paragraph (4.5.5). Uses "openingParts" when present (fixed text from code, slots from content),
+  else the free-text "opening" field. Order follows 4.5.5.1-4.5.5.12.
+.PARAMETER Pub
+  The publication content object.
+.OUTPUTS
+  System.String. The opening paragraph text.
+#>
 function Get-OpeningParagraph($Pub) {
-  # Returns the opening paragraph (4.5.5). Uses "openingParts" when present (fixed text from code,
-  # slots from content), else the free-text "opening" field. Order follows 4.5.5.1-4.5.5.12.
-  $parts = Get-PartValue $Pub 'openingParts'
-  if ($null -eq $parts) { return [string](Get-PartValue $Pub 'opening') }
+  $parts = Get-Prop $Pub 'openingParts'
+  if ($null -eq $parts) { return [string](Get-Prop $Pub 'opening') }
   $s = New-Object System.Collections.Generic.List[string]
-  $ante = [string](Get-PartValue $parts 'antecedent')
+  $ante = [string](Get-Prop $parts 'antecedent')
   if ($ante) { $s.Add('This publication implements ' + $ante.TrimEnd('.') + '.') }                 # 4.5.5.1
-  $purpose = [string](Get-PartValue $parts 'purpose')
+  $purpose = [string](Get-Prop $parts 'purpose')
   if ($purpose) { $s.Add($purpose) }                                                                  # 4.5.5 (what it covers)
-  $appl = [string](Get-PartValue $parts 'applicability')
+  $appl = [string](Get-Prop $parts 'applicability')
   if ($appl) { $s.Add($appl) }                                                                        # 4.5.5.2
-  $pa = Get-PartValue $parts 'privacyAct'
+  $pa = Get-Prop $parts 'privacyAct'
   if ($null -ne $pa) {                                                                                # 4.5.5.3
-    $s.Add('This publication requires the collection and or maintenance of information protected by the Privacy Act of 1974 authorized by ' + ([string](Get-PartValue $pa 'authority')).TrimEnd('.', ' ') + '. The applicable System of Record Notice(s) (SORN) ' + ([string](Get-PartValue $pa 'sorn')).TrimEnd('.', ' ') + ' is (are) available at: http://dpclo.defense.gov/Privacy/SORNs.aspx.')
+    $s.Add('This publication requires the collection and or maintenance of information protected by the Privacy Act of 1974 authorized by ' + ([string](Get-Prop $pa 'authority')).TrimEnd('.', ' ') + '. The applicable System of Record Notice(s) (SORN) ' + ([string](Get-Prop $pa 'sorn')).TrimEnd('.', ' ') + ' is (are) available at: http://dpclo.defense.gov/Privacy/SORNs.aspx.')
   }
-  if ([bool](Get-PartValue $parts 'copyright')) { $s.Add($script:Stmt.Copyright) }                    # 4.5.5.4
-  if ([bool](Get-PartValue $parts 'paperworkReduction')) { $s.Add($script:Stmt.Paperwork) }          # 4.5.5.5
-  $pun = [string](Get-PartValue $parts 'punitiveScope')
+  if ([bool](Get-Prop $parts 'copyright')) { $s.Add($script:Stmt.Copyright) }                    # 4.5.5.4
+  if ([bool](Get-Prop $parts 'paperworkReduction')) { $s.Add($script:Stmt.Paperwork) }          # 4.5.5.5
+  $pun = [string](Get-Prop $parts 'punitiveScope')
   if ($pun) {                                                                                         # 4.5.5.6
     $s.Add('Failure to obey this ' + $pun + ' constitutes a violation of Article 92(1), UCMJ' + [char]0x2014 + 'failure to obey lawful order or regulation. Article 92(1) of the UCMJ does not apply to members of the ANG while in Title 32 status (that is, activated for state duty under state command), but ANG members may be subject to an equivalent article under a state military justice code.')
   }
-  $stat = [string](Get-PartValue $parts 'statutory')
+  $stat = [string](Get-Prop $parts 'statutory')
   if ($stat) { $s.Add($stat) }                                                                        # 4.5.5.7
   $s.Add($script:Stmt.Records)                                                                        # 4.5.5.8
   $s.Add($script:Stmt.Changes)                                                                        # 4.5.5.9
-  $sup = [string](Get-PartValue $parts 'supplement')
+  $sup = [string](Get-Prop $parts 'supplement')
   if ($sup -ceq 'mayNot') { $s.Add($script:Stmt.SupplementMayNot) }
   elseif ($sup -ceq 'may') { $s.Add($script:Stmt.SupplementMay) }
   else { throw "openingParts.supplement must be 'may' or 'mayNot' (4.5.5.10.1); found '$sup'" }   # 4.5.5.10
   $s.Add($script:Stmt.Waiver)                                                                         # 4.5.5.11
-  if ([bool](Get-PartValue $parts 'tradeNames')) { $s.Add($script:Stmt.TradeNames) }                 # 4.5.5.12, last
+  if ([bool](Get-Prop $parts 'tradeNames')) { $s.Add($script:Stmt.TradeNames) }                 # 4.5.5.12, last
   return ($s -join ' ')
 }
 
 $script:NoBreakAbbrev = @('e.g.', 'i.e.', 'Mr.', 'Mrs.', 'Ms.', 'Dr.', 'No.', 'Nos.', 'U.S.', 'St.', 'Jr.', 'Sr.', 'vs.', 'para.', 'Vol.', 'Fig.', 'Col.', 'Lt.', 'Gen.', 'Brig.', 'Maj.', 'Capt.', 'Sgt.')
 
+<#
+.SYNOPSIS
+  L-004: two spaces before each new sentence (measured in DAFMAN 90-161: 6.55 pt vs 3.14 pt word gap); one space after a
+  known abbreviation or an initial, and before a tier number.
+.PARAMETER Text
+  The text (with inline markup).
+.OUTPUTS
+  System.String. The text with the sentence gaps set.
+#>
 function ConvertTo-TwoSpaceSentence([string]$Text) {
-  # L-004: two spaces before each new sentence (measured in DAFMAN 90-161: 6.55 pt vs 3.14 pt word gap).
   if (-not $Text) { return $Text }
   $rx = [regex]('(?<end>\(T-[0-3]\)|[.?!][)"' + [char]0x201D + ']?(?:\{/[ib]\})?)(?<ws>[ ]+)(?=[A-Z0-9"(' + [char]0x201C + '{])')
   return $rx.Replace($Text, {
