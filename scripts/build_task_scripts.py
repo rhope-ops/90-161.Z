@@ -7,6 +7,8 @@ Each scripts/gov/90161Z-T*.ps1 that asks for a DODID holds the block between two
 The text between them is the source from its first "function" line on. Edit only the source, then run this script.
 A script that signs in to the site also holds the site-common block (Get-SiteAddress; PFM 15 Nov 26: the site is entered once),
 between the same kind of markers; a Get-SiteAddress outside that block fails the check.
+A script that waits for a flow (T18, T24) holds the wait-common block (Wait-Until; code standard S1, rule C5) between its own
+markers; it is written only into a script that has them.
 A script with the app-logo markers gets $AppLogoPng: the 90-161.Z logo (PFM 17 Nov 26: logo W2 on the T22 window, 1A) as a
 128 px PNG in base64 text, drawn from the master assets/logo/90161Z-logo.svg by scripts/logo_draw.py (pure Python, the
 same bytes on every machine; scripts/logo_png.py keeps the hash record; the PNGs stay uncommitted, PFM 2A). The RADE runner keeps RADE's own logo (Rho Bold) from the pinned engine.
@@ -23,7 +25,8 @@ SRC = ROOT / 'scripts/gov/src/task-common.ps1'
 BEGIN = '# >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)'
 END = '# <<< task-common'
 ASKS_DODID = "Read-Host 'DODID"
-BLOCKS = [(SRC, BEGIN, END)] + [(ROOT / f'scripts/gov/src/{n}.ps1', BEGIN.replace('task-common', n), END.replace('task-common', n)) for n in ('site-common',)]
+BLOCKS = [(SRC, BEGIN, END)] + [(ROOT / f'scripts/gov/src/{n}.ps1', BEGIN.replace('task-common', n), END.replace('task-common', n)) for n in ('site-common', 'wait-common')]
+SITE = ROOT / 'scripts/gov/src/site-common.ps1'   # the block whose functions must not live outside it
 LOGO = 'app-logo'
 BLOCKS.append((LOGO, '# >>> app-logo: generated from assets/logo/90161Z-logo.svg by scripts/build_task_scripts.py (do not edit)', '# <<< app-logo'))
 UI = 'rade-ui'
@@ -80,10 +83,11 @@ def main(check):
             block = body(src) if src not in GENERATED or begin in text else ''
             m = re.search(re.escape(begin) + r'\n(.*?)' + re.escape(end) + r'\n', text, re.S)
             outside = text if m is None else text[:m.start()] + text[m.end():]
-            if src not in GENERATED and any(a in outside for a in ((ASKS_DODID,) if src == SRC else ('function Get-SiteAddress', 'function Hide-Site'))):
+            owned = (ASKS_DODID,) if src == SRC else ('function Get-SiteAddress', 'function Hide-Site') if src == SITE else ()
+            if src not in GENERATED and any(a in outside for a in owned):
                 unshared.append(f.name)
             if m is None:
-                if src not in (SRC,) + GENERATED and 'Get-SiteAddress' in text and f.name not in unshared:
+                if src == SITE and 'Get-SiteAddress' in text and f.name not in unshared:
                     unshared.append(f.name)   # uses the site address without the shared block
                 continue
             shared += src == SRC
