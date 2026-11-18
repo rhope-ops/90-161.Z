@@ -5,7 +5,8 @@ Blocks (exit 2, reason on stderr) when the checkout has uncommitted changes, or
 commits that its upstream branch does not have, or a branch that was never pushed.
 Passes a clean read-only checkout: no changes (untracked files included), no stash,
 and HEAD is on the default branch (origin/main, else origin/master) or behind it, so
-an unpushed session branch with no work of its own does not block (the PFM, 2026-11-11).
+an unpushed session branch with no work of its own does not block (kit default, 2026-11-11). When the local copy
+of the default branch is old (a new session clone often is), the hook fetches that one branch and compares again.
 Allows the stop on the second try in a row (stop_hook_active), so a turn that must
 end anyway (for example, near the usage limit, or when the PFM said hold) can end.
 Outside a git repo, or when git fails, it allows the stop.
@@ -15,6 +16,9 @@ Configured in .claude/settings.json ("hooks" > "Stop"). Manual run:
 Self-test (temporary repos, no network):
     python3 scripts/stop_check.py --test
 Standard library only.
+Network: the git remote "origin": at most one fetch of the default branch, and only when a clean branch looks ahead of it.
+Writes: none (the fetch updates the remote-tracking branch; the self-test: temporary repos).
+Credentials: none itself; the fetch uses the credentials git already has for origin.
 """
 import json
 import os
@@ -22,6 +26,7 @@ import subprocess
 import sys
 
 REPO_DIR = None
+FETCH_TIMEOUT_S = 10  # the hook timeout in .claude/settings.json is 30
 
 
 def git(*args):
@@ -43,18 +48,41 @@ def default_ref():
     return None
 
 
-def on_default_branch():
-    """True when HEAD has no commits that origin/main (or origin/master) lacks."""
+def on_default_branch(fetch=False):
+    """True when HEAD has no commits that origin/main (or origin/master) lacks. A local copy of that branch can be
+    old: with fetch, when the first comparison fails, fetch the branch once (at most FETCH_TIMEOUT_S seconds) and
+    compare again.
+
+    Args:
+        fetch: True: fetch the branch once when the first comparison fails.
+
+    Returns:
+        True or False.
+    """
     ref = default_ref()
     if ref is None:
         return False
-    r = subprocess.run(["git", "merge-base", "--is-ancestor", "HEAD", ref], cwd=REPO_DIR,
-                       capture_output=True, text=True)
-    return r.returncode == 0
+
+    def merged():
+        """True when HEAD is the ref's commit or one of its ancestors."""
+        return subprocess.run(["git", "merge-base", "--is-ancestor", "HEAD", ref], cwd=REPO_DIR,
+                              capture_output=True, text=True).returncode == 0
+    if merged() or not fetch:
+        return merged()
+    try:  # no network, no remote or a slow host: keep the first answer
+        subprocess.run(["git", "fetch", "--quiet", "origin", ref.split("/", 1)[1]], cwd=REPO_DIR, capture_output=True,
+                       timeout=FETCH_TIMEOUT_S)
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+    return merged()
 
 
 def problems():
-    """Return why the turn may not end yet; empty for a clean read-only checkout or work that is on GitHub."""
+    """Return why the turn may not end yet; empty for a clean read-only checkout or work that is on GitHub.
+
+    Returns:
+        A list of reasons (texts); empty when the turn may end.
+    """
     found = []
     dirty = git("status", "--porcelain", "--untracked-files=all")
     stashed = git("stash", "list")
@@ -74,16 +102,24 @@ def problems():
         if ahead:
             found.append(f"{ahead} commit(s) on {branch} not pushed to {upstream}")
     elif branch != "HEAD":
+        # Only here a fetch is worth its time: a clean branch that was never pushed and looks ahead of an old local
+        # copy of the default branch (a new session clone).
+        if not found and on_default_branch(fetch=True):
+            return found
         found.append(f"branch {branch} has no upstream (never pushed)")
     elif default_ref() and not on_default_branch():
         # Detached HEAD (also during a rebase that is not finished) with commits the default branch lacks
-        # (the PFM, 2026-11-11). With no origin/main or origin/master to compare with, the old pass stays.
+        # (kit default, 2026-11-11). With no origin/main or origin/master to compare with, the old pass stays.
         found.append(f"detached HEAD has commits not on {default_ref()}")
     return found
 
 
 def main():
-    """Read the Stop hook input on stdin; return 2 (reason on stderr) when work is not on GitHub, else 0."""
+    """Read the Stop hook input on stdin; return 2 (reason on stderr) when work is not on GitHub, else 0.
+
+    Returns:
+        The exit code: 0 lets the turn end, 2 blocks it.
+    """
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
@@ -129,7 +165,15 @@ class TestRepos:
         self.run(cwd, "commit", "-q", "-m", name)
 
     def fresh(self, name, default="main"):
-        """A bare origin and a clone with one commit pushed to the default branch; returns the clone's path."""
+        """A bare origin and a clone with one commit pushed to the default branch; returns the clone's path.
+
+        Args:
+            name: the name of the sample repo.
+            default: the name of its default branch.
+
+        Returns:
+            The path of the clone.
+        """
         origin = os.path.join(self.root, name + ".git")
         self.run(self.root, "init", "-q", "--bare", "-b", default, origin)
         work = os.path.join(self.root, name)
@@ -141,7 +185,15 @@ class TestRepos:
         return work
 
     def verdict(self, work, data="{}"):
-        """Run the hook on work with data on stdin; "block" or "pass"."""
+        """Run the hook on work with data on stdin; "block" or "pass".
+
+        Args:
+            work: the path of the clone to run the hook in.
+            data: the hook input (JSON text) for stdin.
+
+        Returns:
+            "block" or "pass".
+        """
         import io
         global REPO_DIR
         saved_env = dict(os.environ)
@@ -163,7 +215,14 @@ def write(path, text):
 
 
 def clean_cases(repos):
-    """Clean checkouts that must pass: at, behind or on the default branch."""
+    """Clean checkouts that must pass: at, behind or on the default branch.
+
+    Args:
+        repos: the helper that makes the sample repos.
+
+    Returns:
+        A list of (label, verdict, wanted verdict).
+    """
     run, verdict = repos.run, repos.verdict
     work = repos.fresh("readonly"); run(work, "checkout", "-q", "-b", "claude/session")
     out = [("clean session branch at origin/main, never pushed", verdict(work), "pass")]
@@ -171,11 +230,22 @@ def clean_cases(repos):
     out.append(("clean branch behind origin/main, never pushed", verdict(work), "pass"))
     work = repos.fresh("master", default="master"); run(work, "checkout", "-q", "-b", "s")
     out.append(("clean branch at origin/master (no main), never pushed", verdict(work), "pass"))
+    # The local origin/main is one commit old, and HEAD is the newer commit that the remote already has.
+    work = repos.fresh("stale"); repos.commit(work, "b"); run(work, "push", "-q", "origin", "main")
+    run(work, "update-ref", "refs/remotes/origin/main", "HEAD~1"); run(work, "checkout", "-q", "-b", "s")
+    out.append(("clean branch at the remote's main while the local origin/main is old", verdict(work), "pass"))
     return out
 
 
 def dirty_cases(repos):
-    """Uncommitted work that must block: a modified file, an untracked file, a stash."""
+    """Uncommitted work that must block: a modified file, an untracked file, a stash.
+
+    Args:
+        repos: the TestRepos helper.
+
+    Returns:
+        A list of (case name, verdict, wanted verdict).
+    """
     run, verdict = repos.run, repos.verdict
     work = repos.fresh("modified"); run(work, "checkout", "-q", "-b", "s")
     write(os.path.join(work, "a"), "changed")
@@ -191,7 +261,14 @@ def dirty_cases(repos):
 
 
 def commit_cases(repos):
-    """Commits not on GitHub, pushed branches, detached HEAD and the second stop in a row."""
+    """Commits not on GitHub, pushed branches, detached HEAD and the second stop in a row.
+
+    Args:
+        repos: the TestRepos helper.
+
+    Returns:
+        A list of (case name, verdict, wanted verdict).
+    """
     run, commit, verdict = repos.run, repos.commit, repos.verdict
     work = repos.fresh("unpushed"); run(work, "checkout", "-q", "-b", "s"); commit(work, "b")
     out = [("one unpushed commit, branch never pushed", verdict(work), "block")]
@@ -212,7 +289,11 @@ def commit_cases(repos):
 
 
 def self_test():
-    """Build throwaway repos and check each case. Prints one line per case; exit 0 = all pass."""
+    """Build throwaway repos and check each case. Prints one line per case; exit 0 = all pass.
+
+    Returns:
+        The exit code: 0 pass, 1 fail.
+    """
     import shutil
     import tempfile
     root = tempfile.mkdtemp(prefix="stop_check_test_")

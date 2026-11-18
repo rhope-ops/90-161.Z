@@ -10,6 +10,6 @@ New to working with AI agents? Read [docs/WORKING_WITH_AGENTS.md](docs/WORKING_W
 
 - Commands (build, test, lint): [AGENTS.md "Commands"](AGENTS.md)
 - Workspace setup and pinned packages: [docs/dev-setup.md](docs/dev-setup.md)
-- Code standard: [docs/code-standard.md](docs/code-standard.md)
+- Code standard: [docs/code-standard.md](docs/code-standard.md) (kit core) and [docs/code-standard-90-161.md](docs/code-standard-90-161.md) (what this repo adds)
 - Gov-device test rounds: [docs/gov-test-plan.md](docs/gov-test-plan.md)
 - Reporting a vulnerability: [SECURITY.md](SECURITY.md)

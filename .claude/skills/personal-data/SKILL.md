@@ -1,36 +1,46 @@
 ---
 name: personal-data
-description: Use when the personal-data guard (scripts/pii_guard.py) blocks a push, a pull-request check or a tool call, before you publish, delegate or send content (artifact, agent brief, pull-request text, doc, mail, message) that the hook does not cover, when a session reports DENYLIST, when you must check the guard's state or tier, and before you set up or change `.pii-guard`. Gives what the guard checks, what the hook scans, how to scan other content, how to fix a block, where the name denylist lives and what only the PFM may do.
+description: Use when the content check blocks a push, a pull-request check or a tool call, before you send content through a channel the hook does not cover, when a session reports DENYLIST, and before you change `.check`. Gives what is scanned, how to fix a block and what only the PFM may do.
 ---
 
-# Personal-data guard
+# The content check (personal data, secrets, blocked terms and files)
 
-AGENTS.md "Personal data" points here. What each tier blocks, in full: the header of `scripts/pii_guard.py`.
+AGENTS.md "Secrets and personal data" points here. Every pattern, tier and limit: the header of `scripts/check_content.py`.
 
 ## State
 
-- On or off: a `.pii-guard` file at the repo root turns the guard on in the pre-push hook and the pull-request Action.
-- Check it: `python3 scripts/pii_guard.py --status` prints the denylist source, a count, a fingerprint and the tier. It never prints names.
-- Tiers: minimum (no option line) and DoD (the line `profile: dod` in `.pii-guard`).
-- With the guard on, a push with no name denylist fails. The line `denylist: warn` in `.pii-guard` (starter tier) makes it warn and still check every other pattern.
+- `scripts/check.sh --status` prints each word list's source, count and fingerprint (never the words) and the tier.
+- The settings file `.check` at the repo root turns on the scan of pushes (pre-push hook) and pull requests (the "checks" Action). Its lines: an allowed exact string, `skip: <path or glob>`, `block: <path or glob>` (a file that must not be committed or sent), `denylist: warn`, `profile: dod`. The old name `.pii-guard` is read while `.check` is absent.
+- Tiers: minimum (no profile line) and DoD (`profile: dod`).
+- Word lists, both outside the repo: names (personal data; a push with no list fails, unless `.check` has `denylist: warn`) and terms (the PFM's own blocked words; optional).
+- Private repo: the pre-push hook (every tracked file) is the gate; the Action scans only the pull request's commits (Actions minutes). A binary file that enters only through a merge resolution, and content already on the base branch, are scanned only by the hook or a manual run of the Action.
 
-## Before you send (the hook)
+## The hook
 
-- In Claude Code on this repo, a PreToolUse hook (`.claude/settings.json`, `pii_guard.py --hook`, about 50 ms) scans each outgoing call before it runs: Agent briefs, Artifact pages and the files they publish, SendUserFile, WebFetch and WebSearch, GitHub pull-request, issue, comment and review calls, Gmail sends and drafts, Claude Docs and Google Docs, Drive and Sheets writes, and messages, sessions and scheduled tasks to other sessions. A finding blocks the call, and so does a named file it cannot scan (over 2 MB, a PDF, a binary) or any error in the scan (fail closed); no extra step for you. One exception: an email address in the top-level recipient fields of a Gmail call (`to`, `cc`, `bcc`) is no finding; a secret or a denylist name there still blocks. Named files over 8 MB in total, or a `file_path` that does not exist, also block. With no denylist (`--status` says none), names are not checked and the hook says nothing.
-- Not covered: claude.ai chats (no hooks), Google Calendar (an invite always holds addresses), Bash commands that send data (`curl`, `gh`), and tools the matcher does not name. For those, scan the text first: `printf '%s' "$TEXT" | python3 scripts/pii_guard.py --stdin --label brief`, or name the file: `python3 scripts/pii_guard.py <file>` (a missing or unreadable path fails, never passes).
-- Commit messages and the files you push are scanned by the pre-push hook; do not scan them again by hand.
+In Claude Code a PreToolUse hook (`.claude/settings.json`: `scripts/check.sh --hook`, about 50 ms) scans these calls before they run. A finding blocks the call, and so does any error in the scan (fail closed).
+
+| Tool | What is scanned |
+|---|---|
+| Write, Edit, NotebookEdit | The new text (also in a file that a `skip:` line names), and the path against the `block:` lines. The old text of an edit is not scanned, so an edit can remove a finding. |
+| Bash | The command, only when it can send something out: a network or publishing client, a URL, or a git verb that publishes text (the lists: `CLIENTS` and `GIT_OUT` in `scripts/check_content_hook.py`), and every command with a backslash at a line end. |
+| Agent, SendMessage, task and session messages, scheduled tasks, environment scripts | Every string of the call. |
+| Artifact, SendUserFile | Every string, and the files the call names (a file over 2 MB, a PDF or a binary blocks; so do named files over 8 MB in total and a `file_path` that does not exist). |
+| WebFetch, WebSearch; GitHub pull-request, issue, comment, review and file calls; Gmail sends and drafts; Claude Docs; Google Docs, Drive, Sheets; Calendar writes | Every string. In a Gmail call, an address in the top-level `to`, `cc`, `bcc` is no finding. |
+
+Not covered: claude.ai chats (no hooks), a Bash command that builds its payload at run time (a script file, a variable), and tools the matcher in `.claude/settings.json` does not name. For those, scan first: `printf '%s' "$TEXT" | scripts/check.sh --content --stdin --label brief`, or name the file: `scripts/check.sh --content <file>` (a missing or unreadable path fails).
+
+- Commit messages and pushed files are scanned by the pre-push hook; do not scan them again by hand.
 - In code, comments and tests, build a sample address from parts ("jane" + "@" + ...) or use an example.com address; never write one whole.
-- End-of-turn summary line: `PII: hook on; N block(s)` (plus each `--stdin` scan you ran). The hook keeps no count: N is the blocks you saw.
 
-## When the guard blocks
+## When it blocks
 
 1. Read the masked findings. Do not copy the data into chat, a commit message or a log.
-2. Remove the data from the files. If it is in an unpushed commit, fix that commit.
-3. Push or call again. Never push with `--no-verify`, and never change the hook to get past a block.
-4. A finding that is not personal data (a public reference text, an example value): tell the PFM. Only the PFM adds an allow or `skip:` entry to `.pii-guard`.
+2. Remove the data. If it is in an unpushed commit, fix that commit.
+3. Push or call again.
+4. A finding that is wrong (a public reference text, an example value): tell the PFM. AGENTS.md "Guards and checks" says who may add an entry to `.check`. A private repo may put its owner's real name in the `- Owner:` line of AGENTS.md.
 
-## The denylist
+## The word lists
 
-- The names live outside the repo. The places, and what the PFM types where: docs/FIRST_USE.md, step 4.
-- Never ask for the names in chat, never commit the list, and never open the PFM's master file.
-- A session that reports DENYLIST has no list: tell the PFM which place is missing.
+- Where each list lives, and what the PFM types where: docs/FIRST_USE.md, step 4. The terms list uses the same places under the names `CHECK_TERMS` (environment variable or Actions secret) and `~/.config/check/terms.txt`.
+- Never open the PFM's master file.
+- A session that reports DENYLIST has no name list: tell the PFM which place is missing.

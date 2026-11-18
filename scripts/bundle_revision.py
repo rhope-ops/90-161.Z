@@ -153,6 +153,8 @@ def self_test():
         fails += changed_on_main(root, read) != []                       # a bundle main lacks may change
         (root / "scripts/gov/paste/90161Z-R01-round-r6.ps1").write_bytes(b"rebuilt in place")
         fails += changed_on_main(root, read) != ["scripts/gov/paste/90161Z-R01-round-r6.ps1"]   # the fault
+        (root / "scripts/gov/paste/90161Z-R01-round-r6.ps1").unlink()
+        fails += changed_on_main(root, read) != ["scripts/gov/paste/90161Z-R01-round-r6.ps1"]   # deleted: also a fault
         moved = raise_revisions(root, read)
         fails += moved != [("scripts/gov/paste/90161Z-R01-round-r6.ps1", "scripts/gov/paste/90161Z-R01-round-r7.ps1")]
         new = bundles(root)
@@ -161,7 +163,7 @@ def self_test():
         fails += (root / GO).read_text(encoding="utf-8") != "link .../90161Z-R01-round-r7.ps1\n"
         fails += (root / "scripts/gov/paste/90161Z-R01-round-r6.ps1").exists()
         fails += changed_on_main(root, read) != []                       # after the raise: nothing on main changes
-    print("BUNDLEREV cases=10 fails=%d" % fails)
+    print("BUNDLEREV cases=11 fails=%d" % fails)
     return 1 if fails else 0
 
 

@@ -22,7 +22,7 @@ AGENTS.md "Verification" points here.
 
 1. Show the full statement, with no placeholders.
 2. Show its effect without changing data: a `SELECT COUNT(*)` with the same `WHERE`, or the engine's dry run. Show the counts, grouped where that helps (for example by date or status).
-3. On production: wait for approval of this statement. An approval covers one statement as shown. A changed statement needs a new approval.
+3. Get the fresh review that AGENTS.md "Fresh review" requires for a data write (lane C): give the reviewer the statement and the counts of step 2. On production: wait for the PFM's approval of this statement. An approval covers one statement as shown. A changed statement needs a new approval.
 4. Have a way back before you run: a snapshot or a backup table (BigQuery: `CREATE TABLE ... CLONE`, or time travel), or a written reverse statement. Say which one.
 5. Run it. Report the row counts before and after, and the rows the engine says it changed. If the numbers do not agree with step 2, stop and report.
 

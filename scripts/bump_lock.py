@@ -199,13 +199,13 @@ def restore(snap):
 
 
 def run_checks():
-    """Run scripts/check.sh and the PII guard against main's allow list.
+    """Run scripts/check.sh and the content check (personal data) against main's allow list.
 
     Returns:
         Nothing; stops with a FAIL message on a failure.
     """
     for cmd in (["bash", "scripts/check.sh"],
-                [sys.executable, "scripts/pii_guard.py", "--require-denylist", "--all", "--allow-from", "origin/main"]):
+                [sys.executable, "scripts/check_content.py", "--require-denylist", "--all", "--allow-from", "origin/main"]):
         if subprocess.run(cmd, cwd=ROOT).returncode:
             sys.exit("FAIL " + " ".join(cmd[1:]))
 
@@ -342,6 +342,8 @@ def order_case(name, build_ok, check_ok, rel):
         os.remove(os.path.join(PASTE, n))
     open(LOCK, "w").write('{"commit": "old"}')
     open(os.path.join(PASTE, "b.ps1"), "w").write("old bundle")
+    for p in (BUNDLES, GO):   # the raise edits these two; a failed run must put them back
+        open(p, "w").write("old")
     open(DECISIONS, "w").write("| Date | What | By | Where |\n|---|---|---|---|\n")
     seen = {}
 
@@ -358,6 +360,8 @@ def order_case(name, build_ok, check_ok, rel):
         """Fake revision raise: the old bundle b.ps1 leaves and the next revision c.ps1 comes."""
         os.remove(os.path.join(PASTE, "b.ps1"))
         open(os.path.join(PASTE, "c.ps1"), "w").write("raised bundle")
+        for p in (BUNDLES, GO):
+            open(p, "w").write("raised")
 
     def checks():
         """Fake checks: the row must not exist yet; fails when the case says so."""
@@ -371,12 +375,13 @@ def order_case(name, build_ok, check_ok, rel):
     except SystemExit:
         stopped = True
     row = open(DECISIONS).read().count(BY)
+    kept = [open(p).read() for p in (BUNDLES, GO)]
     good = (seen.get("lock") is True and seen.get("row") is False and seen.get("row_at_checks", False) is False
             and stopped == (name != "pass"))
     if name == "pass":
-        return good and row == 1 and json.load(open(LOCK))["serial"] == 5 and os.listdir(PASTE) == ["c.ps1"]
+        return good and row == 1 and json.load(open(LOCK))["serial"] == 5 and os.listdir(PASTE) == ["c.ps1"] and kept == ["raised"] * 2
     return good and row == 0 and open(LOCK).read() == '{"commit": "old"}' \
-        and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"]
+        and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"] and kept == ["old"] * 2
 
 
 def order_cases():

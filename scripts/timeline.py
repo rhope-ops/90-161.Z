@@ -16,6 +16,9 @@ Logs are validated with scripts/log_check.py first; a log with findings is refus
 Public pages: the output holds everything in the log. A public repo's log is private on purpose (AGENTS.md
 "Project log"), so publish a timeline from it only to a private place, or sanitize the log first.
 Standard library only.
+Network: none.
+Writes: the output file (-o, default timeline.html; or --outline FILE).
+Credentials: none.
 """
 import argparse
 import datetime as dt
@@ -36,7 +39,14 @@ COMMIT_PHRASE_RE = re.compile(r"\bCommits? ((?:[0-9a-f]{7,40})(?:(?:, | and )[0-
 
 
 def parse_spec(spec):
-    """Split a LABEL=PATH@OWNER/REPO argument into (label, path, repo); the label defaults to the log's title."""
+    """Split a LABEL=PATH@OWNER/REPO argument into (label, path, repo); the label defaults to the log's title.
+
+    Args:
+        spec: the argument text.
+
+    Returns:
+        (label or None, path as a Path, repo or None).
+    """
     label, repo, path = None, None, spec
     if "=" in path:
         label, path = path.split("=", 1)
@@ -51,7 +61,16 @@ def parse_spec(spec):
 
 
 def load(label, path, repo):
-    """The (arcs, events) of one project log, each tagged with its project label."""
+    """The (arcs, events) of one project log, each tagged with its project label.
+
+    Args:
+        label: the project label; None = the log's title.
+        path: the path of the log file (a Path).
+        repo: OWNER/REPO for commit links, or None.
+
+    Returns:
+        (arcs, events), each a list of dicts.
+    """
     t = log_check.tables(path.read_text(encoding="utf-8"))
     arcs = [dict(zip(log_check.ARC_COLS, c)) for _, c in t.get("Arcs", (0, [], []))[2]]
     events = []
@@ -99,7 +118,8 @@ button[aria-pressed=false]{opacity:.6}
 .stat b{display:block;font-size:24px}
 .arcs{display:grid;gap:8px}.arcbox summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
 .arcbox summary h2{display:inline;margin:0 0 0 4px}.arcbox{margin:24px 0 0}
-.arcbox summary{list-style:none}.arcbox summary::-webkit-details-marker{display:none}.arcbox summary::before{content:'\\25B8';color:var(--muted);width:16px}.arcbox[open] summary::before{content:'\\25BE'}
+.arcbox summary{list-style:none}.arcbox summary::-webkit-details-marker{display:none}
+.arcbox summary::before{content:'\\25B8';color:var(--muted);width:16px}.arcbox[open] summary::before{content:'\\25BE'}
 .arc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
 .arc h3{font-size:16px;margin:0}.arc p{margin:4px 0 0;color:var(--muted)}
 .day{margin:24px 0 8px;font-weight:600;color:var(--muted)}
@@ -157,7 +177,17 @@ def zone_note(zones):
 
 
 def render(title, arcs, events, zones=()):
-    """The self-contained HTML timeline page: arcs, filters and event cards, newest first."""
+    """The self-contained HTML timeline page: arcs, filters and event cards, newest first.
+
+    Args:
+        title: the page title.
+        arcs: the arcs of every log.
+        events: the events of every log.
+        zones: the time zone names of the logs.
+
+    Returns:
+        The page as HTML text.
+    """
     e = html.escape
     events = sorted(events, key=lambda x: (x["sort"], x["project"], int(x["num"]) if x["num"].isdigit() else 0), reverse=True)
     projects = sorted({x["project"] for x in events} | {a["project"] for a in arcs})
@@ -207,7 +237,15 @@ STORY = ["Problem", "Turning point", "Outcome", "Lesson"]
 
 
 def outline(arcs, events):
-    """Markdown story outline: one section per arc, oldest arc first, ready to turn into 3-4 slides each."""
+    """Markdown story outline: one section per arc, oldest arc first, ready to turn into 3-4 slides each.
+
+    Args:
+        arcs: the arcs of every log.
+        events: the events of every log.
+
+    Returns:
+        The outline as Markdown text.
+    """
     rows = {(x["project"], x["num"]): x for x in events}
     first = {}
     for x in events:
@@ -236,7 +274,17 @@ def outline(arcs, events):
 
 
 def build(specs, title, force=False, as_outline=False):
-    """Load each log and return (page or outline, problems); no page when a log fails log_check without --force."""
+    """Load each log and return (page or outline, problems); no page when a log fails log_check without --force.
+
+    Args:
+        specs: the LABEL=PATH@OWNER/REPO arguments.
+        title: the page title.
+        force: True to render although a log has findings.
+        as_outline: True for the Markdown outline, not the page.
+
+    Returns:
+        (the text or None, the list of problems).
+    """
     arcs, events, problems, zones = [], [], [], []
     for spec in specs:
         label, path, repo = parse_spec(spec)
@@ -254,7 +302,11 @@ def build(specs, title, force=False, as_outline=False):
 
 
 def self_test():
-    """Render a sample log and check escaping, links, order, zones, outline and refusal; print the results."""
+    """Render a sample log and check escaping, links, order, zones, outline and refusal; print the results.
+
+    Returns:
+        The exit code: 0 pass, 1 fail.
+    """
     ok = True
     with tempfile.TemporaryDirectory() as d:
         f = pathlib.Path(d, "LOG.md")
@@ -290,7 +342,11 @@ def self_test():
 
 
 def main():
-    """Command line: write the timeline page (or outline), or run --test; return the exit code."""
+    """Command line: write the timeline page (or outline), or run --test; return the exit code.
+
+    Returns:
+        The exit code: 0 written or passed, 1 on a problem.
+    """
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("logs", nargs="*", default=["docs/LOG.md"])
     ap.add_argument("-o", "--output", default="timeline.html")
