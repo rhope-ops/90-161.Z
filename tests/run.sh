@@ -667,11 +667,11 @@ assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and sr
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
 hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
-# -Opened (the look questions' gate in the round): fake result files opened / not opened / STOPPED; one line, no other file
-import tempfile; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r4.txt'); got = {}
-for k, body in {'open': 'CARDS opened: home, step8 (17 of 17)\nPASS layout', 'none': 'CARDS opened: none (0 of 17)', 'stop': 'CARDS opened: home (1 of 17)\nSTOPPED: no window (x)'}.items():
-    w.write_text(body + '\n'); r = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-Opened', '-TestDir', d], capture_output=True, text=True, timeout=60); got[k] = (r.stdout.strip(), r.returncode)
-assert got == {'open': ('PASS the window opened (17 of 17 cards)', 0), 'none': ('FAIL the window did not open', 1), 'stop': ('FAIL the window did not open', 1)} and len(list(pathlib.Path(d).iterdir())) == 1, got
+# -Opened (the look questions' gate in the round): fake result files opened / not opened / STOPPED / 4 hours old; one line, no other file
+import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r4.txt'); got = {}
+for k, body in {'open': 'CARDS opened: home, step8 (17 of 17)\nPASS layout', 'none': 'CARDS opened: none (0 of 17)', 'stop': 'CARDS opened: home (1 of 17)\nSTOPPED: no window (x)', 'old': 'CARDS opened: home, step8 (17 of 17)'}.items():
+    w.write_text(body + '\n'); k == 'old' and os.utime(w, (time.time() - 4 * 3600,) * 2); r = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-Opened', '-TestDir', d], capture_output=True, text=True, timeout=60); got[k] = (r.stdout.strip(), r.returncode)
+assert got == {'open': ('PASS the window opened (17 of 17 cards)', 0), 'none': ('FAIL the window did not open', 1), 'stop': ('FAIL the window did not open', 1), 'old': ('FAIL the window did not open (no result from this round)', 1)} and len(list(pathlib.Path(d).iterdir())) == 1, got
 PYT22
 else sk "T22 window preview cards (r4)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.

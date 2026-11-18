@@ -125,7 +125,8 @@ $wn.MeasureRun = {
   $form.Show(); [Windows.Forms.Application]::DoEvents()
   & $ui.FormDpi; $form.BackColor = $pc.surface
   $all = New-Object System.Collections.Generic.List[object]
-  & $wn.Build { param($k) $all.Add((& $wn.MeasureCard $k)) }
+  # A card that cannot be measured is kept with its error and place, and the run goes on (the test names it).
+  & $wn.Build { param($k) try { $all.Add((& $wn.MeasureCard $k)) } catch { $all.Add([ordered]@{ Key = $k; Error = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }) } }
   $res = [ordered]@{ Rev = $Rev; Dpi = $ui.Dpi; Sc8 = (& $wn.Sc 8); Client = ([string]$form.ClientSize.Width + 'x' + $form.ClientSize.Height)
     Cards = @($all); EmptyNames = @($wn.NoName.Keys); LayoutDefects = @($ui.LayBad) }
   Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 8) -Encoding UTF8

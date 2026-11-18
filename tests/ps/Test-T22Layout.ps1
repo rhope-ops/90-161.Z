@@ -62,11 +62,15 @@ try {
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'
   $built = ($code -eq 0 -and (Test-Path -LiteralPath $file))
   Test-That 'the window was built off-screen and measured' $built ('exit ' + $code + '; last line: ' + (@($log | Where-Object { $_.Trim() }) | Select-Object -Last 1))
-  if (-not $built) { @($log | Select-Object -Last 15) | ForEach-Object { Write-Host ('  ' + $_) } }
+  # Invoke-Ps51 shows only lines with FAIL in them: the child's STOPPED and NOTE lines are repeated as FAIL lines, so the CI log names the cause.
+  if (-not $built) { @($log | Where-Object { $_ -match '^\s*(STOPPED|NOTE)' }) | ForEach-Object { Write-Host ('T22LAYOUT FAIL child: ' + $_.Trim()) }
+    @($log | Select-Object -Last 15) | ForEach-Object { Write-Host ('  ' + $_) } }
   else {
     $m = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
     Write-Host ('T22LAYOUT window ' + $m.Client + ' at ' + $m.Dpi + ' dpi; 8 px at 100 % = ' + $m.Sc8 + ' px; layout self-check defects: ' + @($m.LayoutDefects).Count)
     $byKey = @{}; foreach ($c in @($m.Cards)) { $byKey[[string]$c.Key] = $c }
+    $broken = @($m.Cards | Where-Object { $_.Error })
+    Test-That 'every card was measured' ($broken.Count -eq 0) ('cards ' + @($m.Cards).Count + ', not measured: ' + (@($broken | ForEach-Object { [string]$_.Key + ' (' + $_.Error + ')' }) -join '; '))
     foreach ($k in $crumbCards) { Test-Crumb $k $byKey[$k] ([int]$m.Sc8) }
     Test-Step8 $byKey['step8']
     $empty = @($m.EmptyNames | Where-Object { $_ })

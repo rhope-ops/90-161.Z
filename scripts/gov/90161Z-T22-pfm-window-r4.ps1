@@ -98,11 +98,14 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
 }
 # <<< task-common
-# The -Opened line for the result file in $Dir: PASS when its last "CARDS opened" line counts more than 0 cards and no
-# line starts with STOPPED:, else FAIL (also when the file is missing).
+$OpenedHours = 3   # a result file older than this is from an earlier round (review R30): -Opened does not trust it
+# The -Opened line for the result file in $Dir: PASS when it was written in the last $OpenedHours hours, its last
+# "CARDS opened" line counts more than 0 cards and no line starts with STOPPED:, else FAIL (also when it is missing).
 function Get-OpenedLine([string]$Dir) {
-  $f = Join-Path $Dir ('90161Z-T22-window-' + $Rev + '.txt'); $text = @()
-  if (Test-Path -LiteralPath $f -PathType Leaf) { $text = @(Get-Content -LiteralPath $f) }
+  $f = Join-Path $Dir ('90161Z-T22-window-' + $Rev + '.txt')
+  if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { return 'FAIL the window did not open' }
+  if ((Get-Item -LiteralPath $f).LastWriteTime -lt (Get-Date).AddHours(-$OpenedHours)) { return 'FAIL the window did not open (no result from this round)' }
+  $text = @(Get-Content -LiteralPath $f)
   $m = @($text | Where-Object { $_ -match '^CARDS opened: .*\((\d+) of (\d+)\)$' }) | Select-Object -Last 1
   $stopped = @($text | Where-Object { $_ -match '^STOPPED:' }).Count
   if ($m -and -not $stopped -and $m -match '\((\d+) of (\d+)\)$' -and [int]$Matches[1] -gt 0) { return ('PASS the window opened (' + $Matches[1] + ' of ' + $Matches[2] + ' cards)') }
@@ -112,6 +115,8 @@ if ($Opened) {   # no window, no file: one line about the last run, exit 1 on FA
   try { $od = $(if ($TestDir) { $TestDir } else { Get-TaskDir (Get-TaskId $Id).Id $task 'Task 22' }); $ol = Get-OpenedLine $od } catch { $ol = 'FAIL the window did not open' }
   Write-Host $ol; exit $(if ($ol.StartsWith('PASS')) { 0 } else { 1 })
 }
+# Where an error happened, as "<file>:<line>" (the file name only: no folder, so no DODID).
+function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.InvocationInfo.ScriptName)) + ':' + $Err.InvocationInfo.ScriptLineNumber) }
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'window', 'measure')
@@ -204,7 +209,7 @@ try {
   $form.Dispose()
 } catch {
   $code = 1
-  $lines.Add('STOPPED: no window (' + ([string]$_.Exception.Message).Substring(0, [Math]::Min(200, ([string]$_.Exception.Message).Length)) + ')')
+  $lines.Add('STOPPED: no window (' + ([string]$_.Exception.Message).Substring(0, [Math]::Min(200, ([string]$_.Exception.Message).Length)) + ') at ' + (Get-ErrorPlace $_))
 } finally {
   if ($PlanOnly) { exit 0 }
   $lines.Add('WINDOW done: cards=' + $cardsOpened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
