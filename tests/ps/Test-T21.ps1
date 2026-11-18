@@ -380,15 +380,14 @@ Remove-Item Env:T21_TEST_ADDRESS
 New-Site
 $r = Invoke-T21 'Person'; Note $r
 Test-That 'Person without the list: STOPPED and exit 1' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LIST not found') $r.Text
-# This case needs a computer that cannot open the address window (Linux). On Windows the script opens the window and waits
-# for a person, as designed, so the case cannot run unattended there (first ps51 run, 18 Nov 26): it is named, not counted.
-$canAsk = $true; try { Add-Type -AssemblyName Microsoft.VisualBasic -ErrorAction Stop } catch { $canAsk = $false }
-if ($canAsk) { Write-Host 'T21TEST NOTRUN Person in RADE with no window: this computer can open the window (the case is for one that cannot)' }
-else {
-  New-Site; $null = Invoke-T21 'Make'
-  $r = Invoke-T21 'Person'; Note $r
-  Test-That 'Person in RADE with no window and no test address: STOPPED, nothing added' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: ADDRESS window not available|STOPPED: ' -and $global:F.Added -eq 0 -and -not (Test-Path -LiteralPath $state)) $r.Text
-}
+# The script must stop with a plain line when its address window cannot open. On Windows the window opens and waits for a
+# person, so here the test stands in for a computer where it cannot: a function named Add-Type that fails hides the real
+# command while this one case runs (the script runs in this process), and is removed after it. No task script is changed.
+New-Site; $null = Invoke-T21 'Make'
+# Stand-in for the real Add-Type during this one case: it fails, as on a computer that cannot open the window. Takes nothing.
+function Add-Type { throw 'TEST: no window on this computer' }
+try { $r = Invoke-T21 'Person'; Note $r } finally { Remove-Item -LiteralPath Function:\Add-Type }
+Test-That 'Person in RADE with no window and no test address: STOPPED, nothing added' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: ADDRESS window not available' -and $global:F.Added -eq 0 -and -not (Test-Path -LiteralPath $state)) $r.Text
 
 # ---- Run ----
 New-Site; $null = Invoke-T21 'Make'

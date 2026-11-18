@@ -1,6 +1,6 @@
 # Runs the repo's PowerShell tests as child processes of the engine this script runs in, and checks each one's last line.
-# The workflow .github/workflows/ps51.yml starts it with Windows PowerShell 5.1 (powershell.exe) on a Windows runner; tests/run.sh
-# starts it with pwsh so the driver cannot rot. Last line: "PS51 pass=N fail=0"; exit 1 when any test fails.
+# The workflow .github/workflows/ps51.yml starts it with Windows PowerShell 5.1 (powershell.exe) on a Windows runner. tests/run.sh
+# does not start it (that file is at its listed size limit), so only that job proves the driver itself. Last line: "PS51 pass=N fail=0"; exit 1 when any test fails.
 # Network: none.
 # Writes: nothing in the repo (the tests write only their own temp folders and remove them).
 # Credentials: none.
