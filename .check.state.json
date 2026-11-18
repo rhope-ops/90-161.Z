@@ -67,9 +67,7 @@
     "scripts/gov/90161Z-T22-pfm-window-r3.ps1::$wn.Start": 1,
     "scripts/gov/90161Z-T22-pfm-window-r3.ps1::$wn.State": 1,
     "scripts/gov/90161Z-T22-pfm-window-r3.ps1::$wn.Txt": 1,
-    "scripts/gov/90161Z-T22-pfm-window-r3.ps1::ConvertTo-HomeRow": 1,
     "scripts/gov/90161Z-T22-pfm-window-r3.ps1::ConvertTo-PlanText": 1,
-    "scripts/gov/90161Z-T22-pfm-window-r3.ps1::ConvertTo-QueueRow": 1,
     "scripts/gov/90161Z-T22-pfm-window-r3.ps1::Get-CardPlan": 1,
     "scripts/gov/90161Z-T22-pfm-window-r3.ps1::Get-SideStatus": 1,
     "scripts/gov/90161Z-T22-pfm-window-r3.ps1::Test-Deploy": 1,
@@ -230,15 +228,15 @@
    },
    "file_size": {
     "scripts/gov/90161Z-T21-probe-r5.ps1": 788,
-    "scripts/gov/90161Z-T22-pfm-window-r3.ps1": 1402,
+    "scripts/gov/90161Z-T22-pfm-window-r3.ps1": 1401,
     "scripts/gov/New-Publication.ps1": 638,
     "tests/run.sh": 686
    },
    "generated": {},
    "header": {},
    "length": {
-    "scripts/gov/90161Z-T22-pfm-window-r3.ps1::$wn.Block": 110,
-    "scripts/gov/90161Z-T22-pfm-window-r3.ps1::$wn.Grid": 72
+    "scripts/gov/90161Z-T22-pfm-window-r3.ps1::$wn.Block": 107,
+    "scripts/gov/90161Z-T22-pfm-window-r3.ps1::$wn.Grid": 69
    },
    "line": {
     "scripts/build_decision_brief.js": 277,

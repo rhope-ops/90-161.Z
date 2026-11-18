@@ -24,9 +24,9 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R29a-round-r6.ps1",
+      "out": "scripts/gov/paste/90161Z-R29a-round-r7.ps1",
       "round": "R29a",
-      "title": "Round R29a r6: the R28 fixes (health flow, export reader, import cards), the new site logo, the second person and the full flow test",
+      "title": "Round R29a r7: the R28 fixes (health flow, export reader, import cards), the new site logo, the second person and the full flow test",
       "files": [
         {
           "dir": "T17",
@@ -1834,9 +1834,9 @@
       ]
     },
     {
-      "out": "scripts/gov/paste/90161Z-R29b-round-r6.ps1",
+      "out": "scripts/gov/paste/90161Z-R29b-round-r7.ps1",
       "round": "R29b",
-      "title": "Round R29b r6: the 90-161.Z window with its 12 checks inside the window",
+      "title": "Round R29b r7: the 90-161.Z window with its 12 checks inside the window",
       "files": [
         {
           "dir": "T22",
