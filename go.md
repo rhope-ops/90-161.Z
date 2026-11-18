@@ -68,7 +68,7 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 10. Press Run.
 11. Do each check in the bar at the bottom of the 90-161.Z window.
 12. Close the 90-161.Z window with its X.
-13. Answer the 5 questions in the RADE window.
+13. Answer the 5 questions in the RADE window (3 cards, then 2).
 14. At DONE, send the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R30b-round-r1.ps1

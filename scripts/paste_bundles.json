@@ -1786,7 +1786,7 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R30a r1: Power Automate check, health flow, button flow and export reader, list form and view button, full flows and the full flow test. Fake data.",
+          "summary": "Round R30a r1: Power Automate check, health flow, button flow and export, list form and view button, full flows and the full flow test. Fake data.",
           "steps": [
             "T21 Check the test site is clean r6",
             "T21 Make the probe list r6",
@@ -1893,9 +1893,9 @@
           "kind": "guide",
           "dir": "T22",
           "file": "",
-          "note": "You answer 5 questions about the look of the window. About 3 minutes.",
+          "note": "You answer 3 questions about the look of the window. About 2 minutes.",
           "guide": [
-            "1. Answer each of the next 5 cards."
+            "1. Answer each of the next 3 cards."
           ],
           "marker": "90161Z-T22-judged-look.txt",
           "estimate": 2,
@@ -1923,7 +1923,26 @@
               "key": "w-change",
               "prompt": "What would you change first? One line, no names.",
               "kind": "text"
-            },
+            }
+          ],
+          "doneLog": "Confirmed by you: judged the look."
+        },
+        {
+          "name": "T22 Answer: the screenshot fixes r4",
+          "title": "Answer 2 questions about the fixes from your screenshots",
+          "kind": "guide",
+          "dir": "T22",
+          "file": "",
+          "note": "You answer 2 questions about the fixes from your screenshots. About 1 minute.",
+          "guide": [
+            "1. Answer each of the next 2 cards."
+          ],
+          "marker": "90161Z-T22-judged-fixes.txt",
+          "estimate": 2,
+          "after": [
+            "T22 Did the window open r4"
+          ],
+          "answers": [
             {
               "key": "w-crumb",
               "prompt": "On the card FAKE OI 33-101: does the line \"Your Work > FAKE OI 33-101\" read as one line?",
@@ -1935,7 +1954,7 @@
               "kind": "yesno"
             }
           ],
-          "doneLog": "Confirmed by you: judged the look."
+          "doneLog": "Confirmed by you: judged the fixes."
         }
       ],
       "collect": [
@@ -2651,7 +2670,8 @@
           "steps": [
             "T22 Open the 90-161.Z window r4",
             "T22 Did the window open r4",
-            "T22 Answer: look and cards r4"
+            "T22 Answer: look and cards r4",
+            "T22 Answer: the screenshot fixes r4"
           ]
         }
       ]
