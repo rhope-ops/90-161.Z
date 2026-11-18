@@ -14,6 +14,9 @@ simple command into words (quotes respected), so "main" inside a branch name or 
 Exit 2 with the reason on stderr blocks the call; exit 0 lets the normal permission flow decide. A command string run by
 eval or a shell's -c is checked too; other commands built at run time (a script file, stdin, `$(...)` output) are not
 seen: it is a seat belt for honest mistakes, not a security boundary.
+Network: none.
+Writes: none.
+Credentials: none.
 """
 import argparse
 import json
@@ -30,7 +33,11 @@ WRITE_VERBS = {'commit', 'add', 'rm', 'mv', 'merge', 'checkout', 'switch', 'rest
 
 
 def segments(cmd):
-    """Yield the word lists of each simple command (split on newlines and ; && || | &, quotes respected)."""
+    """Yield the word lists of each simple command (split on newlines and ; && || | &, quotes respected).
+
+    Args:
+        cmd: the shell command text.
+    """
     for line in cmd.splitlines():
         try:
             lex = shlex.shlex(line, posix=True, punctuation_chars=True)
@@ -61,7 +68,14 @@ BRANCH_OPTS_WITH_VALUE = {'--sort', '--format', '--contains', '--no-contains', '
 
 def branch_delete(rest):
     """True for any delete form of `git branch`: -d/-D alone or grouped (-rd, -df), and --delete or its prefixes
-    (git accepts an unambiguous prefix such as --del). A value after --sort and the like is skipped."""
+    (git accepts an unambiguous prefix such as --del). A value after --sort and the like is skipped.
+
+    Args:
+        rest: the words after `git branch`.
+
+    Returns:
+        True or False.
+    """
     skip = False
     for w in rest:
         if skip:
@@ -78,7 +92,16 @@ def branch_delete(rest):
 
 
 def check_git(args, branch, readonly=False):
-    """args: the words after `git`. Returns a reason to block, or None."""
+    """args: the words after `git`. Returns a reason to block, or None.
+
+    Args:
+        args: the words after `git`.
+        branch: the current branch, or None when it is not known.
+        readonly: True for the reviewer: also block the git verbs that change the repo.
+
+    Returns:
+        A reason to block (a text), or None.
+    """
     i = 0
     while i < len(args) and args[i].startswith('-'):
         i += 2 if args[i] in GIT_OPTS_WITH_VALUE else 1
@@ -88,7 +111,7 @@ def check_git(args, branch, readonly=False):
     if readonly and sub in WRITE_VERBS:
         return f'reviewers are read-only: no git {sub}'
     if sub == 'rebase':
-        return 'no rebase; update a branch by merging (AGENTS.md "Git safety")'
+        return 'no rebase; update a branch by merging (AGENTS.md "Git history")'
     if sub == 'reset' and '--hard' in rest:
         return 'no reset --hard; ask the orchestrator'
     if sub == 'clean':
@@ -105,7 +128,7 @@ def check_git(args, branch, readonly=False):
             continue
         if w.startswith('--'):
             if w in ('--force', '--mirror', '--all', '--delete', '--prune') or w.startswith('--force-with-lease'):
-                return f'workers may not push with {w} (AGENTS.md "Git safety")'
+                return f'workers may not push with {w} (AGENTS.md "Git history")'
         elif w.startswith('-') and len(w) > 1:
             if 'f' in w[1:] or 'd' in w[1:]:
                 return f'workers may not push with {w} (force or delete)'
@@ -127,7 +150,15 @@ def check_git(args, branch, readonly=False):
 
 
 def push_target(pos, branch):
-    """pos: the push words without options; pos[0] is the remote. Returns a reason to block, or None."""
+    """pos: the push words without options; pos[0] is the remote. Returns a reason to block, or None.
+
+    Args:
+        pos: the push words without options; pos[0] is the remote.
+        branch: the current branch, or None when it is not known.
+
+    Returns:
+        A reason to block (a text), or None.
+    """
     refspecs = pos[1:]
     if not refspecs:
         refspecs = ['HEAD']
@@ -147,7 +178,17 @@ SHELLS = {'sh', 'bash', 'zsh', 'dash', 'ksh'}
 
 
 def reason(cmd, branch=None, readonly=False, depth=0):
-    """Why a shell command is blocked, or None; command strings run by a shell or eval are checked too."""
+    """Why a shell command is blocked, or None; command strings run by a shell or eval are checked too.
+
+    Args:
+        cmd: the shell command text.
+        branch: the current branch, or None when it is not known.
+        readonly: True for the reviewer: also block the git verbs that change the repo.
+        depth: how many shell or eval layers are above this text (the check stops at 3).
+
+    Returns:
+        A reason to block (a text), or None.
+    """
     for seg in segments(cmd):
         for k, w in enumerate(seg):
             # A command string run by a shell (`bash -c "git checkout main"`, `eval "..."`) is checked as a command too.
@@ -178,7 +219,11 @@ def reason(cmd, branch=None, readonly=False, depth=0):
 
 
 def selftest():
-    """Check sample commands that must block and must pass; print the wrong ones and the result."""
+    """Check sample commands that must block and must pass; print the wrong ones and the result.
+
+    Returns:
+        The exit code: 0 pass, 1 fail.
+    """
     block = ['git push origin main', 'git push -u origin HEAD:main', 'git push origin claude/x:main', 'git push --force origin claude/x',
              'git push -f', 'git push -fu origin claude/x', 'git push origin "+claude/x"', 'git push origin +claude/x',
              'git rebase origin/main', 'cd x && git rebase -i HEAD~2', 'git -C sub rebase main', 'git reset --hard origin/main',
@@ -191,7 +236,8 @@ def selftest():
              'git merge origin/main', 'git status', 'python3 tools/check.py --no-perf', 'git log --oneline main..HEAD',
              'git fetch origin main', 'git commit -m "push main menu fix"', 'git commit -m "fix rebase of main"',
              'git push', 'git push origin HEAD', 'git commit -m "note; git rebase later"', 'git branch -a', 'git branch -vv',
-             'git push origin claude/x 2>&1', 'git push -u origin claude/x > /dev/null', 'git branch --sort -committerdate', 'git branch --sort=-committerdate', 'git branch -m old new', 'git branch --list']
+             'git push origin claude/x 2>&1', 'git push -u origin claude/x > /dev/null', 'git branch --sort -committerdate', 'git branch --sort=-committerdate',
+             'git branch -m old new', 'git branch --list']
     bad = [c for c in block if not reason(c, 'claude/x')] + [c for c in allow if reason(c, 'claude/x')]
     for c in ['git push', 'git push origin HEAD', 'git push 2>&1', 'git push > /dev/null', 'git push 2> err.txt',
               'git push origin 2>&1']:     # on main these must block
@@ -214,7 +260,11 @@ def selftest():
 
 
 def main():
-    """PreToolUse hook: exit 2 with the reason when a Bash command is blocked; or run --test."""
+    """PreToolUse hook: exit 2 with the reason when a Bash command is blocked; or run --test.
+
+    Returns:
+        The exit code: 0 lets the command run, 2 blocks it.
+    """
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--test', action='store_true', help='run the self-test')
     ap.add_argument('--readonly', action='store_true', help='also block git verbs that change the repo (reviewer)')

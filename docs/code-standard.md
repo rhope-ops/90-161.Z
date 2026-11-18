@@ -1,14 +1,48 @@
-# Code standard: 90-161.Z
+# Code standard
 
-Decided by the PFM, 2026-11-17 (docs/DECISIONS.md): all code in this repo is modular, clearly commented and human inspectable, and stays so as work continues.
+Decided by the PFM, 2026-11-17 (docs/DECISIONS.md): all code is lean, modular, commented and human-editable, and stays so as work continues. Why: a person must be able to read any script and know what it does before they run it. [scripts/code_standard.py](../scripts/code_standard.py) enforces the rules marked **(check)**; the fresh reviewer of each pull request checks the rules marked **(review)**.
 
-**The rules live in one place: the RADE code standard, https://github.com/rhope-ops/RADE/blob/main/docs/code-standard.md** (the kit core from rhope-ops/archimedes_lever plus the RADE extras). This file holds only what is different for this repo. Why: a person must be able to read any script and know what it does before they run it on the gov device; a pasted round bundle runs with that person's rights.
+The kit owns this file and the check. A project gets both by sync. It sets its own caps, scope and opt-in rules (for example full docs per function) with `code-` lines in its own `.check` (the keys: the header of [scripts/check_settings.py](../scripts/check_settings.py)), keeps stricter rules of its own in its own gate file ("A project's own gate" below) and their text in a doc of its own that links here, never in a copy of the check or of this file.
 
-## This repo
+## Scope
 
-- Check: `python3 scripts/code_standard.py` (a hand port of the kit file with `code_standard_docs.py`, `code_standard_gate.py` and `code_standard_test.py`; from 17 Nov 26 the four files are RADE's stricter ones, pull request 88 there, which the kit takes at its next port; scripts/check.local.sh runs it and its `--test` in both lanes). Pass = last line `CODE-STANDARD pass`. A change to the check is made in the kit first, then ported here by pull request (AGENTS.md "Project rules", no kit sync).
-- Baseline and settings: [.code-standard.json](../.code-standard.json). On: `"c2": "full"` (full docs for each function longer than 10 lines) and `"c1_safety": true` (`Network:`, `Writes:` and `Credentials:`, each at the start of a header line with a value), and the cap `max_line_chars` 200 (a file's longest line; present longer lines are listed debt). Generated: `scripts/gov/paste/*.ps1` (the round bundles; their sources get the rules).
-- Shared task code lives in `scripts/gov/src/`; `scripts/build_task_scripts.py` copies it into each task script between `# >>> <name>: generated from <source>` and `# <<< <name>` markers (kit rule C5), so it is measured once, in its source.
-- Gov-device PowerShell runs on Windows PowerShell 5.1 (AGENTS.md "Commands"; `scripts/lint.sh` checks the 5.1 syntax). PowerShell lives in `.ps1` files, never in a Python or JavaScript string, so the parser, the lint and the check can read it (RADE extra X2 applies to this repo's PowerShell too).
-- Kit files (scripts/pii_guard.py, bloat_check.py, timeline.py, log_check.py, stop_check.py, worker_guard.py, first_use_check.py, session_checkin.sh, check.sh, git-hooks/pre-push): their debt is fixed in the kit first, then ported. A kit port that adds debt waits until the kit fixes it, or the PFM decides.
-- Refactor plan for the debt: docs/phases.md "Code standard refactor".
+- Every file git tracks with the extension `.py`, `.ps1`, `.psm1`, `.js`, `.mjs`, `.cjs` or `.sh`, and every file with no extension whose first line is a shell or Python shebang (for example scripts/git-hooks/pre-push).
+- Generated files get rule C6 only (their source gets the other rules). The list is the `code-generated:` lines in [.check](../.check).
+
+## Rules
+
+| No. | Rule | How |
+|---|---|---|
+| C1 | Each source file starts with a header comment: what the file is for, its inputs, its outputs and how to run it. Python: the module docstring. | **(check)** at least 60 characters; **(review)** the content |
+| C1 safety | Opt-in: a project sets the line `code-c1-safety: on` in its `.check`. Then each source file's header also has the three labels `Network:` (the hosts it reaches, or "none"), `Writes:` (the files, lists or sites it changes, or "none") and `Credentials:` (what it asks for and how, or "none"), so a reviewer finds them before a run. The line `code-c1-safety: strict` asks for a stricter form that the project's own gate defines (for example: each label starts a header line and has a value on that line). | **(check)** the three labels; the strict form: the project's gate; **(review)** true |
+| C2 | Each function has a comment that says what it does. One line is enough; full parameter docs are not required. Python: a docstring, or a `#` line directly above the `def` or before its first statement. Shell and JS: a comment line directly above. The file header and a divider line (`# ----`) do not count. | **(check)** present; **(review)** true and useful |
+| C3 | A function is at most 60 lines long. A longer job is split into named steps, each its own function. | **(check)** |
+| C4 | A file is at most 600 lines long. A larger program is split into modules, one concern each. | **(check)** |
+| C5 | One function lives in one file. A copy that must also run alone is generated, between marker lines `# >>> <name>: generated from <source> ...` and `# <<< <name>`. | **(check)** same body twice fails |
+| C6 | A generated file says `GENERATED` in its first 15 lines and names its source and the command that builds it. | **(check)** |
+| C7 | Names say what a thing is or does: Python `snake_case`; PowerShell `Verb-Noun`; no one-letter names except loop counters and short lambdas. | **(review)** |
+| C8 | A comment says why or what, in plain English, and is true. Remove a comment the code makes obsolete in the same change. | **(review)** |
+| C9 | No magic values: a fixed number, path, address or limit is a named constant with a comment that says where it comes from. | **(review)** |
+| C10 | Each Python and PowerShell file parses. | **(check)** |
+| C2 full | Opt-in: a project sets the line `code-c2: full` in its `.check`. Then each function longer than 10 lines also documents each parameter and its return value, in the form its language's own help tools read. Python: a docstring with an `Args:` section that names each parameter (not `self` or `cls`) and a `Returns:` section when it returns a value (PEP 257). PowerShell: comment-based help (.SYNOPSIS or .DESCRIPTION) with one `.PARAMETER` per parameter, placed where `Get-Help` finds it (about_Comment_Based_Help). JavaScript: a `/** */` JSDoc block directly above, with one `@param` per parameter and `@returns` when it returns a value. Shell: the C2 comment only. | **(check)** [scripts/code_standard_docs.py](../scripts/code_standard_docs.py); **(review)** true and useful |
+| C11 | Lean: no dead code, no unused option, no second way to do the same job; prefer the standard library over a new dependency. A change does not make a check run slower than its baseline (.claude/skills/efficiency/SKILL.md). | **(review)**; time: `scripts/check.sh` TIME line |
+
+## The ratchet
+
+- `.check.state.json` (`code_standard`: `debt`) lists the violations that existed when a repo adopted the standard (empty in the kit). A violation not in that list fails; a listed function or file that grows fails.
+- A listed item that is fixed also fails until the same change lowers the baseline (`--update`, which refuses new debt). So the list can only shrink.
+- A rule turned on later (for example `code-c2: full`): `--adopt` lists its current debt once, in the same change as a docs/DECISIONS.md row that names `.check`. The comparison with main accepts that list only when the option was off on main, so an option that is already on cannot be adopted again. A stricter level of a rule that is on (`code-c1-safety: on` to `strict`) is adopted the same way, while its level is above the one on main. It never touches the debt of a rule the ratchet already holds.
+- Never add an item to the baseline by hand, raise a cap or add an `exclude` to pass (AGENTS.md "Guards and checks"). The check compares the baseline and the `code-` lines of `.check` with those on the merge base with origin/main; a cap or scope change (a `code-` line added, removed or changed) needs a docs/DECISIONS.md row that names `.check`. A `code-` key the check does not know, or a value that is not valid, fails the check.
+
+## A project's own gate
+
+- The extension point for a project that wants more than the rules above: a file `scripts/code_standard_gate.py` of its own, next to the check. The kit has no such file. When it exists, the check loads it and calls its five entry points (their exact form: the header of [scripts/code_standard.py](../scripts/code_standard.py)): more debt kinds (`RULES`), more opt-in kinds (`OPT_IN`), per-file rules (`file_rules`), its own test for "the PFM decided this change" (`decided`), and a refusal that no decision lifts (`new_debt_refusal`, for example debt for a file that is new).
+- Two settings are a gate's to enforce: `code-max-line-chars: <number>` (the longest line of a hand-written file) and `code-c1-safety: strict`. The kit reads them; with one of them set and no gate file, the check fails.
+- A gate that cannot be imported, or lacks an entry point, fails the check: it is never skipped. The result line says when a gate is active.
+- The gate proves itself: when the file names `--test`, `scripts/check.sh` runs `python3 scripts/code_standard_gate.py --test` (the full lane always; the fast lane when the gate or the check changed). The self-test of the kit's check runs without the gate.
+- The kit files a project gets by sync meet the strict forms that projects run today: three safety label lines, each with a value; full docs for each function longer than 10 lines; lines of at most 200 characters. So a gate finds no debt in a kit file.
+
+## Commands
+
+- Check: `python3 scripts/code_standard.py` (scripts/check.sh runs it in both lanes). Pass = last line `CODE-STANDARD pass`.
+- Every measurement: `--report`. Lower the baseline after a fix: `--update`. A project's first baseline: `--init`. A rule just turned on: `--adopt`. Prove the check: `--test`.

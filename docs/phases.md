@@ -52,7 +52,7 @@ A round holds only steps that test something not yet verified (PFM, 2026-11-14).
 
 ## Code standard refactor
 
-Plan for the code-standard debt (docs/code-standard.md; the PFM, 2026-11-17: new code meets the rules, old files shrink by the ratchet). Each stage is an agent **REC** for order; it rides in the round that already changes those files, so it adds no extra round. Exit check of every stage: `python3 scripts/code_standard.py` gives `CODE-STANDARD pass` with a lower baseline in the same pull request; a stage that changes gov-device code also passes its round.
+Plan for the code-standard debt (docs/code-standard.md and docs/code-standard-90-161.md; the PFM, 2026-11-17: new code meets the rules, old files shrink by the ratchet). Each stage is an agent **REC** for order; it rides in the round that already changes those files, so it adds no extra round. Exit check of every stage: `python3 scripts/code_standard.py` gives `CODE-STANDARD pass` with a lower baseline in the same pull request; a stage that changes gov-device code also passes its round.
 
 | Stage | What | Debt it removes (17 Nov 26 counts) | Rides with |
 |---|---|---|---|

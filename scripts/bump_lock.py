@@ -191,13 +191,13 @@ def restore(snap):
 
 
 def run_checks():
-    """Run scripts/check.sh and the PII guard against main's allow list.
+    """Run scripts/check.sh and the content check (personal data) against main's allow list.
 
     Returns:
         Nothing; stops with a FAIL message on a failure.
     """
     for cmd in (["bash", "scripts/check.sh"],
-                [sys.executable, "scripts/pii_guard.py", "--require-denylist", "--all", "--allow-from", "origin/main"]):
+                [sys.executable, "scripts/check_content.py", "--require-denylist", "--all", "--allow-from", "origin/main"]):
         if subprocess.run(cmd, cwd=ROOT).returncode:
             sys.exit("FAIL " + " ".join(cmd[1:]))
 

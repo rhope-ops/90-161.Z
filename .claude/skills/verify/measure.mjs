@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// UI measurement for the ui-verify skill (.claude/skills/ui-verify/SKILL.md).
+// UI measurement for the verify skill (.claude/skills/verify/SKILL.md).
 // Usage: node measure.mjs <url-or-file> [out-dir]   (default out-dir: a new folder in the system temp dir, never the repo)
 // For each width (375, 1440) and scheme (light, dark): saves a screenshot and checks
 //   - horizontal page scroll (scrollWidth > viewport width)
@@ -8,6 +8,9 @@
 // Prints one line per case and the worst findings; exit 1 when any check fails.
 // Contrast uses the nearest opaque background colour; text on images or gradients is listed as "unchecked".
 // Needs Playwright (require('playwright') must resolve).
+// Network: the page under test (the URL or file given) and what that page loads; no other host.
+// Writes: the screenshots, in the out-dir (default: a new folder in the system temp dir).
+// Credentials: none.
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -21,7 +24,7 @@ try { ({ chromium } = require('playwright')); } catch {
   catch { console.error('Playwright not found: install it, or run where require("playwright") resolves.'); process.exit(2); }
 }
 
-const [target, outDir = `${tmpdir()}/ui-verify-${Date.now()}`] = process.argv.slice(2);  // default: outside the repo
+const [target, outDir = `${tmpdir()}/verify-${Date.now()}`] = process.argv.slice(2);  // default: outside the repo
 if (!target) { console.error('Usage: node measure.mjs <url-or-file> [out-dir]'); process.exit(2); }
 const url = /^[a-z]+:\/\//i.test(target) ? target : pathToFileURL(resolve(target)).href;
 mkdirSync(outDir, { recursive: true });
@@ -29,6 +32,11 @@ mkdirSync(outDir, { recursive: true });
 // WCAG 2.5.8 exempts a link inside a sentence: climb inline ancestors to the nearest block; it must be a text block,
 // outside navigation, with at least 3 letters or digits outside links, script and style; never a link around an image.
 // Runs in the page, as an argument of audit().
+/**
+ * Tells whether a link stands inside a sentence (WCAG 2.5.8 exempts such a link from the target size).
+ * @param {Element} a the link element
+ * @returns {boolean} true when the link is inline in a text block with other text
+ */
 function inSentence(a) {
   const TEXT_BLOCKS = new Set(['P', 'LI', 'TD', 'TH', 'DD', 'DT', 'BLOCKQUOTE', 'FIGCAPTION']);
   if (getComputedStyle(a).display !== 'inline') return false;
@@ -43,6 +51,11 @@ function inSentence(a) {
 }
 
 // Runs in the page: the contrast fails, unchecked text, small targets and horizontal overflow of the loaded page.
+/**
+ * Measures the loaded page.
+ * @param {function(Element): boolean} inSentence the test for a link inside a sentence (passed in as source text)
+ * @returns {{contrast: object[], unchecked: string[], targets: object[], overflow: number}} the findings
+ */
 function audit(inSentence) {
   const cx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
   // Any CSS colour (rgb, rgba, oklch, lab, ...) to [r, g, b, a in 0..1], through a 1x1 canvas.
@@ -72,7 +85,10 @@ function audit(inSentence) {
     return canvasBg;
   };
   // True when the element has a size and is not hidden.
-  const visible = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0; };
+  const visible = (el) => {
+    const r = el.getBoundingClientRect(); const s = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0;
+  };
   // A short selector for a finding: tag#id.class.
   const name = (el) => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : '');
   const contrast = [], unchecked = [], targets = [];

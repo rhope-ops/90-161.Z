@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 # Git pre-push hook for Claude, any git client, and people.
-# Install once per clone: git config core.hooksPath <the folder of this file> (scripts/session_checkin.sh or a SessionStart hook does it).
+# Install once per clone: git config core.hooksPath <the folder of this file> (scripts/session_checkin.sh or a
+# SessionStart hook does it).
 # Also runs scripts/check.sh (when present): the full lane for a push to main, master or the default branch (the
 # remote's HEAD, init.defaultBranch, or each name in the git config key check.fullLaneBranch), the fast lane for any other
-# branch (.claude/skills/deliver/SKILL.md), and scripts/pii_guard.py on the tracked files and the pushed commits (when
-# the repo root has a .pii-guard file).
+# branch (.claude/skills/deliver/SKILL.md), and the content check (scripts/check_content.py) on the tracked files and the
+# pushed commits (when the repo root has the settings file .check, or .pii-guard, its old name).
 # Blocks: a push that git runs outside the repo's own work tree (own_tree), a push that is not a fast-forward (every force-push form, including --force-with-lease),
-# deleting main or master on the remote, and pushing a remote commit this clone has not fetched.
-# A person who truly needs to override runs the push with --no-verify; agents never do (AGENTS.md "Git safety").
+# deleting main or master on the remote, pushing a remote commit this clone has not fetched, and a push that adds a commit
+# whose author or committer e-mail is not a GitHub noreply address (check_identity; it prints the length, never the address).
+# A person who truly needs to override runs the push with --no-verify; agents never do (AGENTS.md "Hard rules").
 # Self-test: bash scripts/git-hooks/pre-push --test
+# Network: none itself (git opens the connection of the push; a project's scripts/check.local.sh may use the network).
+# Writes: none itself; scripts/check.sh writes its stamp in .git; the self-test: temporary repos.
+# Credentials: none; the content check reads the word lists from an environment variable or a file.
 set -u
 zero=0000000000000000000000000000000000000000
 # true for an all-zero ID: SHA-1 (40) or SHA-256 (64)
@@ -34,6 +39,38 @@ check() {
       blocked=1
     fi
   done
+  return $blocked
+}
+
+# is_noreply EMAIL: 0 for a GitHub noreply address or the noreply address of GitHub or Anthropic (any letter case)
+is_noreply() {
+  case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
+    *@users.noreply.github.com|noreply@github.com|noreply@anthropic.com) return 0 ;;
+  esac
+  return 1
+}
+
+# check_identity [REMOTE]: reads the push lines; for each commit the push would add (reachable from the pushed ref, not
+# from any ref of REMOTE or from the remote's old tip) both e-mails must be noreply addresses. It prints the short hash
+# and "author" or "committer", and the length of the address, never the address. Returns 1 on a block.
+check_identity() {
+  local remote="${1:-origin}" blocked=0 lref lsha rref rsha h ae ce side addr
+  local refs="--remotes"; git remote get-url "$remote" >/dev/null 2>&1 && refs="--remotes=$remote"
+  while read -r lref lsha rref rsha; do
+    [ -z "${rref:-}" ] && continue
+    is_zero "$lsha" && continue
+    local not=("$refs")
+    is_zero "${rsha:-0}" || ! git cat-file -e "$rsha^{commit}" 2>/dev/null || not+=("$rsha")
+    while IFS='|' read -r h ae ce; do
+      for side in author committer; do
+        [ "$side" = author ] && addr=$ae || addr=$ce
+        is_noreply "$addr" && continue
+        echo "pre-push: blocked: commit $h: the $side e-mail is not a GitHub noreply address (${#addr} characters)."
+        blocked=1
+      done
+    done < <(git log --format='%h|%ae|%ce' "$lsha" --not "${not[@]}" 2>/dev/null)
+  done
+  [ $blocked = 1 ] && echo "pre-push: fix: run git config user.email with your GitHub noreply address (ID+USER@users.noreply.github.com), then recreate the unpushed commits (AGENTS.md \"Hard rules\")."
   return $blocked
 }
 
@@ -119,6 +156,26 @@ refs/heads/main $b refs/heads/main $a"
   eq "init.defaultBranch adds a name" "$(default_branches https://example.invalid/r.git)" "dev"
   eq "push to init.defaultBranch: full lane" "$(printf '%s\n' "refs/heads/x $c refs/heads/dev $a" | lane_of $(default_branches https://example.invalid/r.git))" full
   git config --unset init.defaultBranch
+  # Commit identity: the e-mails are built from parts so no address is written out in this file.
+  nr="1+octo@users"".noreply.github.com"; bad="jane@""example.com"
+  # cmi AUTHOR COMMITTER: an empty commit on branch idn with these e-mails; sets $n to it
+  cmi() { GIT_AUTHOR_EMAIL=$1 GIT_COMMITTER_EMAIL=$2 git -c user.name=t -c commit.gpgsign=false commit -q --allow-empty -m "id"; n=$(git rev-parse HEAD); }
+  # ident NAME WANT_EXIT [REMOTE]: check_identity on a push of $n over the old tip $c; the output must not hold the address
+  ident() { local out got; out=$(printf '%s\n' "refs/heads/idn $n refs/heads/idn ${old:-$c}" | check_identity "${3:-origin}"); got=$?
+            if [ "$got" = "$2" ] && ! printf '%s' "$out" | grep -q "example.com"; then echo "ok   $1"; else echo "FAIL $1 (exit $got) $out"; fails=1; fi; }
+  git checkout -q -b idn "$c"
+  cmi "$nr" "$nr";                   ident "identity: noreply author and committer pass" 0
+  cmi "$nr" noreply@github.com;      ident "identity: a merge made on GitHub (committer noreply@github.com) passes" 0
+  cmi noreply@anthropic.com "$nr";   ident "identity: noreply@anthropic.com passes" 0
+  cmi "$bad" "$nr";                  ident "identity: another author address is refused" 1
+  eq "identity: the refusal names the author, not the address, and the fix" "$(printf '%s\n' "refs/heads/idn $n refs/heads/idn $c" | check_identity | sed 's/[0-9a-f]\{7,\}/H/' | head -n 1)" "pre-push: blocked: commit H: the author e-mail is not a GitHub noreply address (16 characters)."
+  cmi "$nr" "$bad";                  ident "identity: another committer address is refused" 1
+  eq "identity: the refusal names the committer" "$(printf '%s\n' "refs/heads/idn $n refs/heads/idn $c" | check_identity | grep -c 'the committer e-mail is not')" 1
+  cmi "" "$nr";                      ident "identity: an empty author address is refused" 1
+  git remote add up https://example.invalid/r.git; git update-ref refs/remotes/up/main "$c"
+  git checkout -q -b idn2 "$c"; old=$zero; cmi "$nr" "$nr";        ident "identity: a new branch: commits the remote has are not checked" 0 up
+  cmi "$bad" "$nr";                  ident "identity: a new branch: a new commit with another address is refused" 1 up
+  old=; git remote remove up; git checkout -q side; git branch -q -D idn idn2
   eq "a push shows TIME, WARN and CHECK lines, also an indented WARN" "$(printf '%s\n' 'PASS  a' '      WARN  rule lint: x' 'TIME  full' 'WARN  slower' 'CHECK PASS' '      rules: y' 'PASS  x WARN y' | shown | tr '\n' '|')" "      WARN  rule lint: x|TIME  full|WARN  slower|CHECK PASS|"
   o=$(mktemp -d); git -C "$o" init -q -b main  # another repo: the folder a "git --git-dir=..." push may start in
   eq "own work tree: the top folder" "$(own_tree)" "$(pwd -P)"
@@ -139,23 +196,27 @@ out=$(printf '%s\n' "$input" | check) || { echo "$out" >&2; exit 1; }
 
 top="$(own_tree)"
 if [ -z "$top" ]; then
-  echo "pre-push: blocked: git runs this push outside the repo's own work tree (for example \"git --git-dir=<repo>/.git push\" from another folder), so the checks and the personal-data guard cannot run. Run the push from inside the repo folder." >&2
+  echo "pre-push: blocked: git runs this push outside the repo's own work tree (for example \"git --git-dir=<repo>/.git push\"" \
+    "from another folder), so the checks cannot run. Run the push from inside the repo folder." >&2
   exit 1
 fi
 cd "$top" || exit 1
 
+# Commit identity: every commit this push adds needs noreply author and committer e-mails (AGENTS.md "Hard rules").
+idout=$(printf '%s\n' "$input" | check_identity "${1:-origin}") || { echo "$idout" >&2; exit 1; }
+
 # Repo checks: a push that carries commits runs scripts/check.sh on this checkout and is blocked when it fails,
-# so an agent cannot sign off its own work (AGENTS.md "Git safety"). A push that only deletes branches skips it.
+# so an agent cannot sign off its own work (AGENTS.md "Hard rules"). A push that only deletes branches skips it.
 # Lane: full for main, master or a default branch (default_branches), so nothing reaches it on a fast-lane pass; fast for other branches.
 # --cached: a lane that already passed on this commit with a clean tree is not run again.
-# --no-pii: with the guard on, the guard step below scans the tracked files and the pushed commits in one run.
+# --no-content: with the content check on, the guard step below scans the tracked files and the pushed commits in one run.
 carries=0
 printf '%s\n' "$input" | awk 'NF>=4 && $2 !~ /^0+$/ {f=1} END {exit !f}' && carries=1
 if [ -f "$top/scripts/check.sh" ] && [ "$carries" = 1 ]; then
   args=(--cached)
   # shellcheck disable=SC2046  # the names are split on purpose
   [ "$(printf '%s\n' "$input" | lane_of $(default_branches "${1:-origin}"))" = fast ] && args+=(--fast)
-  [ -f "$top/.pii-guard" ] && args+=(--no-pii)
+  { [ -f "$top/.check" ] || [ -f "$top/.pii-guard" ]; } && args+=(--no-content)
   cout=$(bash "$top/scripts/check.sh" "${args[@]}" 2>&1); crc=$?
   if [ "$crc" -ne 0 ]; then
     printf '%s\n' "$cout" >&2
@@ -165,14 +226,14 @@ if [ -f "$top/scripts/check.sh" ] && [ "$carries" = 1 ]; then
   printf '%s\n' "$cout" | shown >&2
 fi
 
-# Personal-data guard: runs only in a repo that opts in with a .pii-guard file at its root (AGENTS.md "Personal data").
-if [ -f "$top/.pii-guard" ]; then
+# Content check: runs only in a repo that has the settings file .check at its root (AGENTS.md "Hard rules").
+if [ -f "$top/.check" ] || [ -f "$top/.pii-guard" ]; then
   guard=""
-  for g in "$(cd "$(dirname "$0")/.." && pwd -P)/pii_guard.py" "$top/scripts/pii_guard.py" "$top/tools/pii_guard.py"; do
+  for g in "$(cd "$(dirname "$0")/.." && pwd -P)/check_content.py" "$top/scripts/check_content.py" "$top/tools/check_content.py"; do
     [ -f "$g" ] && { guard="$g"; break; }
   done
   if [ -z "$guard" ]; then
-    echo "pre-push: blocked: .pii-guard is on but pii_guard.py was not found (scripts/ or tools/)." >&2; exit 1
+    echo "pre-push: blocked: .check is on but check_content.py was not found (scripts/ or tools/)." >&2; exit 1
   fi
   gargs=(--push --require-denylist)
   [ "$carries" = 1 ] && gargs=(--all "${gargs[@]}")  # one run: every tracked file, and the pushed commits
@@ -183,10 +244,10 @@ if [ -f "$top/.pii-guard" ]; then
   case "$g0" in *N|'') ;; *) [ -f "$top/scripts/bloat_check.py" ] && [ "$carries" = 1 ] && python3 "$top/scripts/bloat_check.py" \
     --project "$top" --compare "push-guard=$(awk -v a="$g0" -v b="$(date +%s%N)" 'BEGIN {printf "%.1f", (b - a) / 1e9}')" 2>&1 | tail -n 1 >&2 ;; esac
   if [ "$rc" -ne 0 ]; then
-    if printf '%s' "$pout" | grep -q "PII GUARD FAIL: no denylist found"; then
+    if printf '%s' "$pout" | grep -q "CONTENT CHECK FAIL: no denylist found"; then
       echo "pre-push: blocked: this session has no name denylist, so the guard cannot check names. Add it (docs/FIRST_USE.md step 4), then push again." >&2
     else
-      echo "pre-push: blocked by pii_guard.py: personal data or a secret is in a tracked file or in this push (listed above, masked). Remove it, then push again." >&2
+      echo "pre-push: blocked by the content check: personal data, a secret or blocked content is in a tracked file or in this push (listed above, masked). Remove it, then push again." >&2
     fi
     exit 1
   fi

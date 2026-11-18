@@ -1,6 +1,6 @@
 ---
 name: project-log
-description: Use before you write or change a row in the project log (docs/LOG.md, or the place AGENTS.md "Project rules" names), and when a decision, milestone, breakthrough or miss happens in a turn. Gives the columns, the row types, arcs and story fields, and the format check.
+description: Use before you write or change a project log row, and when a decision, milestone, breakthrough or miss happens in a turn. Gives the columns, row types, arcs, story fields and the format check.
 ---
 
 # Project log: how to write a row

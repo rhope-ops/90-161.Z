@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | Kit 2026.11.20.1 taken by sync (kit c04ff07), first sync. Kept in extension files and docs: .mil finder, code-standard gate, CI test packages, code-standard text. Scope: this repo. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
+| 2026-11-18 | Session-load cap: only "No reconnaissance" is a hard Project rule; 13 rules, Commands and the handoff shortened, exact texts approved. Detail stays in linked docs. Scope: AGENTS.md. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
+| 2026-11-18 | Delivery gates: `pii_guard.py` becomes `check_content.py` and the "pii-guard" check becomes the "checks" check; the gates move to .claude/skills/deliver/PROJECT.md. | PFM | .claude/skills/deliver/PROJECT.md |
+| 2026-11-18 | Two kit-file code-standard failures (pre-push line, bloat_check_test docstring): no exclude and no hand-added debt; the kit fixes them first, then this repo syncs again. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
 | 2026-11-18 | Bookmark page subtitle "Publications and Forms Management" under "90-161.Z", styled as the RADE page tagline; ships with the next round. Scope: index.html. | PFM | Header with the name only (2026-11-18) |
 | 2026-11-18 | Bookmark page header: the band shows the logo, "90-161.Z" and the open count only; no text beside or under the name (the PFM: "say nothing next to or below 90-161.Z"). Scope: index.html. | PFM | [index.html](../index.html) |
 | 2026-11-18 | RADE lock moves to release engine-v16 (RADE b15c624, serial 12) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
