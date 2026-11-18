@@ -17,10 +17,11 @@ AGENTS.md "Project rules" (Gov device, What people see, Round results) point her
 ## 1. Results
 
 1. When the PFM says the e-mail is sent or received, search Gmail for the subject "90161Z R<NN>". Never watch Gmail on a timer.
-2. Write docs/reviews/YYYY-MM-DD-r<NN>-results.md in the form of the R25 file: source line (subject, time, files, build, engine), a table of checks and steps, then findings with what they mean. Counts, field names and status codes only; no session ids, names or site paths.
-3. Design a fallback only for a test that FAILED; no fallback before its test has run.
-4. Move the round to "Done" in go.md, with the link to the results file.
-5. Once the results are on main: move an app-drafted round e-mail to Trash and list it by date, time and subject. Any other result e-mail: ask first (Project rule "Round results").
+2. Before you record a round's results, list the open pull requests and stop if one already holds that round.
+3. Write docs/reviews/YYYY-MM-DD-r<NN>-results.md in the form of the R25 file: source line (subject, time, files, build, engine), a table of checks and steps, then findings with what they mean. Counts, field names and status codes only; no session ids, names or site paths.
+4. Design a fallback only for a test that FAILED; no fallback before its test has run.
+5. Move the round to "Done" in go.md, with the link to the results file.
+6. Once the results are on main: move an app-drafted round e-mail to Trash and list it by date, time and subject. Any other result e-mail: ask first (Project rule "Round results").
 
 ## 2. Task script
 
