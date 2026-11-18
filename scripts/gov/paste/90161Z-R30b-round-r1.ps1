@@ -14,7 +14,7 @@
   and saves its results in Rounds\R30b, then opens an Outlook draft with them (never sent). No download, no admin rights.
   To read it: the Contents list below gives the line of each part and file; each part starts with a "# ====" line.
 #>
-$buildId = '6463180c'
+$buildId = '5f95b6f8'
 $engineRelease = 18
 # ==== Contents (GENERATED; the line numbers are lines of this bundle)
 #   line    55  Part 1 of 6: Settings
@@ -22,36 +22,36 @@ $engineRelease = 18
 #   line    67  Part 3 of 6: Files written to this computer (8)
 #   line    69    File 1 of 8: T22\90161Z-T22-pfm-window-r4.ps1 (from scripts/gov/90161Z-T22-pfm-window-r4.ps1, sha256 9ef02b36ee59)
 #   line   293    File 2 of 8: T22\90161Z-T22-cards-r4.ps1 (from scripts/gov/90161Z-T22-cards-r4.ps1, sha256 cf90c150122b)
-#   line   704    File 3 of 8: T22\90161Z-T22-types-r4.ps1 (from scripts/gov/90161Z-T22-types-r4.ps1, sha256 c3279dcd8f30)
-#   line   928    File 4 of 8: T22\90161Z-T22-ui-r4.ps1 (from scripts/gov/90161Z-T22-ui-r4.ps1, sha256 799b5a976aa0)
-#   line  1229    File 5 of 8: T22\90161Z-T22-parts-r4.ps1 (from scripts/gov/90161Z-T22-parts-r4.ps1, sha256 20e15d633eb1)
-#   line  1502    File 6 of 8: T22\90161Z-T22-grid-r4.ps1 (from scripts/gov/90161Z-T22-grid-r4.ps1, sha256 d3d4100eaf44)
-#   line  1703    File 7 of 8: T22\90161Z-T22-window-r4.ps1 (from scripts/gov/90161Z-T22-window-r4.ps1, sha256 e5c0d78b0f05)
-#   line  2127    File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 aa0cf65d2f9d)
-#   line  2274  Part 4 of 6: Steps (4), downloads, results to collect, clean-up
-#   line  2458  Part 5 of 6: Applications
-#   line  2462  Part 6 of 6: the RADE engine (engine/ps, in run order)
-#   line  2463  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
-#   line  2532  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
-#   line  2659  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
-#   line  2811  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
-#   line  3068  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
-#   line  3360  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
-#   line  3583  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
-#   line  4096  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
-#   line  4200  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
-#   line  4257  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
-#   line  4264  Engine part: engine/ps/window/01-setup.ps1 (sha256 15b9d7af232c)
-#   line  4582  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
-#   line  4660  Engine part: engine/ps/window/03-card.ps1 (sha256 a61ee8e66019)
-#   line  4769  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 e20b78b8f606)
-#   line  4894  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
-#   line  5186  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
-#   line  5417  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
-#   line  5578  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
-#   line  5648  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
-#   line  5754  Engine part: engine/ps/window/10-keys.ps1 (sha256 573899229f04)
-#   line  5838  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
+#   line   704    File 3 of 8: T22\90161Z-T22-types-r4.ps1 (from scripts/gov/90161Z-T22-types-r4.ps1, sha256 1d733b29b4e5)
+#   line   929    File 4 of 8: T22\90161Z-T22-ui-r4.ps1 (from scripts/gov/90161Z-T22-ui-r4.ps1, sha256 799b5a976aa0)
+#   line  1230    File 5 of 8: T22\90161Z-T22-parts-r4.ps1 (from scripts/gov/90161Z-T22-parts-r4.ps1, sha256 20e15d633eb1)
+#   line  1503    File 6 of 8: T22\90161Z-T22-grid-r4.ps1 (from scripts/gov/90161Z-T22-grid-r4.ps1, sha256 d3d4100eaf44)
+#   line  1704    File 7 of 8: T22\90161Z-T22-window-r4.ps1 (from scripts/gov/90161Z-T22-window-r4.ps1, sha256 e5c0d78b0f05)
+#   line  2128    File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 aa0cf65d2f9d)
+#   line  2275  Part 4 of 6: Steps (4), downloads, results to collect, clean-up
+#   line  2459  Part 5 of 6: Applications
+#   line  2463  Part 6 of 6: the RADE engine (engine/ps, in run order)
+#   line  2464  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
+#   line  2533  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
+#   line  2660  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
+#   line  2812  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
+#   line  3069  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
+#   line  3361  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
+#   line  3584  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
+#   line  4097  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
+#   line  4201  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
+#   line  4258  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
+#   line  4265  Engine part: engine/ps/window/01-setup.ps1 (sha256 15b9d7af232c)
+#   line  4583  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
+#   line  4661  Engine part: engine/ps/window/03-card.ps1 (sha256 a61ee8e66019)
+#   line  4770  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 e20b78b8f606)
+#   line  4895  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
+#   line  5187  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
+#   line  5418  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
+#   line  5579  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
+#   line  5649  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
+#   line  5755  Engine part: engine/ps/window/10-keys.ps1 (sha256 573899229f04)
+#   line  5839  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
 # ==== Part 1 of 6: Settings
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -701,8 +701,8 @@ function Get-CheckPlan {
   for ($i = 0; $i -lt $Checks.Count; $i++) { 'CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ': ' + $Checks[$i].Text }
 }
 '@ }
-# ---- File 3 of 8: T22\90161Z-T22-types-r4.ps1 (from scripts/gov/90161Z-T22-types-r4.ps1, sha256 c3279dcd8f30)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-types-r4.ps1'; Kind = 'text'; Sha = 'c3279dcd8f30'; Data = @'
+# ---- File 3 of 8: T22\90161Z-T22-types-r4.ps1 (from scripts/gov/90161Z-T22-types-r4.ps1, sha256 1d733b29b4e5)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-types-r4.ps1'; Kind = 'text'; Sha = '1d733b29b4e5'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 22 r4, part "types": the C# source of the window's own drawn controls, as text.
@@ -902,7 +902,8 @@ $PfmCs=(@(
 'UseMnemonic = false;',
 '}',
 'public override Size GetPreferredSize(Size proposed) {',
-'Size t = TextRenderer.MeasureText(Text, Font, new Size(100000, 0), LinkFlags);',
+'Size t;',
+'using (Graphics g = Graphics.FromHwnd(IntPtr.Zero)) { t = TextRenderer.MeasureText(g, Text, Font, new Size(100000, 0), LinkFlags); }',
 'return new Size(t.Width + 1, Math.Max(MinimumSize.Height, t.Height));',
 '}',
 'protected override void OnPaint(PaintEventArgs e) {',
