@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 18 Nov 26 (R29a and both R29b runs are in; no round is open).
+Updated: 18 Nov 26 (Round R30a and R30b are open).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,7 +26,55 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-Nothing open right now.
+### Round R30a r1 (run first): the flow steps again, with a Power Automate check first
+
+**For:** runs again the flow steps that failed in R29a on Power Automate errors: the health flow, the button flow I make by hand and the export reader, the list button, the import of the full flows and the full flow test. A first step checks that Power Automate shows my connections. The logo and the second person passed in R29a, so they do not run again.
+**Time:** about 2 hours with waits; about 60 minutes of my own work (estimate).
+**Changes:** on the test site: a probe list and library, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end; the solution "90-161.Z flows" is upgraded and stays. On my computer: my OneDrive folder RADE\90-161.Z and one export file in Downloads. Before Run, the window lists every file.
+**Steps:**
+1. Press Copy script next to the link below.
+2. Open the Start menu.
+3. Type: ISE
+4. Open Windows PowerShell ISE (not "Run as administrator").
+5. Select File > New.
+6. Click in the white script pane.
+7. Press Ctrl+V.
+8. Press F5. The RADE window opens.
+9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
+10. Press Run.
+11. Do each step the window shows, until the log says DONE.
+12. At DONE, send the Outlook draft that opens.
+
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R30a-round-r1.ps1
+
+**Report:** send the Outlook draft the round makes (subject "90161Z R30a PASSED" or "90161Z R30a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
+**If it fails:** do the line that starts with "What to do". If Power Automate shows an error, wait 5 minutes, reload the page and try 1 more time; then select "It failed" and type only the line that starts with "Error".
+
+### Round R30b r1 (run after R30a): my 90-161.Z window r4
+
+**For:** tests the fixes from my R29b screenshots (the "Your Work" line, the "See the 0 findings" link, the Action Status card and the Full History button), high contrast through Windows Settings, and a script check that every control has a name for Narrator. Then 5 questions on its look.
+**Time:** about 20 minutes (estimate).
+**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window scripts and their result file). For 2 checks I turn high contrast on and off again in Windows Settings. All data in the window is FAKE; nothing is read, saved or sent. Before Run, the window lists every file.
+**Steps:**
+1. Press Copy script next to the link below.
+2. Open the Start menu.
+3. Type: ISE
+4. Open Windows PowerShell ISE (not "Run as administrator").
+5. Select File > New.
+6. Click in the white script pane.
+7. Press Ctrl+V.
+8. Press F5. The RADE window opens.
+9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
+10. Press Run.
+11. Do each check in the bar at the bottom of the 90-161.Z window.
+12. Close the 90-161.Z window with its X.
+13. Answer the 5 questions in the RADE window.
+14. At DONE, send the Outlook draft that opens.
+
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R30b-round-r1.ps1
+
+**Report:** send the Outlook draft the round makes (subject "90161Z R30b PASSED" or "90161Z R30b NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
+**If it fails:** do the line that starts with "What to do". If the 90-161.Z window does not open, send the results as they are.
 
 ## Done
 
