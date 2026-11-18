@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | RADE lock moves to release engine-v18 (RADE f53f9f1, serial 14) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | RADE lock moves to release engine-v17 (RADE fbaa1ec, serial 13) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Dependabot alerts (45, build/test only): Pillow 13.0.0 and npm override image-size 2.0.3. Scope: requirements.txt, package.json, lockfile. | PFM | [dev-setup](dev-setup.md) |
 | 2026-11-18 | Bundle revisions (the PFM approved the agent REC "from R30 on, raise the revision on every rebuild"): a bundle on main never changes; scripts/bundle_revision.py checks it and bump_lock.py raises revisions before its rebuild. Cause: two R29 r6 builds (engine-v15, then v16) under one name. | PFM | .claude/skills/round/SKILL.md section 4 |
