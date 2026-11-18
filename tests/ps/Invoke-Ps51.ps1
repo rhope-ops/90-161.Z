@@ -59,6 +59,7 @@ function Invoke-OneTest([string]$Engine, [hashtable]$Test, [int]$LimitSeconds) {
   $code = -1
   try {
     $p = Start-Process -FilePath $Engine -ArgumentList $list -RedirectStandardInput $in -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+    $null = $p.Handle   # Windows PowerShell 5.1 gives no ExitCode later unless the handle was read while the child ran
     if ($p.WaitForExit($LimitSeconds * 1000)) { $p.WaitForExit(); $code = $p.ExitCode }
     else { try { $p.Kill() } catch { $null = $_ }   # it ended between the wait and the stop: nothing to stop
       [void]$p.WaitForExit(5000) }
