@@ -194,7 +194,8 @@ $QueueRows=(@(
 'FAKE OI 32-1|Work Orders|Review|5 Scope|5|FAKE AO 5|On track|ok|pub|0',
 'FAKE OI 91-3|Ladder Safety|New|7 Endorsers|6|FAKE AO 7|On track|ok|pub|0'
 ) -join "`n")
-function ConvertTo-GridRow([string[]]$Lines, [string[]]$Names) {   # one row per text line: fields 0 and 1 make Publication, the rest take $Names in order
+# One grid row per text line: fields 0 and 1 make Publication, the rest take $Names in order.
+function ConvertTo-GridRow([string[]]$Lines, [string[]]$Names) {
 foreach ($l in $Lines) { if ($l.Trim()) { $f=$l.Split('|'); $r=@{ Publication=($f[0] + '|' + $f[1]) }; for ($i=2; $i -lt $f.Count; $i++) { $r[$Names[$i - 2]]=$f[$i] }; $r } }
 }
 $GridHome=@(ConvertTo-GridRow ($HomeRows -split "`n") @('Action', 'Step', 'With', 'Since', 'Age', 'Due', 'Status', 'Kind', 'Go'))
