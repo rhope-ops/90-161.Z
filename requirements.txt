@@ -1,5 +1,5 @@
 # Python packages the builds and tests use (docs/dev-setup.md step 4). Install: python3 -m pip install -r requirements.txt
 # jsonschema: the docs name no version; 4.26.0 is the one installed in the cloud image on 2026-11-18.
 python-docx==1.2.0
-pillow==12.3.0
+pillow==13.0.0
 jsonschema==4.26.0
