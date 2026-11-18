@@ -80,7 +80,7 @@ def main(check):
             block = body(src) if src not in GENERATED or begin in text else ''
             m = re.search(re.escape(begin) + r'\n(.*?)' + re.escape(end) + r'\n', text, re.S)
             outside = text if m is None else text[:m.start()] + text[m.end():]
-            if src not in GENERATED and (ASKS_DODID if src == SRC else 'function Get-SiteAddress') in outside:
+            if src not in GENERATED and any(a in outside for a in ((ASKS_DODID,) if src == SRC else ('function Get-SiteAddress', 'function Hide-Site'))):
                 unshared.append(f.name)
             if m is None:
                 if src not in (SRC,) + GENERATED and 'Get-SiteAddress' in text and f.name not in unshared:
@@ -93,7 +93,7 @@ def main(check):
                     text = text[:m.start(1)] + block + text[m.end(1):]
                     f.write_text(text, encoding='utf-8')
     for n in unshared:
-        print('UNSHARED ' + n + ': asks for the DODID or the site address outside its shared block (use Get-TaskId, Get-SiteAddress)')
+        print('UNSHARED ' + n + ': asks for the DODID, the site address or Hide-Site outside its shared block (use Get-TaskId, Get-SiteAddress, Hide-Site)')
     for n in stale:
         print(('STALE ' if check else 'WROTE ') + n)
     print('TASKCOMMON scripts=%d stale=%d unshared=%d' % (shared, len(stale) if check else 0, len(unshared)))
