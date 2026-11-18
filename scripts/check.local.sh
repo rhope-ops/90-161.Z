@@ -6,6 +6,8 @@
 set -u
 cd "$(dirname "$0")/.."
 # The code standard and its gate run in scripts/check.sh itself (kit 2026.11.20.1), not here.
+# Bundle revisions (the PFM, 2026-11-18: "raise the revision on every rebuild"): a bundle that main has never changes.
+python3 scripts/bundle_revision.py --test && python3 scripts/bundle_revision.py || exit 1
 # In the pull-request Action only: install the test packages first (the versions in requirements.txt and
 # package-lock.json; this project's own step, kept here because the kit's workflow file is locked).
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
