@@ -47,3 +47,17 @@ RULES PASS
 - Checked, no conflict: Delivery (deliver/PROJECT.md keeps lane C), Project log, Round results, Code standard, Next-step link, Source authority, Scope, Test, Lint, Build, Gov-device code.
 
 rule-conflict-check: 1778b79e54b1
+
+## Second run (after the PFM's text fixes; head c3cf3cf)
+
+Same reviewer setup (fresh `reviewer` subagent, Opus tier). Changed lines: `python3 scripts/bloat_check.py --rules` at c3cf3cf (Gov device and Deployable package texts approved; Public repo and Commands trims for approval).
+
+- No MAJOR finding.
+- MINOR 1. "Round results" points to the round skill, and the skill's step 6 points back ("ask first (Project rule "Round results")"); the old condition "delete only after the PFM confirms it in that turn" is now in neither. Proposed fix (for the PFM): round skill step 6 "Any other result e-mail: ask first and act only on the PFM's confirmation in that turn."
+- MINOR 2. DECISIONS 2026-11-14 R17 row ("one more A/B round before any fallback") against "built after its easy path fails once"; that row covers R17 only.
+- MINOR 3. DECISIONS 2026-11-17 row names docs/code-standard.md and .code-standard.json; now docs/code-standard-90-161.md and .check / .check.state.json (the kit-sync record lists the moves).
+- MINOR 4. "no app writes data across the boundary" against the app-drafted round e-mail (fake data, sent by a person); the PFM's intent decides.
+- MINOR 5. Data boundary and Public repo overlap the hard rule "Secrets and personal data" (names, e-mails, ID numbers).
+- Checked, no conflict: Delivery, Next-step link, Gov device, the "No kit sync" removal, Commands, dropped clauses (still in DECISIONS and docs/ARCHITECTURE.md).
+
+rule-conflict-check: 335d1db099c5
