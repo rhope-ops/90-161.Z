@@ -1,7 +1,11 @@
-# Tests scripts/gov/90161Z-T21-probe-r5.ps1 (R29 probe, parts Make, Person, Run, Look, Open, Export, Read, Clean) against a small fake site (pwsh 7, cloud only).
+# Tests scripts/gov/90161Z-T21-probe-r6.ps1 and its modules 90161Z-T21-<part>-r6.ps1 (R30 probe, parts Make, Person, Run, Look,
+# Form, View, Open, Export, Read, Clean) against a small fake site (pwsh 7, also Windows PowerShell 5.1 through tests/ps/Invoke-Ps51.ps1).
 # The fake PnP cmdlets are defined here (functions in this file); only an empty PnP.PowerShell 1.12.0 module is put on the
 # module path so the script's "is PnP installed" check passes. It proves the script's logic and output; the real service is
-# proved by the R29 round on the gov device. Last line: "T21 pass=N fail=0".
+# proved by the round on the gov device. Last line: "T21 pass=N fail=0".
+# Network: none (the site is a fake in memory; the fake address host is example.test).
+# Writes: a temporary folder under the system temp folder, removed at the end.
+# Credentials: none (a fake DODID and fake e-mail addresses only).
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
@@ -19,7 +23,7 @@ Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psd1') -Value "@{ Ro
 $env:PSModulePath = (Join-Path $work 'mods') + [IO.Path]::PathSeparator + $env:PSModulePath
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T21-probe-r5.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T21-probe-r6.ps1'
 $fakeAddr = 'second.person@fake.example'
 $buttonId = '260790dd-beca-5206-83f7-e6aab40c894e'
 
@@ -121,12 +125,14 @@ function Add-PnPGroupMember {
   $global:F.GroupUsers[$g] = @($global:F.GroupUsers[$g]) + $global:F.Users[$Matches[1]]
   $global:F.Added++
 }
-# Fake Remove-PnPList: moves a list to the fake recycle bin; throws when -Recycle is missing (never a permanent delete).
+# Fake Remove-PnPList: moves a list to the fake recycle bin; throws when -Recycle is missing (never a permanent delete). Like the
+# real cmdlet it returns the Recycle Bin item (R29a finding 7: the script must not print it).
 function Remove-PnPList {
   [CmdletBinding()] param([string]$Identity, [switch]$Recycle, [switch]$Force)
   if (-not $Recycle) { throw 'FAKE: the script must use -Recycle (never a permanent delete)' }
   $l = Get-FakeList $Identity
   $global:F.Lists.Remove($l); $null = $global:F.Recycled.Add($l.Title)
+  return [pscustomobject]@{ RecycleBinItemId = [guid]::NewGuid().ToString() }
 }
 # Answer a REST GET of the fake site. Takes the path after /_api/ (no query); returns JSON text, or throws a 404 message.
 function Get-FakeRestAnswer([string]$path) {
@@ -232,9 +238,9 @@ function Invoke-PnPSPRestMethod {
 function Invoke-T21([string]$Part, [hashtable]$Extra = @{}, [string]$Label = '') {
   $Extra2 = @{} + $Extra; if ($Label) { $Extra2['Label'] = $Label }
   $global:LASTEXITCODE = 0
-  if ($Part -eq 'Look' -and -not $global:NoButtonId) { Set-Content -LiteralPath (Join-Path $t21 '90161Z-T21-button-flow-r5.txt') -Value $buttonId -Encoding ASCII }
+  if ($Part -in 'Look', 'View' -and -not $global:NoButtonId) { Set-Content -LiteralPath (Join-Path $t21 '90161Z-T21-button-flow-r5.txt') -Value $buttonId -Encoding ASCII }
   $out = & $script -Id 'tester01' -Part $Part -NoPause -NoLaunch -TestDir $t21 @Extra2 *>&1 | ForEach-Object { [string]$_ }
-  $file = Join-Path $t21 ('90161Z-T21-probe-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r5.txt')
+  $file = Join-Path $t21 ('90161Z-T21-probe-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r6.txt')
   $r = @{ Code = $LASTEXITCODE; Out = @($out); Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
   if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file }
   return $r
@@ -421,6 +427,18 @@ Test-That 'Look: when both routes fail, FORM and VIEW FAILED with the reason, ex
 New-Site
 $r = Invoke-T21 'Look'
 Test-That 'Look without the list: STOPPED and exit 1' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LIST not found') $r.Text
+# R29a finding 6: Form and View run on their own, so the round can show the form after Form alone.
+New-Site; $null = Invoke-T21 'Make'
+$lst = Get-Probe '90161ZProbe'
+$r = Invoke-T21 'Form'; Note $r
+Test-That 'Form alone: the header is set, no view is made, its own result file' ($r.Code -eq 0 -and $r.Text -match 'FORM PASSED: .*route=csom; read back=yes' -and $r.Text -cnotmatch 'VIEW' -and $global:F.ViewsMade -eq 0 -and $lst.CT.ClientFormCustomFormatter -match 'test header' -and $r.Out[-1] -eq 'PROBE Form done: passed=2 failed=0' -and $r.File -match 'PROBE Form done') $r.Text
+$global:NoButtonId = $true
+Remove-Item -LiteralPath (Join-Path $t21 '90161Z-T21-button-flow-r5.txt') -ErrorAction SilentlyContinue
+$r = Invoke-T21 'View'; Note $r
+Test-That 'View alone without the flow ID: VIEW FAILED, exit 0, the form is not touched' ($r.Code -eq 0 -and $r.Text -match 'VIEW FAILED: .*flow ID known to the script=no' -and $r.Text -cnotmatch 'FORM' -and $global:F.ViewsMade -eq 0 -and $r.Out[-1] -eq 'PROBE View done: passed=0 failed=2') $r.Text
+$global:NoButtonId = $false
+$r = Invoke-T21 'View'; Note $r
+Test-That 'View alone with the flow ID: VIEW PASSED and one view' ($r.Code -eq 0 -and $r.Text -match 'VIEW PASSED: .*route=csom; read back=yes' -and $global:F.ViewsMade -eq 1 -and $r.Out[-1] -eq 'PROBE View done: passed=2 failed=0') $r.Text
 
 # ---- Read ----
 New-Site; $null = Invoke-T21 'Make'
@@ -473,6 +491,7 @@ Remove-Item Env:T21_TEST_ADDRESS
 Test-That 'Clean setup: the person is in the group and the state file exists' ((@($global:F.GroupUsers[7]) -contains 31) -and (Test-Path -LiteralPath $state))
 $r = Invoke-T21 'Clean'; Note $r
 Test-That 'Clean: removes the person by the saved number, deletes the state file, recycles the 2 objects' ($r.Code -eq 0 -and -not (@($global:F.GroupUsers[7]) -contains 31) -and (@($global:F.GroupUsers[7]) -join ',') -eq '3,4' -and -not (Test-Path -LiteralPath $state) -and ($global:F.Recycled -join '|') -eq '90161Z Probe|90161Z Probe Files' -and $r.Out[-1] -eq 'PROBE Clean done: passed=3 failed=0') $r.Text
+Test-That 'Clean: the Recycle Bin item IDs are not printed (R29a finding 7)' ($r.Text -notmatch 'RecycleBinItemId' -and $r.File -notmatch 'RecycleBinItemId' -and $r.Text -notmatch '[0-9a-f]{8}-[0-9a-f]{4}-') $r.Text
 Test-That 'Clean: the other lists stay' (@($global:F.Lists | ForEach-Object { $_.Title }) -join '|' -eq 'Documents|Other probe list')
 Test-That 'Clean: names what is removed by hand' ($r.Text -match 'the solutions "90-161.Z probe", "90-161.Z probe health" and "90-161.Z probe button"')
 $r = Invoke-T21 'Clean'; Note $r
@@ -503,8 +522,17 @@ Test-That 'Clean with -Label first writes its own result file name' ($r.Code -eq
 $all = $allText.ToString()
 Test-That 'no output line or result file holds the fake site address, host, site name, DODID or any address' ($all.Length -gt 1000 -and $all -notmatch 'fakehost|FakeWing|tester01|example\.test|second\.person|member\.person|nobody@|@fake' -and $all -notmatch 'FAKE NAME') ''
 
-# ---- The script text ----
-$src = Get-Content -LiteralPath $script -Raw
+# ---- A missing module ----
+# The main file loads its modules by name from its own folder; one that is missing stops the part with a plain line.
+$copy = Join-Path $work 'copy'
+$null = New-Item -ItemType Directory -Path $copy -Force
+Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r6.ps1' | Where-Object { $_.Name -ne '90161Z-T21-read-r6.ps1' } | Copy-Item -Destination $copy
+$out = & (Join-Path $copy '90161Z-T21-probe-r6.ps1') -Id 'tester01' -Part Run -NoPause -NoLaunch -TestDir $t21 *>&1 | ForEach-Object { [string]$_ }
+Test-That 'a missing module: STOPPED with its file name, exit 1' ($LASTEXITCODE -eq 1 -and (@($out) -join "`n") -match 'STOPPED: MODULE missing: 90161Z-T21-read-r6\.ps1') (@($out) -join "`n")
+
+# ---- The script text (the main file and its modules) ----
+$src = (@(Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r6.ps1' | Sort-Object Name | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw })) -join "`n"
+Test-That 'script: the main file and its 6 modules are there' (@(Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r6.ps1').Count -eq 7)
 Test-That 'script: no question in RADE (Read-Host only behind RADE_CONTRACT), no permanent delete, no result file for Open' ($src -match 'if \(-not \$NoPause -and -not \$env:RADE_CONTRACT\)' -and $src -notmatch 'Remove-PnPList[^\n]*(?<!-Recycle) -Force -ErrorAction Stop\s*$' -and $src -match "-ne 'Open'")
 $bad = @(($src -split "`n") | Where-Object { $_ -match '\$(personAddr|loginName)\b' -and $_ -match 'Set-Content|Add-Content|Out-File|Write-Host|Write-Output|Write-Error|Write-Warning|Write-Verbose|\$lines\.Add|Add-Item|Add-Test|Tee-Object|Export-|Start-Transcript|\| Out-|>>|\bthrow\b' })
 Test-That 'script: the second person''s address is never written to a file, a result line or an output stream' ($bad.Count -eq 0) ($bad -join "`n")
