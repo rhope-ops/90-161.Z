@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-18 | Kit 2026.11.20.1 taken by sync (kit c04ff07), first sync. Kept in extension files and docs: .mil finder, code-standard gate, CI test packages, code-standard text. Scope: this repo. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
+| 2026-11-18 | Kit 2026.11.20.1 taken by sync (kit c04ff07), first sync. Kept in extension files and docs: .mil finder, code-standard gate, CI test packages, code-standard text. Replaces the 2026-11-15 "No kit sync" row once merged. Scope: this repo. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
 | 2026-11-18 | Session-load cap: only "No reconnaissance" is a hard Project rule; 13 rules, Commands and the handoff shortened, exact texts approved. Detail stays in linked docs. Scope: AGENTS.md. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
 | 2026-11-18 | Delivery gates: `pii_guard.py` becomes `check_content.py` and the "pii-guard" check becomes the "checks" check; the gates move to .claude/skills/deliver/PROJECT.md. | PFM | .claude/skills/deliver/PROJECT.md |
 | 2026-11-18 | Two kit-file code-standard failures (pre-push line, bloat_check_test docstring): no exclude and no hand-added debt; the kit fixes them first, then this repo syncs again. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
