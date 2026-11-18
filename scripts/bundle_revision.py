@@ -10,6 +10,10 @@ and a new file name; the old file leaves. Rule text: .claude/skills/round/SKILL.
 --raise changes only the working tree: in scripts/paste_bundles.json the "out" name and the "Round <id> r<N>" title
 prefix, the same file name in go.md, and it deletes the old bundle file. Rebuild afterwards
 (python3 scripts/build_paste_bundles.py). It needs origin/main; fetch first.
+Network: none (it runs local git read commands on origin/main; it does not fetch).
+Writes: --raise only: scripts/paste_bundles.json, go.md, and deletes the old bundle files; the check and --test write
+nothing in the repo (--test uses a temp folder).
+Credentials: none.
 """
 import json
 import re
