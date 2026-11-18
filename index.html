@@ -192,8 +192,8 @@ function stateOf(h,fallback){
   if(m)return {name:m[1],state:m[2].toLowerCase(),when:m[3]};
   return {name:h,state:fallback||'',when:''};
 }
-/** groupState(h): the state a group gives its cards: "Open..." = open, "Done" = done, else none. */
-function groupState(h){return /^open\b/i.test(h)?'open':/^done$/i.test(h)?'done':''}
+/** groupState(h): the state a group gives its "###" cards: "Open tasks" = open, "Done" = done, else none. */
+function groupState(h){return /^open tasks$/i.test(h)?'open':/^done$/i.test(h)?'done':''}
 /** card(info, lines, id, st, extra): one collapsible card; open by default when its state is open,
     unless this browser remembered another choice for the same name (st). */
 function card(info,lines,id,st,extra){
@@ -212,20 +212,20 @@ function renderSecs(secs,st){
   var r={nav:'',body:'',open:0},n=0;
   secs.forEach(function(s){
     var gs=groupState(s.h);
-    if(!s.items.length){ // a plain section: one card, as before
-      var info=stateOf(s.h,gs),id=slug(info.name,n++);
+    if(!s.items.length){ // a plain section: one card, as before (only "Done" gets a state without "(open|done)")
+      var info=stateOf(s.h,gs==='done'?'done':''),id=slug(info.name,n++);
       if(info.state==='open')r.open++;
       r.nav+='<li><a href="#'+id+'"'+(info.state==='open'?' class="is-open"':'')+'>'+inl(info.name)+'</a></li>';
       r.body+=card(info,s.lines,id,st,/^done$/i.test(s.h)?doneCount(s.lines):'');
       return;
     }
-    var gid=slug(s.h,n++),cards='',opens=0; // a group: a heading, its intro, then one card per "###"
+    var gid=slug(s.h,n++),cards='',links=''; // a group: a heading, its intro, then one card per "###"
     s.items.forEach(function(it){
       var info=stateOf(it.h,gs),id=slug(info.name,n++);
-      if(info.state==='open'){r.open++;opens++}
+      if(info.state==='open'){r.open++;links+='<li><a href="#'+id+'" class="is-open">'+inl(info.name)+'</a></li>'}
       cards+=card(info,it.lines,id,st,'');
     });
-    r.nav+='<li><a href="#'+gid+'"'+(opens?' class="is-open"':'')+'>'+inl(s.h)+' ('+s.items.length+')</a></li>';
+    r.nav+='<li><a href="#'+gid+'">'+inl(s.h)+' ('+s.items.length+')</a></li>'+links; // each open card keeps its own link
     var intro=s.lines.some(function(x){return x.trim()})?'<div class="gintro">'+renderBody(s.lines)+'</div>':'';
     r.body+='<section class="grp" id="'+gid+'"><h2>'+inl(s.h)+'</h2>'+intro+cards+'</section>';
   });
@@ -259,6 +259,7 @@ function wire(m){
   if(location.hash){var d=document.getElementById(location.hash.slice(1));if(d){if(d.tagName==='DETAILS')d.open=true;d.scrollIntoView()}}
   window.addEventListener('beforeprint',function(){all().forEach(function(d){d.open=true})});
 }
+if(window.GO_TEST&&typeof window.GO_TEST==='object'){window.GO_TEST.parse=parse;window.GO_TEST.renderSecs=renderSecs;return} // tests/check_go_page.js
 if(typeof window.GO_MD==='string'){render(window.GO_MD);return}
 fetch(SRC,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(render).catch(function(e){
   document.getElementById('m').innerHTML='<p>Could not load go.md ('+esc(e.message)+'). Fallback: <a href="'+SRC+'">'+SRC+'</a></p>'});
