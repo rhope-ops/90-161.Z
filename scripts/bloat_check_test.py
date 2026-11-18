@@ -343,7 +343,14 @@ def write_skill(rs, folder, body):
 
 
 def hard_rule_cases(rs):
-    """SINGLE_HOME: each hard rule restated in a skill is a hit; a pointer and a hook description pass."""
+    """SINGLE_HOME: each hard rule restated in a skill is a hit; a pointer and a hook description pass.
+
+    Args:
+        rs: the sample repo folder.
+
+    Returns:
+        None (an assert stops on a failure).
+    """
     hits = ["Never force-push or rewrite published history.", "Never rebase a pushed branch.", "Never push with `--no-verify`.",
             "Never push to main directly.", "Never weaken a hook to get past a block.", "Never skip a test.",
             "Never repin an approval.", "A review finding is not approval.", "Review on a model tier no lower than the author's.",

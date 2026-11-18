@@ -70,7 +70,8 @@ check_identity() {
       done
     done < <(git log --format='%h|%ae|%ce' "$lsha" --not "${not[@]}" 2>/dev/null)
   done
-  [ $blocked = 1 ] && echo "pre-push: fix: run git config user.email with your GitHub noreply address (ID+USER@users.noreply.github.com), then recreate the unpushed commits (AGENTS.md \"Hard rules\")."
+  [ $blocked = 1 ] && echo "pre-push: fix: run git config user.email with your GitHub noreply address" \
+    "(ID+USER@users.noreply.github.com), then recreate the unpushed commits (AGENTS.md \"Hard rules\")."
   return $blocked
 }
 
@@ -168,7 +169,9 @@ refs/heads/main $b refs/heads/main $a"
   cmi "$nr" noreply@github.com;      ident "identity: a merge made on GitHub (committer noreply@github.com) passes" 0
   cmi noreply@anthropic.com "$nr";   ident "identity: noreply@anthropic.com passes" 0
   cmi "$bad" "$nr";                  ident "identity: another author address is refused" 1
-  eq "identity: the refusal names the author, not the address, and the fix" "$(printf '%s\n' "refs/heads/idn $n refs/heads/idn $c" | check_identity | sed 's/[0-9a-f]\{7,\}/H/' | head -n 1)" "pre-push: blocked: commit H: the author e-mail is not a GitHub noreply address (16 characters)."
+  first=$(printf '%s\n' "refs/heads/idn $n refs/heads/idn $c" | check_identity | sed 's/[0-9a-f]\{7,\}/H/' | head -n 1)
+  eq "identity: the refusal names the author, not the address, and the fix" "$first" \
+    "pre-push: blocked: commit H: the author e-mail is not a GitHub noreply address (16 characters)."
   cmi "$nr" "$bad";                  ident "identity: another committer address is refused" 1
   eq "identity: the refusal names the committer" "$(printf '%s\n' "refs/heads/idn $n refs/heads/idn $c" | check_identity | grep -c 'the committer e-mail is not')" 1
   cmi "" "$nr";                      ident "identity: an empty author address is refused" 1
@@ -176,7 +179,8 @@ refs/heads/main $b refs/heads/main $a"
   git checkout -q -b idn2 "$c"; old=$zero; cmi "$nr" "$nr";        ident "identity: a new branch: commits the remote has are not checked" 0 up
   cmi "$bad" "$nr";                  ident "identity: a new branch: a new commit with another address is refused" 1 up
   old=; git remote remove up; git checkout -q side; git branch -q -D idn idn2
-  eq "a push shows TIME, WARN and CHECK lines, also an indented WARN" "$(printf '%s\n' 'PASS  a' '      WARN  rule lint: x' 'TIME  full' 'WARN  slower' 'CHECK PASS' '      rules: y' 'PASS  x WARN y' | shown | tr '\n' '|')" "      WARN  rule lint: x|TIME  full|WARN  slower|CHECK PASS|"
+  seen=$(printf '%s\n' 'PASS  a' '      WARN  rule lint: x' 'TIME  full' 'WARN  slower' 'CHECK PASS' '      rules: y' 'PASS  x WARN y' | shown | tr '\n' '|')
+  eq "a push shows TIME, WARN and CHECK lines, also an indented WARN" "$seen" "      WARN  rule lint: x|TIME  full|WARN  slower|CHECK PASS|"
   o=$(mktemp -d); git -C "$o" init -q -b main  # another repo: the folder a "git --git-dir=..." push may start in
   eq "own work tree: the top folder" "$(own_tree)" "$(pwd -P)"
   eq "from a subfolder: the top folder" "$(mkdir -p sub && cd sub && own_tree)" "$(pwd -P)"
