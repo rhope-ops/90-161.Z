@@ -14,3 +14,6 @@
 
 ## Bump with a shrink
 - When a bump also lowers debt, `bump_lock.py` fails its own check on the FIXED items and restores. This time `bump()` ran with `code_standard.py --update` before its unchanged checks (driver kept outside the repo). A future fix in bump_lock.py could run `--update` itself.
+
+## Update 2026-11-18 evening
+- RADE released engine-v18 after PR 157 merged; the "RADE engine is behind" test fails on main again (lock engine-v17). A move to v18 is the PFM's call (round skill: the lock moves only on the PFM's request).
