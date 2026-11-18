@@ -24,7 +24,6 @@ Device evidence: docs/reviews/2026-11-18-r29b-results.md (R29b r5 on engine-v14)
 - Ruleset "protect main": require a pull request and the status check `scan` (not `ps51`: it runs only for some paths).
 - Save the name denylist as a Dependabot secret `PII_GUARD_DENYLIST`, or Dependabot pull requests fail `scan`.
 - Turn on private vulnerability reporting (SECURITY.md points to it).
-- Confirm two versions that no document named: jszip 3.10.2 (the newest on npm) and jsonschema 4.26.0 (the installed one).
 
 ## Open points (MINOR findings of the reviews, not fixed)
 
@@ -33,8 +32,8 @@ Device evidence: docs/reviews/2026-11-18-r29b-results.md (R29b r5 on engine-v14)
 - scripts/logo_draw.py still stops with a Python error on a path with too few numbers.
 - Hide-Site masks the whole unbroken text around an @ (over-masking, no leak). It does not mask display names, office symbols,
   phone numbers, user ids or computer names (listed in its help and in tests/ps/Test-Mask.ps1).
-- The 7 task scripts kept their revision numbers although their shared masking block changed (an agent's decision under
-  delegation; the round skill says a fix adds 1).
+- The 7 task scripts keep their revision numbers until their next real change, and jszip 3.10.2 and jsonschema 4.26.0 stay
+  pinned: both confirmed by the PFM on 18 Nov 26 (docs/DECISIONS.md).
 - .editorconfig would add a final line end to 8 tracked files if an editor obeys it; four files with no extension
   (the pre-push hook among them) have no line-end rule in .gitattributes.
 - scripts/build_decision_brief.js still names a global npm install in its header; no test runs that build, so the jszip pin is unproved.

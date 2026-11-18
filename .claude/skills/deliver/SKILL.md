@@ -52,3 +52,5 @@ Private repos share 2,000 Actions minutes a month. Trigger workflows on `pull_re
 
 - A scheduled task needs a prompt that stands alone and permission to commit, push to main and republish without a person.
 - Background work stops at the usage limit. Say when that can interrupt it.
+- Before unattended work starts, the session makes a dry-run push to each repo it needs. If one fails, it stops at once and says which repo and why.
+- A plan or brief names a required status check by the name a real check run shows (the job name), never by the workflow file's name.
