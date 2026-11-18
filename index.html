@@ -14,7 +14,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 var(--ui)}
 .band{background:linear-gradient(100deg,var(--navy),var(--blue));color:#fff;border-bottom:3px solid var(--gold)}
 .band-in,main{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .band-in{display:flex;align-items:center;gap:14px;padding-block:18px}
-.logo{flex:none;width:59px;height:59px} /* 59 px: 23 % bigger than 48 for legibility (PFM 18 Nov 26: +10 % minimum, then 5 % more) */
+.logo{flex:none;width:64px;height:64px} /* 64 px: the baseline logo size for 90-161.Z and RADE (PFM 18 Nov 26; docs/DECISIONS.md) */
 .band h1{font-size:1.375rem;line-height:1.2;margin:0;text-wrap:balance;font-weight:650}
 .band .sub{color:var(--mist);font-size:.875rem;margin:2px 0 0}
 .band .count{margin-left:auto;text-align:right;color:var(--mist);font-size:.8125rem;font-variant-numeric:tabular-nums}
@@ -71,7 +71,7 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
 .foot{margin-top:24px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 @media print{details.sec>.body{display:block}.bar,.toc,button{display:none}.band{background:none;color:#000;border-bottom:1px solid #000}}
-</style></head><body><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="59" height="59" class="logo" aria-hidden="true" focusable="false">
+</style></head><body><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64" height="64" class="logo" aria-hidden="true" focusable="false">
 <title>90-161.Z logo</title>
 <circle cx="256" cy="256" r="248" fill="#00308F"/>
 <circle cx="256" cy="256" r="230" fill="none" stroke="#FFFFFF" stroke-width="8"/>
