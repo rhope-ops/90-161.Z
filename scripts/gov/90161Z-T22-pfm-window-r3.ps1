@@ -194,14 +194,11 @@ $QueueRows=(@(
 'FAKE OI 32-1|Work Orders|Review|5 Scope|5|FAKE AO 5|On track|ok|pub|0',
 'FAKE OI 91-3|Ladder Safety|New|7 Endorsers|6|FAKE AO 7|On track|ok|pub|0'
 ) -join "`n")
-function ConvertTo-HomeRow([string[]]$Lines) {
-foreach ($l in $Lines) { if ($l.Trim()) { $f=$l.Split('|'); @{ Publication=($f[0] + '|' + $f[1]); Action=$f[2]; Step=$f[3]; With=$f[4]; Since=$f[5]; Age=$f[6]; Due=$f[7]; Status=$f[8]; Kind=$f[9]; Go=$f[10] } } }
+function ConvertTo-GridRow([string[]]$Lines, [string[]]$Names) {   # one row per text line: fields 0 and 1 make Publication, the rest take $Names in order
+foreach ($l in $Lines) { if ($l.Trim()) { $f=$l.Split('|'); $r=@{ Publication=($f[0] + '|' + $f[1]) }; for ($i=2; $i -lt $f.Count; $i++) { $r[$Names[$i - 2]]=$f[$i] }; $r } }
 }
-function ConvertTo-QueueRow([string[]]$Lines) {
-foreach ($l in $Lines) { if ($l.Trim()) { $f=$l.Split('|'); @{ Publication=($f[0] + '|' + $f[1]); Action=$f[2]; Step=$f[3]; Weekdays=$f[4]; With=$f[5]; Status=$f[6]; Kind=$f[7]; Go=$f[8]; Me=($f[9] -eq '1') } } }
-}
-$GridHome=@(ConvertTo-HomeRow ($HomeRows -split "`n"))
-$GridQueue=@(ConvertTo-QueueRow ($QueueRows -split "`n"))
+$GridHome=@(ConvertTo-GridRow ($HomeRows -split "`n") @('Action', 'Step', 'With', 'Since', 'Age', 'Due', 'Status', 'Kind', 'Go'))
+$GridQueue=@(ConvertTo-GridRow ($QueueRows -split "`n") @('Action', 'Step', 'Weekdays', 'With', 'Status', 'Kind', 'Go', 'Me') | ForEach-Object { $_.Me=($_.Me -eq '1'); $_ })
 $ColsNarrow=@(@{ N='Publication'; W=0; K='pub' }, @{ N='Step'; W=128; K='plain' }, @{ N='With'; W=170; K='with' }, @{ N='Since'; W=64; K='since' }, @{ N='Due'; W=72; K='plain' }, @{ N='Status'; W=104; K='chip' })
 $ColsWide=@(@{ N='Publication'; W=0; K='pub' }, @{ N='Action'; W=136; K='plain' }, @{ N='Step'; W=136; K='plain' }, @{ N='With'; W=184; K='with' }, @{ N='Since'; W=120; K='since' }, @{ N='Due'; W=72; K='plain' }, @{ N='Status'; W=104; K='chip' })
 $ColsQueue=@(@{ N='Publication'; W=0; K='pub' }, @{ N='Action'; W=130; K='plain' }, @{ N='Step'; W=150; K='plain' }, @{ N='Weekdays'; W=86; K='plain'; H='Weekdays in step' }, @{ N='With'; W=140; K='with' }, @{ N='Status'; W=124; K='chip' })
@@ -469,6 +466,11 @@ $PfmCs=(@(
 'if (old != null) { old.Dispose(); }',
 '}',
 '}',
+'public static Graphics Begin(PaintEventArgs e, Color back) {   // the start of each OnPaint: clear to back (unless Empty), smooth edges',
+'if (!back.IsEmpty) { e.Graphics.Clear(back); }',
+'e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;',
+'return e.Graphics;',
+'}',
 '}',
 'public class Chip : Control {',
 'public Color Fill = Color.White;',
@@ -477,9 +479,7 @@ $PfmCs=(@(
 'TabStop = false;',
 '}',
 'protected override void OnPaint(PaintEventArgs e) {',
-'Graphics g = e.Graphics;',
-'g.Clear(BackColor);',
-'g.SmoothingMode = SmoothingMode.AntiAlias;',
+'Graphics g = Gfx.Begin(e, BackColor);',
 'using (GraphicsPath p = Gfx.Round(new RectangleF(0, 0, Width - 1, Height - 1), Height / 2f)) {',
 'using (SolidBrush b = new SolidBrush(Fill)) { g.FillPath(b, p); }',
 '}',
@@ -495,8 +495,7 @@ $PfmCs=(@(
 'public Card() { DoubleBuffered = true; ResizeRedraw = true; }',
 'protected override void OnPaint(PaintEventArgs e) {',
 'base.OnPaint(e);',
-'Graphics g = e.Graphics;',
-'g.SmoothingMode = SmoothingMode.AntiAlias;',
+'Graphics g = Gfx.Begin(e, Color.Empty);',
 'using (GraphicsPath p = Gfx.Round(new RectangleF(0.5f, 0.5f, Width - 1.5f, Height - 1.5f), Radius)) {',
 'using (Region r = new Region(new Rectangle(0, 0, Width, Height))) {',
 'r.Exclude(p);',
@@ -526,11 +525,9 @@ $PfmCs=(@(
 'TabStop = false;',
 '}',
 'protected override void OnPaint(PaintEventArgs e) {',
-'Graphics g = e.Graphics;',
-'g.Clear(BackColor);',
+'Graphics g = Gfx.Begin(e, BackColor);',
 'int n = Labels.Length;',
 'if (n == 0 || Fonts.Length == 0) { return; }',
-'g.SmoothingMode = SmoothingMode.AntiAlias;',
 'float cell = (float)Width / n;',
 'int fi = Fonts.Length - 1;',
 'for (int k = 0; k < Fonts.Length; k++) {',
@@ -584,9 +581,7 @@ $PfmCs=(@(
 'protected override void OnGotFocus(EventArgs e) { Invalidate(); base.OnGotFocus(e); }',
 'protected override void OnLostFocus(EventArgs e) { Invalidate(); base.OnLostFocus(e); }',
 'protected override void OnPaint(PaintEventArgs e) {',
-'Graphics g = e.Graphics;',
-'g.Clear(Back);',
-'g.SmoothingMode = SmoothingMode.AntiAlias;',
+'Graphics g = Gfx.Begin(e, Back);',
 'RectangleF rc = new RectangleF(0.5f, 0.5f, Width - 2f, Height - 2f);',
 'using (GraphicsPath p = Gfx.Round(rc, 4f)) {',
 'if (On) { using (SolidBrush b = new SolidBrush(OnBack)) { g.FillPath(b, p); } }',
@@ -1003,20 +998,17 @@ $lh=[Windows.Forms.TextRenderer]::MeasureText('Ag', $wn.StepFonts.A[0]).Height
 $s.Size=[Drawing.Size]::new($W, ($s.Dot + 2 * $lh + (& $wn.Sc 12))); $s.Margin=& $ui.Pad 0 (& $wn.Sc 14) 0 (& $wn.Sc 6)
 $s.AccessibleName='Step ' + $b.N + ' of 12: ' + $StepNames[$b.N - 1] + '. Steps 1 to ' + ($b.N - 1) + ' are done.'
 [void]$Parent.Controls.Add($s) }
-'check' {
+{ 'check', 'ck' -contains $_ } {   # a check result (chip) or a checkbox, then the same text, link and fit
 $p=& $wn.Panel $W 8
+if ($b.T -eq 'check') {
 $cp=& $wn.Chip 'ok' $b.Chip $ui.C.White; $cp.Location=[Drawing.Point]::new(0, (& $wn.Sc 2)); [void]$p.Controls.Add($cp)
-$x=$cp.Width + (& $wn.Sc 10)
-$t=& $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Check result' $null; $t.Location=[Drawing.Point]::new($x, 0)
-if ($b.Link) { $l=& $wn.Link $b.Link; $l.Location=[Drawing.Point]::new($x, ($t.Bottom + (& $wn.Sc 2))); [void]$p.Controls.Add($l) }
-& $wn.Fit $p 4; [void]$Parent.Controls.Add($p) }
-'ck' {
-$p=& $wn.Panel $W 8
+$x=$cp.Width + (& $wn.Sc 10); $nm='Check result' }
+else {
 $cb=New-Object System.Windows.Forms.CheckBox; $cb.Text=''; $cb.AutoSize=$false; $cb.Size=[Drawing.Size]::new((& $wn.Sc 24), (& $wn.Sc 24)); $cb.Location=[Drawing.Point]::new((& $wn.Sc 4), (& $wn.Sc 2))
 $cb.AccessibleName=[string]$b.Text; $cb.BackColor=$ui.C.White; $cb.Tag=[string]$b.Id; $cb.Checked=[bool]$wn.Field[$b.Id]; & $ui.Cue $cb
 $cb.Add_CheckedChanged({ $wn.Field[[string]$this.Tag]=[bool]$this.Checked }); [void]$p.Controls.Add($cb)
-$x=& $wn.Sc 38
-$t=& $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Checkbox text' $null; $t.Location=[Drawing.Point]::new($x, 0)
+$x=& $wn.Sc 38; $nm='Checkbox text' }
+$t=& $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) $nm $null; $t.Location=[Drawing.Point]::new($x, 0)
 if ($b.Link) { $l=& $wn.Link $b.Link; $l.Location=[Drawing.Point]::new($x, ($t.Bottom + (& $wn.Sc 2))); [void]$p.Controls.Add($l) }
 & $wn.Fit $p 4; [void]$Parent.Controls.Add($p) }
 'rows' {
@@ -1125,14 +1117,11 @@ $tag=$s.Tag; $kind=[string]$tag.Kind[$s.Columns[$e.ColumnIndex].Name]; $bd=$e.Ce
 $fl=[Windows.Forms.TextFormatFlags]'Left, VerticalCenter, SingleLine, NoPadding, NoPrefix, EndEllipsis'
 $fw=[Windows.Forms.TextFormatFlags]'Left, VerticalCenter, WordBreak, NoPadding, NoPrefix'
 $tr=New-Object System.Drawing.Rectangle(($bd.X + $pd), $bd.Y, [math]::Max(1, $bd.Width - 2 * $pd), ($bd.Height - 1))
-if ($e.RowIndex -lt 0) {
-$br=New-Object System.Drawing.SolidBrush($ui.C.White); $gr.FillRectangle($br, $bd); $br.Dispose()
-[Windows.Forms.TextRenderer]::DrawText($gr, ([string]$e.Value).ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl)
-$pn=New-Object System.Drawing.Pen($pc.muted, 1); $gr.DrawLine($pn, $bd.X, ($bd.Bottom - 1), $bd.Right, ($bd.Bottom - 1)); $pn.Dispose()
-$e.Handled=$true; return }
-$bg=$(if ($s.Rows[$e.RowIndex].Selected) { $pc.surface } else { $ui.C.White })
+$hdr=($e.RowIndex -lt 0)   # the header row: white, a muted line and capital text; a body row: its fill and a light line
+$bg=$(if (-not $hdr -and $s.Rows[$e.RowIndex].Selected) { $pc.surface } else { $ui.C.White })
 $br=New-Object System.Drawing.SolidBrush($bg); $gr.FillRectangle($br, $bd); $br.Dispose()
-$pn=New-Object System.Drawing.Pen($pc.line, 1); $gr.DrawLine($pn, $bd.X, ($bd.Bottom - 1), $bd.Right, ($bd.Bottom - 1)); $pn.Dispose()
+$pn=New-Object System.Drawing.Pen($(if ($hdr) { $pc.muted } else { $pc.line }), 1); $gr.DrawLine($pn, $bd.X, ($bd.Bottom - 1), $bd.Right, ($bd.Bottom - 1)); $pn.Dispose()
+if ($hdr) { [Windows.Forms.TextRenderer]::DrawText($gr, ([string]$e.Value).ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl); $e.Handled=$true; return }
 $text=[string]$e.Value
 if ($kind -eq 'pub') {
 $pp=$text.Split('|')
@@ -1290,13 +1279,9 @@ Set-Content -LiteralPath $wn.BoundsFile -Value $o -Encoding UTF8
 # It sits at the bottom of the window and is always visible. Pass or Fail moves to the next check; the answers go to the result file.
 $wn.CheckAt=0; $wn.Answers=New-Object 'string[]' $Checks.Count
 $wn.BarShow={
-$i=[int]$wn.CheckAt
-if ($i -lt $Checks.Count) {
-$wn.BarNo.Text='Check ' + ($i + 1) + ' of ' + $Checks.Count; $wn.BarText.Text=[string]$Checks[$i].Text
-$wn.BarPass.Visible=$true; $wn.BarFail.Visible=$true }
-else {
-$wn.BarNo.Text='Checks'; $wn.BarText.Text='All checks done. Close this window with its X.'
-$wn.BarPass.Visible=$false; $wn.BarFail.Visible=$false } }
+$i=[int]$wn.CheckAt; $on=($i -lt $Checks.Count); $wn.BarPass.Visible=$on; $wn.BarFail.Visible=$on   # $on: a check is still open
+$wn.BarNo.Text=$(if ($on) { 'Check ' + ($i + 1) + ' of ' + $Checks.Count } else { 'Checks' })
+$wn.BarText.Text=$(if ($on) { [string]$Checks[$i].Text } else { 'All checks done. Close this window with its X.' }) }
 $wn.Answer={ param([string]$Result)
 if ($wn.CheckAt -ge $Checks.Count) { return }
 $wn.Answers[$wn.CheckAt]=$Result; $wn.CheckAt++
@@ -1304,8 +1289,7 @@ $wn.Answers[$wn.CheckAt]=$Result; $wn.CheckAt++
 $wn.BarLayout={
 if (-not $wn.Bar) { return }
 $w=$form.ClientSize.Width; $pad=& $wn.Sc 16; $gap=& $wn.Sc 8
-$pw=[math]::Max($wn.BarPass.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarPass.MinimumSize.Width)
-$fw=[math]::Max($wn.BarFail.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarFail.MinimumSize.Width)
+$pw, $fw=@($wn.BarPass, $wn.BarFail | ForEach-Object { [math]::Max($_.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $_.MinimumSize.Width) })
 $bh=[math]::Max($wn.BarPass.Height, $wn.BarFail.Height)
 $tw=[math]::Max((& $wn.Sc 200), $w - 2 * $pad - $pw - $fw - 2 * $gap)
 $th=0; foreach ($c in $Checks) { $m=& $ui.Meas ([string]$c.Text) $ui.F.Body $tw; $th=[math]::Max($th, [int]$m.Height) }
@@ -1381,9 +1365,8 @@ $lines.Add('LAYOUT self-check: ' + $defects.Count + ' defects in ' + $ui.LayCard
 $cp=0; $cf=0; $cs=0
 for ($i=0; $i -lt $Checks.Count; $i++) {
 $a=[string]$wn.Answers[$i]
-if ($a -eq 'PASS') { $cp++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' PASS') }
-elseif ($a -eq 'FAIL') { $cf++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL') }
-else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL (not answered)') } }
+if ($a -eq 'PASS') { $cp++ } elseif ($a -eq 'FAIL') { $cf++ } else { $cs++; $a='FAIL (not answered)' }
+$lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' ' + $a) }
 $lines.Add('CHECKS passed=' + $cp + ' failed=' + $cf + ' not answered=' + $cs)
 foreach ($t in @($ui.Trash)) { try { $t.Dispose() } catch { $null=$_ } }
 $form.Dispose()
