@@ -48,7 +48,6 @@ else
 fi
 
 python3 scripts/bloat_check.py --test >/tmp/bloat.out 2>&1 && ok "bloat_check self-test" || { cat /tmp/bloat.out; bad "bloat_check self-test"; }
-
 # The two slowest checks (lint, T20 on the fake site) run beside the other tests (bloat audit 3, 2026-11-15: 36 s suite);
 # each result is read where its PASS line is written: T20 at its old place, lint at the end.
 bg=$(mktemp -d)
@@ -680,6 +679,7 @@ else sk "T22 window preview cards (r3)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
+gp=$(node tests/check_go_page.js) && ok "bookmark page renderer ($(echo "$gp" | tail -1))" || { echo "$gp"; bad "bookmark page renderer (tests/check_go_page.js)"; }
 if [ "${on[lint]}" = 1 ]; then wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }; else sk "lint"; fi
 [ "$lane" = fast ] && echo "TESTS pass=$pass fail=$fail skip=$skipped (fast lane)" || echo "TESTS pass=$pass fail=$fail"
 [ $fail -eq 0 ]
