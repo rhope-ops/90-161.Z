@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 17 Nov 26 (Rounds R29a and R29b are ready; run R29a first).
+Updated: 18 Nov 26 (R29b results are in; Round R29a is still open).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -51,33 +51,10 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 **Report:** send the Outlook draft the round makes (subject "90161Z R29a PASSED" or "90161Z R29a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If Power Automate refuses a step, select "It failed" and type the first line of the message: a refusal is a valid result.
 
-### Round R29b r5 (run after R29a): my 90-161.Z window with its checks inside
-
-**For:** tests my 90-161.Z window again: it now scales with Windows, its self-check works, the grids fit, and 12 checks show at the bottom of the window, one at a time, with Pass and Fail. Then 3 questions on its look.
-**Time:** about 20 minutes (estimate).
-**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window script and its result file). All data in the window is FAKE; nothing is read, saved or sent. Before Run, the window lists every file.
-**Steps:**
-1. Press Copy script next to the link below.
-2. Open the Start menu and type ISE.
-3. Open Windows PowerShell ISE (not "Run as administrator").
-4. Select File > New.
-5. Click in the white script pane.
-6. Press Ctrl+V.
-7. Press F5. The RADE window opens.
-8. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-9. In the RADE window, press Run.
-10. For each check in the bar at the bottom of the 90-161.Z window, select Pass or Fail.
-11. Close the 90-161.Z window with its X.
-12. Answer the 3 questions in the RADE window.
-13. At DONE, send the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29b-round-r5.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R29b PASSED" or "90161Z R29b NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If the 90-161.Z window does not open, send the results as they are.
-
 ## Done
 
+- Round R29b r5 (18 Nov 26): needs review. Checks 9 of 9, shared files 4 of 4, Window OK. Passed: my 90-161.Z window now scales with Windows, its self-check found 0 defects on 17 cards, and Tab, Shift+Tab, Enter and the cards work. Failed: the 2 high-contrast checks (Print Screen is a second function on my right Shift key) and 2 Narrator checks (Narrator said nothing). Skipped: the 3 look questions. My 3 notes are in the details:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r29b-results.md
 - Round R28 r2 (17 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the R27 and R28 test items are all removed from the test site; the probe list 6 of 6; the second person added to Visitors; I made and exported the button flow; the form header set by script. Failed: the health flow (Power Automate has no action that lists flow runs), the export reader (it did not find the flow name), my 90-161.Z window (its self-check stopped on every card and it ran unscaled), the full flow import (the "deactivated and replaced" message is the normal upgrade message, but the card did not say so). Skipped: the second person's row (T4) and the full flow test. My 7 notes are in the details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-17-r28-results.md
 - Round R27 r1 (16 Nov 26): needs review. Checks 14 of 14, flows import confirmed, slice part 1 8 of 8, part 2 14 of 14, shared files 4 of 4, Window OK. Passed: the flows read PFM Settings, test e-mails have no "[TEST]" and the F03 e-mail was in my Inbox after 1 minute. Failed: the probe flows did not save (one names a trigger SharePoint does not have), the app file ("does not contain any components"), Excel (no Automate tab). Skipped: the second person (T4) and the clean-up, so the probe list, library, solution and the second person in Visitors are still on the test site. Details:
