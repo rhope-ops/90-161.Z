@@ -14,44 +14,44 @@
   and saves its results in Rounds\R30b, then opens an Outlook draft with them (never sent). No download, no admin rights.
   To read it: the Contents list below gives the line of each part and file; each part starts with a "# ====" line.
 #>
-$buildId = 'ea1df258'
+$buildId = '83da5b74'
 $engineRelease = 17
 # ==== Contents (GENERATED; the line numbers are lines of this bundle)
 #   line    55  Part 1 of 6: Settings
 #   line    65  Part 2 of 6: Shared blocks (0): each is written back into the files that name it
 #   line    67  Part 3 of 6: Files written to this computer (8)
-#   line    69    File 1 of 8: T22\90161Z-T22-pfm-window-r4.ps1 (from scripts/gov/90161Z-T22-pfm-window-r4.ps1, sha256 80501e2cee0a)
-#   line   270    File 2 of 8: T22\90161Z-T22-cards-r4.ps1 (from scripts/gov/90161Z-T22-cards-r4.ps1, sha256 cf90c150122b)
-#   line   681    File 3 of 8: T22\90161Z-T22-types-r4.ps1 (from scripts/gov/90161Z-T22-types-r4.ps1, sha256 c3279dcd8f30)
-#   line   905    File 4 of 8: T22\90161Z-T22-ui-r4.ps1 (from scripts/gov/90161Z-T22-ui-r4.ps1, sha256 799b5a976aa0)
-#   line  1206    File 5 of 8: T22\90161Z-T22-parts-r4.ps1 (from scripts/gov/90161Z-T22-parts-r4.ps1, sha256 20e15d633eb1)
-#   line  1479    File 6 of 8: T22\90161Z-T22-grid-r4.ps1 (from scripts/gov/90161Z-T22-grid-r4.ps1, sha256 d3d4100eaf44)
-#   line  1680    File 7 of 8: T22\90161Z-T22-window-r4.ps1 (from scripts/gov/90161Z-T22-window-r4.ps1, sha256 5bfd874f97cf)
-#   line  2104    File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 0f8059b24132)
-#   line  2239  Part 4 of 6: Steps (4), downloads, results to collect, clean-up
-#   line  2423  Part 5 of 6: Applications
-#   line  2427  Part 6 of 6: the RADE engine (engine/ps, in run order)
-#   line  2428  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
-#   line  2497  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
-#   line  2624  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
-#   line  2776  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
-#   line  3033  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
-#   line  3325  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
-#   line  3548  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
-#   line  4061  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
-#   line  4165  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
-#   line  4222  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
-#   line  4229  Engine part: engine/ps/window/01-setup.ps1 (sha256 a16415fb5ecf)
-#   line  4545  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
-#   line  4623  Engine part: engine/ps/window/03-card.ps1 (sha256 88ed5b3c076d)
-#   line  4729  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 4a3737cd784d)
-#   line  4848  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
-#   line  5140  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
-#   line  5371  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
-#   line  5532  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
-#   line  5602  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
-#   line  5708  Engine part: engine/ps/window/10-keys.ps1 (sha256 d32e69d3da1e)
-#   line  5791  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
+#   line    69    File 1 of 8: T22\90161Z-T22-pfm-window-r4.ps1 (from scripts/gov/90161Z-T22-pfm-window-r4.ps1, sha256 44bcd7398d1c)
+#   line   288    File 2 of 8: T22\90161Z-T22-cards-r4.ps1 (from scripts/gov/90161Z-T22-cards-r4.ps1, sha256 cf90c150122b)
+#   line   699    File 3 of 8: T22\90161Z-T22-types-r4.ps1 (from scripts/gov/90161Z-T22-types-r4.ps1, sha256 c3279dcd8f30)
+#   line   923    File 4 of 8: T22\90161Z-T22-ui-r4.ps1 (from scripts/gov/90161Z-T22-ui-r4.ps1, sha256 799b5a976aa0)
+#   line  1224    File 5 of 8: T22\90161Z-T22-parts-r4.ps1 (from scripts/gov/90161Z-T22-parts-r4.ps1, sha256 20e15d633eb1)
+#   line  1497    File 6 of 8: T22\90161Z-T22-grid-r4.ps1 (from scripts/gov/90161Z-T22-grid-r4.ps1, sha256 d3d4100eaf44)
+#   line  1698    File 7 of 8: T22\90161Z-T22-window-r4.ps1 (from scripts/gov/90161Z-T22-window-r4.ps1, sha256 e5c0d78b0f05)
+#   line  2122    File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 0f8059b24132)
+#   line  2257  Part 4 of 6: Steps (4), downloads, results to collect, clean-up
+#   line  2441  Part 5 of 6: Applications
+#   line  2445  Part 6 of 6: the RADE engine (engine/ps, in run order)
+#   line  2446  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
+#   line  2515  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
+#   line  2642  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
+#   line  2794  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
+#   line  3051  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
+#   line  3343  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
+#   line  3566  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
+#   line  4079  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
+#   line  4183  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
+#   line  4240  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
+#   line  4247  Engine part: engine/ps/window/01-setup.ps1 (sha256 a16415fb5ecf)
+#   line  4563  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
+#   line  4641  Engine part: engine/ps/window/03-card.ps1 (sha256 88ed5b3c076d)
+#   line  4747  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 4a3737cd784d)
+#   line  4866  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
+#   line  5158  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
+#   line  5389  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
+#   line  5550  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
+#   line  5620  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
+#   line  5726  Engine part: engine/ps/window/10-keys.ps1 (sha256 d32e69d3da1e)
+#   line  5809  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
 # ==== Part 1 of 6: Settings
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -66,8 +66,8 @@ $usersRoot = 'C:\Users'
 $shared = @{}
 # ==== Part 3 of 6: Files written to this computer (8)
 $files = @()
-# ---- File 1 of 8: T22\90161Z-T22-pfm-window-r4.ps1 (from scripts/gov/90161Z-T22-pfm-window-r4.ps1, sha256 80501e2cee0a)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r4.ps1'; Kind = 'text'; Sha = '80501e2cee0a'; Data = @'
+# ---- File 1 of 8: T22\90161Z-T22-pfm-window-r4.ps1 (from scripts/gov/90161Z-T22-pfm-window-r4.ps1, sha256 44bcd7398d1c)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r4.ps1'; Kind = 'text'; Sha = '44bcd7398d1c'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 22: the PFM window, test window r4 (round R30). Windows PowerShell 5.1 and Windows Forms only (no module).
@@ -86,16 +86,19 @@ $files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r4.ps1'; Kind = 'text'; 
   from its own folder, 90161Z-T22-<part>-r4.ps1 (cards, types, ui, parts, grid, window, measure). New: -Measure <file>.
   Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 12 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
-  measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and closes, with no question and no other file.
+  measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and closes, with no question and no other file. -Opened opens no
+  window: it reads 90161Z-T22-window-r4.txt of the last run and prints one line, PASS the window opened (N of M cards) or
+  FAIL the window did not open (the round's look questions run only after a PASS).
   Outputs: 90161Z-T22-window-r4.txt (state, size, scale, cards opened, layout self-check, accessible names, check answers) and
   90161Z-T22-window-bounds.json (last size and place) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
   Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r4.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r4.txt and 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir); with -Measure only the file given.
+  Writes: 90161Z-T22-window-r4.txt and 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir); with -Measure only the file given;
+  with -Opened nothing.
   Credentials: none.
 #>
-param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure)
+param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
 $task = 'T22'
 $Rev = 'r4'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -165,6 +168,20 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
 }
 # <<< task-common
+# The -Opened line for the result file in $Dir: PASS when its last "CARDS opened" line counts more than 0 cards and no
+# line starts with STOPPED:, else FAIL (also when the file is missing).
+function Get-OpenedLine([string]$Dir) {
+  $f = Join-Path $Dir ('90161Z-T22-window-' + $Rev + '.txt'); $text = @()
+  if (Test-Path -LiteralPath $f -PathType Leaf) { $text = @(Get-Content -LiteralPath $f) }
+  $m = @($text | Where-Object { $_ -match '^CARDS opened: .*\((\d+) of (\d+)\)$' }) | Select-Object -Last 1
+  $stopped = @($text | Where-Object { $_ -match '^STOPPED:' }).Count
+  if ($m -and -not $stopped -and $m -match '\((\d+) of (\d+)\)$' -and [int]$Matches[1] -gt 0) { return ('PASS the window opened (' + $Matches[1] + ' of ' + $Matches[2] + ' cards)') }
+  return 'FAIL the window did not open'
+}
+if ($Opened) {   # no window, no file: one line about the last run, exit 1 on FAIL
+  try { $od = $(if ($TestDir) { $TestDir } else { Get-TaskDir (Get-TaskId $Id).Id $task 'Task 22' }); $ol = Get-OpenedLine $od } catch { $ol = 'FAIL the window did not open' }
+  Write-Host $ol; exit $(if ($ol.StartsWith('PASS')) { 0 } else { 1 })
+}
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'window', 'measure')
@@ -173,7 +190,7 @@ function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
 $code = 0
-$cf = 0; $opened = @{}; $presses = 0; $defects = New-Object System.Collections.Generic.List[string]
+$cf = 0; $cardsOpened = @{}; $presses = 0; $defects = New-Object System.Collections.Generic.List[string]
 $dir = ''
 $who = $null
 try {
@@ -236,7 +253,8 @@ try {
   $dpi = 96; try { $g = $form.CreateGraphics(); $dpi = [int]$g.DpiX; $g.Dispose() } catch { $null = $_ }
   $lines.Add('SCALE dpi=' + $dpi + ' autoScale=' + $form.CurrentAutoScaleDimensions.Width + ' controlDpi=' + $ui.Dpi + ' fontFactor=' + $ui.FontK +
     ' fontDpi=' + $ui.FontDpi + ' screenDpi=' + $ui.ScreenDpi)
-  $lines.Add('CARDS opened: ' + $(if ($opened.Count) { (@($Cards.Keys | Where-Object { $opened[$_] }) -join ', ') } else { 'none' }) + ' (' + $opened.Count + ' of ' + $Cards.Count + ')')
+  $openedNames = $(if ($cardsOpened.Count) { (@($Cards.Keys | Where-Object { $cardsOpened[$_] }) -join ', ') } else { 'none' })
+  $lines.Add('CARDS opened: ' + $openedNames + ' (' + $cardsOpened.Count + ' of ' + $Cards.Count + ')')
   $lines.Add('BUTTONS selected=' + $presses)
   $lines.Add('SECONDS open=' + [int]((Get-Date) - $started).TotalSeconds)
   foreach ($d in @($ui.LayBad)) { $defects.Add([string]$d) }
@@ -259,7 +277,7 @@ try {
   $lines.Add('STOPPED: no window (' + ([string]$_.Exception.Message).Substring(0, [Math]::Min(200, ([string]$_.Exception.Message).Length)) + ')')
 } finally {
   if ($PlanOnly) { exit 0 }
-  $lines.Add('WINDOW done: cards=' + $opened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
+  $lines.Add('WINDOW done: cards=' + $cardsOpened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
   $masked = @($lines | ForEach-Object { $t = [string]$_; if ($who) { $t = ConvertTo-Masked $t $who.Secret }; $t })
   if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T22-window-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
@@ -1677,8 +1695,8 @@ $wn.Refilter = {
   & $wn.GridFill $g $rows; $g.ClearSelection()
   if ($wn.CountBox) { $wn.CountBox.Text = ([string]$wn.CountText -f $rows.Count) } }
 '@ }
-# ---- File 7 of 8: T22\90161Z-T22-window-r4.ps1 (from scripts/gov/90161Z-T22-window-r4.ps1, sha256 5bfd874f97cf)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-window-r4.ps1'; Kind = 'text'; Sha = '5bfd874f97cf'; Data = @'
+# ---- File 7 of 8: T22\90161Z-T22-window-r4.ps1 (from scripts/gov/90161Z-T22-window-r4.ps1, sha256 e5c0d78b0f05)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-window-r4.ps1'; Kind = 'text'; Sha = 'e5c0d78b0f05'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 22 r4, part "window": the rail, the cards, the check bar, the window size and place, and the window's
@@ -1926,7 +1944,7 @@ $wn.Show = {
   param([string]$Key)
   $c = $Cards[$Key]; if (-not $c) { return }
   if ($Key -ne $wn.Cur) { if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
-  $script:opened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
+  $script:cardsOpened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
   $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @()
   $ui.Wrap = @{}; $ui.Boxes = @(); $ui.Hot = $null; $ui.Down = $null
   $form.SuspendLayout(); $page.SuspendLayout()
@@ -2240,7 +2258,7 @@ $wn.MeasureRun = {
 $fetch = @()
 $steps = @()
 $steps += @{ Name = 'T22 Open the 90-161.Z window r4'; Title = 'Open the 90-161.Z window and do its 12 checks'; Dir = 'T22'; File = '90161Z-T22-pfm-window-r4.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'Opens your 90-161.Z window with fake data. Do each of the 12 checks in the bar at the bottom, then select Pass or Fail. Contrast now uses Windows+U. Then close the window.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 900; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are. The step can be run again.' }
-$steps += @{ Name = 'T22 Did the window open r4'; Title = 'Check that the window opened'; Dir = 'T22'; File = '90161Z-T22-pfm-window-r4.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 2; Args = '-Opened'; Note = 'Reads the window''s result file. Passes when the window opened, so the look questions run even when a check failed.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T22 Open the 90-161.Z window r4'); Optional = $false; Help = 'Send the results as they are.' }
+$steps += @{ Name = 'T22 Did the window open r4'; Title = 'Check that the window opened'; Dir = 'T22'; File = '90161Z-T22-pfm-window-r4.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 2; Args = '-Opened'; Note = 'Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are.' }
 $steps += @{ Name = 'T22 Answer: look and cards r4'; Title = 'Answer 3 questions about the window look'; Dir = 'T22'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You answer 3 questions about the look of the window. About 2 minutes.'; Kind = 'guide'; Guide = @('1. Answer each of the next 3 cards.'); Url = ''; UrlConfig = ''; Marker = '90161Z-T22-judged-look.txt'; Estimate = 120; DoneText = ''; DoneLog = 'Confirmed by you: judged the look.'; Makes = @(); After = @('T22 Did the window open r4'); Optional = $false; Help = ''; Answers = @(@{ Key = 'w-look'; Prompt = 'Does the window look like your vision of the 90-161.Z app?'; Kind = 'pick'; Choices = @('Yes, as it is', 'Close, with small changes', 'Partly', 'No') }, @{ Key = 'w-cards'; Prompt = 'Did every card open and fit with no scroll bar?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'w-change'; Prompt = 'What would you change first? One line, no names.'; Kind = 'text'; Choices = @() }) }
 $steps += @{ Name = 'T22 Answer: the screenshot fixes r4'; Title = 'Answer 2 questions about the fixes from your screenshots'; Dir = 'T22'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You answer 2 questions about the fixes from your screenshots. About 1 minute.'; Kind = 'guide'; Guide = @('1. Answer each of the next 2 cards.'); Url = ''; UrlConfig = ''; Marker = '90161Z-T22-judged-fixes.txt'; Estimate = 120; DoneText = ''; DoneLog = 'Confirmed by you: judged the fixes.'; Makes = @(); After = @('T22 Did the window open r4'); Optional = $false; Help = ''; Answers = @(@{ Key = 'w-crumb'; Prompt = 'On the card FAKE OI 33-101: does the line "Your Work > FAKE OI 33-101" read as one line?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'w-status'; Prompt = 'On the same card: does the Action Status card end level with the main card?'; Kind = 'yesno'; Choices = @() }) }
 $collect = @()

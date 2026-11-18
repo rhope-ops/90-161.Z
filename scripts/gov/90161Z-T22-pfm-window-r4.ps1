@@ -183,7 +183,8 @@ try {
   $dpi = 96; try { $g = $form.CreateGraphics(); $dpi = [int]$g.DpiX; $g.Dispose() } catch { $null = $_ }
   $lines.Add('SCALE dpi=' + $dpi + ' autoScale=' + $form.CurrentAutoScaleDimensions.Width + ' controlDpi=' + $ui.Dpi + ' fontFactor=' + $ui.FontK +
     ' fontDpi=' + $ui.FontDpi + ' screenDpi=' + $ui.ScreenDpi)
-  $lines.Add('CARDS opened: ' + $(if ($cardsOpened.Count) { (@($Cards.Keys | Where-Object { $cardsOpened[$_] }) -join ', ') } else { 'none' }) + ' (' + $cardsOpened.Count + ' of ' + $Cards.Count + ')')
+  $openedNames = $(if ($cardsOpened.Count) { (@($Cards.Keys | Where-Object { $cardsOpened[$_] }) -join ', ') } else { 'none' })
+  $lines.Add('CARDS opened: ' + $openedNames + ' (' + $cardsOpened.Count + ' of ' + $Cards.Count + ')')
   $lines.Add('BUTTONS selected=' + $presses)
   $lines.Add('SECONDS open=' + [int]((Get-Date) - $started).TotalSeconds)
   foreach ($d in @($ui.LayBad)) { $defects.Add([string]$d) }

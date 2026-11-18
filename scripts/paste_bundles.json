@@ -1880,12 +1880,9 @@
           "file": "90161Z-T22-pfm-window-r4.ps1",
           "args": "-Opened",
           "minutes": 2,
-          "note": "Reads the window's result file. Passes when the window opened, so the look questions run even when a check failed.",
+          "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
           "estimate": 1,
-          "help": "Send the results as they are.",
-          "after": [
-            "T22 Open the 90-161.Z window r4"
-          ]
+          "help": "Send the results as they are."
         },
         {
           "name": "T22 Answer: look and cards r4",

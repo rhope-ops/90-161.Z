@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-18 | S1 lowers the code-standard debt in .check.state.json (comment 90 to 25, length 2 to 0, file_size 4 to 1, duplicate 5 to 0, safety 61 to 53, docs 119 to 94, line 34 to 29), per the approved R30 plan with full S1. | PFM | [R30 plan](reviews/2026-11-18-r30-plan.md) |
+| 2026-11-18 | S1 lowers the code-standard debt in .check.state.json (comment 90 to 25, length 2 to 0, file_size 4 to 0, duplicate 5 to 0, safety 61 to 53, docs 119 to 94, line 34 to 29), per the approved R30 plan with full S1. | PFM | [R30 plan](reviews/2026-11-18-r30-plan.md) |
 | 2026-11-18 | R30 plan approved as written, with full S1 (T22, T21 and New-Publication.ps1 split; duplicate helpers to src). Scope: R30. | PFM | [R30 plan](reviews/2026-11-18-r30-plan.md) |
 | 2026-11-18 | RADE lock moves to release engine-v17 (RADE fbaa1ec, serial 13) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Bundle revisions (the PFM approved the agent REC "from R30 on, raise the revision on every rebuild"): a bundle on main never changes; scripts/bundle_revision.py checks it and bump_lock.py raises revisions before its rebuild. Cause: two R29 r6 builds (engine-v15, then v16) under one name. | PFM | .claude/skills/round/SKILL.md section 4 |
