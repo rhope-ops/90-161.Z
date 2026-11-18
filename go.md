@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 18 Nov 26 (R29b results are in; Round R29a is still open).
+Updated: 18 Nov 26 (R29a and R29b results are in; no round is open).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,34 +26,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R29a r5 (run first): the R28 fixes, the new site logo, the second person and the full flow test
-
-**For:** repeats what failed or was skipped in R28: the health flow (it now checks only that my own flows are On), the reader of my button flow export, the import of the full flows and the full flow test, and the second person (T4). My 90-161.Z window is in Round R29b. It starts by checking that the test site is clean, then I set the new 90-161.Z logo as the site logo and thumbnail.
-**Time:** about 2.5 hours with waits; about 75 minutes of my own work (estimate).
-**Changes:** on the site: the header logo and thumbnail become the new 90-161.Z logo (they stay). On the test site: a probe list and library, the second person in Visitors, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end; the solution "90-161.Z flows" is upgraded and stays. On my computer: my OneDrive folder RADE\90-161.Z and one export file in Downloads. Before Run, the window lists every file.
-**Before I start:** a colleague who can open the test site is free for 5 minutes in Teams.
-**Steps:**
-1. Press Copy script next to the link below.
-2. Open the Start menu.
-3. Type ISE.
-4. Open Windows PowerShell ISE (not "Run as administrator").
-5. Select File > New.
-6. Click in the white script pane.
-7. Press Ctrl+V.
-8. Press F5. The RADE window opens.
-9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-10. Press Run.
-11. Do each step the window shows, until the log says DONE.
-12. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
-13. At DONE, send the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29a-round-r5.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R29a PASSED" or "90161Z R29a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If Power Automate refuses a step, select "It failed" and type the first line of the message: a refusal is a valid result.
+Nothing open right now.
 
 ## Done
 
+- Round R29a r5 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the second person saved a row on the test list (T4, the first pass); the new 90-161.Z logo is the site logo and thumbnail; the test site was clean at the start and at the end. Failed: 3 Power Automate steps, each with a portal error about connections ("try again later"): the health flow import, the button flow I make by hand, and the full flow import. Skipped: 17 steps that needed them, the full flow test included. The flow fixes are still untested and run again in the next round:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r29a-results.md
 - Round R29b r5 (18 Nov 26): needs review. Checks 9 of 9, shared files 4 of 4, Window OK. Passed: my 90-161.Z window now scales with Windows, its self-check found 0 defects on 17 cards, and Tab, Shift+Tab, Enter and the cards work. Failed: the 2 high-contrast checks (Print Screen is a second function on my right Shift key) and 2 Narrator checks (Narrator said nothing). Skipped: the 3 look questions. My 3 notes are in the details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r29b-results.md
 - Round R28 r2 (17 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the R27 and R28 test items are all removed from the test site; the probe list 6 of 6; the second person added to Visitors; I made and exported the button flow; the form header set by script. Failed: the health flow (Power Automate has no action that lists flow runs), the export reader (it did not find the flow name), my 90-161.Z window (its self-check stopped on every card and it ran unscaled), the full flow import (the "deactivated and replaced" message is the normal upgrade message, but the card did not say so). Skipped: the second person's row (T4) and the full flow test. My 7 notes are in the details:
