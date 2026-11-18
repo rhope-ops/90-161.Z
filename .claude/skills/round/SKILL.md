@@ -44,7 +44,8 @@ AGENTS.md "Project rules" (Gov device, What people see, Round results) point her
 2. The engine comes from `scripts/rade.lock.json` (SHA-256 checked). The lock moves only on the PFM's request: `python3 scripts/bump_lock.py engine-v<N>` (docs/dev-setup.md "RADE engine").
 3. Size limit: 600 KB (614,400 bytes); tests/run.sh checks it.
 4. The old round's bundle leaves when the next one ships.
-5. Results go back as plain files in a results folder (Rounds\<round>), attached to one e-mail; never a zip (zips do not cross the boundary).
+5. From R30 on, raise the revision on every rebuild (PFM, 2026-11-18): a bundle that main already has never changes. `scripts/bundle_revision.py` checks it (scripts/check.local.sh, both lanes); `--raise` raises the revision, and `scripts/bump_lock.py` runs it before its rebuild.
+6. Results go back as plain files in a results folder (Rounds\<round>), attached to one e-mail; never a zip (zips do not cross the boundary).
 
 ## 5. go.md task (the usability bar)
 

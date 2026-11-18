@@ -6,10 +6,11 @@
 
 Steps: (1) download rade-engine.lock.json from the RADE release and check it (repo, commit = the tag's commit,
 file paths, SHA-256 form); (2) write the lock with serial = main's + 1 (the build reads it from disk);
-(3) rebuild the round bundles under a trace of the files the engine opens, and fail when the trace differs from the
+(3) give each round bundle that main already has the next revision (scripts/bundle_revision.py; the PFM, 2026-11-18:
+"raise the revision on every rebuild"), then rebuild the round bundles under a trace of the files the engine opens, and fail when the trace differs from the
 lock's file list; (4) run scripts/check.sh (tests/run.sh among them) and the PII guard against main's allow list;
 (5) only after 3 and 4 pass, add the decision row to docs/DECISIONS.md (its By column names this script). On a failure
-the old lock and the old bundles are written back and no row is added. Each git call to the network stops after 120 s.
+the old lock, round definitions, go.md and bundles are written back, new bundle files are deleted, and no row is added. Each git call to the network stops after 120 s.
 It changes only the working tree: commit, push and the pull request stay with the session (AGENTS.md "Delivery").
 Before you run it, check that no other open pull request changes the lock.
 """
@@ -29,6 +30,8 @@ DECISIONS = os.path.join(ROOT, "docs", "DECISIONS.md")
 RELEASE = "https://github.com/rhope-ops/RADE/releases/download/{tag}/rade-engine.lock.json"
 TAG_RE = r"engine-v[0-9]{1,4}"
 PASTE = os.path.join(ROOT, "scripts", "gov", "paste")
+BUNDLES = os.path.join(ROOT, "scripts", "paste_bundles.json")   # round definitions: the raise changes bundle names here
+GO = os.path.join(ROOT, "go.md")                                   # the task page: the raise changes a linked bundle name
 GIT_TIMEOUT = 120   # seconds a git call to the network may take
 BY = "scripts/bump_lock.py (run at the PFM's request)"   # the DECISIONS "By" text: the script wrote the row
 
@@ -168,23 +171,28 @@ def add_decision(row):
 
 
 def snapshot():
-    """Read the lock, the round bundles and the task scripts (they hold blocks made from the locked engine) as they
-    are now.
+    """Read the lock, the round definitions, go.md, the round bundles and the task scripts (they hold blocks made from
+    the locked engine) as they are now. A file that does not exist is left out.
 
     Returns:
         A dict of path to file bytes.
     """
     gov = os.path.dirname(PASTE)
-    paths = [LOCK] + [os.path.join(d, n) for d in (PASTE, gov) for n in sorted(os.listdir(d)) if n.endswith(".ps1")]
-    return {p: open(p, "rb").read() for p in paths}
+    paths = [LOCK, BUNDLES, GO] + [os.path.join(d, n) for d in (PASTE, gov) for n in sorted(os.listdir(d)) if n.endswith(".ps1")]
+    return {p: open(p, "rb").read() for p in paths if os.path.exists(p)}
 
 
 def restore(snap):
-    """Write back the files of a snapshot (the old lock, bundles and task scripts).
+    """Write back the files of a snapshot (the old lock, definitions, go.md, bundles and task scripts), and delete each
+    round bundle that the snapshot does not hold (a raised revision the failed run made).
 
     Args:
         snap: the dict that snapshot() returned.
     """
+    for n in os.listdir(PASTE):
+        p = os.path.join(PASTE, n)
+        if n.endswith(".ps1") and p not in snap:
+            os.remove(p)
     for p, data in snap.items():
         with open(p, "wb") as f:
             f.write(data)
@@ -220,7 +228,20 @@ def prove(rel, build, checks):
     checks()
 
 
-def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_checks):
+def raise_bundle_revisions():
+    """Give each round bundle that main already has the next revision (scripts/bundle_revision.py --raise), so the
+    rebuild writes new file names and no file the work computer may hold changes.
+
+    Returns:
+        Nothing; prints one RAISED line per bundle.
+    """
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import bundle_revision
+    for old, new in bundle_revision.raise_revisions(ROOT, bundle_revision.git_main_reader(ROOT)):
+        print("RAISED %s -> %s" % (old, os.path.basename(new)))
+
+
+def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_checks, revise=raise_bundle_revisions):
     """Write the new lock, prove it, and only then write the DECISIONS row. The build reads the lock from disk, so the
     lock is written first; on any failure the old lock and bundles are put back and no row is written.
 
@@ -232,6 +253,7 @@ def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_che
         today: the date for the DECISIONS row (ISO text).
         build: the traced build function (replaceable for tests).
         checks: the checks function (replaceable for tests).
+        revise: the revision raise before the build (replaceable for tests).
 
     Returns:
         Nothing; stops with a FAIL message (after the restore) on a failure.
@@ -242,11 +264,12 @@ def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_che
         f.write(json.dumps(lock, indent=2) + "\n")
     print("LOCK %s %s serial %d files %d (written for the build; kept only if the checks pass)" % (tag, rel["commit"][:7], serial, len(rel["files"])))
     try:
+        revise()
         prove(rel, build, checks)
     except SystemExit as e:
         if e.code not in (None, 0):
             restore(old)
-            print("RESTORED the old lock and the old round bundles; no DECISIONS row was written.", file=sys.stderr)
+            print("RESTORED the old lock, round definitions, go.md and round bundles; no DECISIONS row was written.", file=sys.stderr)
         raise
     add_decision(decision_row(today, tag, rel["commit"][:7], serial))
 
@@ -273,8 +296,8 @@ def bump(tag):
         sys.exit("FAIL the lock already names " + rel["commit"][:7])
     today = datetime.datetime.now(zoneinfo.ZoneInfo("America/Chicago")).date().isoformat()
     apply_bump(rel, tag, lock, main_serial() + 1, today)
-    print("BUMP PASS %s: commit, push and open the pull request (AGENTS.md \"Delivery\"). If a rebuilt bundle already "
-          "went to the work computer, raise its revision in scripts/paste_bundles.json first." % tag)
+    print("BUMP PASS %s: commit, push and open the pull request (AGENTS.md \"Delivery\"). Each bundle that main has got "
+          "the next revision (RAISED lines above)." % tag)
 
 
 def release_cases():
@@ -303,61 +326,89 @@ def release_cases():
     return len(cases) + 7, fails
 
 
+def order_case(name, build_ok, check_ok, rel):
+    """Run one apply_bump case in the temp folder that order_cases set up (fake build, checks and revision raise).
+
+    Args:
+        name: the case name; "pass" expects success, any other a stop.
+        build_ok: whether the fake build passes.
+        check_ok: whether the fake checks pass.
+        rel: the fake release lock.
+
+    Returns:
+        True when the case behaved as expected.
+    """
+    for n in os.listdir(PASTE):   # each case starts from one old bundle only
+        os.remove(os.path.join(PASTE, n))
+    open(LOCK, "w").write('{"commit": "old"}')
+    open(os.path.join(PASTE, "b.ps1"), "w").write("old bundle")
+    for p in (BUNDLES, GO):   # the raise edits these two; a failed run must put them back
+        open(p, "w").write("old")
+    open(DECISIONS, "w").write("| Date | What | By | Where |\n|---|---|---|---|\n")
+    seen = {}
+
+    def build(root, engine):
+        """Fake traced build: records whether the new lock and no row are on disk; fakes a bundle write."""
+        seen["lock"] = json.load(open(LOCK)).get("commit") == rel["commit"]
+        seen["row"] = "bump_lock" in open(DECISIONS).read()
+        open(os.path.join(PASTE, "c.ps1"), "w").write("new bundle")
+        if not build_ok:
+            sys.exit("FAIL fake build")
+        return set(rel["files"])
+
+    def revise():
+        """Fake revision raise: the old bundle b.ps1 leaves and the next revision c.ps1 comes."""
+        os.remove(os.path.join(PASTE, "b.ps1"))
+        open(os.path.join(PASTE, "c.ps1"), "w").write("raised bundle")
+        for p in (BUNDLES, GO):
+            open(p, "w").write("raised")
+
+    def checks():
+        """Fake checks: the row must not exist yet; fails when the case says so."""
+        seen["row_at_checks"] = "bump_lock" in open(DECISIONS).read()
+        if not check_ok:
+            sys.exit("FAIL fake checks")
+
+    try:
+        apply_bump(rel, "engine-v9", {"commit": "old"}, 5, "2026-01-01", build, checks, revise)
+        stopped = False
+    except SystemExit:
+        stopped = True
+    row = open(DECISIONS).read().count(BY)
+    kept = [open(p).read() for p in (BUNDLES, GO)]
+    good = (seen.get("lock") is True and seen.get("row") is False and seen.get("row_at_checks", False) is False
+            and stopped == (name != "pass"))
+    if name == "pass":
+        return good and row == 1 and json.load(open(LOCK))["serial"] == 5 and os.listdir(PASTE) == ["c.ps1"] and kept == ["raised"] * 2
+    return good and row == 0 and open(LOCK).read() == '{"commit": "old"}' \
+        and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"] and kept == ["old"] * 2
+
+
 def order_cases():
-    """Test the order of apply_bump with fake build and check functions in a temp folder (no network, no git). Cases: the
-    lock is on disk during the build; no DECISIONS row before the checks pass; a failing build or check restores the old
-    lock and bundle and writes no row; a pass writes one row whose By column names this script.
+    """Test the order of apply_bump with fake build, check and raise functions in a temp folder (no network, no git).
+    Cases: the lock is on disk during the build; no DECISIONS row before the checks pass; a failing build or check
+    restores the old lock and bundle, deletes the raised bundle and writes no row; a pass keeps the raised bundle and
+    writes one row whose By column names this script.
 
     Returns:
         A tuple (cases, fails).
     """
     import tempfile
-    global LOCK, DECISIONS, PASTE
-    saved = (LOCK, DECISIONS, PASTE)
+    global LOCK, DECISIONS, PASTE, BUNDLES, GO
+    saved = (LOCK, DECISIONS, PASTE, BUNDLES, GO)
     fails, cases = 0, 0
     rel = {"commit": "d" * 40, "engine": "engine/x.py", "files": {"engine/x.py": "e" * 64}}
     with tempfile.TemporaryDirectory() as t:
         LOCK, DECISIONS, PASTE = (os.path.join(t, "lock.json"), os.path.join(t, "DECISIONS.md"), os.path.join(t, "paste"))
+        BUNDLES, GO = os.path.join(t, "bundles.json"), os.path.join(t, "go.md")
         os.mkdir(PASTE)
         try:
             for name, build_ok, check_ok in (("pass", True, True), ("build fails", False, True), ("checks fail", True, False)):
-                open(LOCK, "w").write('{"commit": "old"}')
-                open(os.path.join(PASTE, "b.ps1"), "w").write("old bundle")
-                open(DECISIONS, "w").write("| Date | What | By | Where |\n|---|---|---|---|\n")
-                seen = {}
-
-                def build(root, engine, ok=build_ok):
-                    """Fake traced build: records whether the new lock and no row are on disk; fakes a bundle write."""
-                    seen["lock"] = json.load(open(LOCK)).get("commit") == rel["commit"]
-                    seen["row"] = "bump_lock" in open(DECISIONS).read()
-                    open(os.path.join(PASTE, "b.ps1"), "w").write("new bundle")
-                    if not ok:
-                        sys.exit("FAIL fake build")
-                    return set(rel["files"])
-
-                def checks(ok=check_ok):
-                    """Fake checks: the row must not exist yet; fails when the case says so."""
-                    seen["row_at_checks"] = "bump_lock" in open(DECISIONS).read()
-                    if not ok:
-                        sys.exit("FAIL fake checks")
-
-                try:
-                    apply_bump(rel, "engine-v9", {"commit": "old"}, 5, "2026-01-01", build, checks)
-                    stopped = False
-                except SystemExit:
-                    stopped = True
-                row = open(DECISIONS).read().count(BY)
-                good = (seen.get("lock") is True and seen.get("row") is False and seen.get("row_at_checks", False) is False
-                        and stopped == (name != "pass"))
-                if name == "pass":
-                    good = good and row == 1 and json.load(open(LOCK))["serial"] == 5
-                else:
-                    good = good and row == 0 and open(LOCK).read() == '{"commit": "old"}' \
-                        and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle"
+                good = order_case(name, build_ok, check_ok, rel)
                 print("BUMPLOCK order %s: %s" % (name, "ok" if good else "FAIL"))
                 cases, fails = cases + 1, fails + (not good)
         finally:
-            LOCK, DECISIONS, PASTE = saved
+            LOCK, DECISIONS, PASTE, BUNDLES, GO = saved
     return cases, fails
 
 
