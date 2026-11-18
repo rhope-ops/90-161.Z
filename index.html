@@ -14,7 +14,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 var(--ui)}
 .band{background:linear-gradient(100deg,var(--navy),var(--blue));color:#fff;border-bottom:3px solid var(--gold)}
 .band-in,main{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .band-in{display:flex;align-items:center;gap:14px;padding-block:18px}
-.logo{flex:none;width:48px;height:48px}
+.logo{flex:none;width:64px;height:64px} /* 64 px: the baseline logo size for 90-161.Z and RADE (PFM 18 Nov 26; docs/DECISIONS.md) */
 .band h1{font-size:1.375rem;line-height:1.2;margin:0;text-wrap:balance;font-weight:650}
 .band .sub{color:var(--mist);font-size:.875rem;margin:2px 0 0}
 .band .count{margin-left:auto;text-align:right;color:var(--mist);font-size:.8125rem;font-variant-numeric:tabular-nums}
@@ -65,10 +65,13 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
 .file .fu{display:block;font-size:.75rem;color:var(--mut);word-break:break-all}
 .file button{min-height:36px}
 .done-list li{color:var(--fg)}
+.grp{margin:22px 0 8px}
+.grp>h2{font-size:1rem;font-weight:650;letter-spacing:.02em;color:var(--mut);margin:0 0 10px;padding-left:2px}
+.gintro{margin:0 0 10px;color:var(--mut);font-size:.9375rem}
 .foot{margin-top:24px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 @media print{details.sec>.body{display:block}.bar,.toc,button{display:none}.band{background:none;color:#000;border-bottom:1px solid #000}}
-</style></head><body><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="48" height="48" class="logo" aria-hidden="true" focusable="false">
+</style></head><body><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64" height="64" class="logo" aria-hidden="true" focusable="false">
 <title>90-161.Z logo</title>
 <circle cx="256" cy="256" r="248" fill="#00308F"/>
 <circle cx="256" cy="256" r="230" fill="none" stroke="#FFFFFF" stroke-width="8"/>
@@ -166,34 +169,85 @@ function renderBody(lines){
   closeList();
   return o;
 }
-function render(md){
-  var lines=md.replace(/\r/g,'').split('\n'),title='',intro=[],secs=[],cur=null;
+/* go.md layout the page reads (PFM 1B, 18 Nov 26: one renderer for many apps and layouts later):
+   "# Title", intro lines, then "## " sections. A section with "### " sub-headings is a GROUP: its
+   lines before the first "###" are the group's intro, and each "###" is one card. A section with no
+   "###" is one card, as before. A card's state comes from "(open, <when>)" or "(done, <when>)" at the
+   end of its heading, else from its group ("Open tasks" = open, "Done" = done). */
+
+/** parse(md): splits go.md text into {title, intro[], secs[{h, lines[], items[{h, lines[]}]}]}. */
+function parse(md){
+  var lines=md.replace(/\r/g,'').split('\n'),doc={title:'',intro:[],secs:[]},sec=null,item=null;
   lines.forEach(function(l){
-    if(/^# /.test(l)&&!title){title=l.slice(2);return}
-    if(/^## /.test(l)){cur={h:l.slice(3),lines:[]};secs.push(cur);return}
-    (cur?cur.lines:intro).push(l);
+    if(/^# /.test(l)&&!doc.title){doc.title=l.slice(2);return}
+    if(/^## /.test(l)){sec={h:l.slice(3),lines:[],items:[]};item=null;doc.secs.push(sec);return}
+    if(/^### /.test(l)&&sec){item={h:l.slice(4),lines:[]};sec.items.push(item);return}
+    (item?item.lines:sec?sec.lines:doc.intro).push(l);
   });
-  var st=load(),o='',nav='',body='';document.getElementById('ht').innerHTML=inl(title.replace(/^90-161\.Z:\s*/,'90-161.Z · '));
-  var openCount=0;
-  secs.forEach(function(s,i){
-    var m=s.h.match(/^(.*?)\s*\((open|done)[,\s]*([^)]*)\)\s*$/i),name=m?m[1]:s.h,state=m?m[2].toLowerCase():(/^done$/i.test(s.h)?'done':''),when=m?m[3]:'';
-    var id=slug(name,i),isOpen;
-    if(state==='open')openCount++;
-    if(Object.prototype.hasOwnProperty.call(st,name))isOpen=st[name];else isOpen=(state==='open');
-    nav+='<li><a href="#'+id+'"'+(state==='open'?' class="is-open"':'')+'>'+inl(name)+'</a></li>';
-    body+='<details class="sec'+(state==='open'?' open-task':state==='done'?' done-task':'')+'" id="'+id+'" data-name="'+esc(name)+'"'+(isOpen?' open':'')+'><summary><span class="st">'+inl(name)+'</span><span class="meta">'+
-      (state?'<span class="chip '+state+'">'+(state==='open'?'Open':'Done')+'</span>':'')+(when?'<span class="when">'+esc(when)+'</span>':'')+
-      (/^done$/i.test(s.h)?'<span class="when">'+s.lines.filter(function(x){return /^\s*-\s/.test(x)}).length+' items</span>':'')+
-      '</span></summary><div class="body">'+renderBody(s.lines)+'</div></details>';
+  return doc;
+}
+/** stateOf(h, fallback): reads "(open|done, when)" from a heading; returns {name, state, when}. */
+function stateOf(h,fallback){
+  var m=h.match(/^(.*?)\s*\((open|done)[,\s]*([^)]*)\)\s*$/i);
+  if(m)return {name:m[1],state:m[2].toLowerCase(),when:m[3]};
+  return {name:h,state:fallback||'',when:''};
+}
+/** groupState(h): the state a group gives its "###" cards: "Open tasks" = open, "Done" = done, else none. */
+function groupState(h){return /^open tasks$/i.test(h)?'open':/^done$/i.test(h)?'done':''}
+/** card(info, lines, id, st, extra): one collapsible card; open by default when its state is open,
+    unless this browser remembered another choice for the same name (st). */
+function card(info,lines,id,st,extra){
+  var isOpen=Object.prototype.hasOwnProperty.call(st,info.name)?st[info.name]:(info.state==='open');
+  var cls='sec'+(info.state==='open'?' open-task':info.state==='done'?' done-task':'');
+  var chip=info.state?'<span class="chip '+info.state+'">'+(info.state==='open'?'Open':'Done')+'</span>':'';
+  return '<details class="'+cls+'" id="'+id+'" data-name="'+esc(info.name)+'"'+(isOpen?' open':'')+
+    '><summary><span class="st">'+inl(info.name)+'</span><span class="meta">'+chip+
+    (info.when?'<span class="when">'+esc(info.when)+'</span>':'')+(extra||'')+
+    '</span></summary><div class="body">'+renderBody(lines)+'</div></details>';
+}
+/** doneCount(lines): the "N items" label of a Done list (one item per "- " line). */
+function doneCount(lines){return '<span class="when">'+lines.filter(function(x){return /^\s*-\s/.test(x)}).length+' items</span>'}
+/** renderSecs(secs, st): builds the section links, the cards and the open count for all sections. */
+function renderSecs(secs,st){
+  var r={nav:'',body:'',open:0},n=0;
+  secs.forEach(function(s){
+    var gs=groupState(s.h);
+    if(!s.items.length){ // a plain section: one card, as before (only "Done" gets a state without "(open|done)")
+      var info=stateOf(s.h,gs==='done'?'done':''),id=slug(info.name,n++);
+      if(info.state==='open')r.open++;
+      r.nav+='<li><a href="#'+id+'"'+(info.state==='open'?' class="is-open"':'')+'>'+inl(info.name)+'</a></li>';
+      r.body+=card(info,s.lines,id,st,/^done$/i.test(s.h)?doneCount(s.lines):'');
+      return;
+    }
+    var gid=slug(s.h,n++),cards='',links=''; // a group: a heading, its intro, then one card per "###"
+    s.items.forEach(function(it){
+      var info=stateOf(it.h,gs),id=slug(info.name,n++);
+      if(info.state==='open'){r.open++;links+='<li><a href="#'+id+'" class="is-open">'+inl(info.name)+'</a></li>'}
+      cards+=card(info,it.lines,id,st,'');
+    });
+    r.nav+='<li><a href="#'+gid+'">'+inl(s.h)+' ('+s.items.length+')</a></li>'+links; // each open card keeps its own link
+    var intro=s.lines.some(function(x){return x.trim()})?'<div class="gintro">'+renderBody(s.lines)+'</div>':'';
+    r.body+='<section class="grp" id="'+gid+'"><h2>'+inl(s.h)+'</h2>'+intro+cards+'</section>';
   });
+  return r;
+}
+/** render(md): draws the whole page from go.md text and wires its buttons. */
+function render(md){
+  var doc=parse(md),st=load(),o='',m=document.getElementById('m');
+  document.getElementById('ht').innerHTML=inl(doc.title.replace(/^90-161\.Z:\s*/,'90-161.Z · '));
+  var r=renderSecs(doc.secs,st);
   var how=(Object.prototype.hasOwnProperty.call(st,'__how')?st.__how:false);
-  document.getElementById('hc').innerHTML='<b>'+openCount+'</b>open task'+(openCount===1?'':'s');
+  document.getElementById('hc').innerHTML='<b>'+r.open+'</b>open task'+(r.open===1?'':'s');
   o+='<p class="mut">Loaded '+new Date().toLocaleString()+'. GitHub can serve a copy up to 5 minutes old: press Reload for the newest.</p>';
   o+='<div class="bar"><button type="button" id="ex">Expand all</button><button type="button" id="co">Collapse all</button><button type="button" id="rl">Reload</button></div>';
-  o+='<nav aria-label="Sections"><ul class="toc">'+nav+'</ul></nav>';
-  o+='<details class="sec" data-name="__how"'+(how?' open':'')+'><summary><span class="st">How to use this page</span></summary><div class="body">'+renderBody(intro)+'</div></details>';
-  o+=body+'<p class="mut foot">Source: <a href="'+SRC+'">go.md</a> in rhope-ops/90-161.Z. Open and closed sections are remembered in this browser.</p>';
-  var m=document.getElementById('m');m.innerHTML=o;
+  o+='<nav aria-label="Sections"><ul class="toc">'+r.nav+'</ul></nav>';
+  o+='<details class="sec" data-name="__how"'+(how?' open':'')+'><summary><span class="st">How to use this page</span></summary><div class="body">'+renderBody(doc.intro)+'</div></details>';
+  o+=r.body+'<p class="mut foot">Source: <a href="'+SRC+'">go.md</a> in rhope-ops/90-161.Z. Open and closed sections are remembered in this browser.</p>';
+  m.innerHTML=o;
+  wire(m);
+}
+/** wire(m): copy buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print. */
+function wire(m){
   m.addEventListener('click',function(e){var s=e.target.closest&&e.target.closest('button[data-script]');if(s){e.preventDefault();copyScript(s);return}var b=e.target.closest&&e.target.closest('button[data-copy]');if(b){e.preventDefault();copy(b.getAttribute('data-copy'),b)}});
   preload(m);
   var all=function(){return Array.prototype.slice.call(m.querySelectorAll('details.sec'))};
@@ -201,10 +255,11 @@ function render(md){
   document.getElementById('ex').onclick=function(){all().forEach(function(d){d.open=true})};
   document.getElementById('co').onclick=function(){all().forEach(function(d){d.open=false})};
   document.getElementById('rl').onclick=function(){location.reload()};
-  m.querySelectorAll('.toc a').forEach(function(a){a.addEventListener('click',function(){var d=document.getElementById(a.getAttribute('href').slice(1));if(d)d.open=true})});
-  if(location.hash){var d=document.getElementById(location.hash.slice(1));if(d){d.open=true;d.scrollIntoView()}}
+  m.querySelectorAll('.toc a').forEach(function(a){a.addEventListener('click',function(){var d=document.getElementById(a.getAttribute('href').slice(1));if(d&&d.tagName==='DETAILS')d.open=true})});
+  if(location.hash){var d=document.getElementById(location.hash.slice(1));if(d){if(d.tagName==='DETAILS')d.open=true;d.scrollIntoView()}}
   window.addEventListener('beforeprint',function(){all().forEach(function(d){d.open=true})});
 }
+if(window.GO_TEST&&typeof window.GO_TEST==='object'){window.GO_TEST.parse=parse;window.GO_TEST.renderSecs=renderSecs;return} // tests/check_go_page.js
 if(typeof window.GO_MD==='string'){render(window.GO_MD);return}
 fetch(SRC,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(render).catch(function(e){
   document.getElementById('m').innerHTML='<p>Could not load go.md ('+esc(e.message)+'). Fallback: <a href="'+SRC+'">'+SRC+'</a></p>'});
