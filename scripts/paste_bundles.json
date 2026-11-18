@@ -873,6 +873,7 @@
             "6. If a panel asks you to continue: select \"Continue\".",
             "7. Wait until the run shows \"Succeeded\" or \"Failed\".",
             "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If the run shows \"Failed\": select \"It failed\".",
             "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T24-f02-again.txt",
@@ -977,7 +978,9 @@
             "9. Select \"Delete from this environment\".",
             "10. Select \"Delete\".",
             "If a flow or the solution is not in the list: skip it.",
-            "If one does not delete: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If one does not delete: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-removed-health.txt",
           "needs": [
@@ -1007,7 +1010,9 @@
             "8. Select \"Delete from this environment\".",
             "9. Select \"Delete\".",
             "If a flow or the solution is not in the list: skip it.",
-            "If one does not delete: select \"It failed\"."
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If one does not delete: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-removed.txt",
           "needs": [

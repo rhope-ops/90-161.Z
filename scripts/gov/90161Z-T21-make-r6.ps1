@@ -78,7 +78,7 @@ function Write-LinksPage([string]$Dir, [string]$Site) {
     @('Open the list with the button', ($s + '/Lists/' + $ListFolder + '/' + $ViewTitle + '.aspx'), 'The view look: a button that starts a flow.'),
     @('Open the fake workbook', ($s + '/' + $LibFolder + '/' + $BookName + '?web=1'), 'The Excel look: a workbook in Excel for the web.'))
   $body = New-Object System.Text.StringBuilder
-  [void]$body.Append('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>90-161.Z test page r5</title><style>')
+  [void]$body.Append('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>90-161.Z test page r6</title><style>')
   [void]$body.Append('body{font-family:"Segoe UI",Arial,sans-serif;color:#1b2430;background:#fff;margin:0}.light{height:6px;background:#ffd520}')
   [void]$body.Append('main{max-width:760px;padding:24px 32px}h1{font-family:"Segoe UI Semibold","Segoe UI",Arial,sans-serif;font-weight:600;')
   [void]$body.Append('font-size:29px;color:#0b2545;margin:8px 0 4px}')
@@ -86,7 +86,7 @@ function Write-LinksPage([string]$Dir, [string]$Site) {
   [void]$body.Append('text-decoration:none;font-size:17px;font-weight:700;padding:14px 18px;margin:0 0 4px}')
   [void]$body.Append('a.go:focus{outline:2px solid #0b2545;outline-offset:2px}span.why{display:block;font-size:14px;color:#5a6573;margin:0 0 20px}')
   [void]$body.Append('</style></head><body><div class="light"></div><main>')
-  [void]$body.Append('<h1>90-161.Z test page</h1><p>Round R29. Fake data only. Open each link when the RADE window says so.</p>')
+  [void]$body.Append('<h1>90-161.Z test page</h1><p>Round R30. Fake data only. Open each link when the RADE window says so.</p>')
   foreach ($l in $links) {
     [void]$body.Append('<a class="go" href="' + (Get-HtmlText $l[1]) + '">' + (Get-HtmlText $l[0]) + '</a><span class="why">' + (Get-HtmlText $l[2]) + '</span>')
   }
