@@ -1,0 +1,16 @@
+message_id,timestamp,turn,session_id,repo,model,source,input_tokens,cache_creation_input_tokens,cache_read_input_tokens,output_tokens
+msg_011ChB9EYJZa139eQbwpKGT3,2026-11-18T21:58:17.212Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,31259,64017,423
+msg_011ChB9F1vEkdQmAYQYZz6Kr,2026-11-18T21:58:23.349Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,2122,95276,315
+msg_011ChB9FTDW5u1kxUogik2Tg,2026-11-18T21:58:30.122Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,5652,97398,411
+msg_011ChB9FvttcKrzk5taAfqFM,2026-11-18T21:58:36.030Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,499,103050,181
+msg_011ChB9G9dccd38Ngh1ZDm8p,2026-11-18T21:58:38.373Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,4807,103549,222
+msg_011ChB9GREycta8hoz7XDxm3,2026-11-18T21:58:43.521Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,2346,108356,406
+msg_011ChB9GmWcoejsc7NdvtzPM,2026-11-18T21:58:47.158Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,2176,110702,273
+msg_011ChB9GzwkRk6zVpWtTNczZ,2026-11-18T21:58:51.001Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,1,1751,112878,526
+msg_011ChB9HM5y5pN1Vjj1Anyaq,2026-11-18T21:58:55.143Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,4,3969,114629,292
+msg_011ChB9Hchp99kGVLMcg7Ech,2026-11-18T21:59:01.170Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,3911,118598,460
+msg_011ChB9HzefpBZfUXQJuRgpN,2026-11-18T21:59:05.419Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,3010,122509,529
+msg_011ChB9JRWQRaAJP5TLpXsdp,2026-11-18T21:59:10.594Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,2253,125519,274
+msg_011ChB9JkQho99pZ6xTKH5S1,2026-11-18T21:59:23.877Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,1,1800,127772,1458
+msg_011ChB9LNcaJcvMevTLm2FfQ,2026-11-18T21:59:41.037Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,1581,129572,665
+msg_011ChB9Ly8ygEaKo26n44xNz,2026-11-18T21:59:49.976Z,1,9fb8e2e2-cf7c-52d1-a61d-1b8bd573d6aa,90-161.Z,claude-opus-5-5,main,2,680,131153,830
