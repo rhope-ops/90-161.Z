@@ -6,6 +6,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | RADE lock moves to engine-v17 for R30 (the PFM, in chat: "Move to engine-v17"); the newest-RADE check failed every rebuild on engine-v16. Scope: R30. | PFM | scripts/rade.lock.json |
+| 2026-11-18 | S1 lowers the code-standard debt in .check.state.json (comment 90 to 62, file_size 4 to 2, duplicate 5 to 0, safety 61 to 54, docs 119 to 104, line 34 to 30), per the approved R30 plan with full S1. | PFM | [R30 plan](reviews/2026-11-18-r30-plan.md) |
 | 2026-11-18 | R30 plan approved as written, with full S1 (T22, T21 and New-Publication.ps1 split; duplicate helpers to src). Scope: R30. | PFM | [R30 plan](reviews/2026-11-18-r30-plan.md) |
 | 2026-11-18 | Bundle revisions (the PFM approved the agent REC "from R30 on, raise the revision on every rebuild"): a bundle on main never changes; scripts/bundle_revision.py checks it and bump_lock.py raises revisions before its rebuild. Cause: two R29 r6 builds (engine-v15, then v16) under one name. | PFM | .claude/skills/round/SKILL.md section 4 |
 | 2026-11-18 | "No kit sync" Project rule removed (exact text shown); the kit Default "Kit files" replaces it. Merge of the kit-sync PR approved (lane C). | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
