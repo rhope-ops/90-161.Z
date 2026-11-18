@@ -59,20 +59,20 @@ These are defaults: how work normally goes here. The method is yours unless the 
 
 - Test: `scripts/check.sh` (full lane), `--fast` (fast lane); pass = last line `CHECK PASS`. Word COM and Power Automate: on the gov device (docs/gov-test-plan.md).
 - Lint: `scripts/lint.sh`; pass = `findings=0`.
-- Build, round bundles, RADE lock, gov-device checks: docs/dev-setup.md "Commands (full text)". Never hand-edit a build output.
+- Build, round bundles, RADE lock, gov-device checks: docs/dev-setup.md "Commands (full text)".
 - Gov-device code: Windows PowerShell 5.1 (also 7), Word 16 COM, PnP.PowerShell 1.12.0; no other modules.
-- Credentials: never store, print, log or ask for passwords in chat; scripts take them only through Get-Credential.
+- Credentials: scripts take them only through Get-Credential.
 
 ## Project rules
 
 - Data boundary (2026-11-14): government data stays in DoD365 and GenAI.mil: no real drafts, publication content, names, e-mails, office symbols or comments in this repo or a chat; no app writes data across the boundary. Use fake data.
 - No reconnaissance (the PFM, 2026-11-14; cannot change): nothing in RADE or any app may look like network reconnaissance (fixed hosts, the one site given, own flows only); any doubt: ask the PFM first.
-- Public repo (2026-11-11): never commit the wing's name or location, the site path (only `https://usaf.dps.mil/sites/<your-site>`), names, office symbols, DODIDs, seal files or gov-network test details (private log).
+- Public repo (2026-11-11): never commit the wing's name or location, the site path (only `https://usaf.dps.mil/sites/<your-site>`), DODIDs, seal files or gov-network test details (private log).
 - Source authority (2026-11-11): DAFMAN 90-161 (edition: docs/DECISIONS.md) is the only rule source; cite its paragraph for each stage, time limit and format rule. Wing files lose on any conflict. Format comes from code, never the model.
 - Scope (2026-11-10): ANG wing publications on the wing's own site (DAFMAN 90-161 1.1.3.2, 6.4); 90-161.Z is the system of record for endorsements (no TMT).
 - Platform (2026-11-16): SharePoint lists and Power Automate in DoD365, standard connectors, no tenant admin, never a service account: docs/ARCHITECTURE.md.
-- Deployable package (2026-11-16): other wings install it through RADE; a step that needs extra rights has a tested fallback. Assume no platform limit unless confidence is high.
-- Gov device (2026-11-13): no Claude app or e-mail there; scripts do every step they can in the RADE round, go.md only the rest: `.claude/skills/round/SKILL.md`.
+- Deployable package (2026-11-16): other wings install it through RADE; a step that needs extra rights has a tested fallback, built after its easy path fails once. Assume no platform limit unless confidence is high.
+- Gov device (2026-11-13): no Claude app there and no e-mail sent to it; scripts do every step they can in the RADE round, go.md only the rest: `.claude/skills/round/SKILL.md`.
 - What people see (2026-11-14): plain, professional English; go.md and runner text meet the round skill's usability bar.
 - Round results (2026-11-15): Gmail and result e-mails: only as the round skill says.
 - Next-step link (2026-11-15): to open a round or task, link https://rhope-ops.github.io/RADE, never go.md.
