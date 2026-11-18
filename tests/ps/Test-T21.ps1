@@ -466,8 +466,9 @@ $lst = Get-Probe '90161ZProbe'
 Add-Row $lst 'T4a' 11; Add-Row $lst 'RUN-HEALTH R29abcdef12' 11
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $r = Invoke-T21 'Read' @{ WaitMinutes = 0.03; PollSeconds = 1 }; Note $r
-Test-That 'Read, no rows by a second person, no health row, no button row: waits, then 3 FAILED lines, way C named' ($r.Code -eq 0 -and $sw.Elapsed.TotalSeconds -ge 1 -and $r.Text -match 'WAIT health row not there \(time ran out\)' -and $r.Text -match "T4 FAILED: a list form by a second person \(Visitors member\)=FAIL \(rows=0; T4a rows=0; person in the Visitors group=not tried \(no state file\)\); next: way C: a flow writes the row with the PFM's connection \(not built\)" -and $r.Text -match 'HEALTH FAILED: .*no result row after the wait' -and $r.Text -match 'Premium licence' -and $r.Text -match 'BUTTON FAILED: .*rows titled BTN-HAND=0' -and $r.Out[-1] -eq 'PROBE Read done: passed=0 failed=3') $r.Text
-Test-That 'Read: failed tests give RESULT lines with the separate word FAIL, so the runner cannot read PASSED (R28 finding 7)' ((@($r.Out | Where-Object { $_ -match '^RESULT (HEALTH|T4|BUTTON) FAIL$' })).Count -eq 3) $r.Text
+Test-That 'Read, no second person, no health row, no button row: waits, then T4 NOT RUN and 2 FAILED lines' ($r.Code -eq 0 -and $sw.Elapsed.TotalSeconds -ge 1 -and $r.Text -match 'WAIT health row not there \(time ran out\)' -and $r.Text -match 'T4 NOT RUN: no second person in this round \(T4 passed in R29a\)' -and $r.Text -match 'HEALTH FAILED: .*no result row after the wait' -and $r.Text -match 'Premium licence' -and $r.Text -match 'BUTTON FAILED: .*rows titled BTN-HAND=0' -and $r.Out[-1] -eq 'PROBE Read done: passed=0 failed=2') $r.Text
+Test-That 'Read: failed tests give RESULT lines with the separate word FAIL, so the runner cannot read PASSED (R28 finding 7)' ((@($r.Out | Where-Object { $_ -match '^RESULT (HEALTH|BUTTON) FAIL$' })).Count -eq 2) $r.Text
+Test-That 'Read: T4 not run (no state file, no row by another person): no T4 PASSED or FAILED line and no RESULT T4 line' ((@($r.Out | Where-Object { $_ -match '^T4 (PASSED|FAILED)|^RESULT T4 ' })).Count -eq 0 -and (@($r.Out | Where-Object { $_ -eq 'T4 NOT RUN: no second person in this round (T4 passed in R29a)' })).Count -eq 1) $r.Text
 
 New-Site; $null = Invoke-T21 'Make'
 $lst = Get-Probe '90161ZProbe'

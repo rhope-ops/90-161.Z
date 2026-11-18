@@ -16,7 +16,8 @@
   round can show the list form when the form header passed, whatever the view result (R29a finding 6); Look still runs both.
   (3) The script is split into modules (code standard, S1): this file holds the start, the shared blocks and the result
   file; the parts live in the files 90161Z-T21-<part>-r6.ps1 in the same folder, which this file loads by name. The
-  results are the same as r5 apart from (1) and the r6 in the result file names.
+  results are the same as r5 apart from (1) and the r6 in the result file names. (4) Read: with no state file and no row
+  by another person, T4 is not counted: one line "T4 NOT RUN" and no RESULT line (R30a has no person steps).
   Parts (-Part):
     Make   (about 1 minute, an estimate)  Makes the library "90161Z Probe Files" and the list "90161Z Probe" (columns
            ProbeTest, ProbeWay, ProbeResult, ProbeDetail; its own permissions: the site's copied, then Contribute for the

@@ -48,7 +48,8 @@ function Add-HealthTest($Rows, [int]$HealthFloor) {
 <#
 .SYNOPSIS
   Read, test T4: a person who is a Visitors member writes a row through the list form (Contribute on this list only).
-  Rows by anyone but you count; RESULT rows do not.
+  Rows by anyone but you count; RESULT rows do not. With no state file and no row by another person the round had no
+  second person (R30a: T4 passed in R29a): one NOT RUN line, no RESULT line, not counted.
 .PARAMETER Rows
   The probe list rows (from Get-ListRow).
 .PARAMETER MeId
@@ -58,6 +59,7 @@ function Add-T4Test($Rows, [int]$MeId) {
   $others = @($Rows | Where-Object { $_.Title -ne 'RESULT' -and $MeId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $MeId })
   $t4a = @($Rows | Where-Object { ([string]$_.Title).Trim() -eq 'T4a' -and $MeId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $MeId })
   $st = Read-State $script:dir
+  if (-not $st -and $others.Count -eq 0) { $script:lines.Add('T4 NOT RUN: no second person in this round (T4 passed in R29a)'); return }
   $addedText = $(if (-not $st) { 'not tried (no state file)' } elseif ($st['WasMember'] -eq 'yes') { 'already a member' } else { 'yes' })
   $t4pass = ($others.Count -ge 1)
   $counts = '(rows=' + $others.Count + '; T4a rows=' + $t4a.Count + '; person in the Visitors group=' + $addedText + ')'
