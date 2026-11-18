@@ -103,13 +103,17 @@ $wn.MeasureCard = {
   while ($st.Count) {
     foreach ($c in $st.Pop().Controls) {
       if ($c -is [Windows.Forms.Button]) {
-        $btns.Add([ordered]@{ Text = [string]$c.Text; Link = ([int]$c.FlatAppearance.BorderSize -eq 0); Back = (& $wn.Hex $c.BackColor); Face = (& $wn.FaceColor $c)
-            Edge = (& $wn.Hex $c.FlatAppearance.BorderColor) }) }
+        $b = [ordered]@{}; $b['Text'] = [string]$c.Text; $b['Link'] = ([int]$c.FlatAppearance.BorderSize -eq 0)
+        $b['Back'] = (& $wn.Hex $c.BackColor); $b['Face'] = (& $wn.FaceColor $c); $b['Edge'] = (& $wn.Hex $c.FlatAppearance.BorderColor)
+        $btns.Add($b) }
       if ($c.Controls.Count) { $st.Push($c) } } }
   $pt = $page.RectangleToScreen($page.ClientRectangle).Top
   $secs = @(foreach ($s in $wn.Secs) { $r = $s.Card.RectangleToScreen($s.Card.ClientRectangle)
       [ordered]@{ Col = $s.Col; Cap = $s.Cap; Stretch = $s.Stretch; Top = ($r.Top - $pt); Bottom = ($r.Bottom - $pt) } })
-  return [ordered]@{ Key = $Key; Crumb = (& $wn.MeasureCrumb); Buttons = @($btns); Sections = $secs } }
+  # One key per statement: Windows PowerShell 5.1 stops on an [ordered] literal that holds a generic list (R30 CI).
+  $card = [ordered]@{}; $card['Key'] = $Key; $card['Crumb'] = (& $wn.MeasureCrumb)
+  $card['Buttons'] = $btns.ToArray(); $card['Sections'] = $secs
+  return $card }
 $wn.MeasureRun = {
   <#
   .SYNOPSIS
