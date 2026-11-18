@@ -7,7 +7,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | Date | Decision | By | Detail |
 |---|---|---|---|
 | 2026-11-18 | "No kit sync" Project rule removed (exact text shown); the kit Default "Kit files" replaces it. Merge of the kit-sync PR approved (lane C). | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
-| 2026-11-18 | Kit 2026.11.20.2 by sync (kit 356eed8; first sync; not kit 1.0.x). Project code and text moved to extension files and docs. Replaces the 2026-11-15 "No kit sync" row. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
+| 2026-11-18 | Kit 1.0.1 by sync (tag v1.0.1 = fecf36d, via 2026.11.20.2; first sync). Project code and text moved to extension files and docs. Replaces the 2026-11-15 "No kit sync" row. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
 | 2026-11-18 | Session load: only "No reconnaissance" is hard; 13 rules, Commands and the handoff shortened, all texts approved; round skill step 6 keeps the e-mail confirmation. | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
 | 2026-11-18 | Delivery gates: `pii_guard.py` becomes `check_content.py` and the "pii-guard" check becomes the "checks" check; the gates move to .claude/skills/deliver/PROJECT.md. | PFM | .claude/skills/deliver/PROJECT.md |
 | 2026-11-18 | Two kit-file code-standard failures (pre-push line, bloat_check_test docstring): no exclude, no hand-added debt; synced from the kit fix 356eed8 (2026.11.20.2). | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |
