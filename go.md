@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 18 Nov 26 (R29a and R29b results are in; no round is open).
+Updated: 18 Nov 26 (R29a and both R29b runs are in; no round is open).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -32,6 +32,7 @@ Nothing open right now.
 
 - Round R29a r5 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the second person saved a row on the test list (T4, the first pass); the new 90-161.Z logo is the site logo and thumbnail; the test site was clean at the start and at the end. Failed: 3 Power Automate steps, each with a portal error about connections ("try again later"): the health flow import, the button flow I make by hand, and the full flow import. Skipped: 17 steps that needed them, the full flow test included. The flow fixes are still untested and run again in the next round:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r29a-results.md
+- Round R29b r6 (18 Nov 26, second run): needs review. Window checks 9 of 12 (Narrator off now passes); the same 2 contrast checks and the Narrator names check fail; my 4 screenshots are 4 look defects, fixed in R30. Details are in the same file as r5.
 - Round R29b r5 (18 Nov 26): needs review. Checks 9 of 9, shared files 4 of 4, Window OK. Passed: my 90-161.Z window now scales with Windows, its self-check found 0 defects on 17 cards, and Tab, Shift+Tab, Enter and the cards work. Failed: the 2 high-contrast checks (Print Screen is a second function on my right Shift key) and 2 Narrator checks (Narrator said nothing). Skipped: the 3 look questions. My 3 notes are in the details:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r29b-results.md
 - Round R28 r2 (17 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the R27 and R28 test items are all removed from the test site; the probe list 6 of 6; the second person added to Visitors; I made and exported the button flow; the form header set by script. Failed: the health flow (Power Automate has no action that lists flow runs), the export reader (it did not find the flow name), my 90-161.Z window (its self-check stopped on every card and it ran unscaled), the full flow import (the "deactivated and replaced" message is the normal upgrade message, but the card did not say so). Skipped: the second person's row (T4) and the full flow test. My 7 notes are in the details:
