@@ -62,7 +62,7 @@ $ui.F = @{ Small = $ui.Form.Font; SmallB = (& $ui.Font 'Segoe UI Semibold' 10 $n
 # parts of a card. Action = a card's buttons; compact = a button beside a box and the Record's "Back"; a link is 28 high.
 # Gaps are on the scale 4, 8, 12, 16, 24. A button or link has a 4 px margin (room for the 2 px focus ring), so two
 # of them are 8 px apart.
-$ui.Z = @{ ActionW = 132; ActionH = 40; CompactW = 110; CompactH = 30; LinkH = 28; M = 4; G1 = 4; G2 = 8; G3 = 12; G4 = 16; G6 = 24 }
+$ui.Z = @{ ActionW = 132; ActionH = 40; CompactW = 110; CompactH = 30; LinkH = 28; BarTop = 11; M = 4; G1 = 4; G2 = 8; G3 = 12; G4 = 16; G6 = 24 }
 $ui.Pad = { param([int]$L, [int]$T, [int]$R, [int]$B) New-Object System.Windows.Forms.Padding($L, $T, $R, $B) }
 $ui.Label = { param($Font, $Color, [int]$Top) $l = New-Object System.Windows.Forms.Label; $l.AutoSize = $true; $l.Font = $Font; $l.ForeColor = $Color; $l.BackColor = $ui.C.White; $l.UseMnemonic = $false; $l.Margin = (& $ui.Pad 0 $Top 0 0); $l.Visible = $false; $l }
 # ---- Card text that can be selected (R28, the Administrator, 2026-11-17)
@@ -229,6 +229,21 @@ $ui.EdgeBad = { param([string]$Card, $Edges)
   $out = @(); $tol = [math]::Max(1, (& $ui.Sc 1)); $es = @($Edges | Where-Object { $_ }); if ($es.Count -lt 2) { return $out }
   foreach ($e in $es) { if ([math]::Abs($e.X - $es[0].X) -gt $tol) { $out += ('LAYOUT ' + $Card + ' ' + $e.N + ' edge: starts at ' + $e.X + ', the card edge is ' + $es[0].X + ' (' + $es[0].N + ')' + $(if ($e.D) { ' [' + $e.D + ']' } else { '' })) } }
   return $out }
+# HeadBad (R29b V1): the ink of the word RADE and of the line under it (@{ N; X }) start at the same x; any difference is a defect.
+$ui.HeadBad = { param([string]$Card, $Title, $Sub)
+  if ([int]$Title.X -eq [int]$Sub.X) { return @() }
+  return @('LAYOUT ' + $Card + ' header ' + $Sub.N + ' edge: starts at ' + $Sub.X + ', ' + $Title.N + ' starts at ' + $Title.X) }
+# GapBad (R29b V1): without an application logo, the name is G1 (scaled) under the word RADE, within 1 px. Takes the card,
+# the measured gap and the gap it must be; gives back the defect lines.
+$ui.GapBad = { param([string]$Card, [int]$Gap, [int]$Want)
+  if ([math]::Abs($Gap - $Want) -le 1) { return @() }
+  return @('LAYOUT ' + $Card + ' header gap: ' + $Gap + ' between WordL and AppL, the gap is ' + $Want) }
+# TickBad (R29b N3): the step's time or count (@{ N; Top; H }) has its vertical center within 1 px of the bar's (@{ Top; H }),
+# at any scale (the tolerance is not scaled).
+$ui.TickBad = { param([string]$Card, $Bar, $Tick)
+  $mb = $Bar.Top + $Bar.H / 2.0; $mt = $Tick.Top + $Tick.H / 2.0
+  if ([math]::Abs($mt - $mb) -le 1) { return @() }
+  return @('LAYOUT ' + $Card + ' StepRow ' + $Tick.N + ' midpoint: ' + $mt + ', the bar midpoint is ' + $mb) }
 # ---- The self-check walk
 $ui.IsCardText = { param($C) return [bool](($C -is [System.Windows.Forms.TextBox]) -and $C.ReadOnly -and -not $C.TabStop -and $ui.Wrap.ContainsKey($C)) }
 # What a card text box needs, as its edit control wraps the text now (the line count it reports), else as measured.

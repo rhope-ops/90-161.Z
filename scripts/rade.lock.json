@@ -1,8 +1,8 @@
 {
   "repo": "rhope-ops/RADE",
-  "commit": "b15c6243beaf3d13d0a7f5c4518094490410142e",
-  "tag": "engine-v16",
-  "serial": 12,
+  "commit": "fbaa1ece3d729df50b548118f2a5fdcf919fab60",
+  "tag": "engine-v17",
+  "serial": 13,
   "engine": "engine/rade_build.py",
   "files": {
     "assets/logo/logo-rho-128.png": "6cd51f259dc07b5920f5027acd0f835c8e46c8ebf2d056346ac41f6b19bf06e0",
@@ -18,16 +18,16 @@
     "engine/ps/10-window.ps1": "70bb5a36409f4cbd9a4380db4c9d234ce70f2334e7081fc6ab6c78a4acb57622",
     "engine/ps/11-text-mode.ps1": "0b5f1eecb5da89e8c1603835c6c676e7e1788b8f5d6dc414a44424380f515a00",
     "engine/ps/window/01-setup.ps1": "a16415fb5ecff775228863fd1524c6a578b06d367d19097b3c0ed6f3919b7d0c",
-    "engine/ps/window/02-fixed-parts.ps1": "9175740d1b6b66378d58ec27154eee92b0c848cabacb200c5a13dc30c6965f78",
-    "engine/ps/window/03-card.ps1": "42d2b18f5db592d1e8720297a6666d63b525549bf462b2ba044ebb0d33c02de1",
-    "engine/ps/window/04-record-parts.ps1": "b3c32b6984b8e24f0a12e090c420cfab84a2fe0d254c6b8dc3b2571a2f5cb9de",
-    "engine/ps/window/05-alignment.ps1": "7b4b8d102fdc83d180ed7ca8d6d58aae19605db4dd3cab205142ea2ef8d20941",
-    "engine/ps/window/06-open.ps1": "346f1bcf084efbe57b7f311f89421d91830b3083a7418ca551439e5b7009aacf",
+    "engine/ps/window/02-fixed-parts.ps1": "fb680d1ee05e74796b64b7f08ff4c832f88b4431f0f9888c06738d97e670d335",
+    "engine/ps/window/03-card.ps1": "88ed5b3c076dd9d3a2081409f43974a4c61077bf44a99e595686ebc7e477e246",
+    "engine/ps/window/04-record-parts.ps1": "4a3737cd784df7eb41e714b06123fb50347e0e38510c23e3f7f4915de9937977",
+    "engine/ps/window/05-alignment.ps1": "29bfa954a952bd68b1af69e9ba049615aa00836b001b051cf3794cae428af506",
+    "engine/ps/window/06-open.ps1": "741e664d25ef5f194962d60495b30294b28a853a4f9dbe60cde77a2d88a86cd8",
     "engine/ps/window/07-run.ps1": "7948c462b7ecffe9ae816145a92bd3e76cfe8c950d1f29e033d07ae197225b70",
     "engine/ps/window/08-hand-step.ps1": "1ddb1cba8a534e2794f187e3f18c3af65a76bce9a16ac68e00192001b38577ac",
     "engine/ps/window/09-record.ps1": "9c40d45d403b5b702f9c8bd241e9ae2d1400380081a5426230ecc5a5b966e780",
     "engine/ps/window/10-keys.ps1": "d32e69d3da1eb531a4d12d45d38ecdbdadabcf9fa0484a47b0fbdc14e1e74936",
-    "engine/rade_build.py": "b210f3ab9ad03ab974b22d71325b940769e61100991fe0a52e528af8d8ed67d3",
-    "engine/rade_ui.ps1": "27410cc8e8dbbbf34edb493eda0e5f8650b0439fd1ab49276ddfdfe3e7824a10"
+    "engine/rade_build.py": "ebb63950da329820abbb9f570b2b61af71ca5d92a2e9ad8f602a1d42a42c0cb6",
+    "engine/rade_ui.ps1": "475f08302b0cd76ae17b422efcb52a392343feaf108c5bf4df4bba46b271a669"
   }
 }

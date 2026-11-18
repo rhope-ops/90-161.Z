@@ -1869,7 +1869,7 @@
           "dir": "T22",
           "file": "90161Z-T22-pfm-window-r4.ps1",
           "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data (nothing is read, saved or sent). A bar at the bottom shows 12 checks, one at a time: do each, then select Pass or Fail. High contrast now goes through Windows Settings (Windows+U), not a key chord. Then close the window with its X.",
+          "note": "Opens your 90-161.Z window with fake data. Do each of the 12 checks in the bar at the bottom, then select Pass or Fail. Contrast now uses Windows+U. Then close the window.",
           "estimate": 15,
           "help": "Send the results as they are. The step can be run again."
         },
