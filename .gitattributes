@@ -1,0 +1,26 @@
+# Text files keep LF in every checkout: the bundle hashes, the stale-file checks and scripts/rade.lock.json are over
+# file bytes, so a Windows checkout must not turn LF into CRLF. No "* text=auto": it could change bytes.
+# The two sample XML files hold CRLF today and are left out (marked -text) so nothing converts them.
+*.md text eol=lf
+*.json text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf
+*.psm1 text eol=lf
+*.psd1 text eol=lf
+*.sh text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.svg text eol=lf
+*.csv text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+flow/solution/export-sample/customizations.xml -text
+flow/solution/export-sample/solution.xml -text
+*.png binary
+*.zip binary
+*.docx binary
+*.pptx binary
+*.pdf binary

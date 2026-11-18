@@ -11,16 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
         with:
           fetch-depth: 0
-      - name: Test packages (the versions in docs/dev-setup.md step 4)
+          persist-credentials: false
+      - name: Test packages (the versions in requirements.txt and package-lock.json)
         env:
           PIP_BREAK_SYSTEM_PACKAGES: "1"
         run: |
-          python3 -m pip install --quiet --user python-docx==1.2.0 pillow==12.3.0
-          npm install --global --silent docx@9.7.1
-          echo "NODE_PATH=$(npm root --global)" >> "$GITHUB_ENV"
+          python3 -m pip install --quiet --user -r requirements.txt
+          npm ci --silent --ignore-scripts
+          echo "NODE_PATH=$GITHUB_WORKSPACE/node_modules" >> "$GITHUB_ENV"
       - name: Repo checks (self-tests, project log in the full tier, project tests)
         run: scripts/check.sh
       - name: Scan files and commits

@@ -1,0 +1,8 @@
+# Dependabot only proposes updates to the GitHub Actions the workflows use; the owner merges them.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3

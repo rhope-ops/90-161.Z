@@ -1,0 +1,22 @@
+# Editor settings that match what the files already use; no file is reformatted by them.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{ps1,psm1,psd1,yml,yaml,json,sh,js,mjs}]
+indent_style = space
+indent_size = 2
+
+[*.fx.yaml]
+indent_size = 4
+
+[*.py]
+indent_style = space
+indent_size = 4
