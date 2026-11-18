@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | Bookmark page header: the band shows the logo, "90-161.Z" and the open count only; no text beside or under the name (the PFM: "say nothing next to or below 90-161.Z"). Scope: index.html. | PFM | [index.html](../index.html) |
 | 2026-11-18 | RADE lock moves to release engine-v16 (RADE b15c624, serial 12) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Round skill, "Results", new step 2, exact text approved (the PFM: "Add it"): "Before you record a round's results, list the open pull requests and stop if one already holds that round." Cause: two sessions recorded R29a (pull requests 145 and 146). | PFM | .claude/skills/round/SKILL.md |
 | 2026-11-18 | R29a flow steps (health flow, button flow and export reader, view button, full flows r2 import, full T24 test) run again in R30, not in an R29c; the PFM tried the portal more than once. Scope: R30. | PFM | [R29a results](reviews/2026-11-18-r29a-results.md) |
