@@ -127,7 +127,14 @@ $wn.MeasureRun = {
   $all = New-Object System.Collections.Generic.List[object]
   # A card that cannot be measured is kept with its error and place, and the run goes on (the test names it).
   & $wn.Build { param($k) try { $all.Add((& $wn.MeasureCard $k)) } catch { $all.Add([ordered]@{ Key = $k; Error = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }) } }
-  $res = [ordered]@{ Rev = $Rev; Dpi = $ui.Dpi; Sc8 = (& $wn.Sc 8); Client = ([string]$form.ClientSize.Width + 'x' + $form.ClientSize.Height)
-    Cards = @($all); EmptyNames = @($wn.NoName.Keys); LayoutDefects = @($ui.LayBad) }
+  # One key per statement: Windows PowerShell 5.1 stopped on the one-literal form ("Argument types do not match", R30 CI).
+  $res = [ordered]@{}
+  $res['Rev'] = $Rev
+  $res['Dpi'] = $ui.Dpi
+  $res['Sc8'] = (& $wn.Sc 8)
+  $res['Client'] = ([string]$form.ClientSize.Width + 'x' + $form.ClientSize.Height)
+  $res['Cards'] = $all.ToArray()
+  $res['EmptyNames'] = @($wn.NoName.Keys | ForEach-Object { [string]$_ })
+  $res['LayoutDefects'] = @($ui.LayBad)
   Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 8) -Encoding UTF8
   $form.Close() }

@@ -14,7 +14,7 @@
   and saves its results in Rounds\R30b, then opens an Outlook draft with them (never sent). No download, no admin rights.
   To read it: the Contents list below gives the line of each part and file; each part starts with a "# ====" line.
 #>
-$buildId = '6ac5965e'
+$buildId = 'a26fa649'
 $engineRelease = 18
 # ==== Contents (GENERATED; the line numbers are lines of this bundle)
 #   line    55  Part 1 of 6: Settings
@@ -27,31 +27,31 @@ $engineRelease = 18
 #   line  1229    File 5 of 8: T22\90161Z-T22-parts-r4.ps1 (from scripts/gov/90161Z-T22-parts-r4.ps1, sha256 20e15d633eb1)
 #   line  1502    File 6 of 8: T22\90161Z-T22-grid-r4.ps1 (from scripts/gov/90161Z-T22-grid-r4.ps1, sha256 d3d4100eaf44)
 #   line  1703    File 7 of 8: T22\90161Z-T22-window-r4.ps1 (from scripts/gov/90161Z-T22-window-r4.ps1, sha256 e5c0d78b0f05)
-#   line  2127    File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 450d8d7ceeed)
-#   line  2263  Part 4 of 6: Steps (4), downloads, results to collect, clean-up
-#   line  2447  Part 5 of 6: Applications
-#   line  2451  Part 6 of 6: the RADE engine (engine/ps, in run order)
-#   line  2452  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
-#   line  2521  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
-#   line  2648  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
-#   line  2800  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
-#   line  3057  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
-#   line  3349  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
-#   line  3572  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
-#   line  4085  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
-#   line  4189  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
-#   line  4246  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
-#   line  4253  Engine part: engine/ps/window/01-setup.ps1 (sha256 15b9d7af232c)
-#   line  4571  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
-#   line  4649  Engine part: engine/ps/window/03-card.ps1 (sha256 a61ee8e66019)
-#   line  4758  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 e20b78b8f606)
-#   line  4883  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
-#   line  5175  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
-#   line  5406  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
-#   line  5567  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
-#   line  5637  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
-#   line  5743  Engine part: engine/ps/window/10-keys.ps1 (sha256 573899229f04)
-#   line  5827  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
+#   line  2127    File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 95265b89158b)
+#   line  2270  Part 4 of 6: Steps (4), downloads, results to collect, clean-up
+#   line  2454  Part 5 of 6: Applications
+#   line  2458  Part 6 of 6: the RADE engine (engine/ps, in run order)
+#   line  2459  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
+#   line  2528  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
+#   line  2655  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
+#   line  2807  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
+#   line  3064  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
+#   line  3356  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
+#   line  3579  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
+#   line  4092  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
+#   line  4196  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
+#   line  4253  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
+#   line  4260  Engine part: engine/ps/window/01-setup.ps1 (sha256 15b9d7af232c)
+#   line  4578  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
+#   line  4656  Engine part: engine/ps/window/03-card.ps1 (sha256 a61ee8e66019)
+#   line  4765  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 e20b78b8f606)
+#   line  4890  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
+#   line  5182  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
+#   line  5413  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
+#   line  5574  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
+#   line  5644  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
+#   line  5750  Engine part: engine/ps/window/10-keys.ps1 (sha256 573899229f04)
+#   line  5834  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
 # ==== Part 1 of 6: Settings
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -2124,8 +2124,8 @@ $wn.Hook = {
         $n = [int]$_.KeyCode - [int][Windows.Forms.Keys]::D1; $wn.Notice = ''; $wn.Err = ''; & $wn.Show ([string]$RailItems[$n].Go); $_.Handled = $true; $_.SuppressKeyPress = $true } })
   $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds }) }
 '@ }
-# ---- File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 450d8d7ceeed)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-measure-r4.ps1'; Kind = 'text'; Sha = '450d8d7ceeed'; Data = @'
+# ---- File 8 of 8: T22\90161Z-T22-measure-r4.ps1 (from scripts/gov/90161Z-T22-measure-r4.ps1, sha256 95265b89158b)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-measure-r4.ps1'; Kind = 'text'; Sha = '95265b89158b'; Data = @'
 <#
 .SYNOPSIS
   90-161.Z Task 22 r4, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
@@ -2255,8 +2255,15 @@ $wn.MeasureRun = {
   $all = New-Object System.Collections.Generic.List[object]
   # A card that cannot be measured is kept with its error and place, and the run goes on (the test names it).
   & $wn.Build { param($k) try { $all.Add((& $wn.MeasureCard $k)) } catch { $all.Add([ordered]@{ Key = $k; Error = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }) } }
-  $res = [ordered]@{ Rev = $Rev; Dpi = $ui.Dpi; Sc8 = (& $wn.Sc 8); Client = ([string]$form.ClientSize.Width + 'x' + $form.ClientSize.Height)
-    Cards = @($all); EmptyNames = @($wn.NoName.Keys); LayoutDefects = @($ui.LayBad) }
+  # One key per statement: Windows PowerShell 5.1 stopped on the one-literal form ("Argument types do not match", R30 CI).
+  $res = [ordered]@{}
+  $res['Rev'] = $Rev
+  $res['Dpi'] = $ui.Dpi
+  $res['Sc8'] = (& $wn.Sc 8)
+  $res['Client'] = ([string]$form.ClientSize.Width + 'x' + $form.ClientSize.Height)
+  $res['Cards'] = $all.ToArray()
+  $res['EmptyNames'] = @($wn.NoName.Keys | ForEach-Object { [string]$_ })
+  $res['LayoutDefects'] = @($ui.LayBad)
   Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 8) -Encoding UTF8
   $form.Close() }
 '@ }
