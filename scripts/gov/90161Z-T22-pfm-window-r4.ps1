@@ -16,16 +16,19 @@
   from its own folder, 90161Z-T22-<part>-r4.ps1 (cards, types, ui, parts, grid, window, measure). New: -Measure <file>.
   Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 12 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
-  measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and closes, with no question and no other file.
+  measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and closes, with no question and no other file. -Opened opens no
+  window: it reads 90161Z-T22-window-r4.txt of the last run and prints one line, PASS the window opened (N of M cards) or
+  FAIL the window did not open (the round's look questions run only after a PASS).
   Outputs: 90161Z-T22-window-r4.txt (state, size, scale, cards opened, layout self-check, accessible names, check answers) and
   90161Z-T22-window-bounds.json (last size and place) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
   Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r4.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r4.txt and 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir); with -Measure only the file given.
+  Writes: 90161Z-T22-window-r4.txt and 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir); with -Measure only the file given;
+  with -Opened nothing.
   Credentials: none.
 #>
-param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure)
+param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
 $task = 'T22'
 $Rev = 'r4'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -95,6 +98,20 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
 }
 # <<< task-common
+# The -Opened line for the result file in $Dir: PASS when its last "CARDS opened" line counts more than 0 cards and no
+# line starts with STOPPED:, else FAIL (also when the file is missing).
+function Get-OpenedLine([string]$Dir) {
+  $f = Join-Path $Dir ('90161Z-T22-window-' + $Rev + '.txt'); $text = @()
+  if (Test-Path -LiteralPath $f -PathType Leaf) { $text = @(Get-Content -LiteralPath $f) }
+  $m = @($text | Where-Object { $_ -match '^CARDS opened: .*\((\d+) of (\d+)\)$' }) | Select-Object -Last 1
+  $stopped = @($text | Where-Object { $_ -match '^STOPPED:' }).Count
+  if ($m -and -not $stopped -and $m -match '\((\d+) of (\d+)\)$' -and [int]$Matches[1] -gt 0) { return ('PASS the window opened (' + $Matches[1] + ' of ' + $Matches[2] + ' cards)') }
+  return 'FAIL the window did not open'
+}
+if ($Opened) {   # no window, no file: one line about the last run, exit 1 on FAIL
+  try { $od = $(if ($TestDir) { $TestDir } else { Get-TaskDir (Get-TaskId $Id).Id $task 'Task 22' }); $ol = Get-OpenedLine $od } catch { $ol = 'FAIL the window did not open' }
+  Write-Host $ol; exit $(if ($ol.StartsWith('PASS')) { 0 } else { 1 })
+}
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'window', 'measure')
@@ -103,7 +120,7 @@ function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
 $code = 0
-$cf = 0; $opened = @{}; $presses = 0; $defects = New-Object System.Collections.Generic.List[string]
+$cf = 0; $cardsOpened = @{}; $presses = 0; $defects = New-Object System.Collections.Generic.List[string]
 $dir = ''
 $who = $null
 try {
@@ -166,7 +183,7 @@ try {
   $dpi = 96; try { $g = $form.CreateGraphics(); $dpi = [int]$g.DpiX; $g.Dispose() } catch { $null = $_ }
   $lines.Add('SCALE dpi=' + $dpi + ' autoScale=' + $form.CurrentAutoScaleDimensions.Width + ' controlDpi=' + $ui.Dpi + ' fontFactor=' + $ui.FontK +
     ' fontDpi=' + $ui.FontDpi + ' screenDpi=' + $ui.ScreenDpi)
-  $lines.Add('CARDS opened: ' + $(if ($opened.Count) { (@($Cards.Keys | Where-Object { $opened[$_] }) -join ', ') } else { 'none' }) + ' (' + $opened.Count + ' of ' + $Cards.Count + ')')
+  $lines.Add('CARDS opened: ' + $(if ($cardsOpened.Count) { (@($Cards.Keys | Where-Object { $cardsOpened[$_] }) -join ', ') } else { 'none' }) + ' (' + $cardsOpened.Count + ' of ' + $Cards.Count + ')')
   $lines.Add('BUTTONS selected=' + $presses)
   $lines.Add('SECONDS open=' + [int]((Get-Date) - $started).TotalSeconds)
   foreach ($d in @($ui.LayBad)) { $defects.Add([string]$d) }
@@ -189,7 +206,7 @@ try {
   $lines.Add('STOPPED: no window (' + ([string]$_.Exception.Message).Substring(0, [Math]::Min(200, ([string]$_.Exception.Message).Length)) + ')')
 } finally {
   if ($PlanOnly) { exit 0 }
-  $lines.Add('WINDOW done: cards=' + $opened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
+  $lines.Add('WINDOW done: cards=' + $cardsOpened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
   $masked = @($lines | ForEach-Object { $t = [string]$_; if ($who) { $t = ConvertTo-Masked $t $who.Secret }; $t })
   if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T22-window-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }

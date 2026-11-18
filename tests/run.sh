@@ -643,25 +643,18 @@ ok_extra = {'back', '@grid', '@note'}
 for l in out:
     t = re.match(r'\s+(?:BUTTON|CHOICE|LINK) .+ -> (\S+)', l) or re.match(r'RAIL .+ -> (\S+)', l)
     if t: assert t.group(1) in cards or t.group(1) in ok_extra, l
-blue, cur = {}, None
-for l in out:
-    if l.startswith('CARD '): cur = l.split(' | ')[0]; blue[cur] = 0
-    if '(blue)' in l: blue[cur] += 1
-assert all(v == 1 for v in blue.values()), blue
-text = '\n'.join(out)
-assert all(ord(c) < 128 for c in text)
+blue = [b.count('(blue)') for b in '\n'.join(out).split('\nCARD ')]; assert len(blue) == len(cards) and set(blue) == {1}, blue   # one blue button per card
+text = '\n'.join(out); assert all(ord(c) < 128 for c in text)
 src = ''.join(x.read_text() for x in [pp(n) for n in parts[:3]] + [pathlib.Path(f)] + [pp(n) for n in parts[3:]])   # load order
 assert all(ord(c) < 128 for c in src)
 assert not [i + 1 for i, l in enumerate(src.splitlines()) if l.startswith("'@")], 'a line starts with \'@ (here-string)'
 for l in out:   # every publication, office and person name says FAKE
     for w in re.findall(r'(?<!FAKE )(?<!DAF )\b(OI \d\d-\d+|Instruction \d\d-\d+|Form \d+|Office \d|AO \d)\b', l): raise AssertionError(l)
-assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text and 'See the 0 findings' not in text
-assert out and len([l for l in out if l.startswith('RAIL ')]) == 5
+assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text and 'See the 0 findings' not in text and len([l for l in out if l.startswith('RAIL ')]) == 5
 # the 12 in-window checks (PFM 17 Nov 26): numbered lines in order, with their keys, each text at most 160 characters
 keys = ['card-open', 'first-button', 'all-cards', 'tab', 'shift-tab', 'enter', 'narrator-on', 'narrator-names', 'narrator-off', 'contrast-on', 'contrast-read', 'contrast-off']
 chk = [re.match(r'CHECK (\d+) ([a-z-]+): (.+)$', l) for l in out if re.match(r'CHECK \d+ ', l)]
-assert len(chk) == 12 and all(chk), chk
-assert [m.group(2) for m in chk] == keys and [int(m.group(1)) for m in chk] == list(range(1, 13)), [m.group(0) for m in chk]
+assert len(chk) == 12 and all(chk) and [m.group(2) for m in chk] == keys and [int(m.group(1)) for m in chk] == list(range(1, 13)), [m.group(0) for m in chk]
 assert all(len(m.group(3)) <= 160 for m in chk), [len(m.group(3)) for m in chk]
 # the rade-ui block is not empty, and the colors painted here are the palette tokens
 assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
@@ -674,6 +667,11 @@ assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and sr
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
 hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
+# -Opened (the look questions' gate in the round): fake result files opened / not opened / STOPPED; one line, no other file
+import tempfile; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r4.txt'); got = {}
+for k, body in {'open': 'CARDS opened: home, step8 (17 of 17)\nPASS layout', 'none': 'CARDS opened: none (0 of 17)', 'stop': 'CARDS opened: home (1 of 17)\nSTOPPED: no window (x)'}.items():
+    w.write_text(body + '\n'); r = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-Opened', '-TestDir', d], capture_output=True, text=True, timeout=60); got[k] = (r.stdout.strip(), r.returncode)
+assert got == {'open': ('PASS the window opened (17 of 17 cards)', 0), 'none': ('FAIL the window did not open', 1), 'stop': ('FAIL the window did not open', 1)} and len(list(pathlib.Path(d).iterdir())) == 1, got
 PYT22
 else sk "T22 window preview cards (r4)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.

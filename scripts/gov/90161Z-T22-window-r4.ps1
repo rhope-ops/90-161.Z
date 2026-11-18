@@ -245,7 +245,7 @@ $wn.Show = {
   param([string]$Key)
   $c = $Cards[$Key]; if (-not $c) { return }
   if ($Key -ne $wn.Cur) { if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
-  $script:opened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
+  $script:cardsOpened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
   $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @()
   $ui.Wrap = @{}; $ui.Boxes = @(); $ui.Hot = $null; $ui.Down = $null
   $form.SuspendLayout(); $page.SuspendLayout()
