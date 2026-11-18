@@ -1,6 +1,9 @@
 // check_go_page.js: tests the go.md renderer of the bookmark page (index.html) in node, with no browser.
 // Loads the page script with window.GO_TEST set, so the script exposes parse() and renderSecs() and draws nothing.
 // Pass = last line "GO PAGE PASS"; exit 1 on any failure. Run: node tests/check_go_page.js
+// Network: none.
+// Writes: none (the page script runs in memory with fake go.md text).
+// Credentials: none.
 'use strict';
 const fs = require('fs');
 const vm = require('vm');

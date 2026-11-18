@@ -48,7 +48,6 @@ else
 fi
 
 python3 scripts/bloat_check.py --test >/tmp/bloat.out 2>&1 && ok "bloat_check self-test" || { cat /tmp/bloat.out; bad "bloat_check self-test"; }
-
 # The two slowest checks (lint, T20 on the fake site) run beside the other tests (bloat audit 3, 2026-11-15: 36 s suite);
 # each result is read where its PASS line is written: T20 at its old place, lint at the end.
 bg=$(mktemp -d)
