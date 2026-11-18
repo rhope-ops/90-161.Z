@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | Bundle revisions (the PFM approved the agent REC "from R30 on, raise the revision on every rebuild"): a bundle on main never changes; scripts/bundle_revision.py checks it and bump_lock.py raises revisions before its rebuild. Cause: two R29 r6 builds (engine-v15, then v16) under one name. | PFM | .claude/skills/round/SKILL.md section 4 |
 | 2026-11-18 | R29b r6 look defects V1-V4 (RADE header edges; T22 crumb, "See the 0 findings" link, Action Status card and Full History button) are fixed in R30, not in an R29c: V1 by the RADE engine session, V2-V4 in T22 r4. Scope: R30. | PFM | [R29b results](reviews/2026-11-18-r29b-results.md) |
 | 2026-11-18 | Bookmark page subtitle "Publications and Forms Management" under "90-161.Z", styled as the RADE page tagline; ships with the next round. Scope: index.html. | PFM | Header with the name only (2026-11-18) |
 | 2026-11-18 | Bookmark page header: the band shows the logo, "90-161.Z" and the open count only; no text beside or under the name (the PFM: "say nothing next to or below 90-161.Z"). Scope: index.html. | PFM | [index.html](../index.html) |
