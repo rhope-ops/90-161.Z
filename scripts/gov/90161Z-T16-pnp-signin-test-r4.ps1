@@ -104,33 +104,35 @@ function Get-SiteAddress([string]$ConfigDir) {
   Set-Content -LiteralPath $f -Value $v -Encoding UTF8
   return $v
 }
-# <<< site-common
 
 function Hide-Site([string]$Text, [string]$Site) {
-  # The result is e-mailed: no site, tenant or sign-in address may stay in it (review R09 T16).
-  $Text = $Text -replace '[\w.+-]+@[\w.-]+', '<EMAIL>'   # whole address first: the host rules below keep the name part (review R12 MAJOR)
+  <#
+  .SYNOPSIS
+  Masks e-mail addresses, the site, its host, path, name and tenant, other URLs, cloud and .mil hosts and GUIDs in a result text. Not masked: display names, office symbols, phone numbers, user ids, computer names.
+  .PARAMETER Text
+  The text to clean (a result line or an error message).
+  .PARAMETER Site
+  The site address (https://<host>/sites/<name>), or an empty text for the generic rules only.
+  .OUTPUTS
+  System.String. The text with each match replaced by a placeholder such as <EMAIL>, <SITE> or <GUID>.
+  #>
+  $Text = $Text -replace '[^\s"<>|,;()\[\]]+(@|%40)[^\s"<>|,;()\[\]]+', '<EMAIL>'   # whole address first: the host rules below would keep its name part
   if ($Site) {
     $Text = $Text -replace [regex]::Escape($Site.TrimEnd('/')), '<SITE>'
     try {
-      $u = [uri]$Site
-      $Text = $Text -replace [regex]::Escape($u.Host), '<SITE-HOST>'
-      $path = $u.AbsolutePath.TrimEnd('/')   # /sites/<name>: also in server-relative and URL-encoded form
-      if ($path.Length -gt 1) {
-        $Text = $Text -replace [regex]::Escape($path), '<SITE-PATH>'
-        $Text = $Text -replace [regex]::Escape([uri]::EscapeDataString($path)), '<SITE-PATH>'
-        $leaf = ($path -split '/')[-1]
-        if ($leaf.Length -ge 3) { $Text = $Text -replace ('\b' + [regex]::Escape($leaf) + '\b'), '<SITE-NAME>' }
-      }
-      $tenant = ($u.Host -split '\.')[0]
-      if ($tenant.Length -ge 3) { $Text = $Text -replace ('\b' + [regex]::Escape($tenant) + '\b'), '<TENANT>' }
+      $u = [uri]$Site; $p = $u.AbsolutePath.TrimEnd('/'); $leaf = ($p -split '/')[-1]   # $p is /sites/<name>: also in URL-encoded form
+      $set = @(, @($u.Host, '<SITE-HOST>', ''))   # literal text, placeholder, word boundary (tenant and site name only, 3+ letters)
+      if ($p.Length -gt 1) { $set += @($p, '<SITE-PATH>', ''), @([uri]::EscapeDataString($p), '<SITE-PATH>', ''), @($leaf, '<SITE-NAME>', '\b') }
+      $set += , @(($u.Host -split '\.')[0], '<TENANT>', '\b')
+      foreach ($s in $set) { if ($s[2] -eq '' -or $s[0].Length -ge 3) { $Text = $Text -replace ($s[2] + [regex]::Escape($s[0]) + $s[2]), $s[1] } }
     } catch { $null = $_ }
   }
-  $Text = $Text -replace 'https?://\S+', '<URL>'
-  $Text = $Text -replace '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>'
-  $Text = $Text -replace '\b[\w.-]+\.mil\b', '<HOST>'
-  $Text = $Text -replace '\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b', '<GUID>'
+  $g = @('https?://\S+', '<URL>', '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>', '\b[\w.-]+\.mil\b', '<HOST>', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>')   # the GUID has no \b: guid%27<id> must be masked too
+  for ($i = 0; $i -lt $g.Count; $i += 2) { $Text = $Text -replace $g[$i], $g[$i + 1] }
   return $Text
 }
+# <<< site-common
+
 
 $secret = @()
 $lines = New-Object System.Collections.Generic.List[string]

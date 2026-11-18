@@ -5,9 +5,11 @@
     python3 scripts/bump_lock.py --test       # self-test of the release-lock checks (no network)
 
 Steps: (1) download rade-engine.lock.json from the RADE release and check it (repo, commit = the tag's commit,
-file paths, SHA-256 form); (2) write the lock with serial = main's + 1 and add the decision row to docs/DECISIONS.md;
+file paths, SHA-256 form); (2) write the lock with serial = main's + 1 (the build reads it from disk);
 (3) rebuild the round bundles under a trace of the files the engine opens, and fail when the trace differs from the
-lock's file list; (4) run scripts/check.sh (tests/run.sh among them) and the PII guard against main's allow list.
+lock's file list; (4) run scripts/check.sh (tests/run.sh among them) and the PII guard against main's allow list;
+(5) only after 3 and 4 pass, add the decision row to docs/DECISIONS.md (its By column names this script). On a failure
+the old lock and the old bundles are written back and no row is added. Each git call to the network stops after 120 s.
 It changes only the working tree: commit, push and the pull request stay with the session (AGENTS.md "Delivery").
 Before you run it, check that no other open pull request changes the lock.
 """
@@ -26,6 +28,9 @@ LOCK = os.path.join(ROOT, "scripts", "rade.lock.json")
 DECISIONS = os.path.join(ROOT, "docs", "DECISIONS.md")
 RELEASE = "https://github.com/rhope-ops/RADE/releases/download/{tag}/rade-engine.lock.json"
 TAG_RE = r"engine-v[0-9]{1,4}"
+PASTE = os.path.join(ROOT, "scripts", "gov", "paste")
+GIT_TIMEOUT = 120   # seconds a git call to the network may take
+BY = "scripts/bump_lock.py (run at the PFM's request)"   # the DECISIONS "By" text: the script wrote the row
 
 
 def check_release(rel, lock, tagged):
@@ -50,28 +55,68 @@ def check_release(rel, lock, tagged):
     return bad
 
 
+def run_git(args, what, cwd=None):
+    """Run one git command with a time limit. Stops with a FAIL message when git does not answer in GIT_TIMEOUT seconds
+    or exits with an error.
+
+    Args:
+        args: the git arguments.
+        what: plain words for the failure message.
+        cwd: the folder to run in, or None.
+
+    Returns:
+        The finished process (text output).
+    """
+    try:
+        return subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True, check=True, timeout=GIT_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        sys.exit("FAIL git did not answer in %d seconds (%s); check the network and run again" % (GIT_TIMEOUT, what))
+    except subprocess.CalledProcessError as e:
+        sys.exit("FAIL git stopped (%s): %s" % (what, (e.stderr or "").strip()[:200]))
+
+
 def tag_commit(tag):
-    """The commit a RADE tag names: the peeled line of an annotated tag, else the plain line."""
-    out = subprocess.run(["git", "ls-remote", "https://github.com/rhope-ops/RADE", "refs/tags/" + tag,
-                          "refs/tags/" + tag + "^{}"], capture_output=True, text=True, check=True).stdout
+    """The commit a RADE tag names: the peeled line of an annotated tag, else the plain line.
+
+    Args:
+        tag: the release tag.
+
+    Returns:
+        The 40-hex commit, or an empty text when the tag is not found.
+    """
+    out = run_git(["ls-remote", "https://github.com/rhope-ops/RADE", "refs/tags/" + tag, "refs/tags/" + tag + "^{}"],
+                  "looking up the tag " + tag).stdout
     refs = dict((r, s) for s, r in (line.split("\t") for line in out.splitlines() if "\t" in line))
     return refs.get("refs/tags/" + tag + "^{}") or refs.get("refs/tags/" + tag, "")
 
 
 def main_serial():
-    """Read the serial in scripts/rade.lock.json on origin/main (after a fetch). Takes nothing; returns the number."""
-    subprocess.run(["git", "fetch", "-q", "origin", "main"], cwd=ROOT, check=True)
-    shown = subprocess.run(["git", "show", "origin/main:scripts/rade.lock.json"], cwd=ROOT,
-                           capture_output=True, text=True, check=True).stdout
+    """Read the serial in scripts/rade.lock.json on origin/main (after a fetch).
+
+    Returns:
+        The serial number.
+    """
+    run_git(["fetch", "-q", "origin", "main"], "fetching origin/main", cwd=ROOT)
+    shown = run_git(["show", "origin/main:scripts/rade.lock.json"], "reading the lock on origin/main", cwd=ROOT).stdout
     return json.loads(shown)["serial"]
 
 
 def traced_build(cache_root, engine):
-    """Build the bundles, then run the engine again in this process and return the files it opens under its
-    cache folder. The build starts the engine as a child process (scripts/build_paste_bundles.py), so a trace of
-    the build alone sees only the download and hash reads, not the engine's own reads."""
-    if subprocess.run([sys.executable, "scripts/build_paste_bundles.py"], cwd=ROOT).returncode:
-        sys.exit("FAIL the bundle build stopped")
+    """Refresh the task scripts' blocks from the newly locked engine (the shared UI file in the window script), build
+    the bundles, then run the engine again in this process and return the files it opens under its cache folder. The
+    build starts the engine as a child process (scripts/build_paste_bundles.py), so a trace of the build alone sees
+    only the download and hash reads, not the engine's own reads.
+
+    Args:
+        cache_root: the folder that holds the locked engine files.
+        engine: the engine's path under that folder.
+
+    Returns:
+        The set of files the engine opened under the cache folder.
+    """
+    for script, what in (("scripts/build_task_scripts.py", "task script build"), ("scripts/build_paste_bundles.py", "bundle build")):
+        if subprocess.run([sys.executable, script], cwd=ROOT).returncode:
+            sys.exit("FAIL the %s stopped" % what)
     seen = set()
 
     def hook(event, args):
@@ -92,8 +137,130 @@ def traced_build(cache_root, engine):
     return seen
 
 
+def decision_row(today, tag, short, serial):
+    """Build the DECISIONS table row for a lock move; its By column names this script, not the PFM alone.
+
+    Args:
+        today: the date, ISO text.
+        tag: the release tag.
+        short: the 7-hex RADE commit.
+        serial: the new serial number.
+
+    Returns:
+        The row text (one line, ends with a newline).
+    """
+    return ("| %s | RADE lock moves to release %s (RADE %s, serial %d) by scripts/bump_lock.py; bundles rebuilt and checked. "
+            "Not verified on a device. | %s | scripts/rade.lock.json |\n" % (today, tag, short, serial, BY))
+
+
+def add_decision(row):
+    """Insert a row at the top of the docs/DECISIONS.md table. Stops when the table head is not found exactly once.
+
+    Args:
+        row: the row text from decision_row.
+    """
+    text = open(DECISIONS).read()
+    head = "|---|---|---|---|\n"
+    if text.count(head) != 1:
+        sys.exit("FAIL could not find the DECISIONS table head")
+    with open(DECISIONS, "w") as f:
+        f.write(text.replace(head, head + row))
+
+
+def snapshot():
+    """Read the lock, the round bundles and the task scripts (they hold blocks made from the locked engine) as they
+    are now.
+
+    Returns:
+        A dict of path to file bytes.
+    """
+    gov = os.path.dirname(PASTE)
+    paths = [LOCK] + [os.path.join(d, n) for d in (PASTE, gov) for n in sorted(os.listdir(d)) if n.endswith(".ps1")]
+    return {p: open(p, "rb").read() for p in paths}
+
+
+def restore(snap):
+    """Write back the files of a snapshot (the old lock, bundles and task scripts).
+
+    Args:
+        snap: the dict that snapshot() returned.
+    """
+    for p, data in snap.items():
+        with open(p, "wb") as f:
+            f.write(data)
+
+
+def run_checks():
+    """Run scripts/check.sh and the PII guard against main's allow list.
+
+    Returns:
+        Nothing; stops with a FAIL message on a failure.
+    """
+    for cmd in (["bash", "scripts/check.sh"],
+                [sys.executable, "scripts/pii_guard.py", "--require-denylist", "--all", "--allow-from", "origin/main"]):
+        if subprocess.run(cmd, cwd=ROOT).returncode:
+            sys.exit("FAIL " + " ".join(cmd[1:]))
+
+
+def prove(rel, build, checks):
+    """Prove the new lock: the traced build (the engine opens exactly the files the lock lists), then the checks.
+
+    Args:
+        rel: the release lock.
+        build: a function like traced_build.
+        checks: a function like run_checks.
+
+    Returns:
+        Nothing; stops with a FAIL message on any failure.
+    """
+    seen = build(os.path.join(ROOT, ".rade-cache", rel["commit"]), rel["engine"])
+    if seen != set(rel["files"]):
+        sys.exit("FAIL trace: the engine opened %s, the lock lists %s" % (sorted(seen), sorted(rel["files"])))
+    print("TRACE PASS: the engine opened the %d files the lock lists" % len(seen))
+    checks()
+
+
+def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_checks):
+    """Write the new lock, prove it, and only then write the DECISIONS row. The build reads the lock from disk, so the
+    lock is written first; on any failure the old lock and bundles are put back and no row is written.
+
+    Args:
+        rel: the release lock (commit, engine, files).
+        tag: the release tag.
+        lock: the old lock, as a dict.
+        serial: the new serial number.
+        today: the date for the DECISIONS row (ISO text).
+        build: the traced build function (replaceable for tests).
+        checks: the checks function (replaceable for tests).
+
+    Returns:
+        Nothing; stops with a FAIL message (after the restore) on a failure.
+    """
+    old = snapshot()
+    lock.update(commit=rel["commit"], tag=tag, serial=serial, engine=rel["engine"], files=rel["files"])
+    with open(LOCK, "w") as f:
+        f.write(json.dumps(lock, indent=2) + "\n")
+    print("LOCK %s %s serial %d files %d (written for the build; kept only if the checks pass)" % (tag, rel["commit"][:7], serial, len(rel["files"])))
+    try:
+        prove(rel, build, checks)
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            restore(old)
+            print("RESTORED the old lock and the old round bundles; no DECISIONS row was written.", file=sys.stderr)
+        raise
+    add_decision(decision_row(today, tag, rel["commit"][:7], serial))
+
+
 def bump(tag):
-    """Move the RADE lock to a release tag: check the release, rewrite the lock, add the DECISIONS row, prove by trace which engine files are read, then run the checks. Takes the tag (engine-v<N>); exits on any failure."""
+    """Move the RADE lock to a release tag: check the release, write the lock for the build, prove it by trace and
+    checks, then add the DECISIONS row.
+
+    Args:
+        tag: the release tag, engine-v<N>.
+
+    Returns:
+        Nothing; exits with a FAIL message on any failure.
+    """
     if not re.fullmatch(TAG_RE, tag):
         sys.exit("FAIL tag must look like engine-v3, got: " + tag)
     lock = json.load(open(LOCK))
@@ -104,38 +271,18 @@ def bump(tag):
         sys.exit("FAIL release lock: " + "; ".join(bad))
     if rel["commit"] == lock["commit"]:
         sys.exit("FAIL the lock already names " + rel["commit"][:7])
-    serial = main_serial() + 1
-    lock.update(commit=rel["commit"], tag=tag, serial=serial, engine=rel["engine"], files=rel["files"])
-    with open(LOCK, "w") as f:
-        f.write(json.dumps(lock, indent=2) + "\n")
-    short = rel["commit"][:7]
-    print("LOCK %s %s serial %d files %d" % (tag, short, serial, len(rel["files"])))
-
     today = datetime.datetime.now(zoneinfo.ZoneInfo("America/Chicago")).date().isoformat()
-    row = ("| %s | RADE lock moves to release %s (RADE %s, serial %d) by scripts/bump_lock.py; bundles rebuilt. "
-           "Not verified on a device. | PFM | scripts/rade.lock.json |\n" % (today, tag, short, serial))
-    text = open(DECISIONS).read()
-    head = "|---|---|---|---|\n"
-    if text.count(head) != 1:
-        sys.exit("FAIL could not find the DECISIONS table head")
-    with open(DECISIONS, "w") as f:
-        f.write(text.replace(head, head + row))
-
-    seen = traced_build(os.path.join(ROOT, ".rade-cache", rel["commit"]), rel["engine"])
-    if seen != set(rel["files"]):
-        sys.exit("FAIL trace: the engine opened %s, the lock lists %s" % (sorted(seen), sorted(rel["files"])))
-    print("TRACE PASS: the engine opened the %d files the lock lists" % len(seen))
-
-    for cmd in (["bash", "scripts/check.sh"],
-                [sys.executable, "scripts/pii_guard.py", "--require-denylist", "--all", "--allow-from", "origin/main"]):
-        if subprocess.run(cmd, cwd=ROOT).returncode:
-            sys.exit("FAIL " + " ".join(cmd[1:]))
+    apply_bump(rel, tag, lock, main_serial() + 1, today)
     print("BUMP PASS %s: commit, push and open the pull request (AGENTS.md \"Delivery\"). If a rebuilt bundle already "
           "went to the work computer, raise its revision in scripts/paste_bundles.json first." % tag)
 
 
-def self_test():
-    """Check check_release and the tag pattern against fixed good and bad cases. Takes nothing; returns 1 when any case fails, else 0."""
+def release_cases():
+    """Check check_release and the tag pattern against fixed good and bad cases.
+
+    Returns:
+        A tuple (cases, fails).
+    """
     lock = {"repo": "rhope-ops/RADE"}
     c, h = "a" * 40, "b" * 64
     good = {"repo": "rhope-ops/RADE", "commit": c, "engine": "engine/x.py", "files": {"engine/x.py": h}}
@@ -153,7 +300,110 @@ def self_test():
     fails = sum(1 for rel, tagged, want in cases if bool(check_release(rel, lock, tagged)) != bool(want))
     fails += sum(1 for t in ("engine-v3", "engine-v1234") if not re.fullmatch(TAG_RE, t))
     fails += sum(1 for t in ("engine-v", "x;id", "engine-v3 ", "v3", "engine-v12345") if re.fullmatch(TAG_RE, t))
-    print("BUMPLOCK cases=%d fails=%d" % (len(cases) + 7, fails))
+    return len(cases) + 7, fails
+
+
+def order_cases():
+    """Test the order of apply_bump with fake build and check functions in a temp folder (no network, no git). Cases: the
+    lock is on disk during the build; no DECISIONS row before the checks pass; a failing build or check restores the old
+    lock and bundle and writes no row; a pass writes one row whose By column names this script.
+
+    Returns:
+        A tuple (cases, fails).
+    """
+    import tempfile
+    global LOCK, DECISIONS, PASTE
+    saved = (LOCK, DECISIONS, PASTE)
+    fails, cases = 0, 0
+    rel = {"commit": "d" * 40, "engine": "engine/x.py", "files": {"engine/x.py": "e" * 64}}
+    with tempfile.TemporaryDirectory() as t:
+        LOCK, DECISIONS, PASTE = (os.path.join(t, "lock.json"), os.path.join(t, "DECISIONS.md"), os.path.join(t, "paste"))
+        os.mkdir(PASTE)
+        try:
+            for name, build_ok, check_ok in (("pass", True, True), ("build fails", False, True), ("checks fail", True, False)):
+                open(LOCK, "w").write('{"commit": "old"}')
+                open(os.path.join(PASTE, "b.ps1"), "w").write("old bundle")
+                open(DECISIONS, "w").write("| Date | What | By | Where |\n|---|---|---|---|\n")
+                seen = {}
+
+                def build(root, engine, ok=build_ok):
+                    """Fake traced build: records whether the new lock and no row are on disk; fakes a bundle write."""
+                    seen["lock"] = json.load(open(LOCK)).get("commit") == rel["commit"]
+                    seen["row"] = "bump_lock" in open(DECISIONS).read()
+                    open(os.path.join(PASTE, "b.ps1"), "w").write("new bundle")
+                    if not ok:
+                        sys.exit("FAIL fake build")
+                    return set(rel["files"])
+
+                def checks(ok=check_ok):
+                    """Fake checks: the row must not exist yet; fails when the case says so."""
+                    seen["row_at_checks"] = "bump_lock" in open(DECISIONS).read()
+                    if not ok:
+                        sys.exit("FAIL fake checks")
+
+                try:
+                    apply_bump(rel, "engine-v9", {"commit": "old"}, 5, "2026-01-01", build, checks)
+                    stopped = False
+                except SystemExit:
+                    stopped = True
+                row = open(DECISIONS).read().count(BY)
+                good = (seen.get("lock") is True and seen.get("row") is False and seen.get("row_at_checks", False) is False
+                        and stopped == (name != "pass"))
+                if name == "pass":
+                    good = good and row == 1 and json.load(open(LOCK))["serial"] == 5
+                else:
+                    good = good and row == 0 and open(LOCK).read() == '{"commit": "old"}' \
+                        and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle"
+                print("BUMPLOCK order %s: %s" % (name, "ok" if good else "FAIL"))
+                cases, fails = cases + 1, fails + (not good)
+        finally:
+            LOCK, DECISIONS, PASTE = saved
+    return cases, fails
+
+
+def text_cases():
+    """Test the row text and the git time limit (a fake subprocess.run that times out).
+
+    Returns:
+        A tuple (cases, fails).
+    """
+    fails = 0
+    row = decision_row("2026-01-01", "engine-v9", "abcdef0", 5)
+    fails += not (row.count("\n") == 1 and row.count("|") == 5 and "| " + BY + " |" in row and "PFM |" not in row)
+    real = subprocess.run
+
+    def slow(*a, **k):
+        """Fake subprocess.run: reports the timeout it was given as expired."""
+        raise subprocess.TimeoutExpired(a[0], k.get("timeout"))
+    subprocess.run = slow
+    try:
+        run_git(["ls-remote", "x"], "test")
+        fails += 1
+    except SystemExit as e:
+        fails += not ("did not answer in %d seconds" % GIT_TIMEOUT in str(e.code))
+    finally:
+        subprocess.run = real
+    seen = {}
+    subprocess.run = lambda *a, **k: seen.update(k) or subprocess.CompletedProcess(a[0], 0, "", "")
+    try:
+        run_git(["fetch"], "test")
+    finally:
+        subprocess.run = real
+    fails += seen.get("timeout") != GIT_TIMEOUT
+    return 3, fails
+
+
+def self_test():
+    """Run every no-network self-test: release checks, the order of the bump steps, the row text and the git timeout.
+
+    Returns:
+        1 when any case fails, else 0 (the BUMPLOCK line is printed).
+    """
+    total = fails = 0
+    for fn in (release_cases, order_cases, text_cases):
+        n, f = fn()
+        total, fails = total + n, fails + f
+    print("BUMPLOCK cases=%d fails=%d" % (total, fails))
     return 1 if fails else 0
 
 
@@ -172,7 +422,7 @@ if __name__ == "__main__":
         bump(sys.argv[1])
     except SystemExit as e:
         if e.code not in (None, 0):
-            # The lock and the decision row may already be written. Never reset or clean (AGENTS.md "Git safety"):
-            # fix the cause and run again, or undo these files with a normal edit.
+            # A failed run puts the old lock and bundles back and writes no row (apply_bump); other files, if any, are listed.
+            # Never reset or clean (AGENTS.md "Git safety"): fix the cause and run again.
             print("Files changed so far:\n" + changed_files(), file=sys.stderr)
         raise

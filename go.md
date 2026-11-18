@@ -26,7 +26,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R29a r4 (run first): the R28 fixes, the new site logo, the second person and the full flow test
+### Round R29a r5 (run first): the R28 fixes, the new site logo, the second person and the full flow test
 
 **For:** repeats what failed or was skipped in R28: the health flow (it now checks only that my own flows are On), the reader of my button flow export, the import of the full flows and the full flow test, and the second person (T4). My 90-161.Z window is in Round R29b. It starts by checking that the test site is clean, then I set the new 90-161.Z logo as the site logo and thumbnail.
 **Time:** about 2.5 hours with waits; about 75 minutes of my own work (estimate).
@@ -46,12 +46,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 11. When a small window asks for the second person's e-mail address, type it there (it stays on my computer).
 12. At DONE, send the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29a-round-r4.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29a-round-r5.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R29a PASSED" or "90161Z R29a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If Power Automate refuses a step, select "It failed" and type the first line of the message: a refusal is a valid result.
 
-### Round R29b r4 (run after R29a): my 90-161.Z window with its checks inside
+### Round R29b r5 (run after R29a): my 90-161.Z window with its checks inside
 
 **For:** tests my 90-161.Z window again: it now scales with Windows, its self-check works, the grids fit, and 12 checks show at the bottom of the window, one at a time, with Pass and Fail. Then 3 questions on its look.
 **Time:** about 20 minutes (estimate).
@@ -71,7 +71,7 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 12. Answer the 3 questions in the RADE window.
 13. At DONE, send the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29b-round-r4.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R29b-round-r5.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R29b PASSED" or "90161Z R29b NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If the 90-161.Z window does not open, send the results as they are.

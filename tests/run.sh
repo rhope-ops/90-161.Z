@@ -37,6 +37,7 @@ grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' '
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py'
 grp t22 'scripts/gov/90161Z-T22-*'
+grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1'
 # Lint: the full lane, or a changed scripts/lint.sh, lints every file; else only the changed PowerShell files under scripts/gov.
 lintfiles=()
 if [ "$changed" != '*all*' ] && ! need scripts/lint.sh; then
@@ -54,6 +55,7 @@ bg=$(mktemp -d)
 [ "${on[lint]}" = 1 ] && { scripts/lint.sh "${lintfiles[@]}" >"$bg/lint.out" 2>&1 & lint_pid=$!; }
 [ "${on[t20]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!; }
 [ "${on[t21]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T21.ps1 >"$bg/t21.out" 2>&1 & t21_pid=$!; }
+[ "${on[mask]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-Mask.ps1 >"$bg/mask.out" 2>&1 & mask_pid=$!; }
 # The small pwsh checks (Hide-Site masking, Get-SiteAddress, two-space sentences, opening paragraph, Font binding, T20 -PlanOnly)
 # run in ONE more pwsh process (tests/ps/Invoke-Batch.ps1; bloat audit 3, P1, 2026-11-15), each in its own runspace, each
 # writing <name>.out and <name>.rc to a fresh folder. A missing .rc (the member did not run) or an rc other than 0 = FAIL.
@@ -188,6 +190,7 @@ for path in zips:
     assert 'type="10018"' not in s, 'connection reference is not a root component in the R18 export'
 PYEOF
 python3 tests/check_names.py && ok "naming rules (PFM 2026-11-11)" || bad "naming rules"
+out=$(python3 tests/check_logo_draw.py 2>&1); [ $? -eq 0 ] && ok "logo_draw: one good drawing and each clean refusal ($(echo "$out" | tail -1))" || { echo "$out" | grep FAIL; bad "logo_draw refusals"; }
 for f in flow/defs/*.json; do python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" && ok "json $f" || bad "json $f"; done
 
 python3 - <<'PY' && ok "T02 package: current payload, site address only (PFM 2026-11-12), lookups and list titles last, loops 1 at a time" || bad "T02 package payload or loop concurrency"
@@ -309,6 +312,11 @@ if [ "${on[t21]}" = 1 ]; then
 wait "$t21_pid"; t21rc=$?; out=$(tail -1 "$bg/t21.out")
 case "$t21rc $out" in "0 T21 pass="*" fail=0") ok "T21 probe script on the fake site ($out)";; *) grep "T21TEST FAIL" "$bg/t21.out" | cut -c1-300; bad "T21 probe script (exit $t21rc): $out";; esac
 else sk "T21 probe script on the fake site"; fi
+# Hide-Site (one masking function, scripts/gov/src/site-common.ps1): every pattern, the known limits, and one copy per task script.
+if [ "${on[mask]}" = 1 ]; then
+wait "$mask_pid"; maskrc=$?; out=$(tail -1 "$bg/mask.out")
+case "$maskrc $out" in "0 MASK pass="*" fail=0") ok "Hide-Site masking test ($out)";; *) grep "MASKTEST FAIL" "$bg/mask.out" | cut -c1-300; bad "Hide-Site masking test (exit $maskrc): $out";; esac
+else sk "Hide-Site masking test"; fi
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
 # Build is deterministic (fixed dates): a rebuild must match the committed file byte for byte.
@@ -587,26 +595,10 @@ if [ "${on[batch]}" = 1 ]; then
 fa=$(grep -ohE "(New-Object System\.Drawing\.Font|\[System\.Drawing\.Font\]::new)\([^)]*,[^)]*, *[\"'][A-Za-z]+[\"'] *\)" scripts/gov/paste/*.ps1 | wc -l)
 amb=$(bout font | tail -1)
 [ "$fa" -eq 0 ] && [ "$amb" = "ambiguous" ] && ok "RADE fonts in the bundles: no string enum in Font() (found: $fa; pwsh confirms the string form is $amb)" || bad "RADE fonts in the bundles: string enum in Font() found=$fa (pwsh: $amb)"
-n=0; for t16 in scripts/gov/90161Z-T16-pnp-signin-test-r4.ps1 scripts/gov/90161Z-T16-site-setup-r12.ps1 scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T19-list-update-r3.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
-# T16 PnP retest: the e-mailed result must hold no site, tenant, sign-in address, GUID or .mil host (review R09 T16).
-hs=$(bout "hs$n")
-[ -n "$hs" ] && ! echo "$hs" | grep -qiE "fakeco|0a1b2c3d|pfmtest|https?://|jane|bob" && ok "$(basename $t16) hides site, tenant, sign-in address and GUID" || { echo "$hs"; bad "T16 masking"; }
-n=$((n+1))
-done
-# A list id right after URL-encoded characters (guid%27<id>%27) must be masked too (review of 15 Nov 26). The scripts
-# revised on or after 15 Nov 26 have the fix; T16 r4, T16 r11 and T19 r3 get it with their next revision.
-n=0; for hsf in scripts/gov/90161Z-T18-slice1-test-r5.ps1 scripts/gov/90161Z-T20-provision-lists-r1.ps1 scripts/gov/90161Z-T24-full-solution-test-r1.ps1; do
-hs=$(bout "hsg$n")
-! echo "$hs" | grep -qiE "0a1b2c3d|9999-2222" && echo "$hs" | grep -q "<GUID>" && ok "$(basename $hsf) hides a list id after URL-encoded characters" || { echo "$hs"; bad "GUID masking after URL-encoded characters: $(basename $hsf)"; }
-n=$((n+1))
-done
 # PFM 15 Nov 26 (enter the site once): Get-SiteAddress returns the address RADE holds, then the saved one, with no question.
 sa=$(bout siteaddr | tail -1)
 [ "$sa" = "https://fakeco.example/sites/one|https://fakeco.example/sites/two|ASKED|SITE ADDRESS not set" ] && ok "site address: from RADE, then from Config; with neither, a question outside RADE and a stop with the fix inside RADE" || { echo "$sa"; bad "site address: one entry"; }
-# R15 review: site setup (r5 on) masks a URL-encoded address (%40) in a fetched result.
-hs=$(bout hsenc)
-[ -n "$hs" ] && ! echo "$hs" | grep -qiE "first.last|fakeco" && ok "site setup r6 masks a URL-encoded e-mail address" || { echo "$hs"; bad "site setup r6 %40 masking"; }
-else sk "RADE fonts in the bundles"; sk "Hide-Site masking of T16, T18, T19, T20, T24 scripts"; sk "list id after URL-encoded characters"; sk "site address: from RADE, then from Config"; sk "site setup r6 masks a URL-encoded e-mail address"; fi
+else sk "RADE fonts in the bundles"; sk "site address: from RADE, then from Config"; fi
 # R16: probe r5 grants Contribute to the coworker's own user (C01 ID), not to a group found by e-mail (R15: none found).
 python3 -c "
 import json; a = json.load(open('flow/defs/90161Z-T11-rights-probe-r5.json'))['actions']

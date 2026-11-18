@@ -48,11 +48,12 @@ def shapes(svg_text):
              'clip': None}
         clip = el.get('clip-path')
         if clip:
-            s['clip'] = clips[re.fullmatch(r'url\(#([\w-]+)\)', clip).group(1)]
+            s['clip'] = find_clip(clips, clip)
         if tag == 'circle':
             s['c'], s['r'] = (float(el.get('cx')), float(el.get('cy'))), float(el.get('r'))
         else:
             s['segs'], s['closed'] = path_segments(el.get('d'))
+            refuse_fill(s)
         out.append(s)
     return out
 
@@ -80,6 +81,40 @@ def refuse_unsupported(el, tag):
     dash = el.get('stroke-dasharray', '').split()
     if dash and (tag != 'circle' or len(dash) != 2):
         raise SystemExit('logo_draw: stroke-dasharray needs two values and works on a <circle> only')
+
+
+def find_clip(clips, text):
+    """Return the clip rectangles for a clip-path="url(#id)" value. Stops with a message when the value is not url(#id)
+    or the id is unknown.
+
+    Args:
+        clips: the clip rectangles by clipPath id.
+        text: the attribute value.
+
+    Returns:
+        The list of rectangles.
+    """
+    m = re.fullmatch(r'url\(#([\w-]+)\)', text)
+    if m is None:
+        raise SystemExit('logo_draw: clip-path %r is not of the form url(#id)' % text)
+    if m.group(1) not in clips:
+        raise SystemExit('logo_draw: clip-path refers to #%s, which is no <clipPath> in the file' % m.group(1))
+    return clips[m.group(1)]
+
+
+def refuse_fill(s):
+    """Stop when a filled path cannot be filled correctly. A fill needs a closed path (Z), or it would silently get no
+    fill; the even-odd fill test handles lines only, not arcs.
+
+    Args:
+        s: a path shape from shapes().
+    """
+    if s['fill'] is None:
+        return
+    if not s['closed']:
+        raise SystemExit('logo_draw: a filled path must end with Z (an open path would get no fill); use fill="none" for a line')
+    if any(g[0] == 'arc' for g in s['segs']):
+        raise SystemExit('logo_draw: a filled path with an arc (A) is not supported; fill="none" and a stroke work')
 
 
 def refuse_clip(clip):
@@ -112,11 +147,35 @@ def color(text):
 
 
 def path_segments(d):
+    """Return (segments, closed) for a path's "d" text (see parse_path), with a clean stop for bad numbers.
+
+    Args:
+        d: the path text, or None.
+
+    Returns:
+        The tuple (segments, closed). Stops with a message, not a Python error, when a command has too few numbers or a
+        letter where a number belongs.
+    """
+    try:
+        return parse_path(d)
+    except (IndexError, ValueError, TypeError):
+        raise SystemExit('logo_draw: a path command has too few or bad numbers: %r' % d)
+
+
+def parse_path(d):
     """Return (segments, closed) for a path's "d" text. A segment is ('line', p0, p1) or ('arc', center, radius,
-    start angle, sweep angle). Only absolute M, L, H, V, A and Z are allowed."""
-    tokens = re.findall(r'[A-Za-z]|-?\d*\.?\d+', d)
+    start angle, sweep angle). Only absolute M, L, H, V, A and Z are allowed.
+
+    Args:
+        d: the path text, or None.
+
+    Returns:
+        The tuple (segments, closed). Stops with a message for a path that does not start with M.
+    """
+    tokens = re.findall(r'[A-Za-z]|-?\d*\.?\d+', d or '')
     segs, pos, start, k, closed = [], None, None, 0, False
-    num = lambda: float(tokens[k])
+    if not tokens or tokens[0] != 'M':
+        raise SystemExit('logo_draw: a path must start with M (found %r)' % (tokens[0] if tokens else 'nothing'))
     while k < len(tokens):
         cmd = tokens[k]; k += 1
         if cmd == 'M':
@@ -143,6 +202,8 @@ def arc_segment(p0, p1, r, large, sweep):
     conversion of the SVG specification, for a circle). A positive sweep angle goes the way of rising angles (y down)."""
     mx, my = (p0[0] - p1[0]) / 2, (p0[1] - p1[1]) / 2
     d2 = mx * mx + my * my
+    if d2 == 0 or r <= 0:
+        raise SystemExit('logo_draw: an arc needs a radius above 0 and an end point different from its start point')
     f = math.sqrt(max(0.0, r * r / d2 - 1)) * (-1 if large == sweep else 1)
     cx = (p0[0] + p1[0]) / 2 + f * my
     cy = (p0[1] + p1[1]) / 2 - f * mx

@@ -19,3 +19,30 @@ function Get-SiteAddress([string]$ConfigDir) {
   Set-Content -LiteralPath $f -Value $v -Encoding UTF8
   return $v
 }
+
+function Hide-Site([string]$Text, [string]$Site) {
+  <#
+  .SYNOPSIS
+  Masks e-mail addresses, the site, its host, path, name and tenant, other URLs, cloud and .mil hosts and GUIDs in a result text. Not masked: display names, office symbols, phone numbers, user ids, computer names.
+  .PARAMETER Text
+  The text to clean (a result line or an error message).
+  .PARAMETER Site
+  The site address (https://<host>/sites/<name>), or an empty text for the generic rules only.
+  .OUTPUTS
+  System.String. The text with each match replaced by a placeholder such as <EMAIL>, <SITE> or <GUID>.
+  #>
+  $Text = $Text -replace '[^\s"<>|,;()\[\]]+(@|%40)[^\s"<>|,;()\[\]]+', '<EMAIL>'   # whole address first: the host rules below would keep its name part
+  if ($Site) {
+    $Text = $Text -replace [regex]::Escape($Site.TrimEnd('/')), '<SITE>'
+    try {
+      $u = [uri]$Site; $p = $u.AbsolutePath.TrimEnd('/'); $leaf = ($p -split '/')[-1]   # $p is /sites/<name>: also in URL-encoded form
+      $set = @(, @($u.Host, '<SITE-HOST>', ''))   # literal text, placeholder, word boundary (tenant and site name only, 3+ letters)
+      if ($p.Length -gt 1) { $set += @($p, '<SITE-PATH>', ''), @([uri]::EscapeDataString($p), '<SITE-PATH>', ''), @($leaf, '<SITE-NAME>', '\b') }
+      $set += , @(($u.Host -split '\.')[0], '<TENANT>', '\b')
+      foreach ($s in $set) { if ($s[2] -eq '' -or $s[0].Length -ge 3) { $Text = $Text -replace ($s[2] + [regex]::Escape($s[0]) + $s[2]), $s[1] } }
+    } catch { $null = $_ }
+  }
+  $g = @('https?://\S+', '<URL>', '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>', '\b[\w.-]+\.mil\b', '<HOST>', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>')   # the GUID has no \b: guid%27<id> must be masked too
+  for ($i = 0; $i -lt $g.Count; $i += 2) { $Text = $Text -replace $g[$i], $g[$i + 1] }
+  return $Text
+}
