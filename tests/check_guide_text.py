@@ -296,7 +296,11 @@ def self_test_steps():
 
 
 def self_test_go():
-    """Check that go_steps reads only the numbered lines under "Steps:" of open tasks. Takes nothing; returns a list of error messages."""
+    """Check that go_steps reads only the numbered lines under "Steps:" of open tasks, in both go.md layouts.
+
+    Returns:
+        A list of error messages (empty when the reader is right).
+    """
     errs = []
     got = list(go_steps('## How\nSteps:\n1. no\n## Round A\nSteps:\n1. Select Run.\nhttps://x\n2. Select Done.\n\nNote\n3. no\n## Done\nSteps:\n1. no\n'))
     if [g[1] for g in got] != ['1. Select Run.', '2. Select Done.']:
