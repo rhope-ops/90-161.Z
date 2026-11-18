@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | Kit 3.0.0 by sync (67e7766): in a private repo the pull-request Action does not run; public repos keep it. Kit PR 56. | PFM | - |
 | 2026-11-18 | Kit 2.0.1 by sync (79540fe, via 2.0.0): merge only a pull request opened for this work; lane C floor; session load ~4,771. Kit plan 16:20. | PFM | - |
 | 2026-11-18 | Bundle revisions (the PFM approved the agent REC "from R30 on, raise the revision on every rebuild"): a bundle on main never changes; scripts/bundle_revision.py checks it and bump_lock.py raises revisions before its rebuild. Cause: two R29 r6 builds (engine-v15, then v16) under one name. | PFM | .claude/skills/round/SKILL.md section 4 |
 | 2026-11-18 | "No kit sync" Project rule removed (exact text shown); the kit Default "Kit files" replaces it. Merge of the kit-sync PR approved (lane C). | PFM | [kit sync](reviews/2026-11-18-kit-sync.md) |

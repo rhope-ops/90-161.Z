@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One check command for the repo (AGENTS.md "Commands": Test): the one front door of every check and guard.
 # Two lanes (.claude/skills/deliver/SKILL.md):
-#   scripts/check.sh          full lane: everything. Before a merge, on a push to main (pre-push), in the pull-request Action.
+#   scripts/check.sh          full lane: everything. Before a merge, on a push to main (pre-push), in the pull-request Action (public repos).
 #   scripts/check.sh --fast   fast lane: each push to another branch (pre-push). Self-tests only of the kit scripts that
 #                             changed against origin/main, and scripts/check.local.sh gets --fast.
 # The content check alone (scripts/check_content.py: personal data, secrets, the PFM's terms, blocked files):
