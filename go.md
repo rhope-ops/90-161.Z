@@ -26,7 +26,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-No round to run. Before R31: send Claude a screenshot of the whole 90-161.Z card (FAKE OI 33-101), and decide the button rules and look notes in the [R30 screen audit](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30-screen-audit.md).
+No round to run. Before R31: send Claude a screenshot of the whole 90-161.Z card (FAKE OI 33-101), and decide the button rules B1 to B7 and the look notes L1 to L8 in the [R30 screen audit](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30-screen-audit.md).
 
 ## Done
 
