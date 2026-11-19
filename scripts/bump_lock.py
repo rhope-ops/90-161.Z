@@ -127,9 +127,7 @@ def traced_build(cache_root, engine):
         """Audit hook: record each file the engine opens under the cache folder (relative path with forward slashes)."""
         if event == "open" and isinstance(args[0], (str, os.PathLike)):
             p = os.path.abspath(os.fspath(args[0]))
-            # A "__pycache__" file is Python's own copy of a module the lock already lists (engine-v21 imports
-            # engine/rade_hash.py): not a source the engine reads.
-            if p.startswith(cache_root + os.sep) and "__pycache__" not in p.split(os.sep):
+            if p.startswith(cache_root + os.sep):
                 seen.add(os.path.relpath(p, cache_root).replace(os.sep, "/"))
     sys.addaudithook(hook)
     argv, sys.argv = sys.argv, [engine, "--app-root", ROOT]
@@ -213,6 +211,26 @@ def run_checks():
             sys.exit("FAIL " + " ".join(cmd[1:]))
 
 
+def without_module_caches(seen, files):
+    """Take Python's own cache copies of listed modules out of a trace. Engine-v21 imports engine/rade_hash.py, and
+    Python then opens engine/__pycache__/rade_hash.cpython-<N>.pyc (and a temporary name of it while it writes). Only
+    the cache of a module the lock lists is taken out; any other file under a __pycache__ folder stays and fails the trace.
+
+    Args:
+        seen: the set of relative paths the engine opened.
+        files: the lock's file list (relative paths).
+
+    Returns:
+        The set without those cache copies.
+    """
+    keep = set()
+    for path in seen:
+        m = re.fullmatch(r"(?:(.*)/)?__pycache__/([^/.]+)\.[A-Za-z0-9_-]+\.pyc(?:\.[0-9]+)?", path)
+        if not (m and ((m.group(1) + "/" if m.group(1) else "") + m.group(2) + ".py") in files):
+            keep.add(path)
+    return keep
+
+
 def prove(rel, build, checks):
     """Prove the new lock: the traced build (the engine opens exactly the files the lock lists), then the checks.
 
@@ -224,7 +242,7 @@ def prove(rel, build, checks):
     Returns:
         Nothing; stops with a FAIL message on any failure.
     """
-    seen = build(os.path.join(ROOT, ".rade-cache", rel["commit"]), rel["engine"])
+    seen = without_module_caches(build(os.path.join(ROOT, ".rade-cache", rel["commit"]), rel["engine"]), rel["files"])
     if seen != set(rel["files"]):
         sys.exit("FAIL trace: the engine opened %s, the lock lists %s" % (sorted(seen), sorted(rel["files"])))
     print("TRACE PASS: the engine opened the %d files the lock lists" % len(seen))
@@ -395,6 +413,21 @@ def order_case(name, build_ok, check_ok, rel):
         and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"] and kept == ["old"] * 2
 
 
+def cache_case():
+    """Test without_module_caches: the cache copy of a listed module leaves the trace (also its temporary name); the
+    cache of a module the lock does not list, and any other file under __pycache__, stay.
+
+    Returns:
+        True when the case passes.
+    """
+    files = {"engine/a.py": "", "engine/b.py": "", "top.py": ""}
+    seen = {"engine/a.py", "engine/__pycache__/b.cpython-313.pyc", "engine/__pycache__/b.cpython-313.pyc.139770291932016",
+            "__pycache__/top.cpython-311.pyc", "engine/__pycache__/other.cpython-313.pyc", "engine/__pycache__/x.txt",
+            "assets/__pycache__/b.cpython-313.pyc"}
+    return without_module_caches(seen, files) == {"engine/a.py", "engine/__pycache__/other.cpython-313.pyc",
+                                                  "engine/__pycache__/x.txt", "assets/__pycache__/b.cpython-313.pyc"}
+
+
 def raise_case():
     """Test raise_bundle_revisions itself (not a fake) in a temp folder with a fake main: the bundle that main has gets
     the next revision in the round definitions and in its go.md link, and its old file and stored hash file leave; the
@@ -445,9 +478,10 @@ def order_cases():
                 cases, fails = cases + 1, fails + (not good)
         finally:
             LOCK, DECISIONS, PASTE, BUNDLES, GO = saved
-    good = raise_case()
-    print("BUMPLOCK raise itself: %s" % ("ok" if good else "FAIL"))
-    cases, fails = cases + 1, fails + (not good)
+    for label, case in (("raise itself", raise_case), ("trace without module caches", cache_case)):
+        good = case()
+        print("BUMPLOCK %s: %s" % (label, "ok" if good else "FAIL"))
+        cases, fails = cases + 1, fails + (not good)
     return cases, fails
 
 

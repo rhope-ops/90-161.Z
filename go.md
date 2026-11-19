@@ -12,7 +12,7 @@ Never send real publication content, names, site addresses or group names. Reply
 ## How a paste task (round) works
 
 **For:** a round is one block of text I paste into PowerShell ISE. It opens the RADE window (Redacted Application Deployment Engine, formerly the 90-161.Z Deployer), saves its own files, runs the tests and makes the results e-mail. The ISSM allows this for scripts that use no elevated credentials (13 Nov 26).
-**Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.
+**Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: most checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.
 Steps:
 1. Press Copy script next to the round's link in its task below. If it says blocked: open the link, press Ctrl+A, then Ctrl+C.
 2. Start menu: type ISE and open Windows PowerShell ISE as myself (not "Run as administrator").
@@ -28,7 +28,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ### Round R32 r2: my 90-161.Z window r6 and the flow steps, in one paste
 
-**For:** one paste for the whole round again. First my 90-161.Z window r6 with 4 alignment fixes (the Action Status caption, the "Your Work" line, the "Passed" label, and the publication titles in a column) and 16 checks. Then the flow steps a fourth time (health flow, button flow and export reader, list button, full flows and the full flow test), with 2 new hand steps: I check that the 6 flows are On with good connections, and I add a second owner to one flow (I remove the person again at the end). The paste is about 810 KB, larger than any before. It runs on RADE engine-v21: the cards show only the buttons that have a use, the card frame stays in one place, RADE shows a short tour at its first start and asks for other feedback at the end. Its check "RADE can run its scripts" now shows if my computer needs the "Bypass" setting. New: the RADE page and the title bar of the RADE window each show a short code for this script; the two must be the same. At the end I paste the same text once in the PowerShell console, to see if RADE starts there too.
+**For:** one paste for the whole round again. First my 90-161.Z window r6 with 4 alignment fixes (the Action Status caption, the "Your Work" line, the "Passed" label, and the publication titles in a column) and 16 checks. Then the flow steps a fourth time (health flow, button flow and export reader, list button, full flows and the full flow test), with 2 new hand steps: I check that the 6 flows are On with good connections, and I add a second owner to one flow (I remove the person again at the end). The paste is about 815 KB, larger than any before. It runs on RADE engine-v21: the cards show only the buttons that have a use, the card frame stays in one place, RADE shows a short tour at its first start and asks for other feedback at the end. Its check "RADE can run its scripts" now shows if my computer needs the "Bypass" setting. New: the RADE page and the title bar of the RADE window each show a short code for this script; the two must be the same. At the end I paste the same text once in the PowerShell console, to see if RADE starts there too.
 **Time:** about 2.5 hours with waits; about 80 minutes of my own work (estimate).
 **Changes:** on the test site: a probe list and library, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end if they were made; the solution "90-161.Z flows" is upgraded and stays; one flow gets a second owner, removed at the end. Before I start, I ask one person in my office if I may add them as an owner of a test flow for about an hour; without a person I skip that step. On my computer: my OneDrive folder RADE\90-161.Z (the window scripts, their result file and 17 pictures of the window cards with fake data) and one export file in Downloads. For 3 window checks I turn high contrast on and off in Windows Settings (Windows+U, Contrast themes). Before Run, the window lists every file.
 **Steps:**
@@ -61,7 +61,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R32-round-r2.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R32 PASSED" or "90161Z R32 NEEDS REVIEW", every file in the results folder attached, the 17 pictures too). Then tell Claude the e-mail is sent, and "console: opened" or "console: did not open".
-**If it fails:** do the line that starts with "What to do". If the code in the title bar is not the code on the RADE page: select Exit and tell Claude "R32 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R32 did not paste"; Claude then makes the round in 2 parts. If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error". If the 90-161.Z window does not open, go on with the steps the RADE window shows.
+**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R32 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R32 did not paste"; Claude then makes the round in 2 parts. If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error". If the 90-161.Z window does not open, go on with the steps the RADE window shows.
 
 ### Round R33 r2 (run after R32): the paste-size test, one paste of 1 MB
 
@@ -77,14 +77,15 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 6. Click in the white script pane.
 7. Press Ctrl+V.
 8. Press F5. The RADE window opens.
-9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-10. Press Run.
-11. At DONE, select Send in the Outlook draft that opens.
+9. Look at the title bar of the RADE window: the code after the word "script" must be the code the RADE page showed.
+10. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
+11. Press Run.
+12. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R33-round-r2.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R33 PASSED" or "90161Z R33 NEEDS REVIEW", the result file attached). Then tell Claude the e-mail is sent.
-**If it fails:** if ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R33 did not paste". That is a valid result of this test.
+**If it fails:** if the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R33 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R33 did not paste". That is a valid result of this test.
 
 ## Done
 
