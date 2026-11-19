@@ -1,17 +1,17 @@
-# Create the 90-161.Z lists with Power Automate
+# How the 90-161.Z lists are made, and what Power Automate still does
 
-Decided (PFM, 2026-11-10): lists are created by a Power Automate flow, not PowerShell. The flow runs under your own sign-in and uses only the SharePoint connector ("Send an HTTP request to SharePoint"): no premium license, no admin.
+Status (19 Nov 26): the 12 lists are made by a script (task T20), not by a flow. Round R25 proved it on a clean site (docs/reviews/2026-11-15-r25-results.md, finding 1; PFM decision of 14 Nov 26 "Lists by PnP" in docs/DECISIONS.md). The provisioning flow of task T02 is retired. Power Automate still runs the 6 flows of the app (section 5).
 
 Names (PFM, 2026-11-11, docs/DECISIONS.md): every list has the prefix PFM. Each list is created under its URL name without spaces, then gets its display title.
 
-## 1. What the flow creates
+## 1. What the script creates
 
 | Display title | URL name | Holds | Who sees rows |
 |---|---|---|---|
 | PFM Offices | PFMOffices | One row per coordinating office | All site members |
-| PFM Series | PFMSeries | Series numbers and titles (DAFMAN Table A2.1), 39 rows added by the flow | All site members |
+| PFM Series | PFMSeries | Series numbers and titles (DAFMAN Table A2.1), 39 rows added by the script | All site members |
 | PFM Process Steps | PFMProcessSteps | The process steps with Table A5.2 target business days (draft; not seeded) | All site members |
-| PFM Settings | PFMSettings | One row per setting (wing name, PFM mailbox, defaults); 7 rows added by the flow (2 with values: DAFMAN 5.2, 5.2.2 suspense days) | All site members |
+| PFM Settings | PFMSettings | One row per setting (wing name, PFM mailbox, defaults); 7 rows added by the script (2 with values: DAFMAN 5.2, 5.2.2 suspense days) | All site members |
 | PFM Guidance | PFMGuidance | The guidance the app shows on each screen | All site members |
 | PFM Publications | PFMPublications | One row per action (8 DAFMAN 1.1.4 types); points to its Product Index row | All site members; edit own rows (10A) |
 | PFM Waivers | PFMWaivers | Waivers written into wing publications (DAFMAN 9.5.3) | All site members |
@@ -23,26 +23,27 @@ Names (PFM, 2026-11-11, docs/DECISIONS.md): every list has the prefix PFM. Each 
 
 Columns, views and their DAFMAN references: `schemas/lists/*.json` (one file per list, named by URL name). The payload `flow/provisioning-payload.json` is generated from them.
 
-## 2. Import and run
+## 2. How the lists are made (task T20)
 
-Package: `flow/packages/90161Z-T02-provision-lists-r12.zip` (built by `python3 scripts/build_flow_package.py` from `flow/defs/90161Z-T02-provision-lists-r12.json`; the payload is embedded at build). r12 (R21) adds Status Reason, Held Since, Coordination Round and the Action Status choices Cancelled and Complete; a site made by r11 gets them from T19 instead (scripts/gov/90161Z-T19-list-update-r3.ps1). Steps for the gov device are in go.md, Task 2 (new site, PFM S1, 2026-11-14).
+The script is `scripts/gov/90161Z-T20-provision-lists-r1.ps1`. You run it through RADE, in a round (go.md, "How a paste task (round) works"). It signs in to the site with PnP.PowerShell and builds the lists from `flow/provisioning-payload.json`. That file is generated from `schemas/lists/*.json`. The script header gives its modes and what it changes on the site. In short, a run on a clean site does this:
+1. Creates the 12 lists under their URL names, with versioning on.
+2. Adds the columns (199) and views (18).
+3. Adds the 88 starting rows to PFM Offices, PFM Series, PFM Process Steps and PFM Settings.
+4. Sets the display titles, column titles and indexes.
+5. Sets "read all items, edit own rows" on PFM Publications and PFM Endorsements (section 4).
+6. Checks every list against the payload.
 
-The flow asks for one input, **Site URL**: the full address of the site that will hold the lists. Paste it from the site's address bar. The site-title check was removed in r9 (PFM, 2026-11-12); check the address before you run.
+The script never deletes a list, a column, a view or a row. A second run skips what is already there, so a run that stopped can run again. It changes only lists it created under their own URL name. A list a person made and titled like one of ours is never changed.
 
-Order of work:
-1. **Create Lists**: 12 lists under their URL names, versioning on.
-2. **Get ... ID** (Offices, Process Steps, Product Index, Publications, Series): the IDs that lookup columns need.
-3. **Create Fields And Views**: columns, views and view columns, one request at a time.
-4. **Add Rows**: 88 rows: 39 into PFM Series, 7 into PFM Settings, 29 into PFM Offices, 13 into PFM Process Steps.
-5. **Apply Updates**: index Created on the Activity Log, rename the Title column where a list uses another label (Setting, Event, Office), then set each list's display title. This runs last because steps 1-3 find lists by URL name.
-6. **Set Item Permissions** (from r11): item-level permissions on PFM Publications and PFM Endorsements (section 4). If SharePoint refuses, the run still ends and Result says NOT SET.
-7. **Result** shows the counts and the permission result.
+Modes: `-PlanOnly` (no sign-in, prints the counts), `-Check` (reads the site and reports what 90-161.Z left on it; a clean site passes) and `-DryRun` (reads the site and prints what a run would create).
 
 ## 3. Checks after the run
 
+The round reports the script result. In R25 the pass was 15 of 15 checks: 12 lists, 199 columns, 18 views, 88 rows, edit own rows on 2 lists (docs/reviews/2026-11-15-r25-results.md). Check these by eye as well:
+
 | Check | Pass |
 |---|---|
-| Run | Succeeded; Result shows "Lists: 12, fields and views: 329, rows: 88, updates: 21. Provisioning finished. Item-level permissions: set on 2 lists." |
+| Round result | The T20 step reads PASSED, with 12 lists, 199 columns, 18 views and 88 rows |
 | Site contents | The 12 display titles in section 1 exist; PFM Series has 39 rows, PFM Settings 7, PFM Offices 29, PFM Process Steps 13 |
 | List address | Open PFM Publications: the address ends in /Lists/PFMPublications |
 | PFM Endorsements, Endorser column | Type Person or Group, people only |
@@ -52,27 +53,35 @@ Order of work:
 | PFM Publications, OPR column | List settings > OPR shows the description "The office of primary responsibility (OPR) for the action, from PFM Offices." (columns with abbreviations spell them out; docs/style-standard.md) |
 | PFM Publications, Status Notes column | List settings > Status Notes shows "Append Changes to Existing Text: Yes" |
 
-Run it once. A second run fails on lists and fields that already exist and ends red; that is expected.
-
-If a run fails part way (any step red, Result not shown), do not run it again on top. Recover:
-1. Note the failed step's name, HTTP status and error code.
-2. Site contents: delete every list whose name starts with PFM (they are empty after provisioning). Some may still show their URL name (for example PFMPublications) because titles are set last.
-3. Empty the site recycle bin of those lists (Recycle bin > select > Delete), so the URL names are free again.
-4. Run the flow again.
-
-If a step fails, open it and send only the HTTP status code and the error code (for example `400 / -2130575342`). Do not send URLs or names.
+If a run stops part way, send the result file (the script writes it into the T20 task folder). Run the script again: it skips what exists. Send only counts and list, column and view names; never the site address.
 
 ## 4. Permissions and site settings
 
 Decided (PFM, 2026-11-12, 10A): all site members read all rows. On PFM Publications and PFM Endorsements, members edit only rows they created. Read access stays "Read all items", so the AO, endorsers and flows still see every row. A row a flow creates is "created by" the flow's connection owner, so customers and endorsers change those rows through the app, which runs a flow (endorser results). Site collection administrators and people with Manage Lists edit every row.
 
 1. Leave each PFM list on the site's permissions (no unique permissions).
-2. Set by the flow from r11 (PFM, 2026-11-14). By hand only if Result says NOT SET (fallback, also for wings whose flow is refused): PFM Publications and PFM Endorsements only: List settings > Advanced settings > Item-level Permissions. Read access: Read all items. Create and Edit access: Create items and edit items that were created by the user. OK. Other lists: no change.
+2. Set by the T20 script. By hand only if the script reports it did not set it: PFM Publications and PFM Endorsements only: List settings > Advanced settings > Item-level Permissions. Read access: Read all items. Create and Edit access: Create items and edit items that were created by the user. OK. Other lists: no change.
 3. Site settings > Regional settings > Time zone: (UTC-06:00) Central Time. Date-only columns (suspense, due and review dates) then show the same day for everyone.
+
+## 5. What Power Automate still does
+
+Power Automate runs the 6 flows of the solution "90-161.Z flows" (F01 activity log, F02 next review due, F03 suspense reminders, F04 status report, F05 endorsement routing, F06 hold and resume). They use the SharePoint and Office 365 Outlook standard connectors under your own sign-in.
+
+- Source: `flow/solution/defs/*.json`. `python3 scripts/build_flow_solution.py` builds the solution zip from them (`flow/solution/90161Z-T24-full-flows-r2.zip`). Never hand-edit the zip.
+- Import: a round has you import the solution (task T24). Importing it again over an older copy works as an upgrade: the flows keep their connections and the new versions replace the old. The page's message "The original workflow definition has been deactivated and replaced" is the normal upgrade message (docs/reviews/2026-11-18-r32-results.md, findings 1 and 2).
+- After the import, all 6 flows read On with no connection warning (R32, finding 1).
+- Not yet working: a flow made by hand and a solution that the environment has never held fail with "The connections could not be loaded" (R32, finding 3). The PFM decided on 18 Nov 26 to put the two probe flows into the solution instead (finding 4, option A).
+
+## 6. The retired provisioning flow (task T02)
+
+The T02 flow is no longer the way to make the lists. Do not run it on a new site. It is kept as history only:
+- Definition: `flow/defs/90161Z-T02-provision-lists-r12.json`.
+- Package: `flow/packages/90161Z-T02-provision-lists-r12.zip`.
+- Its last runs and the decision that retired it: docs/reviews/2026-11-12-gov-results-t01-t02-t05.md and docs/DECISIONS.md (2026-11-14 "Lists by PnP").
 
 ## Change a list or column
 
 1. Edit `schemas/lists/<URL name>.json`. Names follow the rules in docs/DECISIONS.md (2026-11-11); `tests/check_names.py` fails on a name that breaks them.
-2. Run `python3 scripts/build_flow_payload.py`, then `python3 scripts/build_flow_package.py`. Never hand-edit the payload or the zip.
+2. Run `python3 scripts/build_flow_payload.py`. Never hand-edit the payload.
 3. Run `tests/run.sh` (pass = `TESTS pass=N fail=0`).
-4. A list that already exists on the site is not changed by a re-run. Add a new column by hand in List settings, with the same internal name, or plan a change flow.
+4. A list that already exists on the site is not changed by a run. Add a new column by hand in List settings, with the same internal name, or plan an update script (T19 is the model: `scripts/gov/90161Z-T19-list-update-r3.ps1`).
