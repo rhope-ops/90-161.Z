@@ -1,17 +1,23 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 17 import log reader, r2 (R20, PFM 14 Nov 26: r1 in R19 found an old log from an earlier round, so r2 reads only logs saved in the last 3 hours). Read-only. Windows PowerShell 5.1, no modules.
+  90-161.Z Task 17 import log reader, r3 (R34: NOW lines and a tidier layout, same checks and output as r2;
+  r2 was R20, PFM 14 Nov 26: r1 in R19 found an old log from an earlier round, so r2 reads only logs saved in the
+  last 3 hours). Read-only. Windows PowerShell 5.1, no modules.
 .DESCRIPTION
   What it is for: when a solution import fails, Power Automate offers "Download log file" (an Excel XML file). In R17 and
   R18 the error had to be pasted by hand and the paste held only the file's first lines. This script finds the newest
   import log and copies its error rows, so the next build sees the real error. About 1 minute (an estimate).
   It looks for the newest .xml file (changed in the last 3 hours) that is an Excel XML spreadsheet, in the T17 folder,
   Downloads, Desktop and Documents (local and OneDrive) and up to 2 folder levels below each (the browser saves where it
-  saved last). From it, it writes T17\90161Z-T17-import-log-r2.txt (plain text): the column headings and every row that
+  saved last). From it, it writes T17\90161Z-T17-import-log-r3.txt (plain text): the column headings and every row that
   holds "fail", "error" or a 0x8 code, each cell joined with " | " (at most 80 rows). Every https address becomes <SITE>,
   every e-mail address <EMAIL> and the DODID <DODID>. No log found: one SKIP line (the import worked, or no log was
   downloaded). It changes nothing else.
-  Output: the file above (the round collects it) and lines that start with PASS, SKIP or FAIL.
+  Output: the file above (the round collects it) and lines that start with ITEM. Lines that start with NOW say what
+  the script is doing; they are not results.
+  Network: none.
+  Writes: 90161Z-T17-import-log-r3.txt in the T17 folder (the folder is made when missing).
+  Credentials: none.
   Parameters (used by RADE): -Id, -NoPause.
 #>
 param([string]$Id, [switch]$NoPause)
@@ -87,6 +93,7 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
 # <<< task-common
 
 function Hide-Export([string]$Text, [string[]]$Secret) {
+  # Masks the DODID, every https address, every e-mail address and bare SharePoint-type host names in $Text.
   $t = ConvertTo-Masked $Text $Secret
   $t = $t -replace 'https?://[^\s"''<>]+', '<SITE>'
   $t = $t -replace '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '<EMAIL>'
@@ -115,9 +122,11 @@ try {
   foreach ($hm in ($homes | Select-Object -Unique)) { foreach ($sub in @('Downloads', 'Desktop', 'Documents')) { $places += (Join-Path $hm $sub) } }
   $since = (Get-Date).AddHours(-3)   # r2: this round only (R19 found an old log)
   $log = $null
+  Write-Output 'NOW Looking for an import log saved in the last 3 hours.'
   foreach ($pl in ($places | Select-Object -Unique)) {   # the newest log wins, wherever it is (each folder and 2 levels below it)
     if (-not (Test-Path -LiteralPath $pl -PathType Container)) { continue }
-    foreach ($f in @(Get-ChildItem -LiteralPath $pl -Filter '*.xml' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $since } | Sort-Object LastWriteTime -Descending)) {
+    $found = Get-ChildItem -LiteralPath $pl -Filter '*.xml' -File -Recurse -Depth 2 -ErrorAction SilentlyContinue
+    foreach ($f in @($found | Where-Object { $_.LastWriteTime -gt $since } | Sort-Object LastWriteTime -Descending)) {
       if ($log -and $f.LastWriteTime -le $log.LastWriteTime) { break }
       if (Test-ExcelXml $f.FullName) { $log = $f; break }
     }
@@ -125,6 +134,7 @@ try {
   if (-not $log) {
     Write-Output 'ITEM import-log SKIP no Excel XML import log from the last 3 hours in T17, Downloads, Desktop or Documents (the import worked, or no log was downloaded)'
   } else {
+    Write-Output 'NOW Reading the import log and picking its error rows.'
     $doc = New-Object System.Xml.XmlDocument
     $doc.XmlResolver = $null
     $doc.Load($log.FullName)
@@ -148,9 +158,10 @@ try {
         $first = $false
       }
     }
-    $file = Join-Path $dir '90161Z-T17-import-log-r2.txt'
+    $file = Join-Path $dir '90161Z-T17-import-log-r3.txt'
+    Write-Output 'NOW Saving the error rows to the T17 folder.'
     Set-Content -LiteralPath $file -Value $out -Encoding UTF8
-    Write-Output ('ITEM import-log PASS rows=' + $rows + ' kept=' + $kept + ' copied to T17\90161Z-T17-import-log-r2.txt (addresses masked)')
+    Write-Output ('ITEM import-log PASS rows=' + $rows + ' kept=' + $kept + ' copied to T17\90161Z-T17-import-log-r3.txt (addresses masked)')
   }
 } catch {
   $sec = @(); if ($who -and $who.Secret) { $sec = $who.Secret }
