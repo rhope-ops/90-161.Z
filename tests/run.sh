@@ -601,14 +601,14 @@ fb=0; for b in scripts/gov/paste/*.ps1; do grep -q "Outlook draft could not be c
 python3 - <<'PYEOF' && ok "T19 list update: column XML and the Action Status and Tier choices (T-0 first) match schemas/lists" || bad "T19 list update differs from schemas/lists"
 import json, re, sys
 sys.path.insert(0, 'scripts'); import build_flow_payload as B
-s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r6.ps1', encoding='utf-8').read()
-rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'\s+Xml = '([^']+)' \}", t)
-assert len(rows) == 3, rows
+s = B.load(); t = re.sub(r"' \+\s+'", '', open('scripts/gov/90161Z-T19-list-update-r6.ps1', encoding='utf-8').read())   # r6: a long XML is joined from parts
+rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'\s+Xml = \(?'([^']+)'\)? \}", t)
+assert len(rows) == 4, rows
 by_title = {v['title']: v for v in s.values()}
 for title, name, xml in rows:
     assert B.field_xml([x for x in by_title[title]['fields'] if x['internalName'] == name][0]) == xml, (name, xml)
 got = re.findall(r"@\{ List = '([^']+)'; Field = '(\w+)'; Choices = @\(([^)]*)\) \}", t)
-assert [(a, b) for a, b, _ in got] == [('PFM Publications', 'ActionStatus'), ('PFM Waivers', 'Tier')] and 'T-0' in got[1][2], got
+assert [(a, b) for a, b, _ in got] == [('PFM Publications', 'ActionStatus'), ('PFM Waivers', 'Tier'), ('PFM Activity Log', 'EventType')] and 'T-0' in got[1][2], got
 for title, name, ch in got:
     assert [c.strip().strip("'") for c in ch.split(',')] == [x for x in by_title[title]['fields'] if x['internalName'] == name][0]['choices'], ch
 PYEOF
