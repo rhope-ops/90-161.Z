@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r3.zip (R28 r1: all six flows, every flow On; R29 r2: list-name
-variables not required; R34 r3: F04 r3 and the 2 T21 probe flows, fallback A of the PFM, 18 Nov 26; still r3 in R34, not yet on
-main: F01 r3 and F05 r4, which check PFM Publications every 15 minutes, PFM 19 Nov 26 F3 C, and F05 r4 adds the missing Legal rows
-at step 7 by any path, F1 A) from flow/solution/defs/*.json.
+"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r4.zip (R28 r1: all six flows, every flow On; R29 r2: list-name
+variables not required; R34 r3: F04 r3 and the 2 T21 probe flows, fallback A of the PFM, 18 Nov 26; F01 r3 checks PFM
+Publications every 15 minutes, PFM 19 Nov 26 F3 C, and F05 r4 adds the missing Legal rows at step 7 by any path, F1 A; R35 r4:
+F05 r5 checks every minute, PFM 19 Nov 26) from flow/solution/defs/*.json.
+R35 (R34 finding 1): the build fails (exit 1, file, action path, length) when an action description is over 256 characters.
 
 Layout (Microsoft's documented unmanaged solution): [Content_Types].xml, solution.xml, customizations.xml (Workflows,
 connectionreferences), Workflows/<name>-<GUID>.json (properties.connectionReferences + properties.definition),
@@ -55,7 +56,7 @@ import argparse, io, json, pathlib, re, sys, uuid, zipfile
 from xml.sax.saxutils import escape, quoteattr
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r3.zip"
+DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r4.zip"
 # R34: the probe button flow (its workflow ID goes into the T21 look script, which names it in the list view button).
 BUTTON_DEF = DEFS / "90161Z-T21-probe-button-r6.json"
 LOOK_SCRIPT = ROOT / "scripts" / "gov" / "90161Z-T21-look-r8.ps1"
@@ -110,8 +111,8 @@ OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
 # task T18. Same unique name as the full solution, so a later full import upgrades it. F06 joins R21; r4 (R22): F03 r4;
-# r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix; r7 (R34): F05 r4.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r7.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))
+# r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix; r7 (R34): F05 r4; r8 (R35): F05 r5.
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r8.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))
 SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
 
 
@@ -163,6 +164,48 @@ def load(defs=DEFS):
             raise ValueError(f"{src.name}: unknown environment variable reference {sorted(bad)}")
         out.append((src, d, sorted(used)))
     return out
+
+
+# R35 (R34 finding 1): Power Automate refuses to save a flow whose action description is over 256 characters
+# ("ActionDescriptionTooLong"); a flow-level description may be longer (F01 r3 with 734 imported). The build fails first.
+MAX_ACTION_DESCRIPTION = 256
+
+
+def long_action_descriptions(actions, path="/actions"):
+    """Find the action descriptions that Power Automate would refuse.
+
+    Args:
+        actions: the "actions" object of a flow definition (action name -> action), at any depth.
+        path: the JSON path of that object, used in the result (default "/actions").
+
+    Returns:
+        A list of (action path, length) for each action whose "description" is over MAX_ACTION_DESCRIPTION characters,
+        searched in nested "actions" and "else"/"actions" blocks and in Switch "cases" and "default" blocks.
+    """
+    out = []
+    for name, act in (actions or {}).items():
+        if not isinstance(act, dict):
+            continue
+        here = f"{path}/{name}"
+        if len(act.get("description") or "") > MAX_ACTION_DESCRIPTION:
+            out.append((here, len(act["description"])))
+        out += long_action_descriptions(act.get("actions"), here + "/actions")
+        out += long_action_descriptions((act.get("else") or {}).get("actions"), here + "/else/actions")
+        out += long_action_descriptions((act.get("default") or {}).get("actions"), here + "/default/actions")
+        for case, block in (act.get("cases") or {}).items():
+            out += long_action_descriptions((block or {}).get("actions"), f"{here}/cases/{case}/actions")
+    return out
+
+
+def check_action_descriptions(folders=(DEFS, TEST_DEFS)):
+    """Exit 1 with a plain message when any def in the folders has an action description over the limit. Takes the folders."""
+    found = [(src, p, n) for folder in folders for src in sorted(folder.glob("*.json"))
+             for p, n in long_action_descriptions(json.loads(src.read_text(encoding="utf-8")).get("actions"))]
+    for src, p, n in found:
+        print(f"FAIL {src.relative_to(ROOT)}: action {p} has a description of {n} characters; "
+              f"Power Automate allows {MAX_ACTION_DESCRIPTION} (shorten it)")
+    if found:
+        sys.exit(1)
 
 
 def workflow_json(d, used):
@@ -408,6 +451,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="exit 1 if the committed zip differs from a fresh build")
     a = ap.parse_args()
+    check_action_descriptions()   # R35: before any zip is written or compared
     jobs = [(None, OUT, None, ()), (None, SLICE1[0], SLICE1[1], SLICE1_ON)] + [(defs, out, None, ()) for defs, out in test_jobs()]
     for test, out, only, on in jobs:
         data = build(test, only, on)
