@@ -72,6 +72,8 @@ Power Automate runs the 6 flows of the solution "90-161.Z flows" (F01 activity l
 - After the import, all 6 flows read On with no connection warning (R32, finding 1).
 - Not yet working: a flow made by hand and a solution that the environment has never held fail with "The connections could not be loaded" (R32, finding 3). The PFM decided on 18 Nov 26 to put the two probe flows into the solution instead (finding 4, option A).
 
+See also: [flow-handover.md](flow-handover.md) (co-owners, connection swap and checks when the person who imported the flows leaves).
+
 ## 6. The retired provisioning flow (task T02)
 
 The T02 flow is no longer the way to make the lists. Do not run it on a new site. It is kept as history only:
