@@ -1150,6 +1150,7 @@
                         "4. Select the flow \"90161Z F02 Next Review Due r3\".",
                         "5. Select \"Share\" at the top.",
                         "6. In the row of the person you added, select the delete icon (a trash can or an X).",
+                        "If you added no person: select \"Skip\".",
                         "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
                         "If a box asks you to confirm: select \"Remove\".",
                         "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
