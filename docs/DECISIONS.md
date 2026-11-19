@@ -6,6 +6,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | Fallback A for the 2 probe flows (R32 finding 4): the health check and the button flow become flows of the solution "90-161.Z flows", on its SharePoint connection, imported by upgrade. Scope: R34. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
+| 2026-11-18 | Mouse-wheel scroll must work anywhere on a card, in the 90-161.Z window and in RADE (RADE most, at half the screen width). Scope: window r7; RADE brief. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
+| 2026-11-18 | Each screenshot in a results e-mail is a visual defect (misalignment, wasted space or the like), unless the PFM says otherwise. Scope: every round. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
 | 2026-11-18 | R32 and R33 move to engine-v21 before they run ("Yes, move to engine-v21"): r2, with the bundle hash; the hand steps that deleted the saved checks leave go.md. Scope: R32, R33. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
 | 2026-11-18 | RADE lock moves to release engine-v21 (RADE b005bad, serial 16) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Window r6: D1 also on the Publications card (yes). The label that sits about 7 px below its title in the "Needs You Today" rows, and 2 px in rows blocks (the worker's reading of the code, not measured): fix in the next window revision (r7), not in R32. | PFM | [R31b results](reviews/2026-11-18-r31b-results.md) |
