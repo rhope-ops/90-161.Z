@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r6, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   $wn.Show builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
@@ -10,10 +10,12 @@
   R5 (R31): the rail logo sits on the rail's navy and the app name is centered on the logo's middle (W1, $wn.HeadParts);
   with Windows high contrast on the window paints with the system colors, also after a change while it is open (W2,
   $wn.Recolor); $wn.Build saves a picture of each card through the measure part (W4).
+  R6 (R31b): the caption "ACTION STATUS" is level with the first line of the main card (D1, $wn.LevelCaps); the rest of
+  the crumb has the link's text middle (D2, $wn.Crumb).
   The rail logo is the app-logo block below, written by scripts/build_task_scripts.py (never edit it here).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   Credentials: none.
@@ -183,6 +185,8 @@ $wn.Crumb = {
   The link is a Pfm.LinkText: the crumb's own font (the small text font) underlined, the link blue, no padding, so its
   size is its text. The rest starts with the arrow, a small gap after the link (3 px at 100 %, room for the focus ring),
   so the gap from the link's text to the arrow stays under 8 px at 100 %. A crumb with no link is one text.
+  R6 (R31b D2): the link draws its text in its vertical middle; the rest's top gap is set so that the middle of its
+  line is the link's middle (within half a pixel, at any scale), so both parts sit on one line.
   .PARAMETER C
   The card: Crumb, CrumbGo.
   .PARAMETER Cw
@@ -201,7 +205,10 @@ $wn.Crumb = {
   $l.Add_Click({ & $wn.Press $this.Tag }); & $ui.Cue $l; [void]$cf.Controls.Add($l); $wn.CrumbLink = $l
   $rest = $gt + ' ' + ((@($parts | Select-Object -Skip 1)) -join (' ' + $gt + ' '))
   $t = & $wn.Txt $cf $rest $ui.F.Small $ui.C.Gray 8 ($Cw - (& $wn.Sc 160)) 'Where you are' $pc.surface
-  $t.Margin = & $ui.Pad (& $wn.Sc 3) $t.Margin.Top 0 0; $wn.CrumbRest = $t
+  # The link's middle from the row top: its top gap and half its height (its preferred height, as the flow sizes it).
+  $mid = $l.Margin.Top + $l.GetPreferredSize([Drawing.Size]::Empty).Height / 2.0
+  $top = [int][math]::Max(0, [math]::Round($mid - (& $wn.LineH $t.Font) / 2.0))
+  $t.Margin = & $ui.Pad (& $wn.Sc 3) $top 0 0; $wn.CrumbRest = $t
   return $t }
 # The head of a card: the FAKE note of the last button, the crumb, the title and the line under it. Sets $ui.Sent and
 # $ui.Kick (the title and the line the layout self-check reads).
@@ -219,7 +226,8 @@ $wn.ShowCols = {
   .SYNOPSIS
   The columns of a card: one column, or a main column and a side column; each section is a card with its blocks.
   .DESCRIPTION
-  Each section built is kept in $wn.Secs (column number, card, caption, Stretch) for $wn.Align and the measure part.
+  Each section built is kept in $wn.Secs (column number, card, caption, Stretch, caption box) for $wn.LevelCaps,
+  $wn.Align and the measure part.
   .PARAMETER C
   The card data.
   .PARAMETER Key
@@ -244,11 +252,39 @@ $wn.ShowCols = {
       if ($s.WideOnly -and -not $Wide) { continue }
       $px = $(if ($s.Pad) { [int]$s.Pad } else { 24 })
       $sec = & $wn.Card $colW $s.Cap $s.Top $px $pc.surface; [void]$col.Controls.Add($sec)
-      $wn.Secs += @{ Col = $ci; Card = $sec; Cap = [string]$s.Cap; Stretch = [bool]$s.Stretch }
+      # CapBox: the caption text box, the card's first child when it has a caption ($wn.Card adds it first).
+      $wn.Secs += @{ Col = $ci; Card = $sec; Cap = [string]$s.Cap; Stretch = [bool]$s.Stretch; CapBox = $(if ($s.Cap) { $sec.Controls[0] } else { $null }) }
       $iw = $colW - 2 * (& $wn.Sc $px)
       foreach ($b in @($s.Blocks)) { & $wn.Block $sec $b $iw $ctx }
       $sec.PerformLayout() }
     $ci++ } }
+# The first line of text of a section card: the first card text box in the order its parts were added, looking inside
+# a row (the chips row holds the step line). Gives back the text box, or $null.
+$wn.FirstLine = { param($Sec)
+  foreach ($c in $Sec.Controls) {
+    if (& $ui.IsCardText $c) { return $c }
+    if ($c.Controls.Count) { $in = & $wn.FirstLine $c; if ($in) { return $in } } }
+  return $null }
+$wn.LevelCaps = {
+  <#
+  .SYNOPSIS
+  R6 (R31b D1): the caption of each Action Status card (Stretch) is level with the first line of the main card beside it.
+  .DESCRIPTION
+  The columns start at one top, so the two middles compare directly ($wn.TextMid, page pixels). The higher of the two
+  moves down by the difference, rounded to a pixel: the caption by its top gap, or (when the caption is the lower one)
+  the main card's first part. Then the page lays out again; $wn.Align runs after this and lines up the bottoms.
+  #>
+  $mainSec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
+  if (-not $mainSec) { return }
+  $line = & $wn.FirstLine $mainSec.Card; if (-not $line) { return }
+  $moved = $false
+  foreach ($s in @($wn.Secs | Where-Object { $_.Stretch -and $_.CapBox })) {
+    $d = [int][math]::Round((& $wn.TextMid $line) - (& $wn.TextMid $s.CapBox))
+    if ($d -eq 0) { continue }
+    $mv = $(if ($d -gt 0) { $s.CapBox } else { $mainSec.Card.Controls[0] })
+    $m = $mv.Margin; $mv.Margin = & $ui.Pad $m.Left ($m.Top + [math]::Abs($d)) $m.Right $m.Bottom
+    $s.Card.PerformLayout(); $mainSec.Card.PerformLayout(); $moved = $true }
+  if ($moved) { $page.PerformLayout() } }
 # R30 V4: in a card with an Action Status card (Stretch), the last cards of the columns end on one line: the shorter one
 # grows to the bottom of the longer one. The columns start at one top, so their bottoms compare directly.
 $wn.Align = {
@@ -261,7 +297,8 @@ $wn.Align = {
 $wn.Show = {
   <#
   .SYNOPSIS
-  Shows the card $Key: clears the page, builds the head and the columns, lines up the column bottoms and sets the focus.
+  Shows the card $Key: clears the page, builds the head and the columns, levels the side captions (D1), lines up the
+  column bottoms and sets the focus.
   .DESCRIPTION
   A new card forgets the fields of the last one (a modal card remembers the card to go back to). The main button gets
   the focus (or the reason box after an empty reason) and the Enter key. The layout self-check runs a moment later.
@@ -272,7 +309,7 @@ $wn.Show = {
   $c = $Cards[$Key]; if (-not $c) { return }
   if ($Key -ne $wn.Cur) { if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
   $script:cardsOpened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
-  $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @()
+  $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @(); $wn.ChipRows = @()
   $ui.Wrap = @{}; $ui.Boxes = @(); $ui.Hot = $null; $ui.Down = $null
   $form.SuspendLayout(); $page.SuspendLayout()
   foreach ($x in @($page.Controls)) { $page.Controls.Remove($x); $x.Dispose() }
@@ -285,7 +322,7 @@ $wn.Show = {
   $page.PerformLayout(); $wn.HeadH = [int]$page.PreferredSize.Height
   & $wn.ShowCols $c $Key $cw $wide
   $page.ResumeLayout($true); $form.ResumeLayout($true)
-  & $wn.Align
+  & $wn.LevelCaps; & $wn.Align
   $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
   $form.AcceptButton = $wn.Primary
   $ui.CardAt = $ui.Clock.Elapsed.TotalMilliseconds

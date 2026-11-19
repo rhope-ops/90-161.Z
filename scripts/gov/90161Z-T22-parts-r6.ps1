@@ -1,20 +1,31 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r6, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
   Each builder makes Windows Forms controls with the RADE look ($ui, from the ui part) and adds them to a parent.
   R4 (R30 V3): a format check with 0 findings shows no link (Test-CheckLink, in the cards part). The grid block is
-  built by the grid part.
+  built by the grid part. R6 (R31b D3): the chip of a check block is level with the first line of its text; the
+  helpers $wn.LineH, $wn.PageTop and $wn.TextMid give the text middles that the window, the measure part and the
+  layout self-check compare (one rule for D1 to D3).
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
 #>
 # A size at 100 % in screen pixels (the RADE scale).
 $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
+# The height of one line of text in font $F, in pixels (as a card text box spaces its lines).
+$wn.LineH = { param($F) return [int][Windows.Forms.TextRenderer]::MeasureText('Ag', $F).Height }
+# The top of control $C in the pixels of the page (the sum of the tops up to the page), from the layout alone: no handle needed.
+$wn.PageTop = { param($C) $y = 0; while ($C -and -not [object]::ReferenceEquals($C, $page)) { $y += $C.Top; $C = $C.Parent }; return $y }
+# The vertical middle of the first text line of control $C, in page pixels (R6, D1 to D3). A card text box draws its
+# first line at its top: top + one line / 2. A chip or a crumb link draws its text in its vertical middle: top + height / 2.
+$wn.TextMid = { param($C)
+  if ($C -is [Windows.Forms.TextBox]) { return ((& $wn.PageTop $C) + (& $wn.LineH $C.Font) / 2.0) }
+  return ((& $wn.PageTop $C) + $C.Height / 2.0) }
 # Adds a card text box (selectable, read-only, no tab stop) with its text, font, color, top gap, wrap width and
 # accessible name to $Parent; $Back is its background when it is not white. Gives back the box.
 $wn.Txt = { param($Parent, [string]$Text, $Font, $Color, [int]$Top, [int]$W, [string]$Name, $Back)
@@ -133,12 +144,31 @@ $wn.Blocks.steps = {
   $s.Size = [Drawing.Size]::new($W, ($s.Dot + 2 * $lh + (& $wn.Sc 12))); $s.Margin = & $ui.Pad 0 (& $wn.Sc 14) 0 (& $wn.Sc 6)
   $s.AccessibleName = 'Step ' + $b.N + ' of 12: ' + $StepNames[$b.N - 1] + '. Steps 1 to ' + ($b.N - 1) + ' are done.'
   [void]$Parent.Controls.Add($s) }
-# A check result: a green chip, its text and (R30 V3: only when it has something to open) its link.
-$wn.Blocks.check = { param($Parent, $b, [int]$W)
+$wn.Blocks.check = {
+  <#
+  .SYNOPSIS
+  A check result: a green chip, its text and (R30 V3: only when it has something to open) its link.
+  .DESCRIPTION
+  R6 (R31b D3): the chip's vertical middle is the middle of the first line of the text (within half a pixel, at any
+  scale). The chip is taller than a line, so the text starts lower by the difference and the chip sits at the top.
+  Each chip and its text are kept in $wn.ChipRows for the measure part and the layout self-check.
+  .PARAMETER Parent
+  The card that gets the check.
+  .PARAMETER b
+  The block: Chip (the chip's word), Text, Findings and Link.
+  .PARAMETER W
+  The width of the check row.
+  #>
+  param($Parent, $b, [int]$W)
   $p = & $wn.Panel $W 8
-  $cp = & $wn.Chip 'ok' $b.Chip $ui.C.White; $cp.Location = [Drawing.Point]::new(0, (& $wn.Sc 2)); [void]$p.Controls.Add($cp)
+  $cp = & $wn.Chip 'ok' $b.Chip $ui.C.White; [void]$p.Controls.Add($cp)
   $x = $cp.Width + (& $wn.Sc 10)
-  $t = & $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Check result' $null; $t.Location = [Drawing.Point]::new($x, 0)
+  $t = & $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Check result' $null
+  $half = (& $wn.LineH $ui.F.Body) / 2.0                                      # the middle of the first line, from the text top
+  $ty = [int][math]::Max(0, [math]::Round($cp.Height / 2.0 - $half))          # the text starts this low, so the chip fits above it
+  $cy = [int][math]::Max(0, [math]::Round($ty + $half - $cp.Height / 2.0))    # the chip's top: its middle on the line's middle
+  $cp.Location = [Drawing.Point]::new(0, $cy); $t.Location = [Drawing.Point]::new($x, $ty)
+  $wn.ChipRows += @{ Chip = $cp; Text = $t }
   if (Test-CheckLink $b) { $l = & $wn.Link $b.Link; $l.Location = [Drawing.Point]::new($x, ($t.Bottom + (& $wn.Sc 2))); [void]$p.Controls.Add($l) }
   & $wn.Fit $p 4; [void]$Parent.Controls.Add($p) }
 $wn.Blocks.ck = {

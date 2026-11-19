@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 14 in-window checks)
+  90-161.Z Task 22 r6, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 16 in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r5.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r6.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems
   and the functions Get-SideStatus, Test-CheckLink, Get-CardPlan and Get-CheckPlan.
@@ -93,10 +93,11 @@ function Test-CheckLink($Block) {
 }
 $FullHistory = @(@{ Text = 'Full History'; Note = 'FAKE: the history of this action opens here. Nothing is read.' })
 $OneOf = "FAKE OI 33-101, Key Control"
-# The 14 checks of the check bar, in order (PFM 17 Nov 26). R30 fallbacks: contrast through Windows Settings, not a key
+# The 16 checks of the check bar, in order (PFM 17 Nov 26). R30 fallbacks: contrast through Windows Settings, not a key
 # chord; Narrator names are listed by the script itself (RESULT NAMES), so the person only confirms that Narrator speaks.
-# R31 W3 (R30 audit B7): the 2 look questions about the screenshot fixes (crumb V2, Action Status V4) are the last 2
-# checks, so they are answered while the card is on screen.
+# R31 W3 (R30 audit B7): the look questions come last, so they are answered while the card is on screen. R6 (R31b D1 to
+# D4): status asks about the caption the PFM judged (D1); chip (D3) and pubcol (D4) are new. The All Actions grid is
+# the publication list of D4: the Publications card shows one publication, not a list.
 $Checks = @(
   @{ Key = 'card-open'; Text = 'Select a card in the list on the left. Pass if it opened.' },
   @{ Key = 'first-button'; Text = 'On the card "Your Work", select the first button. Pass if it did something.' },
@@ -111,7 +112,9 @@ $Checks = @(
   @{ Key = 'contrast-read'; Text = 'Select 2 other cards. Pass if every text and button is readable.' },
   @{ Key = 'contrast-off'; Text = 'Press Windows+U. Select Contrast themes. Choose None. Select Apply. Pass if the window returned to its colors.' },
   @{ Key = 'crumb'; Text = 'Open the card "FAKE OI 33-101". Pass if the line "Your Work > FAKE OI 33-101" reads as one line.' },
-  @{ Key = 'status'; Text = 'On the same card: pass if the Action Status card ends level with the main card.' }
+  @{ Key = 'status'; Text = 'On the same card: pass if the caption "ACTION STATUS" is level with the first line of the main card beside it.' },
+  @{ Key = 'chip'; Text = 'On the same card, look at the format check. Pass if the label "Passed" is level with the text beside it.' },
+  @{ Key = 'pubcol'; Text = 'Select All Actions in the list on the left. Pass if the publication titles, such as "Recall", start in one column.' }
 )
 # The cards, in the order the window builds them. A card: Rail (the rail item it lights), Title and Sub or Crumb and
 # CrumbGo, Up (the card Esc opens), Side (the right column width at 100 %), Modal, and Cols: columns of sections, each
@@ -406,7 +409,7 @@ function Get-CardPlan {
   foreach ($r in $RailItems) { $out += ('RAIL ' + $r.Text + ' -> ' + $r.Go) }
   return $out
 }
-# The 14 checks as -PlanOnly lines: CHECK <n> <key>: <text> (tests/run.sh reads them).
+# The 16 checks as -PlanOnly lines: CHECK <n> <key>: <text> (tests/run.sh reads them).
 function Get-CheckPlan {
   for ($i = 0; $i -lt $Checks.Count; $i++) { 'CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ': ' + $Checks[$i].Text }
 }
