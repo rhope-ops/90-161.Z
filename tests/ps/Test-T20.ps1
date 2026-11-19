@@ -131,6 +131,12 @@ Set-FakeLevelBits 'PFM Office Edit All Items' '432' ([string](1011030767 -bor 0x
 $r = Invoke-T20 ''
 Test-That 'the same level, bits as JSON strings again: PASS' ($r.Code -eq 0 -and $r.Text -match 'ITEM P01-pfm-office PASS') (@($r.Out) -join ' | ')
 
+# Review of PR 173: with the level there and NO Edit level on the site, the read-back cannot compare the bits: FAIL, never PASS.
+$editLv = @($global:FakeSP.Levels | Where-Object { [int]$_['RoleTypeKind'] -eq 6 })[0]; $global:FakeSP.Levels.Remove($editLv)
+$r = Invoke-T20 ''
+Test-That 'the level is there but the site has no Edit level: FAIL' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the site has no Edit level to compare') (@($r.Out) -join ' | ')
+$null = $global:FakeSP.Levels.Add($editLv)
+
 $r = Invoke-T20 'Check'
 Test-That 'provisioned site: the check fails with 12 lists' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(12\)') $r.Text
 
