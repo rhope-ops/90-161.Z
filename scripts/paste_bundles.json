@@ -24,9 +24,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R34-round-r2.ps1",
-            "round": "R34",
-            "title": "Round R34 r2: the 90-161.Z window r7, list changes, the 2 test flows inside the app solution, the changed app flows and the full flow test",
+            "out": "scripts/gov/paste/90161Z-R35-round-r1.ps1",
+            "round": "R35",
+            "title": "Round R35 r1: the 90-161.Z window r8, F05 every minute, 15 business days, the clearer import and second person cards, and the full flow test again",
             "files": [
                 {
                     "dir": "T22",
@@ -66,31 +66,31 @@
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-probe-r8.ps1"
+                    "src": "scripts/gov/90161Z-T21-probe-r9.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-common-r8.ps1"
+                    "src": "scripts/gov/90161Z-T21-common-r9.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-make-r8.ps1"
+                    "src": "scripts/gov/90161Z-T21-make-r9.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-person-r8.ps1"
+                    "src": "scripts/gov/90161Z-T21-person-r9.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-look-r8.ps1"
+                    "src": "scripts/gov/90161Z-T21-look-r9.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-read-r8.ps1"
+                    "src": "scripts/gov/90161Z-T21-read-r9.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-office-r8.ps1"
+                    "src": "scripts/gov/90161Z-T21-office-r9.ps1"
                 },
                 {
                     "dir": "T21",
@@ -178,13 +178,13 @@
                     "answersOnly": true
                 },
                 {
-                    "name": "T21 Check the test site is clean r8",
+                    "name": "T21 Check the test site is clean r9",
                     "title": "Check that the last round left nothing on the test site",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Clean -Label first",
                     "minutes": 20,
-                    "note": "Signs in (CAC). Removes a test person, list or library if one is still there. The last round removed all, so it should find nothing. Counts only.",
+                    "note": "Signs in (CAC). Removes a test list or library, and a test person in the group Visitors, if one is still there. A test person still in the group PFM Office is a leftover: this step reports it as FAILED and the Clean step at the end removes the person. The last round removed all, so it should find nothing. Counts only.",
                     "estimate": 2,
                     "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
                     "needs": [
@@ -195,10 +195,10 @@
                     "doing": "Checking that the test site is clean."
                 },
                 {
-                    "name": "T21 Make the probe list r8",
+                    "name": "T21 Make the probe list r9",
                     "title": "Make the test list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Make",
                     "minutes": 20,
                     "note": "Signs in (CAC). Makes the fake probe list (Visitors get Contribute on this list only) and library, uploads one fake workbook and writes the test page.",
@@ -244,10 +244,10 @@
                     "doing": "Adding the tier T-0 to the waivers list."
                 },
                 {
-                    "name": "T21 Add the second person r8",
+                    "name": "T21 Add the second person r9",
                     "title": "Add the second person to the test site",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Person",
                     "minutes": 20,
                     "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group.",
@@ -259,15 +259,15 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r8"
+                        "T21 Make the probe list r9"
                     ],
                     "doing": "Adding the second person to the Visitors group."
                 },
                 {
-                    "name": "T21 Give the second person PFM Office r8",
+                    "name": "T21 Give the second person PFM Office r9",
                     "title": "Put the second person in PFM Office",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Office",
                     "minutes": 20,
                     "note": "Signs in (CAC). Makes one test row as you, puts the second person in PFM Office for this round, checks that the person can now edit every row, and copies the link of your row.",
@@ -279,34 +279,35 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Add the second person r8",
+                        "T21 Add the second person r9",
                         "T20 Give PFM Office the edit-all level r2"
                     ],
                     "doing": "Putting the second person in PFM Office."
                 },
                 {
-                    "name": "T21 Second person edits your row r8",
+                    "name": "T21 Second person edits your row r9",
                     "title": "Ask the second person to change your row",
                     "kind": "guide",
                     "dir": "T21",
                     "file": "",
-                    "note": "You ask the second person to change the test row that you made. It shows that a PFM Office member can edit a row of another person. About 5 minutes.",
+                    "note": "You need one person of your office for about 10 minutes. You send that person the link of your test row. The person opens the link, types an X at the end of the Title, and selects Save. It shows that a PFM Office member can edit a row of another person.",
                     "guide": [
-                        "1. Open Teams.",
-                        "2. Select \"Chat\".",
-                        "3. Select \"New chat\".",
-                        "4. In the box \"To\", type the e-mail address you gave RADE for the second person.",
-                        "5. Select the chat box.",
-                        "6. Press Ctrl+V (the link of your row is on the clipboard).",
-                        "7. In the chat box, type: Open the link, add an X to the Title, select Save, tell me what you saw.",
-                        "8. Press Enter.",
-                        "9. Wait for the reply: the row saved, or no permission.",
-                        "If nobody replies: select \"Skip\"."
+                        "1. Ask the second person to stay at a computer for about 10 minutes.",
+                        "2. Open Teams.",
+                        "3. Select \"Chat\".",
+                        "4. Select \"New chat\".",
+                        "5. In the box \"To\", type the e-mail address you gave RADE for the second person.",
+                        "6. Select the chat box.",
+                        "7. Press Ctrl+V (the link of your test row is on the clipboard).",
+                        "8. In the chat box, type: Open this link, add an X to the Title, select Save, tell me if it saved.",
+                        "9. Press Enter.",
+                        "10. Wait for the reply: the row saved, or no permission.",
+                        "If nobody can help now: select \"Skip\" (the test of the PFM Office level then stays open)."
                     ],
                     "marker": "90161Z-T21-office-edit.txt",
-                    "estimate": 5,
+                    "estimate": 10,
                     "after": [
-                        "T21 Give the second person PFM Office r8"
+                        "T21 Give the second person PFM Office r9"
                     ],
                     "answers": [
                         {
@@ -327,7 +328,7 @@
                     ]
                 },
                 {
-                    "name": "T21 Power Automate shows your connections r8",
+                    "name": "T21 Power Automate shows your connections r9",
                     "title": "Check that Power Automate shows your connections",
                     "kind": "guide",
                     "dir": "T21",
@@ -369,25 +370,25 @@
                     ]
                 },
                 {
-                    "name": "T21 Open the test page r8",
+                    "name": "T21 Open the test page r9",
                     "title": "Open the test page",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Open",
                     "minutes": 5,
                     "note": "Opens the test page in your browser (no sign-in). Keep its tab open: the next steps use it.",
                     "estimate": 1,
                     "help": "Send the results as they are.",
                     "after": [
-                        "T21 Make the probe list r8"
+                        "T21 Make the probe list r9"
                     ],
                     "doing": "Opening the test page."
                 },
                 {
-                    "name": "T21 Put a test header on the list form r8",
+                    "name": "T21 Put a test header on the list form r9",
                     "title": "Put a test header on the list form",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Form",
                     "minutes": 20,
                     "note": "Signs in (CAC). Puts a test header on the probe list form and reads it back.",
@@ -399,11 +400,11 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r8"
+                        "T21 Make the probe list r9"
                     ]
                 },
                 {
-                    "name": "T21 Look at the list form r8",
+                    "name": "T21 Look at the list form r9",
                     "title": "Look at the list form",
                     "kind": "guide",
                     "dir": "T21",
@@ -420,7 +421,7 @@
                     "marker": "90161Z-T21-form-looked.txt",
                     "estimate": 3,
                     "after": [
-                        "T21 Put a test header on the list form r8"
+                        "T21 Put a test header on the list form r9"
                     ],
                     "answers": [
                         {
@@ -473,8 +474,8 @@
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
                     "urlConfig": "90161Z-flow-portal.txt",
                     "after": [
-                        "T21 Make the probe list r8",
-                        "T21 Power Automate shows your connections r8"
+                        "T21 Make the probe list r9",
+                        "T21 Power Automate shows your connections r9"
                     ],
                     "hide": [
                         "skip"
@@ -489,19 +490,20 @@
                     "note": "You finish the import of the full flows. It upgrades the flows of the last rounds, so a message or a banner that they were replaced is normal. About 5 minutes.",
                     "guide": [
                         "1. If the page says the solution already exists: select \"Upgrade\".",
-                        "2. In each connection box, select the arrow on its right.",
+                        "2. On the page \"Connection References\", select the arrow on the right of the first connection box.",
                         "3. Select your connection in the list.",
-                        "4. Select \"Next\".",
-                        "5. If the box \"1 Site URL\" is empty: type the address you typed in the RADE box \"Site address\".",
-                        "6. If the box \"2 Alert e-mail\" is empty: type your work e-mail address (the one you use in Outlook).",
-                        "7. Select \"Import\".",
-                        "8. Wait for the line \"Successfully imported\".",
+                        "4. In each other connection box on that page, select your connection too.",
+                        "5. Select \"Next\".",
+                        "6. If the box \"1 Site URL\" is empty: type the address you typed in the RADE box \"Site address\".",
+                        "7. If the box \"2 Alert e-mail\" is empty: type your work e-mail address (the one you use in Outlook).",
+                        "8. Select \"Import\".",
+                        "9. Wait for the line \"Successfully imported\".",
                         "If you see \"The original workflow definition has been deactivated and replaced\": go on.",
                         "If that message shows a button: select the button \"Done\" on that message.",
                         "If \"Import\" stays gray: in each box that already shows text, press Ctrl+A, Ctrl+X, then Ctrl+V.",
-                        "If a box has no connection: select \"New connection\" in that box.",
+                        "If a connection box has no connection: select \"New connection\" in that box.",
                         "If you selected \"New connection\": select \"Create\".",
-                        "If a box has a \"Refresh\" button: select it.",
+                        "If a connection box has a \"Refresh\" button: select it.",
                         "If a sign-in window opens: sign in with your CAC.",
                         "If the import fails: select \"Download log file\".",
                         "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
@@ -519,15 +521,46 @@
                     "doneLog": "Confirmed by you: imported the full solution.",
                     "answers": [
                         {
-                            "key": "import-boxes",
-                            "prompt": "Before \"Import\" could be selected, which boxes did you have to cut and paste?",
+                            "key": "import-conn",
+                            "prompt": "On the page \"Connection References\", what did you do?",
                             "kind": "pick",
                             "choices": [
-                                "None",
-                                "Only the boxes that showed a list name",
-                                "The list names and the 2 empty boxes",
-                                "The connection boxes too"
+                                "Connections were already chosen",
+                                "I chose my connection in each box",
+                                "I made a new connection",
+                                "Something else"
                             ]
+                        },
+                        {
+                            "key": "import-site",
+                            "prompt": "Did you type the site address into the box \"1 Site URL\"?",
+                            "kind": "yesno"
+                        },
+                        {
+                            "key": "import-mail",
+                            "prompt": "Did you type your e-mail address into the box \"2 Alert e-mail\"?",
+                            "kind": "yesno"
+                        },
+                        {
+                            "key": "import-lists",
+                            "prompt": "Did you type or change a list name in a box?",
+                            "kind": "yesno"
+                        },
+                        {
+                            "key": "import-other",
+                            "prompt": "Did you type or change any other box?",
+                            "kind": "yesno"
+                        },
+                        {
+                            "key": "import-which",
+                            "prompt": "Which other box? One line, no names.",
+                            "kind": "text",
+                            "showIf": {
+                                "key": "import-other",
+                                "in": [
+                                    "Yes"
+                                ]
+                            }
                         },
                         {
                             "key": "import-replaced",
@@ -659,286 +692,10 @@
                     ]
                 },
                 {
-                    "name": "T24 Second owner 1 of 6 r4",
-                    "title": "Add a second owner: Activity Log flow",
-                    "kind": "guide",
-                    "dir": "T24",
-                    "file": "",
-                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
-                        "3. Select the solution \"90-161.Z flows\".",
-                        "4. Select the flow \"90161Z F01 Activity Log r3\".",
-                        "5. Select \"Share\" at the top.",
-                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
-                        "7. Select that person in the list.",
-                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
-                        "If a panel about connections opens: select \"OK\".",
-                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
-                        "If the person cannot be added: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
-                    ],
-                    "marker": "90161Z-T24-owner-1.txt",
-                    "needs": [
-                        "net-flow"
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T24 Turn on all 8 flows r4"
-                    ],
-                    "answers": [
-                        {
-                            "key": "owner-1",
-                            "prompt": "Does the flow now show the person as an owner?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: added a second owner.",
-                    "doneText": "I added the owner",
-                    "url": "https://make.powerautomate.appsplatform.us/",
-                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
-                },
-                {
-                    "name": "T24 Second owner 2 of 6 r4",
-                    "title": "Add a second owner: Next Review Due flow",
-                    "kind": "guide",
-                    "dir": "T24",
-                    "file": "",
-                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
-                        "3. Select the solution \"90-161.Z flows\".",
-                        "4. Select the flow \"90161Z F02 Next Review Due r3\".",
-                        "5. Select \"Share\" at the top.",
-                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
-                        "7. Select that person in the list.",
-                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
-                        "If a panel about connections opens: select \"OK\".",
-                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
-                        "If the person cannot be added: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
-                    ],
-                    "marker": "90161Z-T24-owner-2.txt",
-                    "needs": [
-                        "net-flow"
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T24 Turn on all 8 flows r4"
-                    ],
-                    "answers": [
-                        {
-                            "key": "owner-2",
-                            "prompt": "Does the flow now show the person as an owner?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: added a second owner.",
-                    "doneText": "I added the owner",
-                    "url": "https://make.powerautomate.appsplatform.us/",
-                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
-                },
-                {
-                    "name": "T24 Second owner 3 of 6 r4",
-                    "title": "Add a second owner: Suspense Reminders flow",
-                    "kind": "guide",
-                    "dir": "T24",
-                    "file": "",
-                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
-                        "3. Select the solution \"90-161.Z flows\".",
-                        "4. Select the flow \"90161Z F03 Suspense Reminders r6\".",
-                        "5. Select \"Share\" at the top.",
-                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
-                        "7. Select that person in the list.",
-                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
-                        "If a panel about connections opens: select \"OK\".",
-                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
-                        "If the person cannot be added: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
-                    ],
-                    "marker": "90161Z-T24-owner-3.txt",
-                    "needs": [
-                        "net-flow"
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T24 Turn on all 8 flows r4"
-                    ],
-                    "answers": [
-                        {
-                            "key": "owner-3",
-                            "prompt": "Does the flow now show the person as an owner?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: added a second owner.",
-                    "doneText": "I added the owner",
-                    "url": "https://make.powerautomate.appsplatform.us/",
-                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
-                },
-                {
-                    "name": "T24 Second owner 4 of 6 r4",
-                    "title": "Add a second owner: Status Report flow",
-                    "kind": "guide",
-                    "dir": "T24",
-                    "file": "",
-                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
-                        "3. Select the solution \"90-161.Z flows\".",
-                        "4. Select the flow \"90161Z F04 Status Report r3\".",
-                        "5. Select \"Share\" at the top.",
-                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
-                        "7. Select that person in the list.",
-                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
-                        "If a panel about connections opens: select \"OK\".",
-                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
-                        "If the person cannot be added: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
-                    ],
-                    "marker": "90161Z-T24-owner-4.txt",
-                    "needs": [
-                        "net-flow"
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T24 Turn on all 8 flows r4"
-                    ],
-                    "answers": [
-                        {
-                            "key": "owner-4",
-                            "prompt": "Does the flow now show the person as an owner?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: added a second owner.",
-                    "doneText": "I added the owner",
-                    "url": "https://make.powerautomate.appsplatform.us/",
-                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
-                },
-                {
-                    "name": "T24 Second owner 5 of 6 r4",
-                    "title": "Add a second owner: Endorsement Routing flow",
-                    "kind": "guide",
-                    "dir": "T24",
-                    "file": "",
-                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
-                        "3. Select the solution \"90-161.Z flows\".",
-                        "4. Select the flow \"90161Z F05 Endorsement Routing r4\".",
-                        "5. Select \"Share\" at the top.",
-                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
-                        "7. Select that person in the list.",
-                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
-                        "If a panel about connections opens: select \"OK\".",
-                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
-                        "If the person cannot be added: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
-                    ],
-                    "marker": "90161Z-T24-owner-5.txt",
-                    "needs": [
-                        "net-flow"
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T24 Turn on all 8 flows r4"
-                    ],
-                    "answers": [
-                        {
-                            "key": "owner-5",
-                            "prompt": "Does the flow now show the person as an owner?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: added a second owner.",
-                    "doneText": "I added the owner",
-                    "url": "https://make.powerautomate.appsplatform.us/",
-                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
-                },
-                {
-                    "name": "T24 Second owner 6 of 6 r4",
-                    "title": "Add a second owner: Hold and Resume flow",
-                    "kind": "guide",
-                    "dir": "T24",
-                    "file": "",
-                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
-                        "3. Select the solution \"90-161.Z flows\".",
-                        "4. Select the flow \"90161Z F06 Hold and Resume r2\".",
-                        "5. Select \"Share\" at the top.",
-                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
-                        "7. Select that person in the list.",
-                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
-                        "If a panel about connections opens: select \"OK\".",
-                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
-                        "If the person cannot be added: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
-                    ],
-                    "marker": "90161Z-T24-owner-6.txt",
-                    "needs": [
-                        "net-flow"
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T24 Turn on all 8 flows r4"
-                    ],
-                    "answers": [
-                        {
-                            "key": "owner-6",
-                            "prompt": "Does the flow now show the person as an owner?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: added a second owner.",
-                    "doneText": "I added the owner",
-                    "url": "https://make.powerautomate.appsplatform.us/",
-                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
-                },
-                {
-                    "name": "T21 Start the health flow r8",
+                    "name": "T21 Start the health flow r9",
                     "title": "Start the health flow",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Run",
                     "minutes": 20,
                     "note": "Signs in (CAC). Adds one fake row that starts the test flow \"90161Z T21 Probe Health r6\": the flow writes one row that says it ran on the SharePoint connection of the solution.",
@@ -955,10 +712,10 @@
                     "doing": "Adding the row that starts the health flow."
                 },
                 {
-                    "name": "T21 Make the list view with the flow button r8",
+                    "name": "T21 Make the list view with the flow button r9",
                     "title": "Make the list view with the flow button",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part View",
                     "minutes": 20,
                     "note": "Signs in (CAC). Makes a list view with a button that starts your hand-made flow, and reads it back.",
@@ -970,13 +727,13 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r8",
+                        "T21 Make the probe list r9",
                         "T24 Turn on all 8 flows r4"
                     ],
                     "doing": "Making the list view with the button."
                 },
                 {
-                    "name": "T21 Use the list button r8",
+                    "name": "T21 Use the list button r9",
                     "title": "Use the button in the list",
                     "kind": "guide",
                     "dir": "T21",
@@ -996,7 +753,7 @@
                     "marker": "90161Z-T21-button-used.txt",
                     "estimate": 4,
                     "after": [
-                        "T21 Make the list view with the flow button r8"
+                        "T21 Make the list view with the flow button r9"
                     ],
                     "answers": [
                         {
@@ -1236,10 +993,10 @@
                     "doing": "Running the third part of the flow test."
                 },
                 {
-                    "name": "T21 Read the test results r8",
+                    "name": "T21 Read the test results r9",
                     "title": "Read the health, person and button results",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Read",
                     "minutes": 20,
                     "note": "Signs in (CAC). Reads counts only: the health flow row, the rows by the second person and the rows of the button flow. Waits up to about 4 minutes for the health row.",
@@ -1251,7 +1008,7 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r8"
+                        "T21 Make the probe list r9"
                     ],
                     "doing": "Reading what the flows wrote."
                 },
@@ -1273,10 +1030,10 @@
                     "doing": "Moving the test rows to the Recycle Bin."
                 },
                 {
-                    "name": "T21 Remove the test list and library r8",
+                    "name": "T21 Remove the test list and library r9",
                     "title": "Remove the test person, list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r8.ps1",
+                    "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Clean -Label last",
                     "minutes": 20,
                     "note": "Signs in (CAC). Takes the second person out of Visitors and PFM Office, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.",
@@ -1290,7 +1047,7 @@
                     "doing": "Removing the test list and library."
                 },
                 {
-                    "name": "T21 Remove the 2 test flows r8",
+                    "name": "T21 Remove the 2 test flows r9",
                     "title": "Delete the 2 test flows",
                     "kind": "guide",
                     "dir": "T21",
@@ -1425,33 +1182,33 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-first-r8.txt",
-                    "step": "T21 Check the test site is clean r8"
+                    "name": "90161Z-T21-probe-clean-first-r9.txt",
+                    "step": "T21 Check the test site is clean r9"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-make-r8.txt",
-                    "step": "T21 Make the probe list r8"
+                    "name": "90161Z-T21-probe-make-r9.txt",
+                    "step": "T21 Make the probe list r9"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-run-r8.txt",
-                    "step": "T21 Start the health flow r8"
+                    "name": "90161Z-T21-probe-run-r9.txt",
+                    "step": "T21 Start the health flow r9"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-view-r8.txt",
-                    "step": "T21 Make the list view with the flow button r8"
+                    "name": "90161Z-T21-probe-view-r9.txt",
+                    "step": "T21 Make the list view with the flow button r9"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-read-r8.txt",
-                    "step": "T21 Read the test results r8"
+                    "name": "90161Z-T21-probe-read-r9.txt",
+                    "step": "T21 Read the test results r9"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-last-r8.txt",
-                    "step": "T21 Remove the test list and library r8"
+                    "name": "90161Z-T21-probe-clean-last-r9.txt",
+                    "step": "T21 Remove the test list and library r9"
                 },
                 {
                     "dir": "T24",
@@ -1475,8 +1232,8 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-form-r8.txt",
-                    "step": "T21 Put a test header on the list form r8"
+                    "name": "90161Z-T21-probe-form-r9.txt",
+                    "step": "T21 Put a test header on the list form r9"
                 },
                 {
                     "dir": "T20",
@@ -1490,13 +1247,13 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-person-r8.txt",
-                    "step": "T21 Add the second person r8"
+                    "name": "90161Z-T21-probe-person-r9.txt",
+                    "step": "T21 Add the second person r9"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-office-r8.txt",
-                    "step": "T21 Give the second person PFM Office r8"
+                    "name": "90161Z-T21-probe-office-r9.txt",
+                    "step": "T21 Give the second person PFM Office r9"
                 }
             ],
             "cleanup": [
@@ -2369,877 +2126,40 @@
             "apps": [
                 {
                     "name": "90-161.Z: Publications and Forms Management",
-                    "summary": "Round R34 r1: the window, PFM Office level, tier T-0, second person, import by upgrade, 2 test flows, form and button, full flow test. Fake data.",
+                    "summary": "Round R35 r1: the window, PFM Office level, tier T-0, second person, import by upgrade, form and button, full flow test. Fake data.",
                     "steps": [
                         "T22 Open the 90-161.Z window r7",
                         "T22 Did the window open r7",
                         "T22 Answer: look and cards r7",
-                        "T21 Check the test site is clean r8",
-                        "T21 Make the probe list r8",
+                        "T21 Check the test site is clean r9",
+                        "T21 Make the probe list r9",
                         "T20 Give PFM Office the edit-all level r2",
                         "T19 Add the tier T-0 r4",
-                        "T21 Add the second person r8",
-                        "T21 Give the second person PFM Office r8",
-                        "T21 Second person edits your row r8",
-                        "T21 Power Automate shows your connections r8",
-                        "T21 Open the test page r8",
-                        "T21 Put a test header on the list form r8",
-                        "T21 Look at the list form r8",
+                        "T21 Add the second person r9",
+                        "T21 Give the second person PFM Office r9",
+                        "T21 Second person edits your row r9",
+                        "T21 Power Automate shows your connections r9",
+                        "T21 Open the test page r9",
+                        "T21 Put a test header on the list form r9",
+                        "T21 Look at the list form r9",
                         "T24 Import the full solution r4: choose the file",
                         "T24 Import the full solution r4: finish",
                         "T17 Import log reader r3",
                         "T24 Turn on all 8 flows r4",
                         "T24 Check the flows after the import r4",
-                        "T24 Second owner 1 of 6 r4",
-                        "T24 Second owner 2 of 6 r4",
-                        "T24 Second owner 3 of 6 r4",
-                        "T24 Second owner 4 of 6 r4",
-                        "T24 Second owner 5 of 6 r4",
-                        "T24 Second owner 6 of 6 r4",
-                        "T21 Start the health flow r8",
-                        "T21 Make the list view with the flow button r8",
-                        "T21 Use the list button r8",
+                        "T21 Start the health flow r9",
+                        "T21 Make the list view with the flow button r9",
+                        "T21 Use the list button r9",
                         "T24 Full solution test, part 1 r4",
                         "T24 Run F02 once and F04 once r4",
                         "T24 Full solution test, part 2 r4",
                         "T24 Find the F04 e-mail r4",
                         "T24 Run F02 again r4",
                         "T24 Full solution test, part 3 r4",
-                        "T21 Read the test results r8",
+                        "T21 Read the test results r9",
                         "T24 Clean up r4",
-                        "T21 Remove the test list and library r8",
-                        "T21 Remove the 2 test flows r8"
-                    ]
-                }
-            ]
-        },
-        {
-            "out": "scripts/gov/paste/90161Z-R33-round-r4.ps1",
-            "round": "R33",
-            "title": "Round R33 r4: the paste-size test (one paste of 1 MB)",
-            "files": [
-                {
-                    "dir": "T25",
-                    "src": "scripts/gov/90161Z-T25-paste-size-r1.ps1"
-                },
-                {
-                    "dir": "T25",
-                    "src": "samples/90161Z-T25-padding-r1.txt"
-                }
-            ],
-            "steps": [
-                {
-                    "name": "T25 Paste-size test r1",
-                    "title": "Check that the large paste arrived whole",
-                    "dir": "T25",
-                    "file": "90161Z-T25-paste-size-r1.ps1",
-                    "minutes": 2,
-                    "note": "Reads the padding file the round saved and checks that every line is there. Changes nothing and uses no network.",
-                    "estimate": 1,
-                    "help": "Send the results as they are.",
-                    "doing": "Checking the padding file."
-                }
-            ],
-            "collect": [
-                {
-                    "dir": "T25",
-                    "name": "90161Z-T25-paste-size-r1.txt",
-                    "step": "T25 Paste-size test r1"
-                }
-            ],
-            "cleanup": [
-                {
-                    "path": "T02",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T03",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T04",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T05",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T06",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T13",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T07\\90161Z-T07-seal-test-r*.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T07\\90161Z-T07-seal-prep-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T07\\90161Z-T07-seal-prep-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T10\\90161Z-T10-brief-check-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T01\\90161Z-T01-renderer-test-r8.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T01\\90161Z-T01-result-r8.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T09\\90161Z-T09-epubs-collect-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-partb-form-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R09",
-                    "kind": "dir"
-                },
-                {
-                    "path": "Rounds\\R10",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T09\\90161Z-T09-save-pages-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T12\\90161Z-T09-save-pages-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T15\\90161Z-T15-env-inventory-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-pnp-signin-test-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-pnp-result-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T15\\90161Z-T15-inventory-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T07\\90161Z-T07-seal-prep-r3.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-outlook-check-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T10",
-                    "kind": "dir"
-                },
-                {
-                    "path": "Rounds\\R11",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T07\\90161Z-T07-seal-prep-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-partb-form-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-partb-rows-r1.json",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-rights-result-r2.json",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R12",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T14\\90161Z-T14-site-logo-r1.png",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T14\\90161Z-T14-site-logo-thumb-r1.png",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T14\\90161Z-T14-site-logo-r2.png",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T14\\90161Z-T14-site-logo-r3.png",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r7.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r7.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T14\\90161Z-T14-site-logo-thumb-r2.png",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r6.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r6.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r2.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R13",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T11\\90161Z-T11-rights-probe-r3.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-rights-result-r3.json",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-flows-solution-r1.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r3.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R14",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-test-r1.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-rights-probe-r4.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-rights-result-r4.json",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R15",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-test-r2.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T11\\90161Z-T11-rights-probe-r5.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r5.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-test-a-r3.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-test-b-r3.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-result-a-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-result-b-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-b-started.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r8.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r8.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T14",
-                    "kind": "dir"
-                },
-                {
-                    "path": "Rounds\\R16",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-test-a-r4.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-result-a-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-export-read-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r9.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r9.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R17",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-test-a-r5.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-result-a-r5.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-import-log-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-import-log-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T17\\90161Z-T17-solution-a-started.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r10.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r10.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R18",
-                    "kind": "dir"
-                },
-                {
-                    "path": "Rounds\\R19",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-flows-r1.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-test-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part1-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part2-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-test-publication.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-imported.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-f03-ran.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-flows-r2.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T19\\90161Z-T19-list-update-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T19\\90161Z-T19-list-update-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-flows-r3.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R20",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-flows-r4.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-test-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T19\\90161Z-T19-list-update-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T19\\90161Z-T19-list-update-r2.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part1-r2.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part2-r2.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-test-publications-r2.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R21",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T19\\90161Z-T19-list-update-r3.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T19\\90161Z-T19-list-update-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-test-r3.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part1-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part2-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R22",
-                    "kind": "dir"
-                },
-                {
-                    "path": "Rounds\\R23",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T20",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r11.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part1-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part2-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "Rounds\\R24",
-                    "kind": "dir"
-                },
-                {
-                    "path": "Rounds\\R25",
-                    "kind": "dir"
-                },
-                {
-                    "path": "Rounds\\R26",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T21\\files",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-*-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe*-r1.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-app-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-*-imported.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-aib-looked.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-app-*.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-second-person.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-removed.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-*-r2.*",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-*-r4.*",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-flows-r5.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-test-publications-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-test-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-flows-r6.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part1-r5.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-part2-r5.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-test-publications-r5.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-*ed.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-slice1-f03-ran.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-resubmitted.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T18\\90161Z-T18-email-looked.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-r3.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-r3.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-*-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-links-r3.html",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-*-looked.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-button-used.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-pfm-window-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r1.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-judged.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T23",
-                    "kind": "dir"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-r4.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-*-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-links-r4.html",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-button-flow-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r2.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-list1-read.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-list2-read.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-judged-access.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-R28-frame-answered.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-R28-install-checked.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T24\\90161Z-T24-full-flows-r1.zip",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T21\\90161Z-T21-probe-*-r5.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T24\\90161Z-T24-full-solution-test-r1.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-pfm-window-r2.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-pfm-window-r3.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r3.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-judged-look.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-site-setup-r12.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r12.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-logo-r12.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T07\\90161Z-T07-seal-prep-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-pfm-window-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-cards-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-types-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-ui-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-parts-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-grid-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-measure-r4.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r4.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-judged-fixes.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-card-*-r5.png",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-pfm-window-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-cards-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-types-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-ui-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-parts-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-grid-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-measure-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r5.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-card-*-r6.png",
-                    "kind": "glob"
-                }
-            ],
-            "fetch": [],
-            "apps": [
-                {
-                    "name": "90-161.Z: Publications and Forms Management",
-                    "summary": "Round R33 r2: one paste of 1 MB with a padding file, to find out if a large paste works. No data.",
-                    "steps": [
-                        "T25 Paste-size test r1"
+                        "T21 Remove the test list and library r9",
+                        "T21 Remove the 2 test flows r9"
                     ]
                 }
             ]
