@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 18 Nov 26 (Round R31a and R31b are open).
+Updated: 18 Nov 26 (Round R32 and R33 are open).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,11 +26,50 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R31a r1 (run first): the flow steps a third time, with clearer cards
+### Round R32 r1: my 90-161.Z window r6 and the flow steps, in one paste
 
-**For:** runs again the flow steps that Power Automate errors stopped in R29a and R30a: the health flow, the button flow I make by hand and the export reader, the list button, the import of the full flows and the full flow test. The list form look now uses the side panel of the list. A delete step now runs only if its flow or solution was made.
-**Time:** about 2 hours with waits; about 60 minutes of my own work (estimate).
-**Changes:** on the test site: a probe list and library, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end if they were made; the solution "90-161.Z flows" is upgraded and stays. On my computer: my OneDrive folder RADE\90-161.Z and one export file in Downloads. Before Run, the window lists every file.
+**For:** one paste for the whole round again. First my 90-161.Z window r6 with 4 alignment fixes (the Action Status caption, the "Your Work" line, the "Passed" label, and the publication titles in a column) and 16 checks. Then the flow steps a fourth time (health flow, button flow and export reader, list button, full flows and the full flow test), with 2 new hand steps: I check that the 6 flows are On with good connections, and I add a second owner to one flow (I remove the person again at the end). The paste is about 810 KB, larger than any before. It runs on RADE engine-v20: the cards show only the buttons that have a use, the card frame stays in one place, RADE shows a short tour at its first start and asks for other feedback at the end. Its check "RADE can run its scripts" now shows if my computer needs the "Bypass" setting; for that, every check must run again, so I first delete the saved check results. At the end I paste the same text once in the PowerShell console, to see if RADE starts there too.
+**Time:** about 2.5 hours with waits; about 80 minutes of my own work (estimate).
+**Changes:** on the test site: a probe list and library, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end if they were made; the solution "90-161.Z flows" is upgraded and stays; one flow gets a second owner, removed at the end. Before I start, I ask one person in my office if I may add them as an owner of a test flow for about an hour; without a person I skip that step. On my computer: I delete RADE\Config\rade-checks.json (the saved check results; RADE makes it again), and the round writes my OneDrive folder RADE\90-161.Z (the window scripts, their result file and 17 pictures of the window cards with fake data) and one export file in Downloads. For 3 window checks I turn high contrast on and off in Windows Settings (Windows+U, Contrast themes). Before Run, the window lists every file.
+**Steps:**
+1. Open File Explorer.
+2. Open the folder RADE\Config in my OneDrive folder.
+3. Delete the file rade-checks.json (RADE then runs every check again).
+4. Press Copy script next to the link below.
+5. Open the Start menu.
+6. Type: ISE
+7. Open Windows PowerShell ISE (not "Run as administrator").
+8. Select File > New.
+9. Click in the white script pane.
+10. Press Ctrl+V.
+11. Press F5. The RADE window opens.
+12. If RADE shows its tour first, select "Next" on each card.
+13. If the last tour card shows, select "Close the tour".
+14. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
+15. Press Run.
+16. Do each check in the bar at the bottom of the 90-161.Z window.
+17. Close the 90-161.Z window with its X.
+18. Do each step the RADE window shows, until the log says DONE.
+19. At DONE, select Send in the Outlook draft that opens.
+20. Press Copy script next to the link below again.
+21. Open the Start menu.
+22. Type: PowerShell
+23. Open Windows PowerShell (not ISE, not "Run as administrator").
+24. Press Ctrl+V in the blue window.
+25. Wait up to 5 minutes for a RADE window.
+26. If a RADE window opens, select Exit in it.
+27. Close the blue window.
+
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R32-round-r1.ps1
+
+**Report:** send the Outlook draft the round makes (subject "90161Z R32 PASSED" or "90161Z R32 NEEDS REVIEW", every file in the results folder attached, the 17 pictures too). Then tell Claude the e-mail is sent, and "console: opened" or "console: did not open".
+**If it fails:** do the line that starts with "What to do". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R32 did not paste"; Claude then makes the round in 2 parts. If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error". If the 90-161.Z window does not open, go on with the steps the RADE window shows.
+
+### Round R33 r1 (run after R32): the paste-size test, one paste of 1 MB
+
+**For:** finds out if a paste of 1 MB works, so the rounds need no size limit. The round holds RADE, one padding file (6,000 lines of fixed text, no data) and one check that the file arrived whole.
+**Time:** about 5 minutes (estimate).
+**Changes:** nothing on the test site or in Power Automate. On my computer: the T25 folder in my OneDrive folder RADE\90-161.Z (1 script, the padding file of about 700 KB and 1 result file). Before Run, the window lists every file.
 **Steps:**
 1. Press Copy script next to the link below.
 2. Open the Start menu.
@@ -42,42 +81,19 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 8. Press F5. The RADE window opens.
 9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
 10. Press Run.
-11. Do each step the window shows, until the log says DONE.
-12. At DONE, select Send in the Outlook draft that opens.
+11. At DONE, select Send in the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R31a-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R33-round-r1.ps1
 
-**Report:** send the Outlook draft the round makes (subject "90161Z R31a PASSED" or "90161Z R31a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error".
-
-### Round R31b r1 (run after R31a): my 90-161.Z window r5
-
-**For:** tests the logo and title at the top of the rail, high contrast (the window now follows the Windows colors), and the "Your Work" line and the Action Status card, which I now judge in the window while I can see them. The window saves a picture of each card. Then 3 questions on its look.
-**Time:** about 20 minutes (estimate).
-**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window scripts, their result file and 17 pictures of the window cards with fake data). For 3 checks I turn high contrast on, look at the window, and turn it off again in Windows Settings (Windows+U, Contrast themes); the check bar says each action. All data in the window is FAKE; nothing is read or sent. Before Run, the window lists every file.
-**Steps:**
-1. Press Copy script next to the link below.
-2. Open the Start menu.
-3. Type: ISE
-4. Open Windows PowerShell ISE (not "Run as administrator").
-5. Select File > New.
-6. Click in the white script pane.
-7. Press Ctrl+V.
-8. Press F5. The RADE window opens.
-9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-10. Press Run.
-11. Do each check in the bar at the bottom of the 90-161.Z window.
-12. Close the 90-161.Z window with its X.
-13. Answer the 3 questions in the RADE window.
-14. At DONE, select Send in the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R31b-round-r1.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R31b PASSED" or "90161Z R31b NEEDS REVIEW", every file in the results folder attached, the 17 pictures too). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If the 90-161.Z window does not open, send the results as they are.
+**Report:** send the Outlook draft the round makes (subject "90161Z R33 PASSED" or "90161Z R33 NEEDS REVIEW", the result file attached). Then tell Claude the e-mail is sent.
+**If it fails:** if ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R33 did not paste". That is a valid result of this test.
 
 ## Done
 
+- Round R31a r1 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the list form shows my test header in the side panel (the new way to open it works); the clean-up asked me to remove only what was made; the test site was clean at the start and at the end. Failed: the same 3 Power Automate steps (health flow import, button flow I make by hand, full flow import); this time the error names the SharePoint connector, which Power Automate could not load. Skipped: 19 steps that needed them. The form menu has no "Configure layout"; the app does not need it. My 3 wants for RADE went to the RADE session:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r31a-results.md
+- Round R31b r1 (18 Nov 26): needs review. Window checks 12 of 14: all 3 high-contrast checks pass for the first time, and 17 of 17 card pictures arrived. Failed: the "Your Work" line and the Action Status card. My 4 screenshots are 4 alignment defects, fixed in window r6 (R32):
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r31b-results.md
 - Round R30a r1 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: Power Automate shows my connections (new first step); the test list, library and form header were made by script; the test site was clean at the start and at the end. Failed: the same 3 Power Automate steps, again with portal errors during a Microsoft 365 fault (health flow import, button flow I make by hand, full flow import), and the form look: the link opens the new-entry page, which has no layout pencil. Skipped: 17 steps that needed them. Next round: the clean-up asks me to remove a flow only if it was made:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30a-results.md
 - Round R30b r1 (18 Nov 26): needs review. Window checks 11 of 12: Narrator names now pass; high contrast "on" fails. The "Your Work" line and the Action Status card are not judged yet (the questions came after the window was closed); the look is "close, with small changes", with 8 look notes (5 for RADE alone):
