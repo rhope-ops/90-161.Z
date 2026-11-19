@@ -520,8 +520,8 @@ if [ "${on[bundle]}" = 1 ]; then
 tags=$(timeout 30 git ls-remote --tags https://github.com/rhope-ops/RADE 'refs/tags/engine-v*' 2>/dev/null || true)
 lock_tag=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('tag',''))")
 lock_commit=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('commit',''))")
-rbase=$(git merge-base HEAD origin/main 2>/dev/null) && rfiles=$( { git diff --name-only "$rbase"; git ls-files -o --exclude-standard; } 2>/dev/null) || rfiles='*all*'
-verdict=$(rade_lock_verdict "$tags" "$lock_tag" "$lock_commit" "$rfiles")
+rb=$(git merge-base HEAD origin/main 2>/dev/null) && rf=$( { g=(git -c core.quotePath=0); "${g[@]}" diff --name-only "$rb"; "${g[@]}" ls-files -o --exclude-standard; } 2>/dev/null) || rf='*all*'
+verdict=$(rade_lock_verdict "$tags" "$lock_tag" "$lock_commit" "$rf")
 case "$verdict" in
   OK*) ok "RADE engine is the newest release ($lock_tag, commit matches the tag)";;
   NOTCHECKED) echo "NOTE RADE engine newest-release check NOT RUN (no answer from github.com); lock = $lock_tag";;
