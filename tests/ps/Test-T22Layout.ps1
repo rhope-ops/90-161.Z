@@ -1,10 +1,10 @@
-# Tests the look of the T22 PFM window r6 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
+# Tests the look of the T22 PFM window r7 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
 # round R31: the rail head W1, the high-contrast colors W2 and the card pictures W4).
 # Network: none.
 # Writes: one temporary folder with the measure file and the card pictures of the window; removed at the end.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Windows only: elsewhere the one line "T22LAYOUT SKIP ..." and exit 0.
-# Runs scripts/gov/90161Z-T22-pfm-window-r6.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
+# Runs scripts/gov/90161Z-T22-pfm-window-r7.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
 # off-screen, measured and closed; no question) and checks what it wrote: each crumb's link and rest have one font and size
 # (V2), the ink gap after the link is at most 8 px at 100 % (V2), step 8 has no "See the 0 findings" link (V3), step 8's
 # Action Status card ends within 2 px of the main card (V4), Full History is drawn like the other white secondary
@@ -15,6 +15,12 @@
 # 1.25 x and 1.5 x: each Action Status caption is level with the main card's first line (D1), each crumb's link and rest
 # have one size and one text middle (D2), each check chip is level with its first text line (D3), and the titles of each
 # pub grid start in one column, after the widest number and the gap or under the number (D4); 1 px at 100 %, scaled.
+# R7 (R32 W1 to W3), at the same 3 scales: no pub cell is cut (each number and title needs no more width, and its lines
+# no more height, than its cell gave, beside or under) and the head of the pub column is not shortened (W1); every chip
+# beside text (check, list rows, rows blocks, the chips row) is level with its first text line, with the list chips of
+# Your Work and the rows chips of step 8 measured (W3). Once: a mouse-wheel turn on the middle of the first card of Your
+# Work (not on the scroll bar), sent to the button with the focus, scrolls the main column; one on a grid that can
+# still scroll scrolls the grid, not the main column (W2; the window's own filter is called, no real pointer moves).
 # Each line shows the measured numbers.
 # Last line: "T22LAYOUT pass=N fail=0" (tests/ps/Invoke-Ps51.ps1 runs it on the ps51 Windows job).
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
@@ -95,7 +101,7 @@ function Test-Contrast($M) {
 }
 <#
 .SYNOPSIS
-Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r6.png, saved in the folder of
+Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r7.png, saved in the folder of
 the measure file, and the first one is not blank (at least 3 colors in a 20 x 20 grid of its pixels).
 .PARAMETER M
 The measure file (Cards, Pngs).
@@ -121,6 +127,54 @@ function Test-CardPng($M, [string]$Dir) {
 # The cards with an Action Status card (D1) and the cards with a grid of publications (D4): each must have its facts.
 $levelCaps = @('step8', 'waves', 'step11', 'step13', 'pub')
 $levelPubs = @('home', 'empty', 'queue')
+# R7 (W3): the kinds of chip beside text each card must have measured ("Needs You Today" is the list of Your Work).
+$chipKinds = @{ home = @('list'); step8 = @('check', 'rows', 'chips'); waves = @('rows', 'chips'); step11 = @('rows', 'chips'); settings = @('rows') }
+<#
+.SYNOPSIS
+Checks the chips beside text of one card at one scale (D3 of R6; R7 W3: every kind): each chip's middle is within the
+tolerance of its first text line's middle, and the card has each kind of $chipKinds it must have.
+.PARAMETER Key
+The card key.
+.PARAMETER Chips
+The measured chips (Chip, Kind, ChipMid, Line, LineMid).
+.PARAMETER Tol
+The tolerance in pixels.
+.PARAMETER At
+The scale, as text (it starts each line).
+#>
+function Test-ChipLevel([string]$Key, $Chips, [double]$Tol, [string]$At) {
+  foreach ($want in @($chipKinds[$Key])) { if (-not $want) { continue }
+    $n = @($Chips | Where-Object { [string]$_.Kind -eq $want }).Count
+    Test-That ($At + ' W3 ' + $Key + ': ' + $want + ' chips measured') ($n -gt 0) ('chips of this kind: ' + $n + '; all chips: ' + @($Chips).Count) }
+  foreach ($x in $Chips) { $d = [math]::Abs([double]$x.ChipMid - [double]$x.LineMid)
+    $nums = 'chip middle ' + $x.ChipMid + '; first line "' + $x.Line + '" middle ' + $x.LineMid + '; difference ' + $d + ' px'
+    Test-That ($At + ' D3/W3 ' + $Key + ': chip "' + $x.Chip + '" (' + $x.Kind + ') level with its first text line (+-' + $Tol + ' px)') ($d -le $Tol) $nums }
+}
+<#
+.SYNOPSIS
+Checks one pub grid at one scale for cut text (R7, R32 W1): the head of the pub column was measured and needs no more
+width than it had (no dots), and in every row drawn the number and the title need no more width, and their lines no
+more height, than the cell gave them (beside or under).
+.PARAMETER Key
+The card key.
+.PARAMETER P
+The measured grid (Grid, Rows, Head, HeadW, HeadHave, Beside, NumW, NumHave, TitleW, TitleHave, NeedH, HaveH).
+.PARAMETER At
+The scale, as text (it starts each line).
+#>
+function Test-PubCut([string]$Key, $P, [string]$At) {
+  $ok = ([string]$P.Head -ne '' -and [int]$P.HeadW -le [int]$P.HeadHave)
+  Test-That ($At + ' W1 ' + $Key + ' ' + $P.Grid + ': head not shortened') $ok ('head "' + $P.Head + '" needs ' + $P.HeadW + ' px, has ' + $P.HeadHave + ' px')
+  $n = [int]$P.Rows; $cut = @(); $nw = @($P.NumW); $nh = @($P.NumHave); $tw = @($P.TitleW); $th = @($P.TitleHave); $lh = @($P.NeedH); $ch = @($P.HaveH)
+  for ($i = 0; $i -lt $n; $i++) {
+    if ([int]$nw[$i] -gt [int]$nh[$i] -or [int]$tw[$i] -gt [int]$th[$i] -or [int]$lh[$i] -gt [int]$ch[$i]) {
+      $cut += ('row ' + ($i + 1) + ': number ' + $nw[$i] + '/' + $nh[$i] + ', title ' + $tw[$i] + '/' + $th[$i] + ', height ' + $lh[$i] + '/' + $ch[$i]) } }
+  $mode = $(if (@($P.Beside) -contains $true) { 'beside' } else { 'under' })
+  $nums = 'rows drawn ' + $n + ' (' + $mode + '); widest number ' + [int](@($nw) | Measure-Object -Maximum).Maximum + ' px in ' + [int](@($nh) | Measure-Object -Minimum).Minimum
+  $nums += ' px; tallest need ' + [int](@($lh) | Measure-Object -Maximum).Maximum + ' px in ' + [int](@($ch) | Measure-Object -Minimum).Minimum + ' px; cut: ' + $cut.Count
+  if ($cut.Count) { $nums += ' (' + ($cut -join '; ') + ')' }
+  Test-That ($At + ' W1 ' + $Key + ' ' + $P.Grid + ': no publication number or title cut') ($n -ge 1 -and $cut.Count -eq 0) $nums
+}
 <#
 .SYNOPSIS
 Checks D1 to D4 (R6, the R31b defects) on the alignment facts (Level) of every card measured at one scale.
@@ -130,7 +184,8 @@ line. D2: on each card with a crumb link (the cards of $crumbCards at least), li
 their text middles are within the tolerance. D3: each check chip (step 8 has one at least) is within the tolerance of
 its first text line. D4: each pub grid (one at least on each card of $levelPubs) drew 2 rows or more, all its titles
 start at one x, and that x is at or after the widest number's end and the gap (titles beside) or each title starts at
-or below its number's bottom (titles under). The tolerance is 1 px at 100 %: Sc8 / 8, at least 1.
+or below its number's bottom (titles under). The tolerance is 1 px at 100 %: Sc8 / 8, at least 1. R7: the chips of
+every kind (Test-ChipLevel, W3) and the cut cells and head of each pub grid (Test-PubCut, W1).
 .PARAMETER Cards
 The measured cards (Key, Level) of one scale.
 .PARAMETER Sc8
@@ -152,14 +207,11 @@ function Test-Level($Cards, [double]$Sc8, [string]$At) {
     if ($cr) { $d = [math]::Abs([double]$cr.LinkMid - [double]$cr.RestMid); $ok = ([double]$cr.LinkSize -eq [double]$cr.RestSize -and $d -le $tol)
       $nums = 'link ' + $cr.LinkSize + ' pt middle ' + $cr.LinkMid + '; rest ' + $cr.RestSize + ' pt middle ' + $cr.RestMid + '; difference ' + $d + ' px'
       Test-That ($At + ' D2 ' + $k + ': crumb link and rest, one size and one middle (+-' + $tol + ' px)') $ok $nums }
-    $chips = @($lv.Chips | Where-Object { $_ })
-    if ($k -eq 'step8' -and -not $chips.Count) { Test-That ($At + ' D3 step8: chip "Passed" measured') $false 'no check chip measured' }
-    foreach ($x in $chips) { $d = [math]::Abs([double]$x.ChipMid - [double]$x.LineMid)
-      $nums = 'chip middle ' + $x.ChipMid + '; first line middle ' + $x.LineMid + '; difference ' + $d + ' px'
-      Test-That ($At + ' D3 ' + $k + ': chip "' + $x.Chip + '" level with its first text line (+-' + $tol + ' px)') ($d -le $tol) $nums }
+    Test-ChipLevel $k @($lv.Chips | Where-Object { $_ }) $tol $At
     $pubs = @($lv.Pubs | Where-Object { $_ })
     if ($levelPubs -contains $k -and -not $pubs.Count) { Test-That ($At + ' D4 ' + $k + ': publication grid measured') $false 'no pub grid measured' }
     foreach ($p in $pubs) {
+      Test-PubCut $k $p $At
       $n = [int]$p.Rows; $xs = @(@($p.TitleX) | Sort-Object -Unique); $beside = @($p.Beside) -contains $true
       $num = [int](@($p.NumRight) | Measure-Object -Maximum).Maximum
       $low = @(for ($i = 0; $i -lt $n; $i++) { if ([int]@($p.TitleTop)[$i] -lt [int]@($p.NumBottom)[$i]) { $i } })
@@ -168,12 +220,33 @@ function Test-Level($Cards, [double]$Sc8, [string]$At) {
       $nums = 'rows drawn ' + $n + '; title x ' + ($xs -join ', ') + '; ' + $how
       Test-That ($At + ' D4 ' + $k + ' ' + $p.Grid + ': titles start in one column') $ok $nums } }
 }
+<#
+.SYNOPSIS
+Checks the mouse wheel (R7, R32 W2): one turn towards you on the middle of the first card of Your Work, sent to the
+button with the focus, was taken by the window's filter and scrolled the main column down, with the pointer on a part
+of the card (not on the main column or its scroll bar); one turn on a grid that could still scroll moved the grid's
+first row and not the main column (when the card had such a grid).
+.PARAMETER M
+The measure file (Wheel, WheelError).
+#>
+function Test-Wheel($M) {
+  $w = $M.Wheel
+  if (-not $w) { Test-That 'wheel: measured' $false ('no wheel facts' + $(if ($M.WheelError) { '; error: ' + $M.WheelError } else { '' })); return }
+  $onCard = ([string]$w.Under -and [string]$w.Under -notmatch '"Main column"$')
+  $ok = ([bool]$w.Scrolls -and [bool]$w.Handled -and $onCard -and [int]$w.After -gt [int]$w.Before)
+  $nums = 'card ' + $w.Card + ' scrolls ' + $w.Scrolls + '; pointer on ' + $w.Under + '; taken ' + $w.Handled + '; scroll position ' + $w.Before + ' -> ' + $w.After
+  Test-That 'wheel: the card scrolls from a point on the card, not the scroll bar' $ok $nums
+  if ($null -eq $w.GridBefore) { Write-Host 'T22LAYOUT note wheel: no grid on the card could still scroll; the grid turn was not tried'; return }
+  $ok = ([bool]$w.GridHandled -and [int]$w.GridAfter -gt [int]$w.GridBefore -and [int]$w.MainAfter -eq [int]$w.MainBefore)
+  $nums = 'pointer on ' + $w.GridUnder + '; taken ' + $w.GridHandled + '; first row ' + $w.GridBefore + ' -> ' + $w.GridAfter + '; main column ' + $w.MainBefore + ' -> ' + $w.MainAfter
+  Test-That 'wheel: the grid under the pointer scrolls, the card stays' $ok $nums
+}
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGuid().ToString('N'))
 [void](New-Item -ItemType Directory -Path $tmp)
 try {
   $file = Join-Path $tmp 'measure.json'
   $engine = (Get-Process -Id $PID).Path
-  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r6.ps1'
+  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r7.ps1'
   $ErrorActionPreference = 'Continue'   # the child's error output is shown below, not thrown here
   $log = @(& $engine -NoProfile -ExecutionPolicy Bypass -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'
@@ -199,6 +272,7 @@ try {
     foreach ($s in $scaled) { Test-Level @($s.Cards) ([double]$s.Sc8) ('dpi ' + $s.Dpi + ' (' + $s.K + ' x)') }
     $empty = @($m.EmptyNames | Where-Object { $_ })
     Test-That 'every button, link and text box has an accessible name' ($empty.Count -eq 0) ('without a name: ' + $empty.Count + $(if ($empty.Count) { ' (' + ($empty -join ', ') + ')' } else { '' }))
+    Test-Wheel $m
     Test-RailHead $m
     Test-Contrast $m
     Test-CardPng $m $tmp

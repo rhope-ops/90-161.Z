@@ -1,14 +1,16 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r6, part "types": the C# source of the window's own drawn controls, as text.
+  90-161.Z Task 22 r7, part "types": the C# source of the window's own drawn controls, as text.
 .DESCRIPTION
   Pfm.Gfx (rounded shapes), Pfm.Chip (a rounded status chip), Pfm.Card (a card with a thin edge and an optional top
   bar), Pfm.Steps (the 12 step dots), Pfm.RailItem (a rail button), Pfm.LinkText (R30 V2: the link of a crumb, drawn
-  in the crumb's own font with no padding, so the crumb reads as one line) and Rade.Native (HideCaret, used by the
+  in the crumb's own font with no padding, so the crumb reads as one line), Pfm.Wheel (R7, R32 W2: a message filter
+  that gives a mouse-wheel turn to what is under the pointer, not to the control with the focus; its routing functions
+  are public so the measure part can test them with no real pointer) and Rade.Native (HideCaret, used by the
   RADE shared UI file). The end of this file compiles the text with Add-Type, once per process; the main script loads
   this file after Windows Forms and System.Drawing.
   Inputs: none. Outputs: the compiled types Pfm.* and Rade.Native (a failed Rade.Native only leaves the caret visible).
-  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r7.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -204,6 +206,87 @@ $PfmCs=(@(
 'protected override void OnPaint(PaintEventArgs e) {',
 'e.Graphics.Clear(BackColor);',
 'TextRenderer.DrawText(e.Graphics, Text, Font, ClientRectangle, ForeColor, LinkFlags);',
+'}',
+'}',
+'// R7 (R32 W2): the mouse wheel scrolls what is under the pointer, whatever control has the focus.',
+'public class Wheel : IMessageFilter {',
+'public const int WM_MOUSEWHEEL = 0x020A;',
+'public Form Owner = null;',
+'public Control Stop = null;',
+'// The message filter: a wheel message for a control of Owner goes to Route; true = handled here.',
+'public bool PreFilterMessage(ref Message m) {',
+'if (m.Msg != WM_MOUSEWHEEL || Owner == null || !Owner.Visible) { return false; }',
+'Control from = Control.FromChildHandle(m.HWnd);',
+'if (from == null || from.FindForm() != Owner) { return false; }',
+'long lp = m.LParam.ToInt64();',
+'Point pt = new Point((short)(lp & 0xFFFF), (short)((lp >> 16) & 0xFFFF));',
+'int delta = (short)((m.WParam.ToInt64() >> 16) & 0xFFFF);',
+'return Route(Owner, Stop, pt, delta) != null;',
+'}',
+'// A wheel message as Windows sends it: the pointer in screen pixels, delta 120 per notch (positive = away from you).',
+'public static Message Make(IntPtr hwnd, Point screen, int delta) {',
+'long wp = ((long)(delta & 0xFFFF)) << 16;',
+'long lp = (((long)(screen.Y & 0xFFFF)) << 16) | ((long)(screen.X & 0xFFFF));',
+'return Message.Create(hwnd, WM_MOUSEWHEEL, new IntPtr(unchecked((int)wp)), new IntPtr(unchecked((int)lp)));',
+'}',
+'// The deepest visible control of root under the screen point.',
+'public static Control Under(Control root, Point screen) {',
+'Control c = root;',
+'while (true) {',
+'Control k = c.GetChildAtPoint(c.PointToClient(screen), GetChildAtPointSkip.Invisible);',
+'if (k == null) { return c; }',
+'c = k;',
+'}',
+'}',
+'// Routes one wheel turn: the control it scrolls (it is scrolled), or null when the pointer is not on the window,',
+'// is on a list or a text box with its own scroll bar, or nothing under it can scroll that way.',
+'public static Control Route(Control root, Control stop, Point screen, int delta) {',
+'if (delta == 0 || !root.RectangleToScreen(root.ClientRectangle).Contains(screen)) { return null; }',
+'Control under = Under(root, screen);',
+'if (under is ComboBox) { return null; }',
+'TextBoxBase tb = under as TextBoxBase;',
+'if (tb != null && tb.Multiline && tb.TabStop) { return null; }',
+'Control t = Target(under, stop, delta);',
+'if (t != null) { Apply(t, delta); }',
+'return t;',
+'}',
+'// The first control from under up to stop that can still scroll that way: a grid with rows out of view, or a',
+'// panel that scrolls (AutoScroll with its vertical bar showing).',
+'public static Control Target(Control under, Control stop, int delta) {',
+'for (Control c = under; c != null; c = c.Parent) {',
+'DataGridView g = c as DataGridView;',
+'if (g != null && GridCan(g, delta)) { return g; }',
+'ScrollableControl s = c as ScrollableControl;',
+'if (s != null && s.AutoScroll && s.VerticalScroll.Visible && PanelCan(s, delta)) { return s; }',
+'if (c == stop) { break; }',
+'}',
+'return null;',
+'}',
+'// True when grid g can scroll up (delta > 0) or down.',
+'public static bool GridCan(DataGridView g, int delta) {',
+'if (g.RowCount == 0 || g.FirstDisplayedScrollingRowIndex < 0) { return false; }',
+'if (delta > 0) { return g.FirstDisplayedScrollingRowIndex > 0; }',
+'return g.FirstDisplayedScrollingRowIndex + g.DisplayedRowCount(false) < g.RowCount;',
+'}',
+'// True when panel s can scroll up (delta > 0) or down.',
+'public static bool PanelCan(ScrollableControl s, int delta) {',
+'int y = -s.AutoScrollPosition.Y;',
+'if (delta > 0) { return y > 0; }',
+'return y < s.DisplayRectangle.Height - s.ClientSize.Height;',
+'}',
+'// Scrolls t: a grid by the Windows wheel lines per notch (rows), a panel by delta pixels, as a panel does by itself.',
+'public static void Apply(Control t, int delta) {',
+'DataGridView g = t as DataGridView;',
+'if (g != null) {',
+'int lines = SystemInformation.MouseWheelScrollLines;',
+'if (lines <= 0) { lines = Math.Max(1, g.DisplayedRowCount(false)); }',
+'int rows = (int)Math.Round(-delta / 120.0 * lines);',
+'if (rows == 0) { rows = delta > 0 ? -1 : 1; }',
+'g.FirstDisplayedScrollingRowIndex = Math.Max(0, Math.Min(g.RowCount - 1, g.FirstDisplayedScrollingRowIndex + rows));',
+'return;',
+'}',
+'ScrollableControl s = (ScrollableControl)t;',
+'s.AutoScrollPosition = new Point(-s.AutoScrollPosition.X, -s.AutoScrollPosition.Y - delta);',
 '}',
 '}',
 '}'

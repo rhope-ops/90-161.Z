@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r6, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r7, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   $wn.Show builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
@@ -12,10 +12,12 @@
   $wn.Recolor); $wn.Build saves a picture of each card through the measure part (W4).
   R6 (R31b): the caption "ACTION STATUS" is level with the first line of the main card (D1, $wn.LevelCaps); the rest of
   the crumb has the link's text middle (D2, $wn.Crumb).
+  R7 (R32): the mouse wheel scrolls a card from anywhere on it (W2, $wn.WheelOn, Pfm.Wheel in the types part); the
+  NOTICE chip is level with its note (W3, $wn.ShowNotice).
   The rail logo is the app-logo block below, written by scripts/build_task_scripts.py (never edit it here).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r7.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   Credentials: none.
@@ -210,13 +212,18 @@ $wn.Crumb = {
   $top = [int][math]::Max(0, [math]::Round($mid - (& $wn.LineH $t.Font) / 2.0))
   $t.Margin = & $ui.Pad (& $wn.Sc 3) $top 0 0; $wn.CrumbRest = $t
   return $t }
+# The FAKE note of the last button: the NOTICE chip and the note beside it, the chip level with the note's first line
+# (R7 W3, $wn.ChipTops). $Cw: the width of the page column.
+$wn.ShowNotice = { param([int]$Cw)
+  $nf = & $wn.Flow $page $pc.surface; $nf.Margin = & $ui.Pad 0 0 0 (& $wn.Sc 10); $cp = & $wn.Chip 'turn' 'NOTICE' $pc.surface; [void]$nf.Controls.Add($cp)
+  $nt = & $wn.Txt $nf $wn.Notice $ui.F.Body $ui.C.Ink 0 ($Cw - (& $wn.Sc 120)) 'Notice' $pc.surface
+  $tops = & $wn.ChipTops $cp.Height $nt.Font 0; $nt.Margin = & $ui.Pad 0 $tops.Text 0 0; $cp.Margin = & $ui.Pad 0 $tops.Chip $cp.Margin.Right 0
+  & $wn.KeepChip $cp $nt 'notice' }
 # The head of a card: the FAKE note of the last button, the crumb, the title and the line under it. Sets $ui.Sent and
 # $ui.Kick (the title and the line the layout self-check reads).
 $wn.ShowHead = { param($C, [int]$Cw)
   $title = $null
-  if ($wn.Notice) {
-    $nf = & $wn.Flow $page $pc.surface; $nf.Margin = & $ui.Pad 0 0 0 (& $wn.Sc 10); [void]$nf.Controls.Add((& $wn.Chip 'turn' 'NOTICE' $pc.surface))
-    [void](& $wn.Txt $nf $wn.Notice $ui.F.Body $ui.C.Ink 2 ($Cw - (& $wn.Sc 120)) 'Notice' $pc.surface) }
+  if ($wn.Notice) { & $wn.ShowNotice $Cw }
   if ($C.Crumb) { $title = & $wn.Crumb $C $Cw }
   if ($C.Title) { $title = & $wn.Txt $page $C.Title $ui.F.Sent $ui.C.Navy 0 $Cw 'Page title' $pc.surface }
   if ($C.Sub) { $ui.Kick = & $wn.Txt $page $C.Sub $ui.F.Small $ui.C.Gray 4 $Cw 'Page line' $pc.surface } else { $ui.Kick = $title }
@@ -484,6 +491,15 @@ $wn.Recolor = {
   $form.Controls.Remove($wn.Bar); $wn.Bar.Dispose(); & $wn.BuildBar
   $form.ResumeLayout($true)
   & $wn.Show $wn.Cur; $form.Invalidate($true) }
+# R7 (R32 W2): a new mouse-wheel filter for this window (Pfm.Wheel): a wheel turn anywhere on the main column scrolls
+# the grid under the pointer while that grid can still scroll, else the main column; keys and focus are not touched.
+$wn.WheelNew = { $w = New-Object Pfm.Wheel; $w.Owner = $form; $w.Stop = $main; return $w }
+# Starts the filter for the window's message loop ($wn.Wheel); a filter that cannot start is a NOTE line, not a stop.
+$wn.WheelOn = {
+  try { $wn.Wheel = & $wn.WheelNew; [Windows.Forms.Application]::AddMessageFilter($wn.Wheel); $lines.Add('WHEEL on: the mouse wheel scrolls what is under the pointer') }
+  catch { $wn.Wheel = $null; $lines.Add('NOTE the mouse-wheel filter did not start: ' + ([string]$_.Exception.Message)) } }
+# Stops the filter when the window has closed.
+$wn.WheelOff = { if ($wn.Wheel) { try { [Windows.Forms.Application]::RemoveMessageFilter($wn.Wheel) } catch { $null = $_ }; $wn.Wheel = $null } }
 $wn.Start = {
   <#
   .SYNOPSIS
@@ -492,6 +508,7 @@ $wn.Start = {
   .DESCRIPTION
   R31 W2: a change of the Windows high-contrast setting while the window is open runs $wn.Recolor; the handler is added
   here, on the window's own thread (so the event comes back on it), and removed when the window closes ($wn.Hook).
+  R7 (R32 W2): the mouse-wheel filter starts here ($wn.WheelOn) and stops when the window closes.
   #>
   & $wn.LoadBounds
   & $ui.FormDpi
@@ -503,13 +520,14 @@ $wn.Start = {
   $wn.Pref = [Microsoft.Win32.UserPreferenceChangedEventHandler]{
     try { & $wn.Recolor 'changed' } catch { $lines.Add('NOTE the colors were not re-applied: ' + ([string]$_.Exception.Message)) } }
   try { [Microsoft.Win32.SystemEvents]::add_UserPreferenceChanged($wn.Pref) } catch { $lines.Add('NOTE no high-contrast change event: ' + ([string]$_.Exception.Message)); $wn.Pref = $null }
+  & $wn.WheelOn
   $wn.Ready = $true; $form.Opacity = 1
   try { $form.TopMost = $true; $form.Activate(); $form.TopMost = $false } catch { $null = $_ } }
 $wn.Hook = {
   <#
   .SYNOPSIS
   Adds the window's events: start when shown, re-layout on a new size, Esc and Ctrl+1 to Ctrl+5, save the place on close,
-  and remove the high-contrast handler of $wn.Start when the window has closed.
+  and remove the high-contrast handler and the mouse-wheel filter of $wn.Start when the window has closed.
   .DESCRIPTION
   Esc opens the card's Up card (back: the card before a modal one); Ctrl+1 to Ctrl+5 open the rail items in order.
   A window that cannot be built adds a STOPPED line, sets exit code 1 and closes.
@@ -525,4 +543,5 @@ $wn.Hook = {
       elseif ($_.Control -and $_.KeyCode -ge [Windows.Forms.Keys]::D1 -and $_.KeyCode -le [Windows.Forms.Keys]::D5) {
         $n = [int]$_.KeyCode - [int][Windows.Forms.Keys]::D1; $wn.Notice = ''; $wn.Err = ''; & $wn.Show ([string]$RailItems[$n].Go); $_.Handled = $true; $_.SuppressKeyPress = $true } })
   $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds })
-  $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null } }) }
+  $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null }
+      & $wn.WheelOff }) }
