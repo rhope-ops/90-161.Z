@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | Gov scripts collect failure reasons in a typed list with plain statements: T20 r2 reported PASS on Windows PowerShell 5.1 with the array form (found by the ps51 job, PR 173). Scope: new gov scripts. | Agent | [R34 plan](reviews/2026-11-18-r34-plan.md) |
 | 2026-11-18 | R34 agent RECs taken under the PFM's approval of 18 Nov (he was away): the button flow uses the manual trigger F04 uses; the 2 test flows sit in the app solution for tests only and leave before a pilot; R33 runs first. Scope: R34. | Agent (approved in advance by the PFM) | [R34 plan](reviews/2026-11-18-r34-plan.md) |
 | 2026-11-18 | Open for the PFM from the R34 build: F03 counts 20 working days, DAFMAN 90-161 5.2 says 15 business days; an action that passes step 7 between two 15-minute checks gets no Legal rows; the level name "PFM Office Edit All Items". | Agent | [R34 plan](reviews/2026-11-18-r34-plan.md) |
 | 2026-11-18 | R34 plan approved as a large round, with approval for the agent recommendations made while it is built (the PFM is away); hard rules hold. Scope: R34. | PFM | [R34 plan](reviews/2026-11-18-r34-plan.md) |
