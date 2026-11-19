@@ -1,8 +1,8 @@
 {
   "repo": "rhope-ops/RADE",
-  "commit": "bd8cd44c6e84db292fe2ccc21462df1094901d92",
-  "tag": "engine-v23",
-  "serial": 17,
+  "commit": "e863459aba161a34386882eb810fef7f33762f45",
+  "tag": "engine-v24",
+  "serial": 18,
   "engine": "engine/rade_build.py",
   "files": {
     "assets/logo/logo-rho-128.png": "6cd51f259dc07b5920f5027acd0f835c8e46c8ebf2d056346ac41f6b19bf06e0",
@@ -20,16 +20,16 @@
     "engine/ps/window/01-setup.ps1": "03e99d3ab13a039badf1f87e7d0c51f223955879f8f8a75bf2357733b8803aee",
     "engine/ps/window/02-fixed-parts.ps1": "c1c94c1ee2900f23f05aa345b7b2beada42fa84afdd6ff690b7a7f9c30a3a8c0",
     "engine/ps/window/03-card.ps1": "761d776be8331f97a9d5cc0485c27aab5eeaf0ab25d395a4e037a64ae889bac5",
-    "engine/ps/window/04-record-parts.ps1": "c7b2c64605dddef9da4c46dcf59c56cb4d53871ca3cdfaf83852488c320aee81",
-    "engine/ps/window/05-alignment.ps1": "0c4f385e4fdfa322bfb3fb385deccdbf0f80bb8d3b84bbd43b29f2c43ebcf25a",
-    "engine/ps/window/06-open.ps1": "c57d34f6a3a1daf79abeb82dec22b6de4c902fd510eb8462f5c01a9b2193dd3f",
+    "engine/ps/window/04-record-parts.ps1": "942ba178ae915d193a31cb35f0c34c34847a15293c3ed2bf4c301cb5dc06fb62",
+    "engine/ps/window/05-alignment.ps1": "da810299fe6f98fadb1e7dc703257a68a368f67fe9a4fc4e9c22e27e1620f47e",
+    "engine/ps/window/06-open.ps1": "3d2c3d9829c59c150b05673a6f04f96c21377cb88a81e786457f12e741dc24d8",
     "engine/ps/window/07-run.ps1": "d970f71256c6831ea8a6752b87abd69df89749c3d118277237325f424752c9a2",
-    "engine/ps/window/08-hand-step.ps1": "d2152944eabe01cbd548307ec27ae240a62f50e0b9215e80ab03dc02a490a437",
-    "engine/ps/window/09-record.ps1": "48bcf1b0db224001dfcb75d6dba3d09f5b66b67073539a215983604f1c005164",
-    "engine/ps/window/10-keys.ps1": "090b26a85512c642a88e283783580d55169ff860371f00136df23732a20329a1",
-    "engine/rade_build.py": "234858cf355cb254513a34ec3e5ce6b799c1c19685da3aac5b28c3380aa46533",
+    "engine/ps/window/08-hand-step.ps1": "5d4a1441db6e38396adb460a8680723205ad5fd9a400166abb911aa9ce5b396c",
+    "engine/ps/window/09-record.ps1": "c6bcb267c2c24307de504afcf2061cc7ad778fbe021a009c5e02ddd0c85b9e09",
+    "engine/ps/window/10-keys.ps1": "5b447785c7f69337a0be470cc79f4c595b468d0d5c6a605731a652a94e74ad3a",
+    "engine/rade_build.py": "ed3f22688dd38bac19b841a06cfc527036c7251c85079bc14dcdb91a28d6f919",
     "engine/rade_hash.py": "fdae05b90c6732b55a78692781fee6898ed229ff3bf8829fbd8b47a09eda18cb",
-    "engine/rade_ui.ps1": "1ad55c390fed15a9ec1a56518916d2483c6a390c8b2825fb9e162405dcda0159",
+    "engine/rade_ui.ps1": "dc58034f89c05e1babd53fcc1c5c461737c5aff7775d06250148f68e3c3b37bc",
     "engine/window.json": "48a48240a031a6fdd647653c6aa68785330f08e0f2f2dc204e89d7b0c15d3985"
   }
 }

@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r8, module "common": the helpers every part of the probe uses.
+  90-161.Z Task 21 probe r9, module "common": the helpers every part of the probe uses.
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r8.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r9.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets in its own scope ($site, $dir, $lines, $passed, $failed, $WaitMinutes, $pollEvery,
   $StateName). Outputs: functions for the SharePoint REST calls, the result lines, the NOW lines, the wait loop, the
   second person's saved numbers and the sign-in.
   Network: the one SharePoint site of the main file ($site), through the PnP.PowerShell connection.
   Writes: none on the site by itself (Invoke-Rest sends what a part asks for); the result lines in memory.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-ProbeSite); nothing is stored.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r8.ps1 -Part <part> loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r9.ps1 -Part <part> loads it.
 #>
 
 <#

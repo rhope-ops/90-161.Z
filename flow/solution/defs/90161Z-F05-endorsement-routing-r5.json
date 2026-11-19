@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F05 Endorsement Routing r4",
-  "description": "When a PFM Publications row is at process step 6 (Formal coordination) and its Action Status is not On Hold, Cancelled or Complete: adds a Formal Coordination row for each active mandatory office that has none; when every other coordinator has answered and all comments are adjudicated, adds the missing Legal rows and moves the step to 7. Whenever it sees an action at step 7, by any path (its own move from step 6, a hand move, a Guidance Memorandum that goes from step 3 to step 7, or a row made at step 7), it adds the Legal rows that are missing (DAFMAN 90-161 5.1.7: a wing GM requires local legal review; PFM 19 Nov 26, F1 A); an office that has a Legal row already gets none, so a second entry or a second run adds nothing. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 3.4, 5.1, 5.1.7, 5.1.8.2; PFM S5A and 14 Nov 26. Reads Flows paused and Test mode once at the start from PFM Settings rows (missing or empty: No and Yes). r4 (R34): the trigger checks PFM Publications every 15 minutes (was every minute; PFM 19 Nov 26, F3 C); a Legal row counts as existing when its title ends with ' - <office>' or equals the full row title this flow writes (a long publication title is cut at 250 characters, which cut the office name off in r3 and made a second row).",
+  "displayName": "90161Z F05 Endorsement Routing r5",
+  "description": "When a PFM Publications row is at process step 6 (Formal coordination) and its Action Status is not On Hold, Cancelled or Complete: adds a Formal Coordination row for each active mandatory office that has none; when every other coordinator has answered and all comments are adjudicated, adds the missing Legal rows and moves the step to 7. Whenever it sees an action at step 7, by any path (its own move from step 6, a hand move, a Guidance Memorandum that goes from step 3 to step 7, or a row made at step 7), it adds the Legal rows that are missing (DAFMAN 90-161 5.1.7: a wing GM requires local legal review; PFM 19 Nov 26, F1 A); an office that has a Legal row already gets none, so a second entry or a second run adds nothing. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 3.4, 5.1, 5.1.7, 5.1.8.2; PFM S5A and 14 Nov 26. Reads Flows paused and Test mode once at the start from PFM Settings rows (missing or empty: No and Yes). r4 (R34): a Legal row counts as existing when its title ends with ' - <office>'. r5 (R35): the trigger checks PFM Publications every minute (PFM 19 Nov 26: no action may pass step 7 between 2 checks without its Legal rows); a new Formal or Legal row title cuts the publication title, never the office, so it always ends with ' - <office>' (a long title made a second Formal row on every run, and a title of 247 characters or more matched every Legal office); an older cut title counts only when the publication title is under 247 characters; action descriptions 256 characters or fewer (R34: a longer one stopped the save).",
   "workflowKey": "90161Z-F05-endorsement-routing-r1",
   "connections": [
     "shared_sharepointonline",
@@ -11,7 +11,7 @@
       "type": "OpenApiConnection",
       "recurrence": {
         "frequency": "Minute",
-        "interval": 15
+        "interval": 1
       },
       "splitOn": "@triggerOutputs()?['body/value']",
       "inputs": {
@@ -378,7 +378,7 @@
                   "type": "Query",
                   "inputs": {
                     "from": "@body('Get_mandatory_offices')?['value']",
-                    "where": "@not(contains(outputs('Formal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')))"
+                    "where": "@not(or(contains(outputs('Formal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')), and(less(length(coalesce(triggerBody()?['Title'], '')), 247), contains(outputs('Formal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|')))))"
                   }
                 },
                 "Create_formal_rows": {
@@ -419,7 +419,7 @@
                             "parameters": {
                               "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                               "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                              "item/Title": "@take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_formal_rows')?['Title'], '')), 250)",
+                              "item/Title": "@take(concat(take(coalesce(triggerBody()?['Title'], ''), max(0, sub(247, length(coalesce(items('Create_formal_rows')?['Title'], ''))))), ' - ', coalesce(items('Create_formal_rows')?['Title'], '')), 250)",
                               "item/Publication/Id": "@triggerBody()?['ID']",
                               "item/CoordinationStage/Value": "Formal Coordination",
                               "item/CoordinationRole/Value": "@items('Create_formal_rows')?['CoordinationRole']?['Value']",
@@ -446,7 +446,7 @@
                               "parameters": {
                                 "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                                 "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                                "item/Title": "@take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_formal_rows')?['Title'], '')), 250)",
+                                "item/Title": "@take(concat(take(coalesce(triggerBody()?['Title'], ''), max(0, sub(247, length(coalesce(items('Create_formal_rows')?['Title'], ''))))), ' - ', coalesce(items('Create_formal_rows')?['Title'], '')), 250)",
                                 "item/Publication/Id": "@triggerBody()?['ID']",
                                 "item/CoordinationStage/Value": "Formal Coordination",
                                 "item/CoordinationRole/Value": "@items('Create_formal_rows')?['CoordinationRole']?['Value']",
@@ -553,7 +553,7 @@
                             "type": "Query",
                             "inputs": {
                               "from": "@body('Get_legal_offices')?['value']",
-                              "where": "@not(or(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')), contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|'))))"
+                              "where": "@not(or(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')), and(less(length(coalesce(triggerBody()?['Title'], '')), 247), contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|')))))"
                             }
                           },
                           "Create_legal_rows": {
@@ -594,7 +594,7 @@
                                       "parameters": {
                                         "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                                         "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                                        "item/Title": "@take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_legal_rows')?['Title'], '')), 250)",
+                                        "item/Title": "@take(concat(take(coalesce(triggerBody()?['Title'], ''), max(0, sub(247, length(coalesce(items('Create_legal_rows')?['Title'], ''))))), ' - ', coalesce(items('Create_legal_rows')?['Title'], '')), 250)",
                                         "item/Publication/Id": "@triggerBody()?['ID']",
                                         "item/CoordinationStage/Value": "Legal",
                                         "item/CoordinationRole/Value": "@items('Create_legal_rows')?['CoordinationRole']?['Value']",
@@ -621,7 +621,7 @@
                                         "parameters": {
                                           "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                                           "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                                          "item/Title": "@take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_legal_rows')?['Title'], '')), 250)",
+                                          "item/Title": "@take(concat(take(coalesce(triggerBody()?['Title'], ''), max(0, sub(247, length(coalesce(items('Create_legal_rows')?['Title'], ''))))), ' - ', coalesce(items('Create_legal_rows')?['Title'], '')), 250)",
                                           "item/Publication/Id": "@triggerBody()?['ID']",
                                           "item/CoordinationStage/Value": "Legal",
                                           "item/CoordinationRole/Value": "@items('Create_legal_rows')?['CoordinationRole']?['Value']",
@@ -762,7 +762,7 @@
                   "type": "Query",
                   "inputs": {
                     "from": "@body('Get_legal_offices_at_step_7')?['value']",
-                    "where": "@not(or(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')), contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|'))))"
+                    "where": "@not(or(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')), and(less(length(coalesce(triggerBody()?['Title'], '')), 247), contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|')))))"
                   }
                 },
                 "Create_legal_rows_at_step_7": {
@@ -803,7 +803,7 @@
                             "parameters": {
                               "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                               "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                              "item/Title": "@take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_legal_rows_at_step_7')?['Title'], '')), 250)",
+                              "item/Title": "@take(concat(take(coalesce(triggerBody()?['Title'], ''), max(0, sub(247, length(coalesce(items('Create_legal_rows_at_step_7')?['Title'], ''))))), ' - ', coalesce(items('Create_legal_rows_at_step_7')?['Title'], '')), 250)",
                               "item/Publication/Id": "@triggerBody()?['ID']",
                               "item/CoordinationStage/Value": "Legal",
                               "item/CoordinationRole/Value": "@items('Create_legal_rows_at_step_7')?['CoordinationRole']?['Value']",
@@ -830,7 +830,7 @@
                               "parameters": {
                                 "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
                                 "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-                                "item/Title": "@take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_legal_rows_at_step_7')?['Title'], '')), 250)",
+                                "item/Title": "@take(concat(take(coalesce(triggerBody()?['Title'], ''), max(0, sub(247, length(coalesce(items('Create_legal_rows_at_step_7')?['Title'], ''))))), ' - ', coalesce(items('Create_legal_rows_at_step_7')?['Title'], '')), 250)",
                                 "item/Publication/Id": "@triggerBody()?['ID']",
                                 "item/CoordinationStage/Value": "Legal",
                                 "item/CoordinationRole/Value": "@items('Create_legal_rows_at_step_7')?['CoordinationRole']?['Value']",
@@ -890,7 +890,7 @@
               "else": {
                 "actions": {}
               },
-              "description": "F1 A (PFM 19 Nov 26): an action at step 7 gets the Legal rows it lacks, whatever path brought it there (DAFMAN 90-161 5.1.7: GMs at the wing level require local legal review; 5.1.8.2: the servicing legal office gives the legal review). Check before create: Missing_legal_offices_at_step_7 keeps only the offices with no Legal row yet, read at the start of this run."
+              "description": "F1 A (PFM 19 Nov 26): an action at step 7 gets the Legal rows it lacks, by any path (DAFMAN 90-161 5.1.7: a wing GM needs local legal review; 5.1.8.2). Only offices with no Legal row yet get one."
             }
           },
           "else": {

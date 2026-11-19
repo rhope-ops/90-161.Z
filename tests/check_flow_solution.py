@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check the draft flow solution (flow/solution): def names, JSON, trigger and actions, list and column names against
 schemas/lists, connection references, environment variables, "@" expression syntax, URL hosts. Prints one PASS line with counts."""
-import json, pathlib, re, sys, zipfile
+import json, pathlib, re, subprocess, sys, tempfile, zipfile
 import xml.dom.minidom as minidom
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -59,11 +59,11 @@ def expr_ok(s, where):
 
 counts = dict(defs=0, actions=0, columns=0, strings=0)
 # R34 (fallback A, the PFM 18 Nov 26): the T21 probe flows Health and Button are flows of the solution, on the probe list that the
-# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r8.ps1 and its make module).
+# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r9.ps1 and its make module).
 PROBE_DEFS = {"90161Z-T21-probe-health-r6.json", "90161Z-T21-probe-button-r6.json"}
 PROBE_LIST, PROBE_COLS = "90161Z Probe", {"Title", "ProbeTest", "ProbeWay", "ProbeResult", "ProbeDetail"}
 connrefs_declared = set()
-cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r3.zip"
+cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r4.zip"
 zf = zipfile.ZipFile(cz)
 for n in zf.namelist():
     if n.endswith(".xml"): minidom.parseString(zf.read(n))
@@ -140,16 +140,16 @@ for src in sorted(B.DEFS.glob("*.json")):
                 if u not in cols and u not in {"ID", "Id"}: bad(f"{src.name} {name}: column '{u}' not in {title}")
 
 # R27 (PFM 14 and 16 Nov 26): F03, F05 and F06 read the six moved values from PFM Settings rows and add no "[TEST] " prefix. Fails if a def
-# (or a zip) still holds "[TEST]" or reads a moved variable; every Settings key a flow reads is a seed row; the stage 6 target is 25 (PFM 14 Nov 26).
+# (or a zip) still holds "[TEST]" or reads a moved variable; every Settings key a flow reads is a seed row; the stage 6 target is 20 (PFM 19 Nov 26: 15 + 5; was 25).
 settings_seed = {r["Title"]: r for r in json.loads((ROOT / "schemas" / "lists" / "PFMSettings.json").read_text(encoding="utf-8"))["seed"]}
-MOVED_KEYS = {"FlowsPaused": "No", "TestMode": "Yes", "ReminderLeadDays": "5", "EscalationLagDays": "3", "CoordinationSuspenseBusinessDays": "20", "SharedMailbox": ""}
+MOVED_KEYS = {"FlowsPaused": "No", "TestMode": "Yes", "ReminderLeadDays": "5", "EscalationLagDays": "3", "CoordinationSuspenseBusinessDays": "15", "SharedMailbox": ""}
 for k, v in MOVED_KEYS.items():
     r = settings_seed.get(k)
     if not r: bad(f"PFMSettings.json seed has no row {k}"); continue
     if r["SettingValue"] != v: bad(f"PFMSettings.json seed {k}={r['SettingValue']!r}, expected {v!r}")
     if "DAFMAN" not in r["SettingNotes"] and "PFM 2026-11-1" not in r["SettingNotes"]: bad(f"PFMSettings.json seed {k}: SettingNotes cite no source")
 steps = json.loads((ROOT / "schemas" / "lists" / "PFMProcessSteps.json").read_text(encoding="utf-8"))["seed"]
-if [s["TargetBusinessDays"] for s in steps if s["StepNumber"] == 6] != [25]: bad("PFMProcessSteps.json: stage 6 TargetBusinessDays must be 25 (PFM 14 Nov 26)")
+if [s["TargetBusinessDays"] for s in steps if s["StepNumber"] == 6] != [20]: bad("PFMProcessSteps.json: stage 6 TargetBusinessDays must be 20 (PFM 19 Nov 26)")
 # R28 (PFM 17 Nov 26): F01, F02 and F04 read PFM Settings too, so all six flows start the same way.
 r27_defs = [s for s in sorted(B.DEFS.glob("*.json")) if re.match(r"90161Z-F0[1-6]-", s.name)]
 if len(r27_defs) != 6: bad(f"expected the six flow defs F01 to F06, found {[s.name for s in r27_defs]}")
@@ -268,7 +268,7 @@ def check_probe_flows(zz, cust_xml, zname):
         if refs != {("shared_sharepointonline", sp)}: bad(f"{zname} {n}: a probe flow must use only the SharePoint reference {sp}: {sorted(refs)}")
     names = set(re.findall(r'connectionreferencelogicalname="([^"]+)"', cust_xml))
     if names != {sp, B.conn_logical("shared_office365")}: bad(f"{zname}: connection references {sorted(names)}; an upgrade must add none")
-    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r8.ps1").read_text(encoding="utf-8")
+    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r9.ps1").read_text(encoding="utf-8")
     bid = B.guid("workflow", "90161Z-T21-probe-button").lower()
     if f"$ButtonFlowId = '{bid}'" not in look or f'WorkflowId="{{{bid}}}"' not in cust_xml: bad(f"{zname}: the T21 look script does not name the button flow's workflow ID {bid}")
 
@@ -287,7 +287,7 @@ with zipfile.ZipFile(cz) as zz:
     probe_in_zip = sorted(re.findall(r"Workflows/(90161ZT21Probe(?:Health|Button)r\d+)-", "\n".join(zz.namelist())))
     if probe_in_zip != ["90161ZT21ProbeButtonr6", "90161ZT21ProbeHealthr6"]: bad(f"{cz.name}: probe flows in the zip {probe_in_zip}")
     check_probe_flows(zz, c, cz.name)
-    slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r7.zip").read("solution.xml").decode("utf-8")
+    slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r8.zip").read("solution.xml").decode("utf-8")
     for wid in re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', slice_sol):
         if f'id="{{{wid}}}"' not in sol: bad(f"{cz.name}: slice flow {wid} is not in the full solution (the import would not upgrade it)")
 
@@ -344,20 +344,23 @@ f01 = json.loads(next(s for s in r27_defs if "-F01-" in s.name).read_text(encodi
 f01_state = json.dumps(f01["actions"]["Try"]["actions"]["Current_state"]["inputs"])
 if sorted(re.findall(r"\['(\w+)'\]", f01_state)) != sorted(["ActionType", "ProcessStep", "ActionStatus", "Value", "Value", "Value"]): bad(f"F01: the logged state must read exactly Action Type, Process Step and Action Status: {f01_state}")
 if "Own_log_rows" not in f01["actions"]["Try"]["actions"]: bad("F01: the last logged state must come from rows this flow wrote (Own_log_rows)")
-# R34 (PFM 19 Nov 26, F3 C): F01 and F05 check PFM Publications every 15 minutes (was every minute), in the def and in the zip;
-# the other flows keep their triggers.
+# R34 (PFM 19 Nov 26, F3 C): F01 checks PFM Publications every 15 minutes (was every minute), in the def and in the zip.
+# R35 (PFM 19 Nov 26): F05 checks every minute, so no action passes step 7 between 2 checks without its Legal rows.
+# The other flows keep their triggers.
 f05_src = next(s for s in r27_defs if "-F05-" in s.name)
 f05 = json.loads(f05_src.read_text(encoding="utf-8"))
+POLL = {"01": 15, "05": 1}   # minutes between checks, by flow number
 for name, d in (("F01", f01), ("F05", f05)):
     trig = d["triggers"]["When_an_item_is_created_or_modified"]
-    if trig["recurrence"] != {"frequency": "Minute", "interval": 15}: bad(f"{name}: the trigger must check every 15 minutes (F3 C): {trig['recurrence']}")
+    want = {"frequency": "Minute", "interval": POLL[name[1:]]}
+    if trig["recurrence"] != want: bad(f"{name}: the trigger must check every {want['interval']} minute(s): {trig['recurrence']}")
     if trig["inputs"]["parameters"]["table"] != "@parameters('List PFM Publications (pfm_ListPublications)')": bad(f"{name}: the trigger must watch PFM Publications")
 with zipfile.ZipFile(cz) as zz:
     for n in zz.namelist():
         m = re.match(r"Workflows/90161ZF(0[15])", n)
         if m:
             rec = json.loads(zz.read(n).decode("utf-8"))["properties"]["definition"]["triggers"]["When_an_item_is_created_or_modified"]["recurrence"]
-            if rec != {"frequency": "Minute", "interval": 15}: bad(f"{cz.name} {n}: F{m.group(1)} must check every 15 minutes (F3 C): {rec}")
+            if rec != {"frequency": "Minute", "interval": POLL[m.group(1)]}: bad(f"{cz.name} {n}: F{m.group(1)} must check every {POLL[m.group(1)]} minute(s): {rec}")
 # R34 (PFM 19 Nov 26, F1 A; DAFMAN 90-161 5.1.7: a wing GM requires local legal review, stages 1-3 then 7-11): F05 adds the missing
 # Legal rows whenever it sees an open action at step 7, whatever path brought it there, and only for offices with no Legal row yet
 # (check before create, so a second entry to step 7 or a second run adds none; a title cut at 250 characters still counts).
@@ -374,17 +377,55 @@ if s7_acts.get("Create_legal_rows_at_step_7", {}).get("foreach") != "@body('Miss
 legal_rows = f05_open["actions"]["Legal_rows"]["inputs"]
 if legal_rows != {"from": "@body('Get_endorsement_rows')?['value']", "where": "@equals(item()?['CoordinationStage']?['Value'], 'Legal')"}: bad(f"F05: Legal_rows must be every Legal row of the action: {legal_rows}")
 if f05_open["actions"]["Get_endorsement_rows"]["inputs"]["parameters"].get("$filter") != "@concat('Publication/Id eq ', string(triggerBody()?['ID']))": bad("F05: the endorsement rows must be read for this action in this run")
-exists = ("contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|'))",
-          "contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|'))")
-legal6 = f05_open["actions"]["If_step_6"]["actions"]["If_formal_rows_added"]["else"]["actions"]["If_ready_for_Legal"]["actions"]["Missing_legal_offices"]
-for qn, q in (("Missing_legal_offices", legal6), ("Missing_legal_offices_at_step_7", s7_acts.get("Missing_legal_offices_at_step_7", {}))):
-    w = q.get("inputs", {}).get("where", "")
-    if not (w.startswith("@not(or(") and all(e in w for e in exists)): bad(f"F05 {qn}: an office counts as done when a Legal row ends with ' - <office>' or has the full title: {w}")
-for b in ("Create_row_with_endorser_Legal_7", "Create_row_without_endorser_Legal_7"):
-    br = s7_acts["Create_legal_rows_at_step_7"]["actions"]["If_office_has_endorser_Legal_7"]
-    p = (br["actions"].get(b) or br["else"]["actions"].get(b))["inputs"]["parameters"]
-    if p.get("item/CoordinationStage/Value") != "Legal" or "take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_legal_rows_at_step_7')?['Title'], '')), 250)" not in p.get("item/Title", ""):
-        bad(f"F05 {b}: a Legal row must have the title the exists check reads")
+# R35 (R34 plan open points 7 and 9): a Formal or Legal row title cuts the publication title, never the office, so every new row
+# ends with ' - <office>|' in the title list; the older full-title key (r4 rows, cut at 250) counts only for a publication title
+# under 247 characters (from 247 on, that key was the same for every office, so one row hid all the others).
+PUB = "coalesce(triggerBody()?['Title'], '')"
+
+
+def f05_where(title_list):
+    """The exists check (Query "where") that F05 r5 must use for one title list. Takes the Compose name; returns the text."""
+    off = "coalesce(item()?['Title'], '')"
+    new = f"contains(outputs('{title_list}'), concat(' - ', {off}, '|'))"
+    old = f"and(less(length({PUB}), 247), contains(outputs('{title_list}'), concat('|', take(concat({PUB}, ' - ', {off}), 250), '|')))"
+    return f"@not(or({new}, {old}))"
+
+
+def f05_title(loop):
+    """The row title F05 r5 must write in one Foreach loop. Takes the loop name; returns the text."""
+    off = f"coalesce(items('{loop}')?['Title'], '')"
+    return f"@take(concat(take({PUB}, max(0, sub(247, length({off})))), ' - ', {off}), 250)"
+
+
+s6_acts = f05_open["actions"]["If_step_6"]["actions"]
+ready = s6_acts["If_formal_rows_added"]["else"]["actions"]["If_ready_for_Legal"]["actions"]
+for qn, q, tl in (("Missing_formal_offices", s6_acts["Missing_formal_offices"], "Formal_title_list"),
+                  ("Missing_legal_offices", ready["Missing_legal_offices"], "Legal_title_list"),
+                  ("Missing_legal_offices_at_step_7", s7_acts.get("Missing_legal_offices_at_step_7", {}), "Legal_title_list")):
+    if q.get("inputs", {}).get("where", "") != f05_where(tl): bad(f"F05 {qn}: an office counts as done only by its ' - <office>' ending: {q.get('inputs')}")
+for loop, cond, stage, rows in (("Create_formal_rows", "If_office_has_endorser_Formal", "Formal Coordination", s6_acts),
+                                ("Create_legal_rows", "If_office_has_endorser_Legal", "Legal", ready),
+                                ("Create_legal_rows_at_step_7", "If_office_has_endorser_Legal_7", "Legal", s7_acts)):
+    br = rows[loop]["actions"][cond]
+    for p in [a["inputs"]["parameters"] for a in list(br["actions"].values()) + list(br["else"]["actions"].values())]:
+        if p.get("item/CoordinationStage/Value") != stage or p.get("item/Title") != f05_title(loop):
+            bad(f"F05 {loop}: a {stage} row must have the title the exists check reads (office kept): {p.get('item/Title')}")
+# R35 (R34 finding 1, ActionDescriptionTooLong): no action description in the flow solution is over 256 characters, and the
+# builder fails (exit 1, file, action path, length) on a longer one at any depth (If else, Scope, Foreach, Switch case).
+for src in sorted(B.DEFS.glob("*.json")) + sorted(B.TEST_DEFS.glob("*.json")):
+    for ap_, n in B.long_action_descriptions(json.loads(src.read_text(encoding="utf-8")).get("actions")):
+        bad(f"{src.name}: action {ap_} has a description of {n} characters (Power Automate allows 256)")
+deep = {"If_a": {"type": "If", "actions": {}, "else": {"actions": {"Sw": {"type": "Switch", "cases": {"c1": {"actions": {"Do_c": {"description": "x" * 257}}}}}}}}}
+if B.long_action_descriptions(deep) != [("/actions/If_a/else/actions/Sw/cases/c1/actions/Do_c", 257)]: bad(f"builder misses a deep description: {deep}")
+deep["If_a"]["else"]["actions"]["Sw"]["cases"]["c1"]["actions"]["Do_c"]["description"] = "x" * 256
+if B.long_action_descriptions(deep) != []: bad("builder refuses a description of exactly 256 characters")
+with tempfile.TemporaryDirectory() as tmp:
+    (pathlib.Path(tmp) / "bad.json").write_text(json.dumps({"actions": {"Try": {"actions": {"Long": {"description": "y" * 300}}}}}))
+    code = (f"import sys, pathlib; sys.path.insert(0, {str(ROOT / 'scripts')!r}); import build_flow_solution as B; "
+            f"B.ROOT = pathlib.Path({tmp!r}); B.check_action_descriptions((B.ROOT,))")
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    if r.returncode != 1 or "bad.json: action /actions/Try/actions/Long has a description of 300 characters" not in r.stdout:
+        bad(f"builder must exit 1 and name the file, action path and length: {r.returncode} {r.stdout} {r.stderr}")
 
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
@@ -466,4 +507,4 @@ for zname, (nwf, ncr) in T21_EXPECT.items():
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
-print(f"PASS flow solution: flows_in_r3=8 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")
+print(f"PASS flow solution: flows_in_r4=8 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")
