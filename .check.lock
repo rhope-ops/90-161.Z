@@ -1,5 +1,5 @@
 {
- "commit": "67e776601900409fc89373e80d7a2218539e62d9",
+ "commit": "88185f0bad322067f223f9792ca3ea568947dac0",
  "files": {
   ".claude/agents/reviewer.md": "6b0d51e52e7d47cb8e60cdcbba83d56a91bf35021d908403cfe3f8bc0880b294",
   ".claude/agents/scout.md": "4216b318d4258c086dfafd803e1dfa5ba5e6f5e5971e86b3df3a9accf3b41df4",
@@ -26,15 +26,15 @@
   "scripts/bloat_check_test.py": "29feee772503def280e8fa90b8baa1cada0194a00be6583f43128f66dd5fe957",
   "scripts/check.sh": "e1d5c627856c9ffac49a254e673cf55441d3c27d9a8cc4e2be8a3ae8f20a12c7",
   "scripts/check_blocks.py": "4b7d395839eedd198cb8f7c21d291e501fe1c28d1be107efef13dbb09b7e6ff6",
-  "scripts/check_content.py": "a87a3adf56af5f194e603b1a8042954a67f6fad6267c8bdb08d6d2230f61b853",
+  "scripts/check_content.py": "3578ced741e8cfd1495ac2c899718c5c43bf28f77f9c505e4216bcdc562a7a95",
   "scripts/check_content_finders.py": "4ed49615f3c3536a4b7e09dbc401220eab234a95cd389ab8cedc912ebdce8cbc",
   "scripts/check_content_hook.py": "6d2c6c3bed4c02e5e3315e3e8a7862f02a9b9a041e42054f9d010903dc5e442b",
-  "scripts/check_content_scan.py": "6c5671efe1f0833503d52cb7900fa90972866c9d332ae10bac2b0e06c9f0813a",
-  "scripts/check_content_test.py": "dabeeb6d706d7f6af205ce9387f5ef5e026ac9a50e0b1465d1968b84136d6c21",
+  "scripts/check_content_scan.py": "8ffb56deb1348b7a0ef17de4b2eac0146d3c0c42e47babce7211ab00488467c6",
+  "scripts/check_content_test.py": "17404f12f83977b2090c37cf797e176e929b26f7d4c78f6210a1a9d40ac7b0e7",
   "scripts/check_content_test_blocks.py": "8f7a0f2b7036d177985283a0672129b60cda240a12e7d570defb14056e8816f5",
   "scripts/check_content_test_local.py": "6eac5b92409c818b09b0c4114733294974ddcc59a83ef9618d8acb0f6b462d59",
   "scripts/check_lock.py": "0d5697fcb268d7394df3ed2114a6be16f6c3bf397dd0aed39ec2133309187efb",
-  "scripts/check_settings.py": "80b5bcabfa33cff746ade640da1c0035b6e7dc4b6b35c5983960899c9a9171cc",
+  "scripts/check_settings.py": "6896ea1707d19d16a6dfe902d0841bcf70bc2b383d46a30702957b782a0c8875",
   "scripts/check_settings_test.py": "f1419f758e56773a704f8c80b699b9636f09d3702a1abd9a49aafc3a614b33cb",
   "scripts/code_standard.py": "8cf47eac78b5b593c5ed727fb0ddafe150a707542ace5ba8a91a6ac70f637cf9",
   "scripts/code_standard_docs.py": "68c5aaabf1e3141f90f5157e16eb214081cfbc3e4fce80de80bfb9d4aebff9e5",
@@ -50,5 +50,5 @@
  },
  "kit": "archimedes_lever",
  "overrides": [],
- "version": "3.0.0"
+ "version": "3.1.0"
 }

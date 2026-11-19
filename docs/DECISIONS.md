@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | Kit 3.1.0 by sync (88185f0, tag v3.1.0): an optional `content-max-bytes` setting for the content check; no rule text. Kit plan 2026-11-19. | PFM | - |
 | 2026-11-18 | Kit 3.0.0 by sync (67e7766): in a private repo the pull-request Action does not run; public repos keep it. Kit PR 56. | PFM | - |
 | 2026-11-18 | Kit 2.0.1 by sync (79540fe, via 2.0.0): merge only a pull request opened for this work; lane C floor; session load ~4,771. Kit plan 16:20. | PFM | - |
 | 2026-11-18 | RADE lock moves to release engine-v18 (RADE f53f9f1, serial 14) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
