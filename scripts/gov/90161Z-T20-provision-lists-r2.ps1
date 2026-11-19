@@ -344,8 +344,11 @@ function Test-OfficeLevel {
   if ($level -and $edit -and -not (Test-LevelPermission $level $edit ($EditItemsBit -bor $OverrideBit))) { $bad += 'the level lacks a permission of Edit or Override List Behaviors' }
   if ($level -and $gid -and (Get-WebBinding $gid) -notcontains [int]$level.Id) { $bad += 'the group does not hold the level on the site' }
   $bad = @($bad | Where-Object { $_ })
-  if ($bad.Count) { return ('ITEM P01-pfm-office FAIL ' + ($bad -join '; ') + ' (this script never changes a level that is there)') }
-  return ('ITEM P01-pfm-office PASS the group "' + $OfficeGroup + '" holds the level "' + $OfficeLevel + '" on the site (Edit plus Override List Behaviors)')
+  # The permission words as read (numbers only), so a result shows what the check compared.
+  $bits = ' [level ' + $(if ($level) { [string]$level.BasePermissions.High + '/' + [string]$level.BasePermissions.Low } else { 'none' }) +
+    ', Edit ' + $(if ($edit) { [string]$edit.BasePermissions.High + '/' + [string]$edit.BasePermissions.Low } else { 'none' }) + ']'
+  if ($bad.Count) { return ('ITEM P01-pfm-office FAIL ' + ($bad -join '; ') + ' (this script never changes a level that is there)' + $bits) }
+  return ('ITEM P01-pfm-office PASS the group "' + $OfficeGroup + '" holds the level "' + $OfficeLevel + '" on the site (Edit plus Override List Behaviors)' + $bits)
 }
 
 $secret = @()
