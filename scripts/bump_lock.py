@@ -185,15 +185,16 @@ def snapshot():
 
 def restore(snap):
     """Write back the files of a snapshot (the old lock, definitions, go.md, bundles and task scripts), and delete each
-    round bundle and stored hash file that the snapshot does not hold (a raised revision the failed run made).
+    round bundle, task script and stored hash file that the snapshot does not hold (a file the failed run made).
 
     Args:
         snap: the dict that snapshot() returned.
     """
-    for n in os.listdir(PASTE):
-        p = os.path.join(PASTE, n)
-        if n.endswith(BUNDLE_FILES) and p not in snap:
-            os.remove(p)
+    for d in (PASTE, os.path.dirname(PASTE)):   # round bundles, and the task scripts beside them
+        for n in os.listdir(d):
+            p = os.path.join(d, n)
+            if n.endswith(BUNDLE_FILES) and p not in snap:
+                os.remove(p)
     for p, data in snap.items():
         with open(p, "wb") as f:
             f.write(data)
@@ -284,7 +285,8 @@ def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_che
         revise: the revision raise before the build (replaceable for tests).
 
     Returns:
-        Nothing; stops with a FAIL message (after the restore) on a failure.
+        Nothing; stops with a FAIL message (after the restore) on a failure; any other error or Ctrl-C restores too,
+        then goes on up.
     """
     old = snapshot()
     lock.update(commit=rel["commit"], tag=tag, serial=serial, engine=rel["engine"], files=rel["files"])
@@ -294,10 +296,10 @@ def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_che
     try:
         revise()
         prove(rel, build, checks)
-    except SystemExit as e:
-        if e.code not in (None, 0):
+    except BaseException as e:   # a FAIL stop, any other error and Ctrl-C all put the files back
+        if not (isinstance(e, SystemExit) and e.code in (None, 0)):
             restore(old)
-            print("RESTORED the old lock, round definitions, go.md and round bundles; no DECISIONS row was written.", file=sys.stderr)
+            print("RESTORED the old lock, round definitions, go.md, round bundles and task scripts; no DECISIONS row was written.", file=sys.stderr)
         raise
     add_decision(decision_row(today, tag, rel["commit"][:7], serial))
 
@@ -354,7 +356,34 @@ def release_cases():
     return len(cases) + 7, fails
 
 
-def order_case(name, build_ok, check_ok, rel):
+def fake_build(rel, seen, gov, build_ok, crash):
+    """Fake traced build for order_case: records the lock and row state, fakes bundle and task script writes, then fails.
+
+    Args:
+        rel: the fake release lock.
+        seen: the dict that receives the "lock" and "row" observations.
+        gov: the task script folder.
+        build_ok: False makes the build stop with a FAIL message.
+        crash: None, "error" or "interrupt".
+
+    Returns:
+        The lock's file set. Raises RuntimeError ("error"), KeyboardInterrupt ("interrupt") or SystemExit (build_ok False).
+    """
+    seen["lock"] = json.load(open(LOCK)).get("commit") == rel["commit"]
+    seen["row"] = "bump_lock" in open(DECISIONS).read()
+    open(os.path.join(PASTE, "c.ps1"), "w").write("new bundle")
+    open(os.path.join(PASTE, "c.ps1.sha256.json"), "w").write("{}")   # engine-v21 on: the stored hash beside it
+    open(os.path.join(gov, "t.ps1"), "w").write("new task script")   # a task script the build made
+    if crash == "error":
+        raise RuntimeError("fake build error")
+    if crash == "interrupt":
+        raise KeyboardInterrupt()
+    if not build_ok:
+        sys.exit("FAIL fake build")
+    return set(rel["files"])
+
+
+def order_case(name, build_ok, check_ok, rel, crash=None):
     """Run one apply_bump case in the temp folder that order_cases set up (fake build, checks and revision raise).
 
     Args:
@@ -362,12 +391,17 @@ def order_case(name, build_ok, check_ok, rel):
         build_ok: whether the fake build passes.
         check_ok: whether the fake checks pass.
         rel: the fake release lock.
+        crash: None, or "error" / "interrupt": the fake build raises a plain error or KeyboardInterrupt.
 
     Returns:
         True when the case behaved as expected.
     """
+    gov = os.path.dirname(PASTE)
     for n in os.listdir(PASTE):   # each case starts from one old bundle only
         os.remove(os.path.join(PASTE, n))
+    for n in os.listdir(gov):   # and from no task script
+        if n.endswith(".ps1"):
+            os.remove(os.path.join(gov, n))
     open(LOCK, "w").write('{"commit": "old"}')
     open(os.path.join(PASTE, "b.ps1"), "w").write("old bundle")
     for p in (BUNDLES, GO):   # the raise edits these two; a failed run must put them back
@@ -376,14 +410,8 @@ def order_case(name, build_ok, check_ok, rel):
     seen = {}
 
     def build(root, engine):
-        """Fake traced build: records whether the new lock and no row are on disk; fakes a bundle write."""
-        seen["lock"] = json.load(open(LOCK)).get("commit") == rel["commit"]
-        seen["row"] = "bump_lock" in open(DECISIONS).read()
-        open(os.path.join(PASTE, "c.ps1"), "w").write("new bundle")
-        open(os.path.join(PASTE, "c.ps1.sha256.json"), "w").write("{}")   # engine-v21 on: the stored hash beside it
-        if not build_ok:
-            sys.exit("FAIL fake build")
-        return set(rel["files"])
+        """Fake traced build: see fake_build."""
+        return fake_build(rel, seen, gov, build_ok, crash)
 
     def revise():
         """Fake revision raise: the old bundle b.ps1 leaves and the next revision c.ps1 comes."""
@@ -401,16 +429,34 @@ def order_case(name, build_ok, check_ok, rel):
     try:
         apply_bump(rel, "engine-v9", {"commit": "old"}, 5, "2026-01-01", build, checks, revise)
         stopped = False
-    except SystemExit:
+    except (SystemExit, RuntimeError, KeyboardInterrupt):
         stopped = True
     row = open(DECISIONS).read().count(BY)
     kept = [open(p).read() for p in (BUNDLES, GO)]
     good = (seen.get("lock") is True and seen.get("row") is False and seen.get("row_at_checks", False) is False
             and stopped == (name != "pass"))
+    return order_verdict(name, good, row, kept, gov)
+
+
+def order_verdict(name, good, row, kept, gov):
+    """Compare the folder after one apply_bump case with what the case name expects.
+
+    Args:
+        name: the case name ("pass" expects the new state, any other the old one).
+        good: whether the order checks held.
+        row: the number of DECISIONS rows written.
+        kept: the contents of the bundle definitions and go.md.
+        gov: the task script folder (the fake build writes t.ps1 there).
+
+    Returns:
+        True when the folder is as expected.
+    """
+    task = os.path.exists(os.path.join(gov, "t.ps1"))
     if name == "pass":
-        return good and row == 1 and json.load(open(LOCK))["serial"] == 5 and sorted(os.listdir(PASTE)) == ["c.ps1", "c.ps1.sha256.json"] and kept == ["raised"] * 2
-    return good and row == 0 and open(LOCK).read() == '{"commit": "old"}' \
-        and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"] and kept == ["old"] * 2
+        return (good and row == 1 and json.load(open(LOCK))["serial"] == 5 and task and kept == ["raised"] * 2
+                and sorted(os.listdir(PASTE)) == ["c.ps1", "c.ps1.sha256.json"])
+    return (good and row == 0 and open(LOCK).read() == '{"commit": "old"}' and not task and kept == ["old"] * 2
+            and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"])
 
 
 def cache_case():
@@ -472,8 +518,9 @@ def order_cases():
         BUNDLES, GO = os.path.join(t, "bundles.json"), os.path.join(t, "go.md")
         os.mkdir(PASTE)
         try:
-            for name, build_ok, check_ok in (("pass", True, True), ("build fails", False, True), ("checks fail", True, False)):
-                good = order_case(name, build_ok, check_ok, rel)
+            for name, build_ok, check_ok, *crash in (("pass", True, True), ("build fails", False, True), ("checks fail", True, False),
+                                          ("build error", True, True, "error"), ("interrupt", True, True, "interrupt")):
+                good = order_case(name, build_ok, check_ok, rel, *crash)
                 print("BUMPLOCK order %s: %s" % (name, "ok" if good else "FAIL"))
                 cases, fails = cases + 1, fails + (not good)
         finally:
