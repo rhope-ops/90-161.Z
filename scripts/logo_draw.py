@@ -183,6 +183,8 @@ def parse_path(d):
         elif cmd in 'LHV':
             n = {'L': 2, 'H': 1, 'V': 1}[cmd]
             vals = [float(x) for x in tokens[k:k + n]]; k += n
+            if len(vals) != n:   # the slice stops short at the end of the text
+                raise IndexError(cmd)   # path_segments turns this into the "too few or bad numbers" message
             new = tuple(vals) if cmd == 'L' else ((vals[0], pos[1]) if cmd == 'H' else (pos[0], vals[0]))
             segs.append(('line', pos, new)); pos = new
         elif cmd == 'A':

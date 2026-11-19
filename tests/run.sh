@@ -6,7 +6,7 @@
 # always; a slow group (pwsh, network, lint) runs only when a file it reads changed against the merge base with
 # origin/main, and lint checks only the changed PowerShell files. A change to this file or scripts/check.local.sh, or no
 # merge base, runs everything. Each skipped group prints a SKIP line; the full lane before a merge runs them all.
-set -uo pipefail
+set -uo pipefail; exec </dev/null   # no test reads the keyboard: a hidden Skip prompt waited for a key (PFM 19 Nov 26)
 cd "$(git rev-parse --show-toplevel)"
 pass=0; fail=0; skipped=0
 ok()  { echo "PASS $1"; pass=$((pass+1)); }
