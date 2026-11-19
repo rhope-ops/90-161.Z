@@ -1,13 +1,16 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r6, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
   column kind: pub (the number as a link, the title beside or under it), with and bold (semibold), chip (a status
   chip) and plain. Double-click or Enter on a row opens its card.
+  R6 (R31b D4): the titles of a pub column start in one column: after the widest number of all the grid's rows and a
+  fixed gap, when every title fits there, else every title goes under its number. Each painted pub cell is kept in
+  the grid's Tag.Drawn for the measure part and the layout self-check.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -112,17 +115,32 @@ $wn.Grid = {
   $scroll = $(if ($hs.Full -gt $hs.H) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
   $kinds = & $wn.GridCols $g $cols $W $scroll
   $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
-  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows }
+  $pw = & $wn.PubWidths $rows
+  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{} }
   & $wn.GridFill $g $rows
   $g.Add_CellPainting({ param($s, $e) & $wn.PaintCell $s $e })
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
   $g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled = $true; $e.SuppressKeyPress = $true; if ($s.CurrentRow) { & $wn.Later $s $s.CurrentRow.Index } } })
   [void]$Parent.Controls.Add($g); $g.ClearSelection(); $wn.Gridsel = $g
   if ($b.Count) { $wn.CountText = [string]$b.Count; $wn.CountBox = & $wn.Txt $Parent ($b.Count -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq = $g } }
+# The widest number (as a link) and the widest title of the pub values ("number|title") of $Rows, in pixels, measured as
+# $wn.PaintPub draws them. All rows, not only the shown ones, so a filter does not move the title column.
+$wn.PubWidths = { param($Rows)
+  $fl = [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix'; $big = [Drawing.Size]::new(100000, 0); $out = @{ Num = 0; Title = 0 }
+  foreach ($r in @($Rows)) { $pp = ([string]$r.Publication).Split('|'); if ($pp.Count -lt 2) { continue }
+    $out.Num = [math]::Max($out.Num, [Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, $big, $fl).Width)
+    $out.Title = [math]::Max($out.Title, [Windows.Forms.TextRenderer]::MeasureText($pp[1], $ui.F.Small, $big, $fl).Width) }
+  return $out }
 $wn.PaintPub = {
   <#
   .SYNOPSIS
-  Paints a pub cell: the number as a link and the title beside it, or under it when the title does not fit beside it.
+  Paints a pub cell: the number as a link and the title in the grid's title column, or under the number when the
+  widest title of the grid does not fit in that column.
+  .DESCRIPTION
+  R6 (R31b D4): the title column starts after the grid's widest number and its gap (Tag.PubW, Tag.PubGap), so every
+  title starts at one x; the choice beside or under is made once for the grid (Tag.PubT, the widest title), so a long
+  title is never cut and the titles never start at two places. What was drawn goes into Tag.Drawn[row], relative to
+  the text rectangle: the right end of the number, the title's x, the number's bottom and the title's top.
   .PARAMETER Gr
   The graphics of the cell.
   .PARAMETER Text
@@ -133,19 +151,26 @@ $wn.PaintPub = {
   The one-line text flags.
   .PARAMETER Fw
   The wrapping text flags.
+  .PARAMETER Tag
+  The grid's Tag: PubW, PubT, PubGap and Drawn.
+  .PARAMETER Row
+  The row index (the key in Tag.Drawn).
   #>
-  param($Gr, [string]$Text, $Tr, $Fl, $Fw)
+  param($Gr, [string]$Text, $Tr, $Fl, $Fw, $Tag, [int]$Row)
   $pp = $Text.Split('|')
   $w1 = [Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width
-  $w2 = 0; if ($pp.Count -gt 1) { $w2 = [Windows.Forms.TextRenderer]::MeasureText($pp[1], $ui.F.Small, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width }
-  $rest = New-Object System.Drawing.Rectangle(($Tr.X + $w1 + (& $ui.Sc 6)), $Tr.Y, ($Tr.Width - $w1 - (& $ui.Sc 6)), $Tr.Height)
-  if ($pp.Count -lt 2 -or $rest.Width -ge $w2) {
+  $col = [int]$Tag.PubW + [int]$Tag.PubGap                 # the title column, from the left of the text rectangle
+  $beside = ($pp.Count -lt 2 -or [int]$Tag.PubT -le $Tr.Width - $col)
+  if ($beside) {
     [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, $Tr, $pc.primary, $Fl)
+    $tx = $col; $ty = 0; $nb = 0   # one line: the title's x is the column, its top and the number's bottom are not compared
+    $rest = New-Object System.Drawing.Rectangle(($Tr.X + $col), $Tr.Y, ($Tr.Width - $col), $Tr.Height)
     if ($pp.Count -gt 1) { [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, $rest, $pc.muted, $Fl) } }
-  else {   # the rest does not fit beside the name: it goes on a second line (the cell wraps)
-    $lh = [int][math]::Ceiling($ui.F.Link.GetHeight($Gr)); $top = $Tr.Y + [int](($Tr.Height - 2 * $lh) / 2)
-    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, (New-Object System.Drawing.Rectangle($Tr.X, $top, $Tr.Width, $lh)), $pc.primary, $Fl)
-    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, (New-Object System.Drawing.Rectangle($Tr.X, ($top + $lh), $Tr.Width, $lh)), $pc.muted, $Fw) } }
+  else {   # the widest title does not fit in the column: every title goes on a second line (the cell wraps)
+    $lh = [int][math]::Ceiling($ui.F.Link.GetHeight($Gr)); $ny = [int](($Tr.Height - 2 * $lh) / 2); $tx = 0; $ty = $ny + $lh; $nb = $ny + $lh
+    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, (New-Object System.Drawing.Rectangle($Tr.X, ($Tr.Y + $ny), $Tr.Width, $lh)), $pc.primary, $Fl)
+    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, (New-Object System.Drawing.Rectangle($Tr.X, ($Tr.Y + $ty), $Tr.Width, $lh)), $pc.muted, $Fw) }
+  if ($null -ne $Tag.Drawn -and $pp.Count -gt 1) { $Tag.Drawn[$Row] = @{ NumRight = [math]::Min($w1, $Tr.Width); TitleX = $tx; NumBottom = $nb; TitleTop = $ty; Beside = $beside } } }
 # Paints a status chip cell: a rounded fill of the row's chip kind with the status in the middle. $Bd: the cell bounds; $Pd: its padding.
 $wn.PaintChip = { param($Gr, [string]$Text, [string]$Kind, $Bd, [int]$Pd)
   $cwid = [Windows.Forms.TextRenderer]::MeasureText($Text, $ui.F.SmallB, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width + (& $ui.Sc 20)
@@ -175,7 +200,7 @@ $wn.PaintCell = {
     $pn = New-Object System.Drawing.Pen($(if ($head) { $pc.muted } else { $pc.line }), 1); $gr.DrawLine($pn, $bd.X, ($bd.Bottom - 1), $bd.Right, ($bd.Bottom - 1)); $pn.Dispose()
     $text = [string]$E.Value
     if ($head) { [Windows.Forms.TextRenderer]::DrawText($gr, $text.ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl) }
-    elseif ($kind -eq 'pub') { & $wn.PaintPub $gr $text $tr $fl $fw }
+    elseif ($kind -eq 'pub') { & $wn.PaintPub $gr $text $tr $fl $fw $tag $E.RowIndex }
     elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fw) }
     elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fw) }
     elseif ($kind -eq 'chip') { & $wn.PaintChip $gr $text ([string]$tag.Chip[$text]) $bd $pd }

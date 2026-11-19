@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r6, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
@@ -12,12 +12,17 @@
   and at 1.5 x (W1: the logo's middle and the name's middle, the color behind the logo) and the colors that
   Select-T22Color gives with high contrast on and off (W2). No question; no file but the given one and the card
   pictures next to it.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r5.png, in
+  Level (R6, R31b D1 to D4): $wn.LevelFacts gives, for the card on the page, the middles of each Action Status caption
+  and the main card's first line (D1), of the crumb's link and rest with their font sizes (D2), of each check chip and
+  its first text line (D3), and where each pub grid drew its numbers and titles (D4). -Measure records them for every
+  card at this scale and again at 1.25 x and 1.5 x ($wn.MeasureScaled); the layout self-check turns them into LAYOUT lines
+  ($ui.Measure, $wn.LevelBad), so the window flags the 4 defects on the device too.
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r6.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
-  $wn.PngLines, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $ui.Measure, $wn.MeasureRun and its helpers.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -28,7 +33,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r5.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r6.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -123,14 +128,101 @@ $wn.MeasureCrumb = {
   $gap = $(if ($li.Last -ge 0 -and $ti.First -ge 0) { ($t.Left + $ti.First) - ($l.Left + $li.Last) - 1 } else { $null })
   return [ordered]@{ Link = [string]$l.Text; Rest = [string]$t.Text; LinkFont = (& $wn.FontFacts $l.Font); RestFont = (& $wn.FontFacts $t.Font)
     LinkBounds = [string]$l.Bounds; RestBounds = [string]$t.Bounds; LinkInk = $li.Last; RestInk = $ti.First; GapBounds = ($t.Left - $l.Right); GapInk = $gap } }
+$wn.LevelPubs = {
+  <#
+  .SYNOPSIS
+  R6 (R31b D4): where each grid with a pub column on the page drew its numbers and titles.
+  .DESCRIPTION
+  Each such grid is drawn once into a bitmap (so its cells are painted now, also off-screen); $wn.PaintPub keeps what
+  it drew in the grid's Tag.Drawn, relative to the cell's text rectangle. Rows that are scrolled out of the grid are
+  not drawn and not listed.
+  .OUTPUTS
+  One table per grid: Grid (its name), Gap (the gap after the widest number), Rows (rows drawn) and, one value per
+  row drawn, Beside, TitleX, NumRight, NumBottom and TitleTop.
+  #>
+  $out = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) {
+    foreach ($c in $st.Pop().Controls) {
+      if ($c -is [Windows.Forms.DataGridView]) {
+        if (-not ($c.Tag -is [hashtable]) -or -not (@($c.Tag.Kind.Values) -contains 'pub')) { continue }
+        $c.Tag.Drawn = @{}
+        try { $bm = New-Object System.Drawing.Bitmap([math]::Max(1, $c.Width), [math]::Max(1, $c.Height))
+          try { $c.DrawToBitmap($bm, (New-Object System.Drawing.Rectangle(0, 0, $bm.Width, $bm.Height))) } finally { $bm.Dispose() } } catch { $null = $_ }
+        $d = @(foreach ($k in @($c.Tag.Drawn.Keys | Sort-Object)) { $c.Tag.Drawn[$k] })
+        $g = [ordered]@{}; $g['Grid'] = [string]$c.AccessibleName; $g['Gap'] = [int]$c.Tag.PubGap; $g['Rows'] = $d.Count
+        foreach ($n in 'Beside', 'TitleX', 'NumRight', 'NumBottom', 'TitleTop') { $g[$n] = @($d | ForEach-Object { $_[$n] }) }
+        $out.Add($g) }
+      elseif ($c.Controls.Count) { $st.Push($c) } } }
+  return $out.ToArray() }
+$wn.LevelFacts = {
+  <#
+  .SYNOPSIS
+  R6 (R31b D1 to D4): the alignment facts of the card on the page, in page pixels ($wn.TextMid).
+  .DESCRIPTION
+  Caps (D1): for each Action Status card, the middle of its caption and of the first line of the main card. Crumb (D2):
+  the font size and text middle of the crumb's link and rest, or $null when the card has no crumb link. Chips (D3): for
+  each check block, the middle of its chip and of the first line of its text. Pubs (D4): $wn.LevelPubs.
+  .OUTPUTS
+  A table: Caps, Crumb, Chips, Pubs.
+  #>
+  $mainSec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
+  $line = $(if ($mainSec) { & $wn.FirstLine $mainSec.Card } else { $null })
+  $caps = @(foreach ($s in @($wn.Secs | Where-Object { $_.Stretch -and $_.CapBox -and $line })) {
+      $c = [ordered]@{}; $c['Cap'] = [string]$s.CapBox.Text; $c['CapMid'] = (& $wn.TextMid $s.CapBox); $c['Line'] = [string]$line.Text; $c['LineMid'] = (& $wn.TextMid $line); $c })
+  $crumb = $null; $l = $wn.CrumbLink; $t = $wn.CrumbRest
+  if ($l -and $t) { $crumb = [ordered]@{}; $crumb['LinkSize'] = [double]$l.Font.SizeInPoints; $crumb['RestSize'] = [double]$t.Font.SizeInPoints
+    $crumb['LinkMid'] = (& $wn.TextMid $l); $crumb['RestMid'] = (& $wn.TextMid $t) }
+  $chips = @(foreach ($r in @($wn.ChipRows)) {
+      $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['ChipMid'] = (& $wn.TextMid $r.Chip); $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
+  $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs)
+  return $f }
+$wn.LevelBad = {
+  <#
+  .SYNOPSIS
+  The LAYOUT lines of the layout self-check for D1 to D4 (R6): each fact of $wn.LevelFacts that is out of line.
+  .DESCRIPTION
+  D1, D2 and D3: two middles more than $Tol apart (D2 also: two font sizes). D4: the titles of a grid start at more than
+  one x, or a title in the column starts before the end of the widest number and the gap, or a title under its number
+  starts above the number's bottom. A grid with no row drawn has nothing to compare.
+  .PARAMETER Card
+  The card key (it starts each line).
+  .PARAMETER F
+  The facts ($wn.LevelFacts).
+  .PARAMETER Tol
+  The tolerance in pixels: 1 px at 100 %, scaled.
+  .OUTPUTS
+  The LAYOUT lines (none when all is in line).
+  #>
+  param([string]$Card, $F, [double]$Tol)
+  $out = @()
+  foreach ($c in @($F.Caps)) { if ([math]::Abs($c.CapMid - $c.LineMid) -gt $Tol) {
+      $out += ('LAYOUT ' + $Card + ' D1 caption "' + $c.Cap + '" middle ' + $c.CapMid + ', the first line of the main card ' + $c.LineMid) } }
+  $k = $F.Crumb
+  if ($k -and ($k.LinkSize -ne $k.RestSize -or [math]::Abs($k.LinkMid - $k.RestMid) -gt $Tol)) {
+    $out += ('LAYOUT ' + $Card + ' D2 crumb: link ' + $k.LinkSize + ' pt middle ' + $k.LinkMid + ', rest ' + $k.RestSize + ' pt middle ' + $k.RestMid) }
+  foreach ($c in @($F.Chips)) { if ([math]::Abs($c.ChipMid - $c.LineMid) -gt $Tol) {
+      $out += ('LAYOUT ' + $Card + ' D3 chip "' + $c.Chip + '" middle ' + $c.ChipMid + ', its first text line ' + $c.LineMid) } }
+  foreach ($p in @($F.Pubs)) {
+    if ([int]$p.Rows -lt 1) { continue }
+    $xs = @($p.TitleX | Sort-Object -Unique); $num = [int](@($p.NumRight) | Measure-Object -Maximum).Maximum
+    $under = @(for ($i = 0; $i -lt [int]$p.Rows; $i++) { if (-not $p.Beside[$i] -and $p.TitleTop[$i] -lt $p.NumBottom[$i]) { $i } })
+    if ($xs.Count -gt 1) { $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': the titles start at ' + ($xs -join ', ')) }
+    elseif ((@($p.Beside) -contains $true) -and [int]$xs[0] -lt $num + [int]$p.Gap) {
+      $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': the titles start at ' + $xs[0] + ', the widest number ends at ' + $num) }
+    elseif ($under.Count) { $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': ' + $under.Count + ' titles start above the bottom of their number') } }
+  return $out }
+# The self-check's extra lines (the rade-ui block calls $ui.Measure for each card it checks): D1 to D4, 1 px at 100 %.
+$ui.Measure = { param($Card) return @(& $wn.LevelBad $Card (& $wn.LevelFacts) ([math]::Max(1.0, $ui.Dpi / 96.0))) }
 $wn.MeasureCard = {
   <#
   .SYNOPSIS
-  What -Measure records for the card on the page: the crumb, every button and link, every section card.
+  What -Measure records for the card on the page: the crumb, every button and link, every section card, and the
+  alignment facts of D1 to D4 (R6).
   .PARAMETER Key
   The card key.
   .OUTPUTS
-  A table: Key, Crumb, Buttons (Text, Link, Back, Face, Edge), Sections (Col, Cap, Stretch, Top, Bottom; page pixels).
+  A table: Key, Crumb, Buttons (Text, Link, Back, Face, Edge), Sections (Col, Cap, Stretch, Top, Bottom; page pixels),
+  Level ($wn.LevelFacts).
   #>
   param([string]$Key)
   $btns = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
@@ -146,8 +238,42 @@ $wn.MeasureCard = {
       [ordered]@{ Col = $s.Col; Cap = $s.Cap; Stretch = $s.Stretch; Top = ($r.Top - $pt); Bottom = ($r.Bottom - $pt) } })
   # One key per statement: Windows PowerShell 5.1 stops on an [ordered] literal that holds a generic list (R30 CI).
   $card = [ordered]@{}; $card['Key'] = $Key; $card['Crumb'] = (& $wn.MeasureCrumb)
-  $card['Buttons'] = $btns.ToArray(); $card['Sections'] = $secs
+  $card['Buttons'] = $btns.ToArray(); $card['Sections'] = $secs; $card['Level'] = (& $wn.LevelFacts)
   return $card }
+$wn.MeasureScaled = {
+  <#
+  .SYNOPSIS
+  Builds every card again at $K times this scale and gives back the alignment facts of D1 to D4 of each (R6).
+  .DESCRIPTION
+  As $wn.MeasureHead does for the rail head: the scale ($ui.Dpi), the font factor and every font of $ui.F (with the
+  crumb font and the step fonts made from them) are $K times as large, as Windows makes them at that scale. Each card is
+  shown and measured ($wn.LevelFacts); a card that cannot be measured keeps its error. Then the scale and the fonts come
+  back, Your Work is shown again and the scaled fonts are disposed.
+  .PARAMETER K
+  The factor (1.5: the PFM's 150 %).
+  .OUTPUTS
+  A table: K, Dpi, Sc8 (8 px at 100 %, at this scale) and Cards (Key, Level or Error).
+  #>
+  param([double]$K)
+  $keep = @{ Dpi = $ui.Dpi; FontK = $ui.FontK; F = $ui.F; Crumb = $wn.CrumbFont; Step = $wn.StepFonts }
+  $made = New-Object System.Collections.Generic.List[object]; $cards = New-Object System.Collections.Generic.List[object]; $res = [ordered]@{}
+  try {
+    $nf = @{}; foreach ($n in @($keep.F.Keys)) { $o = $keep.F[$n]; $x = New-Object System.Drawing.Font($o.FontFamily, [single]($o.Size * $K), $o.Style); $nf[$n] = $x; $made.Add($x) }
+    $ui.Dpi = $keep.Dpi * $K; $ui.FontK = $keep.FontK * $K; $ui.F = $nf; $wn.StepFonts = $null
+    $wn.CrumbFont = New-Object System.Drawing.Font($nf.Small, [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline')); $made.Add($wn.CrumbFont)
+    $res['K'] = $K; $res['Dpi'] = $ui.Dpi; $res['Sc8'] = (& $wn.Sc 8)
+    foreach ($key in $Cards.Keys) {
+      $c = [ordered]@{}; $c['Key'] = $key
+      try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts) }
+      catch { $c['Error'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
+      $cards.Add($c) }
+  } finally {
+    if ($wn.StepFonts -and -not [object]::ReferenceEquals($wn.StepFonts, $keep.Step)) { foreach ($x in @($wn.StepFonts.A) + @($wn.StepFonts.B)) { $made.Add($x) } }
+    $ui.Dpi = $keep.Dpi; $ui.FontK = $keep.FontK; $ui.F = $keep.F; $wn.CrumbFont = $keep.Crumb; $wn.StepFonts = $keep.Step
+    $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
+    foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
+  $res['Cards'] = $cards.ToArray()
+  return $res }
 $wn.HeadFacts = {
   <#
   .SYNOPSIS
@@ -212,7 +338,8 @@ $wn.MeasureRun = {
   .DESCRIPTION
   The form is shown far off the screen (it is never seen) so that its controls have handles and can be drawn into
   bitmaps; it builds every card as a normal run does ($wn.Build: layout self-check, accessible names and the card
-  pictures, saved next to the JSON file, included), then measures the rail head and the high-contrast color choice.
+  pictures, saved next to the JSON file, included), then measures D1 to D4 of every card at 1.25 x and 1.5 x (R6),
+  the rail head and the high-contrast color choice.
   .PARAMETER Path
   The JSON file to write.
   #>
@@ -234,8 +361,11 @@ $wn.MeasureRun = {
   $res['EmptyNames'] = @($wn.NoName.Keys | ForEach-Object { [string]$_ })
   $res['LayoutDefects'] = @($ui.LayBad)
   $res['Pngs'] = $wn.Pngs.ToArray()
+  # D1 to D4 at 1.25 x and 1.5 x (R6; the PFM works at 150 %): every card again; a pass that cannot run is kept as its error.
+  try { $res['Scaled'] = @(foreach ($k in 1.25, 1.5) { & $wn.MeasureScaled $k }) }
+  catch { $res['Scaled'] = @(); $res['ScaledError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   # The rail head and the color choice: a step that cannot be measured is kept as its error (the test names it).
   try { $res['Head'] = @(& $wn.MeasureHead) } catch { $res['Head'] = @(); $res['HeadError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   try { $res['Contrast'] = @(& $wn.MeasureContrast) } catch { $res['Contrast'] = @(); $res['ContrastError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
-  Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 8) -Encoding UTF8
+  Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 10) -Encoding UTF8
   $form.Close() }
