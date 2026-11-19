@@ -6,7 +6,9 @@ What it reads: the subset of SVG that the logo uses (the list is in scripts/logo
 path command or transform stops with a "logo_draw:" message, so a new logo design cannot be drawn wrong in silence.
 Curves (Q, C) are cut into fixed straight steps, so every machine reads the same shapes.
 Usage: import logo_svg; logo_svg.shapes(svg_text) -> list of shape dicts; invert() and apply() map points.
-Network: none. Writes: none. Credentials: none.
+Network: none.
+Writes: none.
+Credentials: none.
 Run target: Python 3.8+, standard library only.
 """
 import math
@@ -28,10 +30,20 @@ SHAPE_ATTRS = set(INHERITED) | {'transform', 'stroke-dasharray', 'clip-path'}
 # ---------------------------------------------------------------- reading the SVG ------------------------------------
 
 def shapes(svg_text):
-    """Read the SVG and return its painted shapes in order, as dicts: kind ('circle' or 'path'), the geometry in the
-    shape's own coordinates, fill and stroke colors (None or (r, g, b) 0-255), fill opacity, stroke width, dash list,
-    the clip rectangles (or None), and the matrix from the shape's coordinates to the viewBox."""
-    root = ET.fromstring(svg_text)
+    """Read the SVG and return its painted shapes in order.
+
+    Args:
+        svg_text: the SVG file's text.
+
+    Returns:
+        A list of dicts: kind ('circle' or 'path'), the geometry in the shape's own coordinates, fill and stroke colors
+        (None or (r, g, b) 0-255), fill opacity, stroke width, dash list, the clip rectangles (or None), and the matrix
+        from the shape's coordinates to the viewBox. Stops with a "logo_draw:" message for anything it does not handle.
+    """
+    try:
+        root = ET.fromstring(svg_text)
+    except ET.ParseError as e:
+        raise SystemExit('logo_draw: the SVG is not well-formed XML (%s)' % e)
     if root.get('viewBox') != '0 0 512 512':
         raise SystemExit('logo_draw: the viewBox must be 0 0 512 512')
     clips = {c.get('id'): [clip_rect(r) for r in c] for c in root.iter(NS + 'clipPath') if refuse_clip(c)}
@@ -86,7 +98,7 @@ def make_shape(el, tag, paint, matrix, clips):
     s = {'kind': 'circle' if tag == 'circle' else 'path', 'fill': color(paint['fill']),
          'fill_op': opacity(paint['fill-opacity']), 'stroke': color(paint['stroke']),
          'width': number(paint['stroke-width'], 'stroke-width'),
-         'dash': [float(x) for x in el.get('stroke-dasharray', '').split()], 'clip': None, 'm': matrix}
+         'dash': dash_list(el.get('stroke-dasharray', '')), 'clip': None, 'm': matrix}
     if el.get('clip-path'):
         s['clip'] = find_clip(clips, el.get('clip-path'))
     if tag == 'circle':
@@ -99,6 +111,8 @@ def make_shape(el, tag, paint, matrix, clips):
         s['subs'] = [{'segs': [('line', p0, p1)], 'closed': False, 'joins': 0}]
     else:
         s['subs'] = path_segments(el.get('d'))
+        if not any(sub['segs'] for sub in s['subs']):
+            raise SystemExit('logo_draw: a path needs at least one segment after M (it would draw nothing)')
     refuse_unsupported(s, tag, paint)
     refuse_fill(s)
     return s
@@ -183,11 +197,30 @@ def clip_rect(r):
 
 
 def number(text, name):
-    """Return float(text), or stop with a message naming the attribute."""
+    """Return float(text), or stop with a message naming the attribute (also for nan and inf)."""
     try:
-        return float(text)
+        v = float(text)
     except (TypeError, ValueError):
+        v = math.nan
+    if not math.isfinite(v):
         raise SystemExit('logo_draw: %s=%r is not a plain number' % (name, text))
+    return v
+
+
+def dash_list(text):
+    """Return the numbers of a stroke-dasharray value.
+
+    Args:
+        text: the attribute value ('' for none); numbers split by spaces or commas, as SVG allows.
+
+    Returns:
+        The list of floats ([] for none). Stops with a message for a bad number, a negative one, or a pattern whose
+        sum is 0 (it would have no length).
+    """
+    vals = [number(x, 'stroke-dasharray') for x in re.split(r'[\s,]+', text.strip()) if x]
+    if vals and (min(vals) < 0 or sum(vals) <= 0):
+        raise SystemExit('logo_draw: stroke-dasharray %r needs numbers of 0 or more with a sum above 0' % text)
+    return vals
 
 
 def opacity(text):
@@ -236,6 +269,8 @@ def parse_transform(text):
         name = f.group(1)
         try:
             v = [float(x) for x in re.split(r'[\s,]+', f.group(2).strip()) if x]
+            if not all(math.isfinite(x) for x in v):
+                raise ValueError(text)
         except ValueError:
             raise SystemExit('logo_draw: transform %r has bad numbers' % text)
         if name == 'translate' and len(v) in (1, 2):
@@ -294,7 +329,10 @@ def take(tokens, k, n):
     vals = tokens[k:k + n]
     if len(vals) != n or any(re.fullmatch(r'[A-Za-z]', v) for v in vals):
         raise IndexError(n)
-    return [float(v) for v in vals]
+    nums = [float(v) for v in vals]
+    if not all(math.isfinite(v) for v in nums):
+        raise ValueError(vals)   # nan or inf: path_segments turns this into the "too few or bad numbers" message
+    return nums
 
 
 def parse_path(d):
@@ -365,8 +403,20 @@ def bezier(pts, t):
 
 
 def arc_segment(p0, p1, r, large, sweep):
-    """Return ('arc', center, r, start angle, sweep angle) for an SVG arc from p0 to p1 (the endpoint-to-center
-    conversion of the SVG specification, for a circle). A positive sweep angle goes the way of rising angles (y down)."""
+    """Return the arc segment for an SVG arc command (the endpoint-to-center conversion of the SVG specification, for
+    a circle).
+
+    Args:
+        p0: the start point (x, y).
+        p1: the end point (x, y).
+        r: the radius.
+        large: the large-arc flag (True: the arc of more than 180 degrees).
+        sweep: the sweep flag (True: the way of rising angles, clockwise on screen with y down).
+
+    Returns:
+        ('arc', center, r, start angle, sweep angle); a positive sweep angle goes the way of rising angles. Stops with
+        a message for a radius of 0 or less, or an end point equal to the start point.
+    """
     mx, my = (p0[0] - p1[0]) / 2, (p0[1] - p1[1]) / 2
     d2 = mx * mx + my * my
     if d2 == 0 or r <= 0:
