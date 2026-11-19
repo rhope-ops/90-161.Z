@@ -100,6 +100,16 @@ $ui.CopyText = { param($C)
     elseif (& $ui.IsCardText $C) { $s = $s -replace '(?<!\r)\n', '' }
     if ($s) { [System.Windows.Forms.Clipboard]::SetText($s); return $true } } catch { $null = $_ }
   return $false }
+# R34 (the PFM: the answer box did not take a pasted block): a one-line box keeps only the first line of a paste, so a
+# paste into it comes here. $ui.OneLine joins the lines of a text with one space and cuts it to the room that is left.
+# Takes the text and the room (characters); gives back the text to put in.
+$ui.OneLine = { param([string]$T, [int]$Room) $s = ($T -replace '\s*(\r\n|\r|\n)\s*', ' ' -replace '\t', ' ').Trim(); if ($Room -lt 0) { $Room = 0 }; if ($s.Length -gt $Room) { $s = $s.Substring(0, $Room) }; return $s }
+# Pastes the clipboard text into a one-line text box as one line, in place of its selection. Takes the box; gives back
+# $true when it pasted (the key is then handled), $false when the clipboard has no text or the box is multi-line.
+$ui.PasteLine = { param($Tb)
+  try { if ($Tb.Multiline -or $Tb.ReadOnly -or -not [System.Windows.Forms.Clipboard]::ContainsText()) { return $false }
+    $room = [int]$Tb.MaxLength - ([string]$Tb.Text).Length + [int]$Tb.SelectionLength
+    $Tb.SelectedText = & $ui.OneLine ([System.Windows.Forms.Clipboard]::GetText()) $room; return $true } catch { return $false } }
 $ui.MenuCopy.Add_Click({ $null = & $ui.CopyText $ui.Menu.SourceControl })
 $ui.MenuAll.Add_Click({ try { $ui.Menu.SourceControl.SelectAll() } catch { $null = $_ } })
 $ui.Menu.Add_Opening({ try { $ui.MenuCopy.Enabled = [bool]($ui.Menu.SourceControl.SelectionLength -gt 0) } catch { $null = $_ } })
