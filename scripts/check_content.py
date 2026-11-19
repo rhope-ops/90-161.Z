@@ -57,8 +57,9 @@ DoD checks (only with `profile: dod`):
     marking    controlled-information and classification banner marks (the list: MARKING)
     dodid      10 digits next to a DoD ID keyword (the list: DODID)
     unscanned  a file the scanner cannot read: a SKIP_SUFFIX type, a binary file (Office files too) or one over
-               MAX_BYTES (a `content-max-bytes: <number>` line in .check raises it). It blocks unless a
-               `skip: <path or glob>` line names it.
+               MAX_BYTES (a `content-max-bytes: <number>` line in .check raises it; the tool-call hook keeps its
+               own limit on the total of the files one call names, HOOK_MAX_BYTES in scripts/check_content_hook.py,
+               which that line does not change). It blocks unless a `skip: <path or glob>` line names it.
 Known limits of the DoD checks: the scanner reads one line at a time, so a keyword on one line and its number on
 the next pass; a binary file that enters only through a merge resolution is found by --all, not by the commit scan;
 a one-word classification alone on a line is a mark in upper case only (in title case it is an ordinary heading).

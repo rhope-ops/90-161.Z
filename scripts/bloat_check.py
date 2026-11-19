@@ -55,6 +55,7 @@ It measures:
 Settings: the `audit-` lines of `.check` (scripts/check_settings.py reads them and lists the keys; all are optional,
 and a line that is not valid fails --rules):
     audit-every-days: 14, audit-every-commits: 300, audit-ignore: ref/**, audit-start-read: <path>,
+    audit-duplicate-ignore: data/** (not read by the duplicate count only),
     audit-budget-<name>: <number> (handoff_lines 40, file_kb 500, duplicate_lines 20, rules 28, project_rules 15)
 State: `.check.state.json` (tools write it; the full audit in .claude/skills/audit/SKILL.md sets "last_audit"):
     {"audit": {"last_audit": {"date": "YYYY-MM-DD", "commit": "<sha>", "report": "<path>"}},
@@ -98,9 +99,20 @@ def load_config(root):
     return check_settings.audit_config(root)
 
 
-def ignored(rel, cfg):
-    """True when rel matches a glob of an `audit-ignore:` line."""
-    return any(fnmatch.fnmatch(rel, g) for g in cfg.get("ignore", []))
+def ignored(rel, cfg, key="ignore"):
+    """True when rel matches a glob of an `audit-ignore:` line (key "duplicate_ignore": `audit-duplicate-ignore:`)."""
+    return any(fnmatch.fnmatch(rel, g) for g in cfg.get(key, []))
+
+
+def dup_files(files, cfg):
+    """The files the duplicate count reads: files without those an `audit-duplicate-ignore:` glob matches.
+    Args:
+        files: the repo-relative paths that scan_files gives.
+        cfg: the audit settings.
+    Returns:
+        A list of repo-relative paths.
+    """
+    return [rel for rel in files if not ignored(rel, cfg, "duplicate_ignore")]
 
 
 def norm(line):
@@ -325,7 +337,7 @@ def report(root, args, today=None):
     s_lines, s_bytes, s_tok, s_files = start_read(root, cfg)
     hp = root / "docs/NEXT_PROMPT.md"
     h_lines = hp.read_bytes().count(b"\n") if hp.exists() else 0
-    dups = duplicates(root, files)
+    dups = duplicates(root, dup_files(files, cfg))
     big = big_files(root, files, b["file_kb"])
     over = []
     # The session load cap and its warning are reported by rules_report (they fail scripts/check.sh --rules).

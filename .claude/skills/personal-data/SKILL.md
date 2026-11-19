@@ -10,7 +10,7 @@ AGENTS.md "Secrets and personal data" points here. Every pattern, tier and limit
 ## State
 
 - `scripts/check.sh --status` prints each word list's source, count and fingerprint (never the words) and the tier.
-- The settings file `.check` at the repo root turns on the scan of pushes (pre-push hook) and pull requests (the "checks" Action). Its lines: an allowed exact string, `skip: <path or glob>`, `block: <path or glob>` (a file that must not be committed or sent), `denylist: warn`, `profile: dod`. The old name `.pii-guard` is read while `.check` is absent.
+- The settings file `.check` at the repo root turns on the scan of pushes (pre-push hook) and, in a public repo, of pull requests (the "checks" Action). Its lines: an allowed exact string, `skip: <path or glob>`, `block: <path or glob>` (a file that must not be committed or sent), `denylist: warn`, `profile: dod`, `content-max-bytes: <n>` (the size limit of one scanned file; the tool-call hook keeps its own total limit per call). The old name `.pii-guard` is read while `.check` is absent.
 - Tiers: minimum (no profile line) and DoD (`profile: dod`).
 - Word lists, both outside the repo: names (personal data; a push with no list fails, unless `.check` has `denylist: warn`) and terms (the PFM's own blocked words; optional).
 - Private repo: the pre-push hook (every tracked file) is the gate; the Action does not run on pull requests (Actions minutes), so an edit made in the GitHub web page is not scanned until the next manual run. A binary file that enters only through a merge resolution, and content already on the base branch, are scanned only by the hook or a manual run of the Action.
