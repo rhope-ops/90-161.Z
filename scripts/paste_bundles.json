@@ -532,35 +532,25 @@
                             ]
                         },
                         {
-                            "key": "import-site",
-                            "prompt": "Did you type the site address into the box \"1 Site URL\"?",
-                            "kind": "yesno"
-                        },
-                        {
-                            "key": "import-mail",
-                            "prompt": "Did you type your e-mail address into the box \"2 Alert e-mail\"?",
-                            "kind": "yesno"
-                        },
-                        {
-                            "key": "import-lists",
-                            "prompt": "Did you type or change a list name in a box?",
-                            "kind": "yesno"
+                            "key": "import-boxes",
+                            "prompt": "Which of the boxes \"1 Site URL\" and \"2 Alert e-mail\" did you type into before Import?",
+                            "kind": "pick",
+                            "choices": [
+                                "Both",
+                                "Only the site address",
+                                "Only the e-mail",
+                                "Neither"
+                            ]
                         },
                         {
                             "key": "import-other",
-                            "prompt": "Did you type or change any other box?",
-                            "kind": "yesno"
-                        },
-                        {
-                            "key": "import-which",
-                            "prompt": "Which other box? One line, no names.",
-                            "kind": "text",
-                            "showIf": {
-                                "key": "import-other",
-                                "in": [
-                                    "Yes"
-                                ]
-                            }
+                            "prompt": "Did you type or change any other box before Import?",
+                            "kind": "pick",
+                            "choices": [
+                                "No other box",
+                                "A list name",
+                                "Another box"
+                            ]
                         },
                         {
                             "key": "import-replaced",
