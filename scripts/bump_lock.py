@@ -32,6 +32,7 @@ TAG_RE = r"engine-v[0-9]{1,4}"
 PASTE = os.path.join(ROOT, "scripts", "gov", "paste")
 BUNDLES = os.path.join(ROOT, "scripts", "paste_bundles.json")   # round definitions: the raise changes bundle names here
 GO = os.path.join(ROOT, "go.md")                                   # the task page: the raise changes a linked bundle name
+BUNDLE_FILES = (".ps1", ".ps1.sha256.json")   # a round bundle and, from engine-v21, its stored hash file beside it
 GIT_TIMEOUT = 120   # seconds a git call to the network may take
 BY = "scripts/bump_lock.py (run at the PFM's request)"   # the DECISIONS "By" text: the script wrote the row
 
@@ -178,20 +179,20 @@ def snapshot():
         A dict of path to file bytes.
     """
     gov = os.path.dirname(PASTE)
-    paths = [LOCK, BUNDLES, GO] + [os.path.join(d, n) for d in (PASTE, gov) for n in sorted(os.listdir(d)) if n.endswith(".ps1")]
+    paths = [LOCK, BUNDLES, GO] + [os.path.join(d, n) for d in (PASTE, gov) for n in sorted(os.listdir(d)) if n.endswith(BUNDLE_FILES)]
     return {p: open(p, "rb").read() for p in paths if os.path.exists(p)}
 
 
 def restore(snap):
     """Write back the files of a snapshot (the old lock, definitions, go.md, bundles and task scripts), and delete each
-    round bundle that the snapshot does not hold (a raised revision the failed run made).
+    round bundle and stored hash file that the snapshot does not hold (a raised revision the failed run made).
 
     Args:
         snap: the dict that snapshot() returned.
     """
     for n in os.listdir(PASTE):
         p = os.path.join(PASTE, n)
-        if n.endswith(".ps1") and p not in snap:
+        if n.endswith(BUNDLE_FILES) and p not in snap:
             os.remove(p)
     for p, data in snap.items():
         with open(p, "wb") as f:
@@ -210,6 +211,26 @@ def run_checks():
             sys.exit("FAIL " + " ".join(cmd[1:]))
 
 
+def without_module_caches(seen, files):
+    """Take Python's own cache copies of listed modules out of a trace. Engine-v21 imports engine/rade_hash.py, and
+    Python then opens engine/__pycache__/rade_hash.cpython-<N>.pyc (and a temporary name of it while it writes). Only
+    the cache of a module the lock lists is taken out; any other file under a __pycache__ folder stays and fails the trace.
+
+    Args:
+        seen: the set of relative paths the engine opened.
+        files: the lock's file list (relative paths).
+
+    Returns:
+        The set without those cache copies.
+    """
+    keep = set()
+    for path in seen:
+        m = re.fullmatch(r"(?:(.*)/)?__pycache__/([^/.]+)\.[A-Za-z0-9_-]+\.pyc(?:\.[0-9]+)?", path)
+        if not (m and ((m.group(1) + "/" if m.group(1) else "") + m.group(2) + ".py") in files):
+            keep.add(path)
+    return keep
+
+
 def prove(rel, build, checks):
     """Prove the new lock: the traced build (the engine opens exactly the files the lock lists), then the checks.
 
@@ -221,24 +242,31 @@ def prove(rel, build, checks):
     Returns:
         Nothing; stops with a FAIL message on any failure.
     """
-    seen = build(os.path.join(ROOT, ".rade-cache", rel["commit"]), rel["engine"])
+    seen = without_module_caches(build(os.path.join(ROOT, ".rade-cache", rel["commit"]), rel["engine"]), rel["files"])
     if seen != set(rel["files"]):
         sys.exit("FAIL trace: the engine opened %s, the lock lists %s" % (sorted(seen), sorted(rel["files"])))
     print("TRACE PASS: the engine opened the %d files the lock lists" % len(seen))
     checks()
 
 
-def raise_bundle_revisions():
+def raise_bundle_revisions(root=None, read_main=None):
     """Give each round bundle that main already has the next revision (scripts/bundle_revision.py --raise), so the
     rebuild writes new file names and no file the work computer may hold changes.
 
+    Args:
+        root: the repository folder (None = this repository).
+        read_main: a function path -> bytes on main, or None (None = read origin/main with git).
+
     Returns:
-        Nothing; prints one RAISED line per bundle.
+        The list of (old path, new path) pairs; prints one RAISED line per bundle.
     """
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import bundle_revision
-    for old, new in bundle_revision.raise_revisions(ROOT, bundle_revision.git_main_reader(ROOT)):
+    root = root or ROOT
+    moved = bundle_revision.raise_revisions(root, read_main or bundle_revision.git_main_reader(root))
+    for old, new in moved:
         print("RAISED %s -> %s" % (old, os.path.basename(new)))
+    return moved
 
 
 def apply_bump(rel, tag, lock, serial, today, build=traced_build, checks=run_checks, revise=raise_bundle_revisions):
@@ -352,6 +380,7 @@ def order_case(name, build_ok, check_ok, rel):
         seen["lock"] = json.load(open(LOCK)).get("commit") == rel["commit"]
         seen["row"] = "bump_lock" in open(DECISIONS).read()
         open(os.path.join(PASTE, "c.ps1"), "w").write("new bundle")
+        open(os.path.join(PASTE, "c.ps1.sha256.json"), "w").write("{}")   # engine-v21 on: the stored hash beside it
         if not build_ok:
             sys.exit("FAIL fake build")
         return set(rel["files"])
@@ -379,9 +408,49 @@ def order_case(name, build_ok, check_ok, rel):
     good = (seen.get("lock") is True and seen.get("row") is False and seen.get("row_at_checks", False) is False
             and stopped == (name != "pass"))
     if name == "pass":
-        return good and row == 1 and json.load(open(LOCK))["serial"] == 5 and os.listdir(PASTE) == ["c.ps1"] and kept == ["raised"] * 2
+        return good and row == 1 and json.load(open(LOCK))["serial"] == 5 and sorted(os.listdir(PASTE)) == ["c.ps1", "c.ps1.sha256.json"] and kept == ["raised"] * 2
     return good and row == 0 and open(LOCK).read() == '{"commit": "old"}' \
         and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"] and kept == ["old"] * 2
+
+
+def cache_case():
+    """Test without_module_caches: the cache copy of a listed module leaves the trace (also its temporary name); the
+    cache of a module the lock does not list, and any other file under __pycache__, stay.
+
+    Returns:
+        True when the case passes.
+    """
+    files = {"engine/a.py": "", "engine/b.py": "", "top.py": ""}
+    seen = {"engine/a.py", "engine/__pycache__/b.cpython-313.pyc", "engine/__pycache__/b.cpython-313.pyc.139770291932016",
+            "__pycache__/top.cpython-311.pyc", "engine/__pycache__/other.cpython-313.pyc", "engine/__pycache__/x.txt",
+            "assets/__pycache__/b.cpython-313.pyc"}
+    return without_module_caches(seen, files) == {"engine/a.py", "engine/__pycache__/other.cpython-313.pyc",
+                                                  "engine/__pycache__/x.txt", "assets/__pycache__/b.cpython-313.pyc"}
+
+
+def raise_case():
+    """Test raise_bundle_revisions itself (not a fake) in a temp folder with a fake main: the bundle that main has gets
+    the next revision in the round definitions and in its go.md link, and its old file and stored hash file leave; the
+    bare file name in other go.md text stays.
+
+    Returns:
+        True when the case passes.
+    """
+    import tempfile
+    old, new = "scripts/gov/paste/90161Z-R01-round-r6.ps1", "scripts/gov/paste/90161Z-R01-round-r7.ps1"
+    with tempfile.TemporaryDirectory() as t:
+        os.makedirs(os.path.join(t, "scripts", "gov", "paste"))
+        with open(os.path.join(t, "scripts", "paste_bundles.json"), "w") as f:
+            json.dump({"bundles": [{"out": old, "round": "R01", "title": "Round R01 r6: on main"}]}, f, indent=2)
+        for rel_path, text in ((old, "built on main"), (old + ".sha256.json", "{}"), ("go.md", "link .../%s\nDone: 90161Z-R01-round-r6.ps1 ran\n" % old)):
+            with open(os.path.join(t, rel_path), "w") as f:
+                f.write(text)
+        moved = raise_bundle_revisions(t, {old: b"built on main"}.get)
+        left = sorted(os.listdir(os.path.join(t, "scripts", "gov", "paste")))
+        go = open(os.path.join(t, "go.md")).read()
+        out = json.load(open(os.path.join(t, "scripts", "paste_bundles.json")))["bundles"][0]
+    return (moved == [(old, new)] and left == [] and out == {"out": new, "round": "R01", "title": "Round R01 r7: on main"}
+            and go == "link .../%s\nDone: 90161Z-R01-round-r6.ps1 ran\n" % new)
 
 
 def order_cases():
@@ -409,6 +478,10 @@ def order_cases():
                 cases, fails = cases + 1, fails + (not good)
         finally:
             LOCK, DECISIONS, PASTE, BUNDLES, GO = saved
+    for label, case in (("raise itself", raise_case), ("trace without module caches", cache_case)):
+        good = case()
+        print("BUMPLOCK %s: %s" % (label, "ok" if good else "FAIL"))
+        cases, fails = cases + 1, fails + (not good)
     return cases, fails
 
 

@@ -24,9 +24,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R32-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R32-round-r2.ps1",
             "round": "R32",
-            "title": "Round R32 r1: the 90-161.Z window r6, then the flow steps a fourth time, with a flow check and a second owner",
+            "title": "Round R32 r2: the 90-161.Z window r6, then the flow steps a fourth time, with a flow check and a second owner",
             "files": [
                 {
                     "dir": "T22",
@@ -2243,7 +2243,7 @@
             "apps": [
                 {
                     "name": "90-161.Z: Publications and Forms Management",
-                    "summary": "Round R32 r1: the 90-161.Z window, then the flow steps: health flow, button flow, full flows, flow check and the full flow test. Fake data.",
+                    "summary": "Round R32 r2: the 90-161.Z window, then the flow steps: health flow, button flow, full flows, flow check and the full flow test. Fake data.",
                     "steps": [
                         "T22 Open the 90-161.Z window r6",
                         "T22 Did the window open r6",
@@ -2287,9 +2287,9 @@
             ]
         },
         {
-            "out": "scripts/gov/paste/90161Z-R33-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R33-round-r2.ps1",
             "round": "R33",
-            "title": "Round R33 r1: the paste-size test (one paste of 1 MB)",
+            "title": "Round R33 r2: the paste-size test (one paste of 1 MB)",
             "files": [
                 {
                     "dir": "T25",
@@ -3110,7 +3110,7 @@
             "apps": [
                 {
                     "name": "90-161.Z: Publications and Forms Management",
-                    "summary": "Round R33 r1: one paste of 1 MB with a padding file, to find out if a large paste works. No data.",
+                    "summary": "Round R33 r2: one paste of 1 MB with a padding file, to find out if a large paste works. No data.",
                     "steps": [
                         "T25 Paste-size test r1"
                     ]

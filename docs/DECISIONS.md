@@ -6,9 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | S10 C: flow e-mails keep their content (titles, status), because they stay inside DoD365. Scope: F03, F04, F06. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
 | 2026-11-19 | Flow steps: if they fail again on a new day, the PFM sends the exact Error line to the tenant help desk the same day; the flow steps stay in the next round. Scope: R32 and later. | PFM | [R31a results](reviews/2026-11-18-r31a-results.md) |
-| 2026-11-19 | R32 (812,186 bytes) pasted in one paste on the gov device (the PFM, chat). R32 results not received yet. Scope: R32. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
-| 2026-11-19 | Lock move to the RADE release with the bundle hash: in the first round after R32 and R33 have results. Scope: next lock move. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
+| 2026-11-19 | R32 r1 (812,186 bytes, engine-v20) pasted in one paste on the gov device (the PFM, chat). R32 results not received yet. Scope: R32. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
+| 2026-11-19 | Lock: "move the lock up" (the PFM); already done on main as engine-v21 by PR 170, so no second move. Replaces the 3a timing answer. Scope: lock. | PFM | scripts/rade.lock.json |
 | 2026-11-19 | Form look: keep one look step in each round as a watch (the agent REC was to drop them). Scope: rounds after R32. | PFM | [R31a results](reviews/2026-11-18-r31a-results.md) |
 | 2026-11-19 | App writes: list-level Contribute on the intake lists only; the site stays Read (R16 W11). Scope: 90-161.Z app. | PFM | [handoff detail](reviews/2026-11-18-handoff-detail.md) |
 | 2026-11-19 | S9 A: a handover runbook (co-owners, connection swap, re-own steps) and a co-owner on each flow now. Scope: 90-161.Z flows. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
@@ -21,6 +22,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-19 | S8 closed: no old site to retire; the site in use is the isolated site (the PFM, 19 Nov). Scope: sweep S8. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
 | 2026-11-19 | S3 A: the tier list adds T-0 (DAFMAN Attachment 10), as the waiver rule 4.4A names it. Scope: lists and validator. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
 | 2026-11-19 | The wing PowerPoint master is a separate project, not 90-161.Z: it leaves this repo's open items (rows of 2026-11-13). | PFM | - |
+| 2026-11-18 | R32 and R33 move to engine-v21 before they run ("Yes, move to engine-v21"): r2, with the bundle hash; the hand steps that deleted the saved checks leave go.md. Scope: R32, R33. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
+| 2026-11-18 | RADE lock moves to release engine-v21 (RADE b005bad, serial 16) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Window r6: D1 also on the Publications card (yes). The label that sits about 7 px below its title in the "Needs You Today" rows, and 2 px in rows blocks (the worker's reading of the code, not measured): fix in the next window revision (r7), not in R32. | PFM | [R31b results](reviews/2026-11-18-r31b-results.md) |
 | 2026-11-18 | RADE lock moves to release engine-v20 (RADE bdbe873, serial 15) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | One paste for each round again; no bundle size limit (was 600 KB, 2026-11-14): the size test left tests/run.sh. R32 (about 810 KB) and R33 (1 MB) find the largest paste that works. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
