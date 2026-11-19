@@ -19,6 +19,8 @@ The setting lines (a missing key means the default; a key marked * may appear on
                                     the kit reads them, the gate enforces them, and the check fails without a gate.
     audit-every-days: 14            audit-every-commits: 300
     audit-ignore: <glob> *          audit-start-read: <path> *
+    audit-duplicate-ignore: <glob> *  a file it matches is not read by the duplicate count (the other audit measures
+                                    still read it); --migrate moves the old .bloat-audit.json "duplicate_ignore"
     audit-budget-<name>: <number>   names: the keys of AUDIT_DEFAULTS["budgets"]; the three KIT_CAPS may only be lowered
 An unknown `code-` or `audit-` key, a key in capitals, a single key on two lines, or a value that is not valid raises
 ValueError: the check that reads it fails with that message (a typo must not relax a limit in silence).
@@ -33,8 +35,8 @@ Usage:   python3 scripts/check_settings.py            print the settings and the
                                                       files; prints each step; a second run changes nothing.
                                                       An old key with no place in this layout is not moved: one
                                                       `NOTE  dropped <file> <key>=<value>: <reason>` line each, and
-                                                      the last line lists them. An old kit header line at the top
-                                                      of `.check` (OLD_HEADERS) becomes the current one (HEADER).
+                                                      the last line lists them. The kit header lines at the top
+                                                      of `.check` become the current block (HEADER_BLOCK).
          python3 scripts/check_settings.py --test     self-test in temporary repos; prints SETTINGS TEST PASS
                                                       (the cases: scripts/check_settings_test.py)
 Needs:   Python 3.8+ and git. Standard library only.
@@ -60,30 +62,56 @@ CODE_DEFAULTS = {"caps": {"max_file_lines": 600, "max_function_lines": 60}, "inc
                  "generated": [], "c1_safety": False, "c2": "lean"}
 OPT_IN_CAPS = ("max_line_chars",)   # caps that are off (no key in "caps") until `.check` has their line; a gate enforces them
 STRICT = "strict"                   # the value of "c1_safety" for `code-c1-safety: strict` (False = off, True = on)
-AUDIT_DEFAULTS = {"every_days": 14, "every_commits": 300, "start_read": [], "ignore": [],
+AUDIT_DEFAULTS = {"every_days": 14, "every_commits": 300, "start_read": [], "ignore": [], "duplicate_ignore": [],
                   "budgets": {"session_load_tokens": 5000, "session_load_warn_tokens": 4500, "rules_file_lines": 200,
                               "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20, "rules": 28,
                               "project_rules": 15}}
 # The PFM's caps for every repo (2026-11-18): a project can lower one of these budgets, never raise it.
 KIT_CAPS = ("session_load_tokens", "session_load_warn_tokens", "rules_file_lines")
 CODE_LISTS = ("include", "exclude", "generated")
-AUDIT_LISTS = ("ignore", "start_read")
+AUDIT_LISTS = ("ignore", "start_read", "duplicate_ignore")
 SETTING_LINE = re.compile(r"(?i)^((?:code|audit)-[A-Za-z0-9_-]+)\s*:\s*(.*)$")
 # A line that was meant as a setting: a known key written with `_`, with `=` in place of `:`, or with no colon.
 # An allowed string that only starts with those letters ("code-name Bluebird", "code-included in price") is not one.
 _KEY = (r"(?:code[-_](?:max[-_]file[-_]lines|max[-_]function[-_]lines|max[-_]line[-_]chars|include|exclude|generated|c1[-_]safety|c2)"
-        r"|audit[-_](?:every[-_]days|every[-_]commits|ignore|start[-_]read|budget[-_][a-z_]+))")
+        r"|audit[-_](?:every[-_]days|every[-_]commits|ignore|duplicate[-_]ignore|start[-_]read|budget[-_][a-z_]+))")
 LOOKS_LIKE_SETTING = re.compile(r"(?i)^" + _KEY + r"(?:\s*[:=]|\s+\S)")
 # A docs/DECISIONS.md row "names .check" with the file name itself, not .check.lock or .check.state.json.
 NAMES_CHECK = re.compile(r"(?<![\w.])\.check(?!\.(?:lock|state)|\w)")
 STATE_PARTS = ("code_standard", "audit", "timings")
-# The first line of a kit `.check`, and the first lines of older kit versions that named the old scanner: --migrate
-# replaces one of those (only as the first line of the file) with the current one.
-HEADER = '# Settings of the content check (scripts/check.sh --content; the pre-push hook and the "checks" GitHub Action).'
+# The comment block at the top of the kit's `.check` (HEADER is its first line), and the first lines of older kit
+# versions that named the old scanner. When the first line of a `.check` is one of these, --migrate replaces every
+# kit header line of any version (OLD_HEADER_LINES) in the leading comment block with HEADER_BLOCK.
+HEADER_BLOCK = (
+    '# Settings of the content check (scripts/check.sh --content; the pre-push hook and the "checks" GitHub Action).',
+    "# One entry per line:",
+    "#   <exact string>          allowed although it looks like personal data",
+    "#   skip: <path or glob>    not scanned",
+    "#   block: <path or glob>   must not be committed or sent (for example `block: *.xlsx`)",
+    "#   profile: dod            the DoD tier; `denylist: warn` lets a push pass with no name denylist",
+    "#   content-max-bytes: <n>  scan text files up to n bytes (default 2000000, at most 50000000; larger ones block"
+    " in the DoD tier)",
+    "#   code-<key>: <value>     a setting of the code standard, for example `code-max-function-lines: 60`",
+    "#   audit-<key>: <value>    a setting of the audit, for example `audit-ignore: ref/**`",
+    "#                           (the keys and their defaults: the header of scripts/check_settings.py; a `code-` change",
+    "#                           needs a docs/DECISIONS.md row that names this file)",
+    "# An allowed string or a skip line is added only on the PFM's request, never by an agent to get past a block"
+    ' (AGENTS.md "Guards and checks").',
+)
+HEADER = HEADER_BLOCK[0]
 OLD_HEADERS = (
     "# Opt-in file for scripts/pii_guard.py (pre-push hook and the pii-guard GitHub Action).",
     '# Opt-in file for scripts/pii_guard.py (pre-push hook, the merge check in AGENTS.md "Delivery" and the pii-guard Action).',
 )
+OLD_HEADER_LINES = frozenset(HEADER_BLOCK + OLD_HEADERS + (   # the other lines of older kit header blocks
+    "# Below: exact strings that are allowed although they look like personal data, one per line.",
+    "# `skip: <path or glob>` excludes a path.",
+    '# Only the PFM adds entries. Agents never add one to get past a block (AGENTS.md "Personal data").',
+    '# Only the PFM adds an allowed string or a skip line. Agents never add one to get past a block (AGENTS.md'
+    ' "Personal data").',
+    "# An allowed string or a skip line is added only on the PFM's request, never by an agent to get past a block"
+    ' (AGENTS.md "Personal data").',
+))
 
 
 def read(root, name, ref=None):
@@ -390,17 +418,24 @@ def old_json(root, name):
 
 
 def new_header(data):
-    """The bytes of a `.check` file with an old kit header line (OLD_HEADERS) replaced by the current one (HEADER).
-    Only the first line of the file is looked at, and no other line is changed.
+    """The bytes of a `.check` file with its kit header block renewed: when the first line is a kit header line
+    (HEADER or OLD_HEADERS), each kit header line of any version (OLD_HEADER_LINES) in the leading comment block
+    (the `#` lines before the first other line) is dropped and HEADER_BLOCK goes on top. A project comment in that
+    block stays, in its order, below HEADER_BLOCK; every line after the block stays as it is. Another first line:
+    no change.
     Args:
         data: the bytes of the file, or None.
     Returns:
-        (the bytes, True when the first line was replaced).
+        (the bytes, True when the header block changed).
     """
-    first, sep, rest = (data or b"").partition(b"\n")
-    if first.rstrip(b"\r").decode("utf-8", "replace") not in OLD_HEADERS:
+    lines = (data or b"").split(b"\n")
+    if lines[0].rstrip(b"\r").decode("utf-8", "replace") not in OLD_HEADERS + (HEADER,):
         return data, False
-    return HEADER.encode() + (b"\r" if first.endswith(b"\r") else b"") + sep + rest, True
+    end = next((i for i, l in enumerate(lines) if not l.startswith(b"#")), len(lines))
+    cr = b"\r" if lines[0].endswith(b"\r") else b""
+    own = [l for l in lines[:end] if l.rstrip(b"\r").decode("utf-8", "replace") not in OLD_HEADER_LINES]
+    text = b"\n".join([h.encode() + cr for h in HEADER_BLOCK] + own + lines[end:])
+    return (text, True) if text != data else (data, False)
 
 
 def old_settings(code, audit):
@@ -448,7 +483,8 @@ def migrate_plan(root):
         notes.append(f"NOTE  both {CHECK} and {OLD_CHECK} exist: move the lines of {OLD_CHECK} into {CHECK} by hand, "
                      "then delete it")
     text, header = new_header(data)
-    head_note = [f"{CHECK}: the first comment line was an old kit header; it is now the kit's current one"] if header else []
+    head_note = [f"{CHECK}: the kit header lines at the top were an old kit header; they are now the kit's current "
+                 "header block (project comments stay)"] if header else []
     if code is None and audit is None and not renamed:
         return (text if header else None), None, [], notes + (head_note or ["nothing to migrate: no old settings file here"]), []
     want, dropped = old_settings(code, audit)

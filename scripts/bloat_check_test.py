@@ -92,6 +92,26 @@ def metrics_cases(bloat, root, cfg):
     return never
 
 
+def duplicate_ignore_cases(bloat, root, cfg):
+    """Duplicates: a file an `audit-duplicate-ignore:` glob matches is not read by the duplicate count, and stays in
+    the files the other measures read; `audit-ignore:` is a separate list.
+
+    Args:
+        bloat: the module under test.
+        root: the sample repo of sample_repo (a Path); its .check is left as it was.
+        cfg: its audit settings.
+    """
+    keep = (root / check_settings.CHECK).read_text()
+    (root / check_settings.CHECK).write_text(keep + "audit-duplicate-ignore: docs/*\naudit-duplicate-ignore: x.md\n")
+    got = bloat.load_config(root)
+    files = bloat.scan_files(root, got)
+    assert "docs/NEXT_PROMPT.md" in files and "docs/NEXT_PROMPT.md" not in bloat.dup_files(files, got), "only the count skips it"
+    assert bloat.duplicates(root, bloat.dup_files(files, got)) == [] and len(bloat.duplicates(root, files)) == 1, \
+        "the duplicate in the ignored file is not counted"
+    assert got["ignore"] == [] and bloat.ignored("x.md", got, "duplicate_ignore"), "a list apart from audit-ignore"
+    (root / check_settings.CHECK).write_text(keep)
+
+
 def never_audited_cases(bloat, never):
     """A never-audited repo: not due when new, due by days or commits, and always due as a shallow clone.
 
@@ -421,6 +441,7 @@ def run(bloat):
         cfg = sample_repo(bloat, root)
         generated_block_cases(bloat, root, cfg)
         never_audited_cases(bloat, metrics_cases(bloat, root, cfg))
+        duplicate_ignore_cases(bloat, root, cfg)
         strict_cases(bloat, root, cfg, strict)
         rule_count_cases(bloat)
         with tempfile.TemporaryDirectory() as o:

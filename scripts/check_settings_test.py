@@ -19,7 +19,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from check_settings import (AUDIT_DEFAULTS, CHECK, CODE_DEFAULTS, HEADER, KIT_CAPS, MIGRATE, NAMES_CHECK, OLD_AUDIT,
+from check_settings import (AUDIT_DEFAULTS, CHECK, CODE_DEFAULTS, HEADER_BLOCK, KIT_CAPS, MIGRATE, NAMES_CHECK, OLD_AUDIT,
                             OLD_CHECK, OLD_CODE, OLD_HEADERS, STATE, STATE_PARTS, STRICT, audit_config, audit_from_old,
                             audit_lines, audit_settings, code_base, code_config, code_from_old, code_lines,
                             code_settings, load_state, migrate, pairs, save_part, state_text)
@@ -149,7 +149,8 @@ def test_migrate_dropped(root, git):
          ["budgets.start_read_tokens=12000", "budgets.start_read_warn_tokens=6000"], ["audit-every-commits: 200"]),
         ({"budgets": {"rules": 30, "project_rules": 10, "rule_tokens": 4400}},
          ["budgets.rule_tokens=4400"], ["audit-budget-rules: 30", "audit-budget-project_rules: 10"]),
-        ({"duplicate_ignore": ["data/*"], "start_read": ["P.md"]}, ['duplicate_ignore=["data/*"]'], ["audit-start-read: P.md"]),
+        ({"duplicate_ignore": ["data/*"], "start_read": ["P.md"], "line_ignore": ["x"]}, ['line_ignore=["x"]'],
+         ["audit-start-read: P.md", "audit-duplicate-ignore: data/*"]),
         ({"budgets": {"session_load_tokens": 7000, "rules_file_lines": 150}},
          ["budgets.session_load_tokens=7000"], ["audit-budget-rules_file_lines: 150"]),
     )
@@ -179,36 +180,49 @@ def test_migrate_dropped(root, git):
 
 
 def test_migrate_header(root, git):
-    """Self-test of --migrate on the first comment line of `.check`: an old kit header line becomes the current one;
-    no other line changes; any other first line stays.
+    """Self-test of --migrate on the comment block at the top of `.check`: every kit header line of an old block
+    becomes the current block; a project comment in it and every later line stay; any other first line stays.
     Args:
         root: a temporary git repo.
         git: runs one git command in it (not used: nothing is committed).
     """
-    body = "# Below: allowed strings.\n" + OLD_HEADERS[0] + "\nprofile: dod\nskip: a/*\n"
+    block = "\n".join(HEADER_BLOCK) + "\n"
+    old4 = [OLD_HEADERS[0], "# Below: exact strings that are allowed although they look like personal data, one per line.",
+            "# `skip: <path or glob>` excludes a path.",
+            '# Only the PFM adds entries. Agents never add one to get past a block (AGENTS.md "Personal data").']
+    body = "profile: dod\n# A project comment after a setting.\n" + OLD_HEADERS[0] + "\nskip: a/*\n"
     for old in OLD_HEADERS:
-        (root / OLD_CHECK).write_text(old + "\n" + body)
+        (root / OLD_CHECK).write_text("\n".join([old] + old4[1:3] + ["# Below: our own note."] + old4[3:]) + "\n" + body)
         (root / OLD_AUDIT).write_text(json.dumps({"every_days": 7}))
         code, said = migrated(root)
         assert code == 0 and "old kit header" in said, said
-        assert (root / CHECK).read_text() == HEADER + "\n" + body + \
+        assert (root / CHECK).read_text() == block + "# Below: our own note.\n" + body + \
             "# Code standard and audit settings (the keys: the header of scripts/check_settings.py).\naudit-every-days: 7\n", \
-            "only the first line is replaced (the same text on a later line stays): " + (root / CHECK).read_text()
+            "the whole old block is renewed; the project comment and later lines stay: " + (root / CHECK).read_text()
         before = files_of(root)
         assert migrated(root)[0] == 0 and files_of(root) == before, "a second run changes nothing"
         (root / CHECK).unlink()
         (root / STATE).unlink()
-    (root / CHECK).write_bytes(OLD_HEADERS[0].encode() + b"\r\nprofile: dod\r\n")   # a project that migrated before this fix
+    (root / CHECK).write_bytes("\r\n".join(old4).encode() + b"\r\nprofile: dod\r\n")   # a 4-line header migrated before this fix
     code, said = migrated(root)
-    assert code == 0 and (root / CHECK).read_bytes() == HEADER.encode() + b"\r\nprofile: dod\r\n", "the header alone is fixed: " + said
+    want = block.replace("\n", "\r\n").encode() + b"profile: dod\r\n"
+    assert code == 0 and (root / CHECK).read_bytes() == want, "the 4-line header alone is renewed: " + said
+    (root / CHECK).write_text("\n".join(HEADER_BLOCK[:6] + HEADER_BLOCK[7:]) + "\nprofile: dod\n")   # current first line, older block
+    code, said = migrated(root)
+    assert code == 0 and (root / CHECK).read_text() == block + "profile: dod\n", "an older block under HEADER is renewed: " + said
+    before = files_of(root)
+    assert migrated(root) == (0, "nothing to migrate: no old settings file here\n") and files_of(root) == before, \
+        "the current block is not touched"
     for first in ("# My own first line names scripts/pii_guard.py.", OLD_HEADERS[0] + " Edited.", "profile: dod"):
         (root / CHECK).write_text(first + "\n" + OLD_HEADERS[0] + "\n")
         before = files_of(root)
         assert migrated(root) == (0, "nothing to migrate: no old settings file here\n") and files_of(root) == before, \
             "another first line is not touched: " + first
     kit_check = Path(__file__).resolve().parent.parent / CHECK
-    if (kit_check.parent / "KIT_VERSION").is_file() and kit_check.is_file():   # in the kit clone: HEADER is its first line
-        assert kit_check.read_text().splitlines()[0] == HEADER, "HEADER equals the first line of the kit's .check"
+    if (kit_check.parent / "KIT_VERSION").is_file() and kit_check.is_file():   # in the kit clone: its block is HEADER_BLOCK
+        top = kit_check.read_text().splitlines() + [""]
+        assert top[:len(HEADER_BLOCK)] == list(HEADER_BLOCK) and not top[len(HEADER_BLOCK)].startswith("#"), \
+            "HEADER_BLOCK is the kit's .check block"
 
 
 def test_migrate(root, git):
@@ -221,7 +235,7 @@ def test_migrate(root, git):
     old_code = {"config": {"caps": {"max_file_lines": 600, "max_function_lines": 80}, "include": ["*"],
                            "exclude": ["gen/*"], "generated": [], "c2": "full"}, "debt": {"length": {"a.py::f": 90}}}
     old_audit = {"every_days": 7, "budgets": {"file_kb": 100, "session_load_tokens": 99999}, "ignore": ["ref/**"],
-                 "last_audit": {"date": "2026-01-01"}, "timings": {"check": {"seconds": 4.2}}, "odd": 1}
+                 "duplicate_ignore": ["data/*.json"], "last_audit": {"date": "2026-01-01"}, "timings": {"check": {"seconds": 4.2}}, "odd": 1}
     (root / OLD_CHECK).write_bytes(b"# old\nprofile: dod\nskip: data/*")
     (root / OLD_CODE).write_text(json.dumps(old_code))
     (root / OLD_AUDIT).write_text(json.dumps(old_audit))
@@ -233,7 +247,8 @@ def test_migrate(root, git):
     text = (root / CHECK).read_text()
     assert text.startswith("# old\nprofile: dod\nskip: data/*\n# Code standard"), "the old lines stay first: " + text
     assert text.splitlines()[4:] == ["code-max-function-lines: 80", "code-exclude: gen/*", "code-c2: full",
-                                     "audit-every-days: 7", "audit-budget-file_kb: 100", "audit-ignore: ref/**"], text
+                                     "audit-every-days: 7", "audit-budget-file_kb: 100", "audit-ignore: ref/**",
+                                     "audit-duplicate-ignore: data/*.json"], text
     assert load_state(root) == {"code_standard": {"debt": old_code["debt"]}, "audit": {"last_audit": old_audit["last_audit"]},
                                 "timings": old_audit["timings"]}, "the state is moved"
     assert not any((root / n).exists() for n in (OLD_CHECK, OLD_CODE, OLD_AUDIT)), "the old files are deleted"
