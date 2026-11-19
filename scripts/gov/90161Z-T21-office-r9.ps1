@@ -193,7 +193,8 @@ function Clear-OfficeMember {
     if ($Label -eq 'first') {
       $left = @($st.UserIds | Where-Object { $members -contains $_ })
       if ($left.Count) {
-        Add-Item 'c1b-office' 'FAIL' ('leftover: ' + $left.Count + ' test person(s) from an earlier test still in the group ' + $OfficeGroup + ' (state file kept). What to do: run this round to its last Clean step, which removes them, or remove them from the group ' + $OfficeGroup + ' by hand and run this step again')
+        $todo = 'What to do: go on to the last Clean step of this round, which removes them, or remove them from the group ' + $OfficeGroup + ' by hand and run this step again'
+        Add-Item 'c1b-office' 'FAIL' ('leftover: ' + $left.Count + ' test person(s) from an earlier test still in the group ' + $OfficeGroup + ' (state file kept). ' + $todo)
       } else {
         Write-OfficeState $st.GroupId @()
         Add-Item 'c1b-office' 'PASS' ('no test person is left in ' + $OfficeGroup + ' (state file deleted)')
