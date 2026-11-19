@@ -116,7 +116,7 @@ Test-That 'T19 second run: changes nothing' ($r.Code -eq 0 -and $r.Text -match '
 # ---- PFM Office edge cases (F2 A): a level of that name that lacks Override List Behaviors is reported, never changed ----
 $lv[0].BasePermissions.Low = '1011030767'
 $r = Invoke-T20 ''
-Test-That 'a level named PFM Office Edit All Items without Override List Behaviors: FAIL, not changed' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors' -and $lv[0].BasePermissions.Low -eq '1011030767') $r.Text
+Test-That 'a level named PFM Office Edit All Items without Override List Behaviors: FAIL, not changed' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors' -and $lv[0].BasePermissions.Low -eq '1011030767') ('code=' + $r.Code + ' low=' + $lv[0].BasePermissions.Low + ' text=' + (@($r.Out) -join ' | '))
 $lv[0].BasePermissions.Low = [string](1011030767 -bor 0x100)
 
 $r = Invoke-T20 'Check'
