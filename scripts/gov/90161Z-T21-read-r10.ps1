@@ -3,8 +3,7 @@
   90-161.Z Task 21 probe r10, module "read": the parts Run (the command row that starts the health flow) and Read (the
   results of HEALTH, T4, EDITALL and BUTTON).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r10.ps1 (dot-sourced from the same folder; that main file and its other modules are made with the round that
-  uses r10); it does nothing when it is run alone. r10 (PFM 19 Nov 26): T4 expects PASS through list-level Contribute for the Visitors
+  Loaded by 90161Z-T21-probe-r10.ps1 (dot-sourced from the same folder); it does nothing when it is run alone. r10 (PFM 19 Nov 26): T4 expects PASS through list-level Contribute for the Visitors
   group; the FAIL text no longer points to way C (a flow), which the PFM replaced.
   Inputs: the values the main file sets ($dir, $ListTitle, $ListFolder, $WaitMinutes, $pollEvery) and the helpers of the
   module "common"; the rows of the probe list and the second person's state files (Person, Office). Outputs: result lines (counts only)

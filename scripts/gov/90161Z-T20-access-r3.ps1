@@ -3,14 +3,14 @@
   90-161.Z Task 20 list provisioning r3, module "access": the read-backs of step 6 (the PFM Office level) and of the access to
   the 12 lists (PFM 19 Nov 26: R34 plan, open point 12).
 .DESCRIPTION
-  Loaded by 90161Z-T20-provision-lists-r3.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T20-provision-lists-r4.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values and helpers of the main file ($OfficeGroup, $OfficeLevel, $EditRoleKind, $EditItemsBit, $OverrideBit,
   Get-GroupId, Get-RoleLevel, Get-WebBinding, Test-LevelPermission, Get-RestValue, Find-OurList). Outputs: one ITEM line
   from each function. It reads only; it never changes a list, a group or a level.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection of the main file.
   Writes: nothing (reads only).
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T20-provision-lists-r3.ps1 loads it.
+  Run: not alone; powershell.exe -File 90161Z-T20-provision-lists-r4.ps1 loads it.
 #>
 
 # SharePoint permission bit (SP.BasePermissions, low word): EditListItems 0x4 (the main file holds Override List Behaviors, 0x100).

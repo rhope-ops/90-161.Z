@@ -14,7 +14,8 @@
   when the main one would be under 480 px at 100 %; low-priority grid columns hidden in a narrow grid ($GridDrop); more
   rows in a Fill grid on a taller window. The layout is computed once per new size ($wn.Plan), never while the window
   paints, from the size, the scale and the fonts only, never from a count, a date or a status. R4 to R8 (R30 to R35):
-  the part headers. This file loads its 7 parts, 90161Z-T22-<part>-r8.ps1 ($PartRev), and replaces their layout blocks.
+  the part headers. This file loads its 7 parts, 90161Z-T22-<part>-r9.ps1 ($PartRev; renamed from r8 in R36, one revision
+  per task), and replaces their layout blocks.
   Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
   text and opens no window; -LayoutPlan prints the r8 and r9 layout at the 4 test sizes and opens no window; -TestDir
   writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it measured to <file> as JSON
@@ -35,7 +36,7 @@
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened, [string]$SizeCheck, [switch]$LayoutPlan)
 $task = 'T22'
 $Rev = 'r9'
-$PartRev = 'r8'   # the revision of the part files this window loads (r9 replaces only the layout blocks)
+$PartRev = 'r9'   # the revision of the part files this window loads (r9 replaces only their layout blocks)
 $Measuring = [bool]($Measure -or $SizeCheck)   # an off-screen run: no task folder, no question, no check answers
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
