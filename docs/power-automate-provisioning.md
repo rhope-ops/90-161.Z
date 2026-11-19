@@ -25,15 +25,16 @@ Columns, views and their DAFMAN references: `schemas/lists/*.json` (one file per
 
 ## 2. How the lists are made (task T20)
 
-The script is `scripts/gov/90161Z-T20-provision-lists-r1.ps1`. You run it through RADE, in a round (go.md, "How a paste task (round) works"). It signs in to the site with PnP.PowerShell and builds the lists from `flow/provisioning-payload.json`. That file is generated from `schemas/lists/*.json`. The script header gives its modes and what it changes on the site. In short, a run on a clean site does this:
+The script is `scripts/gov/90161Z-T20-provision-lists-r2.ps1`. You run it through RADE, in a round (go.md, "How a paste task (round) works"). It signs in to the site with PnP.PowerShell and builds the lists from `flow/provisioning-payload.json`. That file is generated from `schemas/lists/*.json`. The script header gives its modes and what it changes on the site. In short, a run on a clean site does this:
 1. Creates the 12 lists under their URL names, with versioning on.
 2. Adds the columns (199) and views (18).
 3. Adds the 88 starting rows to PFM Offices, PFM Series, PFM Process Steps and PFM Settings.
 4. Sets the display titles, column titles and indexes.
 5. Sets "read all items, edit own rows" on PFM Publications and PFM Endorsements (section 4).
-6. Checks every list against the payload.
+6. Gives the group PFM Office the permission level "PFM Office Edit All Items" on the site (section 4), and makes the group and the level when they are missing.
+7. Checks every list against the payload, then reads the PFM Office level back.
 
-The script never deletes a list, a column, a view or a row. A second run skips what is already there, so a run that stopped can run again. It changes only lists it created under their own URL name. A list a person made and titled like one of ours is never changed.
+The script never deletes a list, a column, a view, a row, a group or a level. A second run skips what is already there, so a run that stopped can run again. It changes only lists it created under their own URL name. A list a person made and titled like one of ours is never changed.
 
 Modes: `-PlanOnly` (no sign-in, prints the counts), `-Check` (reads the site and reports what 90-161.Z left on it; a clean site passes) and `-DryRun` (reads the site and prints what a run would create).
 
@@ -57,7 +58,7 @@ If a run stops part way, send the result file (the script writes it into the T20
 
 ## 4. Permissions and site settings
 
-Decided (PFM, 2026-11-12, 10A): all site members read all rows. On PFM Publications and PFM Endorsements, members edit only rows they created. Read access stays "Read all items", so the AO, endorsers and flows still see every row. A row a flow creates is "created by" the flow's connection owner, so customers and endorsers change those rows through the app, which runs a flow (endorser results). Site collection administrators and people with Manage Lists edit every row.
+Decided (PFM, 2026-11-12, 10A): all site members read all rows. On PFM Publications and PFM Endorsements, members edit only rows they created. Read access stays "Read all items", so the AO, endorsers and flows still see every row. A row a flow creates is "created by" the flow's connection owner, so customers and endorsers change those rows through the app, which runs a flow (endorser results). SharePoint lets a person edit every row of such a list only with the permission Override List Behaviors, which the Edit level does not have (sweep F2, docs/reviews/2026-11-13-sweep-decisions.md). So the group PFM Office (the PFM, the Alternate and the Acting PFM) gets the permission level "PFM Office Edit All Items": the site's Edit level plus Override List Behaviors (PFM, 2026-11-19, F2 A; T20 r2 step 6). A device test with a second person proves it (F2 B: T21 r8, part Office and test EDITALL).
 
 1. Leave each PFM list on the site's permissions (no unique permissions).
 2. Set by the T20 script. By hand only if the script reports it did not set it: PFM Publications and PFM Endorsements only: List settings > Advanced settings > Item-level Permissions. Read access: Read all items. Create and Edit access: Create items and edit items that were created by the user. OK. Other lists: no change.
@@ -84,4 +85,4 @@ The T02 flow is no longer the way to make the lists. Do not run it on a new site
 1. Edit `schemas/lists/<URL name>.json`. Names follow the rules in docs/DECISIONS.md (2026-11-11); `tests/check_names.py` fails on a name that breaks them.
 2. Run `python3 scripts/build_flow_payload.py`. Never hand-edit the payload.
 3. Run `tests/run.sh` (pass = `TESTS pass=N fail=0`).
-4. A list that already exists on the site is not changed by a run. Add a new column by hand in List settings, with the same internal name, or plan an update script (T19 is the model: `scripts/gov/90161Z-T19-list-update-r3.ps1`).
+4. A list that already exists on the site is not changed by a run. Add a new column by hand in List settings, with the same internal name, or plan an update script (T19 is the model: `scripts/gov/90161Z-T19-list-update-r4.ps1`, which adds new choices to an existing column, for example the tier T-0 in r4).

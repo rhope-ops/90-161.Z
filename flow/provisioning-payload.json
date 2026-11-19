@@ -2364,7 +2364,7 @@
      "__metadata": {
       "type": "SP.XmlSchemaFieldCreationInformation"
      },
-     "SchemaXml": "<Field Name=\"Tier\" StaticName=\"Tier\" DisplayName=\"Tier\" Required=\"FALSE\" Type=\"Choice\"><CHOICES><CHOICE>T-1</CHOICE><CHOICE>T-2</CHOICE><CHOICE>T-3</CHOICE><CHOICE>Non-Tiered</CHOICE></CHOICES></Field>",
+     "SchemaXml": "<Field Name=\"Tier\" StaticName=\"Tier\" DisplayName=\"Tier\" Required=\"FALSE\" Type=\"Choice\"><CHOICES><CHOICE>T-0</CHOICE><CHOICE>T-1</CHOICE><CHOICE>T-2</CHOICE><CHOICE>T-3</CHOICE><CHOICE>Non-Tiered</CHOICE></CHOICES></Field>",
      "Options": 24
     }
    }

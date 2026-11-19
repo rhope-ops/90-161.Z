@@ -1,12 +1,37 @@
 # Fake PnP.PowerShell for tests/ps/Test-T20.ps1 (cloud tests only; never goes to the gov device).
-# It keeps a small site in $global:FakeSP and answers the cmdlets and REST routes that the T20 script uses.
+# It keeps a small site in $global:FakeSP and answers the cmdlets and REST routes that the T20 and T19 scripts use: lists,
+# columns, views, rows, site groups, permission levels and their roles on the site (T20 r2), and the column and row cmdlets
+# and the CSOM choice write of T19 r4 (a small C# stand-in for the CSOM types, below).
 # It is strict on purpose: a request the real SharePoint would refuse (unknown list, a column twice, a row that names
 # a column the list does not have, a lookup to a list id that does not exist, a placeholder left in the XML) throws.
 # It proves the script's logic and order, not the real service: the gov device round is that proof.
 
-# Reset the fake site: an empty site with one Documents library. Takes nothing; returns nothing.
+# The CSOM types T19 reaches through Get-PnPContext: CastTo<FieldChoice>, Choices, Update, ExecuteQuery. Store is the fake
+# column's data (its Choices), so an Update shows in the next Get-PnPField.
+if (-not ('Microsoft.SharePoint.Client.FakeClientContext' -as [type])) {
+  Add-Type -TypeDefinition @'
+namespace Microsoft.SharePoint.Client {
+  public class ClientObject { public System.Collections.Hashtable Store; }
+  public class Field : ClientObject { public string SchemaXml; }
+  public class FieldChoice : Field { public string[] Choices; public void Update() { Store["Choices"] = Choices; } }
+  public class FakeClientContext {
+    public object Web;
+    public T CastTo<T>(ClientObject o) where T : ClientObject, new() { T t = new T(); t.Store = o.Store; return t; }
+    public void ExecuteQuery() { }
+  }
+}
+'@
+}
+
+# Reset the fake site: an empty site with one Documents library, no groups and the 4 standard permission levels (with the
+# real permission bits of SharePoint Online). Takes nothing; returns nothing.
 function New-FakeSite {
-  $global:FakeSP = @{ Lists = (New-Object System.Collections.ArrayList); Groups = @(); Posts = 0; Gets = 0; Connected = $false; Url = ''; FailOn = ''; FailAfter = 0; Sent = (New-Object System.Collections.ArrayList) }
+  $global:FakeSP = @{ Lists = (New-Object System.Collections.ArrayList); Groups = @(); Posts = 0; Gets = 0; Connected = $false; Url = ''; FailOn = ''; FailAfter = 0; Sent = (New-Object System.Collections.ArrayList)
+    Levels = (New-Object System.Collections.ArrayList); WebRoles = @{} }
+  foreach ($lv in @(@(1073741829, 'Full Control', 5, '2147483647', '4294705151'), @(1073741830, 'Edit', 6, '432', '1011030767'),
+      @(1073741827, 'Contribute', 3, '432', '1011028719'), @(1073741826, 'Read', 2, '176', '138612833'))) {
+    $null = $global:FakeSP.Levels.Add([pscustomobject]@{ Id = $lv[0]; Name = $lv[1]; RoleTypeKind = $lv[2]; BasePermissions = [pscustomobject]@{ High = $lv[3]; Low = $lv[4] } })
+  }
   $docs = Add-FakeList 'Documents' 101 'Shared Documents'
   $null = $docs
 }
@@ -38,9 +63,9 @@ function Add-FakeList([string]$Title, [int]$Template, [string]$Folder) {
   return $l
 }
 
-# Make one fake column from its internal name and title. Returns the column object.
-function New-FakeField([string]$Internal, [string]$Title) {
-  $f = [pscustomobject]@{ InternalName = $Internal; Title = $Title; Indexed = $false }
+# Make one fake column from its internal name, title and choices (none for a column that is not a Choice). Returns the column object.
+function New-FakeField([string]$Internal, [string]$Title, [string[]]$Choices = $null) {
+  $f = [pscustomobject]@{ InternalName = $Internal; Title = $Title; Indexed = $false; Data = @{ Choices = $Choices } }
   $f | Add-Member -MemberType ScriptMethod -Name Update -Value { }
   return $f
 }
@@ -63,14 +88,56 @@ function Connect-PnPOnline {
 # Fake Disconnect-PnPOnline: marks the fake site as not connected.
 function Disconnect-PnPOnline { [CmdletBinding()] param() $global:FakeSP.Connected = $false }
 
-# Fake Get-PnPContext: returns a context whose Web.Lists.GetById(guid) finds a fake list and whose ExecuteQuery does nothing.
+# Fake Get-PnPContext: a context whose Web.Lists.GetById(guid) finds a fake list, whose CastTo gives a FieldChoice and whose
+# ExecuteQuery does nothing.
 function Get-PnPContext {
   [CmdletBinding()] param()
   $lists = [pscustomobject]@{}
   $lists | Add-Member -MemberType ScriptMethod -Name GetById -Value { param([guid]$Id) return (Get-FakeListById $Id.ToString()) }
-  $ctx = [pscustomobject]@{ Web = [pscustomobject]@{ Lists = $lists } }
-  $ctx | Add-Member -MemberType ScriptMethod -Name ExecuteQuery -Value { }
+  $ctx = New-Object Microsoft.SharePoint.Client.FakeClientContext
+  $ctx.Web = [pscustomobject]@{ Lists = $lists }
   return $ctx
+}
+
+# Find a fake column of a list by internal name or title. Takes the list title and the column name; returns it or throws.
+function Get-FakeColumn([string]$List, [string]$Name) {
+  $hit = @((Get-PnPList -Identity $List).FieldList | Where-Object { $_.InternalName -eq $Name -or $_.Title -eq $Name })
+  if (-not $hit.Count) { throw ('FAKE: no column ' + $Name + ' in ' + $List) }
+  return $hit[0]
+}
+
+# Fake Get-PnPField: the column as a base Field (as in PnP 1.12.0: Choices only in SchemaXml), or throws when it is missing.
+function Get-PnPField {
+  [CmdletBinding()] param([string]$List, [string]$Identity)
+  $c = Get-FakeColumn $List $Identity
+  $f = New-Object Microsoft.SharePoint.Client.Field
+  $f.Store = $c.Data
+  $inner = $(if ($null -ne $c.Data.Choices) { '<CHOICES>' + ((@($c.Data.Choices) | ForEach-Object { '<CHOICE>' + [Security.SecurityElement]::Escape($_) + '</CHOICE>' }) -join '') + '</CHOICES>' } else { '' })
+  $f.SchemaXml = '<Field Name="' + $c.InternalName + '" DisplayName="' + $c.Title + '">' + $inner + '</Field>'
+  return $f
+}
+
+# Fake Add-PnPFieldFromXml: adds a column from its XML, by the same strict rules as the REST route.
+function Add-PnPFieldFromXml {
+  [CmdletBinding()] param([string]$List, [string]$FieldXml)
+  $body = [pscustomobject]@{ parameters = [pscustomobject]@{ SchemaXml = $FieldXml } }
+  $null = Send-FakeListRest (Get-PnPList -Identity $List) 'fields/createfieldasxml' $body 'Add-PnPFieldFromXml'
+}
+
+# Fake Get-PnPListItem: the rows of a list as hashtables (Id = position + 1, and every value of the row).
+function Get-PnPListItem {
+  [CmdletBinding()] param([string]$List, [string[]]$Fields)
+  $l = Get-PnPList -Identity $List; $i = 0
+  return @($l.Items | ForEach-Object { $i++; $h = @{ Id = $i }; foreach ($p in $_.PSObject.Properties) { $h[$p.Name] = $p.Value }; $h })
+}
+
+# Fake Set-PnPListItem: sets values of one row (by Id from Get-PnPListItem); a column the list does not have throws.
+function Set-PnPListItem {
+  [CmdletBinding()] param([string]$List, [int]$Identity, [hashtable]$Values)
+  $l = Get-PnPList -Identity $List
+  $row = $l.Items[$Identity - 1]
+  foreach ($k in $Values.Keys) { $null = Get-FakeColumn $List $k; $row | Add-Member -NotePropertyName $k -NotePropertyValue $Values[$k] -Force }
+  $global:FakeSP.RowWrites++
 }
 
 # Fake Get-PnPList: finds a fake list by title or throws.
@@ -86,7 +153,13 @@ function Get-FakeRestAnswer([string]$path) {
   if ($path -eq 'web/lists') {
     return (@{ value = @($global:FakeSP.Lists | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Title = $_.Title; ItemCount = $_.Items.Count; EnableVersioning = $_.EnableVersioning; BaseTemplate = $_.BaseTemplate; Hidden = $_.Hidden; RootFolder = $_.RootFolder } }) } | ConvertTo-Json -Depth 6 -Compress)
   }
-  if ($path -eq 'web/sitegroups') { return (@{ value = @($global:FakeSP.Groups | ForEach-Object { @{ Title = $_ } }) } | ConvertTo-Json -Depth 4 -Compress) }
+  # Groups get the Id of their place in the list (1, 2, ...); levels and roles on the site (T20 r2).
+  if ($path -eq 'web/sitegroups') { $i = 0; return (@{ value = @($global:FakeSP.Groups | ForEach-Object { $i++; @{ Id = $i; Title = $_ } }) } | ConvertTo-Json -Depth 4 -Compress) }
+  if ($path -eq 'web/roledefinitions') { return (@{ value = @($global:FakeSP.Levels) } | ConvertTo-Json -Depth 5 -Compress) }
+  if ($path -match '^web/roleassignments/getbyprincipalid\((\d+)\)/roledefinitionbindings$') {
+    if (-not $global:FakeSP.WebRoles.ContainsKey([int]$Matches[1])) { throw 'FAKE 404: the principal holds no role on the site' }
+    return (@{ value = @($global:FakeSP.WebRoles[[int]$Matches[1]] | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Depth 4 -Compress)
+  }
   if ($path -match "^web/lists\(guid'([^']+)'\)/(fields|views|rootfolder/files|items)$") {
     $l = Get-FakeListById $Matches[1]
     switch ($Matches[2]) {
@@ -107,7 +180,8 @@ function Send-FakeListRest($l, [string]$rest, $b, [string]$path) {
     if (([string]$b.parameters.SchemaXml).Contains('__')) { throw ('FAKE 400: a placeholder is left in the column XML of ' + $name) }
     if (@($l.FieldList | Where-Object { $_.InternalName -eq $name }).Count) { throw ('FAKE 500: the column ' + $name + ' exists in ' + $l.Title) }
     if ($xml.Field.Type -like 'Lookup*') { $null = Get-FakeListById ($xml.Field.List.Trim('{', '}')) }
-    $f = New-FakeField $name ([string]$xml.Field.DisplayName)
+    $choices = $null; if ($xml.Field.CHOICES) { $choices = [string[]]@($xml.Field.CHOICES.CHOICE) }
+    $f = New-FakeField $name ([string]$xml.Field.DisplayName) $choices
     $f.Indexed = ($xml.Field.Indexed -eq 'TRUE')
     $null = $l.FieldList.Add($f)
     return ''
@@ -144,7 +218,8 @@ function Send-FakeRestPost([string]$path, $Content, [string]$Url) {
   if ($global:FakeSP.FailOn -and $path.EndsWith($global:FakeSP.FailOn)) { throw ('FAKE 500: the service refused ' + $Url) }
   if ($global:FakeSP.FailAfter -gt 0 -and $global:FakeSP.Posts -ge $global:FakeSP.FailAfter) { throw ('FAKE 429: throttled at ' + $Url) }
   $global:FakeSP.Posts++
-  $null = $global:FakeSP.Sent.Add([string]$Content)
+  if ($path -like 'web/lists*') { $null = $global:FakeSP.Sent.Add([string]$Content) }   # the payload requests only
+  if ($path -like 'web/sitegroups' -or $path -like 'web/role*') { return (Send-FakeWebRest $path $b) }
   if ($path -eq 'web/lists') {
     if ($b.__metadata.type -ne 'SP.List') { throw 'FAKE 400: SP.List expected' }
     if (@($global:FakeSP.Lists | Where-Object { $_.Title -eq $b.Title }).Count) { throw ('FAKE 500: a list titled ' + $b.Title + ' exists') }
@@ -155,6 +230,38 @@ function Send-FakeRestPost([string]$path, $Content, [string]$Url) {
   if ($path -notmatch "^web/lists\(guid'([^']+)'\)/(.+)$") { throw ('FAKE 404 POST ' + $path) }
   $l = Get-FakeListById $Matches[1]; $rest = $Matches[2]
   return (Send-FakeListRest $l $rest $b $path)
+}
+
+<#
+.SYNOPSIS
+  Handle a POST on the site itself (T20 r2): make a group or a permission level, or give a level to a group. A name that is
+  there already, an unknown group or level, or a role given twice throws, as SharePoint refuses it.
+.PARAMETER path
+  The path after /_api/.
+.PARAMETER b
+  The parsed request body.
+.OUTPUTS
+  System.String. An empty string.
+#>
+function Send-FakeWebRest([string]$path, $b) {
+  if ($path -eq 'web/sitegroups') {
+    if ($b.__metadata.type -ne 'SP.Group' -or $global:FakeSP.Groups -contains $b.Title) { throw ('FAKE 400: group not made: ' + $b.Title) }
+    $global:FakeSP.Groups = @($global:FakeSP.Groups) + [string]$b.Title; return ''
+  }
+  if ($path -eq 'web/roledefinitions') {
+    if ($b.__metadata.type -ne 'SP.RoleDefinition' -or $b.BasePermissions.__metadata.type -ne 'SP.BasePermissions') { throw 'FAKE 400: SP.RoleDefinition with SP.BasePermissions expected' }
+    if (@($global:FakeSP.Levels | Where-Object { $_.Name -eq $b.Name }).Count) { throw ('FAKE 500: a level named ' + $b.Name + ' exists') }
+    $id = [int](($global:FakeSP.Levels | ForEach-Object { $_.Id } | Measure-Object -Maximum).Maximum) + 1
+    $null = $global:FakeSP.Levels.Add([pscustomobject]@{ Id = $id; Name = [string]$b.Name; RoleTypeKind = 0; BasePermissions = [pscustomobject]@{ High = [string]$b.BasePermissions.High; Low = [string]$b.BasePermissions.Low } })
+    return ''
+  }
+  if ($path -match '^web/roleassignments/addroleassignment\(principalid=(\d+),roledefid=(\d+)\)$') {
+    $p = [int]$Matches[1]; $d = [int]$Matches[2]
+    if ($p -lt 1 -or $p -gt @($global:FakeSP.Groups).Count -or -not @($global:FakeSP.Levels | Where-Object { $_.Id -eq $d }).Count) { throw 'FAKE 404: no such group or level' }
+    if (@($global:FakeSP.WebRoles[$p]) -contains $d) { throw 'FAKE 500: the group holds that level already' }
+    $global:FakeSP.WebRoles[$p] = @(@($global:FakeSP.WebRoles[$p]) | Where-Object { $_ }) + $d; return ''
+  }
+  throw ('FAKE 404 POST ' + $path)
 }
 
 # Fake Invoke-PnPSPRestMethod: checks the call the way the gov device needs it (connected, -Raw, site address, POST headers), then answers a GET or handles a POST.
@@ -178,4 +285,5 @@ function Invoke-PnPSPRestMethod {
   return (Send-FakeRestPost $path $Content $Url)
 }
 
-Export-ModuleMember -Function Connect-PnPOnline, Disconnect-PnPOnline, Get-PnPContext, Get-PnPList, Invoke-PnPSPRestMethod, New-FakeSite, Add-FakeList
+Export-ModuleMember -Function Connect-PnPOnline, Disconnect-PnPOnline, Get-PnPContext, Get-PnPList, Invoke-PnPSPRestMethod, New-FakeSite, Add-FakeList,
+  Get-PnPField, Add-PnPFieldFromXml, Get-PnPListItem, Set-PnPListItem
