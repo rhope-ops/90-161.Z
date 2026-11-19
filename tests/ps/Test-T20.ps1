@@ -76,7 +76,7 @@ Test-That 'second run: only the 115 view-column requests are sent again' ($globa
 Test-That 'second run: PFM Office: nothing made again, read back PASS' ($r.Text -match 'CREATED for PFM Office: group=0 level=0 level given to the group=0' -and $r.Text -match 'ITEM P01-pfm-office PASS' -and @($global:FakeSP.Levels).Count -eq 5) $r.Text
 Test-That 'second run: same site (200 columns, 18 views with columns, 93 rows)' (((Get-Ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 200 -and ((Get-Ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 93 -and @(Get-Ours | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0)
 
-# ---- T19 r6 on the provisioned fake site (S3 A, PFM 19 Nov 26: the tier T-0) ----
+# ---- T19 r6 on the provisioned fake site (S3 A, PFM 19 Nov 26: the tier T-0; R36: the Event Type choice Waiver Warning for F08) ----
 $t19 = Join-Path $work 'T19'
 $null = New-Item -ItemType Directory -Path $t19 -Force
 $script19 = Join-Path $Root 'scripts/gov/90161Z-T19-list-update-r6.ps1'
@@ -90,13 +90,20 @@ function Invoke-T19([string]$Mode) {
 }
 # The Tier column of the fake PFM Waivers list (its data holds the choices).
 function Get-TierColumn { return @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMWaivers' })[0].FieldList | Where-Object { $_.InternalName -eq 'Tier' })[0] }
+# The Event Type column of the fake PFM Activity Log list (R36: F08 writes the choice Waiver Warning).
+function Get-EventTypeColumn { return @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMActivityLog' })[0].FieldList | Where-Object { $_.InternalName -eq 'EventType' })[0] }
+$logChoices = @((Get-Content -LiteralPath (Join-Path $Root 'schemas/lists/PFMActivityLog.json') -Raw | ConvertFrom-Json).fields | Where-Object { $_.internalName -eq 'EventType' })[0].choices
 $r = Invoke-T19 'PlanOnly'
-Test-That 'T19 plan: 8 items, Tier with T-0 first, no sign-in' ($r.Code -eq 0 -and $r.Text -match 'PLAN 6-Tier choices in PFM Waivers: T-0, T-1, T-2, T-3, Non-Tiered' -and $r.Out[-1] -eq 'PLAN columns=4 choice columns=2 settings=1 steps=1' -and $r.Text -match 'PLAN 8-stage6-target step 6 = 20 in PFM Process Steps') $r.Text
+Test-That 'T19 plan: 9 items, Tier with T-0 first, Event Type with Waiver Warning, no sign-in' ($r.Code -eq 0 -and $r.Text -match 'PLAN 6-Tier choices in PFM Waivers: T-0, T-1, T-2, T-3, Non-Tiered' -and
+  $r.Text -match ('PLAN 7-EventType choices in PFM Activity Log: ' + [regex]::Escape($logChoices -join ', ') + '(\r?\n|$)') -and $logChoices[-1] -eq 'Waiver Warning' -and
+  $r.Out[-1] -eq 'PLAN columns=4 choice columns=3 settings=1 steps=1' -and $r.Text -match 'PLAN 9-stage6-target step 6 = 20 in PFM Process Steps') $r.Text
 Test-That 'T20 built a new site with T-0 already (the payload)' (((Get-TierColumn).Data.Choices -join ',') -eq 'T-0,T-1,T-2,T-3,Non-Tiered')
+Test-That 'T20 built a new site with Waiver Warning already (the payload)' (((Get-EventTypeColumn).Data.Choices -join ',') -eq ($logChoices -join ','))
 $r = Invoke-T19 'Check'
 Test-That 'T19 check on a new site: nothing to change' ($r.Code -eq 0 -and $r.Text -match 'LISTCHECK done, changes a run would make=0, items with problems=0') $r.Text
-# An older site: no T-0, a choice a person added, one column missing, another suspense value.
+# An older site: no T-0, a choice a person added, no Waiver Warning, one column missing, another suspense value.
 (Get-TierColumn).Data.Choices = [string[]]@('T-1', 'T-2', 'T-3', 'Non-Tiered', 'Waived Locally')
+(Get-EventTypeColumn).Data.Choices = [string[]](@($logChoices | Where-Object { $_ -ne 'Waiver Warning' }) + 'Local Event')
 $pubs = @($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMPublications' })[0]
 $pubs.FieldList.Remove(@($pubs.FieldList | Where-Object { $_.InternalName -eq 'HeldSince' })[0])
 $pubs.FieldList.Remove(@($pubs.FieldList | Where-Object { $_.InternalName -eq 'ClosedDate' })[0])
@@ -104,36 +111,42 @@ $setRow = @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMS
 $setRow.SettingValue = '20'
 $r = Invoke-T19 'Check'
 $same = ((Get-TierColumn).Data.Choices -join ',') -eq 'T-1,T-2,T-3,Non-Tiered,Waived Locally' -and $setRow.SettingValue -eq '20'
-Test-That 'T19 check on an older site: names the 4 changes and changes nothing' ($r.Code -eq 0 -and $same -and $r.Text -match 'ITEM 6-Tier INFO a run would add the choices T-0 to PFM Waivers' -and $r.Text -match 'changes a run would make=4' -and $r.File -match 'LISTCHECK done') $r.Text
+$same = $same -and -not ((Get-EventTypeColumn).Data.Choices -contains 'Waiver Warning')
+Test-That 'T19 check on an older site: names the 5 changes and changes nothing' ($r.Code -eq 0 -and $same -and $r.Text -match 'ITEM 6-Tier INFO a run would add the choices T-0 to PFM Waivers' -and
+  $r.Text -match 'ITEM 7-EventType INFO a run would add the choices Waiver Warning to PFM Activity Log' -and $r.Text -match 'changes a run would make=5' -and $r.File -match 'LISTCHECK done') $r.Text
 $r = Invoke-T19 ''
 $tier = ((Get-TierColumn).Data.Choices -join ',')
 Test-That 'T19 run: T-0 added first, the other choices kept in order' ($r.Code -eq 0 -and $tier -eq 'T-0,T-1,T-2,T-3,Non-Tiered,Waived Locally' -and $r.Text -match 'ITEM 6-Tier PASS added choices: T-0 \(choices now 6\)') ($tier + "`n" + $r.Text)
+$events = ((Get-EventTypeColumn).Data.Choices -join ',')
+Test-That 'T19 run: Waiver Warning added in the schema order, the choice a person added kept after them' ($r.Code -eq 0 -and $events -eq (($logChoices -join ',') + ',Local Event') -and
+  $r.Text -match 'ITEM 7-EventType PASS added choices: Waiver Warning \(choices now 13\)') ($events + "`n" + $r.Text)
 $seedNotes = @((Get-Content -LiteralPath (Join-Path $Root 'schemas/lists/PFMSettings.json') -Raw | ConvertFrom-Json).seed | Where-Object { $_.Title -eq 'CoordinationSuspenseBusinessDays' })[0].SettingNotes
 $closedAdded = @($pubs.FieldList | Where-Object { $_.InternalName -eq 'ClosedDate' }).Count -eq 1   # R36: T19 r6 adds Closed Date
-Test-That 'T19 run: the column and the setting (20 becomes 15, the notes of the schema seed row) are set' (@($pubs.FieldList | Where-Object { $_.InternalName -eq 'HeldSince' }).Count -eq 1 -and $closedAdded -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 7-suspense-setting PASS set to 15 \(was 20\)' -and $setRow.SettingNotes -ceq $seedNotes -and $r.Text -match 'LISTUPDATE done, changes made=4, items with problems=0') $r.Text
+Test-That 'T19 run: the column and the setting (20 becomes 15, the notes of the schema seed row) are set' (@($pubs.FieldList | Where-Object { $_.InternalName -eq 'HeldSince' }).Count -eq 1 -and $closedAdded -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 8-suspense-setting PASS set to 15 \(was 20\)' -and $setRow.SettingNotes -ceq $seedNotes -and $r.Text -match 'LISTUPDATE done, changes made=5, items with problems=0') $r.Text
 Test-That 'T19 run: NOW lines on the screen only, result file masked' (@($r.Out | Where-Object { $_ -match '^NOW [A-Z][a-z]+ing ' }).Count -ge 5 -and $r.File -notmatch '(?m)^NOW ' -and $r.File -match 'LISTUPDATE done' -and $r.File -notmatch 'fakehost|FakeWing|tester01') $r.Text
 $r = Invoke-T19 ''
-Test-That 'T19 second run: changes nothing' ($r.Code -eq 0 -and $r.Text -match 'LISTUPDATE done, changes made=0, items with problems=0' -and ((Get-TierColumn).Data.Choices -join ',') -eq $tier) $r.Text
-# T19 r5, item 6 (PFM 19 Nov 26: 15 business days): an empty value becomes 15; any other value (17) is left and reported; 15 stays.
+Test-That 'T19 second run: changes nothing' ($r.Code -eq 0 -and $r.Text -match 'LISTUPDATE done, changes made=0, items with problems=0' -and ((Get-TierColumn).Data.Choices -join ',') -eq $tier -and
+  ((Get-EventTypeColumn).Data.Choices -join ',') -eq $events -and $r.Text -match 'ITEM 7-EventType PASS present in PFM Activity Log, choices=13') $r.Text
+# T19 r5, item 8 in r6 (PFM 19 Nov 26: 15 business days): an empty value becomes 15; any other value (17) is left and reported; 15 stays.
 $setRow.SettingValue = '17'
 $r = Invoke-T19 ''
-Test-That 'T19 setting: 17 is left as it is and reported' ($r.Code -eq 0 -and $setRow.SettingValue -eq '17' -and $r.Text -match 'ITEM 7-suspense-setting INFO kept, 17' -and $r.Text -match 'changes made=0, items with problems=0') $r.Text
+Test-That 'T19 setting: 17 is left as it is and reported' ($r.Code -eq 0 -and $setRow.SettingValue -eq '17' -and $r.Text -match 'ITEM 8-suspense-setting INFO kept, 17' -and $r.Text -match 'changes made=0, items with problems=0') $r.Text
 $r = Invoke-T19 'Check'
-Test-That 'T19 setting check: 17 changes nothing and is reported' ($r.Code -eq 0 -and $setRow.SettingValue -eq '17' -and $r.Text -match 'ITEM 7-suspense-setting INFO kept, 17') $r.Text
+Test-That 'T19 setting check: 17 changes nothing and is reported' ($r.Code -eq 0 -and $setRow.SettingValue -eq '17' -and $r.Text -match 'ITEM 8-suspense-setting INFO kept, 17') $r.Text
 $setRow.SettingValue = ''
 $r = Invoke-T19 ''
-Test-That 'T19 setting: an empty value is set to 15' ($r.Code -eq 0 -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 7-suspense-setting PASS set to 15') $r.Text
+Test-That 'T19 setting: an empty value is set to 15' ($r.Code -eq 0 -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 8-suspense-setting PASS set to 15') $r.Text
 $r = Invoke-T19 ''
-Test-That 'T19 setting: 15 is present and stays (idempotent)' ($r.Code -eq 0 -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 7-suspense-setting PASS present, 15') $r.Text
+Test-That 'T19 setting: 15 is present and stays (idempotent)' ($r.Code -eq 0 -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 8-suspense-setting PASS present, 15') $r.Text
 # Stage 6 target (PFM 19 Nov 26: 15 + 5 = 20 business days): 25 moves to 20, any other value stays.
 $stepRow = @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMProcessSteps' })[0].Items | Where-Object { [string]$_.StepNumber -eq '6' })[0]
 Test-That 'T19 stage 6: a new site has the seed target 20' ([string]$stepRow.TargetBusinessDays -eq '20') ([string]$stepRow.TargetBusinessDays)
 $stepRow.TargetBusinessDays = 25
 $r = Invoke-T19 ''
-Test-That 'T19 stage 6: 25 becomes 20' ($r.Code -eq 0 -and [string]$stepRow.TargetBusinessDays -eq '20' -and $r.Text -match 'ITEM 8-stage6-target PASS set to 20 \(was 25\)') $r.Text
+Test-That 'T19 stage 6: 25 becomes 20' ($r.Code -eq 0 -and [string]$stepRow.TargetBusinessDays -eq '20' -and $r.Text -match 'ITEM 9-stage6-target PASS set to 20 \(was 25\)') $r.Text
 $stepRow.TargetBusinessDays = 23
 $r = Invoke-T19 ''
-Test-That 'T19 stage 6: 23 is left as it is and reported' ($r.Code -eq 0 -and [string]$stepRow.TargetBusinessDays -eq '23' -and $r.Text -match 'ITEM 8-stage6-target INFO kept, 23') $r.Text
+Test-That 'T19 stage 6: 23 is left as it is and reported' ($r.Code -eq 0 -and [string]$stepRow.TargetBusinessDays -eq '23' -and $r.Text -match 'ITEM 9-stage6-target INFO kept, 23') $r.Text
 $stepRow.TargetBusinessDays = 20
 # One value: the T19 r5 setting (new value 15, old value 20), the schema seed row and the default of F03 r7 agree (PFM 19 Nov 26).
 $t19Text = Get-Content -LiteralPath $script19 -Raw

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 19 list update r6 (round R36; PFM 19 Nov 26: the Closed Date column; r5: 15 business days, and S3 A: the tier T-0). Windows PowerShell 5.1, the installed
+  90-161.Z Task 19 list update r6 (round R36; PFM 19 Nov 26: the Closed Date column and the Event Type choice Waiver Warning; r5: 15 business days, and S3 A: the tier T-0). Windows PowerShell 5.1, the installed
   PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: brings the lists of a site that exists up to the list schemas (schemas/lists) where T20 cannot: T20 skips
@@ -11,7 +11,8 @@
        Endorsements: adds the column Coordination Round (whole number) (R21, PFM 14 Nov 26).
     2. PFM Publications: adds the choices Cancelled and Complete to Action Status (R21).
     3. PFM Waivers: adds the choice T-0 to Tier (r4; PFM S3 A, 19 Nov 26: the tier of DAFMAN 90-161 Attachment 10,
-       Table A10.1, that the waiver rule 4.4A names).
+       Table A10.1, that the waiver rule 4.4A names); PFM Activity Log: adds the choice Waiver Warning to Event Type (r6; the
+       rows of the waiver tier check F08, rule 4.4A, design approved by the PFM 19 Nov 26).
     4. PFM Settings: sets CoordinationSuspenseBusinessDays to 15 when it is empty or exactly 20 (r5; PFM 19 Nov 26: 15
        business days, DAFMAN 90-161 5.2 and 5.1.4.3, T-3). Any other value is a choice of the PFM: it is left and reported.
     5. PFM Process Steps: sets the stage 6 TargetBusinessDays to 20 when it is exactly 25 (r5; PFM 19 Nov 26: 15 + 5 business
@@ -188,9 +189,12 @@ $AddFields = @(
     Xml = '<Field Name="CoordinationRound" StaticName="CoordinationRound" DisplayName="Coordination Round" Required="FALSE" Type="Number" Decimals="0"></Field>' }
 )
 # The choices of a Choice column, in the order of the schema. Tier: T-0 added (PFM S3 A, 19 Nov 26; DAFMAN 90-161 Table A10.1).
+# Event Type: Waiver Warning added (r6; F08 writes it, rule 4.4A; tests/check_flow_solution.py checks it is the schema's list).
 $AddChoices = @(
   @{ List = 'PFM Publications'; Field = 'ActionStatus'; Choices = @('On Track', 'On Hold', 'Stalled', 'Cancelled', 'Complete') },
-  @{ List = 'PFM Waivers'; Field = 'Tier'; Choices = @('T-0', 'T-1', 'T-2', 'T-3', 'Non-Tiered') }
+  @{ List = 'PFM Waivers'; Field = 'Tier'; Choices = @('T-0', 'T-1', 'T-2', 'T-3', 'Non-Tiered') },
+  @{ List = 'PFM Activity Log'; Field = 'EventType'; Choices = @('Status Changed', 'Endorsement Requested', 'Reminder Sent', 'Endorsement Received', 'Status Report E-Mailed', 'Other',
+    'Number Assigned', 'Notice Sent', 'Waiver Renewal Due', 'Recommendation Received', 'Review Requested', 'Waiver Warning') }
 )
 # One PFM Settings row: the seed row of schemas/lists/PFMSettings.json (DAFMAN 90-161 5.2, 5.1.4.3; PFM 19 Nov 26: 15 business days).
 # Old is the one earlier value that moves to Value (PFM 14 Nov 26: 20 working days); any other value stays.
@@ -226,7 +230,7 @@ function Write-FieldChoice([string]$List, [string]$Field, [string[]]$All) {
 
 <#
 .SYNOPSIS
-  Item 1 to 3: adds a column that is missing from its XML and reads it back; a column that is there is left as it is.
+  Items 1 to 4: adds a column that is missing from its XML and reads it back; a column that is there is left as it is.
 .PARAMETER Item
   One entry of $AddFields (List, Name, Xml).
 .PARAMETER No
@@ -251,7 +255,7 @@ function Add-MissingField($Item, [int]$No, [bool]$Write) {
 
 <#
 .SYNOPSIS
-  Items 4 and 5: adds the choices that a Choice column lacks, then reads them back. The schema's choices come first, in
+  Items 5 to 7: adds the choices that a Choice column lacks, then reads them back. The schema's choices come first, in
   its order; a choice that a person added stays, after them (nothing is removed).
 .PARAMETER Item
   One entry of $AddChoices (List, Field, Choices).
@@ -280,7 +284,7 @@ function Add-MissingChoice($Item, [int]$No, [bool]$Write) {
 
 <#
 .SYNOPSIS
-  Item 6: sets one PFM Settings row to the new value when it is empty or has the one old value; any other value is left and reported.
+  Item 8: sets one PFM Settings row to the new value when it is empty or has the one old value; any other value is left and reported.
 .PARAMETER Item
   $SetRow (List, Title, Value, Notes).
 .PARAMETER No
@@ -306,7 +310,7 @@ function Write-SettingValue($Item, [int]$No, [bool]$Write) {
 
 <#
 .SYNOPSIS
-  Item 7: sets the TargetBusinessDays of one PFM Process Steps row to the new value when it has the one old value.
+  Item 9: sets the TargetBusinessDays of one PFM Process Steps row to the new value when it has the one old value.
 .PARAMETER Item
   $StepRow (List, Step, Value, Old).
 .PARAMETER No

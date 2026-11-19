@@ -2,9 +2,9 @@
 """Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r5.zip (R28 r1: all six flows, every flow On; R29 r2: list-name
 variables not required; R34 r3: F04 r3 and the 2 T21 probe flows, fallback A of the PFM, 18 Nov 26; F01 r3 checks PFM
 Publications every 15 minutes, PFM 19 Nov 26 F3 C, and F05 r4 adds the missing Legal rows at step 7 by any path, F1 A; R35 r4:
-F05 r5 checks every minute, PFM 19 Nov 26; R36 r5: F03 r8, F04 r4, the new F07 r1, and list GUID placeholders, below) from flow/solution/defs/*.json.
+F05 r5 checks every minute, PFM 19 Nov 26; R36 r5: F03 r8, F04 r4, the new F07 r1 and F08 r1, and list GUID placeholders, below) from flow/solution/defs/*.json.
 R35 (R34 finding 1): the build fails (exit 1, file, action path, length) when an action description is over 256 characters.
-R36 (PFM 19 Nov 26, README choice 11: flows find lists by GUID): the default of each of the 8 list variables is a placeholder
+R36 (PFM 19 Nov 26, README choice 11: flows find lists by GUID): the default of each of the 9 list variables is a placeholder
 that names the list title (list_placeholder); the T24 task script reads each list's GUID from the PFM's own site and writes it
 over the placeholder before the import. The r4 zip and the slice r8 zip (R35) are no longer built: they stay as committed files
 until R35 has run, and --check compares only the zips built here.
@@ -77,7 +77,7 @@ CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Offi
               "shared_onedriveforbusiness": "OneDrive for Business", "shared_office365users": "Office 365 Users",
               "shared_office365groups": "Office 365 Groups", "shared_wordonlinebusiness": "Word Online (Business)",
               "shared_sendmail": "Mail", "shared_flowmanagement": "Power Automate Management"}   # the last six: the T21 probe flows (R26, 16 Nov 26; R27: Management)
-# Environment variables (type Text, 100000000). The 8 list variables hold a list GUID (R36); their default in the zip is a placeholder
+# Environment variables (type Text, 100000000). The 9 list variables hold a list GUID (R36); their default in the zip is a placeholder
 # with the list title from schemas/lists, which the T24 task script replaces on the work computer. The site URL and alert e-mail stay empty.
 # Order and labels (PFM 15 Nov 26: "sort the fields when importing a solution so the ones i need to modify are sequential and on
 # top"): the values a wing must set come first here (the RootComponent order in solution.xml) and their import-page labels (LABEL)
@@ -88,6 +88,7 @@ LIST_TITLES = {   # list variable -> the list title in schemas/lists (the placeh
     "pfm_ListPublications": "PFM Publications", "pfm_ListActivityLog": "PFM Activity Log", "pfm_ListReviews": "PFM Reviews",
     "pfm_ListEndorsements": "PFM Endorsements", "pfm_ListProductIndex": "PFM Product Index", "pfm_ListProcessSteps": "PFM Process Steps",
     "pfm_ListOffices": "PFM Offices",
+    "pfm_ListWaivers": "PFM Waivers",   # R36: F08 r1 (rule 4.4A, design approved by the PFM 19 Nov 26) watches this list
     "pfm_ListSettings": "PFM Settings",   # R27: the flows read their six values from rows of this list
 }
 # R36: the placeholder text. The T24 task script (scripts/gov/90161Z-T24-full-solution-test-r6.ps1, $ListGuidMark) finds it by this
@@ -111,7 +112,7 @@ MOVED_ENV = ("pfm_FlowsPaused", "pfm_TestMode", "pfm_ReminderLeadDays", "pfm_Esc
 LABEL = {"pfm_SiteUrl": "1 Site URL (enter)", "pfm_AlertEmail": "2 Alert e-mail (enter)"}
 OPTIONAL = set()   # isrequired 0 for an optional value (none since R27: the shared mailbox is a PFM Settings row)
 # R29 (R28 note N7: "I had to cut and paste almost every default field to get it to unblock import"): in the full solution a
-# variable with a default value (the 8 list variables) is not required, so the import page does not wait for it to be typed again;
+# variable with a default value (the list variables, 9 from R36) is not required, so the import page does not wait for it to be typed again;
 # the flows use the default. Agent finding, Confidence low: the cause is not seen in an import log; the round asks which boxes
 # still needed it. The slice and the test solutions keep isrequired 1 (they are built files of earlier rounds).
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}

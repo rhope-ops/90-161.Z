@@ -1,0 +1,374 @@
+{
+  "displayName": "90161Z F08 Waiver Tier Check r1",
+  "description": "Rule 4.4A (DEC 2026-11-12; design approved by the PFM 19 Nov 26): when a PFM Waivers row has Tier T-0, T-1 or T-2 and its Waiver Approver is a wing person (the Leader of any PFM Offices row, by e-mail), writes one PFM Activity Log row (Event Type Waiver Warning, title Waiver tier warning: W<ID>, with the tier and the Table A10.1 approver for it) and sends one e-mail to the alert address with a link to the waiver row. Once only per waiver, tier and approver (the Activity Log row is the memory, as in F03), so an unrelated edit does not warn again; a change of tier or approver does. Never changes the waiver row: a warning, not a block. DAFMAN 90-161 Attachment 10, Table A10.1: T-0 is not waivable by the DAF; T-1 and T-2 go to the MAJCOM/CC (ANG: NGB/CF, delegable no lower than ANGRC/CC); T-3 is waived at the wing (no warning). Checks every 15 minutes, one run at a time, as F01. Stops when Flows paused is Yes; e-mails the alert address when a step fails.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365"
+  ],
+  "triggers": {
+    "When_an_item_is_created_or_modified": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 15
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnUpdatedItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "@parameters('List PFM Waivers (pfm_ListWaivers)')"
+        },
+        "authentication": "@parameters('$authentication')"
+      },
+      "runtimeConfiguration": {
+        "concurrency": {
+          "runs": 1
+        }
+      }
+    }
+  },
+  "actions": {
+    "Try": {
+      "runAfter": {},
+      "type": "Scope",
+      "actions": {
+        "Get_settings": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R27 (PFM 14 Nov 26): the flow values are rows of PFM Settings, read once at the start. F08 reads only Flows paused (missing or empty: No)."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@outputs('Setting_flows_paused')",
+              true
+            ]
+          },
+          "actions": {
+            "Stop_flows_are_paused": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Tier": {
+          "runAfter": {
+            "If_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@coalesce(triggerBody()?['Tier']?['Value'], '')"
+        },
+        "Approver_email": {
+          "runAfter": {
+            "Tier": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@toLower(trim(coalesce(triggerBody()?['WaiverApprover']?['Email'], '')))",
+          "description": "The Waiver Approver's e-mail, lower case, to compare with the Leader e-mail of each PFM Offices row"
+        },
+        "Get_offices": {
+          "runAfter": {
+            "Approver_email": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Offices (pfm_ListOffices)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "Every PFM Offices row, active or not: a wing person is the Leader of any row (design 4.4A; no directory lookup, no search outside the site)"
+        },
+        "Wing_leader_rows": {
+          "runAfter": {
+            "Get_offices": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_offices')?['value']",
+            "where": "@equals(toLower(trim(coalesce(item()?['Leader']?['Email'], ''))), outputs('Approver_email'))"
+          }
+        },
+        "If_wing_leader": {
+          "runAfter": {
+            "Wing_leader_rows": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "equals": [
+                  "@contains(createArray('T-0', 'T-1', 'T-2'), outputs('Tier'))",
+                  true
+                ]
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@outputs('Approver_email')",
+                    ""
+                  ]
+                }
+              },
+              {
+                "greater": [
+                  "@length(body('Wing_leader_rows'))",
+                  0
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Warning_key": {
+              "runAfter": {},
+              "type": "Compose",
+              "inputs": "@concat('Tier ', outputs('Tier'), '; approver ', outputs('Approver_email'), ';')",
+              "description": "Once only (the F03 memory pattern): a warning row of this waiver whose details start with this tier and approver means it was sent"
+            },
+            "Get_prior_warnings": {
+              "runAfter": {
+                "Warning_key": [
+                  "Succeeded"
+                ]
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItems"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                  "$filter": "@concat('Title eq ''', concat('Waiver tier warning: W', string(triggerBody()?['ID'])), '''')",
+                  "$top": 500
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Same_warning": {
+              "runAfter": {
+                "Get_prior_warnings": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query",
+              "inputs": {
+                "from": "@body('Get_prior_warnings')?['value']",
+                "where": "@startsWith(coalesce(item()?['EventDetails'], ''), outputs('Warning_key'))"
+              }
+            },
+            "If_not_yet_warned": {
+              "runAfter": {
+                "Same_warning": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "equals": [
+                  "@length(body('Same_warning'))",
+                  0
+                ]
+              },
+              "actions": {
+                "Table_A10_1_approver": {
+                  "runAfter": {},
+                  "type": "Compose",
+                  "inputs": "@if(equals(outputs('Tier'), 'T-0'), 'T-0: not waivable by the DAF; relief goes through command channels to the HQ DAF OPR', if(equals(outputs('Tier'), 'T-1'), 'T-1: the MAJCOM/CC waives; for the ANG, NGB/CF, delegable no lower than ANGRC/CC', 'T-2: the MAJCOM/CC waives; for the ANG, NGB/CF, delegable no lower than ANGRC/CC, also to NGB Directors'))",
+                  "description": "DAFMAN 90-161 Attachment 10, Table A10.1: who waives a requirement of this tier (design 4.4A)"
+                },
+                "Log_waiver_warning": {
+                  "runAfter": {
+                    "Table_A10_1_approver": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PostItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                      "table": "@parameters('List PFM Activity Log (pfm_ListActivityLog)')",
+                      "item/Title": "@concat('Waiver tier warning: W', string(triggerBody()?['ID']))",
+                      "item/EventType/Value": "Waiver Warning",
+                      "item/EventDetails": "@concat(outputs('Warning_key'), ' the Waiver Approver is a wing leader (Leader of ', string(length(body('Wing_leader_rows'))), ' PFM Offices row(s)). Table A10.1 approver: ', outputs('Table_A10_1_approver'), '. Waiver row W', string(triggerBody()?['ID']), ' not changed (a warning, not a block).')"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "description": "The memory row: Event Type Waiver Warning (a T19 r6 choice), title Waiver tier warning: W<ID>"
+                },
+                "E-mail_the_warning": {
+                  "runAfter": {
+                    "Log_waiver_warning": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+                      "connectionName": "shared_office365",
+                      "operationId": "SendEmailV2"
+                    },
+                    "authentication": "@parameters('$authentication')",
+                    "parameters": {
+                      "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+                      "emailMessage/Subject": "@concat('90-161.Z waiver tier warning: W', string(triggerBody()?['ID']), ' (', outputs('Tier'), ')')",
+                      "emailMessage/Body": "@concat('<p>A waiver in PFM Waivers names a wing leader as its Waiver Approver, but its tier is waived above the wing (DAFMAN 90-161, Attachment 10, Table A10.1).</p>', '<p><b>Waiver row:</b> W', string(triggerBody()?['ID']), ' ', coalesce(triggerBody()?['Title'], ''), '<br><b>Tier:</b> ', outputs('Tier'), '<br><b>Waiver Approver:</b> ', outputs('Approver_email'), ' (the Leader of ', string(length(body('Wing_leader_rows'))), ' PFM Offices row(s))', '<br><b>Table A10.1 approver for this tier:</b> ', outputs('Table_A10_1_approver'), '</p>', '<p><b>What to do:</b> check the waiver and its record. If the record is wrong, correct the Waiver Approver or the Tier; if the waiver was approved at the wing, it needs the approver above. ', if(empty(coalesce(triggerBody()?['{Link}'], '')), 'Open the waiver row in PFM Waivers.', concat('<a href=\"', coalesce(triggerBody()?['{Link}'], ''), '\">Open the waiver row</a>.')), '</p>', '<p>The flow changed nothing on the waiver row. It warns once for this waiver, tier and approver; a change of tier or approver warns again.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+                      "emailMessage/Importance": "Normal"
+                    }
+                  },
+                  "description": "One e-mail to the alert address only (PFM 19 Nov 26), with a link to the waiver row"
+                }
+              },
+              "else": {
+                "actions": {}
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "description": "Rule 4.4A (DEC 2026-11-12): Tier T-0, T-1 or T-2 and the Waiver Approver is a wing leader. T-3 is waived at the wing (Table A10.1): no warning"
+        }
+      }
+    },
+    "Failed_actions": {
+      "runAfter": {
+        "Try": [
+          "Failed",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@result('Try')",
+        "where": "@or(equals(item()?['status'], 'Failed'), equals(item()?['status'], 'TimedOut'))"
+      }
+    },
+    "Failure_lines": {
+      "runAfter": {
+        "Failed_actions": [
+          "Succeeded"
+        ]
+      },
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Failed_actions')",
+        "select": "@concat('<li><b>', replace(coalesce(item()?['name'], 'step'), '_', ' '), '</b>: ', coalesce(item()?['error']?['message'], item()?['error']?['code'], 'no error text'), '</li>')"
+      }
+    },
+    "E-mail_the_failure": {
+      "runAfter": {
+        "Failure_lines": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "authentication": "@parameters('$authentication')",
+        "parameters": {
+          "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "emailMessage/Subject": "@concat('90-161.Z flow failed: F08 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
+          "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F08'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '<br><b>Waiver row:</b> W', string(triggerBody()?['ID']), '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. Open the failed run: <a href=\"https://make.powerautomate.appsplatform.us/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'], '\">run details</a> (or open this flow and its 28-day run history; the failed run has the start time above). 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and adds only what is missing.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+          "emailMessage/Importance": "High"
+        }
+      }
+    },
+    "End_as_failed": {
+      "runAfter": {
+        "E-mail_the_failure": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "Terminate",
+      "inputs": {
+        "runStatus": "Failed",
+        "runError": {
+          "code": "StepFailed",
+          "message": "A step failed; the alert address was e-mailed. Fix the cause, then Resubmit this run."
+        }
+      }
+    }
+  }
+}
