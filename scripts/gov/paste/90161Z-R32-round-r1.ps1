@@ -14,56 +14,56 @@
   and saves its results in Rounds\R32, then opens an Outlook draft with them (never sent). No download, no admin rights.
   To read it: the Contents list below gives the line of each part and file; each part starts with a "# ====" line.
 #>
-$buildId = 'b7a9c820'
+$buildId = 'dc50f951'
 $engineRelease = 20
 # ==== Contents (GENERATED; the line numbers are lines of this bundle)
 #   line    67  Part 1 of 6: Settings
 #   line    77  Part 2 of 6: Shared blocks (2): each is written back into the files that name it
 #   line   196  Part 3 of 6: Files written to this computer (20)
-#   line   198    File 1 of 20: T22\90161Z-T22-pfm-window-r5.ps1 (from scripts/gov/90161Z-T22-pfm-window-r5.ps1, sha256 09d8f006b004)
-#   line   357    File 2 of 20: T22\90161Z-T22-cards-r5.ps1 (from scripts/gov/90161Z-T22-cards-r5.ps1, sha256 191170908bde)
-#   line   772    File 3 of 20: T22\90161Z-T22-types-r5.ps1 (from scripts/gov/90161Z-T22-types-r5.ps1, sha256 3fad2f62f89e)
-#   line   997    File 4 of 20: T22\90161Z-T22-ui-r5.ps1 (from scripts/gov/90161Z-T22-ui-r5.ps1, sha256 119d6a64d979)
-#   line  1417    File 5 of 20: T22\90161Z-T22-parts-r5.ps1 (from scripts/gov/90161Z-T22-parts-r5.ps1, sha256 e92e7bf0b854)
-#   line  1692    File 6 of 20: T22\90161Z-T22-grid-r5.ps1 (from scripts/gov/90161Z-T22-grid-r5.ps1, sha256 af933fcd9e37)
-#   line  1893    File 7 of 20: T22\90161Z-T22-window-r5.ps1 (from scripts/gov/90161Z-T22-window-r5.ps1, sha256 8bc87c50b0a9)
-#   line  2387    File 8 of 20: T22\90161Z-T22-measure-r5.ps1 (from scripts/gov/90161Z-T22-measure-r5.ps1, sha256 e06dc64974b3)
-#   line  2631    File 9 of 20: T17\90161Z-T17-import-log-r2.ps1 (from scripts/gov/90161Z-T17-import-log-r2.ps1, sha256 d0cd042fc857)
-#   line  2730    File 10 of 20: T21\90161Z-T21-probe-r6.ps1 (from scripts/gov/90161Z-T21-probe-r6.ps1, sha256 46361486cc52)
-#   line  2901    File 11 of 20: T21\90161Z-T21-common-r6.ps1 (from scripts/gov/90161Z-T21-common-r6.ps1, sha256 87f018b3b4f0)
-#   line  3055    File 12 of 20: T21\90161Z-T21-make-r6.ps1 (from scripts/gov/90161Z-T21-make-r6.ps1, sha256 c2801673dae2)
-#   line  3290    File 13 of 20: T21\90161Z-T21-person-r6.ps1 (from scripts/gov/90161Z-T21-person-r6.ps1, sha256 05e13fd5a56a)
-#   line  3486    File 14 of 20: T21\90161Z-T21-look-r6.ps1 (from scripts/gov/90161Z-T21-look-r6.ps1, sha256 6abf946ab663)
-#   line  3645    File 15 of 20: T21\90161Z-T21-export-r6.ps1 (from scripts/gov/90161Z-T21-export-r6.ps1, sha256 168e5714807d)
-#   line  3816    File 16 of 20: T21\90161Z-T21-read-r6.ps1 (from scripts/gov/90161Z-T21-read-r6.ps1, sha256 bbdd068ec6f9)
-#   line  3917    File 17 of 20: T21\90161Z-T21-probe-r5.zip (from flow/solution/90161Z-T21-probe-r5.zip, sha256 06bb43d468ed)
-#   line  4107    File 18 of 20: T21\90161Z-T21-links-r5.html (from samples/90161Z-T21-links-r5.html, sha256 632f1cf8b10e)
-#   line  4115    File 19 of 20: T24\90161Z-T24-full-solution-test-r2.ps1 (from scripts/gov/90161Z-T24-full-solution-test-r2.ps1, sha256 ace37a9ae7fb)
-#   line  4535    File 20 of 20: T24\90161Z-T24-full-flows-r2.zip (from flow/solution/90161Z-T24-full-flows-r2.zip, sha256 2b98d213ea5f)
-#   line  4925  Part 4 of 6: Steps (37), downloads, results to collect, clean-up
-#   line  5183  Part 5 of 6: Applications
-#   line  5187  Part 6 of 6: the RADE engine (engine/ps, in run order)
-#   line  5188  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
-#   line  5257  Engine part: engine/ps/02-config.ps1 (sha256 68562bae73c3)
-#   line  5395  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
-#   line  5547  Engine part: engine/ps/04-steps.ps1 (sha256 22c342e1a3be)
-#   line  5850  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
-#   line  6142  Engine part: engine/ps/06-round.ps1 (sha256 a6adb5760c8c)
-#   line  6375  Engine part: engine/ps/07-checks.ps1 (sha256 0b5ea9c0f9db)
-#   line  6897  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
-#   line  7001  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
-#   line  7058  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
-#   line  7065  Engine part: engine/ps/window/01-setup.ps1 (sha256 a4459afafeeb)
-#   line  7474  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 ddae500ef27c)
-#   line  7556  Engine part: engine/ps/window/03-card.ps1 (sha256 76bc116cf519)
-#   line  7673  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 d0d27be6565e)
-#   line  7800  Engine part: engine/ps/window/05-alignment.ps1 (sha256 a39c79a2c700)
-#   line  8121  Engine part: engine/ps/window/06-open.ps1 (sha256 c86436835e08)
-#   line  8380  Engine part: engine/ps/window/07-run.ps1 (sha256 0b6e08755971)
-#   line  8554  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 d2152944eabe)
-#   line  8658  Engine part: engine/ps/window/09-record.ps1 (sha256 48bcf1b0db22)
-#   line  8764  Engine part: engine/ps/window/10-keys.ps1 (sha256 1649c8849fc7)
-#   line  8849  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
+#   line   198    File 1 of 20: T22\90161Z-T22-pfm-window-r6.ps1 (from scripts/gov/90161Z-T22-pfm-window-r6.ps1, sha256 eeb474463817)
+#   line   356    File 2 of 20: T22\90161Z-T22-cards-r6.ps1 (from scripts/gov/90161Z-T22-cards-r6.ps1, sha256 b3463ac2c1b7)
+#   line   774    File 3 of 20: T22\90161Z-T22-types-r6.ps1 (from scripts/gov/90161Z-T22-types-r6.ps1, sha256 957cfb8476f8)
+#   line   999    File 4 of 20: T22\90161Z-T22-ui-r6.ps1 (from scripts/gov/90161Z-T22-ui-r6.ps1, sha256 072196384a07)
+#   line  1419    File 5 of 20: T22\90161Z-T22-parts-r6.ps1 (from scripts/gov/90161Z-T22-parts-r6.ps1, sha256 695a183deac1)
+#   line  1724    File 6 of 20: T22\90161Z-T22-grid-r6.ps1 (from scripts/gov/90161Z-T22-grid-r6.ps1, sha256 735f6834fbfd)
+#   line  1950    File 7 of 20: T22\90161Z-T22-window-r6.ps1 (from scripts/gov/90161Z-T22-window-r6.ps1, sha256 54027f78e1f2)
+#   line  2481    File 8 of 20: T22\90161Z-T22-measure-r6.ps1 (from scripts/gov/90161Z-T22-measure-r6.ps1, sha256 6e4a97e5b9dd)
+#   line  2855    File 9 of 20: T17\90161Z-T17-import-log-r2.ps1 (from scripts/gov/90161Z-T17-import-log-r2.ps1, sha256 d0cd042fc857)
+#   line  2954    File 10 of 20: T21\90161Z-T21-probe-r6.ps1 (from scripts/gov/90161Z-T21-probe-r6.ps1, sha256 46361486cc52)
+#   line  3125    File 11 of 20: T21\90161Z-T21-common-r6.ps1 (from scripts/gov/90161Z-T21-common-r6.ps1, sha256 87f018b3b4f0)
+#   line  3279    File 12 of 20: T21\90161Z-T21-make-r6.ps1 (from scripts/gov/90161Z-T21-make-r6.ps1, sha256 c2801673dae2)
+#   line  3514    File 13 of 20: T21\90161Z-T21-person-r6.ps1 (from scripts/gov/90161Z-T21-person-r6.ps1, sha256 05e13fd5a56a)
+#   line  3710    File 14 of 20: T21\90161Z-T21-look-r6.ps1 (from scripts/gov/90161Z-T21-look-r6.ps1, sha256 6abf946ab663)
+#   line  3869    File 15 of 20: T21\90161Z-T21-export-r6.ps1 (from scripts/gov/90161Z-T21-export-r6.ps1, sha256 168e5714807d)
+#   line  4040    File 16 of 20: T21\90161Z-T21-read-r6.ps1 (from scripts/gov/90161Z-T21-read-r6.ps1, sha256 bbdd068ec6f9)
+#   line  4141    File 17 of 20: T21\90161Z-T21-probe-r5.zip (from flow/solution/90161Z-T21-probe-r5.zip, sha256 06bb43d468ed)
+#   line  4331    File 18 of 20: T21\90161Z-T21-links-r5.html (from samples/90161Z-T21-links-r5.html, sha256 632f1cf8b10e)
+#   line  4339    File 19 of 20: T24\90161Z-T24-full-solution-test-r2.ps1 (from scripts/gov/90161Z-T24-full-solution-test-r2.ps1, sha256 ace37a9ae7fb)
+#   line  4759    File 20 of 20: T24\90161Z-T24-full-flows-r2.zip (from flow/solution/90161Z-T24-full-flows-r2.zip, sha256 2b98d213ea5f)
+#   line  5149  Part 4 of 6: Steps (37), downloads, results to collect, clean-up
+#   line  5417  Part 5 of 6: Applications
+#   line  5421  Part 6 of 6: the RADE engine (engine/ps, in run order)
+#   line  5422  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
+#   line  5491  Engine part: engine/ps/02-config.ps1 (sha256 68562bae73c3)
+#   line  5629  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
+#   line  5781  Engine part: engine/ps/04-steps.ps1 (sha256 22c342e1a3be)
+#   line  6084  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
+#   line  6376  Engine part: engine/ps/06-round.ps1 (sha256 a6adb5760c8c)
+#   line  6609  Engine part: engine/ps/07-checks.ps1 (sha256 0b5ea9c0f9db)
+#   line  7131  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
+#   line  7235  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
+#   line  7292  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
+#   line  7299  Engine part: engine/ps/window/01-setup.ps1 (sha256 a4459afafeeb)
+#   line  7708  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 ddae500ef27c)
+#   line  7790  Engine part: engine/ps/window/03-card.ps1 (sha256 76bc116cf519)
+#   line  7907  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 d0d27be6565e)
+#   line  8034  Engine part: engine/ps/window/05-alignment.ps1 (sha256 a39c79a2c700)
+#   line  8355  Engine part: engine/ps/window/06-open.ps1 (sha256 c86436835e08)
+#   line  8614  Engine part: engine/ps/window/07-run.ps1 (sha256 0b6e08755971)
+#   line  8788  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 d2152944eabe)
+#   line  8892  Engine part: engine/ps/window/09-record.ps1 (sha256 48bcf1b0db22)
+#   line  8998  Engine part: engine/ps/window/10-keys.ps1 (sha256 1649c8849fc7)
+#   line  9083  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
 # ==== Part 1 of 6: Settings
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -195,42 +195,42 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
 '@
 # ==== Part 3 of 6: Files written to this computer (20)
 $files = @()
-# ---- File 1 of 20: T22\90161Z-T22-pfm-window-r5.ps1 (from scripts/gov/90161Z-T22-pfm-window-r5.ps1, sha256 09d8f006b004)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r5.ps1'; Kind = 'text'; Sha = '09d8f006b004'; Data = @'
+# ---- File 1 of 20: T22\90161Z-T22-pfm-window-r6.ps1 (from scripts/gov/90161Z-T22-pfm-window-r6.ps1, sha256 eeb474463817)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-pfm-window-r6.ps1'; Kind = 'text'; Sha = 'eeb474463817'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r5 (round R31b). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r6 (round R32). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
   file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it; below 1280 x 720
-  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 14 checks one at a
+  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 16 checks one at a
   time with Pass and Fail (PFM 17 Nov 26); each layout defect is one line "FAIL LAYOUT ..." and "PASS layout" is one line when
   there is none (the runner counts these words).
-  WHAT R5 CHANGES (R31 plan, R31b items W1 to W4): the rail logo has no white box and the app name is centered on the
-  logo's middle (W1); with Windows high contrast on, the window uses the system colors, also when the setting changes
-  while it is open (W2); the 2 look questions about the crumb and the Action Status card are the last 2 checks of the
-  check bar (W3); the window saves a PNG picture of each card (FAKE data only) in the T22 folder (W4). R4 (R30) split the
-  script into parts: this file loads its 7 parts from its own folder, 90161Z-T22-<part>-r5.ps1 (cards, types, ui, parts,
-  grid, window, measure).
-  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 14 checks as
+  WHAT R6 CHANGES (R32 plan W1, R31b defects D1 to D4): the caption "ACTION STATUS" is level with the first line of the
+  main card (D1); the crumb's link and rest have one size and one text middle (D2); the label "Passed" is level with
+  the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
+  writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
+  R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its 7 parts
+  from its own folder, 90161Z-T22-<part>-r6.ps1 (cards, types, ui, parts, grid, window, measure).
+  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 16 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r5.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r6.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r5.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  check answers), 90161Z-T22-window-bounds.json (last size and place) and 90161Z-T22-card-<card>-r5.png (one per card) in
+  Outputs: 90161Z-T22-window-r6.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  check answers), 90161Z-T22-window-bounds.json (last size and place) and 90161Z-T22-card-<card>-r6.png (one per card) in
   the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r5.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r6.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r5.txt, 90161Z-T22-window-bounds.json and the card PNG files in the T22 folder (or -TestDir);
+  Writes: 90161Z-T22-window-r6.txt, 90161Z-T22-window-bounds.json and the card PNG files in the T22 folder (or -TestDir);
   with -Measure only the file given and the card PNG files in its folder; with -Opened nothing.
   Credentials: none.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
 $task = 'T22'
-$Rev = 'r5'
+$Rev = 'r6'
 # @@SHARED task-common-a5c2aafc@@ (RADE writes the shared block "task-common" here; its text is in the bundle part "Shared blocks")
 $OpenedHours = 3   # a result file older than this is from an earlier round (review R30): -Opened does not trust it
 # The -Opened line for the result file in $Dir: PASS when it was written in the last $OpenedHours hours, its last
@@ -254,7 +254,7 @@ function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'window', 'measure')
-# The full path of part $Name: 90161Z-T22-<name>-r5.ps1 in this file's folder.
+# The full path of part $Name: 90161Z-T22-<name>-r6.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
@@ -305,8 +305,7 @@ try {
   $ui.Clock = [System.Diagnostics.Stopwatch]::StartNew(); $ui.CardAt = 0; $ui.GuardMs = 400; $ui.Busy = $false; $ui.Always = @{}; $ui.Boxes = @()
   $ui.B = @(); $ui.P = @()   # the generated NameOf walks these two lists; this window has none (R28: every self-check stopped on a null list)
   $ui.View = ''; $ui.Scrolls = $false; $ui.Scroll = $null; $ui.RecOn = $false; $ui.Picked = $false; $ui.Sent = $null; $ui.Kick = $null
-  # The RADE alignment rules have nothing to measure in this window: no extra layout lines.
-  $ui.Measure = { param($Card) $null = $Card; return @() }
+  # The extra layout lines of the self-check ($ui.Measure: the D1 to D4 alignment) are set by the measure part.
   $rail = New-Object System.Windows.Forms.Panel; $rail.Dock = 'Left'; $rail.BackColor = $pc.navy; $rail.AccessibleName = 'Main menu'
   $main = New-Object System.Windows.Forms.Panel; $main.Dock = 'Fill'; $main.BackColor = $pc.surface; $main.AutoScroll = $true; $main.AccessibleName = 'Main column'
   $page = New-Object System.Windows.Forms.FlowLayoutPanel; $page.FlowDirection = 'TopDown'; $page.WrapContents = $false; $page.AutoSize = $true; $page.AutoSizeMode = 'GrowAndShrink'
@@ -354,14 +353,14 @@ try {
 }
 exit $code
 '@ }
-# ---- File 2 of 20: T22\90161Z-T22-cards-r5.ps1 (from scripts/gov/90161Z-T22-cards-r5.ps1, sha256 191170908bde)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-cards-r5.ps1'; Kind = 'text'; Sha = '191170908bde'; Data = @'
+# ---- File 2 of 20: T22\90161Z-T22-cards-r6.ps1 (from scripts/gov/90161Z-T22-cards-r6.ps1, sha256 b3463ac2c1b7)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-cards-r6.ps1'; Kind = 'text'; Sha = 'b3463ac2c1b7'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 14 in-window checks)
+  90-161.Z Task 22 r6, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 16 in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r5.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r6.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems
   and the functions Get-SideStatus, Test-CheckLink, Get-CardPlan and Get-CheckPlan.
@@ -451,10 +450,11 @@ function Test-CheckLink($Block) {
 }
 $FullHistory = @(@{ Text = 'Full History'; Note = 'FAKE: the history of this action opens here. Nothing is read.' })
 $OneOf = "FAKE OI 33-101, Key Control"
-# The 14 checks of the check bar, in order (PFM 17 Nov 26). R30 fallbacks: contrast through Windows Settings, not a key
+# The 16 checks of the check bar, in order (PFM 17 Nov 26). R30 fallbacks: contrast through Windows Settings, not a key
 # chord; Narrator names are listed by the script itself (RESULT NAMES), so the person only confirms that Narrator speaks.
-# R31 W3 (R30 audit B7): the 2 look questions about the screenshot fixes (crumb V2, Action Status V4) are the last 2
-# checks, so they are answered while the card is on screen.
+# R31 W3 (R30 audit B7): the look questions come last, so they are answered while the card is on screen. R6 (R31b D1 to
+# D4): status asks about the caption the PFM judged (D1); chip (D3) and pubcol (D4) are new. The All Actions grid is
+# the publication list of D4: the Publications card shows one publication, not a list.
 $Checks = @(
   @{ Key = 'card-open'; Text = 'Select a card in the list on the left. Pass if it opened.' },
   @{ Key = 'first-button'; Text = 'On the card "Your Work", select the first button. Pass if it did something.' },
@@ -469,7 +469,9 @@ $Checks = @(
   @{ Key = 'contrast-read'; Text = 'Select 2 other cards. Pass if every text and button is readable.' },
   @{ Key = 'contrast-off'; Text = 'Press Windows+U. Select Contrast themes. Choose None. Select Apply. Pass if the window returned to its colors.' },
   @{ Key = 'crumb'; Text = 'Open the card "FAKE OI 33-101". Pass if the line "Your Work > FAKE OI 33-101" reads as one line.' },
-  @{ Key = 'status'; Text = 'On the same card: pass if the Action Status card ends level with the main card.' }
+  @{ Key = 'status'; Text = 'On the same card: pass if the caption "ACTION STATUS" is level with the first line of the main card beside it.' },
+  @{ Key = 'chip'; Text = 'On the same card, look at the format check. Pass if the label "Passed" is level with the text beside it.' },
+  @{ Key = 'pubcol'; Text = 'Select All Actions in the list on the left. Pass if the publication titles, such as "Recall", start in one column.' }
 )
 # The cards, in the order the window builds them. A card: Rail (the rail item it lights), Title and Sub or Crumb and
 # CrumbGo, Up (the card Esc opens), Side (the right column width at 100 %), Modal, and Cols: columns of sections, each
@@ -764,16 +766,16 @@ function Get-CardPlan {
   foreach ($r in $RailItems) { $out += ('RAIL ' + $r.Text + ' -> ' + $r.Go) }
   return $out
 }
-# The 14 checks as -PlanOnly lines: CHECK <n> <key>: <text> (tests/run.sh reads them).
+# The 16 checks as -PlanOnly lines: CHECK <n> <key>: <text> (tests/run.sh reads them).
 function Get-CheckPlan {
   for ($i = 0; $i -lt $Checks.Count; $i++) { 'CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ': ' + $Checks[$i].Text }
 }
 '@ }
-# ---- File 3 of 20: T22\90161Z-T22-types-r5.ps1 (from scripts/gov/90161Z-T22-types-r5.ps1, sha256 3fad2f62f89e)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-types-r5.ps1'; Kind = 'text'; Sha = '3fad2f62f89e'; Data = @'
+# ---- File 3 of 20: T22\90161Z-T22-types-r6.ps1 (from scripts/gov/90161Z-T22-types-r6.ps1, sha256 957cfb8476f8)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-types-r6.ps1'; Kind = 'text'; Sha = '957cfb8476f8'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "types": the C# source of the window's own drawn controls, as text.
+  90-161.Z Task 22 r6, part "types": the C# source of the window's own drawn controls, as text.
 .DESCRIPTION
   Pfm.Gfx (rounded shapes), Pfm.Chip (a rounded status chip), Pfm.Card (a card with a thin edge and an optional top
   bar), Pfm.Steps (the 12 step dots), Pfm.RailItem (a rail button), Pfm.LinkText (R30 V2: the link of a crumb, drawn
@@ -781,7 +783,7 @@ $files += @{ Dir = 'T22'; Name = '90161Z-T22-types-r5.ps1'; Kind = 'text'; Sha =
   RADE shared UI file). The end of this file compiles the text with Add-Type, once per process; the main script loads
   this file after Windows Forms and System.Drawing.
   Inputs: none. Outputs: the compiled types Pfm.* and Rade.Native (a failed Rade.Native only leaves the caret visible).
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -994,11 +996,11 @@ $NativeCs=(@(
 if (-not ('Pfm.Card' -as [type])) { Add-Type -ReferencedAssemblies 'System.Windows.Forms', 'System.Drawing' -TypeDefinition $PfmCs }
 if (-not ('Rade.Native' -as [type])) { try { Add-Type -TypeDefinition $NativeCs } catch { $null = $_ } }
 '@ }
-# ---- File 4 of 20: T22\90161Z-T22-ui-r5.ps1 (from scripts/gov/90161Z-T22-ui-r5.ps1, sha256 119d6a64d979)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-ui-r5.ps1'; Kind = 'text'; Sha = '119d6a64d979'; Data = @'
+# ---- File 4 of 20: T22\90161Z-T22-ui-r6.ps1 (from scripts/gov/90161Z-T22-ui-r6.ps1, sha256 072196384a07)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-ui-r6.ps1'; Kind = 'text'; Sha = '072196384a07'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
+  90-161.Z Task 22 r6, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
   generated into this file, and the few names it needs from the window.
 .DESCRIPTION
   The block between the rade-ui markers is written by scripts/build_task_scripts.py from the pinned RADE commit
@@ -1008,7 +1010,7 @@ $files += @{ Dir = 'T22'; Name = '90161Z-T22-ui-r5.ps1'; Kind = 'text'; Sha = '1
   high contrast (R31 W2): Select-T22Color and $ui.UseColors (the window part applies them: $wn.Recolor).
   Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the shared UI file, $ui.HcRole,
   $ui.OwnPc, $ui.OwnC, $ui.High, $ui.UseColors and the function Select-T22Color.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -1414,25 +1416,36 @@ $ui.UseColors = { param([bool]$High)
   $b = Select-T22Color $High $ui.OwnC $ui.HcRole; foreach ($k in @($b.Keys)) { $ui.C[$k] = $b[$k] }
   $ui.High = $High }
 '@ }
-# ---- File 5 of 20: T22\90161Z-T22-parts-r5.ps1 (from scripts/gov/90161Z-T22-parts-r5.ps1, sha256 e92e7bf0b854)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-parts-r5.ps1'; Kind = 'text'; Sha = 'e92e7bf0b854'; Data = @'
+# ---- File 5 of 20: T22\90161Z-T22-parts-r6.ps1 (from scripts/gov/90161Z-T22-parts-r6.ps1, sha256 695a183deac1)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-parts-r6.ps1'; Kind = 'text'; Sha = '695a183deac1'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r6, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
   Each builder makes Windows Forms controls with the RADE look ($ui, from the ui part) and adds them to a parent.
   R4 (R30 V3): a format check with 0 findings shows no link (Test-CheckLink, in the cards part). The grid block is
-  built by the grid part.
+  built by the grid part. R6 (R31b D3): the chip of a check block is level with the first line of its text; the
+  helpers $wn.LineH, $wn.PageTop and $wn.TextMid give the text middles that the window, the measure part and the
+  layout self-check compare (one rule for D1 to D3).
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
 #>
 # A size at 100 % in screen pixels (the RADE scale).
 $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
+# The height of one line of text in font $F, in pixels (as a card text box spaces its lines).
+$wn.LineH = { param($F) return [int][Windows.Forms.TextRenderer]::MeasureText('Ag', $F).Height }
+# The top of control $C in the pixels of the page (the sum of the tops up to the page), from the layout alone: no handle needed.
+$wn.PageTop = { param($C) $y = 0; while ($C -and -not [object]::ReferenceEquals($C, $page)) { $y += $C.Top; $C = $C.Parent }; return $y }
+# The vertical middle of the first text line of control $C, in page pixels (R6, D1 to D3). A card text box draws its
+# first line at its top: top + one line / 2. A chip or a crumb link draws its text in its vertical middle: top + height / 2.
+$wn.TextMid = { param($C)
+  if ($C -is [Windows.Forms.TextBox]) { return ((& $wn.PageTop $C) + (& $wn.LineH $C.Font) / 2.0) }
+  return ((& $wn.PageTop $C) + $C.Height / 2.0) }
 # Adds a card text box (selectable, read-only, no tab stop) with its text, font, color, top gap, wrap width and
 # accessible name to $Parent; $Back is its background when it is not white. Gives back the box.
 $wn.Txt = { param($Parent, [string]$Text, $Font, $Color, [int]$Top, [int]$W, [string]$Name, $Back)
@@ -1551,12 +1564,31 @@ $wn.Blocks.steps = {
   $s.Size = [Drawing.Size]::new($W, ($s.Dot + 2 * $lh + (& $wn.Sc 12))); $s.Margin = & $ui.Pad 0 (& $wn.Sc 14) 0 (& $wn.Sc 6)
   $s.AccessibleName = 'Step ' + $b.N + ' of 12: ' + $StepNames[$b.N - 1] + '. Steps 1 to ' + ($b.N - 1) + ' are done.'
   [void]$Parent.Controls.Add($s) }
-# A check result: a green chip, its text and (R30 V3: only when it has something to open) its link.
-$wn.Blocks.check = { param($Parent, $b, [int]$W)
+$wn.Blocks.check = {
+  <#
+  .SYNOPSIS
+  A check result: a green chip, its text and (R30 V3: only when it has something to open) its link.
+  .DESCRIPTION
+  R6 (R31b D3): the chip's vertical middle is the middle of the first line of the text (within half a pixel, at any
+  scale). The chip is taller than a line, so the text starts lower by the difference and the chip sits at the top.
+  Each chip and its text are kept in $wn.ChipRows for the measure part and the layout self-check.
+  .PARAMETER Parent
+  The card that gets the check.
+  .PARAMETER b
+  The block: Chip (the chip's word), Text, Findings and Link.
+  .PARAMETER W
+  The width of the check row.
+  #>
+  param($Parent, $b, [int]$W)
   $p = & $wn.Panel $W 8
-  $cp = & $wn.Chip 'ok' $b.Chip $ui.C.White; $cp.Location = [Drawing.Point]::new(0, (& $wn.Sc 2)); [void]$p.Controls.Add($cp)
+  $cp = & $wn.Chip 'ok' $b.Chip $ui.C.White; [void]$p.Controls.Add($cp)
   $x = $cp.Width + (& $wn.Sc 10)
-  $t = & $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Check result' $null; $t.Location = [Drawing.Point]::new($x, 0)
+  $t = & $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Check result' $null
+  $half = (& $wn.LineH $ui.F.Body) / 2.0                                      # the middle of the first line, from the text top
+  $ty = [int][math]::Max(0, [math]::Round($cp.Height / 2.0 - $half))          # the text starts this low, so the chip fits above it
+  $cy = [int][math]::Max(0, [math]::Round($ty + $half - $cp.Height / 2.0))    # the chip's top: its middle on the line's middle
+  $cp.Location = [Drawing.Point]::new(0, $cy); $t.Location = [Drawing.Point]::new($x, $ty)
+  $wn.ChipRows += @{ Chip = $cp; Text = $t }
   if (Test-CheckLink $b) { $l = & $wn.Link $b.Link; $l.Location = [Drawing.Point]::new($x, ($t.Bottom + (& $wn.Sc 2))); [void]$p.Controls.Add($l) }
   & $wn.Fit $p 4; [void]$Parent.Controls.Add($p) }
 $wn.Blocks.ck = {
@@ -1689,18 +1721,21 @@ $wn.Blocks.buttons = { param($Parent, $b, [int]$W)
 $wn.Block = { param($Parent, $b, [int]$W, $Ctx)
   $f = $wn.Blocks[[string]$b.T]; if ($f) { & $f $Parent $b $W $Ctx } }
 '@ }
-# ---- File 6 of 20: T22\90161Z-T22-grid-r5.ps1 (from scripts/gov/90161Z-T22-grid-r5.ps1, sha256 af933fcd9e37)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-grid-r5.ps1'; Kind = 'text'; Sha = 'af933fcd9e37'; Data = @'
+# ---- File 6 of 20: T22\90161Z-T22-grid-r6.ps1 (from scripts/gov/90161Z-T22-grid-r6.ps1, sha256 735f6834fbfd)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-grid-r6.ps1'; Kind = 'text'; Sha = '735f6834fbfd'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r6, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
   column kind: pub (the number as a link, the title beside or under it), with and bold (semibold), chip (a status
   chip) and plain. Double-click or Enter on a row opens its card.
+  R6 (R31b D4): the titles of a pub column start in one column: after the widest number of all the grid's rows and a
+  fixed gap, when every title fits there, else every title goes under its number. Each painted pub cell is kept in
+  the grid's Tag.Drawn for the measure part and the layout self-check.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -1805,17 +1840,32 @@ $wn.Grid = {
   $scroll = $(if ($hs.Full -gt $hs.H) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
   $kinds = & $wn.GridCols $g $cols $W $scroll
   $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
-  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows }
+  $pw = & $wn.PubWidths $rows
+  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{} }
   & $wn.GridFill $g $rows
   $g.Add_CellPainting({ param($s, $e) & $wn.PaintCell $s $e })
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
   $g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled = $true; $e.SuppressKeyPress = $true; if ($s.CurrentRow) { & $wn.Later $s $s.CurrentRow.Index } } })
   [void]$Parent.Controls.Add($g); $g.ClearSelection(); $wn.Gridsel = $g
   if ($b.Count) { $wn.CountText = [string]$b.Count; $wn.CountBox = & $wn.Txt $Parent ($b.Count -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq = $g } }
+# The widest number (as a link) and the widest title of the pub values ("number|title") of $Rows, in pixels, measured as
+# $wn.PaintPub draws them. All rows, not only the shown ones, so a filter does not move the title column.
+$wn.PubWidths = { param($Rows)
+  $fl = [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix'; $big = [Drawing.Size]::new(100000, 0); $out = @{ Num = 0; Title = 0 }
+  foreach ($r in @($Rows)) { $pp = ([string]$r.Publication).Split('|'); if ($pp.Count -lt 2) { continue }
+    $out.Num = [math]::Max($out.Num, [Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, $big, $fl).Width)
+    $out.Title = [math]::Max($out.Title, [Windows.Forms.TextRenderer]::MeasureText($pp[1], $ui.F.Small, $big, $fl).Width) }
+  return $out }
 $wn.PaintPub = {
   <#
   .SYNOPSIS
-  Paints a pub cell: the number as a link and the title beside it, or under it when the title does not fit beside it.
+  Paints a pub cell: the number as a link and the title in the grid's title column, or under the number when the
+  widest title of the grid does not fit in that column.
+  .DESCRIPTION
+  R6 (R31b D4): the title column starts after the grid's widest number and its gap (Tag.PubW, Tag.PubGap), so every
+  title starts at one x; the choice beside or under is made once for the grid (Tag.PubT, the widest title), so a long
+  title is never cut and the titles never start at two places. What was drawn goes into Tag.Drawn[row], relative to
+  the text rectangle: the right end of the number, the title's x, the number's bottom and the title's top.
   .PARAMETER Gr
   The graphics of the cell.
   .PARAMETER Text
@@ -1826,19 +1876,26 @@ $wn.PaintPub = {
   The one-line text flags.
   .PARAMETER Fw
   The wrapping text flags.
+  .PARAMETER Tag
+  The grid's Tag: PubW, PubT, PubGap and Drawn.
+  .PARAMETER Row
+  The row index (the key in Tag.Drawn).
   #>
-  param($Gr, [string]$Text, $Tr, $Fl, $Fw)
+  param($Gr, [string]$Text, $Tr, $Fl, $Fw, $Tag, [int]$Row)
   $pp = $Text.Split('|')
   $w1 = [Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width
-  $w2 = 0; if ($pp.Count -gt 1) { $w2 = [Windows.Forms.TextRenderer]::MeasureText($pp[1], $ui.F.Small, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width }
-  $rest = New-Object System.Drawing.Rectangle(($Tr.X + $w1 + (& $ui.Sc 6)), $Tr.Y, ($Tr.Width - $w1 - (& $ui.Sc 6)), $Tr.Height)
-  if ($pp.Count -lt 2 -or $rest.Width -ge $w2) {
+  $col = [int]$Tag.PubW + [int]$Tag.PubGap                 # the title column, from the left of the text rectangle
+  $beside = ($pp.Count -lt 2 -or [int]$Tag.PubT -le $Tr.Width - $col)
+  if ($beside) {
     [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, $Tr, $pc.primary, $Fl)
+    $tx = $col; $ty = 0; $nb = 0   # one line: the title's x is the column, its top and the number's bottom are not compared
+    $rest = New-Object System.Drawing.Rectangle(($Tr.X + $col), $Tr.Y, ($Tr.Width - $col), $Tr.Height)
     if ($pp.Count -gt 1) { [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, $rest, $pc.muted, $Fl) } }
-  else {   # the rest does not fit beside the name: it goes on a second line (the cell wraps)
-    $lh = [int][math]::Ceiling($ui.F.Link.GetHeight($Gr)); $top = $Tr.Y + [int](($Tr.Height - 2 * $lh) / 2)
-    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, (New-Object System.Drawing.Rectangle($Tr.X, $top, $Tr.Width, $lh)), $pc.primary, $Fl)
-    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, (New-Object System.Drawing.Rectangle($Tr.X, ($top + $lh), $Tr.Width, $lh)), $pc.muted, $Fw) } }
+  else {   # the widest title does not fit in the column: every title goes on a second line (the cell wraps)
+    $lh = [int][math]::Ceiling($ui.F.Link.GetHeight($Gr)); $ny = [int](($Tr.Height - 2 * $lh) / 2); $tx = 0; $ty = $ny + $lh; $nb = $ny + $lh
+    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, (New-Object System.Drawing.Rectangle($Tr.X, ($Tr.Y + $ny), $Tr.Width, $lh)), $pc.primary, $Fl)
+    [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, (New-Object System.Drawing.Rectangle($Tr.X, ($Tr.Y + $ty), $Tr.Width, $lh)), $pc.muted, $Fw) }
+  if ($null -ne $Tag.Drawn -and $pp.Count -gt 1) { $Tag.Drawn[$Row] = @{ NumRight = [math]::Min($w1, $Tr.Width); TitleX = $tx; NumBottom = $nb; TitleTop = $ty; Beside = $beside } } }
 # Paints a status chip cell: a rounded fill of the row's chip kind with the status in the middle. $Bd: the cell bounds; $Pd: its padding.
 $wn.PaintChip = { param($Gr, [string]$Text, [string]$Kind, $Bd, [int]$Pd)
   $cwid = [Windows.Forms.TextRenderer]::MeasureText($Text, $ui.F.SmallB, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width + (& $ui.Sc 20)
@@ -1868,7 +1925,7 @@ $wn.PaintCell = {
     $pn = New-Object System.Drawing.Pen($(if ($head) { $pc.muted } else { $pc.line }), 1); $gr.DrawLine($pn, $bd.X, ($bd.Bottom - 1), $bd.Right, ($bd.Bottom - 1)); $pn.Dispose()
     $text = [string]$E.Value
     if ($head) { [Windows.Forms.TextRenderer]::DrawText($gr, $text.ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl) }
-    elseif ($kind -eq 'pub') { & $wn.PaintPub $gr $text $tr $fl $fw }
+    elseif ($kind -eq 'pub') { & $wn.PaintPub $gr $text $tr $fl $fw $tag $E.RowIndex }
     elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fw) }
     elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fw) }
     elseif ($kind -eq 'chip') { & $wn.PaintChip $gr $text ([string]$tag.Chip[$text]) $bd $pd }
@@ -1890,11 +1947,11 @@ $wn.Refilter = {
   & $wn.GridFill $g $rows; $g.ClearSelection()
   if ($wn.CountBox) { $wn.CountBox.Text = ([string]$wn.CountText -f $rows.Count) } }
 '@ }
-# ---- File 7 of 20: T22\90161Z-T22-window-r5.ps1 (from scripts/gov/90161Z-T22-window-r5.ps1, sha256 8bc87c50b0a9)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-window-r5.ps1'; Kind = 'text'; Sha = '8bc87c50b0a9'; Data = @'
+# ---- File 7 of 20: T22\90161Z-T22-window-r6.ps1 (from scripts/gov/90161Z-T22-window-r6.ps1, sha256 54027f78e1f2)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-window-r6.ps1'; Kind = 'text'; Sha = '54027f78e1f2'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r6, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   $wn.Show builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
@@ -1904,10 +1961,12 @@ $files += @{ Dir = 'T22'; Name = '90161Z-T22-window-r5.ps1'; Kind = 'text'; Sha 
   R5 (R31): the rail logo sits on the rail's navy and the app name is centered on the logo's middle (W1, $wn.HeadParts);
   with Windows high contrast on the window paints with the system colors, also after a change while it is open (W2,
   $wn.Recolor); $wn.Build saves a picture of each card through the measure part (W4).
+  R6 (R31b): the caption "ACTION STATUS" is level with the first line of the main card (D1, $wn.LevelCaps); the rest of
+  the crumb has the link's text middle (D2, $wn.Crumb).
   The rail logo is the app-logo block below, written by scripts/build_task_scripts.py (never edit it here).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   Credentials: none.
@@ -2077,6 +2136,8 @@ $wn.Crumb = {
   The link is a Pfm.LinkText: the crumb's own font (the small text font) underlined, the link blue, no padding, so its
   size is its text. The rest starts with the arrow, a small gap after the link (3 px at 100 %, room for the focus ring),
   so the gap from the link's text to the arrow stays under 8 px at 100 %. A crumb with no link is one text.
+  R6 (R31b D2): the link draws its text in its vertical middle; the rest's top gap is set so that the middle of its
+  line is the link's middle (within half a pixel, at any scale), so both parts sit on one line.
   .PARAMETER C
   The card: Crumb, CrumbGo.
   .PARAMETER Cw
@@ -2095,7 +2156,10 @@ $wn.Crumb = {
   $l.Add_Click({ & $wn.Press $this.Tag }); & $ui.Cue $l; [void]$cf.Controls.Add($l); $wn.CrumbLink = $l
   $rest = $gt + ' ' + ((@($parts | Select-Object -Skip 1)) -join (' ' + $gt + ' '))
   $t = & $wn.Txt $cf $rest $ui.F.Small $ui.C.Gray 8 ($Cw - (& $wn.Sc 160)) 'Where you are' $pc.surface
-  $t.Margin = & $ui.Pad (& $wn.Sc 3) $t.Margin.Top 0 0; $wn.CrumbRest = $t
+  # The link's middle from the row top: its top gap and half its height (its preferred height, as the flow sizes it).
+  $mid = $l.Margin.Top + $l.GetPreferredSize([Drawing.Size]::Empty).Height / 2.0
+  $top = [int][math]::Max(0, [math]::Round($mid - (& $wn.LineH $t.Font) / 2.0))
+  $t.Margin = & $ui.Pad (& $wn.Sc 3) $top 0 0; $wn.CrumbRest = $t
   return $t }
 # The head of a card: the FAKE note of the last button, the crumb, the title and the line under it. Sets $ui.Sent and
 # $ui.Kick (the title and the line the layout self-check reads).
@@ -2113,7 +2177,8 @@ $wn.ShowCols = {
   .SYNOPSIS
   The columns of a card: one column, or a main column and a side column; each section is a card with its blocks.
   .DESCRIPTION
-  Each section built is kept in $wn.Secs (column number, card, caption, Stretch) for $wn.Align and the measure part.
+  Each section built is kept in $wn.Secs (column number, card, caption, Stretch, caption box) for $wn.LevelCaps,
+  $wn.Align and the measure part.
   .PARAMETER C
   The card data.
   .PARAMETER Key
@@ -2138,11 +2203,39 @@ $wn.ShowCols = {
       if ($s.WideOnly -and -not $Wide) { continue }
       $px = $(if ($s.Pad) { [int]$s.Pad } else { 24 })
       $sec = & $wn.Card $colW $s.Cap $s.Top $px $pc.surface; [void]$col.Controls.Add($sec)
-      $wn.Secs += @{ Col = $ci; Card = $sec; Cap = [string]$s.Cap; Stretch = [bool]$s.Stretch }
+      # CapBox: the caption text box, the card's first child when it has a caption ($wn.Card adds it first).
+      $wn.Secs += @{ Col = $ci; Card = $sec; Cap = [string]$s.Cap; Stretch = [bool]$s.Stretch; CapBox = $(if ($s.Cap) { $sec.Controls[0] } else { $null }) }
       $iw = $colW - 2 * (& $wn.Sc $px)
       foreach ($b in @($s.Blocks)) { & $wn.Block $sec $b $iw $ctx }
       $sec.PerformLayout() }
     $ci++ } }
+# The first line of text of a section card: the first card text box in the order its parts were added, looking inside
+# a row (the chips row holds the step line). Gives back the text box, or $null.
+$wn.FirstLine = { param($Sec)
+  foreach ($c in $Sec.Controls) {
+    if (& $ui.IsCardText $c) { return $c }
+    if ($c.Controls.Count) { $in = & $wn.FirstLine $c; if ($in) { return $in } } }
+  return $null }
+$wn.LevelCaps = {
+  <#
+  .SYNOPSIS
+  R6 (R31b D1): the caption of each Action Status card (Stretch) is level with the first line of the main card beside it.
+  .DESCRIPTION
+  The columns start at one top, so the two middles compare directly ($wn.TextMid, page pixels). The higher of the two
+  moves down by the difference, rounded to a pixel: the caption by its top gap, or (when the caption is the lower one)
+  the main card's first part. Then the page lays out again; $wn.Align runs after this and lines up the bottoms.
+  #>
+  $mainSec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
+  if (-not $mainSec) { return }
+  $line = & $wn.FirstLine $mainSec.Card; if (-not $line) { return }
+  $moved = $false
+  foreach ($s in @($wn.Secs | Where-Object { $_.Stretch -and $_.CapBox })) {
+    $d = [int][math]::Round((& $wn.TextMid $line) - (& $wn.TextMid $s.CapBox))
+    if ($d -eq 0) { continue }
+    $mv = $(if ($d -gt 0) { $s.CapBox } else { $mainSec.Card.Controls[0] })
+    $m = $mv.Margin; $mv.Margin = & $ui.Pad $m.Left ($m.Top + [math]::Abs($d)) $m.Right $m.Bottom
+    $s.Card.PerformLayout(); $mainSec.Card.PerformLayout(); $moved = $true }
+  if ($moved) { $page.PerformLayout() } }
 # R30 V4: in a card with an Action Status card (Stretch), the last cards of the columns end on one line: the shorter one
 # grows to the bottom of the longer one. The columns start at one top, so their bottoms compare directly.
 $wn.Align = {
@@ -2155,7 +2248,8 @@ $wn.Align = {
 $wn.Show = {
   <#
   .SYNOPSIS
-  Shows the card $Key: clears the page, builds the head and the columns, lines up the column bottoms and sets the focus.
+  Shows the card $Key: clears the page, builds the head and the columns, levels the side captions (D1), lines up the
+  column bottoms and sets the focus.
   .DESCRIPTION
   A new card forgets the fields of the last one (a modal card remembers the card to go back to). The main button gets
   the focus (or the reason box after an empty reason) and the Enter key. The layout self-check runs a moment later.
@@ -2166,7 +2260,7 @@ $wn.Show = {
   $c = $Cards[$Key]; if (-not $c) { return }
   if ($Key -ne $wn.Cur) { if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
   $script:cardsOpened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
-  $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @()
+  $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @(); $wn.ChipRows = @()
   $ui.Wrap = @{}; $ui.Boxes = @(); $ui.Hot = $null; $ui.Down = $null
   $form.SuspendLayout(); $page.SuspendLayout()
   foreach ($x in @($page.Controls)) { $page.Controls.Remove($x); $x.Dispose() }
@@ -2179,7 +2273,7 @@ $wn.Show = {
   $page.PerformLayout(); $wn.HeadH = [int]$page.PreferredSize.Height
   & $wn.ShowCols $c $Key $cw $wide
   $page.ResumeLayout($true); $form.ResumeLayout($true)
-  & $wn.Align
+  & $wn.LevelCaps; & $wn.Align
   $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
   $form.AcceptButton = $wn.Primary
   $ui.CardAt = $ui.Clock.Elapsed.TotalMilliseconds
@@ -2384,11 +2478,11 @@ $wn.Hook = {
   $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds })
   $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null } }) }
 '@ }
-# ---- File 8 of 20: T22\90161Z-T22-measure-r5.ps1 (from scripts/gov/90161Z-T22-measure-r5.ps1, sha256 e06dc64974b3)
-$files += @{ Dir = 'T22'; Name = '90161Z-T22-measure-r5.ps1'; Kind = 'text'; Sha = 'e06dc64974b3'; Data = @'
+# ---- File 8 of 20: T22\90161Z-T22-measure-r6.ps1 (from scripts/gov/90161Z-T22-measure-r6.ps1, sha256 6e4a97e5b9dd)
+$files += @{ Dir = 'T22'; Name = '90161Z-T22-measure-r6.ps1'; Kind = 'text'; Sha = '6e4a97e5b9dd'; Data = @'
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r5, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r6, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
@@ -2400,12 +2494,17 @@ $files += @{ Dir = 'T22'; Name = '90161Z-T22-measure-r5.ps1'; Kind = 'text'; Sha
   and at 1.5 x (W1: the logo's middle and the name's middle, the color behind the logo) and the colors that
   Select-T22Color gives with high contrast on and off (W2). No question; no file but the given one and the card
   pictures next to it.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r5.png, in
+  Level (R6, R31b D1 to D4): $wn.LevelFacts gives, for the card on the page, the middles of each Action Status caption
+  and the main card's first line (D1), of the crumb's link and rest with their font sizes (D2), of each check chip and
+  its first text line (D3), and where each pub grid drew its numbers and titles (D4). -Measure records them for every
+  card at this scale and again at 1.25 x and 1.5 x ($wn.MeasureScaled); the layout self-check turns them into LAYOUT lines
+  ($ui.Measure, $wn.LevelBad), so the window flags the 4 defects on the device too.
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r6.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
-  $wn.PngLines, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
+  $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $ui.Measure, $wn.MeasureRun and its helpers.
+  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -2416,7 +2515,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r5.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r6.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -2511,14 +2610,101 @@ $wn.MeasureCrumb = {
   $gap = $(if ($li.Last -ge 0 -and $ti.First -ge 0) { ($t.Left + $ti.First) - ($l.Left + $li.Last) - 1 } else { $null })
   return [ordered]@{ Link = [string]$l.Text; Rest = [string]$t.Text; LinkFont = (& $wn.FontFacts $l.Font); RestFont = (& $wn.FontFacts $t.Font)
     LinkBounds = [string]$l.Bounds; RestBounds = [string]$t.Bounds; LinkInk = $li.Last; RestInk = $ti.First; GapBounds = ($t.Left - $l.Right); GapInk = $gap } }
+$wn.LevelPubs = {
+  <#
+  .SYNOPSIS
+  R6 (R31b D4): where each grid with a pub column on the page drew its numbers and titles.
+  .DESCRIPTION
+  Each such grid is drawn once into a bitmap (so its cells are painted now, also off-screen); $wn.PaintPub keeps what
+  it drew in the grid's Tag.Drawn, relative to the cell's text rectangle. Rows that are scrolled out of the grid are
+  not drawn and not listed.
+  .OUTPUTS
+  One table per grid: Grid (its name), Gap (the gap after the widest number), Rows (rows drawn) and, one value per
+  row drawn, Beside, TitleX, NumRight, NumBottom and TitleTop.
+  #>
+  $out = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) {
+    foreach ($c in $st.Pop().Controls) {
+      if ($c -is [Windows.Forms.DataGridView]) {
+        if (-not ($c.Tag -is [hashtable]) -or -not (@($c.Tag.Kind.Values) -contains 'pub')) { continue }
+        $c.Tag.Drawn = @{}
+        try { $bm = New-Object System.Drawing.Bitmap([math]::Max(1, $c.Width), [math]::Max(1, $c.Height))
+          try { $c.DrawToBitmap($bm, (New-Object System.Drawing.Rectangle(0, 0, $bm.Width, $bm.Height))) } finally { $bm.Dispose() } } catch { $null = $_ }
+        $d = @(foreach ($k in @($c.Tag.Drawn.Keys | Sort-Object)) { $c.Tag.Drawn[$k] })
+        $g = [ordered]@{}; $g['Grid'] = [string]$c.AccessibleName; $g['Gap'] = [int]$c.Tag.PubGap; $g['Rows'] = $d.Count
+        foreach ($n in 'Beside', 'TitleX', 'NumRight', 'NumBottom', 'TitleTop') { $g[$n] = @($d | ForEach-Object { $_[$n] }) }
+        $out.Add($g) }
+      elseif ($c.Controls.Count) { $st.Push($c) } } }
+  return $out.ToArray() }
+$wn.LevelFacts = {
+  <#
+  .SYNOPSIS
+  R6 (R31b D1 to D4): the alignment facts of the card on the page, in page pixels ($wn.TextMid).
+  .DESCRIPTION
+  Caps (D1): for each Action Status card, the middle of its caption and of the first line of the main card. Crumb (D2):
+  the font size and text middle of the crumb's link and rest, or $null when the card has no crumb link. Chips (D3): for
+  each check block, the middle of its chip and of the first line of its text. Pubs (D4): $wn.LevelPubs.
+  .OUTPUTS
+  A table: Caps, Crumb, Chips, Pubs.
+  #>
+  $mainSec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
+  $line = $(if ($mainSec) { & $wn.FirstLine $mainSec.Card } else { $null })
+  $caps = @(foreach ($s in @($wn.Secs | Where-Object { $_.Stretch -and $_.CapBox -and $line })) {
+      $c = [ordered]@{}; $c['Cap'] = [string]$s.CapBox.Text; $c['CapMid'] = (& $wn.TextMid $s.CapBox); $c['Line'] = [string]$line.Text; $c['LineMid'] = (& $wn.TextMid $line); $c })
+  $crumb = $null; $l = $wn.CrumbLink; $t = $wn.CrumbRest
+  if ($l -and $t) { $crumb = [ordered]@{}; $crumb['LinkSize'] = [double]$l.Font.SizeInPoints; $crumb['RestSize'] = [double]$t.Font.SizeInPoints
+    $crumb['LinkMid'] = (& $wn.TextMid $l); $crumb['RestMid'] = (& $wn.TextMid $t) }
+  $chips = @(foreach ($r in @($wn.ChipRows)) {
+      $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['ChipMid'] = (& $wn.TextMid $r.Chip); $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
+  $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs)
+  return $f }
+$wn.LevelBad = {
+  <#
+  .SYNOPSIS
+  The LAYOUT lines of the layout self-check for D1 to D4 (R6): each fact of $wn.LevelFacts that is out of line.
+  .DESCRIPTION
+  D1, D2 and D3: two middles more than $Tol apart (D2 also: two font sizes). D4: the titles of a grid start at more than
+  one x, or a title in the column starts before the end of the widest number and the gap, or a title under its number
+  starts above the number's bottom. A grid with no row drawn has nothing to compare.
+  .PARAMETER Card
+  The card key (it starts each line).
+  .PARAMETER F
+  The facts ($wn.LevelFacts).
+  .PARAMETER Tol
+  The tolerance in pixels: 1 px at 100 %, scaled.
+  .OUTPUTS
+  The LAYOUT lines (none when all is in line).
+  #>
+  param([string]$Card, $F, [double]$Tol)
+  $out = @()
+  foreach ($c in @($F.Caps)) { if ([math]::Abs($c.CapMid - $c.LineMid) -gt $Tol) {
+      $out += ('LAYOUT ' + $Card + ' D1 caption "' + $c.Cap + '" middle ' + $c.CapMid + ', the first line of the main card ' + $c.LineMid) } }
+  $k = $F.Crumb
+  if ($k -and ($k.LinkSize -ne $k.RestSize -or [math]::Abs($k.LinkMid - $k.RestMid) -gt $Tol)) {
+    $out += ('LAYOUT ' + $Card + ' D2 crumb: link ' + $k.LinkSize + ' pt middle ' + $k.LinkMid + ', rest ' + $k.RestSize + ' pt middle ' + $k.RestMid) }
+  foreach ($c in @($F.Chips)) { if ([math]::Abs($c.ChipMid - $c.LineMid) -gt $Tol) {
+      $out += ('LAYOUT ' + $Card + ' D3 chip "' + $c.Chip + '" middle ' + $c.ChipMid + ', its first text line ' + $c.LineMid) } }
+  foreach ($p in @($F.Pubs)) {
+    if ([int]$p.Rows -lt 1) { continue }
+    $xs = @($p.TitleX | Sort-Object -Unique); $num = [int](@($p.NumRight) | Measure-Object -Maximum).Maximum
+    $under = @(for ($i = 0; $i -lt [int]$p.Rows; $i++) { if (-not $p.Beside[$i] -and $p.TitleTop[$i] -lt $p.NumBottom[$i]) { $i } })
+    if ($xs.Count -gt 1) { $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': the titles start at ' + ($xs -join ', ')) }
+    elseif ((@($p.Beside) -contains $true) -and [int]$xs[0] -lt $num + [int]$p.Gap) {
+      $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': the titles start at ' + $xs[0] + ', the widest number ends at ' + $num) }
+    elseif ($under.Count) { $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': ' + $under.Count + ' titles start above the bottom of their number') } }
+  return $out }
+# The self-check's extra lines (the rade-ui block calls $ui.Measure for each card it checks): D1 to D4, 1 px at 100 %.
+$ui.Measure = { param($Card) return @(& $wn.LevelBad $Card (& $wn.LevelFacts) ([math]::Max(1.0, $ui.Dpi / 96.0))) }
 $wn.MeasureCard = {
   <#
   .SYNOPSIS
-  What -Measure records for the card on the page: the crumb, every button and link, every section card.
+  What -Measure records for the card on the page: the crumb, every button and link, every section card, and the
+  alignment facts of D1 to D4 (R6).
   .PARAMETER Key
   The card key.
   .OUTPUTS
-  A table: Key, Crumb, Buttons (Text, Link, Back, Face, Edge), Sections (Col, Cap, Stretch, Top, Bottom; page pixels).
+  A table: Key, Crumb, Buttons (Text, Link, Back, Face, Edge), Sections (Col, Cap, Stretch, Top, Bottom; page pixels),
+  Level ($wn.LevelFacts).
   #>
   param([string]$Key)
   $btns = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
@@ -2534,8 +2720,42 @@ $wn.MeasureCard = {
       [ordered]@{ Col = $s.Col; Cap = $s.Cap; Stretch = $s.Stretch; Top = ($r.Top - $pt); Bottom = ($r.Bottom - $pt) } })
   # One key per statement: Windows PowerShell 5.1 stops on an [ordered] literal that holds a generic list (R30 CI).
   $card = [ordered]@{}; $card['Key'] = $Key; $card['Crumb'] = (& $wn.MeasureCrumb)
-  $card['Buttons'] = $btns.ToArray(); $card['Sections'] = $secs
+  $card['Buttons'] = $btns.ToArray(); $card['Sections'] = $secs; $card['Level'] = (& $wn.LevelFacts)
   return $card }
+$wn.MeasureScaled = {
+  <#
+  .SYNOPSIS
+  Builds every card again at $K times this scale and gives back the alignment facts of D1 to D4 of each (R6).
+  .DESCRIPTION
+  As $wn.MeasureHead does for the rail head: the scale ($ui.Dpi), the font factor and every font of $ui.F (with the
+  crumb font and the step fonts made from them) are $K times as large, as Windows makes them at that scale. Each card is
+  shown and measured ($wn.LevelFacts); a card that cannot be measured keeps its error. Then the scale and the fonts come
+  back, Your Work is shown again and the scaled fonts are disposed.
+  .PARAMETER K
+  The factor (1.5: the PFM's 150 %).
+  .OUTPUTS
+  A table: K, Dpi, Sc8 (8 px at 100 %, at this scale) and Cards (Key, Level or Error).
+  #>
+  param([double]$K)
+  $keep = @{ Dpi = $ui.Dpi; FontK = $ui.FontK; F = $ui.F; Crumb = $wn.CrumbFont; Step = $wn.StepFonts }
+  $made = New-Object System.Collections.Generic.List[object]; $cards = New-Object System.Collections.Generic.List[object]; $res = [ordered]@{}
+  try {
+    $nf = @{}; foreach ($n in @($keep.F.Keys)) { $o = $keep.F[$n]; $x = New-Object System.Drawing.Font($o.FontFamily, [single]($o.Size * $K), $o.Style); $nf[$n] = $x; $made.Add($x) }
+    $ui.Dpi = $keep.Dpi * $K; $ui.FontK = $keep.FontK * $K; $ui.F = $nf; $wn.StepFonts = $null
+    $wn.CrumbFont = New-Object System.Drawing.Font($nf.Small, [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline')); $made.Add($wn.CrumbFont)
+    $res['K'] = $K; $res['Dpi'] = $ui.Dpi; $res['Sc8'] = (& $wn.Sc 8)
+    foreach ($key in $Cards.Keys) {
+      $c = [ordered]@{}; $c['Key'] = $key
+      try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts) }
+      catch { $c['Error'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
+      $cards.Add($c) }
+  } finally {
+    if ($wn.StepFonts -and -not [object]::ReferenceEquals($wn.StepFonts, $keep.Step)) { foreach ($x in @($wn.StepFonts.A) + @($wn.StepFonts.B)) { $made.Add($x) } }
+    $ui.Dpi = $keep.Dpi; $ui.FontK = $keep.FontK; $ui.F = $keep.F; $wn.CrumbFont = $keep.Crumb; $wn.StepFonts = $keep.Step
+    $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
+    foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
+  $res['Cards'] = $cards.ToArray()
+  return $res }
 $wn.HeadFacts = {
   <#
   .SYNOPSIS
@@ -2600,7 +2820,8 @@ $wn.MeasureRun = {
   .DESCRIPTION
   The form is shown far off the screen (it is never seen) so that its controls have handles and can be drawn into
   bitmaps; it builds every card as a normal run does ($wn.Build: layout self-check, accessible names and the card
-  pictures, saved next to the JSON file, included), then measures the rail head and the high-contrast color choice.
+  pictures, saved next to the JSON file, included), then measures D1 to D4 of every card at 1.25 x and 1.5 x (R6),
+  the rail head and the high-contrast color choice.
   .PARAMETER Path
   The JSON file to write.
   #>
@@ -2622,10 +2843,13 @@ $wn.MeasureRun = {
   $res['EmptyNames'] = @($wn.NoName.Keys | ForEach-Object { [string]$_ })
   $res['LayoutDefects'] = @($ui.LayBad)
   $res['Pngs'] = $wn.Pngs.ToArray()
+  # D1 to D4 at 1.25 x and 1.5 x (R6; the PFM works at 150 %): every card again; a pass that cannot run is kept as its error.
+  try { $res['Scaled'] = @(foreach ($k in 1.25, 1.5) { & $wn.MeasureScaled $k }) }
+  catch { $res['Scaled'] = @(); $res['ScaledError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   # The rail head and the color choice: a step that cannot be measured is kept as its error (the test names it).
   try { $res['Head'] = @(& $wn.MeasureHead) } catch { $res['Head'] = @(); $res['HeadError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   try { $res['Contrast'] = @(& $wn.MeasureContrast) } catch { $res['Contrast'] = @(); $res['ContrastError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
-  Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 8) -Encoding UTF8
+  Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 10) -Encoding UTF8
   $form.Close() }
 '@ }
 # ---- File 9 of 20: T17\90161Z-T17-import-log-r2.ps1 (from scripts/gov/90161Z-T17-import-log-r2.ps1, sha256 d0cd042fc857)
@@ -4925,9 +5149,9 @@ DAAAAAAAAAAAAAAApAEnZAAAc29sdXRpb24ueG1sUEsFBgAAAAATABMAnQgAAJdoAAAAAA==
 # ==== Part 4 of 6: Steps (37), downloads, results to collect, clean-up
 $fetch = @()
 $steps = @()
-$steps += @{ Name = 'T22 Open the 90-161.Z window r5'; Title = 'Open the 90-161.Z window and do its 14 checks'; Dir = 'T22'; File = '90161Z-T22-pfm-window-r5.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 14 checks in the bar at the bottom, then select Pass or Fail. Then close the window.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 900; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are. The step can be run again.'; Doing = 'Opening the 90-161.Z window.' }
-$steps += @{ Name = 'T22 Did the window open r5'; Title = 'Check that the window opened'; Dir = 'T22'; File = '90161Z-T22-pfm-window-r5.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 2; Args = '-Opened'; Note = 'Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are.'; Doing = 'Reading the result of the window step.' }
-$steps += @{ Name = 'T22 Answer: look and cards r5'; Title = 'Answer 3 questions about the window look'; Dir = 'T22'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = '3 questions about the look of the window. About 2 minutes.'; Kind = 'guide'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T22 Did the window open r5'); Optional = $false; Help = ''; AnswersOnly = $true; Answers = @(@{ Key = 'w-look'; Prompt = 'Does the window look like your vision of the 90-161.Z app?'; Kind = 'pick'; Choices = @('Yes, as it is', 'Close, with small changes', 'Partly', 'No') }, @{ Key = 'w-cards'; Prompt = 'Did every card open and fit with no scroll bar?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'w-change'; Prompt = 'What would you change first? One line, no names.'; Kind = 'text'; Choices = @() }) }
+$steps += @{ Name = 'T22 Open the 90-161.Z window r6'; Title = 'Open the 90-161.Z window and do its 16 checks'; Dir = 'T22'; File = '90161Z-T22-pfm-window-r6.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 16 checks in the bar at the bottom, then select Pass or Fail. Then close the window.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 900; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are. The step can be run again.'; Doing = 'Opening the 90-161.Z window.' }
+$steps += @{ Name = 'T22 Did the window open r6'; Title = 'Check that the window opened'; Dir = 'T22'; File = '90161Z-T22-pfm-window-r6.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 2; Args = '-Opened'; Note = 'Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 60; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are.'; Doing = 'Reading the result of the window step.' }
+$steps += @{ Name = 'T22 Answer: look and cards r6'; Title = 'Answer 3 questions about the window look'; Dir = 'T22'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = '3 questions about the look of the window. About 2 minutes.'; Kind = 'guide'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @('T22 Did the window open r6'); Optional = $false; Help = ''; AnswersOnly = $true; Answers = @(@{ Key = 'w-look'; Prompt = 'Does the window look like your vision of the 90-161.Z app?'; Kind = 'pick'; Choices = @('Yes, as it is', 'Close, with small changes', 'Partly', 'No') }, @{ Key = 'w-cards'; Prompt = 'Did every card open and fit with no scroll bar?'; Kind = 'yesno'; Choices = @() }, @{ Key = 'w-change'; Prompt = 'What would you change first? One line, no names.'; Kind = 'text'; Choices = @() }) }
 $steps += @{ Name = 'T21 Check the test site is clean r6'; Title = 'Check that the last round left nothing on the test site'; Dir = 'T21'; File = '90161Z-T21-probe-r6.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Clean -Label first'; Note = 'Signs in (CAC). Removes a test person, list or library if one is still there. The last round removed all, so it should find nothing. Counts only.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are. Each removal runs even when an earlier one fails.'; Doing = 'Checking that the test site is clean.' }
 $steps += @{ Name = 'T21 Make the probe list r6'; Title = 'Make the test list and library'; Dir = 'T21'; File = '90161Z-T21-probe-r6.ps1'; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 20; Args = '-Part Make'; Note = 'Signs in (CAC). Makes the fake probe list (Visitors get Contribute on this list only) and library, uploads one fake workbook and writes the test page.'; Kind = 'script'; Guide = @(); Url = ''; UrlConfig = ''; Marker = ''; Estimate = 120; DoneText = ''; DoneLog = ''; Makes = @(); After = @(); Optional = $false; Help = 'Send the results as they are. A second run changes nothing.'; Doing = 'Making the test list and library.' }
 $steps += @{ Name = 'T21 Power Automate shows your connections r6'; Title = 'Check that Power Automate shows your connections'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You check that Power Automate can show your connections before the flow steps. About 3 minutes.'; Kind = 'guide'; Guide = @('1. Select "Open in browser" above.', '2. If Power Automate asks you to sign in: sign in with your CAC.', '3. On the left, select "Connections" (it can be under "More" or "Data").', '4. Wait until the list of connections shows.', '5. Look in the list for a SharePoint connection.', 'If the page says the connections could not be loaded: wait 5 minutes, then reload the page.', 'If the list still does not show after the reload: select "It failed".', 'In the "It failed" box, type only the line that starts with "Error" (no time stamp or session ID).'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T21-pa-ready.txt'; Estimate = 180; DoneText = 'The list loaded'; DoneLog = 'Confirmed by you: Power Automate shows the connections.'; Makes = @(); After = @(); Optional = $false; Help = ''; Hide = @('skip'); Answers = @(@{ Key = 'pa-sharepoint'; Prompt = 'Is there a SharePoint connection in the list?'; Kind = 'pick'; Choices = @('Yes', 'No SharePoint connection') }) }
@@ -4963,24 +5187,24 @@ $steps += @{ Name = 'T21 Remove the health flow and solution r6'; Title = 'Delet
 $steps += @{ Name = 'T21 Remove the button flow r6'; Title = 'Delete the button flow you made'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You delete the button flow you made. It runs only because you made the flow. About 2 minutes.'; Kind = 'guide'; Guide = @('1. Select "Open in browser" above.', '2. On the left, select "Solutions" (it can be under "More").', '3. Select the solution "90-161.Z probe button".', '4. In the row of the flow "90161Z T21 Probe Button hand r5", select the three dots.', '5. Select "Delete from this environment".', '6. Select "Delete".', 'If the flow is not in the list: skip it.', 'If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.', 'If the flow does not delete: select "It failed".', 'In the "It failed" box, type only the line that starts with "Error" (no time stamp or session ID).'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T21-removed.txt'; Estimate = 300; DoneText = ''; DoneLog = 'Confirmed by you: removed.'; Makes = @(); After = @('T21 Button flow by hand r5: make the flow'); Optional = $false; Help = '' }
 $steps += @{ Name = 'T21 Remove the button solution r6'; Title = 'Delete the button flow solution'; Dir = 'T21'; File = ''; Default = $true; AskParam = ''; AskPrompt = ''; ScreenOnly = ''; Minutes = 30; Args = ''; Note = 'You delete the solution "90-161.Z probe button". It runs only because the solution was made. About 2 minutes.'; Kind = 'guide'; Guide = @('1. Select "Open in browser" above.', '2. On the left, select "Solutions" (it can be under "More").', '3. In the row of "90-161.Z probe button", select the three dots.', '4. Select "Delete from this environment".', '5. Select "Delete".', 'If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.', 'If the solution does not delete: select "It failed".', 'In the "It failed" box, type only the line that starts with "Error" (no time stamp or session ID).'); Url = 'https://make.powerautomate.appsplatform.us/'; UrlConfig = '90161Z-flow-portal.txt'; Marker = '90161Z-T21-removed.txt'; Estimate = 300; DoneText = ''; DoneLog = 'Confirmed by you: removed.'; Makes = @(); After = @('T21 Button flow by hand r5: make a solution'); Optional = $false; Help = '' }
 $collect = @()
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-window-r5.txt'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-home-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-empty-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-queue-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-reviews-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step8-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-confirm-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-sendback-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-waves-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step11-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step12-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step13-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-pub-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-settings-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-loading-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-failed-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-noperm-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
-$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-remindall-r5.png'; Step = 'T22 Open the 90-161.Z window r5' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-window-r6.txt'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-home-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-empty-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-queue-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-reviews-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step8-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-confirm-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-sendback-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-waves-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step11-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step12-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-step13-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-pub-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-settings-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-loading-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-failed-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-noperm-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
+$collect += @{ Dir = 'T22'; Name = '90161Z-T22-card-remindall-r6.png'; Step = 'T22 Open the 90-161.Z window r6' }
 $collect += @{ Dir = 'T17'; Name = '90161Z-T17-import-log-r2.txt'; Step = 'T17 Import log reader r2' }
 $collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-clean-first-r6.txt'; Step = 'T21 Check the test site is clean r6' }
 $collect += @{ Dir = 'T21'; Name = '90161Z-T21-probe-make-r6.txt'; Step = 'T21 Make the probe list r6' }
@@ -5180,8 +5404,18 @@ $cleanup += @{ Path = 'T22\90161Z-T22-measure-r4.ps1'; Kind = 'glob' }
 $cleanup += @{ Path = 'T22\90161Z-T22-window-r4.txt'; Kind = 'glob' }
 $cleanup += @{ Path = 'T22\90161Z-T22-judged-fixes.txt'; Kind = 'glob' }
 $cleanup += @{ Path = 'T22\90161Z-T22-card-*-r5.png'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-pfm-window-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-cards-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-types-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-ui-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-parts-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-grid-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-window-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-measure-r5.ps1'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-window-r5.txt'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-card-*-r6.png'; Kind = 'glob' }
 # ==== Part 5 of 6: Applications
-$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r12.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r6.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', '90161Z-T21-common-r6.ps1', '90161Z-T21-export-r6.ps1', '90161Z-T21-links-r5.html', '90161Z-T21-look-r6.ps1', '90161Z-T21-make-r6.ps1', '90161Z-T21-person-r6.ps1', '90161Z-T21-probe-r6.ps1', '90161Z-T21-read-r6.ps1', '90161Z-T22-cards-r5.ps1', '90161Z-T22-grid-r5.ps1', '90161Z-T22-measure-r5.ps1', '90161Z-T22-parts-r5.ps1', '90161Z-T22-pfm-window-r5.ps1', '90161Z-T22-types-r5.ps1', '90161Z-T22-ui-r5.ps1', '90161Z-T22-window-r5.ps1', '90161Z-T23-app-file-r1.ps1', '90161Z-T23-app-file-src-r1', '90161Z-T24-full-solution-test-r2.ps1', '90161Z-T25-padding-r1.txt', '90161Z-T25-paste-size-r1.ps1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Publication.Word.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
+$known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r12.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r6.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', '90161Z-T21-common-r6.ps1', '90161Z-T21-export-r6.ps1', '90161Z-T21-links-r5.html', '90161Z-T21-look-r6.ps1', '90161Z-T21-make-r6.ps1', '90161Z-T21-person-r6.ps1', '90161Z-T21-probe-r6.ps1', '90161Z-T21-read-r6.ps1', '90161Z-T22-cards-r6.ps1', '90161Z-T22-grid-r6.ps1', '90161Z-T22-measure-r6.ps1', '90161Z-T22-parts-r6.ps1', '90161Z-T22-pfm-window-r6.ps1', '90161Z-T22-types-r6.ps1', '90161Z-T22-ui-r6.ps1', '90161Z-T22-window-r6.ps1', '90161Z-T23-app-file-r1.ps1', '90161Z-T23-app-file-src-r1', '90161Z-T24-full-solution-test-r2.ps1', '90161Z-T25-padding-r1.txt', '90161Z-T25-paste-size-r1.ps1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Publication.Word.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
 $apps = @()
 $apps += @{ Name = '90-161.Z: Publications and Forms Management'; Summary = 'Round R32 r1: the 90-161.Z window, then the flow steps: health flow, button flow, full flows, flow check and the full flow test. Fake data.'; Steps = @(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36); Checks = @('nipr', 'ps', 'lang', 'onedrive', 'disk', 'write', 'child', 'outlook', 'pnp', 'net-bookmark', 'net-site', 'net-flow', 'site-rights', 'flow-guide'); Mode = 'test'; Version = ''; Marker = $null; Start = '' }
 # ==== Part 6 of 6: the RADE engine (engine/ps, in run order)
