@@ -995,8 +995,7 @@
           "doneLog": "Confirmed by you: Power Automate shows the connections.",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt",
-          "doneText": "The list loaded"
+          "urlConfig": "90161Z-flow-portal.txt"
         },
         {
           "name": "T21 Import the health flow r5: choose the file",
@@ -1391,8 +1390,7 @@
               ]
             }
           ],
-          "doneLog": "Confirmed by you: looked at the form.",
-          "doneText": "I looked at the form"
+          "doneLog": "Confirmed by you: looked at the form."
         },
         {
           "name": "T21 Use the list button r6",
@@ -1441,8 +1439,7 @@
               ]
             }
           ],
-          "doneLog": "Confirmed by you: used the button.",
-          "doneText": "I tried the button"
+          "doneLog": "Confirmed by you: used the button."
         },
         {
           "name": "T24 Import the full solution r2: choose the file",
@@ -1715,8 +1712,7 @@
               ]
             }
           ],
-          "doneLog": "Confirmed by you: looked at the F04 e-mail.",
-          "doneText": "I looked"
+          "doneLog": "Confirmed by you: looked at the F04 e-mail."
         },
         {
           "name": "T24 Run F02 again r2",
