@@ -7,6 +7,7 @@ This file is the source of truth for every Claude agent on this repo, subagents 
 - Owner: the PFM
 - Time zone: America/Chicago
 - Tier: full
+- Short name: 90-161.Z
 
 ## Order of authority
 
@@ -33,7 +34,7 @@ No task, plan, default or project rule relaxes these. When a request conflicts w
 
 These are defaults: how work normally goes here. The method is yours unless the task states it. When another way serves the request better, use it and say so in one line.
 
-- **Start of session.** Run `python3 scripts/first_use_check.py` (Claude Code runs it as a SessionStart hook) and `scripts/session_checkin.sh`; do what their output lines say (FIRST USE, KIT, DENYLIST, AUDIT DUE) and report the branch, uncommitted files and the ahead/behind count against origin/main. Read the handoff ("Order of authority"). Look for a tool and read the environment docs before you say a capability is not available.
+- **Start of session.** Run `python3 scripts/first_use_check.py` (Claude Code runs it as a SessionStart hook) and `scripts/session_checkin.sh`; do what their output lines say (FIRST USE, KIT, DENYLIST, AUDIT DUE, TITLE, SESSIONS) and report the branch, uncommitted files and the ahead/behind count against origin/main. Read the handoff ("Order of authority"). Look for a tool and read the environment docs before you say a capability is not available.
 - **Decisions.** Make routine decisions yourself. Ask the PFM about source authority, content approval and what "The PFM's approval" names, with all open questions in one round and in the format of the PFM's preferences (without them: a question dialog where one exists, 2–4 options each, the recommendation first).
 - **Assumptions.** Before work of 3+ steps, state the assumptions that change the result if wrong, each with its source and confidence (high / medium / low); ask about the low ones before you build.
 - **The PFM's decisions.** Record each one in docs/DECISIONS.md or its canonical document, with its date and scope. A decision binds the task or thing it names; it binds every session only as a line in "Project rules". Before you change an approved design, source or value, search docs/DECISIONS.md for it and ask.

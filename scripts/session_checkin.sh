@@ -35,6 +35,30 @@ fix_hooks() {
   fi
 }
 
+# Session names (AGENTS.md "Start of session"; steps: .claude/skills/handoff/SKILL.md "Session names").
+# header_value FILE KEY: the value of the "- KEY: value" line in FILE, or nothing; a {{PLACEHOLDER}} counts as nothing
+header_value() {
+  local v
+  v=$({ tr -d '\r' < "$1"; } 2>/dev/null | sed -n "s/^- $2: *\(.*[^[:space:]]\)[[:space:]]*\$/\1/p" | head -n 1)  # no CR, no end spaces
+  case "$v" in '{{'*) v= ;; esac
+  printf '%s' "$v"
+}
+# title_lines FILE: print the TITLE and SESSIONS lines from the AGENTS.md header in FILE. The short name is the
+# "- Short name:" value, else the first word of the project name, else "Kit" (the kit clone keeps its placeholders).
+title_lines() {
+  local short name tz day tag
+  short=$(header_value "$1" "Short name")
+  name=$(sed -n 's/^# \(.*\): agent instructions$/\1/p' "$1" 2>/dev/null | head -n 1)
+  case "$name" in '{{'*) name= ;; esac
+  [ -n "$short" ] || short=${name%% *}
+  [ -n "$short" ] || short=Kit
+  tz=$(header_value "$1" "Time zone")
+  day=$(TZ="${tz:-UTC}" date +%F)
+  tag="project:$(printf '%s' "$short" | tr '[:upper:]' '[:lower:]')"
+  echo "TITLE:       $short · <task, 2-6 words> · $day (tag $tag); keep a title that already has this form; steps: .claude/skills/handoff/SKILL.md \"Session names\""
+  echo "SESSIONS:    where the session tools exist, list the sessions tagged $tag that wait on the PFM"
+}
+
 if [ "${1:-}" = "--test" ]; then
   export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1  # the host's git config must not change the cases
   unset GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
@@ -65,6 +89,17 @@ if [ "${1:-}" = "--test" ]; then
   eq "a linked worktree: the main clone's path" "$(cd "$t/wt" && fix_hooks >/dev/null; hp "$t/r")" "$t/r/scripts/git-hooks"
   git init -q -b main "$t/bare-of-hooks"
   eq "no scripts/git-hooks folder: nothing set" "$(cd "$t/bare-of-hooks" && fix_hooks; echo " $(hp "$t/bare-of-hooks")")" "none "
+  # Session names: the TITLE line takes the short name, else the project name's first word, else "Kit"
+  today=$(TZ=UTC date +%F)
+  printf '# RADE: agent instructions\n\n- Time zone: UTC\n- Short name: RADE\n' > "$t/a1.md"
+  eq "TITLE: the short name" "$(title_lines "$t/a1.md" | head -n 1)" \
+    "TITLE:       RADE · <task, 2-6 words> · $today (tag project:rade); keep a title that already has this form; steps: .claude/skills/handoff/SKILL.md \"Session names\""
+  printf '# ICF Companion: agent instructions\n\n- Time zone: UTC\n- Short name: {{SHORT_NAME}}\n' > "$t/a2.md"
+  eq "TITLE: a placeholder falls back to the name" "$(title_lines "$t/a2.md" | grep -c '^TITLE:       ICF · ')" "1"
+  printf '# R: agent instructions\r\n\r\n- Time zone: UTC\r\n- Short name: RADE  \r\n' > "$t/a4.md"
+  eq "TITLE: CRLF and end spaces trimmed" "$(title_lines "$t/a4.md" | grep -c '(tag project:rade);')" "1"
+  printf '# {{PROJECT_NAME}}: agent instructions\n\n- Time zone: {{TIMEZONE}}\n- Short name: {{SHORT_NAME}}\n' > "$t/a3.md"
+  eq "TITLE: the kit clone is Kit" "$(title_lines "$t/a3.md" | tail -n 1 | grep -o 'project:kit')" "project:kit"
   [ "$fails" = 0 ] && echo "CHECKIN TEST PASS" || { echo "CHECKIN TEST FAIL"; exit 1; }
   exit 0
 fi
@@ -97,6 +132,7 @@ fi
 uncommitted=$(git status --porcelain | wc -l | tr -d ' ')
 echo "uncommitted: $uncommitted"
 [ "$uncommitted" -gt 0 ] && git status --short
+[ -f AGENTS.md ] && title_lines AGENTS.md
 
 [ -f scripts/bloat_check.py ] && python3 scripts/bloat_check.py --brief
 # The last check run in this clone: lane, wall time and the 3 slowest checks (scripts/check.sh writes it).
