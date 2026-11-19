@@ -213,11 +213,11 @@
                 },
                 {
                     "name": "T20 Give PFM Office the edit-all level r2",
-                    "title": "Give PFM Office a level that edits every row",
+                    "title": "Check the lists and give PFM Office its level",
                     "dir": "T20",
                     "file": "90161Z-T20-provision-lists-r2.ps1",
                     "minutes": 30,
-                    "note": "Signs in (CAC). Makes the group PFM Office if it is missing and a permission level that edits every row, gives the group that level on the site, and reads it back. Makes no list.",
+                    "note": "Signs in (CAC). Checks the 12 app lists: makes what is missing and puts the columns of its 18 views back. Then makes the group PFM Office and its level if missing, and reads them back.",
                     "estimate": 4,
                     "help": "Send the results as they are. A second run changes nothing.",
                     "needs": [
@@ -367,16 +367,6 @@
                     "hide": [
                         "skip"
                     ]
-                },
-                {
-                    "name": "T17 Import log reader r3",
-                    "title": "Read the import log if an import failed",
-                    "dir": "T17",
-                    "file": "90161Z-T17-import-log-r3.ps1",
-                    "minutes": 5,
-                    "note": "Runs only if an import failed: copies the error rows of an import log saved in the last 3 hours, addresses masked. Otherwise it reports SKIPPED.",
-                    "estimate": 1,
-                    "doing": "Looking for an import log."
                 },
                 {
                     "name": "T21 Open the test page r8",
@@ -555,6 +545,16 @@
                     ]
                 },
                 {
+                    "name": "T17 Import log reader r3",
+                    "title": "Read the import log if an import failed",
+                    "dir": "T17",
+                    "file": "90161Z-T17-import-log-r3.ps1",
+                    "minutes": 5,
+                    "note": "Runs only if an import failed: copies the error rows of an import log saved in the last 3 hours, addresses masked. Otherwise it reports SKIPPED.",
+                    "estimate": 1,
+                    "doing": "Looking for an import log."
+                },
+                {
                     "name": "T24 Turn on all 8 flows r4",
                     "title": "Turn on all 8 flows",
                     "kind": "guide",
@@ -565,8 +565,8 @@
                         "1. Select \"Open in browser\" above.",
                         "2. On the left, select \"Solutions\" (it can be under \"More\").",
                         "3. Select the solution \"90-161.Z flows\".",
-                        "4. Find F03 in the column \"Status\".",
-                        "5. Remember if it reads On or Off (the next card asks).",
+                        "4. Find the flow whose name starts with \"90161Z F03\" and look at its column \"Status\".",
+                        "5. Remember if it reads On or Off (a question follows).",
                         "6. Look at the other 7 flows: each must read On.",
                         "7. If a flow reads Off: select that flow.",
                         "8. If you selected a flow: select \"Turn on\".",
@@ -659,45 +659,272 @@
                     ]
                 },
                 {
-                    "name": "T24 Add a second owner to each flow r4",
-                    "title": "Add a second owner to each app flow",
+                    "name": "T24 Second owner 1 of 6 r4",
+                    "title": "Add a second owner: Activity Log flow",
                     "kind": "guide",
                     "dir": "T24",
                     "file": "",
-                    "note": "You add a person from your office as a second owner of each of the 6 app flows, so each flow keeps an owner if you leave. The owner stays. The round does not record the name. About 8 minutes.",
+                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
                     "guide": [
                         "1. Select \"Open in browser\" above.",
                         "2. On the left, select \"Solutions\" (it can be under \"More\").",
                         "3. Select the solution \"90-161.Z flows\".",
                         "4. Select the flow \"90161Z F01 Activity Log r3\".",
                         "5. Select \"Share\" at the top.",
-                        "6. In the box under \"Owners\", type the name of a person in your office who agreed to help.",
+                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
                         "7. Select that person in the list.",
-                        "8. Select the Back arrow at the top left to return to the solution.",
-                        "9. Add that person as an owner of each of the other 5 flows whose name starts with \"90161Z F0\".",
                         "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
                         "If a panel about connections opens: select \"OK\".",
                         "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
                         "If the person cannot be added: select \"It failed\".",
                         "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
                     ],
-                    "marker": "90161Z-T24-owner-added.txt",
+                    "marker": "90161Z-T24-owner-1.txt",
                     "needs": [
                         "net-flow"
                     ],
-                    "estimate": 8,
+                    "estimate": 2,
                     "after": [
                         "T24 Turn on all 8 flows r4"
                     ],
                     "answers": [
                         {
-                            "key": "owner-added",
-                            "prompt": "How many of the 6 app flows now show the person as an owner?",
+                            "key": "owner-1",
+                            "prompt": "Does the flow now show the person as an owner?",
                             "kind": "pick",
                             "choices": [
-                                "6",
-                                "1 to 5",
-                                "0"
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    ],
+                    "doneLog": "Confirmed by you: added a second owner.",
+                    "doneText": "I added the owner",
+                    "url": "https://make.powerautomate.appsplatform.us/",
+                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+                    "urlConfig": "90161Z-flow-portal.txt"
+                },
+                {
+                    "name": "T24 Second owner 2 of 6 r4",
+                    "title": "Add a second owner: Next Review Due flow",
+                    "kind": "guide",
+                    "dir": "T24",
+                    "file": "",
+                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
+                    "guide": [
+                        "1. Select \"Open in browser\" above.",
+                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
+                        "3. Select the solution \"90-161.Z flows\".",
+                        "4. Select the flow \"90161Z F02 Next Review Due r3\".",
+                        "5. Select \"Share\" at the top.",
+                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
+                        "7. Select that person in the list.",
+                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
+                        "If a panel about connections opens: select \"OK\".",
+                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+                        "If the person cannot be added: select \"It failed\".",
+                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
+                    ],
+                    "marker": "90161Z-T24-owner-2.txt",
+                    "needs": [
+                        "net-flow"
+                    ],
+                    "estimate": 2,
+                    "after": [
+                        "T24 Turn on all 8 flows r4"
+                    ],
+                    "answers": [
+                        {
+                            "key": "owner-2",
+                            "prompt": "Does the flow now show the person as an owner?",
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    ],
+                    "doneLog": "Confirmed by you: added a second owner.",
+                    "doneText": "I added the owner",
+                    "url": "https://make.powerautomate.appsplatform.us/",
+                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+                    "urlConfig": "90161Z-flow-portal.txt"
+                },
+                {
+                    "name": "T24 Second owner 3 of 6 r4",
+                    "title": "Add a second owner: Suspense Reminders flow",
+                    "kind": "guide",
+                    "dir": "T24",
+                    "file": "",
+                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
+                    "guide": [
+                        "1. Select \"Open in browser\" above.",
+                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
+                        "3. Select the solution \"90-161.Z flows\".",
+                        "4. Select the flow \"90161Z F03 Suspense Reminders r6\".",
+                        "5. Select \"Share\" at the top.",
+                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
+                        "7. Select that person in the list.",
+                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
+                        "If a panel about connections opens: select \"OK\".",
+                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+                        "If the person cannot be added: select \"It failed\".",
+                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
+                    ],
+                    "marker": "90161Z-T24-owner-3.txt",
+                    "needs": [
+                        "net-flow"
+                    ],
+                    "estimate": 2,
+                    "after": [
+                        "T24 Turn on all 8 flows r4"
+                    ],
+                    "answers": [
+                        {
+                            "key": "owner-3",
+                            "prompt": "Does the flow now show the person as an owner?",
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    ],
+                    "doneLog": "Confirmed by you: added a second owner.",
+                    "doneText": "I added the owner",
+                    "url": "https://make.powerautomate.appsplatform.us/",
+                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+                    "urlConfig": "90161Z-flow-portal.txt"
+                },
+                {
+                    "name": "T24 Second owner 4 of 6 r4",
+                    "title": "Add a second owner: Status Report flow",
+                    "kind": "guide",
+                    "dir": "T24",
+                    "file": "",
+                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
+                    "guide": [
+                        "1. Select \"Open in browser\" above.",
+                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
+                        "3. Select the solution \"90-161.Z flows\".",
+                        "4. Select the flow \"90161Z F04 Status Report r3\".",
+                        "5. Select \"Share\" at the top.",
+                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
+                        "7. Select that person in the list.",
+                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
+                        "If a panel about connections opens: select \"OK\".",
+                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+                        "If the person cannot be added: select \"It failed\".",
+                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
+                    ],
+                    "marker": "90161Z-T24-owner-4.txt",
+                    "needs": [
+                        "net-flow"
+                    ],
+                    "estimate": 2,
+                    "after": [
+                        "T24 Turn on all 8 flows r4"
+                    ],
+                    "answers": [
+                        {
+                            "key": "owner-4",
+                            "prompt": "Does the flow now show the person as an owner?",
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    ],
+                    "doneLog": "Confirmed by you: added a second owner.",
+                    "doneText": "I added the owner",
+                    "url": "https://make.powerautomate.appsplatform.us/",
+                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+                    "urlConfig": "90161Z-flow-portal.txt"
+                },
+                {
+                    "name": "T24 Second owner 5 of 6 r4",
+                    "title": "Add a second owner: Endorsement Routing flow",
+                    "kind": "guide",
+                    "dir": "T24",
+                    "file": "",
+                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
+                    "guide": [
+                        "1. Select \"Open in browser\" above.",
+                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
+                        "3. Select the solution \"90-161.Z flows\".",
+                        "4. Select the flow \"90161Z F05 Endorsement Routing r4\".",
+                        "5. Select \"Share\" at the top.",
+                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
+                        "7. Select that person in the list.",
+                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
+                        "If a panel about connections opens: select \"OK\".",
+                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+                        "If the person cannot be added: select \"It failed\".",
+                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
+                    ],
+                    "marker": "90161Z-T24-owner-5.txt",
+                    "needs": [
+                        "net-flow"
+                    ],
+                    "estimate": 2,
+                    "after": [
+                        "T24 Turn on all 8 flows r4"
+                    ],
+                    "answers": [
+                        {
+                            "key": "owner-5",
+                            "prompt": "Does the flow now show the person as an owner?",
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No"
+                            ]
+                        }
+                    ],
+                    "doneLog": "Confirmed by you: added a second owner.",
+                    "doneText": "I added the owner",
+                    "url": "https://make.powerautomate.appsplatform.us/",
+                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
+                    "urlConfig": "90161Z-flow-portal.txt"
+                },
+                {
+                    "name": "T24 Second owner 6 of 6 r4",
+                    "title": "Add a second owner: Hold and Resume flow",
+                    "kind": "guide",
+                    "dir": "T24",
+                    "file": "",
+                    "note": "You add the person from your office as a second owner of this flow, so it keeps an owner if you leave. The owner stays. The round does not record the name. About 2 minutes.",
+                    "guide": [
+                        "1. Select \"Open in browser\" above.",
+                        "2. On the left, select \"Solutions\" (it can be under \"More\").",
+                        "3. Select the solution \"90-161.Z flows\".",
+                        "4. Select the flow \"90161Z F06 Hold and Resume r2\".",
+                        "5. Select \"Share\" at the top.",
+                        "6. In the box under \"Owners\", type the name of the person in your office who agreed to help.",
+                        "7. Select that person in the list.",
+                        "If there is no \"Share\": on the card \"Co-owners\", select \"Edit\".",
+                        "If a panel about connections opens: select \"OK\".",
+                        "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+                        "If the person cannot be added: select \"It failed\".",
+                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no name or session ID)."
+                    ],
+                    "marker": "90161Z-T24-owner-6.txt",
+                    "needs": [
+                        "net-flow"
+                    ],
+                    "estimate": 2,
+                    "after": [
+                        "T24 Turn on all 8 flows r4"
+                    ],
+                    "answers": [
+                        {
+                            "key": "owner-6",
+                            "prompt": "Does the flow now show the person as an owner?",
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No"
                             ]
                         }
                     ],
@@ -1052,7 +1279,7 @@
                     "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Clean -Label last",
                     "minutes": 20,
-                    "note": "Signs in (CAC). Removes the second person from Visitors, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.",
+                    "note": "Signs in (CAC). Takes the second person out of Visitors and PFM Office, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.",
                     "estimate": 2,
                     "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
                     "needs": [
@@ -2155,15 +2382,20 @@
                         "T21 Give the second person PFM Office r8",
                         "T21 Second person edits your row r8",
                         "T21 Power Automate shows your connections r8",
-                        "T17 Import log reader r3",
                         "T21 Open the test page r8",
                         "T21 Put a test header on the list form r8",
                         "T21 Look at the list form r8",
                         "T24 Import the full solution r4: choose the file",
                         "T24 Import the full solution r4: finish",
+                        "T17 Import log reader r3",
                         "T24 Turn on all 8 flows r4",
                         "T24 Check the flows after the import r4",
-                        "T24 Add a second owner to each flow r4",
+                        "T24 Second owner 1 of 6 r4",
+                        "T24 Second owner 2 of 6 r4",
+                        "T24 Second owner 3 of 6 r4",
+                        "T24 Second owner 4 of 6 r4",
+                        "T24 Second owner 5 of 6 r4",
+                        "T24 Second owner 6 of 6 r4",
                         "T21 Start the health flow r8",
                         "T21 Make the list view with the flow button r8",
                         "T21 Use the list button r8",
