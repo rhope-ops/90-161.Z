@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r3.zip (R28 r1: all six flows, every flow On; R29 r2: list-name
-variables not required; R34 r3: F04 r3 and the 2 T21 probe flows, fallback A of the PFM, 18 Nov 26) from flow/solution/defs/*.json.
+variables not required; R34 r3: F04 r3 and the 2 T21 probe flows, fallback A of the PFM, 18 Nov 26; still r3 in R34, not yet on
+main: F01 r3 and F05 r4, which check PFM Publications every 15 minutes, PFM 19 Nov 26 F3 C, and F05 r4 adds the missing Legal rows
+at step 7 by any path, F1 A) from flow/solution/defs/*.json.
 
 Layout (Microsoft's documented unmanaged solution): [Content_Types].xml, solution.xml, customizations.xml (Workflows,
 connectionreferences), Workflows/<name>-<GUID>.json (properties.connectionReferences + properties.definition),
@@ -107,8 +109,9 @@ ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
-# task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 joins R21; r4 (R22): F03 r4; r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix
+# task T18. Same unique name as the full solution, so a later full import upgrades it. F06 joins R21; r4 (R22): F03 r4;
+# r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix; r7 (R34): F05 r4.
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r7.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))
 SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
 
 
