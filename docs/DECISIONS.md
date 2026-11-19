@@ -6,6 +6,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | App writes: wing users get list-level Contribute on the intake lists only; the site stays Read (replaces way C for T4). Scope: R36, T20/T21. | PFM | docs/reviews/2026-11-19-r36-plan.md W12 |
+| 2026-11-19 | R36 plan approved after the R35 results (W1 to W14). Scope: R36. | PFM | docs/reviews/2026-11-19-r36-plan.md |
 | 2026-11-19 | Rule 4.4A warning design approved as written: flow F08 warns (Activity Log row, e-mail to the alert address only) when a T-0 to T-2 waiver names a PFM Offices Leader; checked every 15 minutes. Scope: R36. | PFM | docs/reviews/2026-11-19-r36-4.4A-design.md |
 | 2026-11-19 | List GUIDs reach the flows by script: T24 reads the 8 GUIDs from the PFM's own site and writes them into the solution zip before import. Scope: R36. | PFM | docs/reviews/2026-11-19-r36-prep-plan.md P5 |
 | 2026-11-19 | R36 flow changes (P3 to P5) stay on a branch until the R35 results; R35 r2 bundles stay valid. Scope: R36 prep. | PFM | docs/reviews/2026-11-19-r36-prep-plan.md |
