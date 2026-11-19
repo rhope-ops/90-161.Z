@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | RADE lock moves to release engine-v26 (RADE 29fd57d, serial 20) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | App writes: wing users get list-level Contribute on the intake lists only; the site stays Read (replaces way C for T4). Scope: R36, T20/T21. | PFM | docs/reviews/2026-11-19-r36-plan.md W12 |
 | 2026-11-19 | R36 plan approved after the R35 results (W1 to W14). Scope: R36. | PFM | docs/reviews/2026-11-19-r36-plan.md |
 | 2026-11-19 | Old endorsement rows (made more than 7 days before F03 sets their default suspense) count it from that run day, not from Created, so they are not overdue at once. Scope: F03 r8, R36. | PFM | flow/solution/README.md choice 4 |
