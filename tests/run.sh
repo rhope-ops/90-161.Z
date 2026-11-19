@@ -35,7 +35,7 @@ grp t20 'scripts/gov/90161Z-T20-*' 'scripts/gov/90161Z-T19-*' 'scripts/gov/src/*
   'flow/provisioning-payload.json' 'scripts/build_flow_payload.py'
 grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' 'samples/90161Z-T21-*' 'scripts/build_probe_samples.py' 'flow/solution/90161Z-T24-*'
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
-grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py'
+grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py' 'scripts/rade_newest.py'
 grp t22 'scripts/gov/90161Z-T22-*'
 grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1'
 # Lint: the full lane, or a changed scripts/lint.sh, lints every file; else only the changed PowerShell files under scripts/gov.
@@ -503,39 +503,29 @@ PYS
   done < <(python3 -c "import json;[print(f['dir']+'\t'+f['src']) for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']=='$b' for f in b['files']]")
 done
 fi
-# Newest RADE (the PFM, 15 Nov 26: "there needs to be a check if RADE has upgraded every time we do a round"): the lock must
-# name the newest engine release of rhope-ops/RADE, and its commit must be the commit of that release tag (review of
-# 15 Nov 26: a lock with the new tag and an old commit passed). Behind or a wrong commit = FAIL with the command that
-# moves it. No network = NOTE, not a PASS (the same review: "PASS ... NOT CHECKED" read as a real pass).
-rade_lock_verdict() {  # $1 = output of git ls-remote --tags (may be empty), $2 = lock tag, $3 = lock commit
-  python3 - "$1" "$2" "$3" <<'PYR'
-import re, sys
-tags, lock_tag, lock_commit = sys.argv[1], sys.argv[2], sys.argv[3]
-sha = {}
-for line in tags.splitlines():
-    m = re.match(r'^([0-9a-f]{40})\s+refs/tags/(engine-v[0-9]+)(\^\{\})?$', line.strip())
-    if m and (m.group(3) or m.group(2) not in sha): sha[m.group(2)] = m.group(1)   # a peeled line (^{}) is the commit
-if not sha: print('NOTCHECKED'); sys.exit()
-newest = max(sha, key=lambda t: int(t.split('v')[-1]))
-if lock_tag != newest: print('BEHIND ' + newest)
-elif sha[newest] != lock_commit: print('WRONGCOMMIT ' + newest)
-else: print('OK ' + newest)
-PYR
+# Newest RADE: scripts/rade_newest.py gives the verdict (OK, BEHIND, BEHINDNOTE, WRONGCOMMIT, NOTCHECKED; its header says
+# why each one is a PASS, FAIL or NOTE). Behind is a FAIL only for a change that touches the lock or a round bundle.
+rade_lock_verdict() {  # $1 = git ls-remote --tags output, $2 = lock tag, $3 = lock commit, $4 = changed files or *all*
+  python3 scripts/rade_newest.py "$1" "$2" "$3" "$4"
 }
 fake_tags=$(printf '%s\trefs/tags/engine-v4\n%s\trefs/tags/engine-v5\n%s\trefs/tags/engine-v10\n' aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccccccccccccc)
-[ "$(rade_lock_verdict "$fake_tags" engine-v10 cccccccccccccccccccccccccccccccccccccccc)" = "OK engine-v10" ] \
-  && [ "$(rade_lock_verdict "$fake_tags" engine-v5 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)" = "BEHIND engine-v10" ] \
-  && [ "$(rade_lock_verdict "$fake_tags" engine-v10 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)" = "WRONGCOMMIT engine-v10" ] \
-  && [ "$(rade_lock_verdict "" engine-v10 cccccccccccccccccccccccccccccccccccccccc)" = "NOTCHECKED" ] \
-  && ok "newest-RADE check: verdicts (newest, behind, wrong commit, no network)" || bad "newest-RADE check: verdicts"
+[ "$(rade_lock_verdict "$fake_tags" engine-v10 cccccccccccccccccccccccccccccccccccccccc '*all*')" = "OK engine-v10" ] \
+  && [ "$(rade_lock_verdict "$fake_tags" engine-v5 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb '*all*')" = "BEHIND engine-v10" ] \
+  && [ "$(rade_lock_verdict "$fake_tags" engine-v5 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "docs/a.md scripts/gov/paste/R1.ps1")" = "BEHIND engine-v10" ] \
+  && [ "$(rade_lock_verdict "$fake_tags" engine-v5 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "docs/a.md scripts/gov/T20.ps1")" = "BEHINDNOTE engine-v10" ] \
+  && [ "$(rade_lock_verdict "$fake_tags" engine-v10 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb '*all*')" = "WRONGCOMMIT engine-v10" ] \
+  && [ "$(rade_lock_verdict "" engine-v10 cccccccccccccccccccccccccccccccccccccccc '*all*')" = "NOTCHECKED" ] \
+  && ok "newest-RADE check: verdicts (newest, behind, behind with no round change, wrong commit, no network)" || bad "newest-RADE check: verdicts"
 if [ "${on[bundle]}" = 1 ]; then
 tags=$(timeout 30 git ls-remote --tags https://github.com/rhope-ops/RADE 'refs/tags/engine-v*' 2>/dev/null || true)
 lock_tag=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('tag',''))")
 lock_commit=$(python3 -c "import json;print(json.load(open('scripts/rade.lock.json')).get('commit',''))")
-verdict=$(rade_lock_verdict "$tags" "$lock_tag" "$lock_commit")
+rbase=$(git merge-base HEAD origin/main 2>/dev/null) && rfiles=$( { git diff --name-only "$rbase"; git ls-files -o --exclude-standard; } 2>/dev/null) || rfiles='*all*'
+verdict=$(rade_lock_verdict "$tags" "$lock_tag" "$lock_commit" "$rfiles")
 case "$verdict" in
   OK*) ok "RADE engine is the newest release ($lock_tag, commit matches the tag)";;
   NOTCHECKED) echo "NOTE RADE engine newest-release check NOT RUN (no answer from github.com); lock = $lock_tag";;
+  BEHINDNOTE*) echo "NOTE RADE engine is behind: lock = $lock_tag, newest release = ${verdict#BEHINDNOTE } (not a FAIL: no lock or round bundle changed)";;
   BEHIND*) bad "RADE engine is behind: lock = $lock_tag, newest release = ${verdict#BEHIND }. Run: python3 scripts/bump_lock.py ${verdict#BEHIND }, then build a new round";;
   *) bad "RADE lock commit is not the commit of $lock_tag. Run: python3 scripts/bump_lock.py $lock_tag";;
 esac
