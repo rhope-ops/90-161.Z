@@ -10,7 +10,6 @@
 #                           (the keys and their defaults: the header of scripts/check_settings.py; a `code-` change
 #                           needs a docs/DECISIONS.md row that names this file)
 # An allowed string or a skip line is added only on the PFM's request, never by an agent to get past a block (AGENTS.md "Guards and checks").
-# An allowed string or a skip line is added only on the owner's request, never by an agent to get past a block (AGENTS.md "Guards and checks").
 # Public DAF manual text: office mailboxes, phone numbers and .mil sites printed in DAFMAN 90-161 (PFM, 2026-11-11).
 skip: ref/dafman90-161.txt
 skip: docs/dafman-coverage/*

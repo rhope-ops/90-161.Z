@@ -6,7 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-18 | Kit 3.2.0 by sync (kit commit 18896fc in `.check.lock`; kit pull request 62; no v3.2.0 tag yet, so synced from the merge commit; the kit 3.2.0 plan the owner approved on 2026-11-18): no rule text. `check_settings.py --migrate` renewed the kit header block of `.check` (one help line added; no setting changed); new optional setting `audit-duplicate-ignore`; kit-only docs and wording fixes. | PFM | - |
+| 2026-11-18 | Kit 3.2.0 by sync (kit commit 18896fc in `.check.lock`; kit pull request 62; no v3.2.0 tag yet, so synced from the merge commit; the kit 3.2.0 plan the owner approved on 2026-11-18): no rule text. `check_settings.py --migrate` renewed the kit header block of `.check` (comment lines only: the `content-max-bytes` help line is added, and the last header line names the PFM, as this repo's copy of the kit does; no setting changed); new optional setting `audit-duplicate-ignore`; kit-only docs and wording fixes. | PFM | - |
 | 2026-11-19 | Kit 3.1.0 by sync (88185f0, tag v3.1.0): an optional `content-max-bytes` setting for the content check; no rule text. Kit plan 2026-11-19. | PFM | - |
 | 2026-11-18 | Kit 3.0.0 by sync (67e7766): in a private repo the pull-request Action does not run; public repos keep it. Kit PR 56. | PFM | - |
 | 2026-11-18 | Kit 2.0.1 by sync (79540fe, via 2.0.0): merge only a pull request opened for this work; lane C floor; session load ~4,771. Kit plan 16:20. | PFM | - |
