@@ -13,7 +13,7 @@
   list has its own permissions since Make), so the test needs no change to a PFM list.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: on the probe list: "edit own rows", the PFM Office level for the group PFM Office and 1 row titled EDITALL; the
-          second person in the group PFM Office; on this computer the state file 90161Z-T21-office-state-r9.txt (numbers
+          second person in the group PFM Office; on this computer the state file 90161Z-T21-office-state-r8.txt (numbers
           only: the group Id and the user Id of each person this part added and Clean has not removed yet) and the clipboard
           (the row's edit form link). Clean removes every recorded person from the group again.
   Credentials: none of its own (the main file signs in).

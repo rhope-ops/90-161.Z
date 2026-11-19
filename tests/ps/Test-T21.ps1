@@ -379,7 +379,7 @@ try { $r = Invoke-T21 'Person'; Note $r } finally { Remove-Item -LiteralPath Fun
 Test-That 'Person in RADE with no window and no test address: STOPPED, nothing added' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: ADDRESS window not available' -and $global:F.Added -eq 0 -and -not (Test-Path -LiteralPath $state)) $r.Text
 
 # ---- Office (R35, F2 B: a PFM Office member who is not the author edits a row) ----
-$officeState = Join-Path $t21 '90161Z-T21-office-state-r9.txt'
+$officeState = Join-Path $t21 '90161Z-T21-office-state-r8.txt'
 New-Site; $null = Invoke-T21 'Make'; $env:T21_TEST_ADDRESS = $fakeAddr; $null = Invoke-T21 'Person'; Remove-Item Env:T21_TEST_ADDRESS
 $lst = Get-Probe '90161ZProbe'
 $r = Invoke-T21 'Office'; Note $r

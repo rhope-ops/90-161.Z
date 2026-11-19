@@ -38,7 +38,7 @@
            It also puts the link of the new row form on the clipboard. Prints "added to Visitors: yes" or "no" and a status.
     Office (about 1 minute, an estimate; after Person and after T20 r2)  Sets "edit own rows" on the probe list, gives
            the group PFM Office the level "PFM Office Edit All Items" on it, writes 1 row titled EDITALL (you are its
-           author), puts the second person of Person into PFM Office (state file 90161Z-T21-office-state-r9.txt: numbers
+           author), puts the second person of Person into PFM Office (state file 90161Z-T21-office-state-r8.txt: numbers
            only) and reads back that the person can edit every row. The row's edit form link goes on the clipboard: the
            second person opens it, changes the row and saves it.
     Run    (a few seconds, an estimate)  Adds 1 command row (RUN-HEALTH) that starts the health flow "90161Z T21 Probe
@@ -111,7 +111,7 @@ $script:StateName = '90161Z-T21-person-state-r3.txt'
 # its own state file for Clean.
 $script:OfficeGroup = 'PFM Office'
 $script:OfficeLevel = 'PFM Office Edit All Items'
-$script:OfficeStateName = '90161Z-T21-office-state-r9.txt'
+$script:OfficeStateName = '90161Z-T21-office-state-r8.txt'   # keeps r8: same format, so a person an r8 run left is found
 $script:ViewTitle = 'ProbeButton'
 $script:HeaderText = '90-161.Z test header'
 $Rev = 'r9'
