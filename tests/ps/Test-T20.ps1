@@ -136,7 +136,7 @@ Test-That 'T19 stage 6: 23 is left as it is and reported' ($r.Code -eq 0 -and [s
 $stepRow.TargetBusinessDays = 20
 # One value: the T19 r5 setting (new value 15, old value 20), the schema seed row and the default of F03 r7 agree (PFM 19 Nov 26).
 $t19Text = Get-Content -LiteralPath $script19 -Raw
-$f03Text = Get-Content -LiteralPath (Join-Path $Root 'flow/solution/defs/90161Z-F03-suspense-reminders-r7.json') -Raw
+$f03Text = Get-Content -LiteralPath (Join-Path $Root 'flow/solution/defs/90161Z-F03-suspense-reminders-r8.json') -Raw
 $seedValue = @((Get-Content -LiteralPath (Join-Path $Root 'schemas/lists/PFMSettings.json') -Raw | ConvertFrom-Json).seed | Where-Object { $_.Title -eq 'CoordinationSuspenseBusinessDays' })[0].SettingValue
 Test-That 'T19 setting, schema seed row and F03 r7 default all say 15 (T19 moves only 20)' ($seedValue -eq '15' -and $t19Text -match "Value = '15'; Old = '20'" -and $f03Text -match "'15', trim\(" -and $f03Text -notmatch "'20', trim\(")
 

@@ -1569,6 +1569,19 @@
      "__metadata": {
       "type": "SP.XmlSchemaFieldCreationInformation"
      },
+     "SchemaXml": "<Field Name=\"ClosedDate\" StaticName=\"ClosedDate\" DisplayName=\"Closed Date\" Required=\"FALSE\" Description=\"Date the action closed. A row with a Closed Date is a closed action: F04 and the stage counts leave it out.\" Type=\"DateTime\" Format=\"DateOnly\"></Field>",
+     "Options": 24
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "uri": "_api/web/lists/getbytitle('PFMPublications')/fields/createfieldasxml",
+   "body": {
+    "parameters": {
+     "__metadata": {
+      "type": "SP.XmlSchemaFieldCreationInformation"
+     },
      "SchemaXml": "<Field Name=\"StatusNotes\" StaticName=\"StatusNotes\" DisplayName=\"Status Notes\" Required=\"FALSE\" Type=\"Note\" NumLines=\"6\" AppendOnly=\"TRUE\"></Field>",
      "Options": 24
     }

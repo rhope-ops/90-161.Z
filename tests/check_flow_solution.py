@@ -445,7 +445,8 @@ ANSWERED = "@not(equals(coalesce(triggerBody()?['EndorsementStatus']?['Value'], 
 if t7.get("conditions") != [{"expression": ANSWERED}]: bad(f"F07: the trigger condition must pass only a row with an answer: {t7.get('conditions')}")
 open7 = f07["actions"]["Try"]["actions"]["If_action_open"]
 if "'On Hold', 'Cancelled', 'Complete'" not in json.dumps(open7["expression"]): bad("F07: no touch for an action that is On Hold, Cancelled or Complete")
-if open7["actions"]["If_step_6"]["expression"] != {"equals": ["@body('Get_process_step')?['StepNumber']", 6]}: bad("F07: the touch must be at StepNumber 6 only")
+STEP6_ADJ = {"and": [{"equals": ["@body('Get_process_step')?['StepNumber']", 6]}, {"equals": ["@coalesce(body('Get_publication')?['AllCommentsAdjudicated'], false)", True]}]}
+if open7["actions"]["If_step_6"]["expression"] != STEP6_ADJ: bad("F07: the touch must be at StepNumber 6 with All Comments Adjudicated = Yes only (PFM 19 Nov 26)")
 writes7 = [(n, a) for n, a in walk_actions(f07["actions"]) if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") in ("PatchItem", "PostItem")]
 want7 = {"dataset": "@parameters('Site URL (pfm_SiteUrl)')", "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
          "id": "@body('Get_publication')?['ID']", "item/Title": "@body('Get_publication')?['Title']"}

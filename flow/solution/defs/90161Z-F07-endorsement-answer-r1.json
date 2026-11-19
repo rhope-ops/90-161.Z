@@ -1,6 +1,6 @@
 {
   "displayName": "90161Z F07 Endorsement Answer r1",
-  "description": "When a PFM Endorsements row has an answer (Endorsement Status is not Not Started) and its publication is at process step 6 (Formal coordination) and not On Hold, Cancelled or Complete: writes the publication row's own Title back to it, so F05 runs on that row again and adds the Legal rows and moves the step to 7 when every other row has an answer and all comments are adjudicated. Without it, an answer that comes after the All Comments Adjudicated = Yes edit started nothing (README F05 point a; PFM 19 Nov 26: a second trigger on PFM Endorsements; a flow takes one trigger, so it is this flow). The touch changes no other column, so F01 logs nothing and F06 does nothing. Checks every minute, one at a time, as F05. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.1, 5.1.8.2.",
+  "description": "When a PFM Endorsements row has an answer (Endorsement Status is not Not Started) and its publication is at process step 6 (Formal coordination) with All Comments Adjudicated = Yes (PFM 19 Nov 26: the late-answer case) and not On Hold, Cancelled or Complete: writes the publication row's own Title back to it, so F05 runs on that row again and adds the Legal rows and moves the step to 7 when every other row has an answer and all comments are adjudicated. Without it, an answer that comes after the All Comments Adjudicated = Yes edit started nothing (README F05 point a; PFM 19 Nov 26: a second trigger on PFM Endorsements; a flow takes one trigger, so it is this flow). The touch changes no other column, so F01 logs nothing and F06 does nothing. Checks every minute, one at a time, as F05. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.1, 5.1.8.2.",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
@@ -180,9 +180,19 @@
               },
               "type": "If",
               "expression": {
-                "equals": [
-                  "@body('Get_process_step')?['StepNumber']",
-                  6
+                "and": [
+                  {
+                    "equals": [
+                      "@body('Get_process_step')?['StepNumber']",
+                      6
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@coalesce(body('Get_publication')?['AllCommentsAdjudicated'], false)",
+                      true
+                    ]
+                  }
                 ]
               },
               "actions": {
