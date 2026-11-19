@@ -26,7 +26,7 @@
         {
             "out": "scripts/gov/paste/90161Z-R34-round-r1.ps1",
             "round": "R34",
-            "title": "Round R34 r1: the 90-161.Z window, the 2 test flows inside the app solution, the changed app flows and the full flow test",
+            "title": "Round R34 r1: the 90-161.Z window r7, list changes, the 2 test flows inside the app solution, the changed app flows and the full flow test",
             "files": [
                 {
                     "dir": "T22",
@@ -66,27 +66,31 @@
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-probe-r7.ps1"
+                    "src": "scripts/gov/90161Z-T21-probe-r8.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-common-r7.ps1"
+                    "src": "scripts/gov/90161Z-T21-common-r8.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-make-r7.ps1"
+                    "src": "scripts/gov/90161Z-T21-make-r8.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-person-r7.ps1"
+                    "src": "scripts/gov/90161Z-T21-person-r8.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-look-r7.ps1"
+                    "src": "scripts/gov/90161Z-T21-look-r8.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-read-r7.ps1"
+                    "src": "scripts/gov/90161Z-T21-read-r8.ps1"
+                },
+                {
+                    "dir": "T21",
+                    "src": "scripts/gov/90161Z-T21-office-r8.ps1"
                 },
                 {
                     "dir": "T21",
@@ -99,6 +103,18 @@
                 {
                     "dir": "T24",
                     "src": "flow/solution/90161Z-T24-full-flows-r3.zip"
+                },
+                {
+                    "dir": "T19",
+                    "src": "scripts/gov/90161Z-T19-list-update-r4.ps1"
+                },
+                {
+                    "dir": "T20",
+                    "src": "scripts/gov/90161Z-T20-provision-lists-r2.ps1"
+                },
+                {
+                    "dir": "T20",
+                    "src": "flow/provisioning-payload.json"
                 }
             ],
             "steps": [
@@ -162,10 +178,10 @@
                     "answersOnly": true
                 },
                 {
-                    "name": "T21 Check the test site is clean r7",
+                    "name": "T21 Check the test site is clean r8",
                     "title": "Check that the last round left nothing on the test site",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Clean -Label first",
                     "minutes": 20,
                     "note": "Signs in (CAC). Removes a test person, list or library if one is still there. The last round removed all, so it should find nothing. Counts only.",
@@ -179,10 +195,10 @@
                     "doing": "Checking that the test site is clean."
                 },
                 {
-                    "name": "T21 Make the probe list r7",
+                    "name": "T21 Make the probe list r8",
                     "title": "Make the test list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Make",
                     "minutes": 20,
                     "note": "Signs in (CAC). Makes the fake probe list (Visitors get Contribute on this list only) and library, uploads one fake workbook and writes the test page.",
@@ -196,7 +212,122 @@
                     "doing": "Making the test list and library."
                 },
                 {
-                    "name": "T21 Power Automate shows your connections r7",
+                    "name": "T20 Give PFM Office the edit-all level r2",
+                    "title": "Give PFM Office a level that edits every row",
+                    "dir": "T20",
+                    "file": "90161Z-T20-provision-lists-r2.ps1",
+                    "minutes": 30,
+                    "note": "Signs in (CAC). Makes the group PFM Office if it is missing and a permission level that edits every row, gives the group that level on the site, and reads it back. Makes no list.",
+                    "estimate": 4,
+                    "help": "Send the results as they are. A second run changes nothing.",
+                    "needs": [
+                        "pnp",
+                        "net-site",
+                        "site-rights"
+                    ],
+                    "doing": "Giving PFM Office its permission level."
+                },
+                {
+                    "name": "T19 Add the tier T-0 r4",
+                    "title": "Add the tier T-0 to the waivers list",
+                    "dir": "T19",
+                    "file": "90161Z-T19-list-update-r4.ps1",
+                    "minutes": 20,
+                    "note": "Signs in (CAC). Adds the choice T-0 to the column Tier of the waivers list and keeps every choice that is there. A second run changes nothing.",
+                    "estimate": 2,
+                    "help": "Send the results as they are.",
+                    "needs": [
+                        "pnp",
+                        "net-site",
+                        "site-rights"
+                    ],
+                    "doing": "Adding the tier T-0 to the waivers list."
+                },
+                {
+                    "name": "T21 Add the second person r8",
+                    "title": "Add the second person to the test site",
+                    "dir": "T21",
+                    "file": "90161Z-T21-probe-r8.ps1",
+                    "args": "-Part Person",
+                    "minutes": 20,
+                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group.",
+                    "estimate": 2,
+                    "help": "Send the results as they are. The address is never written to a file; the results show only yes or no.",
+                    "needs": [
+                        "pnp",
+                        "net-site",
+                        "site-rights"
+                    ],
+                    "after": [
+                        "T21 Make the probe list r8"
+                    ],
+                    "doing": "Adding the second person to the Visitors group."
+                },
+                {
+                    "name": "T21 Give the second person PFM Office r8",
+                    "title": "Put the second person in PFM Office",
+                    "dir": "T21",
+                    "file": "90161Z-T21-probe-r8.ps1",
+                    "args": "-Part Office",
+                    "minutes": 20,
+                    "note": "Signs in (CAC). Makes one test row as you, puts the second person in PFM Office for this round, checks that the person can now edit every row, and copies the link of your row.",
+                    "estimate": 2,
+                    "help": "Send the results as they are.",
+                    "needs": [
+                        "pnp",
+                        "net-site",
+                        "site-rights"
+                    ],
+                    "after": [
+                        "T21 Add the second person r8",
+                        "T20 Give PFM Office the edit-all level r2"
+                    ],
+                    "doing": "Putting the second person in PFM Office."
+                },
+                {
+                    "name": "T21 Second person edits your row r8",
+                    "title": "Ask the second person to change your row",
+                    "kind": "guide",
+                    "dir": "T21",
+                    "file": "",
+                    "note": "You ask the second person to change the test row that you made. It shows that a PFM Office member can edit a row of another person. About 5 minutes.",
+                    "guide": [
+                        "1. Open Teams.",
+                        "2. Select \"Chat\".",
+                        "3. Select \"New chat\".",
+                        "4. In the box \"To\", type the e-mail address you gave RADE for the second person.",
+                        "5. Select the chat box.",
+                        "6. Press Ctrl+V (the link of your row is on the clipboard).",
+                        "7. In the chat box, type: Open the link, add an X to the Title, select Save, tell me what you saw.",
+                        "8. Press Enter.",
+                        "9. Wait for the reply: the row saved, or no permission.",
+                        "If nobody replies: select \"Skip\"."
+                    ],
+                    "marker": "90161Z-T21-office-edit.txt",
+                    "estimate": 5,
+                    "after": [
+                        "T21 Give the second person PFM Office r8"
+                    ],
+                    "answers": [
+                        {
+                            "key": "office-edit",
+                            "prompt": "What did the second person see?",
+                            "kind": "pick",
+                            "choices": [
+                                "The row was saved",
+                                "No permission",
+                                "The link did not open",
+                                "Something else"
+                            ]
+                        }
+                    ],
+                    "doneLog": "Confirmed by you: the second person tried the row.",
+                    "hide": [
+                        "failed"
+                    ]
+                },
+                {
+                    "name": "T21 Power Automate shows your connections r8",
                     "title": "Check that Power Automate shows your connections",
                     "kind": "guide",
                     "dir": "T21",
@@ -248,25 +379,25 @@
                     "doing": "Looking for an import log."
                 },
                 {
-                    "name": "T21 Open the test page r7",
+                    "name": "T21 Open the test page r8",
                     "title": "Open the test page",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Open",
                     "minutes": 5,
                     "note": "Opens the test page in your browser (no sign-in). Keep its tab open: the next steps use it.",
                     "estimate": 1,
                     "help": "Send the results as they are.",
                     "after": [
-                        "T21 Make the probe list r7"
+                        "T21 Make the probe list r8"
                     ],
                     "doing": "Opening the test page."
                 },
                 {
-                    "name": "T21 Put a test header on the list form r7",
+                    "name": "T21 Put a test header on the list form r8",
                     "title": "Put a test header on the list form",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Form",
                     "minutes": 20,
                     "note": "Signs in (CAC). Puts a test header on the probe list form and reads it back.",
@@ -278,11 +409,11 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r7"
+                        "T21 Make the probe list r8"
                     ]
                 },
                 {
-                    "name": "T21 Look at the list form r7",
+                    "name": "T21 Look at the list form r8",
                     "title": "Look at the list form",
                     "kind": "guide",
                     "dir": "T21",
@@ -299,7 +430,7 @@
                     "marker": "90161Z-T21-form-looked.txt",
                     "estimate": 3,
                     "after": [
-                        "T21 Put a test header on the list form r7"
+                        "T21 Put a test header on the list form r8"
                     ],
                     "answers": [
                         {
@@ -352,8 +483,8 @@
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
                     "urlConfig": "90161Z-flow-portal.txt",
                     "after": [
-                        "T21 Make the probe list r7",
-                        "T21 Power Automate shows your connections r7"
+                        "T21 Make the probe list r8",
+                        "T21 Power Automate shows your connections r8"
                     ],
                     "hide": [
                         "skip"
@@ -577,10 +708,10 @@
                     "urlConfig": "90161Z-flow-portal.txt"
                 },
                 {
-                    "name": "T21 Start the health flow r7",
+                    "name": "T21 Start the health flow r8",
                     "title": "Start the health flow",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Run",
                     "minutes": 20,
                     "note": "Signs in (CAC). Adds one fake row that starts the test flow \"90161Z T21 Probe Health r6\": the flow writes one row that says it ran on the SharePoint connection of the solution.",
@@ -597,10 +728,10 @@
                     "doing": "Adding the row that starts the health flow."
                 },
                 {
-                    "name": "T21 Make the list view with the flow button r7",
+                    "name": "T21 Make the list view with the flow button r8",
                     "title": "Make the list view with the flow button",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part View",
                     "minutes": 20,
                     "note": "Signs in (CAC). Makes a list view with a button that starts your hand-made flow, and reads it back.",
@@ -612,13 +743,13 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r7",
+                        "T21 Make the probe list r8",
                         "T24 Turn on all 8 flows r4"
                     ],
                     "doing": "Making the list view with the button."
                 },
                 {
-                    "name": "T21 Use the list button r7",
+                    "name": "T21 Use the list button r8",
                     "title": "Use the button in the list",
                     "kind": "guide",
                     "dir": "T21",
@@ -638,7 +769,7 @@
                     "marker": "90161Z-T21-button-used.txt",
                     "estimate": 4,
                     "after": [
-                        "T21 Make the list view with the flow button r7"
+                        "T21 Make the list view with the flow button r8"
                     ],
                     "answers": [
                         {
@@ -878,10 +1009,10 @@
                     "doing": "Running the third part of the flow test."
                 },
                 {
-                    "name": "T21 Read the test results r7",
+                    "name": "T21 Read the test results r8",
                     "title": "Read the health, person and button results",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Read",
                     "minutes": 20,
                     "note": "Signs in (CAC). Reads counts only: the health flow row, the rows by the second person and the rows of the button flow. Waits up to about 4 minutes for the health row.",
@@ -893,7 +1024,7 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r7"
+                        "T21 Make the probe list r8"
                     ],
                     "doing": "Reading what the flows wrote."
                 },
@@ -915,10 +1046,10 @@
                     "doing": "Moving the test rows to the Recycle Bin."
                 },
                 {
-                    "name": "T21 Remove the test list and library r7",
+                    "name": "T21 Remove the test list and library r8",
                     "title": "Remove the test person, list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r7.ps1",
+                    "file": "90161Z-T21-probe-r8.ps1",
                     "args": "-Part Clean -Label last",
                     "minutes": 20,
                     "note": "Signs in (CAC). Removes the second person from Visitors, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.",
@@ -932,7 +1063,7 @@
                     "doing": "Removing the test list and library."
                 },
                 {
-                    "name": "T21 Remove the 2 test flows r7",
+                    "name": "T21 Remove the 2 test flows r8",
                     "title": "Delete the 2 test flows",
                     "kind": "guide",
                     "dir": "T21",
@@ -1067,33 +1198,33 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-first-r7.txt",
-                    "step": "T21 Check the test site is clean r7"
+                    "name": "90161Z-T21-probe-clean-first-r8.txt",
+                    "step": "T21 Check the test site is clean r8"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-make-r7.txt",
-                    "step": "T21 Make the probe list r7"
+                    "name": "90161Z-T21-probe-make-r8.txt",
+                    "step": "T21 Make the probe list r8"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-run-r7.txt",
-                    "step": "T21 Start the health flow r7"
+                    "name": "90161Z-T21-probe-run-r8.txt",
+                    "step": "T21 Start the health flow r8"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-view-r7.txt",
-                    "step": "T21 Make the list view with the flow button r7"
+                    "name": "90161Z-T21-probe-view-r8.txt",
+                    "step": "T21 Make the list view with the flow button r8"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-read-r7.txt",
-                    "step": "T21 Read the test results r7"
+                    "name": "90161Z-T21-probe-read-r8.txt",
+                    "step": "T21 Read the test results r8"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-last-r7.txt",
-                    "step": "T21 Remove the test list and library r7"
+                    "name": "90161Z-T21-probe-clean-last-r8.txt",
+                    "step": "T21 Remove the test list and library r8"
                 },
                 {
                     "dir": "T24",
@@ -1117,8 +1248,28 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-form-r7.txt",
-                    "step": "T21 Put a test header on the list form r7"
+                    "name": "90161Z-T21-probe-form-r8.txt",
+                    "step": "T21 Put a test header on the list form r8"
+                },
+                {
+                    "dir": "T20",
+                    "name": "90161Z-T20-provision-lists-r2.txt",
+                    "step": "T20 Give PFM Office the edit-all level r2"
+                },
+                {
+                    "dir": "T19",
+                    "name": "90161Z-T19-list-update-r4.txt",
+                    "step": "T19 Add the tier T-0 r4"
+                },
+                {
+                    "dir": "T21",
+                    "name": "90161Z-T21-probe-person-r8.txt",
+                    "step": "T21 Add the second person r8"
+                },
+                {
+                    "dir": "T21",
+                    "name": "90161Z-T21-probe-office-r8.txt",
+                    "step": "T21 Give the second person PFM Office r8"
                 }
             ],
             "cleanup": [
@@ -1571,10 +1722,6 @@
                     "kind": "dir"
                 },
                 {
-                    "path": "T20",
-                    "kind": "dir"
-                },
-                {
                     "path": "T16\\90161Z-T16-setup-r11.txt",
                     "kind": "glob"
                 },
@@ -1977,42 +2124,59 @@
                 {
                     "path": "T24\\90161Z-T24-full-solution-test-r3.ps1",
                     "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-*-r7.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-probe-*-r7.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T20\\90161Z-T20-provision-lists-r1.ps1",
+                    "kind": "glob"
                 }
             ],
             "fetch": [],
             "apps": [
                 {
                     "name": "90-161.Z: Publications and Forms Management",
-                    "summary": "Round R34 r1: the 90-161.Z window, then the flows: import by upgrade, 2 test flows, the list form and button, and the full flow test. Fake data.",
+                    "summary": "Round R34 r1: the window, PFM Office level, tier T-0, second person, import by upgrade, 2 test flows, form and button, full flow test. Fake data.",
                     "steps": [
                         "T22 Open the 90-161.Z window r7",
                         "T22 Did the window open r7",
                         "T22 Answer: look and cards r7",
-                        "T21 Check the test site is clean r7",
-                        "T21 Make the probe list r7",
-                        "T21 Power Automate shows your connections r7",
+                        "T21 Check the test site is clean r8",
+                        "T21 Make the probe list r8",
+                        "T20 Give PFM Office the edit-all level r2",
+                        "T19 Add the tier T-0 r4",
+                        "T21 Add the second person r8",
+                        "T21 Give the second person PFM Office r8",
+                        "T21 Second person edits your row r8",
+                        "T21 Power Automate shows your connections r8",
                         "T17 Import log reader r3",
-                        "T21 Open the test page r7",
-                        "T21 Put a test header on the list form r7",
-                        "T21 Look at the list form r7",
+                        "T21 Open the test page r8",
+                        "T21 Put a test header on the list form r8",
+                        "T21 Look at the list form r8",
                         "T24 Import the full solution r4: choose the file",
                         "T24 Import the full solution r4: finish",
                         "T24 Turn on all 8 flows r4",
                         "T24 Check the flows after the import r4",
                         "T24 Add a second owner to each flow r4",
-                        "T21 Start the health flow r7",
-                        "T21 Make the list view with the flow button r7",
-                        "T21 Use the list button r7",
+                        "T21 Start the health flow r8",
+                        "T21 Make the list view with the flow button r8",
+                        "T21 Use the list button r8",
                         "T24 Full solution test, part 1 r4",
                         "T24 Run F02 once and F04 once r4",
                         "T24 Full solution test, part 2 r4",
                         "T24 Find the F04 e-mail r4",
                         "T24 Run F02 again r4",
                         "T24 Full solution test, part 3 r4",
-                        "T21 Read the test results r7",
+                        "T21 Read the test results r8",
                         "T24 Clean up r4",
-                        "T21 Remove the test list and library r7",
-                        "T21 Remove the 2 test flows r7"
+                        "T21 Remove the test list and library r8",
+                        "T21 Remove the 2 test flows r8"
                     ]
                 }
             ]
