@@ -4,10 +4,12 @@
 #   skip: <path or glob>    not scanned
 #   block: <path or glob>   must not be committed or sent (for example `block: *.xlsx`)
 #   profile: dod            the DoD tier; `denylist: warn` lets a push pass with no name denylist
+#   content-max-bytes: <n>  scan text files up to n bytes (default 2000000, at most 50000000; larger ones block in the DoD tier)
 #   code-<key>: <value>     a setting of the code standard, for example `code-max-function-lines: 60`
 #   audit-<key>: <value>    a setting of the audit, for example `audit-ignore: ref/**`
 #                           (the keys and their defaults: the header of scripts/check_settings.py; a `code-` change
 #                           needs a docs/DECISIONS.md row that names this file)
+# An allowed string or a skip line is added only on the PFM's request, never by an agent to get past a block (AGENTS.md "Guards and checks").
 # An allowed string or a skip line is added only on the owner's request, never by an agent to get past a block (AGENTS.md "Guards and checks").
 # Public DAF manual text: office mailboxes, phone numbers and .mil sites printed in DAFMAN 90-161 (PFM, 2026-11-11).
 skip: ref/dafman90-161.txt
