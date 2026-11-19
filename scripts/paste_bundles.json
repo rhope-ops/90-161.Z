@@ -1004,7 +1004,7 @@
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
           "urlConfig": "90161Z-flow-portal.txt",
           "after": [
-            "T21 Import the health flow r5: connections"
+            "T21 Import the health flow r5: choose the file"
           ]
         },
         {
@@ -1013,7 +1013,7 @@
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You delete the button flow you made. It runs only because the flow was saved. About 2 minutes.",
+          "note": "You delete the button flow you made. It runs only because you made the flow. About 2 minutes.",
           "guide": [
             "1. Select \"Open in browser\" above.",
             "2. On the left, select \"Solutions\" (it can be under \"More\").",
@@ -1021,6 +1021,7 @@
             "4. In the row of the flow \"90161Z T21 Probe Button hand r5\", select the three dots.",
             "5. Select \"Delete from this environment\".",
             "6. Select \"Delete\".",
+            "If the flow is not in the list: skip it.",
             "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
             "If the flow does not delete: select \"It failed\".",
             "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
@@ -1032,7 +1033,7 @@
           "estimate": 5,
           "doneLog": "Confirmed by you: removed.",
           "after": [
-            "T21 Button flow by hand r5: the action"
+            "T21 Button flow by hand r5: make the flow"
           ],
           "url": "https://make.powerautomate.appsplatform.us/",
           "urlConfig": "90161Z-flow-portal.txt"
@@ -2803,6 +2804,10 @@
         },
         {
           "path": "T22\\90161Z-T22-judged-fixes.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-card-*-r5.png",
           "kind": "glob"
         }
       ],

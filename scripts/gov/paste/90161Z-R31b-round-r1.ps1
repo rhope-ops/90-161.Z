@@ -14,7 +14,7 @@
   and saves its results in Rounds\R31b, then opens an Outlook draft with them (never sent). No download, no admin rights.
   To read it: the Contents list below gives the line of each part and file; each part starts with a "# ====" line.
 #>
-$buildId = '25f6f742'
+$buildId = 'f8fbb017'
 $engineRelease = 18
 # ==== Contents (GENERATED; the line numbers are lines of this bundle)
 #   line    55  Part 1 of 6: Settings
@@ -29,29 +29,29 @@ $engineRelease = 18
 #   line  1741    File 7 of 8: T22\90161Z-T22-window-r5.ps1 (from scripts/gov/90161Z-T22-window-r5.ps1, sha256 8bc87c50b0a9)
 #   line  2235    File 8 of 8: T22\90161Z-T22-measure-r5.ps1 (from scripts/gov/90161Z-T22-measure-r5.ps1, sha256 e06dc64974b3)
 #   line  2479  Part 4 of 6: Steps (3), downloads, results to collect, clean-up
-#   line  2689  Part 5 of 6: Applications
-#   line  2693  Part 6 of 6: the RADE engine (engine/ps, in run order)
-#   line  2694  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
-#   line  2763  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
-#   line  2890  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
-#   line  3042  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
-#   line  3299  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
-#   line  3591  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
-#   line  3814  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
-#   line  4327  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
-#   line  4431  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
-#   line  4488  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
-#   line  4495  Engine part: engine/ps/window/01-setup.ps1 (sha256 15b9d7af232c)
-#   line  4813  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
-#   line  4891  Engine part: engine/ps/window/03-card.ps1 (sha256 a61ee8e66019)
-#   line  5000  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 e20b78b8f606)
-#   line  5125  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
-#   line  5417  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
-#   line  5648  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
-#   line  5809  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
-#   line  5879  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
-#   line  5985  Engine part: engine/ps/window/10-keys.ps1 (sha256 573899229f04)
-#   line  6069  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
+#   line  2690  Part 5 of 6: Applications
+#   line  2694  Part 6 of 6: the RADE engine (engine/ps, in run order)
+#   line  2695  Engine part: engine/ps/01-base.ps1 (sha256 ed0e1410780e)
+#   line  2764  Engine part: engine/ps/02-config.ps1 (sha256 47ceaa987e4f)
+#   line  2891  Engine part: engine/ps/03-files.ps1 (sha256 8debf84bfbfa)
+#   line  3043  Engine part: engine/ps/04-steps.ps1 (sha256 aae2297bb6c3)
+#   line  3300  Engine part: engine/ps/05-installed.ps1 (sha256 89a8f7e623fe)
+#   line  3592  Engine part: engine/ps/06-round.ps1 (sha256 0f79d005d098)
+#   line  3815  Engine part: engine/ps/07-checks.ps1 (sha256 f055e2d72af1)
+#   line  4328  Engine part: engine/ps/08-saved-checks.ps1 (sha256 6e97041ec4af)
+#   line  4432  Engine part: engine/ps/09-start.ps1 (sha256 68879e39deb8)
+#   line  4489  Engine part: engine/ps/10-window.ps1 (sha256 70bb5a36409f)
+#   line  4496  Engine part: engine/ps/window/01-setup.ps1 (sha256 15b9d7af232c)
+#   line  4814  Engine part: engine/ps/window/02-fixed-parts.ps1 (sha256 fb680d1ee05e)
+#   line  4892  Engine part: engine/ps/window/03-card.ps1 (sha256 a61ee8e66019)
+#   line  5001  Engine part: engine/ps/window/04-record-parts.ps1 (sha256 e20b78b8f606)
+#   line  5126  Engine part: engine/ps/window/05-alignment.ps1 (sha256 29bfa954a952)
+#   line  5418  Engine part: engine/ps/window/06-open.ps1 (sha256 741e664d25ef)
+#   line  5649  Engine part: engine/ps/window/07-run.ps1 (sha256 7948c462b7ec)
+#   line  5810  Engine part: engine/ps/window/08-hand-step.ps1 (sha256 1ddb1cba8a53)
+#   line  5880  Engine part: engine/ps/window/09-record.ps1 (sha256 9c40d45d403b)
+#   line  5986  Engine part: engine/ps/window/10-keys.ps1 (sha256 573899229f04)
+#   line  6070  Engine part: engine/ps/11-text-mode.ps1 (sha256 0b5f1eecb5da)
 # ==== Part 1 of 6: Settings
 $goUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md'
 $releaseUrl = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/rade-release.json'
@@ -2686,6 +2686,7 @@ $cleanup += @{ Path = 'T22\90161Z-T22-window-r4.ps1'; Kind = 'glob' }
 $cleanup += @{ Path = 'T22\90161Z-T22-measure-r4.ps1'; Kind = 'glob' }
 $cleanup += @{ Path = 'T22\90161Z-T22-window-r4.txt'; Kind = 'glob' }
 $cleanup += @{ Path = 'T22\90161Z-T22-judged-fixes.txt'; Kind = 'glob' }
+$cleanup += @{ Path = 'T22\90161Z-T22-card-*-r5.png'; Kind = 'glob' }
 # ==== Part 5 of 6: Applications
 $known = @('90161Z-T01-renderer-test-r9.ps1', '90161Z-T06-extract-test-r3.ps1', '90161Z-T06-messy-draft-r1.docx', '90161Z-T07-seal-prep-r5.ps1', '90161Z-T07-seal-test-r5.ps1', '90161Z-T07-testseal-round-r1.png', '90161Z-T07-testseal-soft-r1.png', '90161Z-T07-testseal-tall-r1.png', '90161Z-T07-testseal-tiny-r1.png', '90161Z-T09-save-pages-r2.ps1', '90161Z-T10-brief-check-r2.ps1', '90161Z-T11-partb-form-r2.ps1', '90161Z-T13-label-capture-r2.ps1', '90161Z-T15-env-inventory-r3.ps1', '90161Z-T16-pnp-signin-test-r4.ps1', '90161Z-T16-site-setup-r12.ps1', '90161Z-T17-import-log-r2.ps1', '90161Z-T18-slice1-test-r6.ps1', '90161Z-T19-list-update-r3.ps1', '90161Z-T20-provision-lists-r1.ps1', '90161Z-T21-common-r6.ps1', '90161Z-T21-export-r6.ps1', '90161Z-T21-links-r5.html', '90161Z-T21-look-r6.ps1', '90161Z-T21-make-r6.ps1', '90161Z-T21-person-r6.ps1', '90161Z-T21-probe-r6.ps1', '90161Z-T21-read-r6.ps1', '90161Z-T22-cards-r5.ps1', '90161Z-T22-grid-r5.ps1', '90161Z-T22-measure-r5.ps1', '90161Z-T22-parts-r5.ps1', '90161Z-T22-pfm-window-r5.ps1', '90161Z-T22-types-r5.ps1', '90161Z-T22-ui-r5.ps1', '90161Z-T22-window-r5.ps1', '90161Z-T23-app-file-r1.ps1', '90161Z-T23-app-file-src-r1', '90161Z-T24-full-solution-test-r2.ps1', 'New-Publication.ps1', 'Publication.Common.ps1', 'Publication.Word.ps1', 'Test-Environment.ps1', 'Test-PSGallery.ps1', 'Test-PnPConnection.ps1', 'Test-Publication.ps1', 'lists', 'publication.sample.json')
 $apps = @()

@@ -54,7 +54,7 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 
 **For:** tests the logo and title at the top of the rail, high contrast (the window now follows the Windows colors), and the "Your Work" line and the Action Status card, which I now judge in the window while I can see them. The window saves a picture of each card. Then 3 questions on its look.
 **Time:** about 20 minutes (estimate).
-**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window scripts, their result file and 17 pictures of the window cards with fake data). For 2 checks I turn high contrast on and off again in Windows Settings (Windows+U, Contrast themes); the check bar says each action. All data in the window is FAKE; nothing is read or sent. Before Run, the window lists every file.
+**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window scripts, their result file and 17 pictures of the window cards with fake data). For 3 checks I turn high contrast on, look at the window, and turn it off again in Windows Settings (Windows+U, Contrast themes); the check bar says each action. All data in the window is FAKE; nothing is read or sent. Before Run, the window lists every file.
 **Steps:**
 1. Press Copy script next to the link below.
 2. Open the Start menu.
