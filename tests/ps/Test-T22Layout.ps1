@@ -222,24 +222,28 @@ function Test-Level($Cards, [double]$Sc8, [string]$At) {
 }
 <#
 .SYNOPSIS
-Checks the mouse wheel (R7, R32 W2): one turn towards you on the middle of the first card of Your Work, sent to the
-button with the focus, was taken by the window's filter and scrolled the main column down, with the pointer on a part
-of the card (not on the main column or its scroll bar); one turn on a grid that could still scroll moved the grid's
-first row and not the main column (when the card had such a grid).
+Checks the mouse wheel (R7, R32 W2), in 2 ways: the routing function on the built control tree (no screen pixels, so it
+holds for this window off the screen) and the window's own filter given the message as Windows sends it. In each way:
+one turn towards you on the middle of the first card of Your Work (a button has the focus) scrolled the main column
+down, with the pointer on a part of the card (not on the main column or its scroll bar); one turn on a grid that could
+still scroll moved the grid's first row and not the main column (when the card had such a grid).
 .PARAMETER M
-The measure file (Wheel, WheelError).
+The measure file (Wheel with Route and Filter, WheelError).
 #>
 function Test-Wheel($M) {
   $w = $M.Wheel
   if (-not $w) { Test-That 'wheel: measured' $false ('no wheel facts' + $(if ($M.WheelError) { '; error: ' + $M.WheelError } else { '' })); return }
-  $onCard = ([string]$w.Under -and [string]$w.Under -notmatch '"Main column"$')
-  $ok = ([bool]$w.Scrolls -and [bool]$w.Handled -and $onCard -and [int]$w.After -gt [int]$w.Before)
-  $nums = 'card ' + $w.Card + ' scrolls ' + $w.Scrolls + '; pointer on ' + $w.Under + '; taken ' + $w.Handled + '; scroll position ' + $w.Before + ' -> ' + $w.After
-  Test-That 'wheel: the card scrolls from a point on the card, not the scroll bar' $ok $nums
-  if ($null -eq $w.GridBefore) { Write-Host 'T22LAYOUT note wheel: no grid on the card could still scroll; the grid turn was not tried'; return }
-  $ok = ([bool]$w.GridHandled -and [int]$w.GridAfter -gt [int]$w.GridBefore -and [int]$w.MainAfter -eq [int]$w.MainBefore)
-  $nums = 'pointer on ' + $w.GridUnder + '; taken ' + $w.GridHandled + '; first row ' + $w.GridBefore + ' -> ' + $w.GridAfter + '; main column ' + $w.MainBefore + ' -> ' + $w.MainAfter
-  Test-That 'wheel: the grid under the pointer scrolls, the card stays' $ok $nums
+  foreach ($way in @(@{ K = 'Route'; T = 'routing function on the control tree' }, @{ K = 'Filter'; T = 'window filter, message as Windows sends it' })) {
+    $c = $w.($way.K)
+    if (-not $c) { Test-That ('wheel (' + $way.T + '): measured') $false 'no facts'; continue }
+    $onCard = ([string]$c.Under -and [string]$c.Under -notmatch '"Main column"$' -and [string]$c.Under -notmatch '^Form ')
+    $ok = ([bool]$c.Scrolls -and [bool]$c.Handled -and $onCard -and [int]$c.After -gt [int]$c.Before)
+    $nums = 'card ' + $w.Card + ' scrolls ' + $c.Scrolls + '; pointer on ' + $c.Under + '; taken ' + $c.Handled + '; scroll position ' + $c.Before + ' -> ' + $c.After
+    Test-That ('wheel (' + $way.T + '): the card scrolls from a point on the card, not the scroll bar') $ok $nums
+    if ($null -eq $c.GridBefore) { Write-Host ('T22LAYOUT note wheel (' + $way.T + '): no grid on the card could still scroll'); continue }
+    $ok = ([bool]$c.GridHandled -and [int]$c.GridAfter -gt [int]$c.GridBefore -and [int]$c.MainAfter -eq [int]$c.MainBefore)
+    $nums = 'pointer on ' + $c.GridUnder + '; taken ' + $c.GridHandled + '; first row ' + $c.GridBefore + ' -> ' + $c.GridAfter + '; main column ' + $c.MainBefore + ' -> ' + $c.MainAfter
+    Test-That ('wheel (' + $way.T + '): the grid under the pointer scrolls, the card stays') $ok $nums }
 }
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGuid().ToString('N'))
 [void](New-Item -ItemType Directory -Path $tmp)

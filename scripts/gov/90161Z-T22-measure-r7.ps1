@@ -360,56 +360,76 @@ $wn.MeasureContrast = {
 $wn.WheelTry = {
   <#
   .SYNOPSIS
-  R7 (R32 W2): turns the mouse wheel once towards you (delta -120) at screen point $Pt through the window's own filter
-  (Pfm.Wheel.PreFilterMessage, as Windows would call it), with the message sent to the control that has the focus.
+  R7 (R32 W2): turns the mouse wheel once towards you (delta -120) at point $Pt of the window, in 2 ways: through the
+  window's own filter (Pfm.Wheel.PreFilterMessage, as Windows calls it, with the message sent to the control that has
+  the focus and the pointer in screen pixels), or straight through the routing function on the control tree.
   .PARAMETER Filter
   The filter ($wn.WheelNew).
   .PARAMETER Pt
-  The pointer, in screen pixels.
+  The pointer, in client pixels of the window ($wn.ViewMid).
   .PARAMETER Focus
   The control the message is for (Windows sends the wheel to the control with the focus).
+  .PARAMETER Direct
+  When set, the routing function Pfm.Wheel.Route is called with $Pt; no message, no screen pixels.
   .OUTPUTS
-  @{ Handled (the filter took it); Under (the control under the pointer: its type and accessible name) }.
+  @{ Handled (the turn was taken); Under (the control under the pointer: its type and accessible name) }.
   #>
-  param($Filter, $Pt, $Focus)
+  param($Filter, $Pt, $Focus, [switch]$Direct)
   $u = [Pfm.Wheel]::Under($form, $Pt)
-  $m = [Pfm.Wheel]::Make($Focus.Handle, $Pt, -120)
-  $ok = $Filter.PreFilterMessage([ref]$m)
+  if ($Direct) { $ok = ($null -ne [Pfm.Wheel]::Route($form, $main, $Pt, -120)) }
+  else { $m = [Pfm.Wheel]::Make($Focus.Handle, $form.PointToScreen($Pt), -120); $ok = $Filter.PreFilterMessage([ref]$m) }
   return @{ Handled = [bool]$ok; Under = ($u.GetType().Name + ' "' + [string]$u.AccessibleName + '"') } }
+$wn.WheelCase = {
+  <#
+  .SYNOPSIS
+  R7 (R32 W2): one wheel case on Your Work at its top: one turn on the middle of its first card ("Needs You Today"),
+  then, when a grid of the card has rows out of view, the card is scrolled to the grid and one turn goes to the middle
+  of the grid's part in view ($wn.WheelTry; a button has the focus).
+  .PARAMETER Direct
+  When set, the turns go straight to the routing function; else through the window's filter.
+  .OUTPUTS
+  A table: Scrolls, Under, Handled, Before, After (the main column's scroll position) and, when a grid can scroll,
+  GridUnder, GridHandled, GridBefore, GridAfter (its first row in view) and MainBefore, MainAfter.
+  #>
+  param([switch]$Direct)
+  $res = [ordered]@{}; $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
+  [Windows.Forms.Application]::DoEvents(); $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
+  $flt = & $wn.WheelNew; $focus = $(if ($wn.Primary) { $wn.Primary } else { $form })
+  $sec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
+  $res['Scrolls'] = [bool]$main.VerticalScroll.Visible; $res['Before'] = -$main.AutoScrollPosition.Y
+  $t = & $wn.WheelTry $flt (& $wn.ViewMid $sec.Card) $focus -Direct:$Direct
+  $res['Under'] = $t.Under; $res['Handled'] = $t.Handled; $res['After'] = -$main.AutoScrollPosition.Y
+  $g = @(& $wn.Grids | Where-Object { [Pfm.Wheel]::GridCan($_, -120) }) | Select-Object -First 1
+  if ($g) {
+    $main.ScrollControlIntoView($g); [Windows.Forms.Application]::DoEvents()
+    $res['MainBefore'] = -$main.AutoScrollPosition.Y; $res['GridBefore'] = $g.FirstDisplayedScrollingRowIndex
+    $t = & $wn.WheelTry $flt (& $wn.ViewMid $g) $focus -Direct:$Direct
+    $res['GridUnder'] = $t.Under; $res['GridHandled'] = $t.Handled; $res['GridAfter'] = $g.FirstDisplayedScrollingRowIndex; $res['MainAfter'] = -$main.AutoScrollPosition.Y }
+  return $res }
 $wn.MeasureWheel = {
   <#
   .SYNOPSIS
   R7 (R32 W2): proves that the mouse wheel scrolls the card from a point on the card, not on the scroll bar, while a
   button has the focus; and the grid under the pointer while that grid can still scroll.
   .DESCRIPTION
-  The window is made 60 % as high so that Your Work scrolls, Your Work is shown at its top, and one wheel turn goes to
-  the middle of its first card ("Needs You Today"). Then, when a grid of the card has rows out of view, the card is
-  scrolled to the grid and one turn goes to the middle of the grid's part in view. Then the size comes back and Your
-  Work is shown again. No real pointer is moved; the message goes through the window's own filter ($wn.WheelTry).
+  The window is made 60 % as high so that Your Work scrolls; $wn.WheelCase runs twice: straight through the routing
+  function on the control tree (Route: no screen pixels, so it holds for this window off the screen), then through the
+  window's own filter as Windows calls it (Filter). Then the size comes back and Your Work is shown again. No real
+  pointer is moved.
   .OUTPUTS
-  A table: Card, Scrolls, Under, Handled, Before, After (the main column's scroll position) and, when a grid can
-  scroll, GridUnder, GridHandled, GridBefore, GridAfter (its first row in view) and MainBefore, MainAfter.
+  A table: Card, Route and Filter (each a $wn.WheelCase table).
   #>
   $keep = $form.ClientSize; $res = [ordered]@{}; $res['Card'] = 'home'
   try {
-    $form.ClientSize = [Drawing.Size]::new($keep.Width, [int]($keep.Height * 0.6)); $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
-    [Windows.Forms.Application]::DoEvents(); $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
-    $flt = & $wn.WheelNew; $focus = $(if ($wn.Primary) { $wn.Primary } else { $form })
-    $sec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
-    $res['Scrolls'] = [bool]$main.VerticalScroll.Visible; $res['Before'] = -$main.AutoScrollPosition.Y
-    $t = & $wn.WheelTry $flt (& $wn.ViewMid $sec.Card) $focus
-    $res['Under'] = $t.Under; $res['Handled'] = $t.Handled; $res['After'] = -$main.AutoScrollPosition.Y
-    $g = @(& $wn.Grids | Where-Object { [Pfm.Wheel]::GridCan($_, -120) }) | Select-Object -First 1
-    if ($g) {
-      $main.ScrollControlIntoView($g); [Windows.Forms.Application]::DoEvents()
-      $res['MainBefore'] = -$main.AutoScrollPosition.Y; $res['GridBefore'] = $g.FirstDisplayedScrollingRowIndex
-      $t = & $wn.WheelTry $flt (& $wn.ViewMid $g) $focus
-      $res['GridUnder'] = $t.Under; $res['GridHandled'] = $t.Handled; $res['GridAfter'] = $g.FirstDisplayedScrollingRowIndex; $res['MainAfter'] = -$main.AutoScrollPosition.Y }
+    $form.ClientSize = [Drawing.Size]::new($keep.Width, [int]($keep.Height * 0.6))
+    $res['Route'] = (& $wn.WheelCase -Direct); $res['Filter'] = (& $wn.WheelCase)
   } finally { $form.ClientSize = $keep; $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'; [Windows.Forms.Application]::DoEvents() }
   return $res }
-# The middle of the part of control $C that the main column shows, in screen pixels (where a person would put the pointer).
+# The middle of the part of control $C that the main column shows, in client pixels of the window, from the control
+# tree (Pfm.Wheel.ClientOf; no screen pixels, so it holds for a window off the screen too).
 $wn.ViewMid = { param($C)
-  $v = [Drawing.Rectangle]::Intersect($C.RectangleToScreen($C.ClientRectangle), $main.RectangleToScreen($main.ClientRectangle))
+  $o = [Pfm.Wheel]::ClientOf($C, $form); $mo = [Pfm.Wheel]::ClientOf($main, $form)
+  $v = [Drawing.Rectangle]::Intersect((New-Object Drawing.Rectangle($o, $C.Size)), (New-Object Drawing.Rectangle($mo, $main.ClientSize)))
   return [Drawing.Point]::new(($v.Left + [int]($v.Width / 2)), ($v.Top + [int]($v.Height / 2))) }
 # The grids on the page (the card shown), in the order they were built.
 $wn.Grids = {
