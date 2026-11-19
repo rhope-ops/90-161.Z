@@ -8,7 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 |---|---|---|---|
 | 2026-11-19 | S10 C: flow e-mails keep their content (titles, status), because they stay inside DoD365. Scope: F03, F04, F06. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
 | 2026-11-19 | Flow steps: if they fail again on a new day, the PFM sends the exact Error line to the tenant help desk the same day; the flow steps stay in the next round. Scope: R32 and later. | PFM | [R31a results](reviews/2026-11-18-r31a-results.md) |
-| 2026-11-19 | R32 r1 (812,186 bytes, engine-v20) pasted in one paste on the gov device (the PFM, chat). R32 results not received yet. Scope: R32. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
+| 2026-11-19 | R32 r1 (812,186 bytes, engine-v20) pasted in one paste on the gov device (the PFM, chat). Scope: R32. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
 | 2026-11-19 | Lock: "move the lock up" (the PFM); already done on main as engine-v21 by PR 170, so no second move. Scope: lock. | PFM | scripts/rade.lock.json |
 | 2026-11-19 | Form look: keep one look step in each round as a watch (the agent REC was to drop them). Scope: rounds after R32. | PFM | [R31a results](reviews/2026-11-18-r31a-results.md) |
 | 2026-11-19 | App writes: list-level Contribute on the intake lists only; the site stays Read (R16 W11). Scope: 90-161.Z app. | PFM | [handoff detail](reviews/2026-11-18-handoff-detail.md) |
