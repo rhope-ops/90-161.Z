@@ -24,9 +24,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R35-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R35-round-r2.ps1",
             "round": "R35",
-            "title": "Round R35 r1: the 90-161.Z window r8, F05 every minute, 15 business days, the clearer import and second person cards, and the full flow test again",
+            "title": "Round R35 r2: the 90-161.Z window r8, F05 every minute, 15 business days, the clearer import and second person cards, and the full flow test again",
             "files": [
                 {
                     "dir": "T22",
