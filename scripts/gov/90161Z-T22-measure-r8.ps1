@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r7, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r8, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
@@ -20,12 +20,15 @@
   R7 (R32 W1 to W3): the level facts also hold every chip beside text with its kind (W3) and, for each pub grid, what
   its head and each cell needed and had (W1); the self-check writes a W1 or W3 LAYOUT line for each one out of line.
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r7.png, in
+  R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
+  part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r8.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
-  $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r7.ps1 dot-sources it from its own folder inside its try block.
+  $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
+  $wn.MeasureLogo, $wn.MeasureRun and its helpers.
+  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -36,7 +39,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r7.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r8.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -161,6 +164,29 @@ $wn.LevelPubs = {
         $out.Add($g) }
       elseif ($c.Controls.Count) { $st.Push($c) } } }
   return $out.ToArray() }
+$wn.LevelHeads = {
+  <#
+  .SYNOPSIS
+  R8 (R35 W7, R34 open point 5): the column heads of every grid on the page, as the grid drew them.
+  .DESCRIPTION
+  Each grid is drawn once into a bitmap (so its head is painted now, also off-screen); $wn.PaintCell keeps each head
+  it drew in the grid's Tag.Heads: its text in capitals, the width it needs and the width its cell gave it.
+  .OUTPUTS
+  One table per head: Grid (its name), Col (the column name), Kind, Head (the text), W (needed) and Have.
+  #>
+  $out = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) {
+    foreach ($c in $st.Pop().Controls) {
+      if ($c -is [Windows.Forms.DataGridView]) {
+        if (-not ($c.Tag -is [hashtable])) { continue }
+        $c.Tag.Heads = [ordered]@{}
+        try { $bm = New-Object System.Drawing.Bitmap([math]::Max(1, $c.Width), [math]::Max(1, $c.Height))
+          try { $c.DrawToBitmap($bm, (New-Object System.Drawing.Rectangle(0, 0, $bm.Width, $bm.Height))) } finally { $bm.Dispose() } } catch { $null = $_ }
+        foreach ($k in @($c.Tag.Heads.Keys)) { $h = $c.Tag.Heads[$k]
+          $r = [ordered]@{}; $r['Grid'] = [string]$c.AccessibleName; $r['Col'] = [string]$k; $r['Kind'] = [string]$h.Kind; $r['Head'] = [string]$h.Text
+          $r['W'] = [int]$h.W; $r['Have'] = [int]$h.Have; $out.Add($r) } }
+      elseif ($c.Controls.Count) { $st.Push($c) } } }
+  return $out.ToArray() }
 $wn.LevelFacts = {
   <#
   .SYNOPSIS
@@ -169,9 +195,9 @@ $wn.LevelFacts = {
   Caps (D1): for each Action Status card, the middle of its caption and of the first line of the main card. Crumb (D2):
   the font size and text middle of the crumb's link and rest, or $null when the card has no crumb link. Chips (D3, R7
   W3): for each chip beside text ($wn.ChipRows: check, list, rows, chips, notice), its kind, the middle of the chip and
-  of the first line of its text. Pubs (D4, R7 W1): $wn.LevelPubs.
+  of the first line of its text. Pubs (D4, R7 W1): $wn.LevelPubs. Heads (R8 W7): $wn.LevelHeads.
   .OUTPUTS
-  A table: Caps, Crumb, Chips, Pubs.
+  A table: Caps, Crumb, Chips, Pubs, Heads.
   #>
   $mainSec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
   $line = $(if ($mainSec) { & $wn.FirstLine $mainSec.Card } else { $null })
@@ -183,7 +209,7 @@ $wn.LevelFacts = {
   $chips = @(foreach ($r in @($wn.ChipRows)) {
       $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['Kind'] = [string]$r.Kind; $c['ChipMid'] = (& $wn.TextMid $r.Chip)
       $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
-  $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs)
+  $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs); $f['Heads'] = @(& $wn.LevelHeads)
   return $f }
 # R7 (W1): the cut cells of one measured pub grid $P ($wn.LevelPubs), one short text per row: "row <n> number 120>96"
 # when its number, title or lines needed more pixels than the cell gave; none when every cell holds its text.
@@ -206,6 +232,8 @@ $wn.LevelBad = {
   R7 (R32): W1: the head of a pub column needs more width than it has (it would be shortened with dots), or a pub cell
   is cut (its number or title needs more width, or its lines more height, than the cell gave). W3: the D3 rule for
   every chip beside text; the line names the chip's kind.
+  R8 (R35 W7): a column head other than the pub head (W1 has that one) needs more width than it has: one line per grid
+  that names each cut head.
   .PARAMETER Card
   The card key (it starts each line).
   .PARAMETER F
@@ -236,6 +264,10 @@ $wn.LevelBad = {
     elseif ((@($p.Beside) -contains $true) -and [int]$xs[0] -lt $num + [int]$p.Gap) {
       $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': the titles start at ' + $xs[0] + ', the widest number ends at ' + $num) }
     elseif ($under.Count) { $out += ('LAYOUT ' + $Card + ' D4 grid ' + $p.Grid + ': ' + $under.Count + ' titles start above the bottom of their number') } }
+  $cut = @($F.Heads | Where-Object { $_ -and [string]$_.Kind -ne 'pub' -and [int]$_.W -gt [int]$_.Have })
+  foreach ($g in @($cut | ForEach-Object { [string]$_.Grid } | Sort-Object -Unique)) {
+    $list = @($cut | Where-Object { [string]$_.Grid -eq $g } | ForEach-Object { '"' + $_.Head + '" needs ' + $_.W + ' px, has ' + $_.Have })
+    $out += ('LAYOUT ' + $Card + ' W7 grid ' + $g + ': ' + $list.Count + ' column heads cut (' + ($list -join '; ') + ')') }
   return $out }
 # The self-check's extra lines (the rade-ui block calls $ui.Measure for each card it checks): D1 to D4, 1 px at 100 %.
 $ui.Measure = { param($Card) return @(& $wn.LevelBad $Card (& $wn.LevelFacts) ([math]::Max(1.0, $ui.Dpi / 96.0))) }
@@ -303,6 +335,29 @@ $wn.MeasureScaled = {
     foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
   $res['Cards'] = $cards.ToArray()
   return $res }
+$wn.LogoFacts = {
+  <#
+  .SYNOPSIS
+  R8 (R35 W7): what the rail logo shows now, for the self-check and the measure part.
+  .OUTPUTS
+  A table: High (the colors in use: $ui.High), Shown (a logo is on the rail), Other (its pixels with any cover that are
+  neither of the 2 system colors of $wn.LogoRole) and Diff (its pixels that differ from the logo in its own colors);
+  -1 when no logo is shown.
+  #>
+  $f = [ordered]@{}; $f['High'] = [bool]$ui.High; $f['Shown'] = $false; $f['Other'] = -1; $f['Diff'] = -1
+  $lg = $wn.Logo; if (-not $lg -or -not $lg.Image) { return $f }
+  $own = & $wn.LogoImage $false; $d = [string]$wn.LogoRole.Dark; $l = [string]$wn.LogoRole.Light
+  try { $f['Shown'] = $true; $f['Other'] = [Pfm.Logo]::Other($lg.Image, [Drawing.SystemColors]::$d, [Drawing.SystemColors]::$l); $f['Diff'] = [Pfm.Logo]::Diff($lg.Image, $own) }
+  finally { $own.Dispose() }
+  return $f }
+# R8 (R35 W7): the LAYOUT line for logo facts $F ($wn.LogoFacts) with the wrong colors, or none: with high contrast on,
+# a pixel in another color or no change from the own colors; with it off, any pixel that differs from the own colors.
+$wn.LogoBad = { param($F)
+  if (-not $F.Shown) { return @() }
+  if ($F.High -and ([int]$F.Other -ne 0 -or [int]$F.Diff -eq 0)) {
+    return @('LAYOUT rail W7 logo: high contrast on, ' + $F.Other + ' pixels not in the system colors, ' + $F.Diff + ' pixels changed from its own colors') }
+  if (-not $F.High -and [int]$F.Diff -ne 0) { return @('LAYOUT rail W7 logo: high contrast off, ' + $F.Diff + ' pixels differ from its own colors') }
+  return @() }
 $wn.HeadFacts = {
   <#
   .SYNOPSIS
@@ -360,6 +415,24 @@ $wn.MeasureContrast = {
         $r['Name'] = [string]$pick[$k].Name; $r['Role'] = [string]$ui.HcRole[$k]; $r['Hex'] = (& $wn.Hex $pick[$k]); $r['Own'] = (& $wn.Hex $t.Own[$k])
         $rows.Add($r) } } }
   return $rows.ToArray() }
+$wn.MeasureLogo = {
+  <#
+  .SYNOPSIS
+  R8 (R35 W7): the rail logo with high contrast on, then off, with no change of the Windows theme.
+  .DESCRIPTION
+  The window is recolored both ways ($wn.Recolor with -Force: the rail, the check bar and the card are rebuilt, as on a
+  real change of the setting) and the logo facts are taken after each rebuild. Then the window takes the Windows
+  setting again.
+  .OUTPUTS
+  Two tables of $wn.LogoFacts (on, then off), each with When and Bad (the LAYOUT lines of $wn.LogoBad).
+  #>
+  $res = @()
+  try {
+    foreach ($h in $true, $false) {
+      & $wn.Recolor ('measure ' + $(if ($h) { 'on' } else { 'off' })) $h; [Windows.Forms.Application]::DoEvents()
+      $f = & $wn.LogoFacts; $f['When'] = $(if ($h) { 'on' } else { 'off' }); $f['Bad'] = @(& $wn.LogoBad $f); $res += , $f }
+  } finally { if ([bool]$ui.High -ne [bool][Windows.Forms.SystemInformation]::HighContrast) { & $wn.Recolor 'measure back' } }
+  return $res }
 $wn.WheelTry = {
   <#
   .SYNOPSIS
@@ -451,7 +524,8 @@ $wn.MeasureRun = {
   The form is shown far off the screen (it is never seen) so that its controls have handles and can be drawn into
   bitmaps; it builds every card as a normal run does ($wn.Build: layout self-check, accessible names and the card
   pictures, saved next to the JSON file, included), then measures D1 to D4 of every card at 1.25 x and 1.5 x (R6,
-  with W1 and W3 of R7), the mouse wheel (R7 W2), the rail head and the high-contrast color choice.
+  with W1 and W3 of R7), the mouse wheel (R7 W2), the rail head, the high-contrast color choice and (R8 W7) the
+  logo with high contrast on and off.
   .PARAMETER Path
   The JSON file to write.
   #>
@@ -481,5 +555,7 @@ $wn.MeasureRun = {
   # The rail head and the color choice: a step that cannot be measured is kept as its error (the test names it).
   try { $res['Head'] = @(& $wn.MeasureHead) } catch { $res['Head'] = @(); $res['HeadError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   try { $res['Contrast'] = @(& $wn.MeasureContrast) } catch { $res['Contrast'] = @(); $res['ContrastError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
+  # R8 (R35 W7): the rail logo rebuilt with high contrast on and off (last: it rebuilds the rail, the bar and the card).
+  try { $res['Logo'] = @(& $wn.MeasureLogo) } catch { $res['Logo'] = @(); $res['LogoError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 10) -Encoding UTF8
   $form.Close() }

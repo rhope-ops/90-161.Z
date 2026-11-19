@@ -1,16 +1,17 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r7, part "types": the C# source of the window's own drawn controls, as text.
+  90-161.Z Task 22 r8, part "types": the C# source of the window's own drawn controls, as text.
 .DESCRIPTION
   Pfm.Gfx (rounded shapes), Pfm.Chip (a rounded status chip), Pfm.Card (a card with a thin edge and an optional top
   bar), Pfm.Steps (the 12 step dots), Pfm.RailItem (a rail button), Pfm.LinkText (R30 V2: the link of a crumb, drawn
   in the crumb's own font with no padding, so the crumb reads as one line), Pfm.Wheel (R7, R32 W2: a message filter
   that gives a mouse-wheel turn to what is under the pointer, not to the control with the focus; its routing functions
-  are public so the measure part can test them with no real pointer) and Rade.Native (HideCaret, used by the
+  are public so the measure part can test them with no real pointer), Pfm.Logo (R8, R35 W7: the logo in 2 system
+  colors for high contrast, and the pixel counts the self-check uses) and Rade.Native (HideCaret, used by the
   RADE shared UI file). The end of this file compiles the text with Add-Type, once per process; the main script loads
   this file after Windows Forms and System.Drawing.
   Inputs: none. Outputs: the compiled types Pfm.* and Rade.Native (a failed Rade.Native only leaves the caret visible).
-  Run: not alone; 90161Z-T22-pfm-window-r7.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -301,6 +302,50 @@ $PfmCs=(@(
 'ScrollableControl s = (ScrollableControl)t;',
 's.AutoScrollPosition = new Point(-s.AutoScrollPosition.X, -s.AutoScrollPosition.Y - delta);',
 '}',
+'}',
+'// R8 (R35 W7, R34 finding 7): the logo in 2 colors for Windows high contrast, and the counts that prove it. Each',
+'// reads the pixels of the bitmap it is given (no copy, so no cover is rounded).',
+'public static class Logo {',
+'// A copy of src in 2 colors: each pixel keeps its cover (alpha); a dark pixel takes dark, a light one light.',
+'// Light: a weighted brightness of 128 or more (of 255): the white rings and page and the yellow arc; dark: the blue disc and Z.',
+'public static Bitmap TwoTone(Bitmap src, Color dark, Color light) {',
+'Bitmap o = new Bitmap(src.Width, src.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);',
+'for (int y = 0; y < src.Height; y++) {',
+'for (int x = 0; x < src.Width; x++) {',
+'Color c = src.GetPixel(x, y);',
+'if (c.A == 0) { continue; }',
+'Color t = (c.R * 299 + c.G * 587 + c.B * 114) >= 128000 ? light : dark;',
+'o.SetPixel(x, y, Color.FromArgb(c.A, t.R, t.G, t.B));',
+'}',
+'}',
+'return o;',
+'}',
+'// The number of pixels of b with any cover whose color (cover left out) is neither p nor q.',
+'public static int Other(Bitmap b, Color p, Color q) {',
+'int n = 0;',
+'for (int y = 0; y < b.Height; y++) {',
+'for (int x = 0; x < b.Width; x++) {',
+'Color c = b.GetPixel(x, y);',
+'if (c.A == 0) { continue; }',
+'if (!Same(c, p) && !Same(c, q)) { n++; }',
+'}',
+'}',
+'return n;',
+'}',
+'// The number of pixels whose color or cover differs between a and b; -1 when their sizes differ.',
+'public static int Diff(Bitmap a, Bitmap b) {',
+'if (a.Width != b.Width || a.Height != b.Height) { return -1; }',
+'int n = 0;',
+'for (int j = 0; j < a.Height; j++) {',
+'for (int i = 0; i < a.Width; i++) {',
+'Color c = a.GetPixel(i, j);',
+'Color d = b.GetPixel(i, j);',
+'if (c.A != d.A || (c.A != 0 && !Same(c, d))) { n++; }',
+'}',
+'}',
+'return n;',
+'}',
+'static bool Same(Color a, Color b) { return a.R == b.R && a.G == b.G && a.B == b.B; }',
 '}',
 '}'
 ) -join "`r`n")
