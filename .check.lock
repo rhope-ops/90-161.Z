@@ -1,5 +1,5 @@
 {
- "commit": "18896fc5ae5e954eeb0182bc4beae264eee9d541",
+ "commit": "c8339c31cc75d50106ede550afd1c36e4c7b529f",
  "files": {
   ".claude/agents/reviewer.md": "6b0d51e52e7d47cb8e60cdcbba83d56a91bf35021d908403cfe3f8bc0880b294",
   ".claude/agents/scout.md": "4216b318d4258c086dfafd803e1dfa5ba5e6f5e5971e86b3df3a9accf3b41df4",
@@ -8,9 +8,9 @@
   ".claude/skills/audit/SKILL.md": "e5b41504c7222e4764be7e60c8104922c1f72723f8127e2b18a09b330c15093e",
   ".claude/skills/data-change/SKILL.md": "c629a58d106ac16a7b34ca698b5675f8a2be7aa81d9c67e3848d9d839039abb9",
   ".claude/skills/delegate/SKILL.md": "bd668e19169dabe3279ca728435bdd8e6a19d52dbf5c532253616f7fa5bc4703",
-  ".claude/skills/deliver/SKILL.md": "fea3ad943a53441ef67554a82c6cb11ce807a818e81a010efb31fbc1500f0150",
+  ".claude/skills/deliver/SKILL.md": "5fba6a64f6067082b8f5716ad97455e470e05049195454abe03b7849ed453569",
   ".claude/skills/efficiency/SKILL.md": "a3123ed86f349ae568d2ac93bf8ee13e1aab586c287b897f7fcbc5694379de7a",
-  ".claude/skills/handoff/SKILL.md": "cdd48862028b5c1030bdbba68f96c5eaaf0c949ea98fc53ebba74516b86c3073",
+  ".claude/skills/handoff/SKILL.md": "f5f5db3ecad27bfa6d135e6a5d3ed592fe8ade6a73b4497231a1297676a799cf",
   ".claude/skills/kit-update/SKILL.md": "19571f5aa3a24d82872c406a17aabcee5b94300cb1af2b4a1485dae1d51df6ae",
   ".claude/skills/personal-data/SKILL.md": "6bc5f8e1159b2605ab60766b0e97ff8ea8fffbcaa27d51c8b9c31cc52ab568d6",
   ".claude/skills/project-log/SKILL.md": "769524b280f05ed122576ae0161d655b8a879c249300ca030f4d45ae842179f9",
@@ -18,7 +18,7 @@
   ".claude/skills/verify/SKILL.md": "d46b696b6f573ceb8140bbb78249372868e995169ca7c13cbb0b248b28b5ba4e",
   ".claude/skills/verify/measure.mjs": "7558802e88715bd8624ff2252280ef6c088b70d995422be88d3d8829935eb102",
   ".github/workflows/check.yml": "4d3efe13298bcddc10724f7521ae4bd144cb421e62bba6410a2f24c6df31330e",
-  "AGENTS.md (kit sections)": "518922538eec3e903bc2be0ba5125babbf25cdbf3dce66428755f09cdaddeff1",
+  "AGENTS.md (kit sections)": "3c00623245c443729e083b8bdfcba93756ffda80617f0925d14e6aa615dcd914",
   "docs/code-standard.md": "cefd7125ce135d7393f0a35fc1d5d4334294129c60373d9c241195e7e59f1b49",
   "scripts/bloat_check.py": "12b12d7c5eeb58653a9e127c0b94058f35cc719ebc8d1fa074ab2417ea6574ae",
   "scripts/bloat_check_rules.py": "6ee6dd88b326b6d40b261d16b17e5e83618eef5c19c19a72104cc8ca815dc1ff",
@@ -43,12 +43,12 @@
   "scripts/first_use_check.py": "5100cce2d9de08a274b8e55277f87badf1ecd4fe9293b29d121648483b46e841",
   "scripts/git-hooks/pre-push": "b7569b34e85af431bfd31bc69c4421608553c5feb6b343aa94ca2baaa3f3b8ac",
   "scripts/log_check.py": "6dc6b7894f1756c4fcaed9c669df21decf94044e8c7301e82ed70583916e27e6",
-  "scripts/session_checkin.sh": "224287b82829406ce08cfd7dd31c6ef293fc835a15099ac0b270079d32f031bb",
+  "scripts/session_checkin.sh": "4c56ea7fc9e6697dd35656d5a6a98fe454ce0529bb97219d45673fd984e03dd4",
   "scripts/stop_check.py": "07c0e61ec8ef6924b7aa45bb56f6b519ae3e4249df88b389ee36698c8a01c6fb",
   "scripts/timeline.py": "1eeb51fba30f30c0e3ee7dcb437003dba3df37c8c3b01b5ab7c92c40d901d5fd",
   "scripts/worker_guard.py": "9ad505602b5690c234018860deee3dc627a1809ce2cc19f19745bc7cdb93995d"
  },
  "kit": "archimedes_lever",
  "overrides": [],
- "version": "3.2.0"
+ "version": "4.0.0"
 }
