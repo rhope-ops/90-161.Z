@@ -391,7 +391,8 @@ $wn.WheelCase = {
   .PARAMETER Direct
   When set, the turns go straight to the routing function; else through the window's filter.
   .OUTPUTS
-  A table: Scrolls, Under, Handled, Before, After (the main column's scroll position) and, when a grid can scroll,
+  A table: Scrolls, Point (the pointer, window pixels), PageTop, Under, Handled, Before, After (the main column's
+  scroll position) and, when a grid can scroll,
   GridUnder, GridHandled, GridBefore, GridAfter (its first row in view) and MainBefore, MainAfter.
   #>
   param([switch]$Direct)
@@ -400,7 +401,8 @@ $wn.WheelCase = {
   $flt = & $wn.WheelNew; $focus = $(if ($wn.Primary) { $wn.Primary } else { $form })
   $sec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
   $res['Scrolls'] = [bool]$main.VerticalScroll.Visible; $res['Before'] = -$main.AutoScrollPosition.Y
-  $t = & $wn.WheelTry $flt (& $wn.ViewMid $sec.Card) $focus -Direct:$Direct
+  $pt = & $wn.ViewMid $sec.Card; $res['Point'] = [string]$pt; $res['PageTop'] = $page.Top
+  $t = & $wn.WheelTry $flt $pt $focus -Direct:$Direct
   $res['Under'] = $t.Under; $res['Handled'] = $t.Handled; $res['After'] = -$main.AutoScrollPosition.Y
   $g = @(& $wn.Grids | Where-Object { [Pfm.Wheel]::GridCan($_, -120) }) | Select-Object -First 1
   if ($g) {
@@ -429,10 +431,12 @@ $wn.MeasureWheel = {
   } finally { $form.ClientSize = $keep; $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'; [Windows.Forms.Application]::DoEvents() }
   return $res }
 # The middle of the part of control $C that the main column shows, in client pixels of the window, from the control
-# tree (Pfm.Wheel.ClientOf; no screen pixels, so it holds for a window off the screen too).
+# tree (Pfm.Wheel.ClientOf; no screen pixels, so it holds for a window off the screen too). It stops with the places
+# when no part shows (R7: an empty overlap gave the point 0,0, on the rail, and hid the cause).
 $wn.ViewMid = { param($C)
   $o = [Pfm.Wheel]::ClientOf($C, $form); $mo = [Pfm.Wheel]::ClientOf($main, $form)
   $v = [Drawing.Rectangle]::Intersect((New-Object Drawing.Rectangle($o, $C.Size)), (New-Object Drawing.Rectangle($mo, $main.ClientSize)))
+  if ($v.Width -lt 1 -or $v.Height -lt 1) { throw ('no part of ' + $C.GetType().Name + ' at ' + $o + ' ' + $C.Size + ' shows in the main column at ' + $mo + ' ' + $main.ClientSize) }
   return [Drawing.Point]::new(($v.Left + [int]($v.Width / 2)), ($v.Top + [int]($v.Height / 2))) }
 # The grids on the page (the card shown), in the order they were built.
 $wn.Grids = {

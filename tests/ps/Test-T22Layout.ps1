@@ -241,7 +241,8 @@ function Test-Wheel($M, [string]$At) {
     if (-not $c) { Test-That ($At + ' wheel (' + $way.T + '): measured') $false 'no facts'; continue }
     $onCard = ([string]$c.Under -and [string]$c.Under -notmatch '"Main column"$' -and [string]$c.Under -notmatch '^Form ')
     $ok = ([bool]$c.Scrolls -and [bool]$c.Handled -and $onCard -and [int]$c.After -gt [int]$c.Before)
-    $nums = 'card ' + $w.Card + ' scrolls ' + $c.Scrolls + '; pointer on ' + $c.Under + '; taken ' + $c.Handled + '; scroll position ' + $c.Before + ' -> ' + $c.After
+    $nums = 'card ' + $w.Card + ' scrolls ' + $c.Scrolls + '; pointer on ' + $c.Under + ' at ' + $c.Point + ' (page top ' + $c.PageTop + ')'
+    $nums += '; taken ' + $c.Handled + '; scroll position ' + $c.Before + ' -> ' + $c.After
     Test-That ($At + ' wheel (' + $way.T + '): the card scrolls from a point on the card, not the scroll bar') $ok $nums
     if ($null -eq $c.GridBefore) { Write-Host ('T22LAYOUT note ' + $At + ' wheel (' + $way.T + '): no grid on the card could still scroll'); continue }
     $ok = ([bool]$c.GridHandled -and [int]$c.GridAfter -gt [int]$c.GridBefore -and [int]$c.MainAfter -eq [int]$c.MainBefore)
