@@ -130,12 +130,13 @@ function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.
 # down to PageMin; a side column takes SideShare of the page, at least SideMin, at most its card's own width; columns
 # stack when the main one would be under MainMin; Hide: low-priority grid columns hide; CardPadK: the share of a card's
 # side padding kept; Reserve: the room under a Fill grid; SideAt: from this width a sideways scroll is a layout defect;
-# FormMin: the smallest window (r9: 600 x 480, so half of a 1920 px laptop screen at 150 % fits).
+# FormMin: the smallest window (r9: 600 x 480, so half of a 1920 px laptop screen at 150 % fits); the rail is RailNarrow
+# wide in a window under NarrowAt (r9: 176 under 1100), 200 up to 1500 and 220 from 1500 (as in r8).
 $LayoutRevs = @{
   r8 = @{ PadX = 28; Top = 22; Bottom = 22; ColGap = 18; ColsTop = 12; CardY = 18; CardGap = 14; CardPadK = 1.0; BarPad = 16; Reserve = 70
-    PageMin = 900; SideShare = 0.0; SideMin = 0; MainMin = 0; Hide = $false; FontPad = $false; SideAt = 1280; FormMin = @(800, 560) }
+    PageMin = 900; SideShare = 0.0; SideMin = 0; MainMin = 0; Hide = $false; FontPad = $false; SideAt = 1280; FormMin = @(800, 560); RailNarrow = 200; NarrowAt = 0 }
   r9 = @{ PadX = 22; Top = 16; Bottom = 16; ColGap = 16; ColsTop = 10; CardY = 14; CardGap = 12; CardPadK = 0.85; BarPad = 12; Reserve = 58
-    PageMin = 320; SideShare = 0.32; SideMin = 240; MainMin = 480; Hide = $true; FontPad = $true; SideAt = 600; FormMin = @(600, 480) } }
+    PageMin = 320; SideShare = 0.32; SideMin = 300; MainMin = 480; Hide = $true; FontPad = $true; SideAt = 600; FormMin = @(600, 480); RailNarrow = 176; NarrowAt = 1100 } }
 # The grid columns that hide first when a grid is too narrow, in this order (Publication, With, Status, Office and Answer always show).
 $GridDrop = @('Weekdays', 'Action', 'Signature', 'Comments', 'Step', 'Due', 'Since')
 # The sizes of the size test (-SizeCheck, -LayoutPlan): the PFM's half laptop (R35) and 3 big monitors; K = the scale.
@@ -149,11 +150,11 @@ $SteadyCards = @('home', 'queue', 'step8', 'waves'); $RowCards = @('home', 'queu
 function Get-T22Layout([int]$ClientW, [int]$ClientH, [double]$Dpi, [double]$FontS, [int]$ScrollW, [string]$LayoutRev) {
   $p = $LayoutRevs[$LayoutRev]; if (-not $p) { $LayoutRev = 'r9'; $p = $LayoutRevs.r9 }; $k = $Dpi / 96.0; $L = [ordered]@{}; $L['Rev'] = $LayoutRev
   $L['Client'] = [string]$ClientW + 'x' + $ClientH; $L['K'] = $k; $L['S'] = $(if ($p.FontPad) { $FontS } else { $k }); $L['Wide'] = ($ClientW -ge [int][math]::Round(1500 * $k))
-  $L['RailW'] = [int]($(if ($L.Wide) { 220 } else { 200 }) * $k); foreach ($n in 'PadX', 'Top', 'Bottom', 'ColGap', 'ColsTop', 'BarPad', 'Reserve') { $L[$n] = [int][math]::Round($p[$n] * $L.S) }
+  $L['RailW'] = [int]($(if ($L.Wide) { 220 } elseif ($ClientW -lt $p.NarrowAt * $k) { $p.RailNarrow } else { 200 }) * $k)
+  foreach ($n in 'PadX', 'Top', 'Bottom', 'ColGap', 'ColsTop', 'BarPad', 'Reserve') { $L[$n] = [int][math]::Round($p[$n] * $L.S) }
   $L['PageW'] = [int][math]::Max([math]::Round($p.PageMin * $k), $ClientW - $L.RailW - $ScrollW - 2 * $L.PadX)
   foreach ($n in 'MainMin', 'SideMin') { $L[$n] = [int][math]::Round($p[$n] * $k) }; $L['OneColMax'] = [int][math]::Round(1000 * $k)
-  foreach ($n in 'SideShare', 'CardPadK', 'CardY', 'CardGap', 'Hide', 'SideAt') { $L[$n] = $p[$n] }
-  $L['FormW'] = [int][math]::Round($p.FormMin[0] * $k); $L['FormH'] = [int][math]::Round($p.FormMin[1] * $k)
+  foreach ($n in 'SideShare', 'CardPadK', 'CardY', 'CardGap', 'Hide', 'SideAt') { $L[$n] = $p[$n] }; $L['FormW'] = [int]($p.FormMin[0] * $k); $L['FormH'] = [int]($p.FormMin[1] * $k)
   return $L }
 # The side column width at 100 % that card $Card (key $Key) asks for: Your Work 300 (420 on a wide window), else its Side.
 function Get-T22Side100([string]$Key, $Card, [bool]$Wide) {
@@ -265,18 +266,21 @@ try {
   # ---- R9 (R36 W13): the layout from the current window size. The blocks below replace r8 blocks of the window and
   # grid parts (an r8 block that is kept and called is named <name>8); each one reads the layout $wn.L.
   $wn.LayoutRev = 'r9'; $wn.Host = $form; $wn.Stacked = $false; $wn.LKey = ''; $wn.LCount = 0; $wn.BarFor = $null
+  # The r8 blocks that the r9 blocks below call (each r9 block of the same name wraps one).
+  $wn.Card8 = $wn.Card; $wn.GridHeight8 = $wn.GridHeight; $wn.GridCols8 = $wn.GridCols; $wn.GridFill8 = $wn.GridFill
+  $wn.Filter8 = $wn.Blocks.filter; $wn.LevelFacts8 = $wn.LevelFacts; $wn.Hook8 = $wn.Hook
   # The layout of the current size, scale and fonts: computed again only when one of them changed (once per new size).
   $wn.Plan = { $h = $wn.Host.ClientSize; $fs = [double]$ui.FontK * [double]$ui.FontDpi / 96.0
     $key = [string]$h.Width + 'x' + $h.Height + '|' + $ui.Dpi + '|' + $fs + '|' + $wn.LayoutRev; if ($key -eq $wn.LKey) { return }
     $wn.L = Get-T22Layout $h.Width $h.Height $ui.Dpi $fs ([Windows.Forms.SystemInformation]::VerticalScrollBarWidth) $wn.LayoutRev
     $wn.LKey = $key; $wn.LCount++ }
-  # A gap of $Px pixels at 100 %, at the layout's scale (the font's in r9); and the side padding of a card whose data gives $PadX.
+  # A gap of $Px pixels at 100 %, at the layout's scale (the font's in r9).
   $wn.G = { param([double]$Px) return [int][math]::Round($Px * $wn.L.S) }
+  # The side padding of a section card whose card data gives $PadX (at 100 %).
   $wn.CardPad = { param([int]$PadX) return (& $wn.G ($PadX * $wn.L.CardPadK)) }
   # The rail width of the layout; the check bar is fitted first (the bar's height sets the room the main column has).
   $wn.RailLayout = { & $wn.Plan; & $wn.BarFit; $rail.Width = $wn.L.RailW; foreach ($x in $wn.RailBtn) { $x.Width = $wn.L.RailW - 2 * (& $wn.Sc 12) } }
   # A section card: the r8 card with the layout's padding (its data's PadX times CardPadK, CardY above and below) and gap under it.
-  $wn.Card8 = $wn.Card
   $wn.Card = { param([int]$W, $Cap, $Top, [int]$PadX, $Back)
     $c = & $wn.Card8 $W $Cap $Top $PadX $Back; $px = & $wn.CardPad $PadX; $tp = $(if ($Top) { 4 } else { 0 })
     $c.Padding = & $ui.Pad $px (& $wn.G ($wn.L.CardY + $tp)) $px (& $wn.G $wn.L.CardY); $c.Margin = & $ui.Pad 0 0 0 (& $wn.G $wn.L.CardGap)
@@ -350,17 +354,43 @@ try {
     $ui.CardAt = $ui.Clock.Elapsed.TotalMilliseconds
     if ($wn.Focus -eq 'reason' -and $wn.Reason) { [void]$wn.Reason.Focus(); $wn.Focus = '' } elseif ($wn.Primary) { [void]$wn.Primary.Focus() }
     if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start() } }
+  $wn.ListRow = {
+    <#
+    .SYNOPSIS
+    R9: one row of a list, as in r8 (a chip, a title, up to two gray lines, a compact button at the right), but the button
+    goes under the text when the text would keep less than 160 px at 100 % beside it (a narrow window).
+    .PARAMETER Parent
+    The card that gets the row.
+    .PARAMETER It
+    The list item: Chip, Title, Sub, Detail, Btn.
+    .PARAMETER W
+    The width of the row.
+    .PARAMETER Tx
+    Where the text starts (the width of the widest chip of the list and a gap; 0 without chips).
+    #>
+    param($Parent, $It, [int]$W, [int]$Tx)
+    $p = & $wn.Panel $W 0; $bw = 0; $btn = $null
+    if ($It.Btn) { $btn = & $wn.Button $It.Btn 'compact'; $btn.AutoSize = $true; $bw = [math]::Max($btn.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $btn.MinimumSize.Width) }
+    $tw = $W - $Tx - $bw - (& $wn.Sc 24); $under = ($btn -and $tw -lt (& $wn.Sc 160)); if ($under) { $tw = $W - $Tx - (& $wn.Sc 8) }
+    $y = & $wn.Sc 8; $t1 = & $wn.Txt $p $It.Title $ui.F.SmallB $ui.C.Ink 0 $tw 'Item' $null
+    if ($It.Chip) { $cp = & $wn.Chip $It.Chip[0] $It.Chip[1] $ui.C.White; $tops = & $wn.ChipTops $cp.Height $t1.Font $y; $y = $tops.Text
+      $cp.Location = [Drawing.Point]::new(0, $tops.Chip); [void]$p.Controls.Add($cp); & $wn.KeepChip $cp $t1 'list' }
+    $t1.Location = [Drawing.Point]::new($Tx, $y); $y = $t1.Bottom + (& $wn.Sc 2)
+    if ($It.Sub) { $t2 = & $wn.Txt $p $It.Sub $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t2.Location = [Drawing.Point]::new($Tx, $y); $y = $t2.Bottom + (& $wn.Sc 2) }
+    if ($It.Detail) { $t3 = & $wn.Txt $p $It.Detail $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t3.Location = [Drawing.Point]::new($Tx, $y); $y = $t3.Bottom }
+    if ($btn) { $btn.Size = [Drawing.Size]::new($bw, $btn.MinimumSize.Height)
+      $by = $(if ($under) { $y + (& $wn.Sc 4) } else { [math]::Max((& $wn.Sc 6), [int](($y + (& $wn.Sc 8) - $btn.Height) / 2)) })
+      $btn.Location = [Drawing.Point]::new($(if ($under) { $Tx } else { $W - $bw - (& $wn.Sc 4) }), $by); [void]$p.Controls.Add($btn) }
+    & $wn.Fit $p 8; [void]$Parent.Controls.Add($p) }
   # The count line under the All Actions grid keeps the lines its longest count needs, so a filter never moves what is under it.
   $wn.HoldCount = { $t = $wn.CountBox; if (-not $t) { return }
     $m = & $ui.Meas ([string]$wn.CountText -f 888) $t.Font ([int]$ui.Wrap[$t])
     $ui.Hold[$t] = [math]::Max(1, [int][math]::Round($m.Height / [double](& $wn.LineH $t.Font))); & $ui.Reflow $t; $page.PerformLayout() }
   # A Fill grid keeps the layout's room under it (Reserve) instead of r8's 70 px at 100 %; the rest is r8's ($wn.GridHeight8).
-  $wn.GridHeight8 = $wn.GridHeight
   $wn.GridHeight = { param($b, $Ctx) $keep = $wn.MainH; $wn.MainH = $keep + (& $wn.Sc 70) - $wn.L.Reserve
     try { return (& $wn.GridHeight8 $b $Ctx) } finally { $wn.MainH = $keep } }
   # The columns of a grid: with Hide on, the low-priority ones that do not fit hide (Select-T22GridColumn): a column needs its
   # own width or its head, the pub column its whole number and title ($PubMin). Then r8 sizes the rest ($wn.GridCols8).
-  $wn.GridCols8 = $wn.GridCols
   $wn.GridCols = { param($G, $Cols, [int]$W, [int]$Scroll, [int]$PubMin)
     if ($wn.L.Hide) {
       $need = @(foreach ($c in @($Cols)) { if ($c.K -eq 'pub' -and $PubMin -gt 0) { $PubMin } else { [math]::Max((& $wn.Sc $(if ($c.W) { $c.W } else { 60 })), (& $wn.HeadMin $c)) } })
@@ -368,14 +398,11 @@ try {
       $Cols = Select-T22GridColumn $Cols $need ($W - $bar - 2) }
     return (& $wn.GridCols8 $G $Cols $W $Scroll $PubMin) }
   # A grid's rows fill only the columns that show (a hidden column has no value).
-  $wn.GridFill8 = $wn.GridFill
   $wn.GridFill = { param($G, $Rows) $G.Tag.Cols = @(@($G.Tag.Cols) | Where-Object { $G.Columns.Contains([string]$_.N) }); & $wn.GridFill8 $G $Rows }
   # The search row above the All Actions grid wraps inside its card (r8: one row of fixed widths, wider than a narrow card).
-  $wn.Filter8 = $wn.Blocks.filter
   $wn.Blocks.filter = { param($Parent, $b, [int]$W) $null = $b; & $wn.Filter8 $Parent
     $f = $Parent.Controls[$Parent.Controls.Count - 1]; $f.WrapContents = $true; $f.MaximumSize = [Drawing.Size]::new($W, 0) }
   # The level facts (measure part) also say whether the card's columns were stacked (then no caption is leveled: D1).
-  $wn.LevelFacts8 = $wn.LevelFacts
   $wn.LevelFacts = { $f = & $wn.LevelFacts8; $f['Stacked'] = [bool]$wn.Stacked; return $f }
   $wn.BarFit = {
     <#
@@ -432,7 +459,6 @@ try {
     $wn.Ready = $true; $form.Opacity = 1
     try { $form.TopMost = $true; $form.Activate(); $form.TopMost = $false } catch { $null = $_ } }
   # The window's events as in r8 ($wn.Hook8), and the end of a resize lays out the window at once (no wait for the timer).
-  $wn.Hook8 = $wn.Hook
   $wn.Hook = { & $wn.Hook8; $form.Add_ResizeEnd({ if ($wn.Ready) { $wn.SizeTimer.Stop(); & $wn.Resized } }) }
   # A new size: the rail, the bar and the card, once (as the r8 size timer does after the last size change).
   $wn.Resized = { if ($form.ClientSize.Width -eq $wn.LastW -and $form.ClientSize.Height -eq $wn.LastH) { return }
