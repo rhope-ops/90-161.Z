@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | R35 is a big round: F05 fix, import card, second person step again, full flow test, window r8 and open points. Scope: R35. | PFM | [R34 results](reviews/2026-11-19-r34-results.md) |
+| 2026-11-19 | F03 counts 15 business days for coordination (DAFMAN 90-161 5.2, 5.1.4.3; T-3). Replaces the 20 working days of 14 Nov 26 and S5.3 A. Scope: F03 and its settings row. | PFM | flow/solution/README.md |
+| 2026-11-19 | F05 checks the list every 1 minute, so no action passes step 7 without its Legal rows (R34 plan open point 2). F01 stays at 15 minutes. Scope: F05. | PFM | flow/solution/README.md |
+| 2026-11-19 | Lock to engine-v23; tests/run.sh allows the engine file rade-checks-last.txt after N (exact change approved). | PFM | scripts/rade.lock.json |
 | 2026-11-19 | RADE lock moves to release engine-v23 (RADE bd8cd44, serial 17) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | Gov scripts collect failure reasons in a typed list with plain statements: T20 r2 reported PASS on Windows PowerShell 5.1 with the array form (found by the ps51 job, PR 173). Scope: new gov scripts. | Agent | [R34 plan](reviews/2026-11-18-r34-plan.md) |
 | 2026-11-18 | R34 agent RECs taken under the PFM's approval of 18 Nov (he was away): the button flow uses the manual trigger F04 uses; the 2 test flows sit in the app solution for tests only and leave before a pilot; R33 runs first. Scope: R34. | Agent (approved in advance by the PFM) | [R34 plan](reviews/2026-11-18-r34-plan.md) |
