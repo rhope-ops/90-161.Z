@@ -336,8 +336,14 @@ function Grant-OfficeLevel([bool]$Write) {
   return $made
 }
 
-# Step 7, the read-back of step 6: one ITEM line, PASS when the group holds the level on the site and the level holds every
-# permission of the Edit level plus Edit Items and Override List Behaviors; else FAIL with the reasons.
+<#
+.SYNOPSIS
+  Step 7, the read-back of step 6: PASS when the group holds the level on the site and the level holds every permission of
+  the Edit level plus Edit Items and Override List Behaviors; else FAIL with the reasons. The line ends with the permission
+  words as read (numbers only).
+.OUTPUTS
+  System.String. One ITEM line.
+#>
 function Test-OfficeLevel {
   $gid = Get-GroupId $OfficeGroup; $level = Get-RoleLevel $OfficeLevel 0; $edit = Get-RoleLevel '' $EditRoleKind
   $bad = @($(if (-not $gid) { 'the group ' + $OfficeGroup + ' is not on the site' }), $(if (-not $level) { 'the level ' + $OfficeLevel + ' is not on the site' }))
