@@ -32,6 +32,8 @@ function Test-Limit([string]$Name, [string]$Text) {
 # ---- part 1: what is masked ----
 Test-Mask 'e-mail' ('mail someone' + $at + 'example.invalid now') 'mail <EMAIL> now'
 Test-Mask 'e-mail with dots and plus' ('a.b+c' + $at + 'x.example.invalid') '<EMAIL>'
+Test-Mask 'e-mail with an apostrophe in the name (R36 review)' ('to ann.o''neil' + $at + 'x.example.invalid now') 'to <EMAIL> now'
+Test-Mask 'quoted e-mail keeps its quotes' ('''ann' + $at + 'x.example.invalid''') '''<EMAIL>'''
 Test-Mask 'encoded e-mail (%40)' 'x first.last%40example.invalid%27 y' 'x <EMAIL> y'
 Test-Mask 'encoded e-mail, no site' 'q=%27someone%40example.invalid%27 y' '<EMAIL> y' ''
 Test-Mask 'e-mail keeps the text around it (colon, trailing dot)' ('contact:who' + $at + 'example.invalid. Done') 'contact:<EMAIL>. Done'

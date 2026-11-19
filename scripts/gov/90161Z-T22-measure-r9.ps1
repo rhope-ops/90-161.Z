@@ -315,7 +315,7 @@ $wn.MeasureScaled = {
   #>
   param([double]$K)
   $keep = @{ Dpi = $ui.Dpi; FontK = $ui.FontK; F = $ui.F; Crumb = $wn.CrumbFont; Step = $wn.StepFonts }
-  $made = New-Object System.Collections.Generic.List[object]; $cards = New-Object System.Collections.Generic.List[object]; $res = [ordered]@{}
+  $made = New-Object System.Collections.Generic.List[object]; $shownCards = New-Object System.Collections.Generic.List[object]; $res = [ordered]@{}
   try {
     $nf = @{}; foreach ($n in @($keep.F.Keys)) { $o = $keep.F[$n]; $x = New-Object System.Drawing.Font($o.FontFamily, [single]($o.Size * $K), $o.Style); $nf[$n] = $x; $made.Add($x) }
     $ui.Dpi = $keep.Dpi * $K; $ui.FontK = $keep.FontK * $K; $ui.F = $nf; $wn.StepFonts = $null
@@ -325,7 +325,7 @@ $wn.MeasureScaled = {
       $c = [ordered]@{}; $c['Key'] = $key
       try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts) }
       catch { $c['Error'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
-      $cards.Add($c) }
+      $shownCards.Add($c) }
     # R7 (W2): the mouse wheel at this scale too; a wheel case that cannot run is kept as its error (the test names it).
     try { $res['Wheel'] = (& $wn.MeasureWheel) } catch { $res['Wheel'] = $null; $res['WheelError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   } finally {
@@ -333,7 +333,7 @@ $wn.MeasureScaled = {
     $ui.Dpi = $keep.Dpi; $ui.FontK = $keep.FontK; $ui.F = $keep.F; $wn.CrumbFont = $keep.Crumb; $wn.StepFonts = $keep.Step
     $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
     foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
-  $res['Cards'] = $cards.ToArray()
+  $res['Cards'] = $shownCards.ToArray()
   return $res }
 $wn.LogoFacts = {
   <#

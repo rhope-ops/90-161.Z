@@ -74,7 +74,7 @@ function New-FakeSite { & $fakeModule { New-FakeSite } }
       if (-not $global:FakeSP.VisitorId) { throw 'FAKE 404: the site has no associated Visitors group' }
       return (@{ Id = [int]$global:FakeSP.VisitorId } | ConvertTo-Json -Compress)
     }
-    if ($Method -eq 'Post' -and $path -match "^web/lists\(guid'([^']+)'\)/(breakroleinheritance\(copyRoleAssignments=true,clearSubscopes=true\)|roleassignments/addroleassignment\(principalid=(\d+),roledefid=(\d+)\))$") {
+    if ($Method -eq 'Post' -and $path -match "^web/lists\(guid'([^']+)'\)/(breakroleinheritance\(copyRoleAssignments=true,clearSubscopes=false\)|roleassignments/addroleassignment\(principalid=(\d+),roledefid=(\d+)\))$") {
       $l = @($global:FakeSP.Lists | Where-Object { $_.Id -eq $Matches[1] })[0]
       if (-not $l) { throw 'FAKE 404: no such list' }
       if ($Matches[2] -like 'breakroleinheritance*') {

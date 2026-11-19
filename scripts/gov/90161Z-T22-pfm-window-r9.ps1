@@ -2,32 +2,24 @@
 .SYNOPSIS
   90-161.Z Task 22: the PFM window, test window r9 (round R36). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
-  The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
-  steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
-  file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it, down to
-  600 x 480 at 100 % (half a laptop screen). Esc goes back one card. Close it with its X. A bar at the bottom shows 18
-  checks one at a time with Pass and Fail (PFM 17 Nov 26); each layout defect is one line "FAIL LAYOUT ..." and "PASS
-  layout" is one line when there is none (the runner counts these words).
-  WHAT R9 CHANGES (R36 plan W13: R35 findings 4 and 5, "dead space" and "fluttering"): the layout comes from the current
-  window size (Get-T22Layout, $LayoutRevs): gaps a little smaller and scaled by the font; the page as wide as the window
-  (r8 kept 900 px at 100 % and scrolled sideways on half a laptop); a side column 32 % of the page, the columns stacked
-  when the main one would be under 480 px at 100 %; low-priority grid columns hidden in a narrow grid ($GridDrop); more
-  rows in a Fill grid on a taller window. The layout is computed once per new size ($wn.Plan), never while the window
-  paints, from the size, the scale and the fonts only, never from a count, a date or a status. Added by the PFM (19 Nov
-  26): a single column is at most 1200 px wide at 100 % (was 1000), and plain text in a card wraps at about 75 characters
-  of the body font (Get-T22ProseWidth; docs/app/screen-map.md "Window size"). R4 to R8 (R30 to R35):
-  the part headers. This file loads its 7 parts, 90161Z-T22-<part>-r9.ps1 ($PartRev; renamed from r8 in R36, one revision
-  per task), and replaces their layout blocks.
-  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
-  text and opens no window; -LayoutPlan prints the r8 and r9 layout at the 4 test sizes and opens no window; -TestDir
-  writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it measured to <file> as JSON
-  (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question; -SizeCheck <file> does
-  so at the 4 test sizes (r8 and r9 layout: rows seen, defects, the stability check $wn.Steady).
-  -Opened opens no window: it reads 90161Z-T22-window-r9.txt of the last run and prints one line, PASS the window opened
-  (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r9.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  check answers), 90161Z-T22-window-bounds.json (last size and place) and 90161Z-T22-card-<card>-r9.png (one per card) in
-  the T22 folder.
+  The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due, steps 8 to 13, a publication, Settings and the states.
+  Nothing is read or sent. The look comes from the RADE shared UI file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it, down to 600 x
+  480 at 100 % (half a laptop screen). Esc goes back one card. Close it with its X. A bar at the bottom shows 18 checks one at a time with Pass and Fail (PFM 17 Nov 26); each layout defect
+  is one line "FAIL LAYOUT ..." and "PASS layout" is one line when there is none (the runner counts these words).
+  WHAT R9 CHANGES (R36 plan W13: R35 findings 4 and 5, "dead space" and "fluttering"): the layout comes from the current window size (Get-T22Layout, $LayoutRevs): gaps a little smaller and
+  scaled by the font; the page as wide as the window (r8 kept 900 px at 100 % and scrolled sideways on half a laptop); a side column 32 % of the page, the columns stacked when the main one
+  would be under 480 px at 100 %; low-priority grid columns hidden in a narrow grid ($GridDrop); more rows in a Fill grid on a taller window. The layout is computed once per new size
+  ($wn.Plan), never while the window paints, from the size, the scale and the fonts only, never from a count, a date or a status. Added by the PFM (19 Nov 26): a single column is at most
+  1200 px wide at 100 % (was 1000), and plain text in a card wraps at about 75 characters of the body font (Get-T22ProseWidth; docs/app/screen-map.md "Window size"). R4 to R8 (R30 to R35):
+  the part headers. This file loads its 7 parts, 90161Z-T22-<part>-r9.ps1 ($PartRev; renamed from r8 in R36, one revision per task), and replaces their layout blocks.
+  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as text and opens no window; -LayoutPlan prints the r8 and r9
+  layout at the 4 test sizes and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it measured to <file> as JSON
+  (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question; -SizeCheck <file> does so at the 4 test sizes (r8 and r9 layout: rows seen, defects, the
+  stability check $wn.Steady).
+  -Opened opens no window: it reads 90161Z-T22-window-r9.txt of the last run and prints one line, PASS the window opened (N of M cards) or FAIL the window did not open (the round's look
+  questions run only after a PASS).
+  Outputs: 90161Z-T22-window-r9.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures, check answers), 90161Z-T22-window-bounds.json (last size and place)
+  and 90161Z-T22-card-<card>-r9.png (one per card) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
   Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r9.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
@@ -278,6 +270,7 @@ try {
   # The r8 blocks that the r9 blocks below call (each r9 block of the same name wraps one).
   $wn.Card8 = $wn.Card; $wn.GridHeight8 = $wn.GridHeight; $wn.GridCols8 = $wn.GridCols; $wn.GridFill8 = $wn.GridFill
   $wn.Filter8 = $wn.Blocks.filter; $wn.LevelFacts8 = $wn.LevelFacts; $wn.Hook8 = $wn.Hook; $wn.P8 = $wn.Blocks.p; $wn.Err8 = $wn.Blocks.err
+  $wn.BuildBar8 = $wn.BuildBar; $wn.MeasureRun8 = $wn.MeasureRun
   # The layout of the current size, scale and fonts: computed again only when one of them changed (once per new size).
   $wn.Plan = { $h = $wn.Host.ClientSize; $fs = [double]$ui.FontK * [double]$ui.FontDpi / 96.0
     $key = [string]$h.Width + 'x' + $h.Height + '|' + $ui.Dpi + '|' + $fs + '|' + $wn.LayoutRev; if ($key -eq $wn.LKey) { return }
@@ -488,11 +481,20 @@ try {
     $ui.F = $nf; $wn.StepFonts = $null
     $wn.CrumbFont = New-Object System.Drawing.Font($nf.Small, [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline')); $made.Add($wn.CrumbFont)
     return , $made }
-  # Builds the rail and the check bar again in the host panel $HostP, at the current scale (the bar first: the rail fits it).
-  $wn.Rebuild = { param($HostP)
+  # A host panel of $W x $H pixels for an off-screen run: the rail and the main column move into it, and the layout and
+  # the self-check read it as the window ($wn.Host, $ui.Form). A panel, unlike a window, is not held to the screen's size.
+  $wn.UseHost = { param([int]$W, [int]$H) $hp = New-Object System.Windows.Forms.Panel; $hp.BackColor = $pc.surface; $hp.AccessibleName = 'Window'
+    $hp.Size = [Drawing.Size]::new($W, $H); [void]$hp.Controls.Add($main); [void]$hp.Controls.Add($rail); $form.Controls.Add($hp); $wn.Host = $hp; $ui.Form = $hp; return $hp }
+  # The check bar goes into the host panel when there is one (r8 put it in the window).
+  $wn.BuildBar = { & $wn.BuildBar8; if (-not [object]::ReferenceEquals($wn.Host, $form)) { [void]$wn.Host.Controls.Add($wn.Bar); $main.BringToFront() } }
+  # -Measure: a window of 1280 x 720 at 100 % whatever the runner's screen allows, shown off-screen first (it has its scale).
+  $wn.MeasureRun = { param([string]$Path) $form.StartPosition = 'Manual'; $form.ShowInTaskbar = $false; $form.Location = [Drawing.Point]::new(-20000, -20000)
+    $form.Show(); [Windows.Forms.Application]::DoEvents(); & $ui.FormDpi; $null = & $wn.UseHost ([int](1280 * $ui.Dpi / 96)) ([int](720 * $ui.Dpi / 96))
+    try { & $wn.MeasureRun8 $Path } finally { $ui.Form = $form } }
+  # Builds the rail and the check bar again in the host panel, at the current scale (the bar first: the rail fits it).
+  $wn.Rebuild = {
     foreach ($x in @($rail.Controls)) { $rail.Controls.Remove($x); $x.Dispose() }
-    if ($wn.Bar) { $wn.Bar.Parent.Controls.Remove($wn.Bar); $wn.Bar.Dispose(); $wn.Bar = $null }
-    & $wn.BuildBar; $form.Controls.Remove($wn.Bar); [void]$HostP.Controls.Add($wn.Bar); $main.BringToFront()
+    if ($wn.Bar) { $wn.Bar.Parent.Controls.Remove($wn.Bar); $wn.Bar.Dispose(); $wn.Bar = $null }; & $wn.BuildBar
     $wn.RailBtn = @(); & $wn.BuildRail; [Windows.Forms.Application]::DoEvents() }
   # The rows of the card's main grid ($wn.Gridsel): Grid = the rows the grid shows whole; Screen = the rows that show whole
   # with the main column at its top (no scrolling); Total = all its rows.
@@ -521,15 +523,15 @@ try {
   # every card (r9) or those of $RowCards (r8) shown with the self-check, the rows seen, and (r9) the stability check.
   # Gives W, H, K, Rev, Layout, Count (layouts computed in this size: 1), Defects (LAYOUT lines), Cards (Key, Stacked, Sideways, Rows, Moved).
   $wn.SizeCase = { param($HostP, $Case, [string]$LayoutRev)
-    $c0 = $wn.LCount; $wn.LayoutRev = $LayoutRev; $HostP.Size = [Drawing.Size]::new([int]$Case.W, [int]$Case.H); & $wn.Rebuild $HostP
-    $n0 = $ui.LayBad.Count; $ui.LaySeen = @{}; $cards = New-Object System.Collections.Generic.List[object]; foreach ($k in @($Cards.Keys)) {
+    $c0 = $wn.LCount; $wn.LayoutRev = $LayoutRev; $HostP.Size = [Drawing.Size]::new([int]$Case.W, [int]$Case.H); & $wn.Rebuild
+    $n0 = $ui.LayBad.Count; $ui.LaySeen = @{}; $shown = New-Object System.Collections.Generic.List[object]; foreach ($k in @($Cards.Keys)) {
       if ($LayoutRev -eq 'r8' -and $RowCards -notcontains $k) { continue }
       $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k; [Windows.Forms.Application]::DoEvents(); & $ui.Check; & $wn.ScrollCheck
       $r = @{ Key = $k; Stacked = [bool]$wn.Stacked; Sideways = [bool]$main.HorizontalScroll.Visible }
       if ($RowCards -contains $k) { $r['Rows'] = (& $wn.RowsSeen) }; if ($LayoutRev -eq 'r9' -and $SteadyCards -contains $k) { $r['Moved'] = & $wn.Steady $k }
-      $cards.Add($r) }   # the LAYOUT lines go to the JSON file, not to this run's defects (the r8 values are not this window's)
+      $shown.Add($r) }   # the LAYOUT lines go to the JSON file, not to this run's defects (the r8 values are not this window's)
     $bad = @($ui.LayBad | Select-Object -Skip $n0 | ForEach-Object { [string]$_ }); while ($ui.LayBad.Count -gt $n0) { $ui.LayBad.RemoveAt($n0) }
-    return @{ W = $Case.W; H = $Case.H; K = $Case.K; Rev = $LayoutRev; Layout = $wn.L; Count = ($wn.LCount - $c0); Defects = $bad; Cards = $cards.ToArray() } }
+    return @{ W = $Case.W; H = $Case.H; K = $Case.K; Rev = $LayoutRev; Layout = $wn.L; Count = ($wn.LCount - $c0); Defects = $bad; Cards = $shown.ToArray() } }
   $wn.SizeRun = {
     <#
     .SYNOPSIS
@@ -544,9 +546,7 @@ try {
     param([string]$Path)
     $form.StartPosition = 'Manual'; $form.ShowInTaskbar = $false; $form.Location = [Drawing.Point]::new(-20000, -20000)
     $form.Show(); [Windows.Forms.Application]::DoEvents(); & $ui.FormDpi; $form.BackColor = $pc.surface
-    $hostP = New-Object System.Windows.Forms.Panel; $hostP.BackColor = $pc.surface; $hostP.AccessibleName = 'Size test'
-    $form.Controls.Remove($main); $form.Controls.Remove($rail); [void]$hostP.Controls.Add($main); [void]$hostP.Controls.Add($rail); $form.Controls.Add($hostP)
-    $wn.Host = $hostP; $keepForm = $ui.Form; $ui.Form = $hostP
+    $hostP = & $wn.UseHost $form.ClientSize.Width $form.ClientSize.Height
     $base = @{ Dpi = $ui.Dpi; FontK = $ui.FontK; F = $ui.F; Crumb = $wn.CrumbFont; Step = $wn.StepFonts }
     $res = New-Object System.Collections.Generic.List[object]; $made = New-Object System.Collections.Generic.List[object]
     try {
@@ -556,8 +556,8 @@ try {
           catch { $res.Add(@{ W = $case.W; H = $case.H; K = $case.K; Rev = $lr; Error = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }) }
           if ($wn.StepFonts -and -not [object]::ReferenceEquals($wn.StepFonts, $base.Step)) { foreach ($x in @($wn.StepFonts.A) + @($wn.StepFonts.B)) { $made.Add($x) } } } }
     } finally {
-      $wn.LayoutRev = 'r9'; $null = & $wn.UseScale $base 1.0; & $wn.Rebuild $hostP; $wn.Notice = ''; & $wn.Show 'home'
-      $ui.Form = $keepForm; foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
+      $wn.LayoutRev = 'r9'; $null = & $wn.UseScale $base 1.0; & $wn.Rebuild; $wn.Notice = ''; & $wn.Show 'home'
+      $ui.Form = $form; foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
     $out = @{ Rev = $Rev; Dpi = $base.Dpi; Cases = $res.ToArray() }
     Set-Content -LiteralPath $Path -Value ($out | ConvertTo-Json -Depth 8) -Encoding UTF8
     $form.Close() }

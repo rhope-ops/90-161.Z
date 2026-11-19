@@ -175,7 +175,8 @@ function Grant-WingContribute([bool]$Write, $SiteLists) {
     $base = "_api/web/lists(guid'" + $l.Id + "')"
     if (-not [bool]$l.HasUniqueRoleAssignments) {
       $made.own++
-      if ($Write) { $null = Invoke-Rest 'Post' ($base + '/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)') '{}' }
+      # clearSubscopes=false: items that hold their own permissions keep them (R36 review).
+      if ($Write) { $null = Invoke-Rest 'Post' ($base + '/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=false)') '{}' }
     }
     $held = @()
     if ($vid -gt 0 -and [bool]$l.HasUniqueRoleAssignments) { $held = @(Get-ListBinding ([string]$l.Id) $vid) }

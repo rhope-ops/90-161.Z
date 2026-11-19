@@ -168,9 +168,10 @@ function Hide-Site([string]$Text, [string]$Site) {
   .OUTPUTS
   System.String. The text with each match replaced by a placeholder such as <EMAIL>, <SITE> or <GUID>.
   #>
-  # The address only (name, @ or %40, host; encoded characters count as part of it), first: the host rules below would
+  # The address only (name, @ or %40, host; encoded characters and an apostrophe inside the name count as part of it),
+  # first: the host rules below would
   # keep its name part.
-  $Text = $Text -replace '(?:[\w.+=-]|%[0-9A-Fa-f]{2})+(?:@|%40)[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*(?:%[0-9A-Fa-f]{2})*', '<EMAIL>'
+  $Text = $Text -replace '(?:[\w.+=-]|%[0-9A-Fa-f]{2}|(?<=\w)''(?=\w))+(?:@|%40)[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*(?:%[0-9A-Fa-f]{2})*', '<EMAIL>'
   if ($Site) {
     $Text = $Text -replace [regex]::Escape($Site.TrimEnd('/')), '<SITE>'
     try {
