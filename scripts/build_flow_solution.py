@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r2.zip (R28 r1: all six flows, every flow On; R29 r2: list-name variables not required) from flow/solution/defs/*.json.
+"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r3.zip (R28 r1: all six flows, every flow On; R29 r2: list-name
+variables not required; R34 r3: F04 r3 and the 2 T21 probe flows, fallback A of the PFM, 18 Nov 26; still r3 in R34, not yet on
+main: F01 r3 and F05 r4, which check PFM Publications every 15 minutes, PFM 19 Nov 26 F3 C, and F05 r4 adds the missing Legal rows
+at step 7 by any path, F1 A) from flow/solution/defs/*.json.
 
 Layout (Microsoft's documented unmanaged solution): [Content_Types].xml, solution.xml, customizations.xml (Workflows,
 connectionreferences), Workflows/<name>-<GUID>.json (properties.connectionReferences + properties.definition),
@@ -39,12 +42,25 @@ variant build into ONE test solution (unique name PFM90161ZTEST + variant) with 
 without "solution" builds as before (T17). A flow whose trigger is kind "Button" runs on the invoker's connection; every
 other flow, the Power Apps (V2) trigger kind "PowerAppV2" included, runs on the owner's embedded connections and
 authenticates with @parameters('$authentication').
+R34 (PFM 18 Nov 26, fallback A: a new solution and a new hand-made flow fail with "The connections could not be loaded", an
+upgrade of this solution works): the T21 probe flows Health and Button are defs of the flow solution (defs/90161Z-T21-*.json),
+on the one SharePoint connection reference the six flows use, so the upgrade needs no new connection. The Button flow's
+workflow ID (uuid5, the same on every build) goes into the T21 look script between the button-flow-id markers, so the
+list view button names the flow with no export; --check fails when that block is stale.
+Network: none.
+Writes: the solution zips in flow/solution and the button-flow-id block of the T21 look script.
+Credentials: none.
 """
 import argparse, io, json, pathlib, re, sys, uuid, zipfile
 from xml.sax.saxutils import escape, quoteattr
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r2.zip"
+DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r3.zip"
+# R34: the probe button flow (its workflow ID goes into the T21 look script, which names it in the list view button).
+BUTTON_DEF = DEFS / "90161Z-T21-probe-button-r6.json"
+LOOK_SCRIPT = ROOT / "scripts" / "gov" / "90161Z-T21-look-r8.ps1"
+ID_BEGIN = "# >>> button-flow-id: generated from flow/solution/defs/90161Z-T21-probe-button-r6.json by scripts/build_flow_solution.py (do not edit)"
+ID_END = "# <<< button-flow-id"
 TEST_DEFS = ROOT / "flow" / "solution" / "test-defs"
 NS = uuid.UUID("6f1c2b4e-9d0a-4c5e-8b7a-90161a000001")
 SCHEMA = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
@@ -93,8 +109,9 @@ ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
 # Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
 # Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
-# task T18. Same unique name as the full solution, so a later full import upgrades it.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))   # F06 joins R21; r4 (R22): F03 r4; r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix
+# task T18. Same unique name as the full solution, so a later full import upgrades it. F06 joins R21; r4 (R22): F03 r4;
+# r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix; r7 (R34): F05 r4.
+SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r7.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))
 SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
 
 
@@ -360,6 +377,32 @@ def build(test=None, only=None, on=()) -> bytes:
     return zip_solution(files, test)
 
 
+def button_flow_id():
+    """The probe button flow's workflow ID (lower case, as the flow URL and the view button use it). Takes nothing; returns text."""
+    return flow_guid(BUTTON_DEF.stem).lower()
+
+
+def sync_button_id(check):
+    """Write the button flow's ID into the T21 look script between the button-flow-id markers, or only compare it.
+
+    Args:
+        check: True to compare only (write nothing).
+
+    Returns:
+        True when the block was up to date (or is now written), False when it is stale or its markers are missing.
+    """
+    text = LOOK_SCRIPT.read_text(encoding="utf-8")
+    m = re.search(re.escape(ID_BEGIN) + r"\n(.*?)" + re.escape(ID_END), text, re.S)
+    want = f"$ButtonFlowId = '{button_flow_id()}'\n"
+    if m is None:
+        return False
+    if m.group(1) == want:
+        return True
+    if not check:
+        LOOK_SCRIPT.write_text(text[:m.start(1)] + want + text[m.end(1):], encoding="utf-8")
+    return not check
+
+
 def main():
     """Command line: build every solution zip; with --check, compare each with the committed zip and exit 1 on the first difference."""
     ap = argparse.ArgumentParser()
@@ -374,6 +417,10 @@ def main():
             print(f"OK {out.relative_to(ROOT)} up to date"); continue
         out.write_bytes(data)
         print(f"BUILT {out.relative_to(ROOT)} bytes={len(data)}")
+    ok = sync_button_id(a.check)
+    print(f"{'OK' if ok else 'STALE'} {LOOK_SCRIPT.relative_to(ROOT)} button-flow-id block")
+    if not ok:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

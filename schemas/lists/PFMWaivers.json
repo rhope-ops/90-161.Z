@@ -43,8 +43,9 @@
       "displayName": "Tier",
       "type": "Choice",
       "required": false,
-      "ref": "List design 2026-11-12 s1",
+      "ref": "List design 2026-11-12 s1; T-0 added (PFM S3 A, 2026-11-19: DAFMAN 90-161 Attachment 10, Table A10.1, the tier the waiver rule 4.4A names)",
       "choices": [
+        "T-0",
         "T-1",
         "T-2",
         "T-3",

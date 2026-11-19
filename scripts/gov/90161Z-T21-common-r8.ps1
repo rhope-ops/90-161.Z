@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r6, module "common": the helpers every part of the probe uses.
+  90-161.Z Task 21 probe r8, module "common": the helpers every part of the probe uses.
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r6.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r8.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets in its own scope ($site, $dir, $lines, $passed, $failed, $WaitMinutes, $pollEvery,
-  $StateName). Outputs: functions for the SharePoint REST calls, the result lines, the wait loop, the second person's
-  saved numbers and the sign-in.
+  $StateName). Outputs: functions for the SharePoint REST calls, the result lines, the NOW lines, the wait loop, the
+  second person's saved numbers and the sign-in.
   Network: the one SharePoint site of the main file ($site), through the PnP.PowerShell connection.
   Writes: none on the site by itself (Invoke-Rest sends what a part asks for); the result lines in memory.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-ProbeSite); nothing is stored.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r6.ps1 -Part <part> loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r8.ps1 -Part <part> loads it.
 #>
 
 <#
@@ -41,6 +41,9 @@ function Find-ByFolder([string]$Folder) {
   foreach ($l in (Get-SiteList)) { if ([string]$l.RootFolder.Name -eq $Folder) { return $l } }
   return $null
 }
+# Prints one "NOW <text>" line before an action that takes time (the RADE window shows it as it happens). It goes to the
+# screen only: it is not a result line, so it is not added to the result lines or the result file and is not counted.
+function Write-Now([string]$Text) { Write-Host ('NOW ' + $Text) }
 # Adds one "ITEM <name> <status> <text>" line and counts a PASS or a FAIL.
 function Add-Item([string]$Name, [string]$Status, [string]$Text) {
   $script:lines.Add('ITEM ' + $Name + ' ' + $Status + $(if ($Text) { ' ' + $Text } else { '' }))
@@ -81,11 +84,11 @@ function Find-Result($Rows, [string]$Test, [string]$Way) {
 
 <#
 .SYNOPSIS
-  Checks every $pollEvery seconds for up to $WaitMinutes (both set by the main file); a progress line a minute.
+  Checks every $pollEvery seconds for up to $WaitMinutes (both set by the main file); a NOW line a minute.
 .DESCRIPTION
   A failed check is retried; 3 failures in a row stop the part (the error goes to the caller). This one differs from the
   shared Wait-Until of T18 and T24 (scripts/gov/src/wait-common.ps1): it takes its poll time from -PollSeconds, so the tests
-  can wait 1 second, and it prints one progress line a minute.
+  can wait 1 second, and it prints one NOW line a minute.
 .PARAMETER Done
   The check: a script block that returns $true when the wait is over.
 .PARAMETER What
@@ -103,13 +106,13 @@ function Wait-Until([scriptblock]$Done, [string]$What) {
     catch {
       $misses++
       if ($misses -ge 3) { throw }
-      Write-Host ('  A check failed (' + $misses + ' of 3 allowed in a row); trying again ...')
+      Write-Now ('Checking again (a check failed, ' + $misses + ' of 3 allowed in a row)')
     }
     if ($isDone) { return $true }
     $now = Get-Date
     if ($now -ge $end) { return $false }
     if ($now -ge $nextNote) {
-      Write-Host ('  Waiting for ' + $What + ' (' + [int]($now - $start).TotalMinutes + ' of ' + $WaitMinutes + ' minutes) ...')
+      Write-Now ('Waiting for ' + $What + ' (' + [int]($now - $start).TotalMinutes + ' of ' + $WaitMinutes + ' minutes)')
       $nextNote = $nextNote.AddMinutes(1)
     }
     Start-Sleep -Seconds $pollEvery
@@ -117,6 +120,8 @@ function Wait-Until([scriptblock]$Done, [string]$What) {
 }
 # The site user number of the author of a row, or 0 when the row has none.
 function Get-AuthorId($Row) { $a = $Row.Item['Author']; if ($a -and $a.LookupId) { return [int]$a.LookupId }; return 0 }
+# The site user number of the person who saved a row last (Modified By), or 0 when the row has none.
+function Get-EditorId($Row) { $a = $Row.Item['Editor']; if ($a -and $a.LookupId) { return [int]$a.LookupId }; return 0 }
 # The site user numbers of the members of one site group.
 function Get-GroupMemberId([int]$GroupId) {
   return @(Get-RestValue ('_api/web/sitegroups/getbyid(' + $GroupId + ')/users?$select=Id&$top=5000') | ForEach-Object { [int]$_.Id })
@@ -140,12 +145,14 @@ function Read-State([string]$Dir) {
   proved by a read before anything is written. Adds the lines ROUTE and ITEM a-rest-read.
 #>
 function Connect-ProbeSite {
+  Write-Now 'Loading PnP.PowerShell'
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
-  Write-Host 'Connecting to the site. If a sign-in window opens, sign in with your CAC.'
+  Write-Now 'Signing in to the site (if a sign-in window opens, sign in with your CAC)'
   $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
   $script:lines.Add('ROUTE web-login PASS')
+  Write-Now 'Reading the lists of the site'
   $siteLists = Get-SiteList
   $script:lines.Add('ITEM a-rest-read INFO lists read from the site=' + $siteLists.Count)
 }

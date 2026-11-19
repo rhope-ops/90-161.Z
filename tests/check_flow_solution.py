@@ -58,8 +58,12 @@ def expr_ok(s, where):
     elif "@{" in s or "@(" in s: bad(f"{where}: '@{{' or '@(' inside a non-expression string")
 
 counts = dict(defs=0, actions=0, columns=0, strings=0)
+# R34 (fallback A, the PFM 18 Nov 26): the T21 probe flows Health and Button are flows of the solution, on the probe list that the
+# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r8.ps1 and its make module).
+PROBE_DEFS = {"90161Z-T21-probe-health-r6.json", "90161Z-T21-probe-button-r6.json"}
+PROBE_LIST, PROBE_COLS = "90161Z Probe", {"Title", "ProbeTest", "ProbeWay", "ProbeResult", "ProbeDetail"}
 connrefs_declared = set()
-cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r2.zip"
+cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r3.zip"
 zf = zipfile.ZipFile(cz)
 for n in zf.namelist():
     if n.endswith(".xml"): minidom.parseString(zf.read(n))
@@ -80,7 +84,7 @@ for n in zf.namelist():
 
 for src in sorted(B.DEFS.glob("*.json")):
     counts["defs"] += 1
-    if not re.fullmatch(r"90161Z-F\d{2}-[a-z0-9-]+-r\d+", src.stem): bad(f"BAD name {src.name}: use 90161Z-F<NN>-<slug>-r<N>")
+    if not re.fullmatch(r"90161Z-(F\d{2}|T21-probe)-[a-z0-9-]+-r\d+", src.stem): bad(f"BAD name {src.name}: use 90161Z-F<NN>-<slug>-r<N> (or 90161Z-T21-probe-<slug>-r<N>)")
     d = json.loads(src.read_text(encoding="utf-8"))
     if not d.get("triggers") or not d.get("actions"): bad(f"{src.name}: needs a trigger and actions")
     for s in strings(d):
@@ -114,6 +118,11 @@ for src in sorted(B.DEFS.glob("*.json")):
         # R20 finding 1: "Update item" (PatchItem) fails flow activation without item/Title (a required column).
         if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in p:
             bad(f"{src.name} {name}: PatchItem without item/Title (activation fails: R20 finding 1)")
+        if "table" in p and src.name in PROBE_DEFS:   # R34: a probe flow names its list (made by T21 Make), as the r5 health flow did
+            if p["table"] != PROBE_LIST: bad(f"{src.name} {name}: table must be the probe list '{PROBE_LIST}'")
+            for k in p:
+                if k.startswith("item/") and k.split("/")[1] not in PROBE_COLS: bad(f"{src.name} {name}: column '{k}' not in the probe list")
+            continue
         if "table" in p:
             m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
             title = env_list.get(m.group(1)) if m else None
@@ -241,18 +250,44 @@ for z in SLICES:
         for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
             if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
+def check_probe_flows(zz, cust_xml, zname):
+    """R34 (fallback A): the upgrade must need no new connection, so check the probe flows and the whole solution zip.
+
+    Args:
+        zz: the open solution zip.
+        cust_xml: its customizations.xml text.
+        zname: the zip name for the messages.
+    """
+    sp = B.conn_logical("shared_sharepointonline")
+    blob = "\n".join(zz.read(n).decode("utf-8", "replace") for n in zz.namelist())
+    if "shared_flowmanagement" in blob or "Power Automate Management" in blob: bad(f"{zname}: the Power Automate Management connector is in the solution")
+    for n in zz.namelist():
+        if not re.match(r"Workflows/90161ZT21Probe", n): continue
+        w = json.loads(zz.read(n).decode("utf-8"))["properties"]
+        refs = {(k, r["connection"]["connectionReferenceLogicalName"]) for k, r in w["connectionReferences"].items()}
+        if refs != {("shared_sharepointonline", sp)}: bad(f"{zname} {n}: a probe flow must use only the SharePoint reference {sp}: {sorted(refs)}")
+    names = set(re.findall(r'connectionreferencelogicalname="([^"]+)"', cust_xml))
+    if names != {sp, B.conn_logical("shared_office365")}: bad(f"{zname}: connection references {sorted(names)}; an upgrade must add none")
+    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r8.ps1").read_text(encoding="utf-8")
+    bid = B.guid("workflow", "90161Z-T21-probe-button").lower()
+    if f"$ButtonFlowId = '{bid}'" not in look or f'WorkflowId="{{{bid}}}"' not in cust_xml: bad(f"{zname}: the T21 look script does not name the button flow's workflow ID {bid}")
+
+
 # R28: the full solution (R28, PFM 17 Nov 26: "the full solution with every flow On") holds F01 to F06, every flow On (StateCode 1), the
 # same unique name as the slice (so it upgrades it), and every environment variable its flows read.
 with zipfile.ZipFile(cz) as zz:
     c, sol = zz.read("customizations.xml").decode("utf-8"), zz.read("solution.xml").decode("utf-8")
-    if len(re.findall(r'<RootComponent type="29"', sol)) != 6: bad(f"{cz.name}: must hold exactly the six flows F01 to F06")
-    if c.count("<StateCode>1</StateCode>") != 6 or "<StateCode>0</StateCode>" in c: bad(f"{cz.name}: every flow must import On")
+    if len(re.findall(r'<RootComponent type="29"', sol)) != 8: bad(f"{cz.name}: must hold exactly 8 flows: F01 to F06 and the 2 T21 probe flows (R34)")
+    if c.count("<StateCode>1</StateCode>") != 8 or "<StateCode>0</StateCode>" in c: bad(f"{cz.name}: every flow must import On")
     if "<UniqueName>PFM90161Z</UniqueName>" not in sol: bad(f"{cz.name}: unique name must be PFM90161Z (the slice's), so the import upgrades it")
     flows_in_zip = sorted(re.findall(r"Workflows/90161ZF(\d\d)[A-Za-z0-9]+-", "\n".join(zz.namelist())))
     if flows_in_zip != ["01", "02", "03", "04", "05", "06"]: bad(f"{cz.name}: flows in the zip {flows_in_zip}")
     envs_full = {n.split("/")[1] for n in zz.namelist() if n.startswith("environmentvariabledefinitions/")}
     if envs_full != {s for s, _, _ in B.ENV}: bad(f"{cz.name}: environment variables {sorted(envs_full)} differ from the list in the builder")
-    slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip").read("solution.xml").decode("utf-8")
+    probe_in_zip = sorted(re.findall(r"Workflows/(90161ZT21Probe(?:Health|Button)r\d+)-", "\n".join(zz.namelist())))
+    if probe_in_zip != ["90161ZT21ProbeButtonr6", "90161ZT21ProbeHealthr6"]: bad(f"{cz.name}: probe flows in the zip {probe_in_zip}")
+    check_probe_flows(zz, c, cz.name)
+    slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r7.zip").read("solution.xml").decode("utf-8")
     for wid in re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', slice_sol):
         if f'id="{{{wid}}}"' not in sol: bad(f"{cz.name}: slice flow {wid} is not in the full solution (the import would not upgrade it)")
 
@@ -296,10 +331,60 @@ for src in r27_defs:
 # (it reads Action Type, Process Step and Action Status only).
 f04 = next(s for s in r27_defs if "-F04-" in s.name).read_text(encoding="utf-8")
 if "Test_mode" not in f04 or "parameters('Alert e-mail (pfm_AlertEmail)'), triggerBody()?['text']" not in f04: bad("F04: test mode must send to the alert address")
+# F04 r3 (R32 finding 9): each head sits over its column (heads and cells share one alignment) and the Number column shows the
+# number (the row's own, else its Product Index row's) or a dash.
+f04_try = json.loads(f04)["actions"]["Try"]["actions"]["For_each_process_step"]["actions"]["If_any_actions"]["actions"]
+f04_html = f04_try["Append_stage_section"]["inputs"]["value"]
+th, td = re.findall(r"'<th style=\\?\"([^\"\\]+)\\?\">'", f04_html), re.findall(r"'<td style=\\?\"([^\"\\]+)\\?\">'", f04_html)
+if not (th and td and th == td and "text-align:left" in th[0]): bad(f"F04: heads and cells must share one alignment: th {th} td {td}")
+if "replace(replace(body('Create_HTML_table'), '<th>'" not in f04_html: bad("F04: the table heads and cells are not styled")
+num = f04_try["Create_HTML_table"]["inputs"]["columns"][0]
+if num["header"] != "Number" or "'-'" not in num["value"] or "PublicationNumber" not in num["value"] or "['Product']?['Value']" not in num["value"]: bad(f"F04: the Number column must show the number or a dash: {num}")
 f01 = json.loads(next(s for s in r27_defs if "-F01-" in s.name).read_text(encoding="utf-8"))
 f01_state = json.dumps(f01["actions"]["Try"]["actions"]["Current_state"]["inputs"])
 if sorted(re.findall(r"\['(\w+)'\]", f01_state)) != sorted(["ActionType", "ProcessStep", "ActionStatus", "Value", "Value", "Value"]): bad(f"F01: the logged state must read exactly Action Type, Process Step and Action Status: {f01_state}")
 if "Own_log_rows" not in f01["actions"]["Try"]["actions"]: bad("F01: the last logged state must come from rows this flow wrote (Own_log_rows)")
+# R34 (PFM 19 Nov 26, F3 C): F01 and F05 check PFM Publications every 15 minutes (was every minute), in the def and in the zip;
+# the other flows keep their triggers.
+f05_src = next(s for s in r27_defs if "-F05-" in s.name)
+f05 = json.loads(f05_src.read_text(encoding="utf-8"))
+for name, d in (("F01", f01), ("F05", f05)):
+    trig = d["triggers"]["When_an_item_is_created_or_modified"]
+    if trig["recurrence"] != {"frequency": "Minute", "interval": 15}: bad(f"{name}: the trigger must check every 15 minutes (F3 C): {trig['recurrence']}")
+    if trig["inputs"]["parameters"]["table"] != "@parameters('List PFM Publications (pfm_ListPublications)')": bad(f"{name}: the trigger must watch PFM Publications")
+with zipfile.ZipFile(cz) as zz:
+    for n in zz.namelist():
+        m = re.match(r"Workflows/90161ZF(0[15])", n)
+        if m:
+            rec = json.loads(zz.read(n).decode("utf-8"))["properties"]["definition"]["triggers"]["When_an_item_is_created_or_modified"]["recurrence"]
+            if rec != {"frequency": "Minute", "interval": 15}: bad(f"{cz.name} {n}: F{m.group(1)} must check every 15 minutes (F3 C): {rec}")
+# R34 (PFM 19 Nov 26, F1 A; DAFMAN 90-161 5.1.7: a wing GM requires local legal review, stages 1-3 then 7-11): F05 adds the missing
+# Legal rows whenever it sees an open action at step 7, whatever path brought it there, and only for offices with no Legal row yet
+# (check before create, so a second entry to step 7 or a second run adds none; a title cut at 250 characters still counts).
+f05_open = f05["actions"]["Try"]["actions"]["If_action_open"]
+f05_cond = json.dumps(f05_open["expression"])
+if "ProcessStep" not in f05_cond or "'On Hold', 'Cancelled', 'Complete'" not in f05_cond: bad("F05: the step rules must run only for an open action with a process step")
+s7 = f05_open["actions"].get("If_step_7", {})
+if s7.get("expression") != {"equals": ["@body('Get_process_step')?['StepNumber']", 7]}: bad(f"F05: If_step_7 must test StepNumber 7: {s7.get('expression')}")
+if set(s7.get("runAfter", {}).get("If_step_6", [])) != {"Succeeded", "Skipped"}: bad("F05: If_step_7 must run after If_step_6 whether it ran or was skipped")
+if "5.1.7" not in s7.get("description", "") or "5.1.7" not in f05["description"]: bad("F05: the step-7 rule must cite DAFMAN 90-161 5.1.7")
+s7_acts = s7.get("actions", {})
+if s7_acts.get("Get_legal_offices_at_step_7", {}).get("inputs", {}).get("parameters", {}).get("$filter") != "CoordinateLast eq 1 and IsActive eq 1": bad("F05: step 7 must read the active CoordinateLast (Legal) offices")
+if s7_acts.get("Create_legal_rows_at_step_7", {}).get("foreach") != "@body('Missing_legal_offices_at_step_7')": bad("F05: step 7 must create rows only for the missing offices")
+legal_rows = f05_open["actions"]["Legal_rows"]["inputs"]
+if legal_rows != {"from": "@body('Get_endorsement_rows')?['value']", "where": "@equals(item()?['CoordinationStage']?['Value'], 'Legal')"}: bad(f"F05: Legal_rows must be every Legal row of the action: {legal_rows}")
+if f05_open["actions"]["Get_endorsement_rows"]["inputs"]["parameters"].get("$filter") != "@concat('Publication/Id eq ', string(triggerBody()?['ID']))": bad("F05: the endorsement rows must be read for this action in this run")
+exists = ("contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|'))",
+          "contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|'))")
+legal6 = f05_open["actions"]["If_step_6"]["actions"]["If_formal_rows_added"]["else"]["actions"]["If_ready_for_Legal"]["actions"]["Missing_legal_offices"]
+for qn, q in (("Missing_legal_offices", legal6), ("Missing_legal_offices_at_step_7", s7_acts.get("Missing_legal_offices_at_step_7", {}))):
+    w = q.get("inputs", {}).get("where", "")
+    if not (w.startswith("@not(or(") and all(e in w for e in exists)): bad(f"F05 {qn}: an office counts as done when a Legal row ends with ' - <office>' or has the full title: {w}")
+for b in ("Create_row_with_endorser_Legal_7", "Create_row_without_endorser_Legal_7"):
+    br = s7_acts["Create_legal_rows_at_step_7"]["actions"]["If_office_has_endorser_Legal_7"]
+    p = (br["actions"].get(b) or br["else"]["actions"].get(b))["inputs"]["parameters"]
+    if p.get("item/CoordinationStage/Value") != "Legal" or "take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_legal_rows_at_step_7')?['Title'], '')), 250)" not in p.get("item/Title", ""):
+        bad(f"F05 {b}: a Legal row must have the title the exists check reads")
 
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
@@ -381,4 +466,4 @@ for zname, (nwf, ncr) in T21_EXPECT.items():
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
-print(f"PASS flow solution: t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")
+print(f"PASS flow solution: flows_in_r3=8 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")

@@ -28,7 +28,7 @@ Service accounts are not available in practice (PFM, 12 Nov). Flows run on the P
 
 | Group | Made by | Members | Rights |
 |---|---|---|---|
-| PFM Office (SharePoint group) | Setup | PFM, Alternate PFM, Acting PFM, people who work the org box | Edit on every PFM list and the 90-161.Z library; only group with edit on config lists (P2A) |
+| PFM Office (SharePoint group) | Setup (T20 r2 makes it when missing) | PFM, Alternate PFM, Acting PFM, people who work the org box | The level "PFM Office Edit All Items" on the site: Edit plus Override List Behaviors, so its members edit every row (PFM F2 A, 2026-11-19; docs/power-automate-provisioning.md section 4); the 90-161.Z library; only group with edit on config lists (P2A) |
 | Wing access group (existing; type per P6) | Exists | All wing members | Read on all lists; create and edit own rows on PFM Publications and PFM Endorsements (10A); read on Published |
 | Site Owners (existing) | Exists | Site owners | Unchanged; not used by the app |
 

@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F04 Status Report r2",
-  "description": "Run on demand. E-mails the person named at run time an HTML table of PFM Publications actions grouped by Process Step (DECISIONS 2026-11-11: status report to anyone at any time; DAFMAN 90-161 2.6.8). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused and Test mode read from PFM Settings; in test mode the report goes to the alert address only and the body names the intended recipient; failure e-mail to the alert address.",
+  "displayName": "90161Z F04 Status Report r3",
+  "description": "Run on demand. E-mails the person named at run time an HTML table of PFM Publications actions grouped by Process Step (DECISIONS 2026-11-11: status report to anyone at any time; DAFMAN 90-161 2.6.8). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused and Test mode read from PFM Settings; in test mode the report goes to the alert address only and the body names the intended recipient; failure e-mail to the alert address. r3 (R34, R32 finding 9): each column head is left-aligned like its cells (the heads were centered over left-aligned cells), and the Number column shows the publication number (the row's own Publication Number, else the number of its Product Index row) or a dash when the row has none.",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
@@ -229,7 +229,7 @@
                     "columns": [
                       {
                         "header": "Number",
-                        "value": "@coalesce(item()?['PublicationNumber'], '')"
+                        "value": "@if(empty(item()?['PublicationNumber']), if(empty(item()?['Product']?['Value']), '-', item()?['Product']?['Value']), item()?['PublicationNumber'])"
                       },
                       {
                         "header": "Title",
@@ -259,7 +259,7 @@
                   "type": "AppendToStringVariable",
                   "inputs": {
                     "name": "ReportHtml",
-                    "value": "@concat('<h3>Step ', string(items('For_each_process_step')?['StepNumber']), ': ', coalesce(items('For_each_process_step')?['Title'], ''), ' (', string(length(body('Actions_at_this_step'))), ')</h3>', body('Create_HTML_table'))"
+                    "value": "@concat('<h3>Step ', string(items('For_each_process_step')?['StepNumber']), ': ', coalesce(items('For_each_process_step')?['Title'], ''), ' (', string(length(body('Actions_at_this_step'))), ')</h3>', replace(replace(body('Create_HTML_table'), '<th>', '<th style=\"text-align:left\">'), '<td>', '<td style=\"text-align:left\">'))"
                   }
                 }
               },

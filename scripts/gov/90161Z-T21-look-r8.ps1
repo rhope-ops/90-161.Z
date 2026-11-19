@@ -1,20 +1,26 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r6, module "look": the parts Form (a header on the list form) and View (a list view with a
-  button that starts the hand-made flow). The part Look runs both.
+  90-161.Z Task 21 probe r8, module "look": the parts Form (a header on the list form) and View (a list view with a
+  button that starts the button flow "90161Z T21 Probe Button r6" of the solution "90-161.Z flows"). The part Look runs
+  both.
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r6.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
-  Inputs: the values the main file sets ($dir, $ListTitle, $ListFolder, $ViewTitle, $HeaderText, $ButtonIdName) and the
-  helpers of the module "common"; View reads the flow ID file that the Export part saved. Outputs: result lines through
-  Add-Item and Add-Test (FORM, VIEW).
+  Loaded by 90161Z-T21-probe-r8.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Inputs: the values the main file sets ($ListTitle, $ListFolder, $ViewTitle, $HeaderText) and the helpers of the module
+  "common"; View takes the button flow's ID from the button-flow-id block below, which scripts/build_flow_solution.py
+  writes at build time (the flow's workflow ID in the solution, the same on every build; R34: no export file). Outputs:
+  result lines through Add-Item and Add-Test (FORM, VIEW).
   R29a finding 6: the round skipped the look at the form because one step held both tests and the view failed. With Form
   and View as separate parts, the round can run the look at the form after Form alone.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection (CSOM, then REST).
   Writes: Form: the form formatting (ClientFormCustomFormatter) of the probe list's content type. View: the view
           "ProbeButton" on the probe list and its formatting (CustomFormatter). Nothing on this computer.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r6.ps1 -Part Form, View or Look loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r8.ps1 -Part Form, View or Look loads it.
 #>
+
+# >>> button-flow-id: generated from flow/solution/defs/90161Z-T21-probe-button-r6.json by scripts/build_flow_solution.py (do not edit)
+$ButtonFlowId = 'ce93ba66-4985-5431-bec3-5f371af52372'
+# <<< button-flow-id
 
 <#
 .SYNOPSIS
@@ -57,6 +63,7 @@ function Send-Formatter([string]$Kind, [string]$Json, [string]$ListId, [string]$
 
 # Finds the probe list or stops the part (Form and View need it).
 function Get-ProbeListOrStop {
+  Write-Now 'Looking for the probe list'
   $lst = Find-ByFolder $ListFolder
   if (-not $lst) { throw 'LIST not found: run -Part Make first.' }
   return $lst
@@ -76,6 +83,7 @@ function Invoke-FormPart {
   if (-not $ctId) { Add-Item 'l1-form' 'FAIL' 'no content type found on the list' }
   else {
     $hdr = [ordered]@{ headerJSONFormatter = [ordered]@{ elmType = 'div'; style = [ordered]@{ padding = '12px'; 'font-size' = '18px'; 'font-weight' = '600' }; txtContent = $HeaderText } }
+    Write-Now 'Setting the header on the list form and reading it back'
     $route = Send-Formatter 'form' ($hdr | ConvertTo-Json -Depth 8 -Compress) ([string]$lst.Id) $ctId
     try {
       $raw = Invoke-Rest 'Get' ($lbase + "/contenttypes('" + $ctId + "')?" + '$select=ClientFormCustomFormatter') ''
@@ -89,11 +97,9 @@ function Invoke-FormPart {
   Add-Test 'FORM' @($summary + '; what the form shows is left to your answers') $formPass
 }
 
-# The button flow's ID saved by the Export part on this computer (lower case), or '' when there is none.
-function Read-ButtonFlowId {
-  $bf = Join-Path $script:dir $ButtonIdName
-  if (-not (Test-Path -LiteralPath $bf -PathType Leaf)) { return '' }
-  $bt = ([string](Get-Content -LiteralPath $bf -TotalCount 1)).Trim()
+# The button flow's ID from the button-flow-id block (lower case), or '' when the block holds no ID.
+function Get-ButtonFlowId {
+  $bt = ([string]$ButtonFlowId).Trim()
   if ($bt -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') { return $bt.ToLowerInvariant() }
   return ''
 }
@@ -111,7 +117,7 @@ function Get-ButtonView([string]$ListBase) {
   try { $vs = @(Get-RestValue ($ListBase + '/views?$select=Id,Title') | Where-Object { [string]$_.Title -eq $ViewTitle }); if ($vs.Count) { $viewId = [string]$vs[0].Id } } catch { $viewId = '' }
   $viewMade = 0
   if (-not $viewId) {
-    Write-Host ('  Making the view ' + $ViewTitle + ' ...')
+    Write-Now ('Making the view ' + $ViewTitle)
     $null = Add-PnPView -List $ListTitle -Title $ViewTitle -Fields @('Title', 'ProbeTest', 'ProbeResult') -ErrorAction Stop
     $viewMade++
     $vs = @(Get-RestValue ($ListBase + '/views?$select=Id,Title') | Where-Object { [string]$_.Title -eq $ViewTitle }); if ($vs.Count) { $viewId = [string]$vs[0].Id }
@@ -122,15 +128,16 @@ function Get-ButtonView([string]$ListBase) {
 <#
 .SYNOPSIS
   The part View (b): a view with a button that starts the button flow (customRowAction executeFlow with the ID of the
-  hand-made flow, saved by the Export part), read back from the view. Adds the ITEM line l2-view and the test VIEW.
+  flow "90161Z T21 Probe Button r6" from the button-flow-id block), read back from the view. Adds the ITEM line l2-view and
+  the test VIEW.
 #>
 function Invoke-ViewPart {
   $lst = Get-ProbeListOrStop
   $lbase = "_api/web/lists(guid'" + $lst.Id + "')"
-  $btnId = Read-ButtonFlowId
+  $btnId = Get-ButtonFlowId
   if (-not $btnId) {
-    Add-Item 'l2-view' 'FAIL' 'no button flow ID on this computer: the Export part did not read a hand-made flow, so the view was not made'
-    Add-Test 'VIEW' @('b a view formatted by script with a button that starts a flow=FAIL (flow ID known to the script=no; run the export step first)') $false
+    Add-Item 'l2-view' 'FAIL' 'no button flow ID in the look module (its button-flow-id block is empty), so the view was not made'
+    Add-Test 'VIEW' @('b a view formatted by script with a button that starts a flow=FAIL (flow ID known to the script=no; the build left no ID)') $false
     return
   }
   $view = Get-ButtonView $lbase
@@ -142,6 +149,7 @@ function Invoke-ViewPart {
       rowFormatter = [ordered]@{ elmType = 'div'; style = [ordered]@{ display = 'flex'; 'align-items' = 'center'; padding = '4px' }
         children = @([ordered]@{ elmType = 'span'; style = [ordered]@{ flex = '1' }; txtContent = '[$Title]' },
           [ordered]@{ elmType = 'button'; txtContent = 'Run the test flow'; customRowAction = [ordered]@{ action = 'executeFlow'; actionParams = $params } }) } }
+    Write-Now 'Setting the button on the view and reading it back'
     $vroute = Send-Formatter 'view' ($fmt | ConvertTo-Json -Depth 10 -Compress) ([string]$lst.Id) $view.Id
     try {
       $raw = Invoke-Rest 'Get' ($lbase + "/views(guid'" + $view.Id + "')?" + '$select=CustomFormatter') ''
