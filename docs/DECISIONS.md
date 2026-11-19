@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | RADE lock moves to release engine-v19 (RADE 430de3c, serial 15) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Kit 3.2.0 by sync (kit commit 18896fc in `.check.lock`; kit pull request 62; no v3.2.0 tag yet, so synced from the merge commit; the kit 3.2.0 plan the owner approved on 2026-11-18): no rule text. `check_settings.py --migrate` renewed the kit header block of `.check` (comment lines only: the `content-max-bytes` help line is added, and the last header line names the PFM, as this repo's copy of the kit does; no setting changed); new optional setting `audit-duplicate-ignore`; kit-only docs and wording fixes. | PFM | - |
 | 2026-11-19 | Kit 3.1.0 by sync (88185f0, tag v3.1.0): an optional `content-max-bytes` setting for the content check; no rule text. Kit plan 2026-11-19. | PFM | - |
 | 2026-11-18 | B6 wins over the 17 Nov "one Done button" rule on look steps (steps with questions; doneText 30 characters or fewer); tests/check_guide_text.py changed at the PFM's request. | PFM | docs/reviews/2026-11-17-runner-polish.md |

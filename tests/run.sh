@@ -382,9 +382,7 @@ print('ok changed, serial %s = main + 1, on top of main lock commit %s' % (want,
 PYEOF
 )
 [ "${lb%% *}" = "ok" ] && ok "RADE lock bump (${lb#ok })" || bad "RADE lock bump: ${lb#FAIL }"
-# Bundle size limit (PFM 14 Nov 26, raised with the function-complete engine): 600 KB = 614,400 bytes.
-big=0; for b in scripts/gov/paste/*.ps1; do s=$(wc -c < "$b"); [ "$s" -le 614400 ] || { echo "  $b bytes=$s"; big=$((big+1)); }; done
-[ "$big" -eq 0 ] && ok "paste bundles at most 600 KB" || bad "paste bundles over 600 KB: $big"
+# No bundle size limit (the PFM, 2026-11-19; was 600 KB): R32 and R33 find the largest paste that works.
 # T16 r12 -LogoOnly (R29, PFM 17 Nov 26 logo places 1A): items a, b, d, e and f sit inside "if ($connected -and -not $LogoOnly)",
 # only c-logo runs outside it, and the logo item uses read-only PnP calls (no Set-, Add-, New-, Remove- or Invoke-).
 python3 - <<'PYT16' && ok "T16 r12 -LogoOnly runs only the read-only logo check" || bad "T16 r12 -LogoOnly runs more than the read-only logo check"

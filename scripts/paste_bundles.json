@@ -24,9 +24,9 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R31a-round-r1.ps1",
+      "out": "scripts/gov/paste/90161Z-R31a-round-r2.ps1",
       "round": "R31a",
-      "title": "Round R31a r1: the flow steps a third time (health flow, button flow and export reader, view button, full flows and the full flow test), with clearer cards",
+      "title": "Round R31a r2: the flow steps a third time (health flow, button flow and export reader, view button, full flows and the full flow test), with clearer cards",
       "files": [
         {
           "dir": "T17",
@@ -1877,9 +1877,9 @@
       ]
     },
     {
-      "out": "scripts/gov/paste/90161Z-R31b-round-r1.ps1",
+      "out": "scripts/gov/paste/90161Z-R31b-round-r2.ps1",
       "round": "R31b",
-      "title": "Round R31b r1: the 90-161.Z window r5 (logo and title, high contrast, 2 look checks in the window, a picture of each card), then the look questions",
+      "title": "Round R31b r2: the 90-161.Z window r5 (logo and title, high contrast, 2 look checks in the window, a picture of each card), then the look questions",
       "files": [
         {
           "dir": "T22",

@@ -45,7 +45,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 11. Do each step the window shows, until the log says DONE.
 12. At DONE, select Send in the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R31a-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R31a-round-r2.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R31a PASSED" or "90161Z R31a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error".
@@ -71,7 +71,7 @@ https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/9016
 13. Answer the 3 questions in the RADE window.
 14. At DONE, select Send in the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R31b-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R31b-round-r2.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R31b PASSED" or "90161Z R31b NEEDS REVIEW", every file in the results folder attached, the 17 pictures too). Then tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If the 90-161.Z window does not open, send the results as they are.
