@@ -1,19 +1,19 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r7, module "person": the parts Person (the second person for test T4) and Clean (removes the
+  90-161.Z Task 21 probe r8, module "person": the parts Person (the second person for test T4) and Clean (removes the
   person, the list and the library again).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r7.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r8.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($site, $dir, $StateName, $ListTitle, $ListFolder, $LibTitle, $LibFolder,
   $TestDir, $NoLaunch) and the helpers of the module "common". Outputs: result lines through Add-Item.
   The second person's e-mail address is read in a small window and used in memory only: it is never written to a file,
   a result line or an output stream (tests/ps/Test-T21.ps1 checks this text).
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: Person: adds one person to the site's Visitors group; on this computer the state file (3 numbers or flags) and
-          the clipboard (the new row form link). Clean: removes that person from the group again, moves the probe list
+          the clipboard (the new row form link). Clean: removes that person from Visitors and PFM Office again, moves the probe list
           and library to the site Recycle Bin, deletes the state file.
   Credentials: none of its own (the main file signs in); no password is asked for.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r7.ps1 -Part Person (or Clean) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r8.ps1 -Part Person (or Clean) loads it.
 #>
 
 function Read-PersonAddress {
@@ -176,12 +176,14 @@ function Clear-SecondPerson {
 
 <#
 .SYNOPSIS
-  The part Clean: runs each step on its own, even if an earlier one failed. First the person, then the two objects (found
+  The part Clean: runs each step on its own, even if an earlier one failed. First the person (Visitors, then PFM Office:
+  module "office"), then the two objects (found
   by their folder name), to the site Recycle Bin (restorable for 93 days). The probe flows stay in the solution.
 #>
 function Invoke-CleanPart {
   Write-Now 'Looking for a second person on file'
   Clear-SecondPerson
+  Clear-OfficeMember
   foreach ($o in @(@('c2-list', $ListTitle, $ListFolder), @('c3-library', $LibTitle, $LibFolder))) {
     try {
       $x = Find-ByFolder $o[2]
