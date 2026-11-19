@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F05 Endorsement Routing r3",
-  "description": "When a PFM Publications row is at process step 6 (Formal coordination) and its Action Status is not On Hold, Cancelled or Complete: adds a Formal Coordination row for each active mandatory office that has none; when every other coordinator has answered and all comments are adjudicated, adds the missing Legal rows and moves the step to 7. At step 7 it adds missing Legal rows. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 3.4, 5.1, 5.1.8.2; PFM S5A and 14 Nov 26. Reads Flows paused and Test mode once at the start from PFM Settings rows (missing or empty: No and Yes).",
+  "displayName": "90161Z F05 Endorsement Routing r4",
+  "description": "When a PFM Publications row is at process step 6 (Formal coordination) and its Action Status is not On Hold, Cancelled or Complete: adds a Formal Coordination row for each active mandatory office that has none; when every other coordinator has answered and all comments are adjudicated, adds the missing Legal rows and moves the step to 7. Whenever it sees an action at step 7, by any path (its own move from step 6, a hand move, a Guidance Memorandum that goes from step 3 to step 7, or a row made at step 7), it adds the Legal rows that are missing (DAFMAN 90-161 5.1.7: a wing GM requires local legal review; PFM 19 Nov 26, F1 A); an office that has a Legal row already gets none, so a second entry or a second run adds nothing. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 3.4, 5.1, 5.1.7, 5.1.8.2; PFM S5A and 14 Nov 26. Reads Flows paused and Test mode once at the start from PFM Settings rows (missing or empty: No and Yes). r4 (R34): the trigger checks PFM Publications every 15 minutes (was every minute; PFM 19 Nov 26, F3 C); a Legal row counts as existing when its title ends with ' - <office>' or equals the full row title this flow writes (a long publication title is cut at 250 characters, which cut the office name off in r3 and made a second row).",
   "workflowKey": "90161Z-F05-endorsement-routing-r1",
   "connections": [
     "shared_sharepointonline",
@@ -11,7 +11,7 @@
       "type": "OpenApiConnection",
       "recurrence": {
         "frequency": "Minute",
-        "interval": 1
+        "interval": 15
       },
       "splitOn": "@triggerOutputs()?['body/value']",
       "inputs": {
@@ -553,7 +553,7 @@
                             "type": "Query",
                             "inputs": {
                               "from": "@body('Get_legal_offices')?['value']",
-                              "where": "@not(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')))"
+                              "where": "@not(or(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')), contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|'))))"
                             }
                           },
                           "Create_legal_rows": {
@@ -762,7 +762,7 @@
                   "type": "Query",
                   "inputs": {
                     "from": "@body('Get_legal_offices_at_step_7')?['value']",
-                    "where": "@not(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')))"
+                    "where": "@not(or(contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|')), contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|'))))"
                   }
                 },
                 "Create_legal_rows_at_step_7": {
@@ -876,7 +876,7 @@
                           "item/Publication/Id": "@triggerBody()?['ID']",
                           "item/EventType/Value": "Endorsement Requested",
                           "item/EventBy/Claims": "@triggerBody()?['Editor']?['Claims']",
-                          "item/EventDetails": "@concat('Legal rows added at step 7 for offices that had none: ', string(length(body('Missing_legal_offices_at_step_7'))), '. DAFMAN 90-161 5.1.8.2.')"
+                          "item/EventDetails": "@concat('Legal rows added at step 7 for offices that had none: ', string(length(body('Missing_legal_offices_at_step_7'))), '. DAFMAN 90-161 5.1.7, 5.1.8.2.')"
                         },
                         "authentication": "@parameters('$authentication')"
                       }
@@ -889,7 +889,8 @@
               },
               "else": {
                 "actions": {}
-              }
+              },
+              "description": "F1 A (PFM 19 Nov 26): an action at step 7 gets the Legal rows it lacks, whatever path brought it there (DAFMAN 90-161 5.1.7: GMs at the wing level require local legal review; 5.1.8.2: the servicing legal office gives the legal review). Check before create: Missing_legal_offices_at_step_7 keeps only the offices with no Legal row yet, read at the start of this run."
             }
           },
           "else": {

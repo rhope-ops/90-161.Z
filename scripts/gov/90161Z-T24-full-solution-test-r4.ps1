@@ -1,24 +1,25 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 24 full-solution test, r3. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
-  WHAT R3 CHANGES (R34): the script prints lines that start with NOW before each step that takes time (sign-in, each
-  list read or write, each wait). They say what it is doing and are not results; the checks, the result lines, the exit
-  behavior and the file names are the same as r2 (the result and state files keep their r1 names).
-  r2 text follows.
-  WHAT R2 CHANGES (R30, code standard S1): Wait-Until now comes from the shared block scripts/gov/src/wait-common.ps1 (the
-  same code as r1, also used by T18); the header names what the script reaches, writes and asks for; long lines are
-  wrapped and each function has its comment. The checks, the result lines and the file names are the same as r1 (the
-  result and state files keep their r1 names, so a part of r2 finds the state that a part of r1 saved).
-  r1 (R28, PFM 17 Nov 26): imports are done by hand; this script tests F01, F02 and F04 of the full flow solution and
-  checks that all 6 flows are On.
+  90-161.Z Task 24 full-solution test, r4. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  WHAT R4 CHANGES (R34, PFM 19 Nov 26): F01 r3 and F05 r4 check PFM Publications every 15 minutes (F3 C), so part 1 makes
+  its fake publications together and changes them together: one wait (up to -PollMinutes, 17) for the first check, one
+  for the next check, then 2 minutes for extra rows. F01 is tested on 4 fake publications (open, note, Action Type,
+  Process Step, Action Status), and F05 r4 on 2 more (F1 A, DAFMAN 90-161 5.1.7): one made at step 7 and one moved by
+  hand from step 3 to step 7, as a Guidance Memorandum goes; each gets its Legal rows once, and a second run at step 7
+  adds none. Part 4 removes them with the other fake rows. The result and state files keep their r1 names, so a part of
+  r4 finds the state that an earlier part saved. Earlier: r3 (R34) printed the NOW lines (what it is doing; not results);
+  r2 (R30) took Wait-Until from scripts/gov/src/wait-common.ps1; r1 (R28, PFM 17 Nov 26) tested F01, F02, F04 and On.
 .DESCRIPTION
   What it is for: proves on the test site that F01 (activity log), F02 (next review due and periodic review task) and F04 (status report e-mail)
   work, and that the full solution imported with every flow On. It runs in 3 parts with hand steps between them (round guide).
-  Part 1 (about 15 minutes, an estimate):
+  Part 1 (about 35 minutes, an estimate; most of it is waiting for the 15-minute flow checks):
     0. Writes the PFM Settings rows Flows paused = No and Test mode = Yes (their old values are kept in a state file and put back in part 4).
     a. Reads your own flows in Power Automate and counts the 6 flows F01 to F06 that are On (one try; if it cannot be read, a hand check line).
-    1. F01 (no DAFMAN paragraph; PFM design): makes one fake publication and changes it one step at a time: the row is opened (1 log row),
-       a note is edited (no log row), Action Type, Process Step and Action Status are changed (1 log row each). Total 4 log rows.
+    1. F01 (no DAFMAN paragraph; PFM design) and F05 (DAFMAN 90-161 5.1.7, 5.1.8.2): makes 6 fake publications at once: X, X type,
+       X step and X status at the first step of the list, G at step 3 and S at step 7. After the first flow check: each has 1 log row
+       (opened) and S has 1 Legal row per active office with Coordinate Last = Yes. Then at once: a note on X and on S, a new Action
+       Type on X type, Process Step on X step, Action Status on X status, and G moved by hand to step 7. After the next check: 1 more
+       log row each for X type, X step and X status, none for X (a note), G has its Legal rows and S has no second Legal row.
     2. F02 (DAFMAN 90-161 7.4.2 and 7.4.4): makes 4 fake Product Index rows (A: Certified Current Date is later, a wrong Next Review Due;
        B: Effective Date is later, the review window not open yet; C: like A with a periodic review already open; D: Inactive) and 1 review row.
     3. F04 (DAFMAN 90-161 2.6.8): makes 2 fake publications at 2 process steps and notes the newest status-report log row.
@@ -29,7 +30,7 @@
   Part 4 (Clean, about 3 minutes, an estimate; R28 review): moves every fake row to the site Recycle Bin (restorable for 93 days) and puts the
     PFM Settings rows back to their old values. The round runs it with no dependence on the earlier parts, so a failed or skipped part cannot
     leave the Settings changed or the fake rows on the site. It can run again: with no state file it reports that there is nothing to clean.
-  WHAT IT CHANGES ON THE SITE: the fake rows (publications, product index rows, review rows and the log rows the flows write for them), two
+  WHAT IT CHANGES ON THE SITE: the fake rows (publications, product index rows, review rows, and the log and Legal rows the flows write for them), two
   PFM Settings rows (put back in part 4). With Test mode = Yes the F04 e-mail goes to the alert address only.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this computer; every output
   line shows it as <SITE> and the DODID as <DODID>.
@@ -39,13 +40,20 @@
   Writes: the site rows listed under WHAT IT CHANGES ON THE SITE; on this computer the T24 folder (result files, the state
           file) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r3.ps1 -Part 1 (RADE does this).
-  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1, 2, 3 or 4, -WaitMinutes (default 6), -NoPause.
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r4.ps1 -Part 1 (RADE does this).
+  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1, 2, 3 or 4, -WaitMinutes (default 6: a
+  flow you start with Run), -PollMinutes (default 17: a flow check every 15 minutes plus 2 minutes for the run), -NoPause.
 #>
-param([string]$Id, [ValidateSet(1, 2, 3, 4)][int]$Part = 1, [int]$WaitMinutes = 6, [switch]$NoPause)
+param([string]$Id, [ValidateSet(1, 2, 3, 4)][int]$Part = 1, [int]$WaitMinutes = 6, [int]$PollMinutes = 17, [switch]$NoPause)
 $task = 'T24'
 $Prefix = '90161Z TEST R28 '
 $TitleX = $Prefix + 'X (delete me)'
+# R34 (F3 C): one fake publication per F01 change, so all changes wait for the same flow check; G and S test F05 r4 (F1 A).
+$TitleXT = $Prefix + 'X type (delete me)'
+$TitleXS = $Prefix + 'X step (delete me)'
+$TitleXA = $Prefix + 'X status (delete me)'
+$TitleG7 = $Prefix + 'F05 G step 3 to 7 (delete me)'
+$TitleS7 = $Prefix + 'F05 S made at 7 (delete me)'
 $TitleF4A = $Prefix + 'F04 A (delete me)'
 $TitleF4B = $Prefix + 'F04 B (delete me)'
 # Seed values of the two PFM Settings rows this test writes (schemas/lists/PFMSettings.json). Part 4 puts the old values back (these when a row was missing).
@@ -180,6 +188,18 @@ function Get-OwnLogRow([int]$PubId) {
   return @(Get-RowsFor 'PFM Activity Log' 'Publication' $PubId | Where-Object { ([string]$_['Title']).StartsWith('Action opened: ') -or ([string]$_['Title']).StartsWith('Action updated: ') } |
       Sort-Object Id)
 }
+function Get-LegalRow([int]$PubId) {
+  # The Legal rows of a publication in PFM Endorsements (F05 writes them at step 7; DAFMAN 90-161 5.1.7, 5.1.8.2).
+  return @(Get-RowsFor 'PFM Endorsements' 'Publication' $PubId | Where-Object { [string]$_['CoordinationStage'] -eq 'Legal' })
+}
+function Test-LegalOnce([int]$PubId, [string[]]$Office) {
+  # Exactly 1 Legal row per office in $Office (titles of the active Coordinate Last offices; F05 r4 titles a row "... - <office>")
+  # and no other Legal row: returns 'once', else the counts for the result line.
+  $rows = @(Get-LegalRow $PubId)
+  $per = @($Office | ForEach-Object { $o = $_; @($rows | Where-Object { ([string]$_['Title']).EndsWith(' - ' + $o) }).Count })
+  if ($Office.Count -gt 0 -and $rows.Count -eq $Office.Count -and @($per | Where-Object { $_ -ne 1 }).Count -eq 0) { return 'once' }
+  return ('Legal rows=' + $rows.Count + ' expected=' + $Office.Count + ' (1 per office; per office: ' + ($per -join ',') + ')')
+}
 function Get-LocalDate($Value) {
   # The date part of the UTC value: the first 10 characters of the stored value, as the flows read a date-only column (README choice 7). It does not
   # depend on this computer's time zone (a Central date-only value is 05:00 or 06:00 UTC on the same day).
@@ -218,6 +238,13 @@ function Wait-Until([scriptblock]$Done, [string]$What) {
   }
 }
 # <<< wait-common
+function Wait-ForCheck([scriptblock]$Done, [string]$What) {
+  # Wait-Until with -PollMinutes instead of -WaitMinutes (Wait-Until reads $WaitMinutes from its caller): F01 and F05 check PFM
+  # Publications every 15 minutes (PFM 19 Nov 26, F3 C), so a change shows up to 15 minutes later, plus the run itself.
+  $keep = $script:WaitMinutes
+  $script:WaitMinutes = $PollMinutes
+  try { return (Wait-Until $Done $What) } finally { $script:WaitMinutes = $keep }
+}
 function Get-SettingValue([string]$Key) {
   # The value of a PFM Settings row, or $null when the row is missing.
   $rows = @(Get-PnPListItem -List 'PFM Settings' -Fields 'Title', 'SettingValue' -ErrorAction Stop | Where-Object { ([string]$_['Title']).Trim() -eq $Key })
@@ -396,62 +423,75 @@ try {
     foreach ($o in $oldProds) { $moved += Clear-TestProduct $o.Id }
     if ($oldPubs.Count -or $oldProds.Count) { Add-Line 'b-leftovers' 'SET' ('moved ' + $oldPubs.Count + ' earlier test publication(s) and ' + $oldProds.Count +
         ' product row(s) and their rows to the Recycle Bin, rows=' + $moved) }
-    Write-Host 'NOW Reading the process steps.'
-    $steps = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'Title', 'StepNumber' -ErrorAction Stop | Where-Object { [int]$_['StepNumber'] -ne 6 -and [int]$_['StepNumber'] -ne 7 } |
-        Sort-Object { [int]$_['StepNumber'] })
+    Write-Host 'NOW Reading the process steps and the Legal offices.'
+    $all = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'Title', 'StepNumber' -ErrorAction Stop)
+    $steps = @($all | Where-Object { [int]$_['StepNumber'] -ne 6 -and [int]$_['StepNumber'] -ne 7 } | Sort-Object { [int]$_['StepNumber'] })
     if ($steps.Count -lt 3) { throw 'PROCESS STEPS: fewer than 3 steps besides 6 and 7 in PFM Process Steps.' }
     $titles = @($steps | ForEach-Object { [string]$_['Title'] })
+    $step7 = @($all | Where-Object { [int]$_['StepNumber'] -eq 7 })
+    $step3 = @($steps | Where-Object { [int]$_['StepNumber'] -eq 3 }) + @($steps[0])   # a wing GM runs stages 1-3, then 7 (DAFMAN 5.1.7)
+    if (-not $step7.Count) { throw 'PROCESS STEPS: no step 7 (Legal coordination) in PFM Process Steps.' }
+    $legal = @(Get-PnPListItem -List 'PFM Offices' -Fields 'Title', 'CoordinateLast', 'IsActive' -ErrorAction Stop |
+        Where-Object { [bool]$_['CoordinateLast'] -and [bool]$_['IsActive'] } | ForEach-Object { [string]$_['Title'] })
 
-    # 1. F01: one fake publication; 1 row on open, none for a note, 1 row each for Action Type, Process Step and Action Status.
-    Write-Host 'NOW Making 1 fake publication for the F01 test.'
-    $x = Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $TitleX; ActionType = 'New'; ProductType = 'Publication'; ProcessStep = $steps[0].Id
-        ActionStatus = 'On Track' } -ErrorAction Stop
-    $state['x'] = [string]$x.Id
+    # 1. F01 and F05 (R34, F3 C: both check every 15 minutes): all fake publications are made together, so they wait for one check.
+    Write-Host 'NOW Making 6 fake publications: 4 for F01 and 2 for F05.'
+    $make = [ordered]@{ x = @($TitleX, $steps[0].Id); xt = @($TitleXT, $steps[0].Id); xs = @($TitleXS, $steps[0].Id); xa = @($TitleXA, $steps[0].Id)
+      g7 = @($TitleG7, $step3[0].Id); s7 = @($TitleS7, $step7[0].Id) }
+    $pub = @{}
+    foreach ($k in $make.Keys) {
+      $pub[$k] = (Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $make[$k][0]; ActionType = 'New'; ProductType = 'Publication'
+          ProcessStep = $make[$k][1]; ActionStatus = 'On Track' } -ErrorAction Stop).Id
+      $state[$k] = [string]$pub[$k]
+    }
     Save-State $stateFile $state
-    Add-Line 'c-f01-created' 'SET' ('fake publication X made=' + $x.Id + ' (Action Type New, step 1 of the list, On Track)')
-    Write-Host 'NOW Waiting for the log row of the new fake publication.'
-    $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 1 } 'the F01 log row for the new publication'
-    $rows = @(Get-OwnLogRow $x.Id)
+    Add-Line 'c-f01-created' 'SET' ('fake publications made=6 (Action Type New, On Track; 4 at step 1 of the list, G at step 3, S at step 7); Legal offices=' + $legal.Count)
+    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next flow check: F01 logs the 6 new rows, F05 adds the Legal rows of S.')
+    $ok = Wait-ForCheck { @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 1 }).Count -eq 0 -and
+      (Get-LegalRow $pub['s7']).Count -ge $legal.Count } 'the F01 log rows and the F05 Legal rows'
+    $rows = @(Get-OwnLogRow $pub['x'])
     $d0 = $(if ($rows.Count) { [string]$rows[0]['EventDetails'] } else { '' })
-    $good = $ok -and $rows.Count -eq 1 -and $d0.StartsWith('Opened.') -and $d0.Contains('State: New | ' + $titles[0] + ' | On Track') -and ([string]$rows[0]['Title']).StartsWith('Action opened: ')
-    Add-Line 'f01-open' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the row was opened=' + $rows.Count + ' expected=1 (title Action opened, details Opened. and the state)' +
-        $(if ($ok) { '' } else { '. If 0: check that F01 is On and read its run history' }))
-    Write-Host 'NOW Editing a note on the fake publication.'
-    $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ StatusNotes = 'R28 test: a note edit' } -ErrorAction Stop
-    Write-Host 'NOW Waiting 2.5 minutes to see that F01 logs nothing.'
-    Write-Host '  A note was edited; waiting 2.5 minutes to see that F01 logs nothing ...'
-    Start-Sleep -Seconds 150
-    Write-Host 'NOW Changing the Action Type of the fake publication.'
-    $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ ActionType = 'Rewrite' } -ErrorAction Stop
-    Write-Host 'NOW Waiting for the log row of the Action Type change.'
-    $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 2 } 'the F01 log row for the new Action Type'
-    $rows = @(Get-OwnLogRow $x.Id)
-    $d1 = $(if ($rows.Count -ge 2) { [string]$rows[1]['EventDetails'] } else { '' })
-    $good = $ok -and $rows.Count -eq 2 -and $d1.StartsWith('Changed.') -and $d1.Contains('State: Rewrite | ' + $titles[0] + ' | On Track') -and
-        ([string]$rows[1]['Title']).StartsWith('Action updated: ')
-    Add-Line 'f01-type' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the note edit and the Action Type change=' + $rows.Count + ' expected=2 (1 more = the note edit was logged)')
-    Write-Host 'NOW Changing the Process Step of the fake publication.'
-    $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ ProcessStep = $steps[1].Id } -ErrorAction Stop
-    Write-Host 'NOW Waiting for the log row of the Process Step change.'
-    $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 3 } 'the F01 log row for the new Process Step'
-    $rows = @(Get-OwnLogRow $x.Id)
-    $d2 = $(if ($rows.Count -ge 3) { [string]$rows[2]['EventDetails'] } else { '' })
-    $good = $ok -and $rows.Count -eq 3 -and $d2.Contains('State: Rewrite | ' + $titles[1] + ' | On Track')
-    Add-Line 'f01-step' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the Process Step change=' + $rows.Count + ' expected=3')
-    Write-Host 'NOW Changing the Action Status of the fake publication.'
-    $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ ActionStatus = 'Stalled' } -ErrorAction Stop
-    Write-Host 'NOW Waiting for the log row of the Action Status change.'
-    $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 4 } 'the F01 log row for the new Action Status'
-    $rows = @(Get-OwnLogRow $x.Id)
-    $d3 = $(if ($rows.Count -ge 4) { [string]$rows[3]['EventDetails'] } else { '' })
-    $good = $ok -and $rows.Count -eq 4 -and $d3.Contains('State: Rewrite | ' + $titles[1] + ' | Stalled')
-    Add-Line 'f01-status' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the Action Status change=' + $rows.Count + ' expected=4')
-    Write-Host 'NOW Waiting 2 minutes to see that F01 adds no more rows.'
-    Write-Host '  Waiting 2 minutes to see that F01 adds no more rows ...'
+    $one = @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -eq 1 }).Count
+    $good = $one -eq 6 -and $d0.StartsWith('Opened.') -and $d0.Contains('State: New | ' + $titles[0] + ' | On Track') -and ([string]$rows[0]['Title']).StartsWith('Action opened: ')
+    Add-Line 'f01-open' $(if ($good) { 'PASS' } else { 'FAIL' }) ('publications with 1 log row after they were opened=' + $one + ' expected=6 (title Action opened, details Opened. and the state)' +
+        $(if ($ok) { '' } else { '. The wait ran out: check that F01 and F05 are On and read their run history' }))
+    $s7 = Test-LegalOnce $pub['s7'] $legal
+    Add-Line 'f05-legal-made-at-7' $(if ($s7 -eq 'once') { 'PASS' } else { 'FAIL' }) ('S (made at step 7): ' + $s7 +
+        $(if ($legal.Count) { '' } else { '; no active office with Coordinate Last = Yes in PFM Offices' }))
+    $n3 = (Get-LegalRow $pub['g7']).Count
+    Add-Line 'f05-none-before-7' $(if ($n3 -eq 0) { 'PASS' } else { 'FAIL' }) ('G (at step 3): Legal rows=' + $n3 + ' expected=0')
+
+    # The changes, together (the notes first, so the check that sees the others has seen them too).
+    Write-Host 'NOW Editing a note on X and S, changing X type, X step and X status, and moving G by hand to step 7.'
+    foreach ($k in 'x', 's7') { $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub[$k] -Values @{ StatusNotes = 'R34 test: a note edit' } -ErrorAction Stop }
+    $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['xt'] -Values @{ ActionType = 'Rewrite' } -ErrorAction Stop
+    $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['xs'] -Values @{ ProcessStep = $steps[1].Id } -ErrorAction Stop
+    $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['xa'] -Values @{ ActionStatus = 'Stalled' } -ErrorAction Stop
+    $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['g7'] -Values @{ ProcessStep = $step7[0].Id } -ErrorAction Stop
+    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next flow check: F01 logs 3 changes, F05 adds the Legal rows of G.')
+    $ok = Wait-ForCheck { @('xt', 'xs', 'xa' | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 2 }).Count -eq 0 -and
+      (Get-LegalRow $pub['g7']).Count -ge $legal.Count } 'the F01 log rows and the F05 Legal rows'
+    Write-Host 'NOW Waiting 2 minutes to see that F01 and F05 add no more rows.'
+    Write-Host '  Waiting 2 minutes to see that F01 and F05 add no more rows ...'
     Start-Sleep -Seconds 120
-    $total = (Get-OwnLogRow $x.Id).Count
-    Add-Line 'f01-no-extra' $(if ($total -eq 4) { 'PASS' } else { 'FAIL' }) ('F01 log rows in all=' + $total +
-        ' expected=4 (open 1, Action Type 1, Process Step 1, Action Status 1; the note edit none)')
+    # Key: item name, the changed column, the state F01 logs.
+    $check = [ordered]@{ xt = @('f01-type', 'Action Type', ('State: Rewrite | ' + $titles[0] + ' | On Track'))
+      xs = @('f01-step', 'Process Step', ('State: New | ' + $titles[1] + ' | On Track')); xa = @('f01-status', 'Action Status', ('State: New | ' + $titles[0] + ' | Stalled')) }
+    foreach ($k in $check.Keys) {
+      $rows = @(Get-OwnLogRow $pub[$k])
+      $d1 = $(if ($rows.Count -ge 2) { [string]$rows[1]['EventDetails'] } else { '' })
+      $good = $rows.Count -eq 2 -and $d1.StartsWith('Changed.') -and $d1.Contains($check[$k][2]) -and ([string]$rows[1]['Title']).StartsWith('Action updated: ')
+      Add-Line $check[$k][0] $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the ' + $check[$k][1] + ' change=' + $rows.Count + ' expected=2')
+    }
+    $expect = [ordered]@{ x = 1; xt = 2; xs = 2; xa = 2; g7 = 2; s7 = 1 }   # G: its step change logs; X and S: a note edit logs nothing
+    $got = @($expect.Keys | ForEach-Object { $_ + '=' + (Get-OwnLogRow $pub[$_]).Count }) -join ' '
+    $wantText = @($expect.Keys | ForEach-Object { $_ + '=' + $expect[$_] }) -join ' '
+    Add-Line 'f01-no-extra' $(if ($got -eq $wantText) { 'PASS' } else { 'FAIL' }) ('F01 log rows ' + $got + ' expected ' + $wantText + ' (the note edits on X and S none)' +
+        $(if ($ok) { '' } else { '. The wait ran out: check that F01 and F05 are On and read their run history' }))
+    $g7 = Test-LegalOnce $pub['g7'] $legal
+    Add-Line 'f05-legal-moved-to-7' $(if ($g7 -eq 'once') { 'PASS' } else { 'FAIL' }) ('G (moved by hand from step 3 to step 7, as a wing GM): ' + $g7)
+    $s7 = Test-LegalOnce $pub['s7'] $legal
+    Add-Line 'f05-no-duplicate' $(if ($s7 -eq 'once') { 'PASS' } else { 'FAIL' }) ('S after a second F05 run at step 7 (a note edit): ' + $s7)
 
     # 2. F02: 4 fake Product Index rows, 1 review row. Fixed day 15 of this month, so every date is exact (no month-end rounding).
     $today = (Get-Date).Date
@@ -521,7 +561,7 @@ try {
       # lines above keep the evidence). A row already gone is not an error.
       Write-Host 'NOW Moving the fake rows to the site Recycle Bin.'
       $n = 0; $gone = 0
-      foreach ($k in 'x', 'fa', 'fb') { if ($state.ContainsKey($k)) { try { $n += Clear-TestPublication ([int]$state[$k]) } catch { $gone++ } } }
+      foreach ($k in 'x', 'xt', 'xs', 'xa', 'g7', 's7', 'fa', 'fb') { if ($state.ContainsKey($k)) { try { $n += Clear-TestPublication ([int]$state[$k]) } catch { $gone++ } } }
       foreach ($k in 'p1', 'p2', 'p3', 'p4') { if ($state.ContainsKey($k)) { try { $n += Clear-TestProduct ([int]$state[$k]) } catch { $gone++ } } }
       if ($state.ContainsKey('reportBase')) {
         foreach ($r in (Get-ReportLogRow ([int]$state['reportBase']))) { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ }

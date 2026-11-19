@@ -27,6 +27,9 @@ for f in sol_defs:
     text = f.read_text(encoding="utf-8")
     if re.search(r"""\[\s*\\?['"]body/""", re.sub(r'"splitOn": "[^"]*"', "", text)):
         bad.append(f"BAD {f.name}: body/ path expression; use body('Action')?['key']")
+    # R34: the name the PFM sees ends with the file's revision (a new revision keeps its workflow ID, so only the name tells them apart).
+    if not json.loads(text)["displayName"].endswith(" " + f.stem.rsplit("-", 1)[-1]):
+        bad.append(f"BAD {f.name}: the display name must end with the file revision {f.stem.rsplit('-', 1)[-1]}")
     if f.stem.startswith("90161Z-T21-") and (json.loads(text)["connections"] != ["shared_sharepointonline"] or "shared_flowmanagement" in text):
         bad.append(f"BAD {f.name}: a probe flow of the solution uses only the SharePoint connector")
 if len([f for f in sol_defs if f.stem.startswith("90161Z-T21-probe-")]) != 2:

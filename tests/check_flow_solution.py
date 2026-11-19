@@ -287,7 +287,7 @@ with zipfile.ZipFile(cz) as zz:
     probe_in_zip = sorted(re.findall(r"Workflows/(90161ZT21Probe(?:Health|Button)r\d+)-", "\n".join(zz.namelist())))
     if probe_in_zip != ["90161ZT21ProbeButtonr6", "90161ZT21ProbeHealthr6"]: bad(f"{cz.name}: probe flows in the zip {probe_in_zip}")
     check_probe_flows(zz, c, cz.name)
-    slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip").read("solution.xml").decode("utf-8")
+    slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r7.zip").read("solution.xml").decode("utf-8")
     for wid in re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', slice_sol):
         if f'id="{{{wid}}}"' not in sol: bad(f"{cz.name}: slice flow {wid} is not in the full solution (the import would not upgrade it)")
 
@@ -344,6 +344,47 @@ f01 = json.loads(next(s for s in r27_defs if "-F01-" in s.name).read_text(encodi
 f01_state = json.dumps(f01["actions"]["Try"]["actions"]["Current_state"]["inputs"])
 if sorted(re.findall(r"\['(\w+)'\]", f01_state)) != sorted(["ActionType", "ProcessStep", "ActionStatus", "Value", "Value", "Value"]): bad(f"F01: the logged state must read exactly Action Type, Process Step and Action Status: {f01_state}")
 if "Own_log_rows" not in f01["actions"]["Try"]["actions"]: bad("F01: the last logged state must come from rows this flow wrote (Own_log_rows)")
+# R34 (PFM 19 Nov 26, F3 C): F01 and F05 check PFM Publications every 15 minutes (was every minute), in the def and in the zip;
+# the other flows keep their triggers.
+f05_src = next(s for s in r27_defs if "-F05-" in s.name)
+f05 = json.loads(f05_src.read_text(encoding="utf-8"))
+for name, d in (("F01", f01), ("F05", f05)):
+    trig = d["triggers"]["When_an_item_is_created_or_modified"]
+    if trig["recurrence"] != {"frequency": "Minute", "interval": 15}: bad(f"{name}: the trigger must check every 15 minutes (F3 C): {trig['recurrence']}")
+    if trig["inputs"]["parameters"]["table"] != "@parameters('List PFM Publications (pfm_ListPublications)')": bad(f"{name}: the trigger must watch PFM Publications")
+with zipfile.ZipFile(cz) as zz:
+    for n in zz.namelist():
+        m = re.match(r"Workflows/90161ZF(0[15])", n)
+        if m:
+            rec = json.loads(zz.read(n).decode("utf-8"))["properties"]["definition"]["triggers"]["When_an_item_is_created_or_modified"]["recurrence"]
+            if rec != {"frequency": "Minute", "interval": 15}: bad(f"{cz.name} {n}: F{m.group(1)} must check every 15 minutes (F3 C): {rec}")
+# R34 (PFM 19 Nov 26, F1 A; DAFMAN 90-161 5.1.7: a wing GM requires local legal review, stages 1-3 then 7-11): F05 adds the missing
+# Legal rows whenever it sees an open action at step 7, whatever path brought it there, and only for offices with no Legal row yet
+# (check before create, so a second entry to step 7 or a second run adds none; a title cut at 250 characters still counts).
+f05_open = f05["actions"]["Try"]["actions"]["If_action_open"]
+f05_cond = json.dumps(f05_open["expression"])
+if "ProcessStep" not in f05_cond or "'On Hold', 'Cancelled', 'Complete'" not in f05_cond: bad("F05: the step rules must run only for an open action with a process step")
+s7 = f05_open["actions"].get("If_step_7", {})
+if s7.get("expression") != {"equals": ["@body('Get_process_step')?['StepNumber']", 7]}: bad(f"F05: If_step_7 must test StepNumber 7: {s7.get('expression')}")
+if set(s7.get("runAfter", {}).get("If_step_6", [])) != {"Succeeded", "Skipped"}: bad("F05: If_step_7 must run after If_step_6 whether it ran or was skipped")
+if "5.1.7" not in s7.get("description", "") or "5.1.7" not in f05["description"]: bad("F05: the step-7 rule must cite DAFMAN 90-161 5.1.7")
+s7_acts = s7.get("actions", {})
+if s7_acts.get("Get_legal_offices_at_step_7", {}).get("inputs", {}).get("parameters", {}).get("$filter") != "CoordinateLast eq 1 and IsActive eq 1": bad("F05: step 7 must read the active CoordinateLast (Legal) offices")
+if s7_acts.get("Create_legal_rows_at_step_7", {}).get("foreach") != "@body('Missing_legal_offices_at_step_7')": bad("F05: step 7 must create rows only for the missing offices")
+legal_rows = f05_open["actions"]["Legal_rows"]["inputs"]
+if legal_rows != {"from": "@body('Get_endorsement_rows')?['value']", "where": "@equals(item()?['CoordinationStage']?['Value'], 'Legal')"}: bad(f"F05: Legal_rows must be every Legal row of the action: {legal_rows}")
+if f05_open["actions"]["Get_endorsement_rows"]["inputs"]["parameters"].get("$filter") != "@concat('Publication/Id eq ', string(triggerBody()?['ID']))": bad("F05: the endorsement rows must be read for this action in this run")
+exists = ("contains(outputs('Legal_title_list'), concat(' - ', coalesce(item()?['Title'], ''), '|'))",
+          "contains(outputs('Legal_title_list'), concat('|', take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(item()?['Title'], '')), 250), '|'))")
+legal6 = f05_open["actions"]["If_step_6"]["actions"]["If_formal_rows_added"]["else"]["actions"]["If_ready_for_Legal"]["actions"]["Missing_legal_offices"]
+for qn, q in (("Missing_legal_offices", legal6), ("Missing_legal_offices_at_step_7", s7_acts.get("Missing_legal_offices_at_step_7", {}))):
+    w = q.get("inputs", {}).get("where", "")
+    if not (w.startswith("@not(or(") and all(e in w for e in exists)): bad(f"F05 {qn}: an office counts as done when a Legal row ends with ' - <office>' or has the full title: {w}")
+for b in ("Create_row_with_endorser_Legal_7", "Create_row_without_endorser_Legal_7"):
+    br = s7_acts["Create_legal_rows_at_step_7"]["actions"]["If_office_has_endorser_Legal_7"]
+    p = (br["actions"].get(b) or br["else"]["actions"].get(b))["inputs"]["parameters"]
+    if p.get("item/CoordinationStage/Value") != "Legal" or "take(concat(coalesce(triggerBody()?['Title'], ''), ' - ', coalesce(items('Create_legal_rows_at_step_7')?['Title'], '')), 250)" not in p.get("item/Title", ""):
+        bad(f"F05 {b}: a Legal row must have the title the exists check reads")
 
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")

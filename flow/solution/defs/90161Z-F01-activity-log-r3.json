@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F01 Activity Log r2",
-  "description": "When a PFM Publications row is created or modified, writes a PFM Activity Log row if Action Type, Process Step or Action Status differs from the last state this flow logged (a note edit logs nothing). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused read from PFM Settings, failure e-mail to the alert address; the last logged state is the latest row this flow wrote (title 'Action opened: ' or 'Action updated: '), so a row F06 logs ('Action Held' and others, also Status Changed) is not mistaken for it.",
+  "displayName": "90161Z F01 Activity Log r3",
+  "description": "When a PFM Publications row is created or modified, writes a PFM Activity Log row if Action Type, Process Step or Action Status differs from the last state this flow logged (a note edit logs nothing). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused read from PFM Settings, failure e-mail to the alert address; the last logged state is the latest row this flow wrote (title 'Action opened: ' or 'Action updated: '), so a row F06 logs ('Action Held' and others, also Status Changed) is not mistaken for it. r3 (R34, PFM 19 Nov 26, F3 C): the trigger checks PFM Publications every 15 minutes (was every minute), so a change is logged up to 15 minutes later; edits made between two checks are seen as one change (the state at the check).",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
@@ -10,7 +10,7 @@
       "type": "OpenApiConnection",
       "recurrence": {
         "frequency": "Minute",
-        "interval": 1
+        "interval": 15
       },
       "splitOn": "@triggerOutputs()?['body/value']",
       "inputs": {
