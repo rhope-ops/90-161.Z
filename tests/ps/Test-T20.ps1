@@ -1,6 +1,6 @@
-# Tests scripts/gov/90161Z-T20-provision-lists-r3.ps1 (with its part 90161Z-T20-access-r3.ps1) and scripts/gov/90161Z-T19-list-update-r6.ps1 against the strict fake in
+# Tests scripts/gov/90161Z-T20-provision-lists-r4.ps1 (with its part 90161Z-T20-access-r3.ps1) and scripts/gov/90161Z-T19-list-update-r6.ps1 against the strict fake in
 # tests/fake-pnp (pwsh 7, cloud only). Proves the logic: order, list ids, lookup ids, skip-what-exists, the PFM Office level
-# (F2 A), the per-list access read-back (R34 plan, open point 12), the T19 choices (S3 A: T-0) and the suspense setting (15), the checks and the masking. The real service is proved only by a gov device round.
+# (F2 A), the per-list access read-back (R34 plan, open point 12), Contribute for the Visitors group on the intake lists (r4, PFM 19 Nov 26), the T19 choices (S3 A: T-0) and the suspense setting (15), the checks and the masking. The real service is proved only by a gov device round.
 # Last line: "T20 pass=N fail=0".
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
@@ -17,7 +17,7 @@ $null = New-Item -ItemType Directory -Path $t20 -Force
 Copy-Item -LiteralPath (Join-Path $Root 'flow/provisioning-payload.json') -Destination (Join-Path $t20 'provisioning-payload.json')
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r3.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r4.ps1'
 # Run the T20 script against the fake site in one mode (Check, DryRun or empty for a real run). Returns a hashtable with Code (exit code), Out (lines) and Text (joined).
 function Invoke-T20([string]$Mode) {
   $sw = @{}; if ($Mode) { $sw[$Mode] = $true }
@@ -28,15 +28,88 @@ function Invoke-T20([string]$Mode) {
 # List the fake lists whose folder name starts with PFM (the ones the script makes). Takes nothing; returns an array.
 function Get-Ours { return @($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -like 'PFM*' }) }
 
+# r4: the shared fake has no Visitors group, no breakroleinheritance and no list role route, so this test adds them in front of the
+# fake module's own Invoke-PnPSPRestMethod, inside the module (the script imports the module again, so a function outside it would not be found).
+$fakeModule = Get-Module PnP.PowerShell
+$visitorsId = 9000   # the Id the fake gives the Visitors group (set inside the module block below)
+# The test's own name for it: always the module's version above, whatever scope imported the module last.
+function New-FakeSite { & $fakeModule { New-FakeSite } }
+& $fakeModule {
+  $script:origNewSite = ${function:New-FakeSite}
+  # A new fake site with an associated Visitors group (Id 9000) that holds Read on the site. Takes nothing; returns nothing.
+  function script:New-FakeSite {
+    & $script:origNewSite
+    $global:FakeSP.VisitorId = 9000
+    $readLevel = @($global:FakeSP.Levels | Where-Object { $_['Name'] -eq 'Read' })[0]['Id']
+    $global:FakeSP.WebRoles[9000] = @($readLevel)
+  }
+  $script:origRest = ${function:Invoke-PnPSPRestMethod}
+  <#
+  .SYNOPSIS
+    The fake REST call with the three routes of T20 r4 added: the Visitors group, breaking inheritance (the site's roles are
+    copied) and a role on a list. Every other request goes on to the fake module's own function.
+  .PARAMETER Method
+    Get or Post.
+  .PARAMETER Url
+    The full request address (site address plus _api/...).
+  .PARAMETER Content
+    The JSON body of a Post.
+  .PARAMETER ContentType
+    The content type of a Post.
+  .PARAMETER Accept
+    The accepted answer type.
+  .PARAMETER Raw
+    Switch: the answer as text.
+  .OUTPUTS
+    System.String. The answer text; it throws as the service would.
+  #>
+  function script:Invoke-PnPSPRestMethod {
+    [CmdletBinding()]
+    param([string]$Method = 'Get', [string]$Url, $Content, [string]$ContentType = 'application/json', [string]$Accept = 'application/json;odata=nometadata', [switch]$Raw)
+    $path = ''
+    if ($global:FakeSP.Url -and $Url.StartsWith($global:FakeSP.Url.TrimEnd('/') + '/_api/')) {
+      $path = $Url.Substring($global:FakeSP.Url.TrimEnd('/').Length + 6); $q = $path.IndexOf('?'); if ($q -ge 0) { $path = $path.Substring(0, $q) }
+    }
+    if ($Method -eq 'Get' -and $path -eq 'web/associatedvisitorgroup') {
+      if (-not $global:FakeSP.VisitorId) { throw 'FAKE 404: the site has no associated Visitors group' }
+      return (@{ Id = [int]$global:FakeSP.VisitorId } | ConvertTo-Json -Compress)
+    }
+    if ($Method -eq 'Post' -and $path -match "^web/lists\(guid'([^']+)'\)/(breakroleinheritance\(copyRoleAssignments=true,clearSubscopes=true\)|roleassignments/addroleassignment\(principalid=(\d+),roledefid=(\d+)\))$") {
+      $l = @($global:FakeSP.Lists | Where-Object { $_.Id -eq $Matches[1] })[0]
+      if (-not $l) { throw 'FAKE 404: no such list' }
+      if ($Matches[2] -like 'breakroleinheritance*') {
+        if ($l.HasUniqueRoleAssignments) { throw 'FAKE 500: the list has its own permissions already' }
+        $l.HasUniqueRoleAssignments = $true; $l.ListRoles = @{}
+        foreach ($key in @($global:FakeSP.WebRoles.Keys)) { $l.ListRoles[[int]$key] = @($global:FakeSP.WebRoles[$key]) }
+        $global:FakeSP.BreakCalls++
+        return ''
+      }
+      $p = [int]$Matches[3]; $d = [int]$Matches[4]
+      if (-not $l.HasUniqueRoleAssignments) { throw 'FAKE 500: the list inherits: break the inheritance first' }
+      if (@($l.ListRoles[$p]) -contains $d) { throw 'FAKE 500: the group holds that level on the list already' }
+      $l.ListRoles[$p] = @(@($l.ListRoles[$p]) | Where-Object { $_ }) + $d
+      $global:FakeSP.GrantCalls++
+      return ''
+    }
+    return (& $script:origRest @PSBoundParameters)
+  }
+}
+# The level Ids of Read and Contribute on the fake site (the fake gives them fixed numbers).
+function Get-FakeLevelId([string]$Name) { return [int]@($global:FakeSP.Levels | Where-Object { $_['Name'] -eq $Name })[0]['Id'] }
+# The three intake lists of the fake site. Takes nothing; returns the list objects.
+function Get-IntakeLists { return @($global:FakeSP.Lists | Where-Object { @('PFMPublications', 'PFMEndorsements', 'PFMRecommendations') -contains $_.RootFolder.Name }) }
+
 New-FakeSite
+$global:FakeSP.BreakCalls = 0; $global:FakeSP.GrantCalls = 0
 $r = Invoke-T20 'Check'
 Test-That 'clean site: the check passes' ($r.Code -eq 0 -and $r.Text -match 'CLEAN check done, items with problems=0') $r.Text
 Test-That 'check writes nothing' ($global:FakeSP.Posts -eq 0)
-Test-That 'check result file' (Test-Path -LiteralPath (Join-Path $t20 '90161Z-T20-clean-check-r3.txt'))
+Test-That 'check result file' (Test-Path -LiteralPath (Join-Path $t20 '90161Z-T20-clean-check-r4.txt'))
 
 $r = Invoke-T20 'DryRun'
 Test-That 'dry run: counts' ($r.Text -match 'DRYRUN would create lists=12 fields=200 views=18 view-column requests=115 rows=93; set: updates=21 permissions=2') $r.Text
-Test-That 'dry run writes nothing' ($global:FakeSP.Posts -eq 0 -and (Get-Ours).Count -eq 0)
+Test-That 'dry run writes nothing' ($global:FakeSP.Posts -eq 0 -and (Get-Ours).Count -eq 0 -and $global:FakeSP.BreakCalls -eq 0 -and $global:FakeSP.GrantCalls -eq 0)
+Test-That 'dry run: the 3 intake lists would get own permissions and Contribute for Visitors (r4)' ($r.Text -match 'DRYRUN would create for the intake lists: own permissions=3 Visitors given Contribute=3') $r.Text
 Test-That 'dry run: PFM Office would get the group, the level and the role (F2 A)' ($r.Text -match 'DRYRUN would create for PFM Office: group=1 level=1 level given to the group=1' -and @($global:FakeSP.Groups).Count -eq 0) $r.Text
 
 $r = Invoke-T20 ''
@@ -60,7 +133,13 @@ $lv = @($global:FakeSP.Levels | Where-Object { $_['Name'] -eq 'PFM Office Edit A
 $gi = [array]::IndexOf(@($global:FakeSP.Groups), 'PFM Office') + 1
 $okLevel = $lv.Count -eq 1 -and $lv[0].BasePermissions.Low -eq [string](1011030767 -bor 0x100) -and $lv[0].BasePermissions.High -eq '432'
 Test-That 'create: group PFM Office, the level (Edit + Override List Behaviors) and its role on the site, read back' ($okLevel -and $gi -gt 0 -and @($global:FakeSP.WebRoles[$gi]) -contains $lv[0].Id -and $r.Text -match 'CREATED for PFM Office: group=1 level=1 level given to the group=1' -and $r.Text -match 'ITEM P01-pfm-office PASS') $r.Text
-$file = Get-Content -LiteralPath (Join-Path $t20 '90161Z-T20-provision-lists-r3.txt') -Raw
+$intake = Get-IntakeLists
+$readId = Get-FakeLevelId 'Read'; $conId = Get-FakeLevelId 'Contribute'
+Test-That 'create r4: the 3 intake lists (Publications, Endorsements, Recommendations) got own permissions and Visitors hold Contribute on each' ($intake.Count -eq 3 -and @($intake | Where-Object { $_.HasUniqueRoleAssignments -and @($_.ListRoles[$visitorsId]) -contains $conId }).Count -eq 3 -and $global:FakeSP.BreakCalls -eq 3 -and $global:FakeSP.GrantCalls -eq 3 -and $r.Text -match 'CREATED for the intake lists: own permissions=3 Visitors given Contribute=3') $r.Text
+Test-That 'create r4: the copied roles are kept (Visitors Read, PFM Office level) and the other 9 lists still inherit' (@($intake | Where-Object { @($_.ListRoles[$visitorsId]) -contains $readId -and @($_.ListRoles[$gi]).Count -ge 1 }).Count -eq 3 -and @($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -like 'PFM*' -and $_.HasUniqueRoleAssignments }).Count -eq 3)
+Test-That 'create r4: the site itself stays Read for Visitors (no site role added)' (@($global:FakeSP.WebRoles[$visitorsId]).Count -eq 1 -and @($global:FakeSP.WebRoles[$visitorsId])[0] -eq $readId)
+Test-That 'create r4: read-back lines W01 to W03 PASS' (@($r.Out | Where-Object { $_ -match '^ITEM W0[1-3]-PFM(Publications|Endorsements|Recommendations) PASS ' }).Count -eq 3) $r.Text
+$file = Get-Content -LiteralPath (Join-Path $t20 '90161Z-T20-provision-lists-r4.txt') -Raw
 Test-That 'result file: no site address, host or id' ($file -notmatch 'fakehost|FakeWing|tester01|[0-9a-f]{8}-[0-9a-f]{4}-')
 # Every POST body the script sent equals the payload's body for that request, in the payload's order (list ids aside).
 $pl = Get-Content -LiteralPath (Join-Path $t20 'provisioning-payload.json') -Raw | ConvertFrom-Json
@@ -73,6 +152,7 @@ $posts = $global:FakeSP.Posts
 $r = Invoke-T20 ''
 Test-That 'second run: creates nothing and passes' ($r.Code -eq 0 -and $r.Text -match 'CREATED lists=0 fields=0 views=0 view-column requests=115 rows=0' -and $r.Text -match 'items with problems=0') $r.Text
 Test-That 'second run: only the 115 view-column requests are sent again' ($global:FakeSP.Posts -eq $posts + 115)
+Test-That 'second run r4: no inheritance broken, no role given again, W01 to W03 PASS' ($global:FakeSP.BreakCalls -eq 3 -and $global:FakeSP.GrantCalls -eq 3 -and $r.Text -match 'CREATED for the intake lists: own permissions=0 Visitors given Contribute=0' -and @($r.Out | Where-Object { $_ -match '^ITEM W0[1-3]-\S+ PASS ' }).Count -eq 3) $r.Text
 Test-That 'second run: PFM Office: nothing made again, read back PASS' ($r.Text -match 'CREATED for PFM Office: group=0 level=0 level given to the group=0' -and $r.Text -match 'ITEM P01-pfm-office PASS' -and @($global:FakeSP.Levels).Count -eq 5) $r.Text
 Test-That 'second run: same site (200 columns, 18 views with columns, 93 rows)' (((Get-Ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 200 -and ((Get-Ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 93 -and @(Get-Ours | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0)
 
@@ -180,15 +260,15 @@ $null = $global:FakeSP.Levels.Add($editLv)
 
 # R34 plan, open point 12: each of the 12 lists inherits from the site, or has its own permissions and the group holds the level.
 $r = Invoke-T20 ''
-Test-That 'list access: all 12 lists inherit from the site: PASS with the counts' ($r.Code -eq 0 -and $r.Text -match 'ITEM P02-list-access PASS 12 lists: 12 inherit from the site, 0 have own permissions') (@($r.Out) -join ' | ')
+Test-That 'list access: 9 lists inherit from the site, the 3 intake lists have their own (r4): PASS with the counts' ($r.Code -eq 0 -and $r.Text -match 'ITEM P02-list-access PASS 12 lists: 9 inherit from the site, 3 have own permissions') (@($r.Out) -join ' | ')
 $offId = [int]@($global:FakeSP.Levels | Where-Object { $_['Name'] -eq 'PFM Office Edit All Items' })[0]['Id']
 $readId = [int]@($global:FakeSP.Levels | Where-Object { $_['Name'] -eq 'Read' })[0]['Id']
 $accPub = @($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMPublications' })[0]
 $accEnd = @($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMEndorsements' })[0]
-$accPub.HasUniqueRoleAssignments = $true; $accPub.ListRoles[$gi] = @($offId, $readId)
+$accPub.ListRoles[$gi] = @($offId, $readId)
 $r = Invoke-T20 ''
-Test-That 'list access: own permissions and the group holds the level on the list: PASS' ($r.Code -eq 0 -and $r.Text -match 'ITEM P02-list-access PASS 12 lists: 11 inherit from the site, 1 have own permissions') (@($r.Out) -join ' | ')
-$accEnd.HasUniqueRoleAssignments = $true
+Test-That 'list access: own permissions and the group holds the level on the list: PASS' ($r.Code -eq 0 -and $r.Text -match 'ITEM P02-list-access PASS 12 lists: 9 inherit from the site, 3 have own permissions') (@($r.Out) -join ' | ')
+$accEnd.ListRoles.Remove($gi)
 $r = Invoke-T20 ''
 Test-That 'list access: own permissions and no role for the group: FAIL naming that list only' ($r.Code -eq 1 -and $r.Text -match '(?m)ITEM P02-list-access FAIL lists that fail \(1 of 12\): PFM Endorsements has its own permissions and the group PFM Office does not hold the level on it\r?$' -and $r.Text -notmatch 'FAIL lists that fail.*PFM Publications') (@($r.Out) -join ' | ')
 $accEnd.ListRoles[$gi] = @($readId)
@@ -197,8 +277,15 @@ $r = Invoke-T20 ''
 Test-That 'list access: the group holds another level only: FAIL naming both lists' ($r.Code -eq 1 -and $r.Text -match 'ITEM P02-list-access FAIL lists that fail \(2 of 12\): .*PFM Publications.*PFM Endorsements|ITEM P02-list-access FAIL lists that fail \(2 of 12\): .*PFM Endorsements.*PFM Publications') (@($r.Out) -join ' | ')
 $accEnd.ListRoles[$gi] = @($offId); $accPub.ListRoles[$gi] = @($offId)
 $r = Invoke-T20 ''
-Test-That 'list access: the level given on both lists: PASS again, nothing written' ($r.Code -eq 0 -and $r.Text -match 'ITEM P02-list-access PASS 12 lists: 10 inherit from the site, 2 have own permissions') (@($r.Out) -join ' | ')
-$accPub.HasUniqueRoleAssignments = $false; $accEnd.HasUniqueRoleAssignments = $false
+Test-That 'list access: the level given on both lists: PASS again, nothing written' ($r.Code -eq 0 -and $r.Text -match 'ITEM P02-list-access PASS 12 lists: 9 inherit from the site, 3 have own permissions') (@($r.Out) -join ' | ')
+# r4: a list that inherits again (a person reset it) gets own permissions and Contribute again, in one run.
+$accPub.HasUniqueRoleAssignments = $false; $accPub.ListRoles = @{}
+$r = Invoke-T20 ''
+Test-That 'r4: a list that inherits again: own permissions made, Contribute given, W01 PASS; the other two lists untouched' ($r.Code -eq 0 -and $r.Text -match 'CREATED for the intake lists: own permissions=1 Visitors given Contribute=1' -and $accPub.HasUniqueRoleAssignments -and @($accPub.ListRoles[$visitorsId]) -contains $conId -and $r.Text -match 'ITEM W01-PFMPublications PASS') $r.Text
+# A list with its own permissions where Visitors hold only Read: Contribute is added without breaking anything.
+$accEnd.ListRoles[$visitorsId] = @($readId)
+$r = Invoke-T20 ''
+Test-That 'r4: own permissions already, Visitors hold only Read: no inheritance break, Contribute added' ($r.Code -eq 0 -and $r.Text -match 'CREATED for the intake lists: own permissions=0 Visitors given Contribute=1' -and @($accEnd.ListRoles[$visitorsId]) -contains $conId -and @($accEnd.ListRoles[$visitorsId]) -contains $readId) $r.Text
 
 $r = Invoke-T20 'Check'
 Test-That 'provisioned site: the check fails with 12 lists' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(12\)') $r.Text
@@ -271,6 +358,17 @@ New-FakeSite
 $global:FakeSP.Levels.RemoveAt(1)
 $r = Invoke-T20 ''
 Test-That 'a site without an Edit level: STOPPED after the lists, no level made' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LEVEL Edit not found on the site' -and (Get-Ours).Count -eq 12 -and @($global:FakeSP.Levels).Count -eq 3) $r.Text
+
+# r4: a site with no associated Visitors group: no list is changed for them, and each intake list reads FAIL with the reason.
+New-FakeSite
+$global:FakeSP.VisitorId = 0
+$r = Invoke-T20 ''
+Test-That 'r4: no Visitors group on the site: W01 to W03 FAIL with the reason, exit 1, no inheritance broken' ($r.Code -eq 1 -and @($r.Out | Where-Object { $_ -match '^ITEM W0[1-3]-\S+ FAIL the site has no associated Visitors group' }).Count -eq 3 -and @(Get-IntakeLists | Where-Object { $_.HasUniqueRoleAssignments }).Count -eq 0 -and $r.Text -match 'items with problems=3') $r.Text
+# r4: a site with no Contribute level: the same, with that reason.
+New-FakeSite
+$noContribute = @($global:FakeSP.Levels | Where-Object { [int]$_['RoleTypeKind'] -eq 3 })[0]; $global:FakeSP.Levels.Remove($noContribute)
+$r = Invoke-T20 ''
+Test-That 'r4: no Contribute level on the site: W01 to W03 FAIL with the reason, nothing changed' ($r.Code -eq 1 -and @($r.Out | Where-Object { $_ -match '^ITEM W0[1-3]-\S+ FAIL the site has no Contribute level' }).Count -eq 3 -and @(Get-IntakeLists | Where-Object { $_.HasUniqueRoleAssignments }).Count -eq 0) $r.Text
 
 Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host ('T20 pass=' + $script:pass + ' fail=' + $script:fail)

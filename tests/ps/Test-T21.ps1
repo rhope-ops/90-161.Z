@@ -422,7 +422,7 @@ $global:F.EditAllUsers = @(31); $r = Invoke-T21 'Office'
 Test-That 'Office with a person who edits every row already: FAIL, not added, no state file' ($r.Text -match 'o5-person FAIL the second person can edit every row already' -and -not (@($global:F.GroupUsers[9]) -contains 31) -and -not (Test-Path -LiteralPath $officeState)) $r.Text
 New-Site; $r = Invoke-T21 'Office'
 Test-That 'Office without the list: STOPPED and exit 1' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LIST not found') $r.Text
-$t20Text = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r3.ps1') -Raw; $probeText = Get-Content -LiteralPath $script -Raw
+$t20Text = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r4.ps1') -Raw; $probeText = Get-Content -LiteralPath $script -Raw
 Test-That 'Office: the group and level names are the ones T20 r2 makes' ($t20Text -match "(?m)^\`$OfficeGroup = 'PFM Office'$" -and $t20Text -match "(?m)^\`$OfficeLevel = 'PFM Office Edit All Items'$" -and $probeText -match "(?m)^\`$script:OfficeGroup = 'PFM Office'$" -and $probeText -match "(?m)^\`$script:OfficeLevel = 'PFM Office Edit All Items'$")
 
 # ---- Run ----
@@ -548,6 +548,26 @@ Test-That 'Clean with -Label first writes its own result file name' ($r.Code -eq
 # ---- Masking over everything printed and written ----
 $all = $allText.ToString()
 Test-That 'no output line or result file holds the fake site address, host, site name, DODID or any address' ($all.Length -gt 1000 -and $all -notmatch 'fakehost|FakeWing|tester01|example\.test|second\.person|member\.person|nobody@|@fake' -and $all -notmatch 'FAKE NAME') ''
+# ---- Read r10 (PFM 19 Nov 26): T4 through list-level Contribute; the FAIL text no longer names way C ----
+# The r10 module is run in a copy of the folder where it stands in the place of read-r9 (the main file loads one revision by name).
+$copy10 = Join-Path $work 'copy10'
+$null = New-Item -ItemType Directory -Path $copy10 -Force
+Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r9.ps1' | Copy-Item -Destination $copy10
+Copy-Item -LiteralPath (Join-Path (Split-Path -Parent $script) '90161Z-T21-read-r10.ps1') -Destination (Join-Path $copy10 '90161Z-T21-read-r9.ps1') -Force
+$script9 = $script; $script = Join-Path $copy10 '90161Z-T21-probe-r9.ps1'
+New-Site; $null = Invoke-T21 'Make'
+$lst = Get-Probe '90161ZProbe'
+Add-Row $lst 'T4a' 12
+$r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r
+Test-That 'Read r10: a row by a second person: T4 PASSED through list-level Contribute' ($r.Text -match 'T4 PASSED: a list form by a second person \(Visitors member\)=PASS \(rows=1; T4a rows=1' -and $r.Text -match '(?m)^RESULT T4 PASS$') $r.Text
+New-Site; $null = Invoke-T21 'Make'
+$env:T21_TEST_ADDRESS = $fakeAddr
+$null = Invoke-T21 'Person'
+Remove-Item Env:T21_TEST_ADDRESS
+$r = Invoke-T21 'Read' @{ PollSeconds = 1; WaitMinutes = 0.03 }; Note $r
+Test-That 'Read r10: no row by the second person: T4 FAILED with a plain reason about Contribute, no way C' ($r.Text -match 'T4 FAILED: .*=FAIL \(rows=0' -and $r.Text -match 'does not hold Contribute on this list' -and $r.Text -notmatch 'way C|flow writes the row') $r.Text
+$script = $script9
+
 # ---- A missing module ----
 # The main file loads its modules by name from its own folder; one that is missing stops the part with a plain line.
 $copy = Join-Path $work 'copy'
