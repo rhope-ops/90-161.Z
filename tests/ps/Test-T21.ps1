@@ -557,7 +557,7 @@ $out = & (Join-Path $copy '90161Z-T21-probe-r9.ps1') -Id 'tester01' -Part Run -N
 Test-That 'a missing module: STOPPED with its file name, exit 1' ($LASTEXITCODE -eq 1 -and (@($out) -join "`n") -match 'STOPPED: MODULE missing: 90161Z-T21-read-r9\.ps1') (@($out) -join "`n")
 # ---- The button flow ID (R34: written by scripts/build_flow_solution.py, no export file) ----
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$zipPath = Join-Path $Root 'flow/solution/90161Z-T24-full-flows-r3.zip'
+$zipPath = Join-Path $Root 'flow/solution/90161Z-T24-full-flows-r4.zip'
 $za = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
 try { $rd = New-Object System.IO.StreamReader(@($za.Entries | Where-Object { $_.FullName -eq 'customizations.xml' })[0].Open()); $cust = $rd.ReadToEnd(); $rd.Dispose() } finally { $za.Dispose() }
 $wfName = $(if ($buttonId -and $cust -match ('WorkflowId="\{' + $buttonId + '\}" Name="([^"]+)"')) { $Matches[1] } else { '' })

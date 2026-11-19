@@ -1,18 +1,14 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 24 full-solution test, r4. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
-  WHAT R4 CHANGES (R34, PFM 19 Nov 26): F01 r3 and F05 r4 check PFM Publications every 15 minutes (F3 C), so part 1 makes
-  its fake publications together and changes them together: one wait (up to -PollMinutes, 17) for the first check, one
-  for the next check, then 2 minutes for extra rows. F01 is tested on 4 fake publications (open, note, Action Type,
-  Process Step, Action Status), and F05 r4 on 2 more (F1 A, DAFMAN 90-161 5.1.7): one made at step 7 and one moved by
-  hand from step 3 to step 7, as a Guidance Memorandum goes; each gets its Legal rows once, and a second run at step 7
-  adds none. Part 4 removes them with the other fake rows. The result and state files keep their r1 names, so a part of
-  r4 finds the state that an earlier part saved. Earlier: r3 (R34) printed the NOW lines (what it is doing; not results);
-  r2 (R30) took Wait-Until from scripts/gov/src/wait-common.ps1; r1 (R28, PFM 17 Nov 26) tested F01, F02, F04 and On.
+  90-161.Z Task 24 full-solution test, r5. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  WHAT R5 CHANGES (R35, PFM 19 Nov 26): F05 r5 checks PFM Publications every minute, so part 1 waits for its Legal rows up to -F05Minutes (3) after
+  each change (a FAIL there means F05 is not checking every minute); F01 r3 still checks every 15 minutes: its waits keep -PollMinutes (17). The
+  a-flows-on INFO line gives the error message. R4 (R34, F3 C): fake publications are made and changed together; F01 is tested on 4, F05 on 2 (F1 A,
+  DAFMAN 90-161 5.1.7): one made at step 7, one moved by hand from step 3 to 7 (as a GM goes); each gets its Legal rows once. Files keep r1 names.
 .DESCRIPTION
   What it is for: proves on the test site that F01 (activity log), F02 (next review due and periodic review task) and F04 (status report e-mail)
   work, and that the full solution imported with every flow On. It runs in 3 parts with hand steps between them (round guide).
-  Part 1 (about 35 minutes, an estimate; most of it is waiting for the 15-minute flow checks):
+  Part 1 (about 35 minutes, an estimate; most of it is waiting for the 15-minute F01 checks; F05 checks every minute):
     0. Writes the PFM Settings rows Flows paused = No and Test mode = Yes (their old values are kept in a state file and put back in part 4).
     a. Reads your own flows in Power Automate and counts the 6 flows F01 to F06 that are On (one try; if it cannot be read, a hand check line).
     1. F01 (no DAFMAN paragraph; PFM design) and F05 (DAFMAN 90-161 5.1.7, 5.1.8.2): makes 6 fake publications at once: X, X type,
@@ -40,15 +36,16 @@
   Writes: the site rows listed under WHAT IT CHANGES ON THE SITE; on this computer the T24 folder (result files, the state
           file) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r4.ps1 -Part 1 (RADE does this).
-  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1, 2, 3 or 4, -WaitMinutes (default 6: a
-  flow you start with Run), -PollMinutes (default 17: a flow check every 15 minutes plus 2 minutes for the run), -NoPause.
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r5.ps1 -Part 1 (RADE does this).
+  Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1, 2, 3 or 4, -WaitMinutes (default 6: a flow you start
+  with Run), -PollMinutes (default 17: F01 checks every 15 minutes, plus 2 for the run), -F05Minutes (default 3: every minute, plus 2), -NoPause.
 #>
-param([string]$Id, [ValidateSet(1, 2, 3, 4)][int]$Part = 1, [int]$WaitMinutes = 6, [int]$PollMinutes = 17, [switch]$NoPause)
+param([string]$Id, [ValidateSet(1, 2, 3, 4)][int]$Part = 1, [int]$WaitMinutes = 6, [int]$PollMinutes = 17, [int]$F05Minutes = 3, [switch]$NoPause)
 $task = 'T24'
 $Prefix = '90161Z TEST R28 '
 $TitleX = $Prefix + 'X (delete me)'
-# R34 (F3 C): one fake publication per F01 change, so all changes wait for the same flow check; G and S test F05 r4 (F1 A).
+$F05Late = 'The F05 wait ran out: check that F05 r5 is On (it checks every minute) and read its run history'
+# R34 (F3 C): one fake publication per F01 change, so all changes wait for the same flow check; G and S test F05 (F1 A).
 $TitleXT = $Prefix + 'X type (delete me)'
 $TitleXS = $Prefix + 'X step (delete me)'
 $TitleXA = $Prefix + 'X status (delete me)'
@@ -173,7 +170,6 @@ function Hide-Site([string]$Text, [string]$Site) {
 }
 # <<< site-common
 
-
 function Add-Line([string]$Name, [string]$Status, [string]$Text) {
   # Adds one "ITEM <name> <status> <text>" result line.
   $script:lines.Add('ITEM ' + $Name + ' ' + $Status + $(if ($Text) { ' ' + $Text } else { '' }))
@@ -193,7 +189,7 @@ function Get-LegalRow([int]$PubId) {
   return @(Get-RowsFor 'PFM Endorsements' 'Publication' $PubId | Where-Object { [string]$_['CoordinationStage'] -eq 'Legal' })
 }
 function Test-LegalOnce([int]$PubId, [string[]]$Office) {
-  # Exactly 1 Legal row per office in $Office (titles of the active Coordinate Last offices; F05 r4 titles a row "... - <office>")
+  # Exactly 1 Legal row per office in $Office (titles of the active Coordinate Last offices; F05 titles a row "... - <office>")
   # and no other Legal row: returns 'once', else the counts for the result line.
   $rows = @(Get-LegalRow $PubId)
   $per = @($Office | ForEach-Object { $o = $_; @($rows | Where-Object { ([string]$_['Title']).EndsWith(' - ' + $o) }).Count })
@@ -238,11 +234,11 @@ function Wait-Until([scriptblock]$Done, [string]$What) {
   }
 }
 # <<< wait-common
-function Wait-ForCheck([scriptblock]$Done, [string]$What) {
-  # Wait-Until with -PollMinutes instead of -WaitMinutes (Wait-Until reads $WaitMinutes from its caller): F01 and F05 check PFM
-  # Publications every 15 minutes (PFM 19 Nov 26, F3 C), so a change shows up to 15 minutes later, plus the run itself.
+function Wait-ForCheck([scriptblock]$Done, [string]$What, [int]$Minutes = $PollMinutes) {
+  # Wait-Until with $Minutes instead of -WaitMinutes (Wait-Until reads $WaitMinutes from its caller): F01 checks PFM Publications
+  # every 15 minutes (F3 C; -PollMinutes, the default), F05 r5 every minute (PFM 19 Nov 26; -F05Minutes), plus the run itself.
   $keep = $script:WaitMinutes
-  $script:WaitMinutes = $PollMinutes
+  $script:WaitMinutes = $Minutes
   try { return (Wait-Until $Done $What) } finally { $script:WaitMinutes = $keep }
 }
 function Get-SettingValue([string]$Key) {
@@ -408,8 +404,10 @@ try {
       $mine = @(Get-PnPFlow -Environment $envs[0] -ErrorAction Stop | Where-Object { ([string]$_.Properties.DisplayName) -like '90161Z F0*' })
       $on = @($mine | Where-Object { ([string]$_.Properties.State) -eq 'Started' }).Count
       Add-Line 'a-flows-on' $(if ($mine.Count -eq 6 -and $on -eq 6) { 'PASS' } else { 'FAIL' }) ('flows named 90161Z F01 to F06 found=' + $mine.Count + ' expected=6; On=' + $on + ' expected=6')
-    } catch {
-      Add-Line 'a-flows-on' 'INFO' ('your flows could not be read from here (' + $_.Exception.GetType().Name + '). Check by hand: in the solution, all 6 flows read On')
+    } catch {   # R34: PSInvalidOperationException from PnP (cause not proven): r5 adds its message, masked like every line, as evidence
+      $why = ([string]$_.Exception.Message) -replace '\s+', ' '
+      Add-Line 'a-flows-on' 'INFO' ('your flows could not be read from here (' + $_.Exception.GetType().Name + ': ' + $why.Substring(0, [Math]::Min(160, $why.Length)) +
+          '). Check by hand: in the solution, all 6 flows read On')
     }
 
     # Leftovers of an earlier run (by title), then the steps the fake rows use.
@@ -434,7 +432,7 @@ try {
     $legal = @(Get-PnPListItem -List 'PFM Offices' -Fields 'Title', 'CoordinateLast', 'IsActive' -ErrorAction Stop |
         Where-Object { [bool]$_['CoordinateLast'] -and [bool]$_['IsActive'] } | ForEach-Object { [string]$_['Title'] })
 
-    # 1. F01 and F05 (R34, F3 C: both check every 15 minutes): all fake publications are made together, so they wait for one check.
+    # 1. F01 (every 15 minutes, F3 C) and F05 (r5: every minute): all fake publications are made together, so F01 needs one check.
     Write-Host 'NOW Making 6 fake publications: 4 for F01 and 2 for F05.'
     $make = [ordered]@{ x = @($TitleX, $steps[0].Id); xt = @($TitleXT, $steps[0].Id); xs = @($TitleXS, $steps[0].Id); xa = @($TitleXA, $steps[0].Id)
       g7 = @($TitleG7, $step3[0].Id); s7 = @($TitleS7, $step7[0].Id) }
@@ -446,18 +444,19 @@ try {
     }
     Save-State $stateFile $state
     Add-Line 'c-f01-created' 'SET' ('fake publications made=6 (Action Type New, On Track; 4 at step 1 of the list, G at step 3, S at step 7); Legal offices=' + $legal.Count)
-    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next flow check: F01 logs the 6 new rows, F05 adds the Legal rows of S.')
-    $ok = Wait-ForCheck { @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 1 }).Count -eq 0 -and
-      (Get-LegalRow $pub['s7']).Count -ge $legal.Count } 'the F01 log rows and the F05 Legal rows'
+    Write-Host ('NOW Waiting up to ' + $F05Minutes + ' minutes for F05 (it checks every minute) to add the Legal rows of S.')
+    $okS = Wait-ForCheck { (Get-LegalRow $pub['s7']).Count -ge $legal.Count } 'the F05 Legal rows of S' $F05Minutes
+    $s7 = Test-LegalOnce $pub['s7'] $legal
+    Add-Line 'f05-legal-made-at-7' $(if ($s7 -eq 'once' -and $okS) { 'PASS' } else { 'FAIL' }) ('S (made at step 7), within ' + $F05Minutes + ' minutes: ' + $s7 +
+        $(if ($legal.Count) { '' } else { '; no active office with Coordinate Last = Yes in PFM Offices' }) + $(if ($okS) { '' } else { '. ' + $F05Late }))
+    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next F01 check (every 15 minutes): F01 logs the 6 new rows.')
+    $ok = Wait-ForCheck { @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 1 }).Count -eq 0 } 'the F01 log rows'
     $rows = @(Get-OwnLogRow $pub['x'])
     $d0 = $(if ($rows.Count) { [string]$rows[0]['EventDetails'] } else { '' })
     $one = @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -eq 1 }).Count
     $good = $one -eq 6 -and $d0.StartsWith('Opened.') -and $d0.Contains('State: New | ' + $titles[0] + ' | On Track') -and ([string]$rows[0]['Title']).StartsWith('Action opened: ')
     Add-Line 'f01-open' $(if ($good) { 'PASS' } else { 'FAIL' }) ('publications with 1 log row after they were opened=' + $one + ' expected=6 (title Action opened, details Opened. and the state)' +
-        $(if ($ok) { '' } else { '. The wait ran out: check that F01 and F05 are On and read their run history' }))
-    $s7 = Test-LegalOnce $pub['s7'] $legal
-    Add-Line 'f05-legal-made-at-7' $(if ($s7 -eq 'once') { 'PASS' } else { 'FAIL' }) ('S (made at step 7): ' + $s7 +
-        $(if ($legal.Count) { '' } else { '; no active office with Coordinate Last = Yes in PFM Offices' }))
+        $(if ($ok) { '' } else { '. The wait ran out: check that F01 is On and read its run history' }))
     $n3 = (Get-LegalRow $pub['g7']).Count
     Add-Line 'f05-none-before-7' $(if ($n3 -eq 0) { 'PASS' } else { 'FAIL' }) ('G (at step 3): Legal rows=' + $n3 + ' expected=0')
 
@@ -468,11 +467,11 @@ try {
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['xs'] -Values @{ ProcessStep = $steps[1].Id } -ErrorAction Stop
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['xa'] -Values @{ ActionStatus = 'Stalled' } -ErrorAction Stop
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['g7'] -Values @{ ProcessStep = $step7[0].Id } -ErrorAction Stop
-    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next flow check: F01 logs 3 changes, F05 adds the Legal rows of G.')
-    $ok = Wait-ForCheck { @('xt', 'xs', 'xa' | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 2 }).Count -eq 0 -and
-      (Get-LegalRow $pub['g7']).Count -ge $legal.Count } 'the F01 log rows and the F05 Legal rows'
+    Write-Host ('NOW Waiting up to ' + $F05Minutes + ' minutes for F05 (it checks every minute) to add the Legal rows of G.')
+    $okG = Wait-ForCheck { (Get-LegalRow $pub['g7']).Count -ge $legal.Count } 'the F05 Legal rows of G' $F05Minutes
+    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next F01 check (every 15 minutes): F01 logs 3 changes.')
+    $ok = Wait-ForCheck { @('xt', 'xs', 'xa' | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 2 }).Count -eq 0 } 'the F01 log rows'
     Write-Host 'NOW Waiting 2 minutes to see that F01 and F05 add no more rows.'
-    Write-Host '  Waiting 2 minutes to see that F01 and F05 add no more rows ...'
     Start-Sleep -Seconds 120
     # Key: item name, the changed column, the state F01 logs.
     $check = [ordered]@{ xt = @('f01-type', 'Action Type', ('State: Rewrite | ' + $titles[0] + ' | On Track'))
@@ -487,9 +486,10 @@ try {
     $got = @($expect.Keys | ForEach-Object { $_ + '=' + (Get-OwnLogRow $pub[$_]).Count }) -join ' '
     $wantText = @($expect.Keys | ForEach-Object { $_ + '=' + $expect[$_] }) -join ' '
     Add-Line 'f01-no-extra' $(if ($got -eq $wantText) { 'PASS' } else { 'FAIL' }) ('F01 log rows ' + $got + ' expected ' + $wantText + ' (the note edits on X and S none)' +
-        $(if ($ok) { '' } else { '. The wait ran out: check that F01 and F05 are On and read their run history' }))
+        $(if ($ok) { '' } else { '. The wait ran out: check that F01 is On and read its run history' }))
     $g7 = Test-LegalOnce $pub['g7'] $legal
-    Add-Line 'f05-legal-moved-to-7' $(if ($g7 -eq 'once') { 'PASS' } else { 'FAIL' }) ('G (moved by hand from step 3 to step 7, as a wing GM): ' + $g7)
+    Add-Line 'f05-legal-moved-to-7' $(if ($g7 -eq 'once' -and $okG) { 'PASS' } else { 'FAIL' }) ('G (moved by hand from step 3 to step 7, as a wing GM), rows within ' +
+        $F05Minutes + ' minutes=' + $okG + ': ' + $g7 + $(if ($okG) { '' } else { '. ' + $F05Late }))
     $s7 = Test-LegalOnce $pub['s7'] $legal
     Add-Line 'f05-no-duplicate' $(if ($s7 -eq 'once') { 'PASS' } else { 'FAIL' }) ('S after a second F05 run at step 7 (a note edit): ' + $s7)
 
