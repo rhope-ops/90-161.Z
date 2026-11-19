@@ -338,21 +338,16 @@ function Grant-OfficeLevel([bool]$Write) {
 
 <#
 .SYNOPSIS
-  Step 7, the read-back of step 6: PASS when the group holds the level on the site and the level holds every permission of
-  the Edit level plus Edit Items and Override List Behaviors; else FAIL with the reasons. The line ends with the permission
-  words as read (numbers only).
+  Step 7, the read-back of step 6: PASS when the group holds the level on the site and the level holds Edit plus Edit Items and Override List Behaviors; else FAIL.
 .OUTPUTS
-  System.String. One ITEM line.
+  System.String. One ITEM line; it ends with the permission words as read (numbers only).
 #>
 function Test-OfficeLevel {
   $gid = Get-GroupId $OfficeGroup; $level = Get-RoleLevel $OfficeLevel 0; $edit = Get-RoleLevel '' $EditRoleKind
   $bad = @($(if (-not $gid) { 'the group ' + $OfficeGroup + ' is not on the site' }), $(if (-not $level) { 'the level ' + $OfficeLevel + ' is not on the site' }))
   if ($level -and $edit -and -not (Test-LevelPermission $level $edit ($EditItemsBit -bor $OverrideBit))) { $bad += 'the level lacks a permission of Edit or Override List Behaviors' }
-  if ($level -and $gid -and (Get-WebBinding $gid) -notcontains [int]$level.Id) { $bad += 'the group does not hold the level on the site' }
-  $bad = @($bad | Where-Object { $_ })
-  # The permission words as read (numbers only), so a result shows what the check compared.
-  $bits = ' [level ' + $(if ($level) { [string]$level.BasePermissions.High + '/' + [string]$level.BasePermissions.Low } else { 'none' }) +
-    ', Edit ' + $(if ($edit) { [string]$edit.BasePermissions.High + '/' + [string]$edit.BasePermissions.Low } else { 'none' }) + ']'
+  if ($level -and $gid -and (Get-WebBinding $gid) -notcontains [int]$level.Id) { $bad += 'the group does not hold the level on the site' }; $bad = @($bad | Where-Object { $_ })
+  $bits = ' [level ' + [string]$level.BasePermissions.High + '/' + [string]$level.BasePermissions.Low + ', Edit ' + [string]$edit.BasePermissions.High + '/' + [string]$edit.BasePermissions.Low + ']'
   if ($bad.Count) { return ('ITEM P01-pfm-office FAIL ' + ($bad -join '; ') + ' (this script never changes a level that is there)' + $bits) }
   return ('ITEM P01-pfm-office PASS the group "' + $OfficeGroup + '" holds the level "' + $OfficeLevel + '" on the site (Edit plus Override List Behaviors)' + $bits)
 }
