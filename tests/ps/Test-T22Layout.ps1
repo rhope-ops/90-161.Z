@@ -22,6 +22,10 @@
 # Work (not on the scroll bar), sent to the button with the focus, scrolls the main column; one on a grid that can
 # still scroll scrolls the grid, not the main column (W2, at the 3 scales; the routing function on the control tree and
 # the window's own filter are each called, no real pointer moves).
+# R8 (R35 W7), at the same 3 scales (1.5 x gives the narrowest grids: the page column is never under 900 px at 100 %):
+# no column head of any grid is shortened (each head needs no more width than its cell gave). Once: the rail logo,
+# rebuilt with high contrast on, has only the 2 system colors and differs from its own colors; rebuilt with it off,
+# it is its own colors again (no change of the Windows theme).
 # Each line shows the measured numbers.
 # Last line: "T22LAYOUT pass=N fail=0" (tests/ps/Invoke-Ps51.ps1 runs it on the ps51 Windows job).
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
@@ -102,6 +106,23 @@ function Test-Contrast($M) {
 }
 <#
 .SYNOPSIS
+Checks the rail logo in high contrast (R8, R35 W7; the PFM's R34 note: the logo did not change): rebuilt with high
+contrast on, every logo pixel with any cover is one of the 2 system colors and the logo differs from its own colors;
+rebuilt with it off, no pixel differs from its own colors. No LAYOUT line either way.
+.PARAMETER M
+The measure file (Logo, LogoError).
+#>
+function Test-Logo($M) {
+  $rows = @($M.Logo | Where-Object { $_ })
+  $on = @($rows | Where-Object { [string]$_.When -eq 'on' }) | Select-Object -First 1; $off = @($rows | Where-Object { [string]$_.When -eq 'off' }) | Select-Object -First 1
+  $err = $(if ($M.LogoError) { '; error: ' + $M.LogoError } else { '' })
+  $ok = [bool]($on -and $on.Shown -and $on.High -and [int]$on.Other -eq 0 -and [int]$on.Diff -gt 0 -and @($on.Bad | Where-Object { $_ }).Count -eq 0)
+  Test-That 'high contrast on: the logo in the 2 system colors' $ok ('shown ' + $on.Shown + '; other pixels ' + $on.Other + '; changed pixels ' + $on.Diff + $err)
+  $ok = [bool]($off -and $off.Shown -and -not $off.High -and [int]$off.Diff -eq 0 -and @($off.Bad | Where-Object { $_ }).Count -eq 0)
+  Test-That 'high contrast off: the logo in its own colors' $ok ('shown ' + $off.Shown + '; changed pixels ' + $off.Diff + $err)
+}
+<#
+.SYNOPSIS
 Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r8.png, saved in the folder of
 the measure file, and the first one is not blank (at least 3 colors in a 20 x 20 grid of its pixels).
 .PARAMETER M
@@ -128,6 +149,8 @@ function Test-CardPng($M, [string]$Dir) {
 # The cards with an Action Status card (D1) and the cards with a grid of publications (D4): each must have its facts.
 $levelCaps = @('step8', 'waves', 'step11', 'step13', 'pub')
 $levelPubs = @('home', 'empty', 'queue')
+# R8 (W7): the cards whose grids must have their column heads measured (the 3 pub grids and the Wave 1 answers).
+$levelHeads = @('home', 'empty', 'queue', 'waves')
 # R7 (W3): the kinds of chip beside text each card must have measured ("Needs You Today" is the list of Your Work).
 $chipKinds = @{ home = @('list'); step8 = @('check', 'rows', 'chips'); waves = @('rows', 'chips'); step11 = @('rows', 'chips'); settings = @('rows') }
 <#
@@ -178,6 +201,24 @@ function Test-PubCut([string]$Key, $P, [string]$At) {
 }
 <#
 .SYNOPSIS
+Checks the column heads of the grids of one card at one scale (R8, R35 W7): each grid's heads were measured and none
+needs more width than its cell gave (no head shortened with dots), one line per grid with every head's numbers.
+.PARAMETER Key
+The card key.
+.PARAMETER Heads
+The measured heads (Grid, Col, Kind, Head, W, Have).
+.PARAMETER At
+The scale, as text (it starts each line).
+#>
+function Test-HeadCut([string]$Key, $Heads, [string]$At) {
+  if ($levelHeads -contains $Key -and -not @($Heads).Count) { Test-That ($At + ' W7 ' + $Key + ': grid column heads measured') $false 'no head measured' }
+  foreach ($g in @($Heads | ForEach-Object { [string]$_.Grid } | Sort-Object -Unique)) {
+    $hs = @($Heads | Where-Object { [string]$_.Grid -eq $g }); $cut = @($hs | Where-Object { [int]$_.W -gt [int]$_.Have })
+    $nums = 'heads ' + $hs.Count + ', cut ' + $cut.Count + ': ' + (@($hs | ForEach-Object { $_.Head + ' ' + $_.W + '/' + $_.Have }) -join ', ')
+    Test-That ($At + ' W7 ' + $Key + ' ' + $g + ': no column head shortened') ($hs.Count -ge 2 -and $cut.Count -eq 0) $nums }
+}
+<#
+.SYNOPSIS
 Checks D1 to D4 (R6, the R31b defects) on the alignment facts (Level) of every card measured at one scale.
 .DESCRIPTION
 D1: on each card of $levelCaps, each Action Status caption's middle is within the tolerance of the main card's first
@@ -186,7 +227,8 @@ their text middles are within the tolerance. D3: each check chip (step 8 has one
 its first text line. D4: each pub grid (one at least on each card of $levelPubs) drew 2 rows or more, all its titles
 start at one x, and that x is at or after the widest number's end and the gap (titles beside) or each title starts at
 or below its number's bottom (titles under). The tolerance is 1 px at 100 %: Sc8 / 8, at least 1. R7: the chips of
-every kind (Test-ChipLevel, W3) and the cut cells and head of each pub grid (Test-PubCut, W1).
+every kind (Test-ChipLevel, W3) and the cut cells and head of each pub grid (Test-PubCut, W1). R8: the column heads
+of every grid (Test-HeadCut, W7).
 .PARAMETER Cards
 The measured cards (Key, Level) of one scale.
 .PARAMETER Sc8
@@ -219,7 +261,8 @@ function Test-Level($Cards, [double]$Sc8, [string]$At) {
       $ok = ($n -ge 2 -and $xs.Count -eq 1 -and $(if ($beside) { [int]$xs[0] -ge $num + [int]$p.Gap } else { $low.Count -eq 0 }))
       $how = $(if ($beside) { 'beside: widest number ends at ' + $num + ', gap ' + $p.Gap } else { 'under: titles above their number bottom ' + $low.Count })
       $nums = 'rows drawn ' + $n + '; title x ' + ($xs -join ', ') + '; ' + $how
-      Test-That ($At + ' D4 ' + $k + ' ' + $p.Grid + ': titles start in one column') $ok $nums } }
+      Test-That ($At + ' D4 ' + $k + ' ' + $p.Grid + ': titles start in one column') $ok $nums }
+    Test-HeadCut $k @($lv.Heads | Where-Object { $_ }) $At }
 }
 <#
 .SYNOPSIS
@@ -283,6 +326,7 @@ try {
     Test-Wheel $m ('dpi ' + $m.Dpi)
     Test-RailHead $m
     Test-Contrast $m
+    Test-Logo $m
     Test-CardPng $m $tmp
   }
 } finally { Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue }

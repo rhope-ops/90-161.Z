@@ -14,6 +14,9 @@
   the crumb has the link's text middle (D2, $wn.Crumb).
   R7 (R32): the mouse wheel scrolls a card from anywhere on it (W2, $wn.WheelOn, Pfm.Wheel in the types part); the
   NOTICE chip is level with its note (W3, $wn.ShowNotice).
+  R8 (R35 W7, R34 finding 7): with high contrast on, the rail logo is drawn in 2 system colors and back in its own
+  colors when it goes off ($wn.LogoImage); each rail build checks the logo it shows ($wn.LogoFacts and $wn.LogoBad in
+  the measure part: a LOGO line, and a LAYOUT line when the logo has the wrong colors).
   The rail logo is the app-logo block below, written by scripts/build_task_scripts.py (never edit it here).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
@@ -132,6 +135,7 @@ $wn.HeadParts = {
   behind it. The name is placed by its middle, not its top: its middle is the logo's middle (rounded to a pixel), at
   any scale. A logo that cannot be shown is a NOTE line, not an error; the name keeps its place. The measure part
   builds the same parts into a test panel at 1.5 x to measure the centering at a second scale.
+  R8 (R35 W7): the logo picture follows the high-contrast setting ($wn.LogoImage $ui.High).
   .PARAMETER Into
   The panel the parts go into (the rail).
   .PARAMETER WordFont
@@ -144,17 +148,31 @@ $wn.HeadParts = {
   try {
     $logo = New-Object System.Windows.Forms.PictureBox; $logo.Size = [Drawing.Size]::new($side, $side); $logo.SizeMode = 'Zoom'; $logo.BackColor = $pc.navy
     $logo.AccessibleName = '90-161.Z logo'; $logo.Location = [Drawing.Point]::new((& $wn.Sc 16), $top)
-    $logo.Image = [Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($AppLogoPng)))); [void]$Into.Controls.Add($logo); $out.Logo = $logo
+    $logo.Image = & $wn.LogoImage ([bool]$ui.High); [void]$Into.Controls.Add($logo); $out.Logo = $logo
   } catch { $lines.Add('NOTE logo not shown: ' + $_.Exception.Message) }
   $nm = & $ui.Label $WordFont $ui.C.White 0; $nm.BackColor = $pc.navy; $nm.Text = '90-161.Z'; $nm.Visible = $true
   $nh = [int]$nm.PreferredSize.Height
   $nm.Location = [Drawing.Point]::new((& $wn.Sc 64), ($top + [int][math]::Round(($side - $nh) / 2.0)))
   [void]$Into.Controls.Add($nm); $out.Name = $nm
   return $out }
+# R8 (R35 W7): the 2 system colors of the logo with high contrast on: the dark disc and Z take Window, the light rings,
+# page and arc take WindowText (the rail behind it is WindowText, so the disc stands out from the rail).
+$wn.LogoRole = @{ Dark = 'Window'; Light = 'WindowText' }
+# R8 (R35 W7): the logo picture for high contrast $High: its own colors when off; when on, a copy in the 2 system colors
+# of $wn.LogoRole (Pfm.Logo.TwoTone; each pixel keeps its cover).
+$wn.LogoImage = { param([bool]$High)
+  $img = [Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($AppLogoPng))))
+  if (-not $High) { return $img }
+  $d = [string]$wn.LogoRole.Dark; $l = [string]$wn.LogoRole.Light
+  try { return [Pfm.Logo]::TwoTone($img, [Drawing.SystemColors]::$d, [Drawing.SystemColors]::$l) } finally { $img.Dispose() } }
 # The rail head: the logo and the app name ($wn.HeadParts; kept in $wn.Logo and $wn.AppName for the measure part) and the
-# line under them.
+# line under them. R8 (R35 W7): then the logo check: one LOGO line, and a LAYOUT line when its colors are wrong.
 $wn.RailHead = {
   $h = & $wn.HeadParts $rail $ui.F.Word; $wn.Logo = $h.Logo; $wn.AppName = $h.Name
+  try { $lf = & $wn.LogoFacts; $bad = @(& $wn.LogoBad $lf); foreach ($x in $bad) { $ui.LayBad.Add([string]$x) }
+    if ($lf.Shown) { $lines.Add('LOGO ' + $(if ($lf.High) { 'high contrast on: system colors' } else { 'high contrast off: own colors' }) + ', other pixels ' + $lf.Other +
+        ', changed pixels ' + $lf.Diff + $(if ($bad.Count) { ' (wrong colors)' } else { ' (right colors)' })) } }
+  catch { $lines.Add('NOTE the logo check stopped: ' + ([string]$_.Exception.Message)) }
   $sb = & $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $sb.BackColor = $pc.navy; $sb.Text = 'Publications and Forms'; $sb.Visible = $true
   $sb.Location = [Drawing.Point]::new((& $wn.Sc 16), (& $wn.Sc 66)); [void]$rail.Controls.Add($sb) }
 $wn.BuildRail = {
@@ -479,10 +497,13 @@ $wn.Recolor = {
   rail, the check bar (the current check stays) and the card on the page, so every part takes the new colors; nothing
   happens when the setting did not change. Each change adds one CONTRAST line to the result.
   .PARAMETER When
-  'start' or 'changed'.
+  'start' or 'changed' (R8: or a name the measure part gives).
+  .PARAMETER Force
+  R8 (R35 W7): $true or $false to use instead of the Windows setting (the measure part rebuilds the window both ways
+  with no change of the Windows theme); $null: the Windows setting.
   #>
-  param([string]$When)
-  $high = [bool][Windows.Forms.SystemInformation]::HighContrast
+  param([string]$When, $Force = $null)
+  $high = $(if ($null -ne $Force) { [bool]$Force } else { [bool][Windows.Forms.SystemInformation]::HighContrast })
   if ($When -ne 'start' -and $high -eq [bool]$ui.High) { return }
   & $ui.UseColors $high; $wn.Fills = & $wn.FillsOf
   $form.BackColor = $pc.surface; $main.BackColor = $pc.surface; $page.BackColor = $pc.surface; $rail.BackColor = $pc.navy

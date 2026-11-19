@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r7 (round R34). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r8 (round R35). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
@@ -8,7 +8,12 @@
   (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 18 checks one at a
   time with Pass and Fail (PFM 17 Nov 26); each layout defect is one line "FAIL LAYOUT ..." and "PASS layout" is one line when
   there is none (the runner counts these words).
-  WHAT R7 CHANGES (R34 plan W1, R32 finding 6, W1 to W3): a publication number is never cut and the grid head reads
+  WHAT R8 CHANGES (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
+  in 2 system colors, and in its own colors again when it goes off ($wn.LogoImage, Pfm.Logo); every rail build checks
+  the logo's colors (a LOGO line; a W7 LAYOUT line when they are wrong). No column head of a grid is shortened with
+  dots in a narrow grid: each column keeps its head's width ($wn.HeadMin); the layout self-check writes a W7 LAYOUT
+  line for a cut head. The check bar keeps its 18 checks.
+  WHAT R7 CHANGED (R34 plan W1, R32 finding 6, W1 to W3): a publication number is never cut and the grid head reads
   PUBLICATION (W1, grid part); the mouse wheel scrolls a card, or the grid under the pointer, from anywhere on it
   (W2, Pfm.Wheel); every chip beside text is level with its first line (W3, $wn.ChipTops). The layout self-check
   writes W1 and W3 LAYOUT lines, and the check bar has 2 more checks (wheel, pubnum).

@@ -12,6 +12,9 @@
   R7 (R32 W1): the pub column is never narrower than its widest number, title and head plus the cell padding
   ($wn.PubMin, $wn.GridCols), so no number is cut with dots and the head reads PUBLICATION; a grid with a pub column has
   rows 2 lines high at least ($wn.GridHeight); each painted pub cell and the pub head keep what they needed and had.
+  R8 (R35 W7, R34 open point 5): no column head is shortened with dots in a narrow grid: every column keeps at least
+  the width of its head ($wn.HeadMin, $wn.GridCols), and every painted head keeps what it needed and had (Tag.Heads)
+  for the measure part and the layout self-check.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
   Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
@@ -82,6 +85,9 @@ $wn.GridCols = {
   width the grid has, so the sum of the visible columns never exceeds the client width.
   R7 (R32 W1): a pub column keeps its whole minimum, $PubMin (its widest number, title and head plus the cell padding),
   so a number is never cut; the other columns share what is left (their text wraps).
+  R8 (R35 W7): each other column keeps at least its head ($wn.HeadMin) when all heads fit: it wants the larger of its
+  own width and its head; when all wants do not fit, each gets its head and the rest is shared by what it wanted more.
+  Only when the heads alone do not fit do the columns shrink by one factor as before (the self-check names a cut head).
   .PARAMETER G
   The grid.
   .PARAMETER Cols
@@ -104,10 +110,18 @@ $wn.GridCols = {
     $o = $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $pubOwn } elseif ($c.W -eq 0) { & $wn.Sc 60 } else { & $wn.Sc $c.W }); $own[[string]$c.N] = $o
     if ($c.W -ne 0) { $fixed += $o }; if ($c.K -eq 'pub' -and $PubMin -gt 0) { $keep += $o } else { $rest += $o } }
   $k = $(if ($rest -gt 0 -and $keep + $rest -gt $avail) { [math]::Max(0.0, [double]($avail - $keep) / $rest) } else { 1.0 })
+  # R8 (W7): the head floor of each other column, what it wants, and the room they share ($avail less the pub column)
+  $hm = @{}; $want = 0; $floor = 0; $more = 0
+  foreach ($c in $Cols) { if (-not ($c.K -eq 'pub' -and $PubMin -gt 0)) { $f = & $wn.HeadMin $c; $hm[[string]$c.N] = $f
+      $floor += $f; $want += [math]::Max($own[[string]$c.N], $f); $more += [math]::Max(0, $own[[string]$c.N] - $f) } }
+  $pool = $avail - $keep
   $kinds = @{}
   foreach ($c in $Cols) {
     $dc = New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name = [string]$c.N; $dc.HeaderText = $(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode = 'NotSortable'
-    $o = $own[[string]$c.N]; $min = $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $o } else { [math]::Max(2, [int][math]::Floor($o * $k)) })
+    $o = $own[[string]$c.N]; $f = [int]$hm[[string]$c.N]
+    $min = $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $o } elseif ($want -le $pool) { [math]::Max($o, $f) }
+      elseif ($floor -le $pool) { $f + $(if ($more -gt 0) { [int][math]::Floor(($pool - $floor) * [math]::Max(0, $o - $f) / [double]$more) } else { 0 }) }
+      else { [math]::Max(2, [int][math]::Floor($o * $k)) })
     $dc.AutoSizeMode='Fill'; $dc.MinimumWidth = $min; $dc.FillWeight = [single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $Scroll) } else { $c.W })
     [void]$G.Columns.Add($dc); $kinds[[string]$c.N] = [string]$c.K }
   return $kinds }
@@ -133,7 +147,7 @@ $wn.Grid = {
   $pw = & $wn.PubWidths $rows
   $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw)
   $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
-  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null }
+  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null; Heads = [ordered]@{} }
   & $wn.GridFill $g $rows
   $g.Add_CellPainting({ param($s, $e) & $wn.PaintCell $s $e })
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
@@ -153,6 +167,9 @@ $wn.TextW = { param([string]$Text, $F)
   return [Windows.Forms.TextRenderer]::MeasureText($Text, $F, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width }
 # The head text of grid column $C as the grid draws it: its header text (H, else its name) in capitals.
 $wn.HeadText = { param($C) return ($(if ($C.H) { [string]$C.H } else { [string]$C.N })).ToUpperInvariant() }
+# R8 (R35 W7): the smallest width of grid column $C that shows its whole head: the head text in the head font, the cell
+# padding at both sides ($wn.PaintCell) and 1 px, as $wn.PubMin does for the pub column.
+$wn.HeadMin = { param($C) return ((& $wn.TextW (& $wn.HeadText $C) $ui.F.SmallB) + 2 * (& $ui.Sc 10) + 1) }
 # R7 (W1): the height of one line of a pub cell, in pixels: the larger of the link font's height and its card line height.
 $wn.PubLineH = { return [math]::Max([int]$ui.F.Link.Height, (& $wn.LineH $ui.F.Link)) }
 # R7 (W1): the smallest width of the pub column of $Cols: its widest number, widest title ($Pw, $wn.PubWidths) or head,
@@ -235,7 +252,9 @@ $wn.PaintCell = {
     $text = [string]$E.Value
     if ($head) { [Windows.Forms.TextRenderer]::DrawText($gr, $text.ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl)
       # R7 (W1): what the head of the pub column needs and has, for the measure part and the layout self-check
-      if ($kind -eq 'pub') { $tag.Head = @{ Text = $text.ToUpperInvariant(); W = (& $wn.TextW $text.ToUpperInvariant() $ui.F.SmallB); Have = $tr.Width } } }
+      $hd = @{ Text = $text.ToUpperInvariant(); W = (& $wn.TextW $text.ToUpperInvariant() $ui.F.SmallB); Have = $tr.Width; Kind = $kind }
+      if ($kind -eq 'pub') { $tag.Head = $hd }
+      if ($null -ne $tag.Heads) { $tag.Heads[[string]$S.Columns[$E.ColumnIndex].Name] = $hd } }   # R8 (W7): every head, for the same checks
     elseif ($kind -eq 'pub') { & $wn.PaintPub $gr $text $tr $fl $fw $tag $E.RowIndex }
     elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fw) }
     elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fw) }
