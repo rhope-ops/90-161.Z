@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r4, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r5, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
@@ -8,14 +8,48 @@
   "RESULT NAMES FAIL (<n> controls: <card>/<type> "<text>", ...)".
   Measure (-Measure <file>): the window is built at 1280 x 720 far off the screen and never shown to a person; for each
   card it records the crumb (fonts, bounds, the ink gap after the link: R30 V2), every button (its color and the color
-  of its face as drawn: V4) and every section card (its bottom: V4). No question, no file but the given one.
-  Inputs: $form, $page, $ui, $wn, $Cards, $Rev. Outputs: $wn.NoName, $wn.NamesLine, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r4.ps1 dot-sources it from its own folder inside its try block.
+  of its face as drawn: V4) and every section card (its bottom: V4). R31: it also records the rail head at this scale
+  and at 1.5 x (W1: the logo's middle and the name's middle, the color behind the logo) and the colors that
+  Select-T22Color gives with high contrast on and off (W2). No question; no file but the given one and the card
+  pictures next to it.
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r5.png, in
+  $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
+  CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
+  Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
+  $wn.PngLines, $wn.MeasureRun and its helpers.
+  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: with -Measure only: the JSON file given (the test gives a file in its own temporary folder).
+  Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
+  card PNG files in its folder (the test gives a file in its own temporary folder).
   Credentials: none.
 #>
 $wn.NoName = [ordered]@{}; $wn.Scanned = $false
+$wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
+$wn.SavePng = {
+  <#
+  .SYNOPSIS
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r5.png in $wn.PngDir.
+  .DESCRIPTION
+  Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
+  saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
+  .PARAMETER Key
+  The card key (the card on the page).
+  #>
+  param([string]$Key)
+  if (-not $wn.PngDir) { return }
+  $name = '90161Z-T22-card-' + $Key + '-' + $Rev + '.png'
+  try {
+    $bm = New-Object System.Drawing.Bitmap([math]::Max(1, $form.Width), [math]::Max(1, $form.Height))
+    try {
+      $form.DrawToBitmap($bm, (New-Object System.Drawing.Rectangle(0, 0, $bm.Width, $bm.Height)))
+      $bm.Save((Join-Path $wn.PngDir $name), [System.Drawing.Imaging.ImageFormat]::Png); $wn.Pngs.Add($name)
+    } finally { $bm.Dispose() }
+  } catch { $lines.Add('NOTE card picture not saved: ' + $name + ' (' + ([string]$_.Exception.Message) + ')') } }
+# The CARDPNG lines of the result: how many card pictures were saved of how many cards, then one line per file name.
+$wn.PngLines = {
+  if (-not $wn.PngDir) { return }
+  $lines.Add('CARDPNG saved=' + $wn.Pngs.Count + ' of ' + $Cards.Count)
+  foreach ($n in $wn.Pngs) { $lines.Add('CARDPNG ' + $n) } }
 $wn.NameScan = {
   <#
   .SYNOPSIS
@@ -114,17 +148,76 @@ $wn.MeasureCard = {
   $card = [ordered]@{}; $card['Key'] = $Key; $card['Crumb'] = (& $wn.MeasureCrumb)
   $card['Buttons'] = $btns.ToArray(); $card['Sections'] = $secs
   return $card }
+$wn.HeadFacts = {
+  <#
+  .SYNOPSIS
+  The facts of one rail head (R31 W1): the bounds of the logo and the name, their vertical middles and the colors
+  behind the logo and behind the panel it sits on.
+  .PARAMETER Logo
+  The logo picture box.
+  .PARAMETER Name
+  The app name label.
+  .PARAMETER Into
+  The panel they sit on (the rail, or the test panel).
+  .PARAMETER At
+  The scale, as text.
+  #>
+  param($Logo, $Name, $Into, [string]$At)
+  $f = [ordered]@{}; $f['At'] = $At; $f['Logo'] = [string]$Logo.Bounds; $f['Name'] = [string]$Name.Bounds
+  $f['LogoMid'] = $Logo.Top + $Logo.Height / 2.0; $f['NameMid'] = $Name.Top + $Name.Height / 2.0
+  $f['LogoBack'] = (& $wn.Hex $Logo.BackColor); $f['RailBack'] = (& $wn.Hex $Into.BackColor)
+  return $f }
+$wn.MeasureHead = {
+  <#
+  .SYNOPSIS
+  The rail head at this screen's scale (the rail as built) and at 1.5 x that scale (R31 W1).
+  .DESCRIPTION
+  For 1.5 x, the same builder ($wn.HeadParts) runs into a navy test panel on the window with the scale ($ui.Dpi) and
+  the name's font 1.5 x as large, as Windows makes them at 150 %; then the scale comes back and the panel goes.
+  .OUTPUTS
+  Two tables of $wn.HeadFacts.
+  #>
+  $res = @(& $wn.HeadFacts $wn.Logo $wn.AppName $rail ('dpi ' + $ui.Dpi))
+  $dpi = $ui.Dpi; $f = $null; $p = $null
+  try {
+    $wf = $ui.F.Word; $f = New-Object System.Drawing.Font($wf.FontFamily, [single]($wf.Size * 1.5), $wf.Style)
+    $ui.Dpi = $dpi * 1.5
+    $p = New-Object System.Windows.Forms.Panel; $p.BackColor = $pc.navy; $p.Size = [Drawing.Size]::new((& $wn.Sc 200), (& $wn.Sc 100)); $form.Controls.Add($p)
+    $h = & $wn.HeadParts $p $f; [Windows.Forms.Application]::DoEvents()
+    $res += & $wn.HeadFacts $h.Logo $h.Name $p ('dpi ' + $ui.Dpi)
+  } finally { $ui.Dpi = $dpi; if ($p) { $form.Controls.Remove($p); $p.Dispose() }; if ($f) { $f.Dispose() } }
+  return $res }
+$wn.MeasureContrast = {
+  <#
+  .SYNOPSIS
+  The colors Select-T22Color gives for each palette name with high contrast on and off (R31 W2), with no change of the
+  Windows theme.
+  .OUTPUTS
+  One table per palette name and setting: Table (pc or C), Key, High, System (a system color), Name (its color name),
+  Role (the system color its role names), Hex and Own (the window's own color).
+  #>
+  $rows = New-Object System.Collections.Generic.List[object]
+  foreach ($t in @(@{ Name = 'pc'; Own = $ui.OwnPc }, @{ Name = 'C'; Own = $ui.OwnC })) {
+    foreach ($high in $true, $false) {
+      $pick = Select-T22Color $high $t.Own $ui.HcRole
+      foreach ($k in @($pick.Keys | Sort-Object)) {
+        $r = [ordered]@{}; $r['Table'] = $t.Name; $r['Key'] = [string]$k; $r['High'] = $high; $r['System'] = [bool]$pick[$k].IsSystemColor
+        $r['Name'] = [string]$pick[$k].Name; $r['Role'] = [string]$ui.HcRole[$k]; $r['Hex'] = (& $wn.Hex $pick[$k]); $r['Own'] = (& $wn.Hex $t.Own[$k])
+        $rows.Add($r) } } }
+  return $rows.ToArray() }
 $wn.MeasureRun = {
   <#
   .SYNOPSIS
   The -Measure run: builds the window off-screen at 1280 x 720, measures every card, writes the JSON file, closes.
   .DESCRIPTION
   The form is shown far off the screen (it is never seen) so that its controls have handles and can be drawn into
-  bitmaps; it builds every card as a normal run does ($wn.Build: layout self-check and accessible names included).
+  bitmaps; it builds every card as a normal run does ($wn.Build: layout self-check, accessible names and the card
+  pictures, saved next to the JSON file, included), then measures the rail head and the high-contrast color choice.
   .PARAMETER Path
   The JSON file to write.
   #>
   param([string]$Path)
+  $wn.PngDir = Split-Path -Parent $Path
   $form.StartPosition = 'Manual'; $form.ShowInTaskbar = $false; $form.Location = [Drawing.Point]::new(-20000, -20000)
   $form.Show(); [Windows.Forms.Application]::DoEvents()
   & $ui.FormDpi; $form.BackColor = $pc.surface
@@ -140,5 +233,9 @@ $wn.MeasureRun = {
   $res['Cards'] = $all.ToArray()
   $res['EmptyNames'] = @($wn.NoName.Keys | ForEach-Object { [string]$_ })
   $res['LayoutDefects'] = @($ui.LayBad)
+  $res['Pngs'] = $wn.Pngs.ToArray()
+  # The rail head and the color choice: a step that cannot be measured is kept as its error (the test names it).
+  try { $res['Head'] = @(& $wn.MeasureHead) } catch { $res['Head'] = @(); $res['HeadError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
+  try { $res['Contrast'] = @(& $wn.MeasureContrast) } catch { $res['Contrast'] = @(); $res['ContrastError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 8) -Encoding UTF8
   $form.Close() }
