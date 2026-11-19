@@ -24,9 +24,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R34-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R34-round-r2.ps1",
             "round": "R34",
-            "title": "Round R34 r1: the 90-161.Z window r7, list changes, the 2 test flows inside the app solution, the changed app flows and the full flow test",
+            "title": "Round R34 r2: the 90-161.Z window r7, list changes, the 2 test flows inside the app solution, the changed app flows and the full flow test",
             "files": [
                 {
                     "dir": "T22",
@@ -2414,9 +2414,9 @@
             ]
         },
         {
-            "out": "scripts/gov/paste/90161Z-R33-round-r3.ps1",
+            "out": "scripts/gov/paste/90161Z-R33-round-r4.ps1",
             "round": "R33",
-            "title": "Round R33 r3: the paste-size test (one paste of 1 MB)",
+            "title": "Round R33 r4: the paste-size test (one paste of 1 MB)",
             "files": [
                 {
                     "dir": "T25",
