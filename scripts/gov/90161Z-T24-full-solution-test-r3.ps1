@@ -1,6 +1,10 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 24 full-solution test, r2. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 24 full-solution test, r3. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  WHAT R3 CHANGES (R34): the script prints lines that start with NOW before each step that takes time (sign-in, each
+  list read or write, each wait). They say what it is doing and are not results; the checks, the result lines, the exit
+  behavior and the file names are the same as r2 (the result and state files keep their r1 names).
+  r2 text follows.
   WHAT R2 CHANGES (R30, code standard S1): Wait-Until now comes from the shared block scripts/gov/src/wait-common.ps1 (the
   same code as r1, also used by T18); the header names what the script reaches, writes and asks for; long lines are
   wrapped and each function has its comment. The checks, the result lines and the file names are the same as r1 (the
@@ -35,7 +39,7 @@
   Writes: the site rows listed under WHAT IT CHANGES ON THE SITE; on this computer the T24 folder (result files, the state
           file) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r2.ps1 -Part 1 (RADE does this).
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r3.ps1 -Part 1 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 1, 2, 3 or 4, -WaitMinutes (default 6), -NoPause.
 #>
 param([string]$Id, [ValidateSet(1, 2, 3, 4)][int]$Part = 1, [int]$WaitMinutes = 6, [switch]$NoPause)
@@ -344,9 +348,11 @@ try {
   $site = Get-SiteAddress $configDir
   $stateFile = Join-Path $dir '90161Z-T24-test-state-r1.txt'   # item IDs and the old Settings values, for parts 2 and 3
   $lines.Add('TASK T24 full solution test r1, part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ', wait-minutes=' + $WaitMinutes)
+  Write-Host 'NOW Looking for the PnP.PowerShell module.'
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
+  Write-Host 'NOW Signing in to the site. A sign-in window may open.'
   Write-Host 'Connecting to the site. If a sign-in window opens, sign in with your CAC.'
   $null = & { Connect-PnPOnline -Url $site -UseWebLogin -ErrorAction Stop } *>&1
   $lines.Add('ROUTE web-login PASS')
@@ -354,6 +360,7 @@ try {
   if ($Part -eq 1) {
     # 0. The Settings rows the flows read. Test mode Yes: the F04 e-mail goes to the alert address only. The old values are kept for part 4
     # (an earlier unfinished run keeps its first values).
+    Write-Host 'NOW Reading the two Settings rows the test changes.'
     $state = Read-State $stateFile
     foreach ($k in $SeedSettings.Keys) {
       if (-not $state.ContainsKey('orig' + $k)) { $old = Get-SettingValue $k; $state['orig' + $k] = $(if ($null -eq $old) { '<missing>' } else { $old }) }
@@ -361,11 +368,13 @@ try {
     Save-State $stateFile $state
     $settingsChanged = $true
     if ($state.ContainsKey('settingsRestored')) { $state.Remove('settingsRestored'); Save-State $stateFile $state }   # an earlier stopped run put them back; they change again now
+    Write-Host 'NOW Setting Flows paused to No and Test mode to Yes.'
     $made = 0; $upd = 0
     foreach ($k in $SeedSettings.Keys) { if ((Save-SettingRow $k $SeedSettings[$k]) -eq 'created') { $made++ } else { $upd++ } }
     Add-Line 'a0-settings' 'SET' ('PFM Settings rows made=' + $made + ' updated=' + $upd + '; Flows paused No; Test mode Yes')
 
     # a. All 6 flows On after the import: your own flows only, filtered by the 90161Z F0 names. One try; a hand check line when it cannot be read.
+    Write-Host 'NOW Counting which of the 6 flows are On.'
     try {
       $envs = @(Get-PnPPowerPlatformEnvironment -ErrorAction Stop | Where-Object { $_.IsDefault })
       if ($envs.Count -ne 1) { throw [System.InvalidOperationException]::new('default environment not identified') }
@@ -377,6 +386,7 @@ try {
     }
 
     # Leftovers of an earlier run (by title), then the steps the fake rows use.
+    Write-Host 'NOW Looking for fake rows left by an earlier run.'
     $oldPubs = @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -ErrorAction Stop | Where-Object { ([string]$_['Title']).StartsWith($Prefix) -and
         ([string]$_['Title']).EndsWith('(delete me)') })
     $oldProds = @(Get-PnPListItem -List 'PFM Product Index' -Fields 'Title' -ErrorAction Stop | Where-Object { ([string]$_['Title']).StartsWith($Prefix) -and
@@ -386,45 +396,57 @@ try {
     foreach ($o in $oldProds) { $moved += Clear-TestProduct $o.Id }
     if ($oldPubs.Count -or $oldProds.Count) { Add-Line 'b-leftovers' 'SET' ('moved ' + $oldPubs.Count + ' earlier test publication(s) and ' + $oldProds.Count +
         ' product row(s) and their rows to the Recycle Bin, rows=' + $moved) }
+    Write-Host 'NOW Reading the process steps.'
     $steps = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'Title', 'StepNumber' -ErrorAction Stop | Where-Object { [int]$_['StepNumber'] -ne 6 -and [int]$_['StepNumber'] -ne 7 } |
         Sort-Object { [int]$_['StepNumber'] })
     if ($steps.Count -lt 3) { throw 'PROCESS STEPS: fewer than 3 steps besides 6 and 7 in PFM Process Steps.' }
     $titles = @($steps | ForEach-Object { [string]$_['Title'] })
 
     # 1. F01: one fake publication; 1 row on open, none for a note, 1 row each for Action Type, Process Step and Action Status.
+    Write-Host 'NOW Making 1 fake publication for the F01 test.'
     $x = Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $TitleX; ActionType = 'New'; ProductType = 'Publication'; ProcessStep = $steps[0].Id
         ActionStatus = 'On Track' } -ErrorAction Stop
     $state['x'] = [string]$x.Id
     Save-State $stateFile $state
     Add-Line 'c-f01-created' 'SET' ('fake publication X made=' + $x.Id + ' (Action Type New, step 1 of the list, On Track)')
+    Write-Host 'NOW Waiting for the log row of the new fake publication.'
     $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 1 } 'the F01 log row for the new publication'
     $rows = @(Get-OwnLogRow $x.Id)
     $d0 = $(if ($rows.Count) { [string]$rows[0]['EventDetails'] } else { '' })
     $good = $ok -and $rows.Count -eq 1 -and $d0.StartsWith('Opened.') -and $d0.Contains('State: New | ' + $titles[0] + ' | On Track') -and ([string]$rows[0]['Title']).StartsWith('Action opened: ')
     Add-Line 'f01-open' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the row was opened=' + $rows.Count + ' expected=1 (title Action opened, details Opened. and the state)' +
         $(if ($ok) { '' } else { '. If 0: check that F01 is On and read its run history' }))
+    Write-Host 'NOW Editing a note on the fake publication.'
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ StatusNotes = 'R28 test: a note edit' } -ErrorAction Stop
+    Write-Host 'NOW Waiting 2.5 minutes to see that F01 logs nothing.'
     Write-Host '  A note was edited; waiting 2.5 minutes to see that F01 logs nothing ...'
     Start-Sleep -Seconds 150
+    Write-Host 'NOW Changing the Action Type of the fake publication.'
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ ActionType = 'Rewrite' } -ErrorAction Stop
+    Write-Host 'NOW Waiting for the log row of the Action Type change.'
     $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 2 } 'the F01 log row for the new Action Type'
     $rows = @(Get-OwnLogRow $x.Id)
     $d1 = $(if ($rows.Count -ge 2) { [string]$rows[1]['EventDetails'] } else { '' })
     $good = $ok -and $rows.Count -eq 2 -and $d1.StartsWith('Changed.') -and $d1.Contains('State: Rewrite | ' + $titles[0] + ' | On Track') -and
         ([string]$rows[1]['Title']).StartsWith('Action updated: ')
     Add-Line 'f01-type' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the note edit and the Action Type change=' + $rows.Count + ' expected=2 (1 more = the note edit was logged)')
+    Write-Host 'NOW Changing the Process Step of the fake publication.'
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ ProcessStep = $steps[1].Id } -ErrorAction Stop
+    Write-Host 'NOW Waiting for the log row of the Process Step change.'
     $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 3 } 'the F01 log row for the new Process Step'
     $rows = @(Get-OwnLogRow $x.Id)
     $d2 = $(if ($rows.Count -ge 3) { [string]$rows[2]['EventDetails'] } else { '' })
     $good = $ok -and $rows.Count -eq 3 -and $d2.Contains('State: Rewrite | ' + $titles[1] + ' | On Track')
     Add-Line 'f01-step' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the Process Step change=' + $rows.Count + ' expected=3')
+    Write-Host 'NOW Changing the Action Status of the fake publication.'
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $x.Id -Values @{ ActionStatus = 'Stalled' } -ErrorAction Stop
+    Write-Host 'NOW Waiting for the log row of the Action Status change.'
     $ok = Wait-Until { $script:got = (Get-OwnLogRow $x.Id).Count; $script:got -ge 4 } 'the F01 log row for the new Action Status'
     $rows = @(Get-OwnLogRow $x.Id)
     $d3 = $(if ($rows.Count -ge 4) { [string]$rows[3]['EventDetails'] } else { '' })
     $good = $ok -and $rows.Count -eq 4 -and $d3.Contains('State: Rewrite | ' + $titles[1] + ' | Stalled')
     Add-Line 'f01-status' $(if ($good) { 'PASS' } else { 'FAIL' }) ('log rows after the Action Status change=' + $rows.Count + ' expected=4')
+    Write-Host 'NOW Waiting 2 minutes to see that F01 adds no more rows.'
     Write-Host '  Waiting 2 minutes to see that F01 adds no more rows ...'
     Start-Sleep -Seconds 120
     $total = (Get-OwnLogRow $x.Id).Count
@@ -437,6 +459,7 @@ try {
     $certA = $m15.AddYears(-4).AddMonths(3); $effA = $certA.AddYears(-1)       # later = certified; Next Review Due = 3 months ahead; window opened 3 months ago
     $effB = $m15.AddYears(-4).AddMonths(8); $certB = $effB.AddYears(-1)        # later = effective; Next Review Due = 8 months ahead; window opens in 2 months
     $nrdA = $certA.AddYears(4); $nrdB = $effB.AddYears(4)
+    Write-Host 'NOW Making 4 fake product rows and 1 review row for F02.'
     $base = @{ ProductType = 'Publication'; ProductStatus = 'Active' }
     $p1 = Add-PnPListItem -List 'PFM Product Index' -Values ($base + @{ Title = $Prefix + 'P1 A (delete me)'
         PublicationNumber = 'R28-A'; EffectiveDate = $effA; CertifiedCurrentDate = $certA; NextReviewDue = $effA }) -ErrorAction Stop
@@ -453,6 +476,7 @@ try {
     Add-Line 'd-f02-prepared' 'SET' ('product rows A,B,C,D made=4 (A: wrong Next Review Due; B: window not open; C: review already open, 1 review row made; D: Inactive)')
 
     # 3. F04: two fake publications at two process steps; the newest status-report log row is noted so part 2 finds only the new one.
+    Write-Host 'NOW Making 2 fake publications for the F04 report.'
     $fa = Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $TitleF4A; ActionType = 'New'; ProductType = 'Publication'; ProcessStep = $steps[0].Id
         ActionStatus = 'On Track' } -ErrorAction Stop
     $fb = Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $TitleF4B; ActionType = 'Rewrite'; ProductType = 'Publication'; ProcessStep = $steps[1].Id
@@ -470,8 +494,10 @@ try {
     $settingsChanged = -not $state.ContainsKey('settingsRestored')   # part 1 changed the Settings rows; part 4, or a stop in any part, puts them back once
     if ($Part -eq 4 -and -not $hasState) { $null = $state } elseif ($Part -eq 2) {
       # F02 after the first run, then F04.
+      Write-Host 'NOW Checking what F02 did after its first run.'
       Test-F02Row $state $false
       Save-State $stateFile $state
+      Write-Host 'NOW Reading the status report log rows from F04.'
       $rowsNew = @(Get-ReportLogRow ([int]$state['reportBase']))
       $none = ($rowsNew.Count -eq 0)
       if ($none) { $none = -not (Wait-Until { @(Get-ReportLogRow ([int]$state['reportBase'])).Count -ge 1 } 'the F04 log row') }
@@ -480,6 +506,7 @@ try {
       Add-Line 'f04-logged' $(if ($rowsNew.Count -eq 1 -and $det.Contains('Test mode: sent to the alert address only')) { 'PASS' } else { 'FAIL' }) ('new status-report log rows=' +
           $rowsNew.Count + ' expected=1 (start F04 once; 2 or more fail); the row says test mode=' + $det.Contains('Test mode') +
               $(if ($rowsNew.Count) { '' } else { '. Start F04 with Run in Power Automate, type any address, and read its run history' }))
+      Write-Host 'NOW Counting the rows on the Publications list.'
       $nPub = @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -ErrorAction Stop).Count
       $covered = $(if ($det -match 'covered (\d+) actions') { [int]$Matches[1] } else { -1 })
       Add-Line 'f04-count' $(if ($covered -eq $nPub) { 'PASS' } else { 'FAIL' }) ('the report covered ' + $covered + ' actions; Publications rows now=' + $nPub +
@@ -487,10 +514,12 @@ try {
       Add-Line 'f04-hand' 'INFO' 'the e-mail itself (alert address Inbox, 2 tables, test mode line) is checked by you in the next step'
     } elseif ($Part -eq 3) {
       # Part 3: F02 after the second run (checks only; part 4 cleans up).
+      Write-Host 'NOW Checking that F02 made no second review row.'
       if ($state.ContainsKey('p1') -and $state.ContainsKey('nrd1')) { Test-F02Row $state $true } else { Add-Line 'f02-not-twice-run2' 'SKIP' 'part 1 stopped before the F02 rows were made' }
     } else {
       # Part 4: clean-up and settings back. The fake rows always go to the Recycle Bin here, also after a failed check (the check
       # lines above keep the evidence). A row already gone is not an error.
+      Write-Host 'NOW Moving the fake rows to the site Recycle Bin.'
       $n = 0; $gone = 0
       foreach ($k in 'x', 'fa', 'fb') { if ($state.ContainsKey($k)) { try { $n += Clear-TestPublication ([int]$state[$k]) } catch { $gone++ } } }
       foreach ($k in 'p1', 'p2', 'p3', 'p4') { if ($state.ContainsKey($k)) { try { $n += Clear-TestProduct ([int]$state[$k]) } catch { $gone++ } } }
@@ -498,12 +527,14 @@ try {
         foreach ($r in (Get-ReportLogRow ([int]$state['reportBase']))) { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ }
       }
       Add-Line 'g-clean-up' 'SET' ('rows moved to the site Recycle Bin=' + $n + '; fake items already gone or not removable=' + $gone)
+      Write-Host 'NOW Putting the two Settings rows back.'
       if ($state.ContainsKey('settingsRestored')) { $nRestored = 0; Add-Line 'h-settings-restored' 'SET' 'PFM Settings rows were put back earlier (a part stopped)' }
       else { $nRestored = Restore-TestSetting $state; Add-Line 'h-settings-restored' 'SET' ('PFM Settings rows put back to their old values=' + $nRestored) }
       $settingsChanged = $false
       Remove-Item -LiteralPath $stateFile -Force
     }
   }
+  Write-Host 'NOW Signing out of the site.'
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
   $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
   $lines.Add('FULL SOLUTION part ' + $Part + ' done, items with problems=' + $nf)

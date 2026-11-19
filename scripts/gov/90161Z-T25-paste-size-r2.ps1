@@ -1,20 +1,21 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 25 paste-size test, r1 (R33; the PFM, 18 Nov 26: "No limit; test 1 MB too"). Read-only. Windows PowerShell 5.1, no modules.
+  90-161.Z Task 25 paste-size test, r2 (R34: NOW lines, same checks as r1; r1 was R33; the PFM, 18 Nov 26: "No limit; test 1 MB too"). Read-only. Windows PowerShell 5.1, no modules.
 .DESCRIPTION
   What it is for: the round bundle had a size limit of 600 KB that no test had set. Round R33 is one paste of at least
   1,048,576 bytes: the RADE engine, this script and one padding file. When this script runs, the paste worked: the text
   reached PowerShell ISE whole, RADE started and saved the files. This script then checks that the padding file is whole.
   About 1 minute (an estimate).
   It reads T25\90161Z-T25-padding-r1.txt (6,000 numbered lines of fixed text and 1 end line; no data) and writes
-  T25\90161Z-T25-paste-size-r1.txt (plain text): the number of lines, the first and the last line number and the end
+  T25\90161Z-T25-paste-size-r2.txt (plain text): the number of lines, the first and the last line number and the end
   line. It changes nothing else, signs in nowhere and uses no network.
   The padding file: samples/90161Z-T25-padding-r1.txt in the repo; line N is
   "FAKE padding line <N, 6 digits> for the 90-161.Z paste-size test: no data, only letters to make the paste larger. .........."
   and the last line is "END OF PADDING lines=6000".
   Output: the file above (the round collects it) and lines that start with ITEM, then PASS or FAIL.
+  Lines that start with NOW say what the script is doing; they are not results.
   Network: none.
-  Writes: 90161Z-T25-paste-size-r1.txt in the T25 folder.
+  Writes: 90161Z-T25-paste-size-r2.txt in the T25 folder.
   Credentials: none.
   Parameters (used by RADE): -Id, -NoPause.
 #>
@@ -22,7 +23,7 @@ param([string]$Id, [switch]$NoPause)
 $task = 'T25'
 $ErrorActionPreference = 'Stop'
 $PaddingName = '90161Z-T25-padding-r1.txt'      # the padding file the round saves beside this script
-$ResultName = '90161Z-T25-paste-size-r1.txt'    # the result file the round collects
+$ResultName = '90161Z-T25-paste-size-r2.txt'    # the result file the round collects
 $PaddingLines = 6000                            # numbered lines in the padding file (the end line is 1 more)
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -121,10 +122,12 @@ try {
   Assert-TaskFile $dir @($PaddingName) 'FILE missing in T25: '
   $path = Join-Path $dir $PaddingName
   $bytes = (Get-Item -LiteralPath $path).Length
+  Write-Output 'NOW Checking that the padding file is whole.'
   $test = Test-Padding $path
-  $out = @('TASK T25 paste-size test r1, ' + (Get-Date).ToString('yyyy-MM-dd HH:mm'),
+  $out = @('TASK T25 paste-size test r2, ' + (Get-Date).ToString('yyyy-MM-dd HH:mm'),
     ('PADDING lines=' + $test.Lines + ' bytes=' + $bytes),
     $(if ($test.Ok) { 'RESULT PASTE PASS: the padding file is whole, so a paste of this size works' } else { 'RESULT PASTE FAIL: ' + $test.Why }))
+  Write-Output 'NOW Saving the paste-size result to the T25 folder.'
   Set-Content -LiteralPath (Join-Path $dir $ResultName) -Value $out -Encoding UTF8
   if ($test.Ok) { Write-Output ('ITEM paste-size PASS lines=' + $test.Lines + ' bytes=' + $bytes) }
   else { Write-Output ('ITEM paste-size FAIL ' + $test.Why); $code = 1 }
