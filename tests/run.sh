@@ -649,11 +649,11 @@ assert not [i + 1 for i, l in enumerate(src.splitlines()) if l.startswith("'@")]
 for l in out:   # every publication, office and person name says FAKE
     for w in re.findall(r'(?<!FAKE )(?<!DAF )\b(OI \d\d-\d+|Instruction \d\d-\d+|Form \d+|Office \d|AO \d)\b', l): raise AssertionError(l)
 assert 'FAKE' in text and 'RAIL Your Work' in text and 'RAIL Settings' in text and 'See the 0 findings' not in text and len([l for l in out if l.startswith('RAIL ')]) == 5
-# the 18 in-window checks (PFM 17 Nov 26; R31 W3 adds crumb and status, R6 chip and pubcol, R7 wheel and pubnum): numbered lines in order, with their keys, each text at most 200 characters
+# the 18 in-window checks (PFM 17 Nov 26; R31 W3 adds crumb and status, R6 chip and pubcol, R7 wheel and pubnum): numbered lines in order, with their keys, each text at most 160 characters
 keys = ['card-open', 'first-button', 'all-cards', 'tab', 'shift-tab', 'enter', 'narrator-on', 'narrator-names', 'narrator-off', 'contrast-on', 'contrast-read', 'contrast-off', 'crumb', 'status', 'chip', 'pubcol', 'wheel', 'pubnum']
 chk = [re.match(r'CHECK (\d+) ([a-z-]+): (.+)$', l) for l in out if re.match(r'CHECK \d+ ', l)]
 assert len(chk) == 18 and all(chk) and [m.group(2) for m in chk] == keys and [int(m.group(1)) for m in chk] == list(range(1, 19)), [m.group(0) for m in chk]
-assert all(len(m.group(3)) <= 200 for m in chk), [len(m.group(3)) for m in chk]
+assert all(len(m.group(3)) <= 160 for m in chk), [len(m.group(3)) for m in chk]
 # the rade-ui block is not empty, and the colors painted here are the palette tokens
 assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
 after = src.split('# <<< rade-ui', 1)[1]
