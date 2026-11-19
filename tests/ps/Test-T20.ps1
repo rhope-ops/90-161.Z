@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T20-provision-lists-r4.ps1 (with its part 90161Z-T20-access-r3.ps1) and scripts/gov/90161Z-T19-list-update-r6.ps1 against the strict fake in
+# Tests scripts/gov/90161Z-T20-provision-lists-r4.ps1 (with its part 90161Z-T20-access-r4.ps1) and scripts/gov/90161Z-T19-list-update-r6.ps1 against the strict fake in
 # tests/fake-pnp (pwsh 7, cloud only). Proves the logic: order, list ids, lookup ids, skip-what-exists, the PFM Office level
 # (F2 A), the per-list access read-back (R34 plan, open point 12), Contribute for the Visitors group on the intake lists (r4, PFM 19 Nov 26), the T19 choices (S3 A: T-0) and the suspense setting (15), the checks and the masking. The real service is proved only by a gov device round.
 # Last line: "T20 pass=N fail=0".

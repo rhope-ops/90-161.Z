@@ -274,7 +274,6 @@ def check_probe_flows(zz, cust_xml, zname):
     bid = B.guid("workflow", "90161Z-T21-probe-button").lower()
     if f"$ButtonFlowId = '{bid}'" not in look or f'WorkflowId="{{{bid}}}"' not in cust_xml: bad(f"{zname}: the T21 look script does not name the button flow's workflow ID {bid}")
 
-
 def check_list_placeholders(zz, zname):
     """R36 (README choice 11): every list variable's default is the placeholder of its list, in the variable file and in each flow's
     parameters, so the T24 task script (r6, module zip) can write the GUIDs; it finds them by the same mark and names the r5 zip.
@@ -294,7 +293,6 @@ def check_list_placeholders(zz, zname):
     t24 = (ROOT / "scripts" / "gov" / "90161Z-T24-zip-r6.ps1").read_text(encoding="utf-8")   # T24 r6, module zip (part 0)
     if f"$ListGuidMark = '{B.LIST_GUID_MARK}'" not in t24: bad(f"T24 r6 module zip: $ListGuidMark is not the builder's mark {B.LIST_GUID_MARK}")
     if f"'{zname}'" not in t24: bad(f"T24 r6 module zip does not name the solution zip {zname}")
-
 
 # R28: the full solution (R28, PFM 17 Nov 26: "the full solution with every flow On") holds F01 to F06, every flow On (StateCode 1), the
 # same unique name as the slice (so it upgrades it), and every environment variable its flows read. R36 (r5): F07 and F08 join, so 10 flows.
@@ -323,7 +321,6 @@ with zipfile.ZipFile(cz) as zz:
 T21_EXPECT = {"90161Z-T21-probe-r5.zip": (1, 2)}
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
 T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
-
 def check_levels(actions, where, outer=()):
     """runAfter names must be siblings (same level); names are unique across the flow."""
     for name, a in actions.items():
@@ -337,7 +334,6 @@ def check_levels(actions, where, outer=()):
                     bad(f"{where}: {name} writes a row but runs only after {dep} {statuses}; capture every status")
         for sub in (a.get("actions", {}), a.get("else", {}).get("actions", {})):
             check_levels(sub, where)
-
 # R28 (full solution, task T24): the six flow defs share one shape (Try scope, settings read, Flows paused stop, failure e-mail), every
 # runAfter name is a sibling, every expression names an action that exists, and no variable is initialized inside the scope.
 for src in r27_defs:
@@ -406,7 +402,6 @@ if f05_open["actions"]["Get_endorsement_rows"]["inputs"]["parameters"].get("$fil
 # under 247 characters (from 247 on, that key was the same for every office, so one row hid all the others).
 PUB = "coalesce(triggerBody()?['Title'], '')"
 
-
 def f05_where(title_list):
     """The exists check (Query "where") that F05 r5 must use for one title list. Takes the Compose name; returns the text."""
     off = "coalesce(item()?['Title'], '')"
@@ -414,12 +409,10 @@ def f05_where(title_list):
     old = f"and(less(length({PUB}), 247), contains(outputs('{title_list}'), concat('|', take(concat({PUB}, ' - ', {off}), 250), '|')))"
     return f"@not(or({new}, {old}))"
 
-
 def f05_title(loop):
     """The row title F05 r5 must write in one Foreach loop. Takes the loop name; returns the text."""
     off = f"coalesce(items('{loop}')?['Title'], '')"
     return f"@take(concat(take({PUB}, max(0, sub(247, length({off})))), ' - ', {off}), 250)"
-
 
 s6_acts = f05_open["actions"]["If_step_6"]["actions"]
 ready = s6_acts["If_formal_rows_added"]["else"]["actions"]["If_ready_for_Legal"]["actions"]
@@ -507,7 +500,6 @@ if "['Created']" not in cd3 or "addDays(convertTimeZone(utcNow(), 'UTC', 'Centra
     bad("F03: the default suspense starts at the row's Created date; a row older than 7 days starts from the run day (PFM 19 Nov 26)")
 # R36 (PFM 19 Nov 26, README choice 9): F04 r4 leaves out the rows with a Closed Date.
 if json.loads(f04)["actions"]["Try"]["actions"]["Get_publications"]["inputs"]["parameters"].get("$filter") != "ClosedDate eq null": bad("F04: rows with a Closed Date must be left out")
-
 # R35 (R34 finding 1, ActionDescriptionTooLong): no action description in the flow solution is over 256 characters, and the
 # builder fails (exit 1, file, action path, length) on a longer one at any depth (If else, Scope, Foreach, Switch case).
 for src in sorted(B.DEFS.glob("*.json")) + sorted(B.TEST_DEFS.glob("*.json")):
@@ -524,7 +516,6 @@ with tempfile.TemporaryDirectory() as tmp:
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     if r.returncode != 1 or "bad.json: action /actions/Try/actions/Long has a description of 300 characters" not in r.stdout:
         bad(f"builder must exit 1 and name the file, action path and length: {r.returncode} {r.stdout} {r.stderr}")
-
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
 t21_defs = sorted(B.TEST_DEFS.glob("90161Z-T21-*.json"))

@@ -133,7 +133,8 @@ Test-That 'no zip stops the part' ($r.Text -match 'STOPPED: SOLUTION ZIP not in 
 
 # 6. W11 (R35 finding 1): part 1 counts F01 rows only after one full F01 check (16 minutes after the rows were made or changed) and says how
 # long it waits. Wait-FullCheck is taken from the script by its syntax tree and run with a fake clock (Get-Date and Start-Sleep below).
-$text = Get-Content -LiteralPath $script -Raw
+# The main file and its module checks (R36: the F08 check and parts 2 to 4 moved there to keep the main file under the cap).
+$text = (Get-Content -LiteralPath $script -Raw) + (Get-Content -LiteralPath (Join-Path (Split-Path -Parent $script) '90161Z-T24-checks-r6.ps1') -Raw)
 $ast = [System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$null, [ref]$null)
 $fn = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Wait-FullCheck' }, $true))
 Test-That 'Wait-FullCheck is defined once' ($fn.Count -eq 1)
@@ -151,8 +152,11 @@ function Invoke-FullCheck([double]$Ago) {
   $clock = @{ Now = [datetime]'2026-11-19T14:00:00'; Slept = 0 }
   $shown = New-Object System.Collections.Generic.List[string]
   $back = & {
+    # The fake clock: Get-Date gives the fake time.
     function Get-Date { return $clock.Now }
+    # Start-Sleep moves the fake time on by $Seconds and counts them, with no real wait.
     function Start-Sleep([int]$Seconds) { $clock.Now = $clock.Now.AddSeconds($Seconds); $clock.Slept += $Seconds }
+    # Write-Host keeps the line in $shown instead of printing it.
     function Write-Host([string]$Object) { $shown.Add($Object) }
     $F01FullCheck = $full
     . ([scriptblock]::Create($fn[0].Extent.Text))

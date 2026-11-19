@@ -8,7 +8,7 @@
   A placeholder is '<mark>[<list title>]' (scripts/build_flow_solution.py writes it; tests/check_flow_solution.py checks the mark).
   The zip the round saved is not changed; the ready zip is removed when a list is missing or a placeholder is left.
   Network: the one SharePoint site of the main file (one Get-PnPList per list title in the zip; no list scan), through PnP.PowerShell.
-  Writes: on this computer only: the ready zip in the T24 folder. Nothing on the site.
+  Writes: on this computer only: the ready zip in the T24 folder and its path on the clipboard. Nothing on the site.
   Credentials: none of its own (the main file signs in).
   Run: not alone; powershell.exe -File 90161Z-T24-full-solution-test-r6.ps1 -Part 0 loads it.
 #>
@@ -173,4 +173,8 @@ function Invoke-ListGuidPart {
   Add-Line 'p0-list-guids' $(if ($check.Lists -eq $titles.Count -and $check.Variables -eq $titles.Count) { 'PASS' } else { 'FAIL' }) (
     'lists read by title=' + $titles.Count + ' (' + ($titles -join ', ') + '); list variables with a GUID default=' + $check.Lists + ' of ' + $check.Variables +
     '; zip entries written with GUIDs=' + $changed + '; placeholders left=0; import ' + $ReadyZip)
+  # The import card (R36 round) has no file of its own: the path of the ready zip goes on the clipboard for its Browse box.
+  $clip = 'no (test run)'
+  if (-not $TestDir) { try { Set-Clipboard -Value $readyPath; $clip = 'yes' } catch { $clip = 'no' } }
+  Add-Line 'p0-clipboard' 'INFO' ('the path of the ready zip is on the clipboard=' + $clip)
 }

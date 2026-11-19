@@ -34,7 +34,7 @@
        not touched.
   A second run skips what is there, so a run that stopped can be run again.
   r3 (R34 plan, open point 12): the read-back also checks that each of the 12 lists inherits its permissions from the site or,
-  with its own, gives the group PFM Office the level. The read-backs of the level and the lists are in 90161Z-T20-access-r3.ps1
+  with its own, gives the group PFM Office the level. The read-backs of the level and the lists are in 90161Z-T20-access-r4.ps1
   (r4 loads that file as it is). r4: one more read-back per intake list (ITEM W01 to W03): Visitors hold Contribute on it.
   How: the POST requests of the payload go through Invoke-PnPSPRestMethod (the same requests the flow sent); the 23 MERGE
   updates go through CSOM (Update, ExecuteQuery), the way T16 and T19 already write on this computer. Step 6 uses the
@@ -258,15 +258,7 @@ function Write-CsomMerge([string]$ListId, [string]$FieldName, $Body) {
 # ---- Step 6: the PFM Office level (PFM 19 Nov 26, F2 A; docs/reviews/2026-11-13-sweep-decisions.md, F2) ----
 # The group the app shows the PFM screens to (PFM 12 Nov 26, 3.7B and 7A). tests/ps/Test-T21.ps1 checks that T21 uses both names.
 $OfficeGroup = 'PFM Office'
-$OfficeGroupText = 'Publications and Forms Manager (PFM) office: the people who work the PFM organization box (90-161.Z).'
-# The site's Edit level plus Override List Behaviors: Edit lacks it, and only it lets a person edit every row of a list set to
-# "edit own rows" (PFM Publications and PFM Endorsements, PFM 10A), so the Alternate and the Acting PFM need it (sweep F2).
-$OfficeLevel = 'PFM Office Edit All Items'
-$OfficeLevelText = 'Edit, plus Override List Behaviors: edits every row, also on lists set to edit own rows (90-161.Z, PFM 2026-11-19).'
-# SharePoint permission bit (SP.BasePermissions, low word): CancelCheckout 0x100 ("Override List Behaviors"); EditListItems is in the access module.
-$OverrideBit = [long]0x100
-# The RoleTypeKind of the site's Edit level (SP.RoleType Editor = 6): found by kind, so a site in another language works too.
-$EditRoleKind = 6
+# The texts, the level name and the bits of step 6 are in the module 90161Z-T20-access-r4.ps1 (R36).
 
 # Finds a site group by its name; returns its Id, or 0 when the site has no group with that name.
 function Get-GroupId([string]$Name) {
@@ -302,130 +294,7 @@ function Test-LevelPermission($Level, $Base, [long]$Extra) {
   return $true
 }
 
-<#
-.SYNOPSIS
-  Step 6: the group PFM Office, the level PFM Office Edit All Items (the bits of the site's Edit level plus Override List
-  Behaviors) and that level for the group on the site, each made only when it is missing (a second run changes nothing).
-  A level with that name that is there is not changed.
-.PARAMETER Write
-  $true: make what is missing; $false (-DryRun): only count it.
-.OUTPUTS
-  System.Collections.Hashtable. group, level, binding: 1 when it was made (or a dry run would make it), else 0.
-#>
-function Grant-OfficeLevel([bool]$Write) {
-  $made = @{ group = 0; level = 0; binding = 0 }
-  $gid = Get-GroupId $OfficeGroup
-  if (-not $gid) {
-    $made.group = 1
-    if ($Write) {
-      Write-Host ('  Making the group ' + $OfficeGroup + ' ...')
-      $null = Invoke-Rest 'Post' '_api/web/sitegroups' (@{ __metadata = @{ type = 'SP.Group' }; Title = $OfficeGroup; Description = $OfficeGroupText } | ConvertTo-Json -Compress)
-      $gid = Get-GroupId $OfficeGroup
-      if (-not $gid) { throw ('GROUP ' + $OfficeGroup + ' not on the site after the create step.') }
-    }
-  }
-  $level = Get-RoleLevel $OfficeLevel 0
-  if (-not $level) {
-    $made.level = 1
-    $edit = Get-RoleLevel '' $EditRoleKind
-    if (-not $edit) { throw ('LEVEL Edit not found on the site: the level ' + $OfficeLevel + ' is made from it. The lists are done.') }
-    if ($Write) {
-      Write-Host ('  Making the permission level ' + $OfficeLevel + ' ...')
-      $low = (ConvertTo-PermissionWord $edit.BasePermissions.Low) -bor $OverrideBit
-      $bits = @{ __metadata = @{ type = 'SP.BasePermissions' }; High = [string](ConvertTo-PermissionWord $edit.BasePermissions.High); Low = [string]$low }
-      $body = @{ __metadata = @{ type = 'SP.RoleDefinition' }; Name = $OfficeLevel; Description = $OfficeLevelText; BasePermissions = $bits }
-      $null = Invoke-Rest 'Post' '_api/web/roledefinitions' ($body | ConvertTo-Json -Depth 5 -Compress)
-      $level = Get-RoleLevel $OfficeLevel 0
-      if (-not $level) { throw ('LEVEL ' + $OfficeLevel + ' not on the site after the create step.') }
-    }
-  }
-  if (-not $gid -or -not $level) { $made.binding = 1; return $made }
-  if ((Get-WebBinding $gid) -notcontains [int]$level.Id) {
-    $made.binding = 1
-    if ($Write) {
-      Write-Host ('  Giving the level ' + $OfficeLevel + ' to the group ' + $OfficeGroup + ' ...')
-      $null = Invoke-Rest 'Post' ('_api/web/roleassignments/addroleassignment(principalid=' + $gid + ',roledefid=' + [int]$level.Id + ')') '{}'
-    }
-  }
-  return $made
-}
-
-# ---- Step 7 (r4): Contribute for the site's Visitors group on the intake lists (PFM 19 Nov 26; docs/roles-and-permissions.md section 7) ----
-# The intake lists are the ones wing users write to through the app: the request (PFM Publications), the endorser entry (PFM
-# Endorsements) and the DAF Form 847 intake (PFM Recommendations); docs/ARCHITECTURE.md (Data and UI rows, and the risk row on edit own rows).
-$IntakeLists = @('PFMPublications', 'PFMEndorsements', 'PFMRecommendations')
-# SP.RoleType Contributor = 3: found by kind, so a site in another language works too.
-$ContributeRoleKind = 3
-
-# The Id of the site's associated Visitors group (the people the site gives Read), or 0 when the site has none or it cannot be read.
-function Get-VisitorGroupId {
-  try { return [int]((Invoke-Rest 'Get' '_api/web/associatedvisitorgroup?$select=Id' '') | ConvertFrom-Json).Id } catch { return 0 }
-}
-
-<#
-.SYNOPSIS
-  Step 7: for each intake list that is on the site, makes the list's own permissions when it inherits (the site's role
-  assignments are copied), then gives the Visitors group the level Contribute on that list when it does not hold it yet. Reads
-  first and writes only what is missing, so a second run changes nothing. Never changes the site's own permissions.
-.PARAMETER Write
-  $true: make what is missing; $false (-DryRun): only count it.
-.PARAMETER SiteLists
-  The lists of the site (Get-SiteList). A list that is not there yet counts as one that would be made and given the role.
-.OUTPUTS
-  System.Collections.Hashtable. own (lists that got their own permissions) and granted (lists that got the role): counts; a dry run counts what it would do.
-#>
-function Grant-WingContribute([bool]$Write, $SiteLists) {
-  $made = @{ own = 0; granted = 0 }
-  $vid = Get-VisitorGroupId
-  $level = Get-RoleLevel '' $ContributeRoleKind
-  if ($Write -and ($vid -le 0 -or -not $level)) { return $made }   # the read-back names the cause
-  foreach ($k in $IntakeLists) {
-    $l = Find-OurList $SiteLists $k
-    if (-not $l) { $made.own++; $made.granted++; continue }
-    $base = "_api/web/lists(guid'" + $l.Id + "')"
-    if (-not [bool]$l.HasUniqueRoleAssignments) {
-      $made.own++
-      if ($Write) { $null = Invoke-Rest 'Post' ($base + '/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)') '{}' }
-    }
-    $held = @()
-    if ($vid -gt 0 -and [bool]$l.HasUniqueRoleAssignments) { $held = @(Get-ListBinding ([string]$l.Id) $vid) }
-    if ($level -and $held -contains [int]$level.Id) { continue }
-    $made.granted++
-    if ($Write) {
-      Write-Host ('  Giving Visitors Contribute on ' + $k + ' ...')
-      $null = Invoke-Rest 'Post' ($base + '/roleassignments/addroleassignment(principalid=' + $vid + ',roledefid=' + [int]$level.Id + ')') '{}'
-    }
-  }
-  return $made
-}
-
-<#
-.SYNOPSIS
-  Step 7, the read-back: one ITEM line per intake list. PASS when the list has its own permissions and the Visitors group holds
-  Contribute on it; else FAIL, with the reason (list missing, no Visitors group, no Contribute level, inherits, role missing).
-.PARAMETER SiteLists
-  The lists of the site (Get-SiteList), read after step 7.
-.OUTPUTS
-  System.String[]. The ITEM lines, W01 to W03.
-#>
-function Test-WingContribute($SiteLists) {
-  $vid = Get-VisitorGroupId
-  $level = Get-RoleLevel '' $ContributeRoleKind
-  $out = New-Object System.Collections.Generic.List[string]
-  $n = 0
-  foreach ($k in $IntakeLists) {
-    $n++
-    $tag = 'ITEM W' + $n.ToString('00') + '-' + $k
-    $l = Find-OurList $SiteLists $k
-    if (-not $l) { $out.Add($tag + ' FAIL the list is not on the site'); continue }
-    if ($vid -le 0) { $out.Add($tag + ' FAIL the site has no associated Visitors group, so wing users cannot write to "' + $l.Title + '"'); continue }
-    if (-not $level) { $out.Add($tag + ' FAIL the site has no Contribute level'); continue }
-    if (-not [bool]$l.HasUniqueRoleAssignments) { $out.Add($tag + ' FAIL "' + $l.Title + '" still inherits its permissions from the site: Visitors only read'); continue }
-    if (@(Get-ListBinding ([string]$l.Id) $vid) -notcontains [int]$level.Id) { $out.Add($tag + ' FAIL the Visitors group does not hold Contribute on "' + $l.Title + '"'); continue }
-    $out.Add($tag + ' PASS "' + $l.Title + '": the Visitors group holds Contribute on the list (own permissions); the site stays Read')
-  }
-  return $out.ToArray()
-}
+# Step 6 (Grant-OfficeLevel) and step 7 (Grant-WingContribute, Test-WingContribute) live in the module 90161Z-T20-access-r4.ps1.
 
 $secret = @()
 $site = ''
@@ -445,8 +314,8 @@ try {
     exit 0
   }
   # The read-backs are dot-sourced here, in this script's scope, so they see the values and helpers above.
-  $accessFile = Join-Path $PSScriptRoot '90161Z-T20-access-r3.ps1'
-  if (-not (Test-Path -LiteralPath $accessFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T20-access-r3.ps1 is not in the folder of this script. Run the round again.' }
+  $accessFile = Join-Path $PSScriptRoot '90161Z-T20-access-r4.ps1'
+  if (-not (Test-Path -LiteralPath $accessFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T20-access-r4.ps1 is not in the folder of this script. Run the round again.' }
   . $accessFile
   $who = Get-TaskId $Id
   $id = $who.Id

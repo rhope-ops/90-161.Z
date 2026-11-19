@@ -71,7 +71,9 @@ function Add-T4Test($Rows, [int]$MeId) {
   $t4pass = ($others.Count -ge 1)
   $counts = '(rows=' + $others.Count + '; T4a rows=' + $t4a.Count + '; person in the Visitors group=' + $addedText + ')'
   $t4 = @('a list form by a second person (Visitors member)=' + $(if ($t4pass) { 'PASS' } else { 'FAIL' }) + ' ' + $counts)
-  if (-not $t4pass) { $t4 += 'next: the second person opens the new row form link and saves one row; a form that says no permission means the Visitors group does not hold Contribute on this list (the Make part gives it; for the app lists, run T20 r4 and read ITEM W01 to W03)' }
+  if (-not $t4pass) {
+    $t4 += ('next: the second person opens the new row form link and saves one row; a form that says no permission means the Visitors group' +
+      ' does not hold Contribute on this list (the Make part gives it; for the app lists, run T20 r4 and read ITEM W01 to W03)') }
   Add-Test 'T4' $t4 $t4pass
 }
 
