@@ -338,18 +338,18 @@ function Grant-OfficeLevel([bool]$Write) {
 
 <#
 .SYNOPSIS
-  Step 7, the read-back of step 6: PASS when the group holds the level on the site and the level holds Edit plus Edit Items and Override List Behaviors; else FAIL.
+  Step 7, the read-back of step 6: PASS when the group holds the level on the site and the level holds Edit plus Edit Items and Override List Behaviors; else FAIL (typed list: PS 5.1).
 .OUTPUTS
-  System.String. One ITEM line; it ends with the permission words as read (numbers only).
+  System.String. One ITEM line.
 #>
 function Test-OfficeLevel {
   $gid = Get-GroupId $OfficeGroup; $level = Get-RoleLevel $OfficeLevel 0; $edit = Get-RoleLevel '' $EditRoleKind
-  $bad = @($(if (-not $gid) { 'the group ' + $OfficeGroup + ' is not on the site' }), $(if (-not $level) { 'the level ' + $OfficeLevel + ' is not on the site' }))
-  if ($level -and $edit -and -not (Test-LevelPermission $level $edit ($EditItemsBit -bor $OverrideBit))) { $bad += 'the level lacks a permission of Edit or Override List Behaviors' }
-  if ($level -and $gid -and (Get-WebBinding $gid) -notcontains [int]$level.Id) { $bad += 'the group does not hold the level on the site' }; $bad = @($bad | Where-Object { $_ })
-  $x = ($EditItemsBit -bor $OverrideBit); $bits = ' [x=' + $x + ' t=' + (@(Test-LevelPermission $level $edit $x) -join ',') + ' lv=' + [bool]$level + ' ev=' + [bool]$edit + ' b=' + $bad.Count + ']'
-  if ($bad.Count) { return ('ITEM P01-pfm-office FAIL ' + ($bad -join '; ') + ' (this script never changes a level that is there)' + $bits) }
-  return ('ITEM P01-pfm-office PASS the group "' + $OfficeGroup + '" holds the level "' + $OfficeLevel + '" on the site (Edit plus Override List Behaviors)' + $bits)
+  $bad = New-Object System.Collections.Generic.List[string]; $need = [long]($EditItemsBit -bor $OverrideBit); $okBits = $false
+  if (-not $gid) { $bad.Add('the group ' + $OfficeGroup + ' is not on the site') }; if (-not $level) { $bad.Add('the level ' + $OfficeLevel + ' is not on the site') }
+  if ($level -and $edit) { $okBits = [bool](Test-LevelPermission $level $edit $need); if (-not $okBits) { $bad.Add('the level lacks a permission of Edit or Override List Behaviors') } }
+  if ($level -and $gid) { $held = @(Get-WebBinding $gid); if ($held -notcontains [int]$level.Id) { $bad.Add('the group does not hold the level on the site') } }
+  if ($bad.Count -gt 0) { return ('ITEM P01-pfm-office FAIL ' + ($bad -join '; ') + ' (this script never changes a level that is there)') }
+  return ('ITEM P01-pfm-office PASS the group "' + $OfficeGroup + '" holds the level "' + $OfficeLevel + '" on the site (Edit plus Override List Behaviors)')
 }
 
 $secret = @()
