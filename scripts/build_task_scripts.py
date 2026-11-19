@@ -9,7 +9,7 @@ A script that signs in to the site also holds the site-common block (Get-SiteAdd
 between the same kind of markers; a Get-SiteAddress outside that block fails the check.
 A script that waits for a flow (T18, T24) holds the wait-common block (Wait-Until; code standard S1, rule C5) between its own
 markers; it is written only into a script that has them.
-A script with the app-logo markers gets $AppLogoPng: the 90-161.Z logo (PFM 17 Nov 26: logo W2 on the T22 window, 1A) as a
+A script with the app-logo markers gets $AppLogoPng: the 90-161.Z logo (PFM 17 Nov 26: logo on the T22 window, 1A; Delta since PFM 19 Nov 26) as a
 128 px PNG in base64 text, drawn from the master assets/logo/90161Z-logo.svg by scripts/logo_draw.py (pure Python, the
 same bytes on every machine; scripts/logo_png.py keeps the hash record; the PNGs stay uncommitted, PFM 2A). The RADE runner keeps RADE's own logo (Rho Bold) from the pinned engine.
 A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1 of the same pinned commit, SHA-256 checked the

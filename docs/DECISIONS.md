@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | 90-161.Z logo = Delta, USAF colours, version without the phrase; drawn in code (logo_draw.py). Ships with the next round, not before. RADE keeps Rho. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/Kwrd4D84GffcrxtZ2qUzBZ |
 | 2026-11-19 | App writes: wing users get list-level Contribute on the intake lists only; the site stays Read (replaces way C for T4). Scope: R36, T20/T21. | PFM | docs/reviews/2026-11-19-r36-plan.md W12 |
 | 2026-11-19 | R36 plan approved after the R35 results (W1 to W14). Scope: R36. | PFM | docs/reviews/2026-11-19-r36-plan.md |
 | 2026-11-19 | Rule 4.4A warning design approved as written: flow F08 warns (Activity Log row, e-mail to the alert address only) when a T-0 to T-2 waiver names a PFM Offices Leader; checked every 15 minutes. Scope: R36. | PFM | docs/reviews/2026-11-19-r36-4.4A-design.md |
@@ -122,7 +123,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-17 | If R29 on the new engine is over 600 KB, split it: R29a (fixes, T21, T24) and R29b (T22 window, T4), each with its own bundle and e-mail. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | Lock moves to the RADE release with the R28 fixes (N1, N4, N6, N8-N10, answer cut, logo) when it ships; R29 is built on it. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | R29 logo places (1A): 90-161.Z logo on the T22 PFM window, index.html band, T16 logo check, site logo and thumbnail; RADE runner keeps Rho Bold. PNGs stay uncommitted, built from the SVG (2A). | PFM | docs/NEXT_PROMPT.md item 4 |
-| 2026-11-17 | 90-161.Z logo = W2 Flap 26: route arc, page with a sliced Z, small folded flap; Rho Bold frame and colors. Master assets/logo/; ships in R29. RADE keeps Rho Bold. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU |
+| 2026-11-17 | Replaced 19 Nov 26: 90-161.Z logo = W2 Flap 26: route arc, page with a sliced Z, small folded flap; Rho Bold frame and colors. Master assets/logo/; ships in R29. RADE keeps Rho Bold. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU |
 | 2026-11-17 | R29 = the R28 fixes (health flow checks only On, export reader, T22 window, T24 card, notes N2 N3 N6 N7) + full T24 test + logo; RADE Diagnose and Back up move to R30. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T22 checks show inside the test window, one at a time, with Pass and Fail; no list to remember (note N5). Scope: T22 window test. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T4 second-person step stays in R29: a colleague is free. Way C not built yet. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |

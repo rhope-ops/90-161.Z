@@ -66,7 +66,7 @@ def test_good():
 def test_refusals():
     """Each input that used to raise a Python error (or draw nothing) now stops with a logo_draw message."""
     refuses('filled path with an arc', svg(path('M 100 100 A 50 50 0 0 1 200 100 L 150 200 Z')), 'arc')
-    refuses('filled path with no Z', svg(path('M 64 64 L 448 64 L 256 448')), 'must end with Z')
+    refuses('filled path with no Z', svg(path('M 64 64 L 448 64 L 256 448')), 'with Z')
     refuses('arc from a point to itself', svg(path('M 100 100 A 50 50 0 0 1 100 100', 'fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round"')), 'arc needs')
     refuses('unknown clip-path id', svg('<circle cx="256" cy="256" r="50" fill="#000000" clip-path="url(#nope)"/>'), '#nope')
     refuses('clip-path not url(#id)', svg('<circle cx="256" cy="256" r="50" fill="#000000" clip-path="none"/>'), 'url(#id)')
@@ -79,8 +79,51 @@ def test_refusals():
     refuses('missing d attribute', svg('<path fill="none"/>'), 'start with M')
 
 
+def px_at(rows, x, y):
+    """Return the RGBA tuple of one pixel. Args: rows (from L.pixels), x, y. Returns: a 4-tuple."""
+    return tuple(rows[y][x * 4:x * 4 + 4])
+
+
+def test_delta_features():
+    """The features the Delta logo needs (the PFM, 2026-11-19): groups, transforms, lines, curves, holes, opacity."""
+    ring = path('M 64 64 L 448 64 L 448 448 L 64 448 Z M 192 192 L 192 320 L 320 320 L 320 192 Z')
+    rows = L.pixels(svg(ring), 32)
+    check('two sub-paths: the ring is red', px_at(rows, 5, 16) == (255, 0, 0, 255))
+    check('two sub-paths: the hole is empty (nonzero rule)', px_at(rows, 16, 16) == (0, 0, 0, 0))
+    rows = L.pixels(svg('<g fill="#0000ff" fill-opacity="0.5"><circle cx="256" cy="256" r="200"/></g>'), 32)
+    check('group: fill and fill-opacity pass to the child', px_at(rows, 16, 16) == (0, 0, 255, 128))
+    rows = L.pixels(svg('<g transform="translate(256 256) rotate(90)"><path d="M 0 0 L 200 0 L 200 40 L 0 40 Z" fill="#00ff00"/></g>'), 32)
+    check('transform: rotate(90) turns the bar to point down', px_at(rows, 15, 26) == (0, 255, 0, 255) and px_at(rows, 28, 17) == (0, 0, 0, 0))
+    rows = L.pixels(svg('<line x1="64" y1="256" x2="448" y2="256" stroke="#000000" stroke-width="32" stroke-linecap="round" transform="scale(1 2) translate(0 -128)"/>'), 32)
+    alpha = [px_at(rows, 16, y)[3] for y in range(12, 20)]   # rows 14 to 17 (y 232 to 280) lie inside 224 to 288
+    check('line under scale(1 2): the stroke is 64 units tall', [a > 128 for a in alpha] == [False] * 2 + [True] * 4 + [False] * 2, str(alpha))
+    rows = L.pixels(svg(path('M 64 448 Q 256 -192 448 448 Z', 'fill="#ff0000"')), 32)
+    check('Q curve: the hump is filled', px_at(rows, 16, 12) == (255, 0, 0, 255) and px_at(rows, 3, 6) == (0, 0, 0, 0))
+    rows = L.pixels(svg(path('M 64 448 C 64 0 448 0 448 448 Z', 'fill="#ff0000"')), 32)
+    check('C curve: the arch is filled', px_at(rows, 16, 12) == (255, 0, 0, 255) and px_at(rows, 1, 1) == (0, 0, 0, 0))
+    a = L.draw(svg(path('M 64 64 L 448 64 L 448 448 Z')), 32)
+    b = L.draw(svg(path('M 64 64 L 448 64 448 448 Z')), 32)
+    check('numbers after L repeat L, as SVG reads them', a == b)
+
+
+def test_delta_refusals():
+    """What the Delta drawing still does not handle stops with a logo_draw message."""
+    refuses('relative command', svg(path('M 10 10 l 20 20 Z')), 'not supported')
+    refuses('skewX transform', svg('<circle cx="256" cy="256" r="50" transform="skewX(10)"/>'), 'skewX')
+    refuses('scale(0) flattens the shape', svg('<circle cx="256" cy="256" r="50" transform="scale(0)"/>'), 'flattens')
+    refuses('unknown attribute on <g>', svg('<g opacity="0.5"><circle cx="256" cy="256" r="50"/></g>'), 'opacity')
+    refuses('stroke-opacity on a shape', svg('<circle cx="256" cy="256" r="50" stroke-opacity="0.5"/>'), 'stroke-opacity')
+    refuses('one open sub-path in a fill', svg(path('M 64 64 L 448 64 L 256 448 Z M 10 10 L 20 20')), 'with Z')
+    refuses('a command after Z that is not M', svg(path('M 64 64 L 448 64 L 256 448 Z L 10 10')), 'after Z')
+    refuses('line with a square cap', svg('<line x1="0" y1="0" x2="10" y2="10" stroke="#000000"/>'), 'linecap')
+    refuses('fill-opacity above 1', svg('<circle cx="256" cy="256" r="50" fill-opacity="2"/>'), 'fill-opacity')
+    refuses('bad cx number', svg('<circle cx="a" cy="256" r="50"/>'), 'cx')
+
+
 if __name__ == '__main__':
     test_good()
     test_refusals()
+    test_delta_features()
+    test_delta_refusals()
     print('LOGODRAW pass=%d fail=%d' % (PASS[0], FAIL[0]))
     sys.exit(1 if FAIL[0] else 0)
