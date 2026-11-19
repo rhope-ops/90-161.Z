@@ -1,19 +1,19 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 20 list provisioning by PnP r3 (round R35; PFM 19 Nov 26, F2 A: the PFM Office level; PFM 14 Nov 26: lists
+  90-161.Z Task 20 list provisioning by PnP r4 (round R36; PFM 19 Nov 26: Contribute on the intake lists; F2 A: the PFM Office level; PFM 14 Nov 26: lists
   by PnP; PFM 15 Nov 26: clean install in R25). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: builds the 12 PFM lists on a site from the payload the retired T02 r12 flow used
   (provisioning-payload.json, generated from schemas/lists by scripts/build_flow_payload.py): lists, columns, views, seed
   rows, display titles, indexes and "edit own rows". r2 also gives the group PFM Office a permission level that edits every
-  row. r3 also reads back the access to the 12 lists.
+  row. r3 also reads back the access to the 12 lists. r4 gives the site's Visitors group Contribute on the intake lists.
   About 5 minutes (an estimate).
   Modes:
     -PlanOnly  No sign-in, no network. Prints the counts in the payload.
     -Check     Signs in and READS only. Reports what 90-161.Z left on the site (lists, the 90-161.Z library, result files,
-               the probe's test group). A clean site passes. Result: 90161Z-T20-clean-check-r3.txt.
+               the probe's test group). A clean site passes. Result: 90161Z-T20-clean-check-r4.txt.
     -DryRun    Signs in and READS only. Prints what a run would create.
-    (none)     Creates what is missing, then checks every list against the payload. Result: 90161Z-T20-provision-lists-r3.txt.
+    (none)     Creates what is missing, then checks every list against the payload. Result: 90161Z-T20-provision-lists-r4.txt.
   WHAT IT CHANGES ON THE SITE (create mode only). It never deletes a list, a column, a view, a row, a group or a level. One
   thing it sets again on every run: the columns shown by its own 18 views (a column that a person added to one of these
   views is taken out again; the list's default view is not touched):
@@ -27,9 +27,15 @@
        makes the permission level "PFM Office Edit All Items" (the site's Edit level plus Override List Behaviors, the one
        permission that lets a person edit every row of a list set to "edit own rows") when it is missing, and gives that
        level to the group on the site. A level with that name that is there already is not changed; the check reports it.
+    7. r4 (PFM 19 Nov 26, T4: wing users write through the app): gives the site's associated Visitors group the level
+       Contribute on each intake list: PFM Publications, PFM Endorsements and PFM Recommendations (docs/roles-and-permissions.md
+       section 7). A list that inherits its permissions from the site gets its own first, with the site's role assignments
+       copied; "edit own rows" stays as it is. The site itself stays Read for Visitors. A list that has the role already is
+       not touched.
   A second run skips what is there, so a run that stopped can be run again.
   r3 (R34 plan, open point 12): the read-back also checks that each of the 12 lists inherits its permissions from the site or,
-  with its own, gives the group PFM Office the level. The read-backs of the level and the lists are in 90161Z-T20-access-r3.ps1.
+  with its own, gives the group PFM Office the level. The read-backs of the level and the lists are in 90161Z-T20-access-r4.ps1
+  (r4 loads that file as it is). r4: one more read-back per intake list (ITEM W01 to W03): Visitors hold Contribute on it.
   How: the POST requests of the payload go through Invoke-PnPSPRestMethod (the same requests the flow sent); the 23 MERGE
   updates go through CSOM (Update, ExecuteQuery), the way T16 and T19 already write on this computer. Step 6 uses the
   SharePoint REST requests for groups, levels and role assignments, through the same cmdlet.
@@ -45,7 +51,7 @@
           Config\90161Z-site.txt when the site address is typed outside RADE. -Check, -DryRun and -PlanOnly change nothing
           on the site.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T20-provision-lists-r3.ps1 (RADE does this).
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T20-provision-lists-r4.ps1 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -NoPause. -PayloadPath and -TestDir are for
   the tests in tests/run.sh.
 #>
@@ -141,7 +147,8 @@ function Get-SiteAddress([string]$ConfigDir) {
 function Hide-Site([string]$Text, [string]$Site) {
   <#
   .SYNOPSIS
-  Masks e-mail addresses, the site, its host, path, name and tenant, other URLs, cloud and .mil hosts and GUIDs in a result text. Not masked: display names, office symbols, phone numbers, user ids, computer names.
+  Masks e-mail addresses, the site, its host, path, name and tenant, other URLs, cloud and .mil hosts and GUIDs in a
+  result text. Not masked: display names, office symbols, phone numbers, user ids, computer names.
   .PARAMETER Text
   The text to clean (a result line or an error message).
   .PARAMETER Site
@@ -149,7 +156,9 @@ function Hide-Site([string]$Text, [string]$Site) {
   .OUTPUTS
   System.String. The text with each match replaced by a placeholder such as <EMAIL>, <SITE> or <GUID>.
   #>
-  $Text = $Text -replace '[^\s"<>|,;()\[\]]+(@|%40)[^\s"<>|,;()\[\]]+', '<EMAIL>'   # whole address first: the host rules below would keep its name part
+  # The address only (name, @ or %40, host; encoded characters count as part of it), first: the host rules below would
+  # keep its name part.
+  $Text = $Text -replace '(?:[\w.+=-]|%[0-9A-Fa-f]{2})+(?:@|%40)[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*(?:%[0-9A-Fa-f]{2})*', '<EMAIL>'
   if ($Site) {
     $Text = $Text -replace [regex]::Escape($Site.TrimEnd('/')), '<SITE>'
     try {
@@ -160,7 +169,9 @@ function Hide-Site([string]$Text, [string]$Site) {
       foreach ($s in $set) { if ($s[2] -eq '' -or $s[0].Length -ge 3) { $Text = $Text -replace ($s[2] + [regex]::Escape($s[0]) + $s[2]), $s[1] } }
     } catch { $null = $_ }
   }
-  $g = @('https?://\S+', '<URL>', '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>', '\b[\w.-]+\.mil\b', '<HOST>', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>')   # the GUID has no \b: guid%27<id> must be masked too
+  # Pattern and mask pairs. The GUID has no \b: guid%27<id> must be masked too.
+  $g = @('https?://\S+', '<URL>', '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>',
+    '\b[\w.-]+\.mil\b', '<HOST>', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>')
   for ($i = 0; $i -lt $g.Count; $i += 2) { $Text = $Text -replace $g[$i], $g[$i + 1] }
   return $Text
 }
@@ -247,15 +258,7 @@ function Write-CsomMerge([string]$ListId, [string]$FieldName, $Body) {
 # ---- Step 6: the PFM Office level (PFM 19 Nov 26, F2 A; docs/reviews/2026-11-13-sweep-decisions.md, F2) ----
 # The group the app shows the PFM screens to (PFM 12 Nov 26, 3.7B and 7A). tests/ps/Test-T21.ps1 checks that T21 uses both names.
 $OfficeGroup = 'PFM Office'
-$OfficeGroupText = 'Publications and Forms Manager (PFM) office: the people who work the PFM organization box (90-161.Z).'
-# The site's Edit level plus Override List Behaviors: Edit lacks it, and only it lets a person edit every row of a list set to
-# "edit own rows" (PFM Publications and PFM Endorsements, PFM 10A), so the Alternate and the Acting PFM need it (sweep F2).
-$OfficeLevel = 'PFM Office Edit All Items'
-$OfficeLevelText = 'Edit, plus Override List Behaviors: edits every row, also on lists set to edit own rows (90-161.Z, PFM 2026-11-19).'
-# SharePoint permission bit (SP.BasePermissions, low word): CancelCheckout 0x100 ("Override List Behaviors"); EditListItems is in the access module.
-$OverrideBit = [long]0x100
-# The RoleTypeKind of the site's Edit level (SP.RoleType Editor = 6): found by kind, so a site in another language works too.
-$EditRoleKind = 6
+# The texts, the level name and the bits of step 6 are in the module 90161Z-T20-access-r4.ps1 (R36).
 
 # Finds a site group by its name; returns its Id, or 0 when the site has no group with that name.
 function Get-GroupId([string]$Name) {
@@ -291,59 +294,13 @@ function Test-LevelPermission($Level, $Base, [long]$Extra) {
   return $true
 }
 
-<#
-.SYNOPSIS
-  Step 6: the group PFM Office, the level PFM Office Edit All Items (the bits of the site's Edit level plus Override List
-  Behaviors) and that level for the group on the site, each made only when it is missing (a second run changes nothing).
-  A level with that name that is there is not changed.
-.PARAMETER Write
-  $true: make what is missing; $false (-DryRun): only count it.
-.OUTPUTS
-  System.Collections.Hashtable. group, level, binding: 1 when it was made (or a dry run would make it), else 0.
-#>
-function Grant-OfficeLevel([bool]$Write) {
-  $made = @{ group = 0; level = 0; binding = 0 }
-  $gid = Get-GroupId $OfficeGroup
-  if (-not $gid) {
-    $made.group = 1
-    if ($Write) {
-      Write-Host ('  Making the group ' + $OfficeGroup + ' ...')
-      $null = Invoke-Rest 'Post' '_api/web/sitegroups' (@{ __metadata = @{ type = 'SP.Group' }; Title = $OfficeGroup; Description = $OfficeGroupText } | ConvertTo-Json -Compress)
-      $gid = Get-GroupId $OfficeGroup
-      if (-not $gid) { throw ('GROUP ' + $OfficeGroup + ' not on the site after the create step.') }
-    }
-  }
-  $level = Get-RoleLevel $OfficeLevel 0
-  if (-not $level) {
-    $made.level = 1
-    $edit = Get-RoleLevel '' $EditRoleKind
-    if (-not $edit) { throw ('LEVEL Edit not found on the site: the level ' + $OfficeLevel + ' is made from it. The lists are done.') }
-    if ($Write) {
-      Write-Host ('  Making the permission level ' + $OfficeLevel + ' ...')
-      $low = (ConvertTo-PermissionWord $edit.BasePermissions.Low) -bor $OverrideBit
-      $bits = @{ __metadata = @{ type = 'SP.BasePermissions' }; High = [string](ConvertTo-PermissionWord $edit.BasePermissions.High); Low = [string]$low }
-      $body = @{ __metadata = @{ type = 'SP.RoleDefinition' }; Name = $OfficeLevel; Description = $OfficeLevelText; BasePermissions = $bits }
-      $null = Invoke-Rest 'Post' '_api/web/roledefinitions' ($body | ConvertTo-Json -Depth 5 -Compress)
-      $level = Get-RoleLevel $OfficeLevel 0
-      if (-not $level) { throw ('LEVEL ' + $OfficeLevel + ' not on the site after the create step.') }
-    }
-  }
-  if (-not $gid -or -not $level) { $made.binding = 1; return $made }
-  if ((Get-WebBinding $gid) -notcontains [int]$level.Id) {
-    $made.binding = 1
-    if ($Write) {
-      Write-Host ('  Giving the level ' + $OfficeLevel + ' to the group ' + $OfficeGroup + ' ...')
-      $null = Invoke-Rest 'Post' ('_api/web/roleassignments/addroleassignment(principalid=' + $gid + ',roledefid=' + [int]$level.Id + ')') '{}'
-    }
-  }
-  return $made
-}
+# Step 6 (Grant-OfficeLevel) and step 7 (Grant-WingContribute, Test-WingContribute) live in the module 90161Z-T20-access-r4.ps1.
 
 $secret = @()
 $site = ''
 $lines = New-Object System.Collections.Generic.List[string]
 $dir = ''
-$Rev = 'r3'
+$Rev = 'r4'
 $resultName = '90161Z-T20-provision-lists-' + $Rev + '.txt'
 if ($Check) { $resultName = '90161Z-T20-clean-check-' + $Rev + '.txt' }
 try {
@@ -357,8 +314,8 @@ try {
     exit 0
   }
   # The read-backs are dot-sourced here, in this script's scope, so they see the values and helpers above.
-  $accessFile = Join-Path $PSScriptRoot '90161Z-T20-access-r3.ps1'
-  if (-not (Test-Path -LiteralPath $accessFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T20-access-r3.ps1 is not in the folder of this script. Run the round again.' }
+  $accessFile = Join-Path $PSScriptRoot '90161Z-T20-access-r4.ps1'
+  if (-not (Test-Path -LiteralPath $accessFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T20-access-r4.ps1 is not in the folder of this script. Run the round again.' }
   . $accessFile
   $who = Get-TaskId $Id
   $id = $who.Id
@@ -530,14 +487,17 @@ try {
     }
     # 6. The PFM Office level (F2 A), after the lists, so it never stops the list steps above.
     $office = Grant-OfficeLevel $write
+    # 7. Contribute for Visitors on the intake lists (r4), after step 6 so the copied role assignments include PFM Office.
+    $wing = Grant-WingContribute $write (Get-SiteList)
     $word = 'CREATED'; if (-not $write) { $word = 'DRYRUN would create' }
     $lines.Add($word + ' lists=' + $made.lists + ' fields=' + $made.fields + ' views=' + $made.views + ' view-column requests=' + $made.viewops +
       ' rows=' + $made.rows + '; set: updates=' + $made.updates + ' permissions=' + $made.permissions)
     $lines.Add($word + ' for ' + $OfficeGroup + ': group=' + $office.group + ' level=' + $office.level + ' level given to the group=' + $office.binding)
+    $lines.Add($word + ' for the intake lists: own permissions=' + $wing.own + ' Visitors given Contribute=' + $wing.granted)
     $lines.Add('SKIPPED (already there) lists=' + $skip.lists + ' fields=' + $skip.fields + ' views=' + $skip.views + ' rows=' + $skip.rows)
 
     if ($write) {
-      # 7. Check every list against the payload, then the PFM Office level.
+      # 8. Check every list against the payload, then the PFM Office level.
       $siteLists = Get-SiteList
       $n = 0
       foreach ($k in $plan.Keys) {
@@ -570,6 +530,7 @@ try {
       }
       $lines.Add((Test-OfficeLevel))
       $lines.Add((Test-ListAccess $plan $siteLists))
+      foreach ($w in @(Test-WingContribute $siteLists)) { $lines.Add($w) }
       $lines.Add('AFTER lists on the site=' + @($plan.Keys | Where-Object { Find-OurList $siteLists $_ }).Count + ' of ' + $plan.Count)
     }
     $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count

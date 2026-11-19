@@ -1,16 +1,17 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r9, module "read": the parts Run (the command row that starts the health flow) and Read (the
+  90-161.Z Task 21 probe r10, module "read": the parts Run (the command row that starts the health flow) and Read (the
   results of HEALTH, T4, EDITALL and BUTTON).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r9.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r10.ps1 (dot-sourced from the same folder); it does nothing when it is run alone. r10 (PFM 19 Nov 26): T4 expects PASS through list-level Contribute for the Visitors
+  group; the FAIL text no longer points to way C (a flow), which the PFM replaced.
   Inputs: the values the main file sets ($dir, $ListTitle, $ListFolder, $WaitMinutes, $pollEvery) and the helpers of the
   module "common"; the rows of the probe list and the second person's state files (Person, Office). Outputs: result lines (counts only)
   through Add-Item and Add-Test.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: Run: 1 row on the probe list. Read: nothing.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r9.ps1 -Part Run (or Read) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r10.ps1 -Part Run (or Read) loads it.
 #>
 
 # The part Run: adds 1 command row (RUN-HEALTH) that starts the health flow; the Read part waits for its answer.
@@ -50,7 +51,7 @@ function Add-HealthTest($Rows, [int]$HealthFloor) {
 
 <#
 .SYNOPSIS
-  Read, test T4: a person who is a Visitors member writes a row through the list form (Contribute on this list only).
+  Read, test T4: a person who is a Visitors member writes a row through the list form (list-level Contribute on this list only; the site stays Read).
   Rows by anyone but you count; RESULT rows do not. With no state file and no row by another person the round had no
   second person (R30a: T4 passed in R29a): one NOT RUN line, no RESULT line, not counted.
 .PARAMETER Rows
@@ -63,11 +64,16 @@ function Add-T4Test($Rows, [int]$MeId) {
   $t4a = @($Rows | Where-Object { ([string]$_.Title).Trim() -eq 'T4a' -and $MeId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $MeId })
   $st = Read-State $script:dir
   if (-not $st -and $others.Count -eq 0) { $script:lines.Add('T4 NOT RUN: no second person in this round (T4 passed in R29a)'); return }
+  # R35 (19 Nov 26): a second person was added for EDITALL only, and no step asked for a new row, so T4 read FAIL. T4 counts only
+  # when the round asked (T4Asked=yes in the state file) or a row by another person is there.
+  if ($others.Count -eq 0 -and -not ($st -and $st['T4Asked'] -eq 'yes')) { $script:lines.Add('T4 NOT RUN: this round did not ask the second person to add a row (T4 passed in R29a)'); return }
   $addedText = $(if (-not $st) { 'not tried (no state file)' } elseif ($st['WasMember'] -eq 'yes') { 'already a member' } else { 'yes' })
   $t4pass = ($others.Count -ge 1)
   $counts = '(rows=' + $others.Count + '; T4a rows=' + $t4a.Count + '; person in the Visitors group=' + $addedText + ')'
   $t4 = @('a list form by a second person (Visitors member)=' + $(if ($t4pass) { 'PASS' } else { 'FAIL' }) + ' ' + $counts)
-  if (-not $t4pass) { $t4 += 'next: way C: a flow writes the row with the PFM''s connection (not built)' }
+  if (-not $t4pass) {
+    $t4 += ('next: the second person opens the new row form link and saves one row; a form that says no permission means the Visitors group' +
+      ' does not hold Contribute on this list (the Make part gives it; for the app lists, run T20 r4 and read ITEM W01 to W03)') }
   Add-Test 'T4' $t4 $t4pass
 }
 

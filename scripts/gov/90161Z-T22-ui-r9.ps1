@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r8, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
+  90-161.Z Task 22 r9, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
   generated into this file, and the few names it needs from the window.
 .DESCRIPTION
   The block between the rade-ui markers is written by scripts/build_task_scripts.py from the pinned RADE commit
@@ -10,7 +10,7 @@
   high contrast (R31 W2): Select-T22Color and $ui.UseColors (the window part applies them: $wn.Recolor).
   Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the shared UI file, $ui.HcRole,
   $ui.OwnPc, $ui.OwnC, $ui.High, $ui.UseColors and the function Select-T22Color.
-  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r9.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -104,12 +104,19 @@ $ui.CopyText = { param($C)
 # paste into it comes here. $ui.OneLine joins the lines of a text with one space and cuts it to the room that is left.
 # Takes the text and the room (characters); gives back the text to put in.
 $ui.OneLine = { param([string]$T, [int]$Room) $s = ($T -replace '\s*(\r\n|\r|\n)\s*', ' ' -replace '\t', ' ').Trim(); if ($Room -lt 0) { $Room = 0 }; if ($s.Length -gt $Room) { $s = $s.Substring(0, $Room) }; return $s }
-# Pastes the clipboard text into a one-line text box as one line, in place of its selection. Takes the box; gives back
-# $true when it pasted (the key is then handled), $false when the clipboard has no text or the box is multi-line.
+# Pastes the clipboard text into a one-line text box as one line, in place of its selection. When the text is longer
+# than the room, it is cut and the gray line under the box says how many characters did not fit (R7, the Administrator,
+# 2026-11-19; docs/window-design.md "Cards"). Takes the box; gives back $true when it pasted (the key is then handled),
+# $false when the clipboard has no text or the box is multi-line.
 $ui.PasteLine = { param($Tb)
   try { if ($Tb.Multiline -or $Tb.ReadOnly -or -not [System.Windows.Forms.Clipboard]::ContainsText()) { return $false }
     $room = [int]$Tb.MaxLength - ([string]$Tb.Text).Length + [int]$Tb.SelectionLength
-    $Tb.SelectedText = & $ui.OneLine ([System.Windows.Forms.Clipboard]::GetText()) $room; return $true } catch { return $false } }
+    $whole = & $ui.OneLine ([System.Windows.Forms.Clipboard]::GetText()) ([int]::MaxValue)
+    $Tb.SelectedText = & $ui.OneLine $whole $room
+    $lost = $whole.Length - [math]::Max(0, $room)
+    $msg = $(if ($lost -gt 0) { 'The paste was too long: ' + $lost.ToString('N0', [System.Globalization.CultureInfo]::InvariantCulture) + $(if ($lost -eq 1) { ' character did' } else { ' characters did' }) + ' not fit.' } else { '' })
+    if ($msg) { & $ui.Say1 $msg; $ui.PasteNote = $msg } elseif ($ui.PasteNote -and [string]$ui.Note.Text -ceq [string]$ui.PasteNote) { & $ui.Say1 ''; $ui.PasteNote = '' }   # clear only a note this paste wrote
+    return $true } catch { return $false } }
 $ui.MenuCopy.Add_Click({ $null = & $ui.CopyText $ui.Menu.SourceControl })
 $ui.MenuAll.Add_Click({ try { $ui.Menu.SourceControl.SelectAll() } catch { $null = $_ } })
 $ui.Menu.Add_Opening({ try { $ui.MenuCopy.Enabled = [bool]($ui.Menu.SourceControl.SelectionLength -gt 0) } catch { $null = $_ } })

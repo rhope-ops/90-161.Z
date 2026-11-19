@@ -32,6 +32,18 @@ The PFM works in the RADE-style window (scripts/gov/90161Z-T22-pfm-window-r2.ps1
 
 Every action card in the window has the 12-dot step bar and a Change or Skip button (step 13).
 
+#### Window size (proposed in window r9, R36 W13; not yet approved by the PFM)
+
+The PFM asked for less dead space, sizing from the current screen, and one stable layout at any size (R35 findings 4 and 5, docs/reviews/2026-11-19-r35-results.md). Window r9 proposes the rules below; the values live in `$LayoutRevs` of scripts/gov/90161Z-T22-pfm-window-r9.ps1, and `-LayoutPlan` prints them for r8 and r9 at the 4 test sizes.
+
+- One layout per window size, computed when a resize ends (or 250 ms after the last size change), from the size, the scale and the fonts only; a count, a date or a status never moves or resizes a control. tests/ps/Test-T22Sizes.ps1 checks this (each card shown again with other numbers) at 956 x 1081 at 150 %, 1920 x 1080 and 2560 x 1440 at 100 %, and 3840 x 2160 at 150 %.
+- Padding and gaps scale with the font, about 20 % smaller than r8: page sides 28 to 22 px at 100 %, page top and bottom 22 to 16, column gap 18 to 16, card padding 24 x 18 to 20 x 14, gap under a card 14 to 12, check bar padding 16 to 12.
+- The page is as wide as the window (r8 kept at least 900 px at 100 % and scrolled sideways on half a laptop). A side column takes 32 % of the page, at least 300 px (the narrowest side column of r8) and at most its card's own width; when the main column would be under 480 px at 100 %, the columns go one under the other. The rail is 176 px under a 1100 px window, 200 up to 1500, 220 from 1500. The smallest window is 600 x 480 at 100 %.
+- A grid too narrow for all its columns hides, in this order: Weekdays, Action, Signature, Comments, Step, Due, Since. Publication, With, Status, Office and Answer always show. A grid that fills the card shows more rows on a taller window.
+- In a narrow list row, the button goes under the text when the text would keep less than 160 px at 100 % beside it.
+- A card with a single column is at most 1200 px wide at 100 % (the PFM, 19 Nov 26; was 1000 px). `OneColMax` in `Get-T22Layout`.
+- Plain text in a card (paragraphs, notes, notices, guidance; not grids or tables) wraps at a measure of about 75 characters of the body font, or at the card width when that is less (the PFM, 19 Nov 26). The width is 75 times the font's average character width at the current dpi (the 52 letters a to z and A to Z, measured, divided by 52): `Get-T22ProseWidth`, computed with the layout, so it changes only on a resize or a scale change. Sources: USWDS typography, prose measure default 75 characters (https://designsystem.digital.gov/components/typography/); WCAG 2.2 success criterion 1.4.8 Visual Presentation, at most 80 characters (https://www.w3.org/WAI/WCAG22/Understanding/visual-presentation).
+
 ## 1. Rules for every screen
 
 - One screen = one task (docs/guidance/customer-steps.md). Step screens show "Step X of Y", the due date, the heading, the instructions, "Why", and one main button.

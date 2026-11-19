@@ -1,18 +1,22 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 1 runner, r9: renderer test (docs/gov-test-plan.md). Windows PowerShell 5.1.
+  90-161.Z Task 6 runner, r4: GenAI.mil extraction test (docs/gov-test-plan.md, Task 6). Windows PowerShell 5.1.
 .DESCRIPTION
-  Uses this computer's profile folder as the DODID (no question), goes to the Task 1 folder
-  C:\Users\<DODID>\OneDrive - United States Air Force\90-161.Z\T01, checks the 4 task files are there,
-  runs the validator, the draft render and the final render, and saves the output to
-  90161Z-T01-result-r9.txt in that folder after each step. The DODID, profile folder name and user name
+  Uses this computer's profile folder as the DODID (no question), goes to the Task 6 folder
+  C:\Users\<DODID>\OneDrive - United States Air Force\90-161.Z\T06, checks that 90161Z-T06-extracted-r1.json
+  is there and that the Task 1 folder (T01) holds the renderer scripts, runs the validator and the final
+  render with PDF on the extracted JSON, and saves the output to 90161Z-T06-result-r2.txt in the T06 folder.
+  The renderer writes the .docx and .pdf into the T06 folder. The DODID, profile folder name and user name
   are replaced by <DODID> in all output. Start it with right-click > Run with PowerShell (no -File path typed).
   The window always waits for Enter before it closes, also after an unexpected error.
-  Parameters (used by the paste bundle, scripts/gov/paste): -Id skips the DODID question, -NoPause skips the final Enter.
+  r4 (R36 W6, PFM 19 Nov 26): Publication.Word.ps1 joins the renderer files it needs in the T01 folder.
+  Network: none (Word on this computer only).
+  Writes: the T06 folder: the result file, the final .docx and PDF of the extracted fake draft.
+  Credentials: none.
 #>
-param([string]$Id, [switch]$NoPause)
-$task = 'T01'
-$need = @('Publication.Common.ps1', 'Test-Publication.ps1', 'New-Publication.ps1', 'publication.sample.json')
+$task = 'T06'
+$need = @('90161Z-T06-extracted-r1.json')
+$needT01 = @('Publication.Common.ps1', 'Publication.Word.ps1', 'Test-Publication.ps1', 'New-Publication.ps1')   # Task 1 r10 files
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -84,25 +88,26 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
 
 try {
   $ErrorActionPreference = 'Stop'
-  $who = Get-TaskId $Id
+  $who = Get-TaskId ""
   $id = $who.Id
   $secret = $who.Secret
 
-  $dir = Get-TaskDir $id $task 'Task 1'
+  $dir = Get-TaskDir $id $task 'Task 6'
+  $t01 = Join-Path (Split-Path -Parent $dir) 'T01'
+  Assert-TaskFile $t01 $needT01 'MISSING in T01 folder (do Task 1 r10 first): '
   Set-Location -LiteralPath $dir
   Assert-TaskFile $dir $need ('MISSING in ' + $task + ' folder: ')
   Unblock-TaskScript $dir
 
-  $log = Join-Path $dir ('90161Z-' + $task + '-result-r9.txt')
-  $sample = Join-Path $dir 'publication.sample.json'
+  $log = Join-Path $dir ('90161Z-' + $task + '-result-r2.txt')
+  $sample = Join-Path $dir '90161Z-T06-extracted-r1.json'
   $steps = @(
     @{ Name = '1 validate'; File = 'Test-Publication.ps1'; Args = @('-Path', $sample) },
-    @{ Name = '2 draft'; File = 'New-Publication.ps1'; Args = @('-Path', $sample, '-Mode', 'draft') },
-    @{ Name = '3 final'; File = 'New-Publication.ps1'; Args = @('-Path', $sample, '-Mode', 'final', '-Pdf') }
+    @{ Name = '2 final'; File = 'New-Publication.ps1'; Args = @('-Path', $sample, '-Mode', 'final', '-Pdf', '-OutDir', $dir) }
   )
   $lines = New-Object System.Collections.Generic.List[string]
-  $lines.Add('TASK ' + $task + ' renderer test r9, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
-  foreach ($s in $steps) { Invoke-TaskStep $s $dir $secret $lines $log }
+  $lines.Add('TASK ' + $task + ' extraction test r2, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+  foreach ($s in $steps) { Invoke-TaskStep $s $t01 $secret $lines $log }
   Write-Host ''
   Write-Host ('Saved: ' + (Split-Path -Leaf $log) + ' in the ' + $task + ' folder. Report the RENDER, VALIDATE and exit lines.')
 } catch {
@@ -112,5 +117,5 @@ try {
   Write-Host ('STOPPED: ' + $msg)
   Write-Host 'Result file is NOT complete. Report this STOPPED line.'
 } finally {
-  if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
+  [void](Read-Host 'Press Enter to close')
 }
