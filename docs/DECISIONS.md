@@ -9,7 +9,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-19 | List GUIDs reach the flows by script: T24 reads the 8 GUIDs from the PFM's own site and writes them into the solution zip before import. Scope: R36. | PFM | docs/reviews/2026-11-19-r36-prep-plan.md P5 |
 | 2026-11-19 | R36 flow changes (P3 to P5) stay on a branch until the R35 results; R35 r2 bundles stay valid. Scope: R36 prep. | PFM | docs/reviews/2026-11-19-r36-prep-plan.md |
 | 2026-11-19 | The app's name in the RADE side rail is "90-161.Z" only, without "Publications and Forms Management". Scope: R36 bundle, go.md. | PFM | docs/reviews/2026-11-19-r36-plan.md W10 |
-| 2026-11-19 | Publication.Word.ps1 joins T01, T06 and T07 in R36. Scope: R36. | PFM | docs/NEXT_PROMPT.md item 4 |
+| 2026-11-19 | Publication.Word.ps1 joins T01, T06 and T07 in R36. Scope: R36. | PFM | docs/reviews/2026-11-19-r36-plan.md W6 |
 | 2026-11-19 | F05 gets a second trigger on PFM Endorsements, so an answer after "All Comments Adjudicated = Yes" is handled. Scope: F05, R36. | PFM | flow/solution/README.md F05 point a |
 | 2026-11-19 | PFM Publications gets a Closed Date column; F04 and stage counts leave out rows with a Closed Date. Scope: lists, F04, R36. | PFM | flow/solution/README.md choice 9 |
 | 2026-11-19 | An endorsement suspense starts at the row's Created date, Legal rows included. Scope: F03, F05, R36. | PFM | flow/solution/README.md choice 4 |
