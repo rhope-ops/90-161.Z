@@ -147,6 +147,14 @@
       "ref": "PFM D1/D2 (2026-11-14): set by F06 when the action goes On Hold, cleared when it resumes; on resume F06 moves each open suspense out by the weekdays held"
     },
     {
+      "internalName": "ClosedDate",
+      "displayName": "Closed Date",
+      "type": "DateTime",
+      "required": false,
+      "ref": "PFM 2026-11-19 (R36; flow/solution/README.md choice 9): the date the action closed; F04 and the stage counts leave out rows that have one",
+      "description": "Date the action closed. A row with a Closed Date is a closed action: F04 and the stage counts leave it out."
+    },
+    {
       "internalName": "StatusNotes",
       "displayName": "Status Notes",
       "type": "Note",
