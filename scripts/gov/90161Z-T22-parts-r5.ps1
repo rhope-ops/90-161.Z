@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r4, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r5, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
@@ -8,7 +8,7 @@
   R4 (R30 V3): a format check with 0 findings shows no link (Test-CheckLink, in the cards part). The grid block is
   built by the grid part.
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r4.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -35,8 +35,10 @@ $wn.Link = { param($B)
   $x = & $ui.LinkBtn ([string]$B.Text); $x.AccessibleName = [string]$B.Text; $x.Tag = $B
   $x.Add_Click({ & $wn.Press $this.Tag })
   return $x }
-# The chip colors by kind: your turn, late, due soon, done, warning, neutral.
-$wn.Fills = @{ turn = $pc.accentFill; late = $pc.redTint; soon = $pc.amberTint; ok = $pc.greenTint; amber = $pc.amberTint; neu = $pc.surface }
+# The chip colors by kind: your turn, late, due soon, done, warning, neutral. Read again from $pc when the colors change
+# (R31 W2, $wn.Recolor in the window part).
+$wn.FillsOf = { return @{ turn = $pc.accentFill; late = $pc.redTint; soon = $pc.amberTint; ok = $pc.greenTint; amber = $pc.amberTint; neu = $pc.surface } }
+$wn.Fills = & $wn.FillsOf
 # A status chip of kind $Kind with $Text, on background $Back. Gives back the chip.
 $wn.Chip = { param($Kind, [string]$Text, $Back)
   $c = New-Object Pfm.Chip; $c.Text = $Text; $c.Font = $ui.F.SmallB; $c.ForeColor = $pc.ink; $c.Fill = $wn.Fills[$Kind]; $c.BackColor = $Back; $c.AccessibleName = $Text

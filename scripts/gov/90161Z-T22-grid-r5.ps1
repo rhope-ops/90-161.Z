@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r4, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r5, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
   column kind: pub (the number as a link, the title beside or under it), with and bold (semibold), chip (a status
   chip) and plain. Double-click or Enter on a row opens its card.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r4.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.

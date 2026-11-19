@@ -1,36 +1,37 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r4 (round R30). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r5 (round R31b). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
-  steps 8 to 13, a publication, Settings and the states. Nothing is read, saved or sent. The look comes from the RADE shared UI
+  steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
   file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it; below 1280 x 720
-  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 12 checks one at a
+  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 14 checks one at a
   time with Pass and Fail (PFM 17 Nov 26); each layout defect is one line "FAIL LAYOUT ..." and "PASS layout" is one line when
   there is none (the runner counts these words).
-  WHAT R4 CHANGES (R29b results, R30 plan steps 1 and 3): the crumb is one line in one font and size, with a small gap after
-  its link (V2); a format check with 0 findings shows no link (V3); the Action Status card ends on the main card's bottom line
-  (V4); contrast on and off go through Windows Settings (Windows+U, Contrast themes), not a key chord; the script lists every
-  control with no accessible name itself (one line RESULT NAMES PASS or FAIL) and the person check only confirms that Narrator
-  speaks; Narrator off passes on what you can see. The script is split into parts (code standard): this file loads its 7 parts
-  from its own folder, 90161Z-T22-<part>-r4.ps1 (cards, types, ui, parts, grid, window, measure). New: -Measure <file>.
-  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 12 checks as
+  WHAT R5 CHANGES (R31 plan, R31b items W1 to W4): the rail logo has no white box and the app name is centered on the
+  logo's middle (W1); with Windows high contrast on, the window uses the system colors, also when the setting changes
+  while it is open (W2); the 2 look questions about the crumb and the Action Status card are the last 2 checks of the
+  check bar (W3); the window saves a PNG picture of each card (FAKE data only) in the T22 folder (W4). R4 (R30) split the
+  script into parts: this file loads its 7 parts from its own folder, 90161Z-T22-<part>-r5.ps1 (cards, types, ui, parts,
+  grid, window, measure).
+  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 14 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
-  measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and closes, with no question and no other file. -Opened opens no
-  window: it reads 90161Z-T22-window-r4.txt of the last run and prints one line, PASS the window opened (N of M cards) or
-  FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r4.txt (state, size, scale, cards opened, layout self-check, accessible names, check answers) and
-  90161Z-T22-window-bounds.json (last size and place) in the T22 folder.
+  measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
+  -Opened opens no window: it reads 90161Z-T22-window-r5.txt of the last run and prints one line, PASS the window opened
+  (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
+  Outputs: 90161Z-T22-window-r5.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  check answers), 90161Z-T22-window-bounds.json (last size and place) and 90161Z-T22-card-<card>-r5.png (one per card) in
+  the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r4.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r5.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r4.txt and 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir); with -Measure only the file given;
-  with -Opened nothing.
+  Writes: 90161Z-T22-window-r5.txt, 90161Z-T22-window-bounds.json and the card PNG files in the T22 folder (or -TestDir);
+  with -Measure only the file given and the card PNG files in its folder; with -Opened nothing.
   Credentials: none.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
 $task = 'T22'
-$Rev = 'r4'
+$Rev = 'r5'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -120,7 +121,7 @@ function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'window', 'measure')
-# The full path of part $Name: 90161Z-T22-<name>-r4.ps1 in this file's folder.
+# The full path of part $Name: 90161Z-T22-<name>-r5.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))

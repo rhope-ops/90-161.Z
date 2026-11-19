@@ -1,16 +1,19 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r4, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r5, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   $wn.Show builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
   line in one font (V2: its link is a Pfm.LinkText in the crumb's font, underlined, with no padding); the last cards of
   the columns end on one line when the card has an Action Status card (V4). $wn.Build builds every card once (layout
   self-check, grid check, the accessible-name check of the measure part) and $wn.Hook adds the window's events.
+  R5 (R31): the rail logo sits on the rail's navy and the app name is centered on the logo's middle (W1, $wn.HeadParts);
+  with Windows high contrast on the window paints with the system colors, also after a change while it is open (W2,
+  $wn.Recolor); $wn.Build saves a picture of each card through the measure part (W4).
   The rail logo is the app-logo block below, written by scripts/build_task_scripts.py (never edit it here).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r4.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   Credentials: none.
@@ -116,15 +119,38 @@ $wn.Press = {
 $wn.RailLayout = {
   $wide = ($form.ClientSize.Width -ge (& $wn.Sc 1500)); $rw = $(if ($wide) { & $wn.Sc 220 } else { & $wn.Sc 200 }); $rail.Width = $rw
   foreach ($x in $wn.RailBtn) { $x.Width = $rw - 2 * (& $wn.Sc 12) } }
-# The logo, the app name and its line at the top of the rail (a logo that cannot be shown is noted, not an error).
-$wn.RailHead = {
+$wn.HeadParts = {
+  <#
+  .SYNOPSIS
+  Builds the logo and the app name "90-161.Z" of the rail head into $Into (R31 W1).
+  .DESCRIPTION
+  The logo (40 x 40 at 100 %, at 16,16) sits on the rail's navy, the same color as the name, so no white box shows
+  behind it. The name is placed by its middle, not its top: its middle is the logo's middle (rounded to a pixel), at
+  any scale. A logo that cannot be shown is a NOTE line, not an error; the name keeps its place. The measure part
+  builds the same parts into a test panel at 1.5 x to measure the centering at a second scale.
+  .PARAMETER Into
+  The panel the parts go into (the rail).
+  .PARAMETER WordFont
+  The font of the name (the RADE logo word, $ui.F.Word).
+  .OUTPUTS
+  @{ Logo (the picture box, or $null); Name (the label) }.
+  #>
+  param($Into, $WordFont)
+  $out = @{ Logo = $null; Name = $null }; $top = & $wn.Sc 16; $side = & $wn.Sc 40
   try {
-    $logo = New-Object System.Windows.Forms.PictureBox; $logo.Size = [Drawing.Size]::new((& $wn.Sc 40), (& $wn.Sc 40)); $logo.SizeMode = 'Zoom'; $logo.BackColor = $ui.C.White
-    $logo.AccessibleName = '90-161.Z logo'; $logo.Location = [Drawing.Point]::new((& $wn.Sc 16), (& $wn.Sc 16))
-    $logo.Image = [Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($AppLogoPng)))); [void]$rail.Controls.Add($logo)
+    $logo = New-Object System.Windows.Forms.PictureBox; $logo.Size = [Drawing.Size]::new($side, $side); $logo.SizeMode = 'Zoom'; $logo.BackColor = $pc.navy
+    $logo.AccessibleName = '90-161.Z logo'; $logo.Location = [Drawing.Point]::new((& $wn.Sc 16), $top)
+    $logo.Image = [Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($AppLogoPng)))); [void]$Into.Controls.Add($logo); $out.Logo = $logo
   } catch { $lines.Add('NOTE logo not shown: ' + $_.Exception.Message) }
-  $nm = & $ui.Label $ui.F.Word $ui.C.White 0; $nm.BackColor = $pc.navy; $nm.Text = '90-161.Z'; $nm.Visible = $true; $nm.Location = [Drawing.Point]::new((& $wn.Sc 64), (& $wn.Sc 18))
-  [void]$rail.Controls.Add($nm)
+  $nm = & $ui.Label $WordFont $ui.C.White 0; $nm.BackColor = $pc.navy; $nm.Text = '90-161.Z'; $nm.Visible = $true
+  $nh = [int]$nm.PreferredSize.Height
+  $nm.Location = [Drawing.Point]::new((& $wn.Sc 64), ($top + [int][math]::Round(($side - $nh) / 2.0)))
+  [void]$Into.Controls.Add($nm); $out.Name = $nm
+  return $out }
+# The rail head: the logo and the app name ($wn.HeadParts; kept in $wn.Logo and $wn.AppName for the measure part) and the
+# line under them.
+$wn.RailHead = {
+  $h = & $wn.HeadParts $rail $ui.F.Word; $wn.Logo = $h.Logo; $wn.AppName = $h.Name
   $sb = & $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $sb.BackColor = $pc.navy; $sb.Text = 'Publications and Forms'; $sb.Visible = $true
   $sb.Location = [Drawing.Point]::new((& $wn.Sc 16), (& $wn.Sc 66)); [void]$rail.Controls.Add($sb) }
 $wn.BuildRail = {
@@ -378,6 +404,10 @@ $wn.Build = {
   .SYNOPSIS
   Builds the check bar, the rail and every card once, with the layout self-check, the grid check and the accessible-name
   check on each card; $Each (when given) runs after each card with its key (the -Measure run).
+  .DESCRIPTION
+  R31 W4: while each card is on the page, a picture of the window is saved ($wn.SavePng, measure part) when
+  $wn.PngDir is set. This runs before the person sees the window (it is still clear), so nobody loses their place:
+  the last card shown is Your Work, where the window starts.
   .PARAMETER Each
   A script block that gets the card key, or nothing.
   #>
@@ -388,22 +418,61 @@ $wn.Build = {
   $wn.LastW = $form.ClientSize.Width; $wn.LastH = $form.ClientSize.Height
   foreach ($k in $Cards.Keys) {
     $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k; [Windows.Forms.Application]::DoEvents(); & $ui.Check; & $wn.ScrollCheck; & $wn.NameScan $k $page
+    & $wn.SavePng $k
     if ($Each) { & $Each $k } }
   & $wn.NameScan 'rail' $rail; & $wn.NameScan 'bar' $wn.Bar
   $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home' }
-# Starts the window when it is first shown: its place, its scale, its smallest size, every card once, then Your Work.
+$wn.Recolor = {
+  <#
+  .SYNOPSIS
+  Paints the window in the colors for the Windows high-contrast setting (R31 W2): the system colors when it is on,
+  the window's own palette when it is off.
+  .DESCRIPTION
+  At the start it only sets the colors (nothing is built yet). On a change while the window is open it rebuilds the
+  rail, the check bar (the current check stays) and the card on the page, so every part takes the new colors; nothing
+  happens when the setting did not change. Each change adds one CONTRAST line to the result.
+  .PARAMETER When
+  'start' or 'changed'.
+  #>
+  param([string]$When)
+  $high = [bool][Windows.Forms.SystemInformation]::HighContrast
+  if ($When -ne 'start' -and $high -eq [bool]$ui.High) { return }
+  & $ui.UseColors $high; $wn.Fills = & $wn.FillsOf
+  $form.BackColor = $pc.surface; $main.BackColor = $pc.surface; $page.BackColor = $pc.surface; $rail.BackColor = $pc.navy
+  $lines.Add('CONTRAST ' + $When + ': high contrast ' + $(if ($high) { 'on, the window uses the system colors' } else { 'off, the window uses its own colors' }))
+  if ($When -eq 'start') { return }
+  $form.SuspendLayout()
+  foreach ($x in @($rail.Controls)) { $rail.Controls.Remove($x); $x.Dispose() }
+  $wn.RailBtn = @(); & $wn.BuildRail
+  $form.Controls.Remove($wn.Bar); $wn.Bar.Dispose(); & $wn.BuildBar
+  $form.ResumeLayout($true)
+  & $wn.Show $wn.Cur; $form.Invalidate($true) }
 $wn.Start = {
+  <#
+  .SYNOPSIS
+  Starts the window when it is first shown: its place, its scale, its smallest size, its colors, every card once (with
+  the card pictures), then Your Work.
+  .DESCRIPTION
+  R31 W2: a change of the Windows high-contrast setting while the window is open runs $wn.Recolor; the handler is added
+  here, on the window's own thread (so the event comes back on it), and removed when the window closes ($wn.Hook).
+  #>
   & $wn.LoadBounds
   & $ui.FormDpi
   $form.MinimumSize = [Drawing.Size]::new((& $wn.Sc 800), (& $wn.Sc 560))
-  $form.BackColor = $pc.surface
+  & $wn.Recolor 'start'
+  $wn.PngDir = $dir
   & $wn.Build $null
+  & $wn.PngLines
+  $wn.Pref = [Microsoft.Win32.UserPreferenceChangedEventHandler]{
+    try { & $wn.Recolor 'changed' } catch { $lines.Add('NOTE the colors were not re-applied: ' + ([string]$_.Exception.Message)) } }
+  try { [Microsoft.Win32.SystemEvents]::add_UserPreferenceChanged($wn.Pref) } catch { $lines.Add('NOTE no high-contrast change event: ' + ([string]$_.Exception.Message)); $wn.Pref = $null }
   $wn.Ready = $true; $form.Opacity = 1
   try { $form.TopMost = $true; $form.Activate(); $form.TopMost = $false } catch { $null = $_ } }
 $wn.Hook = {
   <#
   .SYNOPSIS
-  Adds the window's events: start when shown, re-layout on a new size, Esc and Ctrl+1 to Ctrl+5, save the place on close.
+  Adds the window's events: start when shown, re-layout on a new size, Esc and Ctrl+1 to Ctrl+5, save the place on close,
+  and remove the high-contrast handler of $wn.Start when the window has closed.
   .DESCRIPTION
   Esc opens the card's Up card (back: the card before a modal one); Ctrl+1 to Ctrl+5 open the rail items in order.
   A window that cannot be built adds a STOPPED line, sets exit code 1 and closes.
@@ -418,4 +487,5 @@ $wn.Hook = {
         $_.Handled = $true; $_.SuppressKeyPress = $true }
       elseif ($_.Control -and $_.KeyCode -ge [Windows.Forms.Keys]::D1 -and $_.KeyCode -le [Windows.Forms.Keys]::D5) {
         $n = [int]$_.KeyCode - [int][Windows.Forms.Keys]::D1; $wn.Notice = ''; $wn.Err = ''; & $wn.Show ([string]$RailItems[$n].Go); $_.Handled = $true; $_.SuppressKeyPress = $true } })
-  $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds }) }
+  $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds })
+  $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null } }) }
