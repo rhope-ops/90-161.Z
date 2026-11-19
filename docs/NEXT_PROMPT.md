@@ -5,6 +5,7 @@ Updated 2026-11-19 06:15 Central (R35 built). Full open items: [handoff detail](
 ## Open
 
 1. R35 r2 (32 steps, engine-v25), [approved plan](reviews/2026-11-19-r35-plan.md), waits for the PFM. Read: F05 Legal rows within 3 minutes, `import-*` answers, EDITALL, T20 `P02-list-access` (fake-only route), window r8 logo self-check, `a-flows-on` error. Last results: [R34](reviews/2026-11-19-r34-results.md).
-2. From the [R34 plan](reviews/2026-11-18-r34-plan.md) (DECISIONS 19 Nov 26): R36 gets the 4.4A design (PFM approves first) and the tests/run.sh fix (lane C); F05 second trigger, Closed Date, suspense from Created, list GUIDs (flow/solution/README.md); point 3 before the pilot; point 11 accepted; F05 pilot interval after R35. RADE items: a RADE session has them (19 Nov 26).
-3. Lock: engine-v25 (19 Nov 26; v25 makes the window system DPI aware in ISE: read SCALE thread= and sysDpi=). Commit each bundle with its `.sha256.json`. bump_lock.py MINOR: `without_module_caches` takes only `cpython-<digits>`.
-4. Next T01 round: add Publication.Word.ps1 to T01, T06, T07. One form look step stays in each round.
+2. R36 prep (PFM 19 Nov 26): [prep plan](reviews/2026-11-19-r36-prep-plan.md), [R36 plan draft](reviews/2026-11-19-r36-plan.md), [4.4A design](reviews/2026-11-19-r36-4.4A-design.md) waits for the PFM. Flow and list work (prep P3 to P5) stays on a branch until the R35 results.
+3. From the [R34 plan](reviews/2026-11-18-r34-plan.md) (DECISIONS 19 Nov 26): R36 gets the 4.4A design (PFM approves first) and the tests/run.sh fix (lane C); F05 second trigger, Closed Date, suspense from Created, list GUIDs (flow/solution/README.md); point 3 before the pilot; point 11 accepted; F05 pilot interval after R35. RADE items: a RADE session has them (19 Nov 26).
+4. Lock: engine-v25 (19 Nov 26; v25 makes the window system DPI aware in ISE: read SCALE thread= and sysDpi=). Commit each bundle with its `.sha256.json`. bump_lock.py MINOR: `without_module_caches` takes only `cpython-<digits>`.
+5. Next T01 round: add Publication.Word.ps1 to T01, T06, T07. One form look step stays in each round.
