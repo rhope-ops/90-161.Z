@@ -297,7 +297,7 @@ PY
 if [ "${on[batch]}" = 1 ]; then
 wait "$batch_pid"   # first use of the batch results
 out=$(bout plan | tail -1)
-[ "$out" = "PLAN lists=12 fields=199 views=18 rows=93 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
+[ "$out" = "PLAN lists=12 fields=200 views=18 rows=93 updates=21 permissions=2" ] && ok "lists plan ($out)" || bad "lists plan: $out"
 else sk "lists plan"; fi
 if [ "${on[t20]}" = 1 ]; then
 wait "$t20_pid"; t20rc=$?; out=$(tail -1 "$bg/t20.out")
