@@ -5,16 +5,20 @@
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
   file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it; below 1280 x 720
-  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 16 checks one at a
+  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 18 checks one at a
   time with Pass and Fail (PFM 17 Nov 26); each layout defect is one line "FAIL LAYOUT ..." and "PASS layout" is one line when
   there is none (the runner counts these words).
-  WHAT R6 CHANGES (R32 plan W1, R31b defects D1 to D4): the caption "ACTION STATUS" is level with the first line of the
+  WHAT R7 CHANGES (R34 plan W1, R32 finding 6, W1 to W3): a publication number is never cut and the grid head reads
+  PUBLICATION (W1, grid part); the mouse wheel scrolls a card, or the grid under the pointer, from anywhere on it
+  (W2, Pfm.Wheel); every chip beside text is level with its first line (W3, $wn.ChipTops). The layout self-check
+  writes W1 and W3 LAYOUT lines, and the check bar has 2 more checks (wheel, pubnum).
+  WHAT R6 CHANGED (R32 plan W1, R31b defects D1 to D4): the caption "ACTION STATUS" is level with the first line of the
   main card (D1); the crumb's link and rest have one size and one text middle (D2); the label "Passed" is level with
   the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
   R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its 7 parts
   from its own folder, 90161Z-T22-<part>-r7.ps1 (cards, types, ui, parts, grid, window, measure).
-  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 16 checks as
+  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
   -Opened opens no window: it reads 90161Z-T22-window-r7.txt of the last run and prints one line, PASS the window opened

@@ -17,11 +17,14 @@
   its first text line (D3), and where each pub grid drew its numbers and titles (D4). -Measure records them for every
   card at this scale and again at 1.25 x and 1.5 x ($wn.MeasureScaled); the layout self-check turns them into LAYOUT lines
   ($ui.Measure, $wn.LevelBad), so the window flags the 4 defects on the device too.
+  R7 (R32 W1 to W3): the level facts also hold every chip beside text with its kind (W3) and, for each pub grid, what
+  its head and each cell needed and had (W1); the self-check writes a W1 or W3 LAYOUT line for each one out of line.
+  $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r7.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
-  $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $ui.Measure, $wn.MeasureRun and its helpers.
+  $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.MeasureRun and its helpers.
   Run: not alone; 90161Z-T22-pfm-window-r7.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
@@ -136,21 +139,25 @@ $wn.LevelPubs = {
   Each such grid is drawn once into a bitmap (so its cells are painted now, also off-screen); $wn.PaintPub keeps what
   it drew in the grid's Tag.Drawn, relative to the cell's text rectangle. Rows that are scrolled out of the grid are
   not drawn and not listed.
+  R7 (R32 W1): also the head of the pub column (its text, the width it needs and has) and, per row drawn, the widths
+  and heights the number and title needed and had ($wn.PaintPub).
   .OUTPUTS
-  One table per grid: Grid (its name), Gap (the gap after the widest number), Rows (rows drawn) and, one value per
-  row drawn, Beside, TitleX, NumRight, NumBottom and TitleTop.
+  One table per grid: Grid (its name), Gap (the gap after the widest number), Rows (rows drawn), Head, HeadW, HeadHave
+  and, one value per row drawn, Beside, TitleX, NumRight, NumBottom, TitleTop, NumW, NumHave, TitleW, TitleHave, NeedH
+  and HaveH.
   #>
   $out = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
   while ($st.Count) {
     foreach ($c in $st.Pop().Controls) {
       if ($c -is [Windows.Forms.DataGridView]) {
         if (-not ($c.Tag -is [hashtable]) -or -not (@($c.Tag.Kind.Values) -contains 'pub')) { continue }
-        $c.Tag.Drawn = @{}
+        $c.Tag.Drawn = @{}; $c.Tag.Head = $null
         try { $bm = New-Object System.Drawing.Bitmap([math]::Max(1, $c.Width), [math]::Max(1, $c.Height))
           try { $c.DrawToBitmap($bm, (New-Object System.Drawing.Rectangle(0, 0, $bm.Width, $bm.Height))) } finally { $bm.Dispose() } } catch { $null = $_ }
         $d = @(foreach ($k in @($c.Tag.Drawn.Keys | Sort-Object)) { $c.Tag.Drawn[$k] })
         $g = [ordered]@{}; $g['Grid'] = [string]$c.AccessibleName; $g['Gap'] = [int]$c.Tag.PubGap; $g['Rows'] = $d.Count
-        foreach ($n in 'Beside', 'TitleX', 'NumRight', 'NumBottom', 'TitleTop') { $g[$n] = @($d | ForEach-Object { $_[$n] }) }
+        $h = $c.Tag.Head; $g['Head'] = $(if ($h) { [string]$h.Text } else { '' }); $g['HeadW'] = $(if ($h) { [int]$h.W } else { 0 }); $g['HeadHave'] = $(if ($h) { [int]$h.Have } else { 0 })
+        foreach ($n in 'Beside', 'TitleX', 'NumRight', 'NumBottom', 'TitleTop', 'NumW', 'NumHave', 'TitleW', 'TitleHave', 'NeedH', 'HaveH') { $g[$n] = @($d | ForEach-Object { $_[$n] }) }
         $out.Add($g) }
       elseif ($c.Controls.Count) { $st.Push($c) } } }
   return $out.ToArray() }
@@ -160,8 +167,9 @@ $wn.LevelFacts = {
   R6 (R31b D1 to D4): the alignment facts of the card on the page, in page pixels ($wn.TextMid).
   .DESCRIPTION
   Caps (D1): for each Action Status card, the middle of its caption and of the first line of the main card. Crumb (D2):
-  the font size and text middle of the crumb's link and rest, or $null when the card has no crumb link. Chips (D3): for
-  each check block, the middle of its chip and of the first line of its text. Pubs (D4): $wn.LevelPubs.
+  the font size and text middle of the crumb's link and rest, or $null when the card has no crumb link. Chips (D3, R7
+  W3): for each chip beside text ($wn.ChipRows: check, list, rows, chips, notice), its kind, the middle of the chip and
+  of the first line of its text. Pubs (D4, R7 W1): $wn.LevelPubs.
   .OUTPUTS
   A table: Caps, Crumb, Chips, Pubs.
   #>
@@ -173,9 +181,20 @@ $wn.LevelFacts = {
   if ($l -and $t) { $crumb = [ordered]@{}; $crumb['LinkSize'] = [double]$l.Font.SizeInPoints; $crumb['RestSize'] = [double]$t.Font.SizeInPoints
     $crumb['LinkMid'] = (& $wn.TextMid $l); $crumb['RestMid'] = (& $wn.TextMid $t) }
   $chips = @(foreach ($r in @($wn.ChipRows)) {
-      $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['ChipMid'] = (& $wn.TextMid $r.Chip); $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
+      $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['Kind'] = [string]$r.Kind; $c['ChipMid'] = (& $wn.TextMid $r.Chip)
+      $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
   $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs)
   return $f }
+# R7 (W1): the cut cells of one measured pub grid $P ($wn.LevelPubs), one short text per row: "row <n> number 120>96"
+# when its number, title or lines needed more pixels than the cell gave; none when every cell holds its text.
+$wn.PubCut = { param($P)
+  $out = @(); $nw = @($P.NumW); $nh = @($P.NumHave); $tw = @($P.TitleW); $th = @($P.TitleHave); $lh = @($P.NeedH); $ch = @($P.HaveH)
+  for ($i = 0; $i -lt [int]$P.Rows; $i++) {
+    $bad = @(); if ([int]$nw[$i] -gt [int]$nh[$i]) { $bad += ('number ' + $nw[$i] + '>' + $nh[$i]) }
+    if ([int]$tw[$i] -gt [int]$th[$i]) { $bad += ('title ' + $tw[$i] + '>' + $th[$i]) }
+    if ([int]$lh[$i] -gt [int]$ch[$i]) { $bad += ('height ' + $lh[$i] + '>' + $ch[$i]) }
+    if ($bad.Count) { $out += ('row ' + ($i + 1) + ' ' + ($bad -join ', ')) } }
+  return $out }
 $wn.LevelBad = {
   <#
   .SYNOPSIS
@@ -184,6 +203,9 @@ $wn.LevelBad = {
   D1, D2 and D3: two middles more than $Tol apart (D2 also: two font sizes). D4: the titles of a grid start at more than
   one x, or a title in the column starts before the end of the widest number and the gap, or a title under its number
   starts above the number's bottom. A grid with no row drawn has nothing to compare.
+  R7 (R32): W1: the head of a pub column needs more width than it has (it would be shortened with dots), or a pub cell
+  is cut (its number or title needs more width, or its lines more height, than the cell gave). W3: the D3 rule for
+  every chip beside text; the line names the chip's kind.
   .PARAMETER Card
   The card key (it starts each line).
   .PARAMETER F
@@ -201,8 +223,12 @@ $wn.LevelBad = {
   if ($k -and ($k.LinkSize -ne $k.RestSize -or [math]::Abs($k.LinkMid - $k.RestMid) -gt $Tol)) {
     $out += ('LAYOUT ' + $Card + ' D2 crumb: link ' + $k.LinkSize + ' pt middle ' + $k.LinkMid + ', rest ' + $k.RestSize + ' pt middle ' + $k.RestMid) }
   foreach ($c in @($F.Chips)) { if ([math]::Abs($c.ChipMid - $c.LineMid) -gt $Tol) {
-      $out += ('LAYOUT ' + $Card + ' D3 chip "' + $c.Chip + '" middle ' + $c.ChipMid + ', its first text line ' + $c.LineMid) } }
+      $out += ('LAYOUT ' + $Card + ' W3 chip "' + $c.Chip + '" (' + $c.Kind + ') middle ' + $c.ChipMid + ', its first text line ' + $c.LineMid) } }
   foreach ($p in @($F.Pubs)) {
+    if ($p.Head -and [int]$p.HeadW -gt [int]$p.HeadHave) {
+      $out += ('LAYOUT ' + $Card + ' W1 grid ' + $p.Grid + ': the head "' + $p.Head + '" needs ' + $p.HeadW + ' px, has ' + $p.HeadHave) }
+    $cut = @(& $wn.PubCut $p)
+    if ($cut.Count) { $out += ('LAYOUT ' + $Card + ' W1 grid ' + $p.Grid + ': ' + $cut.Count + ' publication cells cut (' + ($cut -join '; ') + ')') }
     if ([int]$p.Rows -lt 1) { continue }
     $xs = @($p.TitleX | Sort-Object -Unique); $num = [int](@($p.NumRight) | Measure-Object -Maximum).Maximum
     $under = @(for ($i = 0; $i -lt [int]$p.Rows; $i++) { if (-not $p.Beside[$i] -and $p.TitleTop[$i] -lt $p.NumBottom[$i]) { $i } })
@@ -331,6 +357,65 @@ $wn.MeasureContrast = {
         $r['Name'] = [string]$pick[$k].Name; $r['Role'] = [string]$ui.HcRole[$k]; $r['Hex'] = (& $wn.Hex $pick[$k]); $r['Own'] = (& $wn.Hex $t.Own[$k])
         $rows.Add($r) } } }
   return $rows.ToArray() }
+$wn.WheelTry = {
+  <#
+  .SYNOPSIS
+  R7 (R32 W2): turns the mouse wheel once towards you (delta -120) at screen point $Pt through the window's own filter
+  (Pfm.Wheel.PreFilterMessage, as Windows would call it), with the message sent to the control that has the focus.
+  .PARAMETER Filter
+  The filter ($wn.WheelNew).
+  .PARAMETER Pt
+  The pointer, in screen pixels.
+  .PARAMETER Focus
+  The control the message is for (Windows sends the wheel to the control with the focus).
+  .OUTPUTS
+  @{ Handled (the filter took it); Under (the control under the pointer: its type and accessible name) }.
+  #>
+  param($Filter, $Pt, $Focus)
+  $u = [Pfm.Wheel]::Under($form, $Pt)
+  $m = [Pfm.Wheel]::Make($Focus.Handle, $Pt, -120)
+  $ok = $Filter.PreFilterMessage([ref]$m)
+  return @{ Handled = [bool]$ok; Under = ($u.GetType().Name + ' "' + [string]$u.AccessibleName + '"') } }
+$wn.MeasureWheel = {
+  <#
+  .SYNOPSIS
+  R7 (R32 W2): proves that the mouse wheel scrolls the card from a point on the card, not on the scroll bar, while a
+  button has the focus; and the grid under the pointer while that grid can still scroll.
+  .DESCRIPTION
+  The window is made 60 % as high so that Your Work scrolls, Your Work is shown at its top, and one wheel turn goes to
+  the middle of its first card ("Needs You Today"). Then, when a grid of the card has rows out of view, the card is
+  scrolled to the grid and one turn goes to the middle of the grid's part in view. Then the size comes back and Your
+  Work is shown again. No real pointer is moved; the message goes through the window's own filter ($wn.WheelTry).
+  .OUTPUTS
+  A table: Card, Scrolls, Under, Handled, Before, After (the main column's scroll position) and, when a grid can
+  scroll, GridUnder, GridHandled, GridBefore, GridAfter (its first row in view) and MainBefore, MainAfter.
+  #>
+  $keep = $form.ClientSize; $res = [ordered]@{}; $res['Card'] = 'home'
+  try {
+    $form.ClientSize = [Drawing.Size]::new($keep.Width, [int]($keep.Height * 0.6)); $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
+    [Windows.Forms.Application]::DoEvents(); $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
+    $flt = & $wn.WheelNew; $focus = $(if ($wn.Primary) { $wn.Primary } else { $form })
+    $sec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
+    $res['Scrolls'] = [bool]$main.VerticalScroll.Visible; $res['Before'] = -$main.AutoScrollPosition.Y
+    $t = & $wn.WheelTry $flt (& $wn.ViewMid $sec.Card) $focus
+    $res['Under'] = $t.Under; $res['Handled'] = $t.Handled; $res['After'] = -$main.AutoScrollPosition.Y
+    $g = @(& $wn.Grids | Where-Object { [Pfm.Wheel]::GridCan($_, -120) }) | Select-Object -First 1
+    if ($g) {
+      $main.ScrollControlIntoView($g); [Windows.Forms.Application]::DoEvents()
+      $res['MainBefore'] = -$main.AutoScrollPosition.Y; $res['GridBefore'] = $g.FirstDisplayedScrollingRowIndex
+      $t = & $wn.WheelTry $flt (& $wn.ViewMid $g) $focus
+      $res['GridUnder'] = $t.Under; $res['GridHandled'] = $t.Handled; $res['GridAfter'] = $g.FirstDisplayedScrollingRowIndex; $res['MainAfter'] = -$main.AutoScrollPosition.Y }
+  } finally { $form.ClientSize = $keep; $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'; [Windows.Forms.Application]::DoEvents() }
+  return $res }
+# The middle of the part of control $C that the main column shows, in screen pixels (where a person would put the pointer).
+$wn.ViewMid = { param($C)
+  $v = [Drawing.Rectangle]::Intersect($C.RectangleToScreen($C.ClientRectangle), $main.RectangleToScreen($main.ClientRectangle))
+  return [Drawing.Point]::new(($v.Left + [int]($v.Width / 2)), ($v.Top + [int]($v.Height / 2))) }
+# The grids on the page (the card shown), in the order they were built.
+$wn.Grids = {
+  $out = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Queue; $st.Enqueue($page)
+  while ($st.Count) { foreach ($c in $st.Dequeue().Controls) { if ($c -is [Windows.Forms.DataGridView]) { $out.Add($c) } elseif ($c.Controls.Count) { $st.Enqueue($c) } } }
+  return $out.ToArray() }
 $wn.MeasureRun = {
   <#
   .SYNOPSIS
@@ -338,8 +423,8 @@ $wn.MeasureRun = {
   .DESCRIPTION
   The form is shown far off the screen (it is never seen) so that its controls have handles and can be drawn into
   bitmaps; it builds every card as a normal run does ($wn.Build: layout self-check, accessible names and the card
-  pictures, saved next to the JSON file, included), then measures D1 to D4 of every card at 1.25 x and 1.5 x (R6),
-  the rail head and the high-contrast color choice.
+  pictures, saved next to the JSON file, included), then measures D1 to D4 of every card at 1.25 x and 1.5 x (R6,
+  with W1 and W3 of R7), the mouse wheel (R7 W2), the rail head and the high-contrast color choice.
   .PARAMETER Path
   The JSON file to write.
   #>
@@ -364,6 +449,8 @@ $wn.MeasureRun = {
   # D1 to D4 at 1.25 x and 1.5 x (R6; the PFM works at 150 %): every card again; a pass that cannot run is kept as its error.
   try { $res['Scaled'] = @(foreach ($k in 1.25, 1.5) { & $wn.MeasureScaled $k }) }
   catch { $res['Scaled'] = @(); $res['ScaledError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
+  # R7 (W2): one wheel turn on the card body and one on a grid, through the window's own filter.
+  try { $res['Wheel'] = (& $wn.MeasureWheel) } catch { $res['Wheel'] = $null; $res['WheelError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   # The rail head and the color choice: a step that cannot be measured is kept as its error (the test names it).
   try { $res['Head'] = @(& $wn.MeasureHead) } catch { $res['Head'] = @(); $res['HeadError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   try { $res['Contrast'] = @(& $wn.MeasureContrast) } catch { $res['Contrast'] = @(); $res['ContrastError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }

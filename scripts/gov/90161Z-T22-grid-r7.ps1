@@ -9,6 +9,9 @@
   R6 (R31b D4): the titles of a pub column start in one column: after the widest number of all the grid's rows and a
   fixed gap, when every title fits there, else every title goes under its number. Each painted pub cell is kept in
   the grid's Tag.Drawn for the measure part and the layout self-check.
+  R7 (R32 W1): the pub column is never narrower than its widest number, title and head plus the cell padding
+  ($wn.PubMin, $wn.GridCols), so no number is cut with dots and the head reads PUBLICATION; a grid with a pub column has
+  rows 2 lines high at least ($wn.GridHeight); each painted pub cell and the pub head keep what they needed and had.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
   Run: not alone; 90161Z-T22-pfm-window-r7.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
@@ -29,11 +32,15 @@ $wn.GridHeight = {
   The grid block: Rows, Fill.
   .PARAMETER Ctx
   The column context: Col, the column the grid is in (its height so far).
+  .DESCRIPTION
+  R7 (W1): a grid with a pub column has rows tall enough for 2 lines of the link font ($wn.PubLineH) and 2 px above and
+  below, so a title under its number is never cut; at 100 % this is the usual 41 px.
   .OUTPUTS
   @{ H = the grid height; Full = the height with every row; Hdr = the header height; Row = the row height }.
   #>
   param($b, $Ctx)
   $rows = @($b.Rows); $hdrH = & $wn.Sc 33; $rowH = & $wn.Sc 41
+  if (@($b.Cols | Where-Object { $_.K -eq 'pub' }).Count) { $rowH = [math]::Max($rowH, 2 * (& $wn.PubLineH) + (& $wn.Sc 4) + 1) }
   $full = $hdrH + $rowH * $rows.Count + 2; $h = $full
   if ($b.Fill) {
     $used = 0; try { $used = [int]$Ctx.Col.PreferredSize.Height } catch { $null = $_ }
@@ -73,6 +80,8 @@ $wn.GridCols = {
   .DESCRIPTION
   Every column fills: a column keeps at most its own width as its minimum, and all minimums together never exceed the
   width the grid has, so the sum of the visible columns never exceeds the client width.
+  R7 (R32 W1): a pub column keeps its whole minimum, $PubMin (its widest number, title and head plus the cell padding),
+  so a number is never cut; the other columns share what is left (their text wraps).
   .PARAMETER G
   The grid.
   .PARAMETER Cols
@@ -81,17 +90,25 @@ $wn.GridCols = {
   The grid width.
   .PARAMETER Scroll
   The width of the vertical scroll bar when the grid scrolls, else 0.
+  .PARAMETER PubMin
+  The smallest width of a pub column ($wn.PubMin), or 0.
   .OUTPUTS
   The column kinds by name (@{ name = kind }).
   #>
-  param($G, $Cols, [int]$W, [int]$Scroll)
-  $fixed = 0; $open = 0; foreach ($c in $Cols) { if ($c.W -eq 0) { $open++ } else { $fixed += (& $wn.Sc $c.W) } }
-  $avail = $W - $Scroll - 2; $need = $fixed + $open * (& $wn.Sc 60); $k = $(if ($need -gt $avail) { [double]$avail / $need } else { 1.0 })
+  param($G, $Cols, [int]$W, [int]$Scroll, [int]$PubMin)
+  # With a pub column the room for the scroll bar is always kept: narrower columns wrap, rows grow, and a bar may come.
+  $bar = $(if ($PubMin -gt 0) { [math]::Max($Scroll, [Windows.Forms.SystemInformation]::VerticalScrollBarWidth) } else { $Scroll })
+  $fixed = 0; $keep = 0; $rest = 0; $n = @($Cols).Count; $avail = $W - $bar - 2
+  $pubOwn = [math]::Max(2, [math]::Min([math]::Max((& $wn.Sc 60), $PubMin), $avail - 2 * ($n - 1)))   # a pub column never leaves less than 2 px a column
+  $own = @{}; foreach ($c in $Cols) {
+    $o = $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $pubOwn } elseif ($c.W -eq 0) { & $wn.Sc 60 } else { & $wn.Sc $c.W }); $own[[string]$c.N] = $o
+    if ($c.W -ne 0) { $fixed += $o }; if ($c.K -eq 'pub' -and $PubMin -gt 0) { $keep += $o } else { $rest += $o } }
+  $k = $(if ($rest -gt 0 -and $keep + $rest -gt $avail) { [math]::Max(0.0, [double]($avail - $keep) / $rest) } else { 1.0 })
   $kinds = @{}
   foreach ($c in $Cols) {
     $dc = New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name = [string]$c.N; $dc.HeaderText = $(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode = 'NotSortable'
-    $own = $(if ($c.W -eq 0) { & $wn.Sc 60 } else { & $wn.Sc $c.W })
-    $dc.AutoSizeMode='Fill'; $dc.MinimumWidth = [math]::Max(2, [int][math]::Floor($own * $k)); $dc.FillWeight = [single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $Scroll) } else { $c.W })
+    $o = $own[[string]$c.N]; $min = $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $o } else { [math]::Max(2, [int][math]::Floor($o * $k)) })
+    $dc.AutoSizeMode='Fill'; $dc.MinimumWidth = $min; $dc.FillWeight = [single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $Scroll) } else { $c.W })
     [void]$G.Columns.Add($dc); $kinds[[string]$c.N] = [string]$c.K }
   return $kinds }
 $wn.Grid = {
@@ -113,10 +130,10 @@ $wn.Grid = {
   $rows = @($b.Rows); $hs = & $wn.GridHeight $b $Ctx
   $g = & $wn.GridNew ([string]$b.Name) $W $hs
   $scroll = $(if ($hs.Full -gt $hs.H) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
-  $kinds = & $wn.GridCols $g $cols $W $scroll
-  $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
   $pw = & $wn.PubWidths $rows
-  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{} }
+  $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw)
+  $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
+  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null }
   & $wn.GridFill $g $rows
   $g.Add_CellPainting({ param($s, $e) & $wn.PaintCell $s $e })
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
@@ -131,6 +148,19 @@ $wn.PubWidths = { param($Rows)
     $out.Num = [math]::Max($out.Num, [Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, $big, $fl).Width)
     $out.Title = [math]::Max($out.Title, [Windows.Forms.TextRenderer]::MeasureText($pp[1], $ui.F.Small, $big, $fl).Width) }
   return $out }
+# The width of a one-line text $Text in font $F as the grid draws it (no padding), in pixels.
+$wn.TextW = { param([string]$Text, $F)
+  return [Windows.Forms.TextRenderer]::MeasureText($Text, $F, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width }
+# The head text of grid column $C as the grid draws it: its header text (H, else its name) in capitals.
+$wn.HeadText = { param($C) return ($(if ($C.H) { [string]$C.H } else { [string]$C.N })).ToUpperInvariant() }
+# R7 (W1): the height of one line of a pub cell, in pixels: the larger of the link font's height and its card line height.
+$wn.PubLineH = { return [math]::Max([int]$ui.F.Link.Height, (& $wn.LineH $ui.F.Link)) }
+# R7 (W1): the smallest width of the pub column of $Cols: its widest number, widest title ($Pw, $wn.PubWidths) or head,
+# whichever is widest, plus the cell padding at both sides and 1 px; 0 when the grid has no pub column.
+$wn.PubMin = { param($Cols, $Pw)
+  $c = @($Cols | Where-Object { $_.K -eq 'pub' }) | Select-Object -First 1; if (-not $c) { return 0 }
+  $hw = & $wn.TextW (& $wn.HeadText $c) $ui.F.SmallB
+  return ([math]::Max([math]::Max([int]$Pw.Num, [int]$Pw.Title), $hw) + 2 * (& $ui.Sc 10) + 1) }
 $wn.PaintPub = {
   <#
   .SYNOPSIS
@@ -141,6 +171,8 @@ $wn.PaintPub = {
   title starts at one x; the choice beside or under is made once for the grid (Tag.PubT, the widest title), so a long
   title is never cut and the titles never start at two places. What was drawn goes into Tag.Drawn[row], relative to
   the text rectangle: the right end of the number, the title's x, the number's bottom and the title's top.
+  R7 (R32 W1): also what each text needs and what it was given (number and title width, the height of the lines and
+  of the cell), so the measure part and the layout self-check find a cut cell. A line is $wn.PubLineH high.
   .PARAMETER Gr
   The graphics of the cell.
   .PARAMETER Text
@@ -158,19 +190,21 @@ $wn.PaintPub = {
   #>
   param($Gr, [string]$Text, $Tr, $Fl, $Fw, $Tag, [int]$Row)
   $pp = $Text.Split('|')
-  $w1 = [Windows.Forms.TextRenderer]::MeasureText($pp[0], $ui.F.Link, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width
+  $w1 = & $wn.TextW $pp[0] $ui.F.Link; $lh = & $wn.PubLineH
   $col = [int]$Tag.PubW + [int]$Tag.PubGap                 # the title column, from the left of the text rectangle
   $beside = ($pp.Count -lt 2 -or [int]$Tag.PubT -le $Tr.Width - $col)
   if ($beside) {
     [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, $Tr, $pc.primary, $Fl)
-    $tx = $col; $ty = 0; $nb = 0   # one line: the title's x is the column, its top and the number's bottom are not compared
+    $tx = $col; $ty = 0; $nb = 0; $th = $lh; $tw = $Tr.Width - $col   # one line: the title's x is the column; top and bottom are not compared
     $rest = New-Object System.Drawing.Rectangle(($Tr.X + $col), $Tr.Y, ($Tr.Width - $col), $Tr.Height)
     if ($pp.Count -gt 1) { [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, $rest, $pc.muted, $Fl) } }
-  else {   # the widest title does not fit in the column: every title goes on a second line (the cell wraps)
-    $lh = [int][math]::Ceiling($ui.F.Link.GetHeight($Gr)); $ny = [int](($Tr.Height - 2 * $lh) / 2); $tx = 0; $ty = $ny + $lh; $nb = $ny + $lh
+  else {   # the widest title does not fit in the column: every title goes on a second line (the row is 2 lines high, $wn.GridHeight)
+    $ny = [int](($Tr.Height - 2 * $lh) / 2); $tx = 0; $ty = $ny + $lh; $nb = $ny + $lh; $th = 2 * $lh; $tw = $Tr.Width
     [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[0], $ui.F.Link, (New-Object System.Drawing.Rectangle($Tr.X, ($Tr.Y + $ny), $Tr.Width, $lh)), $pc.primary, $Fl)
     [Windows.Forms.TextRenderer]::DrawText($Gr, $pp[1], $ui.F.Small, (New-Object System.Drawing.Rectangle($Tr.X, ($Tr.Y + $ty), $Tr.Width, $lh)), $pc.muted, $Fw) }
-  if ($null -ne $Tag.Drawn -and $pp.Count -gt 1) { $Tag.Drawn[$Row] = @{ NumRight = [math]::Min($w1, $Tr.Width); TitleX = $tx; NumBottom = $nb; TitleTop = $ty; Beside = $beside } } }
+  if ($null -eq $Tag.Drawn -or $pp.Count -lt 2) { return }
+  $Tag.Drawn[$Row] = @{ NumRight = [math]::Min($w1, $Tr.Width); TitleX = $tx; NumBottom = $nb; TitleTop = $ty; Beside = $beside
+    NumW = $w1; NumHave = $Tr.Width; TitleW = (& $wn.TextW $pp[1] $ui.F.Small); TitleHave = $tw; NeedH = $th; HaveH = $Tr.Height } }
 # Paints a status chip cell: a rounded fill of the row's chip kind with the status in the middle. $Bd: the cell bounds; $Pd: its padding.
 $wn.PaintChip = { param($Gr, [string]$Text, [string]$Kind, $Bd, [int]$Pd)
   $cwid = [Windows.Forms.TextRenderer]::MeasureText($Text, $ui.F.SmallB, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width + (& $ui.Sc 20)
@@ -199,7 +233,9 @@ $wn.PaintCell = {
     $br = New-Object System.Drawing.SolidBrush($bg); $gr.FillRectangle($br, $bd); $br.Dispose()
     $pn = New-Object System.Drawing.Pen($(if ($head) { $pc.muted } else { $pc.line }), 1); $gr.DrawLine($pn, $bd.X, ($bd.Bottom - 1), $bd.Right, ($bd.Bottom - 1)); $pn.Dispose()
     $text = [string]$E.Value
-    if ($head) { [Windows.Forms.TextRenderer]::DrawText($gr, $text.ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl) }
+    if ($head) { [Windows.Forms.TextRenderer]::DrawText($gr, $text.ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl)
+      # R7 (W1): what the head of the pub column needs and has, for the measure part and the layout self-check
+      if ($kind -eq 'pub') { $tag.Head = @{ Text = $text.ToUpperInvariant(); W = (& $wn.TextW $text.ToUpperInvariant() $ui.F.SmallB); Have = $tr.Width } } }
     elseif ($kind -eq 'pub') { & $wn.PaintPub $gr $text $tr $fl $fw $tag $E.RowIndex }
     elseif ($kind -eq 'with') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.navy, $fw) }
     elseif ($kind -eq 'bold') { [Windows.Forms.TextRenderer]::DrawText($gr, $text, $ui.F.SmallB, $tr, $pc.ink, $fw) }
