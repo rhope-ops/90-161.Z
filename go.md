@@ -26,13 +26,13 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-None. Claude builds the next round after the R30 questions are answered.
+No round to run. Before R31: send Claude a screenshot of the whole 90-161.Z card (FAKE OI 33-101), and decide the button rules B1 to B7 and the look notes L1 to L8 in the [R30 screen audit](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30-screen-audit.md).
 
 ## Done
 
 - Round R30a r1 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: Power Automate shows my connections (new first step); the test list, library and form header were made by script; the test site was clean at the start and at the end. Failed: the same 3 Power Automate steps, again with portal errors during a Microsoft 365 fault (health flow import, button flow I make by hand, full flow import), and the form look: the link opens the new-entry page, which has no layout pencil. Skipped: 17 steps that needed them. Next round: the clean-up asks me to remove a flow only if it was made:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30a-results.md
-- Round R30b r1 (18 Nov 26): needs review. Window checks 11 of 12: Narrator names now pass; high contrast "on" fails. My answers: the "Your Work" line and the Action Status card are still not right; the look is "close, with small changes", with 8 look notes (6 for RADE alone):
+- Round R30b r1 (18 Nov 26): needs review. Window checks 11 of 12: Narrator names now pass; high contrast "on" fails. The "Your Work" line and the Action Status card are not judged yet (the questions came after the window was closed); the look is "close, with small changes", with 8 look notes (5 for RADE alone):
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30b-results.md
 - Round R29a r5 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the second person saved a row on the test list (T4, the first pass); the new 90-161.Z logo is the site logo and thumbnail; the test site was clean at the start and at the end. Failed: 3 Power Automate steps, each with a portal error about connections ("try again later"): the health flow import, the button flow I make by hand, and the full flow import. Skipped: 17 steps that needed them, the full flow test included. The flow fixes are still untested and run again in the next round:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r29a-results.md
