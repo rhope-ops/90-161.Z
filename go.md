@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 19 Nov 26 (Round R33 and R34 are open; run R33 first).
+Updated: 19 Nov 26 (R33 and R34 done; no open task).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,77 +26,14 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R33 r3 (run first, 5 minutes): the paste-size test, one paste of 1 MB
-
-**For:** finds out if a paste of 1 MB works, so the rounds need no size limit. It is also the first run of RADE engine-v21: I compare the script code, and I read 1 check line that the report does not hold (does my computer need the "Bypass" setting). The round holds RADE, one padding file (6,000 lines of fixed text, no data) and one check that the file arrived whole.
-**Time:** about 5 minutes (estimate).
-**Changes:** nothing on the test site or in Power Automate. On my computer: the T25 folder in my OneDrive folder RADE\90-161.Z (1 script, the padding file of about 700 KB and 1 result file). Before Run, the window lists every file.
-**Steps:**
-1. Press Copy script next to the link below.
-2. Open the Start menu.
-3. Type: ISE
-4. Open Windows PowerShell ISE (not "Run as administrator").
-5. Select File > New.
-6. Click in the white script pane.
-7. Press Ctrl+V.
-8. Press F5. The RADE window opens.
-9. Look at the title bar of the RADE window: the code after the word "script" must be the code the RADE page showed.
-10. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-11. Press F2 to open the Record.
-12. Find the line "RADE can run its scripts".
-13. Remember the word in brackets after "without Bypass": ran or blocked.
-14. Press F2 again to close the Record.
-15. Press Run.
-16. At DONE, select Send in the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R33-round-r3.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R33 PASSED" or "90161Z R33 NEEDS REVIEW", the result file attached). Then tell Claude the e-mail is sent, and "Bypass: ran" or "Bypass: blocked".
-**If it fails:** if the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R33 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R33 did not paste". That is a valid result of this test.
-
-### Round R34 r1 (run after R33): my window r7, list changes, the test flows inside the app solution, and the changed app flows
-
-**For:** the large round after R32, in one paste of about 1 MB (so I run R33 first: it shows in 5 minutes if a paste of that size works). It has 38 steps:
-- My 90-161.Z window r7: the publication number is not cut, the mouse wheel scrolls a card from anywhere on it, each label is level with its text (18 checks).
-- List changes on the test site: PFM Office gets a permission level that edits every row, and the waivers list gets the tier T-0. A second person proves the level: they change a test row that I made.
-- The flows: the solution "90-161.Z flows" is imported again as an upgrade, now with 2 test flows inside it (a health check and a button flow), because a new solution and a hand-made flow do not work in my environment. F01 and F05 now check the list every 15 minutes, and the status report e-mail tables are fixed. Then the list form look, the list button, and the full flow test.
-- I add a second owner to each of the 6 app flows (1 card for each flow); the owner stays.
-- The scripts show what they do at each moment under the bar. At the end I paste the same text once in the PowerShell console, to see if RADE starts there too.
-**Time:** about 3.5 hours with waits (one step waits about 35 minutes for 2 flows); about 90 minutes of my own work (estimate). The second person needs about 10 minutes, about 20 minutes after I start.
-**Changes:** on the test site: one script checks the 12 app lists, makes any list, column or first row that is missing, and puts the columns of its 18 views back (a column that a person added to one of those views is taken out again); the group PFM Office (made if it is missing) and the permission level "PFM Office Edit All Items" are made and stay; the setting for the coordination days is set to 20 only if it is missing; the settings rows are set to Test mode for the flow test and put back at the end; the choice T-0 is added to the waivers list and stays; a probe list and library, fake rows, a form header and a list view are made and removed again at the end; the second person is added to Visitors, and to PFM Office only for this round; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: the solution "90-161.Z flows" is upgraded and stays; its 2 test flows are deleted at the end; each of the 6 app flows gets a second owner, who stays. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files and 17 pictures of the window cards with fake data). For 3 window checks I turn high contrast on and off in Windows Settings (Windows+U, Contrast themes). Before Run, the window lists every file.
-**Steps:**
-1. Ask one person in my office to help for 10 minutes in this round and to be a second owner of the 6 app flows on the test site.
-2. Press Copy script next to the link below.
-3. Open the Start menu.
-4. Type: ISE
-5. Open Windows PowerShell ISE (not "Run as administrator").
-6. Select File > New.
-7. Click in the white script pane.
-8. Press Ctrl+V.
-9. Press F5. The RADE window opens.
-10. Look at the title bar of the RADE window: the code after the word "script" must be the code the RADE page showed.
-11. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-12. Press Run.
-13. Do each check in the bar at the bottom of the 90-161.Z window.
-14. Close the 90-161.Z window with its X.
-15. Do each step the RADE window shows, until the log says DONE.
-16. At DONE, select Send in the Outlook draft that opens.
-17. Press Copy script next to the link below again.
-18. Open the Start menu.
-19. Type: PowerShell
-20. Open Windows PowerShell (not ISE, not "Run as administrator").
-21. Press Ctrl+V in the blue window.
-22. Wait up to 5 minutes for a RADE window.
-23. If a RADE window opens, select Exit in it.
-24. Close the blue window.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R34-round-r1.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R34 PASSED" or "90161Z R34 NEEDS REVIEW", every file in the results folder attached, the 17 pictures too). Then tell Claude the e-mail is sent, and "console: opened" or "console: did not open".
-**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R34 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R34 did not paste"; Claude then makes the round in 2 parts. If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error". If the 90-161.Z window does not open, go on with the steps the RADE window shows.
+No open task. Claude builds the next round.
 
 ## Done
 
+- Round R34 r1 (19 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the 2 test flows inside the app solution ran (the health flow, and the list button started the button flow); the 2 test flows were deleted again; PFM Office and its edit-all level, the tier T-0 and the form header were made; a second owner on each of the 6 app flows; my 90-161.Z window r7 passed 18 of 18 checks; the paste of 1 MB worked in ISE and in the PowerShell console. Not saved: F05, because one description in it is too long for Power Automate (365 characters, the limit is 256), so the 3 F05 checks failed and the next 5 steps were skipped. Not tested: the second person edit (I skipped that step):
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-19-r34-results.md
+- Round R33 r3 (19 Nov 26): passed. One paste of 1.1 MB works in ISE. RADE can run its scripts without Bypass (ran):
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-19-r33-results.md
 - Round R32 r1 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the full flows imported and the full flow test passed in all 3 parts, the first result since R28 (F01, F02 and F04 work; the F04 e-mail came to my Inbox); all 6 flows On with no connection warning; a second owner added and removed; my 90-161.Z window r6 passed 16 of 16 checks, with the 4 alignment fixes; one paste of 812 KB worked. Failed, for the 4th round: the health flow import and the button flow I make by hand, both with "The connections could not be loaded"; this is not a service fault, because the upgrade of the full flows worked in the same sitting. Skipped: 11 steps that needed them. My notes on the RADE window went to the RADE session:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r32-results.md
 - Round R31a r1 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the list form shows my test header in the side panel (the new way to open it works); the clean-up asked me to remove only what was made; the test site was clean at the start and at the end. Failed: the same 3 Power Automate steps (health flow import, button flow I make by hand, full flow import); this time the error names the SharePoint connector, which Power Automate could not load. Skipped: 19 steps that needed them. The form menu has no "Configure layout"; the app does not need it. My 3 wants for RADE went to the RADE session:
