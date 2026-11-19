@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r4.zip (R28 r1: all six flows, every flow On; R29 r2: list-name
+"""Build the unmanaged Power Automate solution flow/solution/90161Z-T24-full-flows-r5.zip (R28 r1: all six flows, every flow On; R29 r2: list-name
 variables not required; R34 r3: F04 r3 and the 2 T21 probe flows, fallback A of the PFM, 18 Nov 26; F01 r3 checks PFM
 Publications every 15 minutes, PFM 19 Nov 26 F3 C, and F05 r4 adds the missing Legal rows at step 7 by any path, F1 A; R35 r4:
-F05 r5 checks every minute, PFM 19 Nov 26) from flow/solution/defs/*.json.
+F05 r5 checks every minute, PFM 19 Nov 26; R36 r5: F03 r8, F04 r4, the new F07 r1, and list GUID placeholders, below) from flow/solution/defs/*.json.
 R35 (R34 finding 1): the build fails (exit 1, file, action path, length) when an action description is over 256 characters.
+R36 (PFM 19 Nov 26, README choice 11: flows find lists by GUID): the default of each of the 8 list variables is a placeholder
+that names the list title (list_placeholder); the T24 task script reads each list's GUID from the PFM's own site and writes it
+over the placeholder before the import. The r4 zip and the slice r8 zip (R35) are no longer built: they stay as committed files
+until R35 has run, and --check compares only the zips built here.
 
 Layout (Microsoft's documented unmanaged solution): [Content_Types].xml, solution.xml, customizations.xml (Workflows,
 connectionreferences), Workflows/<name>-<GUID>.json (properties.connectionReferences + properties.definition),
@@ -56,7 +60,7 @@ import argparse, io, json, pathlib, re, sys, uuid, zipfile
 from xml.sax.saxutils import escape, quoteattr
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r4.zip"
+DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r5.zip"
 # R34: the probe button flow (its workflow ID goes into the T21 look script, which names it in the list view button).
 BUTTON_DEF = DEFS / "90161Z-T21-probe-button-r6.json"
 LOOK_SCRIPT = ROOT / "scripts" / "gov" / "90161Z-T21-look-r9.ps1"
@@ -73,24 +77,33 @@ CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Offi
               "shared_onedriveforbusiness": "OneDrive for Business", "shared_office365users": "Office 365 Users",
               "shared_office365groups": "Office 365 Groups", "shared_wordonlinebusiness": "Word Online (Business)",
               "shared_sendmail": "Mail", "shared_flowmanagement": "Power Automate Management"}   # the last six: the T21 probe flows (R26, 16 Nov 26; R27: Management)
-# Environment variables (type Text, 100000000). Defaults are list titles from schemas/lists; the site URL and the two day counts stay empty.
+# Environment variables (type Text, 100000000). The 8 list variables hold a list GUID (R36); their default in the zip is a placeholder
+# with the list title from schemas/lists, which the T24 task script replaces on the work computer. The site URL and alert e-mail stay empty.
 # Order and labels (PFM 15 Nov 26: "sort the fields when importing a solution so the ones i need to modify are sequential and on
 # top"): the values a wing must set come first here (the RootComponent order in solution.xml) and their import-page labels (LABEL)
 # start with a number, so they are together and first whether the page keeps the file order or sorts by name (agent finding,
 # Confidence medium: the page's sort rule is not documented; the next import shows it). A flow parameter key (ENV_KEY) keeps the
 # plain name: flows bind a variable by its schema name.
+LIST_TITLES = {   # list variable -> the list title in schemas/lists (the placeholder names it; T24 reads that list's GUID)
+    "pfm_ListPublications": "PFM Publications", "pfm_ListActivityLog": "PFM Activity Log", "pfm_ListReviews": "PFM Reviews",
+    "pfm_ListEndorsements": "PFM Endorsements", "pfm_ListProductIndex": "PFM Product Index", "pfm_ListProcessSteps": "PFM Process Steps",
+    "pfm_ListOffices": "PFM Offices",
+    "pfm_ListSettings": "PFM Settings",   # R27: the flows read their six values from rows of this list
+}
+# R36: the placeholder text. The T24 task script (scripts/gov/90161Z-T24-full-solution-test-r6.ps1, $ListGuidMark) finds it by this
+# mark and fails when one is left after its write; tests/check_flow_solution.py checks that both use the same mark.
+LIST_GUID_MARK = "90161Z-LIST-GUID"
+
+
+def list_placeholder(title):
+    """The default value of a list variable in the zip. Takes the list title; returns '90161Z-LIST-GUID[<title>]'."""
+    return f"{LIST_GUID_MARK}[{title}]"
+
+
 ENV = [  # (schema name, display name, default value)
     ("pfm_SiteUrl", "Site URL", ""),
     ("pfm_AlertEmail", "Alert e-mail", ""),   # failure e-mails and test-mode e-mails go here (PFM, 2026-11-14)
-    ("pfm_ListPublications", "List PFM Publications", "PFM Publications"),
-    ("pfm_ListActivityLog", "List PFM Activity Log", "PFM Activity Log"),
-    ("pfm_ListReviews", "List PFM Reviews", "PFM Reviews"),
-    ("pfm_ListEndorsements", "List PFM Endorsements", "PFM Endorsements"),
-    ("pfm_ListProductIndex", "List PFM Product Index", "PFM Product Index"),
-    ("pfm_ListProcessSteps", "List PFM Process Steps", "PFM Process Steps"),
-    ("pfm_ListOffices", "List PFM Offices", "PFM Offices"),
-    ("pfm_ListSettings", "List PFM Settings", "PFM Settings"),   # R27: the flows read their six values from rows of this list
-]
+] + [(s, "List " + t, list_placeholder(t)) for s, t in LIST_TITLES.items()]
 # R27 (PFM 14 Nov 26, "Flow values move"): Flows paused, Test mode, reminder lead days, escalation lag days, suspense working days and
 # the shared mailbox are rows of PFM Settings (schemas/lists/PFMSettings.json), no longer environment variables here.
 # F03, F05 and F06 read them once at the start of a run. tests/check_flow_solution.py fails if a def still reads one.
@@ -98,7 +111,7 @@ MOVED_ENV = ("pfm_FlowsPaused", "pfm_TestMode", "pfm_ReminderLeadDays", "pfm_Esc
 LABEL = {"pfm_SiteUrl": "1 Site URL (enter)", "pfm_AlertEmail": "2 Alert e-mail (enter)"}
 OPTIONAL = set()   # isrequired 0 for an optional value (none since R27: the shared mailbox is a PFM Settings row)
 # R29 (R28 note N7: "I had to cut and paste almost every default field to get it to unblock import"): in the full solution a
-# variable with a default value (the 8 list names) is not required, so the import page does not wait for it to be typed again;
+# variable with a default value (the 8 list variables) is not required, so the import page does not wait for it to be typed again;
 # the flows use the default. Agent finding, Confidence low: the cause is not seen in an import log; the round asks which boxes
 # still needed it. The slice and the test solutions keep isrequired 1 (they are built files of earlier rounds).
 ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
@@ -108,12 +121,9 @@ ENV_KEY = {s: f"{d} ({s})" for s, d, _ in ENV}
 # import then on if it's more than 2 that need to be on. otherwise separately toggled": the state is per flow in
 # customizations.xml, so each flow gets its own); the full deployment solution (OUT) and the test solutions import On (1 / 2).
 OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
-# Slice 1 r2 (14 Nov 26): F05 r2 and F03 r3 (flow controls, test mode, failure e-mail, kill switch).
-# Slice 1 (PFM, 2026-11-14: Publications + Endorsements + F05 routing + F03 reminders first): the solution R20 imports, as
-# task T18. Same unique name as the full solution, so a later full import upgrades it. F06 joins R21; r4 (R22): F03 r4;
-# r5: order, labels, Test mode Yes; r6 (R27): F03 r6, F05 r3, F06 r2 read PFM Settings rows, no [TEST] prefix; r7 (R34): F05 r4; r8 (R35): F05 r5.
-SLICE1 = (ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r8.zip", ("90161Z-F03-", "90161Z-F05-", "90161Z-F06-"))
-SLICE1_ON = ("90161Z-F05-", "90161Z-F06-")   # R22: these import On; F03 imports Off (the PFM runs it once by hand)
+# Slice 1 (PFM, 2026-11-14; task T18, R20 to R35): F03, F05 and F06 with the same unique name as the full solution, last built as
+# 90161Z-T18-slice1-flows-r8.zip (R35). R36: no longer built (the full solution r5 replaces it, and a slice would carry the list
+# placeholders that only T24 replaces); build(only, on) keeps the slice form for a later test round.
 
 
 XSI = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
@@ -452,7 +462,7 @@ def main():
     ap.add_argument("--check", action="store_true", help="exit 1 if the committed zip differs from a fresh build")
     a = ap.parse_args()
     check_action_descriptions()   # R35: before any zip is written or compared
-    jobs = [(None, OUT, None, ()), (None, SLICE1[0], SLICE1[1], SLICE1_ON)] + [(defs, out, None, ()) for defs, out in test_jobs()]
+    jobs = [(None, OUT, None, ())] + [(defs, out, None, ()) for defs, out in test_jobs()]
     for test, out, only, on in jobs:
         data = build(test, only, on)
         if a.check:
