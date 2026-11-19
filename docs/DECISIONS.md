@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | F05 checks every 1 minute in the test rounds; the pilot interval is decided after R35, from its run counts. Scope: F05. | PFM | docs/reviews/2026-11-18-r34-plan.md point 2 |
+| 2026-11-19 | Rule 4.4A warning: Claude writes a design for R36; the PFM approves it before the build. Scope: R36. | PFM | docs/reviews/2026-11-18-r34-plan.md point 8 |
+| 2026-11-19 | The PFM asks for the tests/run.sh fix (hidden Skip prompt) in R36; lane C, diff shown before merge. Scope: R36. | PFM | docs/reviews/2026-11-18-r34-plan.md point 6 |
+| 2026-11-19 | Second person may hold Edit on the whole test site while in PFM Office during a round; test site only, never the real site. | PFM | docs/reviews/2026-11-18-r34-plan.md point 11 |
 | 2026-11-19 | Kit 4.0.0 by sync (kit commit c8339c3, PR 64, no tag yet); kept: all Project rules and Commands; new header line Short name 90-161.Z. | Agent | .check.lock |
 | 2026-11-19 | RADE lock moves to release engine-v25 (RADE f06737f, serial 19) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | RADE lock moves to release engine-v24 (RADE e863459, serial 18) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
