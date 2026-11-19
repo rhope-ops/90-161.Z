@@ -4,7 +4,8 @@
 
 The three files at the top of a repo:
     .check             every setting a person edits: one entry per line, `#` comments. The content check reads its
-                       own lines (scripts/check_content_scan.py); this module reads the `code-` and `audit-` lines.
+                       own lines, `content-max-bytes` included (scripts/check_content_scan.py); this module reads the `code-` and
+                       `audit-` lines.
     .check.lock        written by a sync (scripts/check_lock.py); not read here.
     .check.state.json  everything tools write: {"code_standard": {"debt": {...}}, "audit": {"last_audit": {...}},
                        "timings": {...}}, with sorted keys and indent 1, so the same state gives the same bytes.

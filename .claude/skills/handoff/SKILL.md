@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Use when a session ends with work open, before a long pause or a compaction, when the PFM asks for a handoff or a resume prompt, and at the start of a session that continues earlier work. Gives what goes where and the resume prompt.
+description: Use when a session ends with work open, before a long pause or a compaction, when the PFM asks for a handoff or a resume prompt, and at the start of a session that continues earlier work.
 ---
 
 # Handoff

@@ -1,6 +1,6 @@
 ---
 name: data-change
-description: Use before any data write (INSERT, UPDATE, DELETE, MERGE, DROP, TRUNCATE, schema change, migration, backfill) and before any query that can scan a large table. Gives the dry run, approval, row-count and cost steps, and how to report numbers without personal data.
+description: Use before any data write (INSERT, UPDATE, DELETE, MERGE, DROP, TRUNCATE, schema change, migration, backfill) and before any query that can scan a large table.
 ---
 
 # Data change

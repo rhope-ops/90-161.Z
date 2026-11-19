@@ -1,6 +1,6 @@
 ---
 name: deliver
-description: Use when a change is ready to commit, push, merge or publish, when a push or merge is blocked, when you clean up branches or change a GitHub Actions workflow, and before you report repo work as done. Gives the steps, the merge lanes and the check lanes.
+description: Use when a change is ready to commit, push, merge or publish, when a push or merge is blocked, when you clean up branches or change a GitHub Actions workflow, and before you report repo work as done.
 ---
 
 # Deliver a change
@@ -12,11 +12,12 @@ AGENTS.md "Delivery", "Checks" and "Fresh review" hold the rules; this file hold
 1. Commit on a branch (the branch the host requires, else `claude/<topic>`), with a noreply identity. Write a commit message that names a blocked git form (stash, restore, hooksPath, the hook-skip flag) to a file and commit with `git commit -F <file>`; the deny rules match the whole command.
 2. Push. The pre-push hook runs the fast lane.
 3. Open a pull request for the branch (one per branch). Name its merge lane in the text.
-4. Make it green: run the full lane one time on the head commit (`scripts/check.sh`), wait for the pull-request Action, and for lanes B and C get the fresh review on that head commit.
-5. Merge by lane, with a merge commit. If the base moved, update the branch by merge first; a conflict with another session's work goes to the PFM.
+4. Make it green: run the full lane one time on the head commit (`scripts/check.sh`), wait for the pull-request Action (a public repo; a private repo skips it), and for lanes B and C get the fresh review on that head commit.
+5. Before a merge, list the repository's open pull requests; AGENTS.md "Git history" says whose pull request you may merge. Merge by lane, with a merge commit. If the base moved, update the branch by merge first; a conflict with another session's work goes to the PFM.
 6. Verify: `git fetch origin main && git merge-base --is-ancestor <commit> origin/main`.
 7. Republish the affected artifacts. Delete previews after they ship.
 8. Clean up branches (below). Report with the states kept apart: done, published, verified.
+9. In the kit repo, after a kit release merges: the kit owner (named in docs/KIT_HANDOFF.md) opens the sync pull request in each synced repo (`.claude/skills/kit-update/SKILL.md`) and updates that repo's row on the fleet page that KIT_HANDOFF names.
 
 ## Merge lanes
 
@@ -37,7 +38,7 @@ Take the highest lane that any file or effect of the pull request falls in.
 | Lane | Command | Runs | When |
 |---|---|---|---|
 | Fast | `scripts/check.sh --fast` | Rule caps and pointers; self-tests only of the kit scripts that changed against origin/main; the project log check; the content check; `scripts/check.local.sh --fast` | The pre-push hook, on each push |
-| Full | `scripts/check.sh` | Everything: all self-tests and `scripts/check.local.sh` with no argument | Before a merge (step 4), and the pull-request Action |
+| Full | `scripts/check.sh` | Everything: all self-tests and `scripts/check.local.sh` with no argument | Before a merge (step 4), and the pull-request Action (public repos) |
 
 - Steps of a lane run in parallel. Each run ends with a `TIME` line and a line that compares the times with their baselines. A `WARN  slower than the baseline` line (full tier) starts the `efficiency` skill; it does not fail the lane.
 - A passing step can print `WARN` lines (rule lint). When rule lines changed, the full lane fails until the conflict check of `.claude/skills/rule-change/SKILL.md` has a record.

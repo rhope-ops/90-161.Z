@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Fresh reviewer. Gets only a diff and its brief, never the author's conclusions. Reports correctness bugs, files outside the brief, conflicts with the repo's rules and missing checks, by severity. Read-only; never edits, commits or pushes.
+description: Fresh reviewer. Gets only a diff and its brief; reports defects, files outside the brief, rule conflicts and missing checks by severity. Read-only.
 model: inherit
 tools: Read, Grep, Glob, Bash
 hooks:

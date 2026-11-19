@@ -146,6 +146,30 @@ OPTION_LINE = re.compile(r"(?i)^(?:" + _TIER + r"|denylist\s*:)")  # option line
 OPTION_MAX = 200  # a longer line is never an option line: the patterns above only ever see short lines (no slow match)
 
 
+MAX_BYTES_LINE = re.compile(r"(?i)^content-max-bytes\s*:\s*([0-9]{1,9})\s*$")
+MAX_BYTES_CEILING = 50_000_000  # a larger value is ignored: the scan of one file must stay fast
+
+
+def max_bytes_of(allow):
+    """The size limit of one scanned file: the `content-max-bytes: <number>` line of the settings file, else MAX_BYTES.
+
+    A project raises it so that its large text files are scanned instead of reported as unscanned (a higher limit
+    scans more, so it never weakens the check). The line is not an option line: the callers that drop option lines
+    keep it, so the limit reaches the scan; as an allowed string it only allows its own text. It is never a tier line. A value below MAX_BYTES, above MAX_BYTES_CEILING or not a number is
+    ignored, and MAX_BYTES applies.
+
+    Args:
+        allow: the lines of the settings file (load_allow).
+    Returns:
+        The limit in bytes.
+    """
+    for v in allow:
+        m = MAX_BYTES_LINE.match(v) if len(v) <= OPTION_MAX else None
+        if m and MAX_BYTES <= int(m.group(1)) <= MAX_BYTES_CEILING:
+            return int(m.group(1))
+    return MAX_BYTES
+
+
 def is_tier_line(v):
     """True when this settings line is a tier line, in any form (short lines only; never a `code-` or `audit-` setting)."""
     return len(v) <= OPTION_MAX and bool(PROFILE_LINE.match(v)) and not SETTING_LINE.match(v)
@@ -372,8 +396,8 @@ def scan_files(paths, root, deny, allow, dod=False, named=False, terms=()):
         why = None
         if f.suffix.lower() in SKIP_SUFFIX:
             why = f"file type {f.suffix.lower()} is not scanned"
-        elif f.stat().st_size > MAX_BYTES:
-            why = f"larger than {MAX_BYTES} bytes"
+        elif f.stat().st_size > max_bytes_of(allow):
+            why = f"larger than {max_bytes_of(allow)} bytes"
         else:
             data = f.read_bytes()
             if b"\0" in data[:8192]:
@@ -431,9 +455,9 @@ def unscanned_in_commit(sha, root, allow, unscanned):
         parts = rec.split("\t", 2)
         if len(parts) != 3 or skipped(parts[2], allow):
             continue
-        if sizes.get(parts[2], 0) > MAX_BYTES:
+        if sizes.get(parts[2], 0) > max_bytes_of(allow):
             unscanned.add(parts[2])
-            found.append((f"commit {short} {parts[2]}", "+", "unscanned", f"larger than {MAX_BYTES} bytes"))
+            found.append((f"commit {short} {parts[2]}", "+", "unscanned", f"larger than {max_bytes_of(allow)} bytes"))
         elif parts[2].lower().endswith(SKIP_SUFFIX):
             found.append((f"commit {short} {parts[2]}", "+", "unscanned", "file type is not scanned"))
         elif parts[0] == "-":
