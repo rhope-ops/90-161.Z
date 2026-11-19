@@ -31,9 +31,9 @@ grp() { local n=$1; shift; if need "$@"; then on[$n]=1; else on[$n]=0; fi; }
 grp val 'scripts/gov/Test-Publication.ps1' 'scripts/gov/Publication.Common.ps1' 'samples/*' 'tests/fixtures/*' \
   'tests/ps/Invoke-Validations.ps1' 'schemas/publication.schema.json'
 grp seal 'scripts/gov/90161Z-T07-*' 'scripts/build_test_seals.py' 'tests/ps/Test-SealTrim.ps1' 'tests/fixtures/seal*'
-grp t20 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*' 'tests/ps/Test-T20.ps1' 'tests/fake-pnp/*' 'schemas/lists/*' \
+grp t20 'scripts/gov/90161Z-T20-*' 'scripts/gov/90161Z-T19-*' 'scripts/gov/src/*' 'tests/ps/Test-T20.ps1' 'tests/fake-pnp/*' 'schemas/lists/*' \
   'flow/provisioning-payload.json' 'scripts/build_flow_payload.py'
-grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' 'samples/90161Z-T21-*' 'scripts/build_probe_samples.py' 'flow/solution/90161Z-T24-*'
+grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' 'samples/90161Z-T21-*' 'scripts/build_probe_samples.py' 'flow/solution/90161Z-T24-*'
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py'
 grp t22 'scripts/gov/90161Z-T22-*'
@@ -607,20 +607,20 @@ nd=$(grep -L 'ComObject Outlook.Application' scripts/gov/paste/*.ps1 | wc -l); n
 fb=0; for b in scripts/gov/paste/*.ps1; do grep -q "Outlook draft could not be created" "$b" || fb=1; done
 [ "$nd" -eq 0 ] && [ "$ns" -eq 0 ] && [ "$fb" -eq 0 ] && ok "Outlook draft step, never sent (bundles without draft: $nd; Send calls: $ns; fallback present)" || bad "Outlook draft step (without draft: $nd; Send calls: $ns; fallback rc=$fb)"
 
-# R21: T19 adds to an existing site the same column XML T02 r12 builds a new site with (one source: schemas/lists).
-python3 - <<'PYEOF' && ok "T19 list update: column XML and Action Status choices match schemas/lists" || bad "T19 list update differs from schemas/lists"
+# T19 r4 adds to an existing site the same column XML and choices T20 builds a new site with (one source: schemas/lists; S3 A: T-0).
+python3 - <<'PYEOF' && ok "T19 list update: column XML and the Action Status and Tier choices (T-0 first) match schemas/lists" || bad "T19 list update differs from schemas/lists"
 import json, re, sys
 sys.path.insert(0, 'scripts'); import build_flow_payload as B
-s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r3.ps1', encoding='utf-8').read()
-rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'; Xml = '([^']+)' \}", t)
+s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r4.ps1', encoding='utf-8').read()
+rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'\s+Xml = '([^']+)' \}", t)
 assert len(rows) == 3, rows
 by_title = {v['title']: v for v in s.values()}
 for title, name, xml in rows:
-    f = [x for x in by_title[title]['fields'] if x['internalName'] == name][0]
-    assert B.field_xml(f) == xml, (name, xml)
-want = [x for x in by_title['PFM Publications']['fields'] if x['internalName'] == 'ActionStatus'][0]['choices']
-got = re.search(r"\$statusChoices = @\(([^)]*)\)", t).group(1)
-assert [c.strip().strip("'") for c in got.split(',')] == want, got
+    assert B.field_xml([x for x in by_title[title]['fields'] if x['internalName'] == name][0]) == xml, (name, xml)
+got = re.findall(r"@\{ List = '([^']+)'; Field = '(\w+)'; Choices = @\(([^)]*)\) \}", t)
+assert [(a, b) for a, b, _ in got] == [('PFM Publications', 'ActionStatus'), ('PFM Waivers', 'Tier')] and 'T-0' in got[1][2], got
+for title, name, ch in got:
+    assert [c.strip().strip("'") for c in ch.split(',')] == [x for x in by_title[title]['fields'] if x['internalName'] == name][0]['choices'], ch
 PYEOF
 # T22 PFM window test r7 (R34 W1; R32 defects W1 to W3): the cards and the 18 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
 # Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), each card has one blue button, the text is ASCII and FAKE,

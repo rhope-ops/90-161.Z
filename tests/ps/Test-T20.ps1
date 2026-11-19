@@ -1,6 +1,7 @@
-# Tests scripts/gov/90161Z-T20-provision-lists-r1.ps1 against the strict fake in tests/fake-pnp (pwsh 7, cloud only).
-# Proves the logic: order, list ids, lookup ids, skip-what-exists, the checks and the masking. The real service is
-# proved only by a gov device round. Last line: "T20 pass=N fail=0".
+# Tests scripts/gov/90161Z-T20-provision-lists-r2.ps1 and scripts/gov/90161Z-T19-list-update-r4.ps1 against the strict fake in
+# tests/fake-pnp (pwsh 7, cloud only). Proves the logic: order, list ids, lookup ids, skip-what-exists, the PFM Office level
+# (F2 A), the T19 choices (S3 A: T-0), the checks and the masking. The real service is proved only by a gov device round.
+# Last line: "T20 pass=N fail=0".
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
@@ -16,7 +17,7 @@ $null = New-Item -ItemType Directory -Path $t20 -Force
 Copy-Item -LiteralPath (Join-Path $Root 'flow/provisioning-payload.json') -Destination (Join-Path $t20 'provisioning-payload.json')
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r1.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r2.ps1'
 # Run the T20 script against the fake site in one mode (Check, DryRun or empty for a real run). Returns a hashtable with Code (exit code), Out (lines) and Text (joined).
 function Invoke-T20([string]$Mode) {
   $sw = @{}; if ($Mode) { $sw[$Mode] = $true }
@@ -31,11 +32,12 @@ New-FakeSite
 $r = Invoke-T20 'Check'
 Test-That 'clean site: the check passes' ($r.Code -eq 0 -and $r.Text -match 'CLEAN check done, items with problems=0') $r.Text
 Test-That 'check writes nothing' ($global:FakeSP.Posts -eq 0)
-Test-That 'check result file' (Test-Path -LiteralPath (Join-Path $t20 '90161Z-T20-clean-check-r1.txt'))
+Test-That 'check result file' (Test-Path -LiteralPath (Join-Path $t20 '90161Z-T20-clean-check-r2.txt'))
 
 $r = Invoke-T20 'DryRun'
 Test-That 'dry run: counts' ($r.Text -match 'DRYRUN would create lists=12 fields=199 views=18 view-column requests=115 rows=93; set: updates=21 permissions=2') $r.Text
 Test-That 'dry run writes nothing' ($global:FakeSP.Posts -eq 0 -and (Get-Ours).Count -eq 0)
+Test-That 'dry run: PFM Office would get the group, the level and the role (F2 A)' ($r.Text -match 'DRYRUN would create for PFM Office: group=1 level=1 level given to the group=1' -and @($global:FakeSP.Groups).Count -eq 0) $r.Text
 
 $r = Invoke-T20 ''
 $ours = Get-Ours
@@ -53,7 +55,12 @@ $log = @($ours | Where-Object { $_.RootFolder.Name -eq 'PFMActivityLog' })[0]
 Test-That 'site: Created is indexed on the activity log' ([bool]@($log.FieldList | Where-Object { $_.InternalName -eq 'Created' })[0].Indexed)
 Test-That 'site: Title column renamed' (@(@($ours | Where-Object { $_.RootFolder.Name -eq 'PFMOffices' })[0].FieldList | Where-Object { $_.InternalName -eq 'Title' })[0].Title -eq 'Office')
 Test-That 'site: versioning on' (@($ours | Where-Object { -not $_.EnableVersioning }).Count -eq 0)
-$file = Get-Content -LiteralPath (Join-Path $t20 '90161Z-T20-provision-lists-r1.txt') -Raw
+# F2 A (PFM 19 Nov 26): the group PFM Office holds a level with the bits of Edit plus Override List Behaviors (0x100) on the site.
+$lv = @($global:FakeSP.Levels | Where-Object { $_.Name -eq 'PFM Office Edit All Items' })
+$gi = [array]::IndexOf(@($global:FakeSP.Groups), 'PFM Office') + 1
+$okLevel = $lv.Count -eq 1 -and $lv[0].BasePermissions.Low -eq [string](1011030767 -bor 0x100) -and $lv[0].BasePermissions.High -eq '432'
+Test-That 'create: group PFM Office, the level (Edit + Override List Behaviors) and its role on the site, read back' ($okLevel -and $gi -gt 0 -and @($global:FakeSP.WebRoles[$gi]) -contains $lv[0].Id -and $r.Text -match 'CREATED for PFM Office: group=1 level=1 level given to the group=1' -and $r.Text -match 'ITEM P01-pfm-office PASS') $r.Text
+$file = Get-Content -LiteralPath (Join-Path $t20 '90161Z-T20-provision-lists-r2.txt') -Raw
 Test-That 'result file: no site address, host or id' ($file -notmatch 'fakehost|FakeWing|tester01|[0-9a-f]{8}-[0-9a-f]{4}-')
 # Every POST body the script sent equals the payload's body for that request, in the payload's order (list ids aside).
 $pl = Get-Content -LiteralPath (Join-Path $t20 'provisioning-payload.json') -Raw | ConvertFrom-Json
@@ -66,7 +73,51 @@ $posts = $global:FakeSP.Posts
 $r = Invoke-T20 ''
 Test-That 'second run: creates nothing and passes' ($r.Code -eq 0 -and $r.Text -match 'CREATED lists=0 fields=0 views=0 view-column requests=115 rows=0' -and $r.Text -match 'items with problems=0') $r.Text
 Test-That 'second run: only the 115 view-column requests are sent again' ($global:FakeSP.Posts -eq $posts + 115)
+Test-That 'second run: PFM Office: nothing made again, read back PASS' ($r.Text -match 'CREATED for PFM Office: group=0 level=0 level given to the group=0' -and $r.Text -match 'ITEM P01-pfm-office PASS' -and @($global:FakeSP.Levels).Count -eq 5) $r.Text
 Test-That 'second run: same site (199 columns, 18 views with columns, 93 rows)' (((Get-Ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 199 -and ((Get-Ours | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 93 -and @(Get-Ours | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0)
+
+# ---- T19 r4 on the provisioned fake site (S3 A, PFM 19 Nov 26: the tier T-0) ----
+$t19 = Join-Path $work 'T19'
+$null = New-Item -ItemType Directory -Path $t19 -Force
+$script19 = Join-Path $Root 'scripts/gov/90161Z-T19-list-update-r4.ps1'
+# Run the T19 script against the fake site in one mode (Check, PlanOnly or empty for a real run). Returns Code, Out, Text and File.
+function Invoke-T19([string]$Mode) {
+  $sw = @{}; if ($Mode) { $sw[$Mode] = $true }
+  $global:LASTEXITCODE = 0
+  $out = & $script19 -Id 'tester01' -NoPause -TestDir $t19 @sw *>&1 | ForEach-Object { [string]$_ }
+  $f = Join-Path $t19 $(if ($Mode -eq 'Check') { '90161Z-T19-list-check-r4.txt' } else { '90161Z-T19-list-update-r4.txt' })
+  return @{ Code = $LASTEXITCODE; Out = @($out); Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f -Raw } else { '' }) }
+}
+# The Tier column of the fake PFM Waivers list (its data holds the choices).
+function Get-TierColumn { return @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMWaivers' })[0].FieldList | Where-Object { $_.InternalName -eq 'Tier' })[0] }
+$r = Invoke-T19 'PlanOnly'
+Test-That 'T19 plan: 6 items, Tier with T-0 first, no sign-in' ($r.Code -eq 0 -and $r.Text -match 'PLAN 5-Tier choices in PFM Waivers: T-0, T-1, T-2, T-3, Non-Tiered' -and $r.Out[-1] -eq 'PLAN columns=3 choice columns=2 settings=1') $r.Text
+Test-That 'T20 built a new site with T-0 already (the payload)' (((Get-TierColumn).Data.Choices -join ',') -eq 'T-0,T-1,T-2,T-3,Non-Tiered')
+$r = Invoke-T19 'Check'
+Test-That 'T19 check on a new site: nothing to change' ($r.Code -eq 0 -and $r.Text -match 'LISTCHECK done, changes a run would make=0, items with problems=0') $r.Text
+# An older site: no T-0, a choice a person added, one column missing, another suspense value.
+(Get-TierColumn).Data.Choices = [string[]]@('T-1', 'T-2', 'T-3', 'Non-Tiered', 'Waived Locally')
+$pubs = @($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMPublications' })[0]
+$pubs.FieldList.Remove(@($pubs.FieldList | Where-Object { $_.InternalName -eq 'HeldSince' })[0])
+$setRow = @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMSettings' })[0].Items | Where-Object { $_.Title -eq 'CoordinationSuspenseBusinessDays' })[0]
+$setRow.SettingValue = '15'
+$r = Invoke-T19 'Check'
+$same = ((Get-TierColumn).Data.Choices -join ',') -eq 'T-1,T-2,T-3,Non-Tiered,Waived Locally' -and $setRow.SettingValue -eq '15'
+Test-That 'T19 check on an older site: names the 3 changes and changes nothing' ($r.Code -eq 0 -and $same -and $r.Text -match 'ITEM 5-Tier INFO a run would add the choices T-0 to PFM Waivers' -and $r.Text -match 'changes a run would make=3' -and $r.File -match 'LISTCHECK done') $r.Text
+$r = Invoke-T19 ''
+$tier = ((Get-TierColumn).Data.Choices -join ',')
+Test-That 'T19 run: T-0 added first, the other choices kept in order' ($r.Code -eq 0 -and $tier -eq 'T-0,T-1,T-2,T-3,Non-Tiered,Waived Locally' -and $r.Text -match 'ITEM 5-Tier PASS added choices: T-0 \(choices now 6\)') ($tier + "`n" + $r.Text)
+$seedNotes = @((Get-Content -LiteralPath (Join-Path $Root 'schemas/lists/PFMSettings.json') -Raw | ConvertFrom-Json).seed | Where-Object { $_.Title -eq 'CoordinationSuspenseBusinessDays' })[0].SettingNotes
+Test-That 'T19 run: the column and the setting (value 20, the notes of the schema seed row) are set' (@($pubs.FieldList | Where-Object { $_.InternalName -eq 'HeldSince' }).Count -eq 1 -and $setRow.SettingValue -eq '20' -and $setRow.SettingNotes -ceq $seedNotes -and $r.Text -match 'LISTUPDATE done, changes made=3, items with problems=0') $r.Text
+Test-That 'T19 run: NOW lines on the screen only, result file masked' (@($r.Out | Where-Object { $_ -match '^NOW [A-Z][a-z]+ing ' }).Count -ge 5 -and $r.File -notmatch '(?m)^NOW ' -and $r.File -match 'LISTUPDATE done' -and $r.File -notmatch 'fakehost|FakeWing|tester01') $r.Text
+$r = Invoke-T19 ''
+Test-That 'T19 second run: changes nothing' ($r.Code -eq 0 -and $r.Text -match 'LISTUPDATE done, changes made=0, items with problems=0' -and ((Get-TierColumn).Data.Choices -join ',') -eq $tier) $r.Text
+
+# ---- PFM Office edge cases (F2 A): a level of that name that lacks Override List Behaviors is reported, never changed ----
+$lv[0].BasePermissions.Low = '1011030767'
+$r = Invoke-T20 ''
+Test-That 'a level named PFM Office Edit All Items without Override List Behaviors: FAIL, not changed' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors' -and $lv[0].BasePermissions.Low -eq '1011030767') $r.Text
+$lv[0].BasePermissions.Low = [string](1011030767 -bor 0x100)
 
 $r = Invoke-T20 'Check'
 Test-That 'provisioned site: the check fails with 12 lists' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(12\)') $r.Text
@@ -90,6 +141,9 @@ $global:FakeSP.Groups = @('PFM Rights Probe TEST', 'PFM Somebody Else', 'Members
 $r = Invoke-T20 'Check'
 Test-That 'check names the library, the file and the test group' ($r.Text -match 'ITEM c-library FAIL' -and $r.Text -match 'ITEM d-files FAIL result files still in Documents \(1\): 90161Z-T11-rights-result-r5\.json' -and $r.Text -match 'ITEM e-groups FAIL') $r.Text
 Test-That 'check never prints another group name' ($r.Text -notmatch 'Somebody Else|notes\.docx')
+$global:FakeSP.Groups = @('PFM Office', 'PFM Somebody Else')
+$r = Invoke-T20 'Check'
+Test-That 'check: the group PFM Office is named and kept, not counted with the other PFM groups' ($r.Text -match 'other groups whose name starts with PFM: 1, not made by 90-161\.Z; the group PFM Office is there=yes, kept') $r.Text
 
 # A run that the service stops at ANY request is finished by the next run: stop after 20, 300, 351 and 400 requests
 # (inside the lists, between a view and its columns, and inside the seed rows).
@@ -126,6 +180,16 @@ Test-That 'a refused request: the message is masked' ($r.Text -match '<SITE>' -a
 $global:FakeSP.FailOn = ''
 $r = Invoke-T20 ''
 Test-That 'after a stop: the next run finishes the site' ($r.Code -eq 0 -and $r.Text -match 'items with problems=0' -and (Get-Ours).Count -eq 12) $r.Text
+
+# PFM Office (F2 A): a group a person made before is used as it is; a site without an Edit level stops after the lists.
+New-FakeSite
+$global:FakeSP.Groups = @('Members', 'PFM Office')
+$r = Invoke-T20 ''
+Test-That 'a group PFM Office that is there: used, only the level and its role are made' ($r.Code -eq 0 -and $r.Text -match 'CREATED for PFM Office: group=0 level=1 level given to the group=1' -and @($global:FakeSP.WebRoles[2]).Count -eq 1 -and @($global:FakeSP.Groups).Count -eq 2) $r.Text
+New-FakeSite
+$global:FakeSP.Levels.RemoveAt(1)
+$r = Invoke-T20 ''
+Test-That 'a site without an Edit level: STOPPED after the lists, no level made' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LEVEL Edit not found on the site' -and (Get-Ours).Count -eq 12 -and @($global:FakeSP.Levels).Count -eq 3) $r.Text
 
 Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host ('T20 pass=' + $script:pass + ' fail=' + $script:fail)

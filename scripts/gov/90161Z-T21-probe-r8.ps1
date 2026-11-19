@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe, r7 (round R34). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 21 probe, r8 (round R35). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: the device side of the T21 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10
   passed); R29a proved T4 (a second person writes a row). The 2 probe flows are now flows of the solution "90-161.Z flows"
@@ -11,7 +11,10 @@
   the person again), formats the list form and a view, starts the health flow, reads what the people and the flows wrote,
   and removes everything it made. Fake data only (the fake workbook comes from scripts/build_probe_samples.py). Counts,
   status codes and field names only: no names, addresses or text from the tenant.
-  WHAT R7 CHANGES: (1) the health flow writes its row without the Power Automate Management connector, so HEALTH now tests
+  WHAT R8 CHANGES (PFM 19 Nov 26, F2 B): the new part Office and the test EDITALL prove that a PFM Office member who is not
+  a row's author can edit that row on a list set to "edit own rows" (the level T20 r2 gives the group PFM Office, F2 A).
+  The part lives in the new module "office"; Read prints the EDITALL line, Clean also takes the person out of PFM Office.
+  WHAT R7 CHANGED: (1) the health flow writes its row without the Power Automate Management connector, so HEALTH now tests
   that the flow ran on the SharePoint connection of the solution (it no longer counts flows). (2) View takes the button
   flow's ID from the button-flow-id block of the look module, which scripts/build_flow_solution.py writes at build time
   (the ID is the same on every build); the Export part, its module and the flow ID file are gone. (3) BUTTON counts the
@@ -21,7 +24,7 @@
   a raw RecycleBinItemId table reached the log). (2) The parts Form and View run the two halves of Look on their own, so the
   round can show the list form when the form header passed, whatever the view result (R29a finding 6); Look still runs both.
   (3) The script is split into modules (code standard, S1): this file holds the start, the shared blocks and the result
-  file; the parts live in the files 90161Z-T21-<part>-r7.ps1 in the same folder, which this file loads by name.
+  file; the parts live in the files 90161Z-T21-<part>-r8.ps1 in the same folder, which this file loads by name.
   (4) Read: with no state file and no row by another person, T4 is not counted: one line "T4 NOT RUN" and no RESULT line.
   Parts (-Part):
     Make   (about 1 minute, an estimate)  Makes the library "90161Z Probe Files" and the list "90161Z Probe" (columns
@@ -33,6 +36,11 @@
            sign-in it adds that person to the site's Visitors group and saves only the number of the site user (no address,
            no name) in the state file 90161Z-T21-person-state-r3.txt in the T21 folder, so that Clean can find the person.
            It also puts the link of the new row form on the clipboard. Prints "added to Visitors: yes" or "no" and a status.
+    Office (about 1 minute, an estimate; after Person and after T20 r2)  Sets "edit own rows" on the probe list, gives
+           the group PFM Office the level "PFM Office Edit All Items" on it, writes 1 row titled EDITALL (you are its
+           author), puts the second person of Person into PFM Office (state file 90161Z-T21-office-state-r8.txt: numbers
+           only) and reads back that the person can edit every row. The row's edit form link goes on the clipboard: the
+           second person opens it, changes the row and saves it.
     Run    (a few seconds, an estimate)  Adds 1 command row (RUN-HEALTH) that starts the health flow "90161Z T21 Probe
            Health r6"; it answers within minutes.
     Look   (about 1 minute, an estimate)  Runs Form, then View.
@@ -41,34 +49,36 @@
            T21 Probe Button r6" (a view formatting with the action executeFlow; the flow's ID is in the look module).
     Open   (a few seconds; no sign-in)  Writes the test page again and opens it in the browser.
     Read   (about 1 to 5 minutes, an estimate)  Waits up to -WaitMinutes (default 4) for the health flow's row, then prints
-           one line each for HEALTH, T4 and BUTTON (counts only; the button flow's rows are the ones titled BTN-FLOW).
-    Clean  (about 1 minute, an estimate)  Removes the second person from the Visitors group again (found by the saved
-           number; then deletes the state file), then moves the list and the library to the site Recycle Bin (restorable
+           one line each for HEALTH, T4, EDITALL and BUTTON (counts only; the button flow's rows are the ones titled
+           BTN-FLOW). EDITALL passes when the second person saved the EDITALL row that you wrote.
+    Clean  (about 1 minute, an estimate)  Removes the second person from the Visitors group and from PFM Office again (found
+           by the saved numbers; then deletes the state files), then moves the list and the library to the site Recycle Bin (restorable
            for 93 days). Each step runs even if an earlier one failed, and the part can be run again. The 2 probe flows
            stay in the solution "90-161.Z flows" (the part says so). The round runs it twice: first (-Label first), last
            (-Label last).
   WHAT IT CHANGES ON THE SITE: Make adds the two objects, their columns, their permissions and two files. Person adds one
-  person to the Visitors group. Run adds 1 row. Form sets one form formatting; View adds one view. Read and Open change
+  person to the Visitors group. Office sets "edit own rows" and the PFM Office level on the probe list, adds 1 row and puts
+  that person into PFM Office. Run adds 1 row. Form sets one form formatting; View adds one view. Read and Open change
   nothing on the site. Clean undoes Person and recycles the two objects. On this computer: the T21 folder (the test
   page, the state file). Every output line shows the site as <SITE> and the DODID as <DODID>; the test page holds the
   site address and stays on this computer (it is not a result file).
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell; Open
            uses no network (it hands the test page to the browser).
-  Writes: the site objects listed above; on this computer the T21 folder (result files, test page, state file, the fake
+  Writes: the site objects listed above; on this computer the T21 folder (result files, test page, state files, the fake
           workbook) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T21-probe-<part>-r7.txt (make, person, run, look, form, view, read) or -clean-<label>-r7.txt in
-  the T21 folder (send them back). Each test line (HEALTH, T4, BUTTON, FORM, VIEW) is followed by "RESULT <test> PASS" or
+  Output: 90161Z-T21-probe-<part>-r8.txt (make, person, office, run, look, form, view, read) or -clean-<label>-r8.txt in
+  the T21 folder (send them back). Each test line (HEALTH, T4, EDITALL, BUTTON, FORM, VIEW) is followed by "RESULT <test> PASS" or
   "RESULT <test> FAIL", so the RADE step counts what the part read (R28 finding 7). Last line of each part: PROBE <part>
   done: passed=<n> failed=<n>. Exit code 0 when the part ran to its end (a FAILED test is a result); exit 1 only when the
   part could not run (sign-in, missing list, missing module file).
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T21-probe-r7.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T21-probe-r8.ps1 -Part <part> (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part, -Label, -WaitMinutes, -NoPause.
   -PollSeconds, -TestDir and -NoLaunch are for the tests in tests/run.sh (tests/ps/Test-T21.ps1).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
-  The part to run: Make, Person, Run, Look, Form, View, Open, Read or Clean.
+  The part to run: Make, Person, Office, Run, Look, Form, View, Open, Read or Clean.
 .PARAMETER Label
   For Clean: first or last (it goes into the result file name).
 .PARAMETER WaitMinutes
@@ -82,7 +92,7 @@
 .PARAMETER NoLaunch
   Test runs only: do not open the browser or use the clipboard.
 #>
-param([string]$Id, [ValidateSet('Make', 'Person', 'Run', 'Look', 'Form', 'View', 'Open', 'Read', 'Clean')][string]$Part,
+param([string]$Id, [ValidateSet('Make', 'Person', 'Office', 'Run', 'Look', 'Form', 'View', 'Open', 'Read', 'Clean')][string]$Part,
   [ValidateSet('', 'first', 'last')][string]$Label = '', [double]$WaitMinutes = 14, [switch]$NoPause, [int]$PollSeconds = 20,
   [string]$TestDir, [switch]$NoLaunch)
 $task = 'T21'
@@ -97,11 +107,16 @@ $script:BookName = '90161Z-T21-fake-book-r1.xlsx'
 $script:LinksName = '90161Z-T21-links-r5.html'
 # The state file keeps its r3 name: Clean finds a person that an earlier round added through it.
 $script:StateName = '90161Z-T21-person-state-r3.txt'
+# The part Office (F2 B): the group and the level T20 r2 makes (the same names as there; tests/ps/Test-T21.ps1 checks), and
+# its own state file for Clean.
+$script:OfficeGroup = 'PFM Office'
+$script:OfficeLevel = 'PFM Office Edit All Items'
+$script:OfficeStateName = '90161Z-T21-office-state-r8.txt'
 $script:ViewTitle = 'ProbeButton'
 $script:HeaderText = '90-161.Z test header'
-$Rev = 'r7'
+$Rev = 'r8'
 # The modules this file loads from its own folder (round skill section 2: scripts that load each other keep fixed names).
-$ModuleNames = @('common', 'make', 'person', 'look', 'read')
+$ModuleNames = @('common', 'make', 'person', 'office', 'look', 'read')
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -226,7 +241,7 @@ $fatal = $false
 $script:fmtError = ''
 try {
   $ErrorActionPreference = 'Stop'
-  if (-not $Part) { throw 'PART not given: use -Part Make, Person, Run, Look, Form, View, Open, Read or Clean.' }
+  if (-not $Part) { throw 'PART not given: use -Part Make, Person, Office, Run, Look, Form, View, Open, Read or Clean.' }
   # The modules are dot-sourced here, in this script's scope, so their functions see the values above.
   foreach ($moduleName in $ModuleNames) {
     $moduleFile = Join-Path $PSScriptRoot ('90161Z-T21-' + $moduleName + '-' + $Rev + '.ps1')
@@ -252,6 +267,7 @@ try {
     switch ($Part) {
       'Make' { Invoke-MakePart }
       'Person' { Invoke-PersonPart }
+      'Office' { Invoke-OfficePart }
       'Run' { Invoke-RunPart }
       'Look' { Invoke-FormPart; Invoke-ViewPart }
       'Form' { Invoke-FormPart }
