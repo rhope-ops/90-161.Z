@@ -7,6 +7,9 @@
 # origin/main, and lint checks only the changed PowerShell files. A change to this file or scripts/check.local.sh, or no
 # merge base, runs everything. Each skipped group prints a SKIP line; the full lane before a merge runs them all.
 set -uo pipefail
+# No test reads the keyboard: every prompt (for example a card's hidden Skip question) gets end of input, as in CI
+# (PFM request 19 Nov 26, R34 plan open point 6). Without this, a run with keyboard input attached waits for a key.
+exec </dev/null
 cd "$(git rev-parse --show-toplevel)"
 pass=0; fail=0; skipped=0
 ok()  { echo "PASS $1"; pass=$((pass+1)); }
