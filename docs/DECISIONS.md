@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | R34 plan approved as a large round, with approval for the agent recommendations made while it is built (the PFM is away); hard rules hold. Scope: R34. | PFM | [R34 plan](reviews/2026-11-18-r34-plan.md) |
 | 2026-11-18 | Fallback A for the 2 probe flows (R32 finding 4): the health check and the button flow become flows of the solution "90-161.Z flows", on its SharePoint connection, imported by upgrade. Scope: R34. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
 | 2026-11-18 | Mouse-wheel scroll must work anywhere on a card, in the 90-161.Z window and in RADE (RADE most, at half the screen width). Scope: window r7; RADE brief. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
 | 2026-11-18 | Each screenshot in a results e-mail is a visual defect (misalignment, wasted space or the like), unless the PFM says otherwise. Scope: every round. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
