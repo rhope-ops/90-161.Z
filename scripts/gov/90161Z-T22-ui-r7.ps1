@@ -74,10 +74,18 @@ $ui.Label = { param($Font, $Color, [int]$Top) $l = New-Object System.Windows.For
 # WordBreak, TextBoxControl) whenever its text, its font or its wrap width changes. The wrap width is $ui.Wrap[box] (set with
 # $ui.SetWrap): a text box's own MaximumSize would cut the few extra pixels the edit control keeps at its edges.
 $ui.Wrap = @{}
+# A text box with a fixed number of lines ($ui.Hold[box] = n): $ui.Reflow makes it n lines tall whatever its text, also with no
+# text, so the parts under it never move when the text changes (the Run card's now-doing line: the Administrator, 2026-11-19,
+# "the cancel button jumps up and down"). Its text is cut to n lines with $ui.FitLines.
+$ui.Hold = @{}
 $ui.GetWrap = { param($C) if ($C -is [System.Windows.Forms.TextBox]) { return [int]$ui.Wrap[$C] }; return [int]$C.MaximumSize.Width }
 $ui.SetWrap = { param($C, [int]$W) if ($C -is [System.Windows.Forms.TextBox]) { $ui.Wrap[$C] = $W; & $ui.Reflow $C } else { $C.MaximumSize = New-Object System.Drawing.Size($W, 0) } }
 $ui.Reflow = { param($T)
-  try { $txt = [string]$T.Text; if (-not $txt) { return }
+  try { $txt = [string]$T.Text; $n = [int]$ui.Hold[$T]
+    if ($n -gt 0) {   # a fixed number of lines: as wide as its wrap width, n lines tall
+      $w = [int]$ui.Wrap[$T]; $one = & $ui.Meas 'Ag' $T.Font 100000
+      $ns = New-Object System.Drawing.Size($(if ($w -gt 0) { $w + (& $ui.Sc 4) } else { $one.Width }), ($n * $one.Height + (& $ui.Sc 2))); if ($T.Width -ne $ns.Width -or $T.Height -ne $ns.Height) { $T.Size = $ns }; return }
+    if (-not $txt) { return }
     $sl = & $ui.Sc 4; $w = [int]$ui.Wrap[$T]; $one = & $ui.Meas $txt $T.Font 100000; $sz = $one
     if ($w -gt 0 -and $one.Width -gt $w) { $sz = & $ui.Meas $txt $T.Font $w; $bw = $w + $sl } else { $bw = $one.Width + 2 * $sl }
     $ns = New-Object System.Drawing.Size($bw, ($sz.Height + (& $ui.Sc 2))); if ($T.Width -ne $ns.Width -or $T.Height -ne $ns.Height) { $T.Size = $ns } } catch { $null = $_ } }
@@ -202,7 +210,7 @@ $ui.FontInk = { param($Font)
 # panel; $ui.InkFit sizes it when its text changes and when the window has its scale.
 $ui.InkText = { param($Font, $Color, [string]$Name, [bool]$Desc)
   $p = New-Object System.Windows.Forms.Panel; $p.Font = $Font; $p.ForeColor = $Color; $p.BackColor = $ui.C.White; $p.Margin = (& $ui.Pad 0 0 0 0); $p.Size = New-Object System.Drawing.Size(1, 1)
-  $p.AccessibleRole = 'StaticText'; $p.AccessibleName = $Name; $p.Tag = @{ Desc = $Desc; Left = 0; MaxW = 0 }; $p.Visible = $false
+  $p.AccessibleRole = 'StaticText'; $p.AccessibleName = $Name; $p.Tag = @{ Desc = $Desc; Left = 0; MaxW = 0; Cut = $false }; $p.Visible = $false
   $p.Add_Paint({ & $ui.InkPaint $this $_.Graphics }); $p.Add_TextChanged({ & $ui.InkFit $this }); $p }
 # Sizes an ink-tight panel to its text: as wide as the ink (at most Tag.MaxW when that is set: the text then ends with
 # "...") and as tall as the font's ink rows. Does nothing before the window has its scale. Takes the panel.
@@ -212,15 +220,21 @@ $ui.InkFit = { param($P)
     if ($P.Text) { $box = & $ui.InkOf ([string]$P.Text) $P.Font
       if ($box) { $P.Tag.Left = [int]$box.Left; $w = [int]$box.Right - [int]$box.Left }
       else { $w = [int][System.Windows.Forms.TextRenderer]::MeasureText([string]$P.Text, $P.Font).Width } }
-    if ([int]$P.Tag.MaxW -gt 0) { $w = [math]::Min($w, [int]$P.Tag.MaxW) }
+    $P.Tag.Cut = ([int]$P.Tag.MaxW -gt 0 -and $w -gt [int]$P.Tag.MaxW)   # cut = the text is wider than its widest size: only then it ends with "..."
+    if ($P.Tag.Cut) { $w = [int]$P.Tag.MaxW }
     $ns = New-Object System.Drawing.Size(([math]::Max(1, $w)), ([math]::Max(1, $h))); if ($P.Width -ne $ns.Width -or $P.Height -ne $ns.Height) { $P.Size = $ns }
     if ($P.Text) { $P.AccessibleName = [string]$P.Text }; $P.Invalidate() } catch { $null = $_ } }   # no size now: the next fit sizes it
 # Draws the text of an ink-tight panel: moved left and up by the empty room of its text cell, so the ink starts at the
-# panel's left and top edge; a text wider than the panel ends with "...". Takes the panel and its Graphics.
+# panel's left and top edge; a text cut to its widest size (Tag.Cut) ends with "...". Takes the panel and its Graphics.
 $ui.InkPaint = { param($P, $G)
   try { $G.Clear($P.BackColor); if (-not $P.Text) { return }
     $fi = & $ui.FontInk $P.Font; $l = [int]$P.Tag.Left
-    [System.Windows.Forms.TextRenderer]::DrawText($G, [string]$P.Text, $P.Font, (New-Object System.Drawing.Rectangle((-$l), (-[int]$fi.Top), ($P.ClientSize.Width + $l), ([int]$fi.Bottom + 4))), $P.ForeColor, $P.BackColor, [System.Windows.Forms.TextFormatFlags]'Left, Top, NoPadding, NoPrefix, SingleLine, EndEllipsis') } catch { $null = $_ } }   # drawing never stops the window
+    # R32 (the Administrator, 2026-11-18: "RA..." at 150 %): the panel is as wide as the ink, and Windows needs the text's whole
+    # cell (the ink and the last letter's side room, 1 or 2 px more at a large size) or it ends the text with "...". So a text
+    # that is not cut gets room past the panel's edge (nothing is drawn there) and no "..." rule; a cut text keeps both.
+    $room = $P.ClientSize.Width + $l; $fl = 'Left, Top, NoPadding, NoPrefix, SingleLine, EndEllipsis'
+    if (-not $P.Tag.Cut) { $room += [int][math]::Max(8, $fi.Bottom); $fl = 'Left, Top, NoPadding, NoPrefix, SingleLine' }
+    [System.Windows.Forms.TextRenderer]::DrawText($G, [string]$P.Text, $P.Font, (New-Object System.Drawing.Rectangle((-$l), (-[int]$fi.Top), $room, ([int]$fi.Bottom + 4))), $P.ForeColor, $P.BackColor, [System.Windows.Forms.TextFormatFlags]$fl) } catch { $null = $_ } }   # drawing never stops the window
 # Where the ink of a control is, measured on what Windows drew (DrawToBitmap; the first 240 px of its width): gives back
 # @{ Top; Bottom; Left; Right } in the control's own pixels, or its whole box when it cannot be measured. Takes the control.
 $ui.InkBox = { param($C)
@@ -255,6 +269,32 @@ $ui.Shorten = { param($C, [string]$Full, [int]$W)
   $si = New-Object System.Globalization.StringInfo($Full); $lo = 0; $hi = $si.LengthInTextElements
   while ($lo -lt $hi) { $mid = [int][math]::Ceiling(($lo + $hi) / 2.0); $C.Text = $si.SubstringByTextElements(0, $mid).TrimEnd() + '...'; if ($C.PreferredSize.Width -le $W) { $lo = $mid } else { $hi = $mid - 1 } }
   $C.Text = $(if ($lo -gt 0) { $si.SubstringByTextElements(0, $lo).TrimEnd() } else { '' }) + '...' }
+# Cuts a text to N lines with "..." (the help below).
+$ui.FitLines = {
+  <#
+  .SYNOPSIS
+  Cuts a text to at most N lines at a width, with "..." at its end when it is cut (the Administrator, 2026-11-19).
+  .DESCRIPTION
+  Measured as a card text box wraps ($ui.Meas). Binary search on the number of text elements, so a letter with its accents
+  is never split. The text is not changed when it fits.
+  .PARAMETER T
+  The text.
+  .PARAMETER F
+  The font it shows in.
+  .PARAMETER W
+  The wrap width, in pixels.
+  .PARAMETER N
+  The most lines it may take.
+  .OUTPUTS
+  The text that fits, as a string.
+  #>
+  param([string]$T, $F, [int]$W, [int]$N)
+  if (-not $T -or $W -le 0 -or $N -le 0) { return $T }
+  $most = $N * (& $ui.Meas 'Ag' $F 100000).Height
+  if ((& $ui.Meas $T $F $W).Height -le $most) { return $T }
+  $si = New-Object System.Globalization.StringInfo($T); $lo = 0; $hi = $si.LengthInTextElements
+  while ($lo -lt $hi) { $mid = [int][math]::Ceiling(($lo + $hi) / 2.0); $x = $si.SubstringByTextElements(0, $mid).TrimEnd() + '...'; if ((& $ui.Meas $x $F $W).Height -le $most) { $lo = $mid } else { $hi = $mid - 1 } }
+  return ($(if ($lo -gt 0) { $si.SubstringByTextElements(0, $lo).TrimEnd() } else { '' }) + '...') }
 # The self-check's rule for it: a word of a text that wraps is never wider than the line the text may take (a label's
 # MaximumSize, a card text box's $ui.GetWrap; else the word is cut). Not the label's own width: a wrapping label is as wide
 # as its widest line by its own measure, about 1 % narrower than the probe's, so a cut piece that is the widest line would
@@ -363,7 +403,7 @@ $ui.Check = {
         if (& $ui.IsCardText $c) {   # card text boxes are measured as labels are: a word wider than the line, and text that needs more room than the box has
           if ([int](& $ui.GetWrap $c) -gt 0 -and $c.Text) { $wb = & $ui.WordBad $card (& $ui.NameOf $c) ([string]$c.Text) $c.Font ([int](& $ui.GetWrap $c)); if ($wb) { $ui.LayBad.Add($wb) } }
           $nd = & $ui.TextNeed $c; if ($c.Text -and ($nd.Height -gt $c.ClientSize.Height + 1 -or $nd.Width -gt $c.ClientSize.Width + 1)) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' text: needs ' + $nd.Width + 'x' + $nd.Height + ' has ' + $c.ClientSize.Width + 'x' + $c.ClientSize.Height) }
-          $lh1 = [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $c.Font).Height; if ($c.Text -and $c.ClientSize.Height -gt $nd.Height + $lh1) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' dead space: has ' + $c.ClientSize.Height + ' high, the text needs ' + $nd.Height) } }   # more than one empty line under its text
+          $lh1 = [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $c.Font).Height; if ($c.Text -and -not $ui.Hold.ContainsKey($c) -and $c.ClientSize.Height -gt $nd.Height + $lh1) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' dead space: has ' + $c.ClientSize.Height + ' high, the text needs ' + $nd.Height) } }   # more than one empty line under its text (a box with fixed lines keeps its room)
         if ($c -is [System.Windows.Forms.CheckBox] -and $c.Text -and -not $c.AutoEllipsis) {   # a one-line check box whose text alone is wider than it is cut (the Record's step boxes before R24 fix round 3)
           $tw = [System.Windows.Forms.TextRenderer]::MeasureText([string]$c.Text, $c.Font).Width; if ($tw -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' text cut: needs ' + $tw + ' has ' + $c.ClientSize.Width) } }
         # A cut line (R28 N9: the run card's status line was cut through its middle): a control with text is at least one line of its
