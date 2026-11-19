@@ -70,6 +70,7 @@ function Add-FakeList([string]$Title, [int]$Template, [string]$Folder) {
   $l = [pscustomobject]@{
     Id = [guid]::NewGuid().ToString(); Title = $Title; ItemCount = 0; EnableVersioning = $false; BaseTemplate = $Template; Hidden = $false
     RootFolder = [pscustomobject]@{ Name = $Folder }; ReadSecurity = 1; WriteSecurity = 1
+    HasUniqueRoleAssignments = $false; ListRoles = @{}   # T20 r3: own permissions on the list, and the level Ids each group holds on it
     FieldList = (New-Object System.Collections.ArrayList); ViewList = (New-Object System.Collections.ArrayList)
     Items = (New-Object System.Collections.ArrayList); Files = (New-Object System.Collections.ArrayList)
   }
@@ -180,7 +181,10 @@ function Get-PnPList {
 # Answer a REST GET. Takes the path after /_api/ (no query); returns the JSON text of the lists, groups, columns, views, rows or files, or throws a 404 message.
 function Get-FakeRestAnswer([string]$path) {
   if ($path -eq 'web/lists') {
-    return (@{ value = @($global:FakeSP.Lists | ForEach-Object { [pscustomobject]@{ Id = $_.Id; Title = $_.Title; ItemCount = $_.Items.Count; EnableVersioning = $_.EnableVersioning; BaseTemplate = $_.BaseTemplate; Hidden = $_.Hidden; RootFolder = $_.RootFolder } }) } | ConvertTo-Json -Depth 6 -Compress)
+    $rows = @($global:FakeSP.Lists | ForEach-Object {
+        [pscustomobject]@{ Id = $_.Id; Title = $_.Title; ItemCount = $_.Items.Count; EnableVersioning = $_.EnableVersioning; BaseTemplate = $_.BaseTemplate
+          Hidden = $_.Hidden; HasUniqueRoleAssignments = $_.HasUniqueRoleAssignments; RootFolder = $_.RootFolder } })
+    return (@{ value = $rows } | ConvertTo-Json -Depth 6 -Compress)
   }
   # Groups get the Id of their place in the list (1, 2, ...); levels and roles on the site (T20 r2).
   if ($path -eq 'web/sitegroups') { $i = 0; return (@{ value = @($global:FakeSP.Groups | ForEach-Object { $i++; @{ Id = $i; Title = $_ } }) } | ConvertTo-Json -Depth 4 -Compress) }
@@ -188,6 +192,12 @@ function Get-FakeRestAnswer([string]$path) {
   if ($path -match '^web/roleassignments/getbyprincipalid\((\d+)\)/roledefinitionbindings$') {
     if (-not $global:FakeSP.WebRoles.ContainsKey([int]$Matches[1])) { throw 'FAKE 404: the principal holds no role on the site' }
     return (@{ value = @($global:FakeSP.WebRoles[[int]$Matches[1]] | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Depth 4 -Compress)
+  }
+  # The roles of a group on one list (T20 r3): the list's own, as the real route answers; none gives a 404.
+  if ($path -match "^web/lists\(guid'([^']+)'\)/roleassignments/getbyprincipalid\((\d+)\)/roledefinitionbindings$") {
+    $l = Get-FakeListById $Matches[1]; $p = [int]$Matches[2]
+    if (-not $l.HasUniqueRoleAssignments -or -not $l.ListRoles.ContainsKey($p)) { throw 'FAKE 404: the principal holds no role on the list' }
+    return (@{ value = @($l.ListRoles[$p] | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Depth 4 -Compress)
   }
   if ($path -match "^web/lists\(guid'([^']+)'\)/(fields|views|rootfolder/files|items)$") {
     $l = Get-FakeListById $Matches[1]

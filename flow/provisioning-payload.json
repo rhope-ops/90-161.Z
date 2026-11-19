@@ -4808,8 +4808,8 @@
      "type": "SP.Data.PFMSettingsListItem"
     },
     "Title": "CoordinationSuspenseBusinessDays",
-    "SettingValue": "20",
-    "SettingNotes": "Working days (weekdays) a coordinator gets to respond (DAFMAN 90-161 5.2; PFM 2026-11-14: 20 working days, no holiday list). F03 reads it each run (an empty or missing row means 20); Guard and Reserve Applicability get at least 30 calendar days."
+    "SettingValue": "15",
+    "SettingNotes": "Business days (weekdays) a coordinator gets to respond (DAFMAN 90-161 5.2 and 5.1.4.3, T-3; PFM 2026-11-19: 15 business days, no holiday list). F03 reads it each run (an empty or missing row means 15); Guard and Reserve Applicability get at least 30 calendar days."
    }
   },
   {

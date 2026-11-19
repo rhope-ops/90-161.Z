@@ -38,7 +38,7 @@ Add-Member1 'font' {
   try { $null = New-Object System.Drawing.Font("Segoe UI", 10, "Bold"); "bound" } catch { if ($_.Exception.Message -match "ambiguous") { "ambiguous" } else { "bound" } }
 }
 Add-Member1 'plan' {
-  & ./scripts/gov/90161Z-T20-provision-lists-r2.ps1 -PlanOnly -PayloadPath flow/provisioning-payload.json
+  & ./scripts/gov/90161Z-T20-provision-lists-r3.ps1 -PlanOnly -PayloadPath flow/provisioning-payload.json
 }
 
 foreach ($name in $members.Keys) {
