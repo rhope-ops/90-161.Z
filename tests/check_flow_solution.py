@@ -456,7 +456,9 @@ f03 = json.loads(next(s for s in r27_defs if "-F03-" in s.name).read_text(encodi
 if f03["Get_endorsements_without_suspense"]["inputs"]["parameters"]["$filter"] != "EndorsementStatus eq 'Not Started' and DueDate eq null":
     bad("F03: every open row without a suspense, Legal rows included")
 loop3 = f03["For_each_endorsement_without_suspense"]["actions"]
-if "['Created']" not in loop3["Created_day"]["inputs"] or "Today" in json.dumps(loop3): bad("F03: the default suspense must start at the row's Created date, not the run day")
+cd3 = loop3["Created_day"]["inputs"]
+if "['Created']" not in cd3 or "addDays(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), -7)" not in cd3 or "Today" in json.dumps(loop3):
+    bad("F03: the default suspense starts at the row's Created date; a row older than 7 days starts from the run day (PFM 19 Nov 26)")
 # R36 (PFM 19 Nov 26, README choice 9): F04 r4 leaves out the rows with a Closed Date.
 if json.loads(f04)["actions"]["Try"]["actions"]["Get_publications"]["inputs"]["parameters"].get("$filter") != "ClosedDate eq null": bad("F04: rows with a Closed Date must be left out")
 

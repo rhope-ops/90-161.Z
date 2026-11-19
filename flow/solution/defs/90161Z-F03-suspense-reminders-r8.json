@@ -261,8 +261,8 @@
             "Created_day": {
               "runAfter": {},
               "type": "Compose",
-              "inputs": "@formatDateTime(convertTimeZone(items('For_each_endorsement_without_suspense')?['Created'], 'UTC', 'Central Standard Time'), 'yyyy-MM-dd')",
-              "description": "r8 (R36, PFM 19 Nov 26, README choice 4): the suspense starts at the row's Created date, in Central time (was the first weekday run after the row was made)"
+              "inputs": "@if(less(ticks(convertTimeZone(items('For_each_endorsement_without_suspense')?['Created'], 'UTC', 'Central Standard Time')), ticks(addDays(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), -7))), formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd'), formatDateTime(convertTimeZone(items('For_each_endorsement_without_suspense')?['Created'], 'UTC', 'Central Standard Time'), 'yyyy-MM-dd'))",
+              "description": "r8 (R36, PFM 19 Nov 26): the suspense starts at the row's Created date (Central); a row made more than 7 days before this run (an old row) starts from the run day, so it is not overdue at once"
             },
             "Created_weekday": {
               "runAfter": {
