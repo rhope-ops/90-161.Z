@@ -13,6 +13,8 @@
        Table A10.1, that the waiver rule 4.4A names).
     4. PFM Settings: sets CoordinationSuspenseBusinessDays to 15 when it is empty or exactly 20 (r5; PFM 19 Nov 26: 15
        business days, DAFMAN 90-161 5.2 and 5.1.4.3, T-3). Any other value is a choice of the PFM: it is left and reported.
+    5. PFM Process Steps: sets the stage 6 TargetBusinessDays to 20 when it is exactly 25 (r5; PFM 19 Nov 26: 15 + 5 business
+       days). Any other value is left and reported.
   A column, choice or value that is there already is left as it is (PASS present, or INFO kept), so a second run changes nothing. The
   choices are written in the order of the schema; a choice that a person added stays, after them.
   Modes:
@@ -29,7 +31,7 @@
   DODID as <DODID>.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell (none
            with -PlanOnly).
-  Writes: (no mode) the columns, choices and the setting listed above on that site; on this computer the result file in
+  Writes: (no mode) the columns, choices, the setting and the stage 6 target listed above on that site; on this computer the result file in
           the T19 folder and, once, Config\90161Z-site.txt when the site address is typed outside RADE. -Check and
           -PlanOnly change nothing on the site.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
@@ -185,6 +187,9 @@ $AddChoices = @(
 $SetRow = @{ List = 'PFM Settings'; Title = 'CoordinationSuspenseBusinessDays'; Value = '15'; Old = '20'
   Notes = ('Business days (weekdays) a coordinator gets to respond (DAFMAN 90-161 5.2 and 5.1.4.3, T-3; PFM 2026-11-19: 15 business days, no holiday list). ' +
     'F03 reads it each run (an empty or missing row means 15); Guard and Reserve Applicability get at least 30 calendar days.') }
+# The stage 6 (Formal coordination) target of PFM Process Steps: 15 business days of coordination plus 5 to adjudicate
+# (PFM 19 Nov 26; was 25 = 20 + 5 of 14 Nov 26). Old is the one earlier value that moves to Value; any other value stays.
+$StepRow = @{ List = 'PFM Process Steps'; Step = 6; Value = 20; Old = 25 }
 
 # Prints one "NOW <text>" line before an action that takes time. It goes to the screen only: it is not a result line, so it
 # is not in the result file and is not counted.
@@ -289,13 +294,41 @@ function Write-SettingValue($Item, [int]$No, [bool]$Write) {
   return 1
 }
 
+<#
+.SYNOPSIS
+  Item 7: sets the TargetBusinessDays of one PFM Process Steps row to the new value when it has the one old value.
+.PARAMETER Item
+  $StepRow (List, Step, Value, Old).
+.PARAMETER No
+  The item number for the ITEM line.
+.PARAMETER Write
+  $true: set the value; $false (-Check): only report it.
+.OUTPUTS
+  System.Int32. 1 when the value was set (or a run would set it), else 0.
+#>
+function Write-StepTarget($Item, [int]$No, [bool]$Write) {
+  $tag = [string]$No + '-stage6-target'
+  $rows = @(Get-PnPListItem -List $Item.List -Fields 'StepNumber', 'TargetBusinessDays' -ErrorAction Stop)
+  $row = @($rows | Where-Object { [string]$_['StepNumber'] -eq [string]$Item.Step })
+  if (-not $row.Count) { Add-Item $tag 'FAIL' ('no step ' + $Item.Step + ' row in ' + $Item.List); return 0 }
+  $was = [string]$row[0]['TargetBusinessDays']
+  if ($was -eq [string]$Item.Value) { Add-Item $tag 'PASS' ('present, ' + $was); return 0 }
+  if ($was -ne [string]$Item.Old) { Add-Item $tag 'INFO' ('kept, ' + $was + ' (not ' + $Item.Old + ', so not changed)'); return 0 }
+  if (-not $Write) { Add-Item $tag 'INFO' ('a run would set it to ' + $Item.Value + ' (now ' + $was + ')'); return 1 }
+  Write-Now ('Setting the stage ' + $Item.Step + ' target to ' + $Item.Value + ' business days')
+  $null = Set-PnPListItem -List $Item.List -Identity $row[0].Id -Values @{ TargetBusinessDays = $Item.Value } -ErrorAction Stop
+  Add-Item $tag 'PASS' ('set to ' + $Item.Value + ' (was ' + $was + ')')
+  return 1
+}
+
 # Prints the plan (-PlanOnly): one PLAN line per item, then the counts. No sign-in.
 function Write-Plan {
   $n = 0
   foreach ($f in $AddFields) { $n++; Write-Host ('PLAN ' + $n + '-' + $f.Name + ' column in ' + $f.List) }
   foreach ($c in $AddChoices) { $n++; Write-Host ('PLAN ' + $n + '-' + $c.Field + ' choices in ' + $c.List + ': ' + ($c.Choices -join ', ')) }
   $n++; Write-Host ('PLAN ' + $n + '-suspense-setting ' + $SetRow.Title + ' = ' + $SetRow.Value + ' in ' + $SetRow.List)
-  Write-Host ('PLAN columns=' + $AddFields.Count + ' choice columns=' + $AddChoices.Count + ' settings=1')
+  $n++; Write-Host ('PLAN ' + $n + '-stage6-target step ' + $StepRow.Step + ' = ' + $StepRow.Value + ' in ' + $StepRow.List)
+  Write-Host ('PLAN columns=' + $AddFields.Count + ' choice columns=' + $AddChoices.Count + ' settings=1 steps=1')
 }
 
 $secret = @()
@@ -331,6 +364,9 @@ try {
   $n++
   Write-Now 'Reading the rows of PFM Settings'
   $changes += Write-SettingValue $SetRow $n $write
+  $n++
+  Write-Now 'Reading the rows of PFM Process Steps'
+  $changes += Write-StepTarget $StepRow $n $write
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
   $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
   if ($Check) { $lines.Add('LISTCHECK done, changes a run would make=' + $changes + ', items with problems=' + $nf) }

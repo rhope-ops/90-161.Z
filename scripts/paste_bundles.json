@@ -30,35 +30,35 @@
             "files": [
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-pfm-window-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-pfm-window-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-cards-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-cards-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-types-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-types-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-parts-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-parts-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-grid-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-grid-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-window-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-window-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-measure-r7.ps1"
+                    "src": "scripts/gov/90161Z-T22-measure-r8.ps1"
                 },
                 {
                     "dir": "T17",
@@ -98,19 +98,23 @@
                 },
                 {
                     "dir": "T24",
-                    "src": "scripts/gov/90161Z-T24-full-solution-test-r4.ps1"
+                    "src": "scripts/gov/90161Z-T24-full-solution-test-r5.ps1"
                 },
                 {
                     "dir": "T24",
-                    "src": "flow/solution/90161Z-T24-full-flows-r3.zip"
+                    "src": "flow/solution/90161Z-T24-full-flows-r4.zip"
                 },
                 {
                     "dir": "T19",
-                    "src": "scripts/gov/90161Z-T19-list-update-r4.ps1"
+                    "src": "scripts/gov/90161Z-T19-list-update-r5.ps1"
                 },
                 {
                     "dir": "T20",
-                    "src": "scripts/gov/90161Z-T20-provision-lists-r2.ps1"
+                    "src": "scripts/gov/90161Z-T20-provision-lists-r3.ps1"
+                },
+                {
+                    "dir": "T20",
+                    "src": "scripts/gov/90161Z-T20-access-r3.ps1"
                 },
                 {
                     "dir": "T20",
@@ -119,10 +123,10 @@
             ],
             "steps": [
                 {
-                    "name": "T22 Open the 90-161.Z window r7",
+                    "name": "T22 Open the 90-161.Z window r8",
                     "title": "Open the 90-161.Z window and do its 18 checks",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r7.ps1",
+                    "file": "90161Z-T22-pfm-window-r8.ps1",
                     "minutes": 30,
                     "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 18 checks in the bar at the bottom, then select Pass or Fail. Then close the window.",
                     "estimate": 15,
@@ -130,10 +134,10 @@
                     "doing": "Opening the 90-161.Z window."
                 },
                 {
-                    "name": "T22 Did the window open r7",
+                    "name": "T22 Did the window open r8",
                     "title": "Check that the window opened",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r7.ps1",
+                    "file": "90161Z-T22-pfm-window-r8.ps1",
                     "args": "-Opened",
                     "minutes": 2,
                     "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
@@ -142,7 +146,7 @@
                     "doing": "Reading the result of the window step."
                 },
                 {
-                    "name": "T22 Answer: look and cards r7",
+                    "name": "T22 Answer: look and cards r8",
                     "title": "Answer 3 questions about the window look",
                     "kind": "guide",
                     "dir": "T22",
@@ -150,7 +154,7 @@
                     "note": "3 questions about the look of the window. About 2 minutes.",
                     "estimate": 2,
                     "after": [
-                        "T22 Did the window open r7"
+                        "T22 Did the window open r8"
                     ],
                     "answers": [
                         {
@@ -184,7 +188,7 @@
                     "file": "90161Z-T21-probe-r9.ps1",
                     "args": "-Part Clean -Label first",
                     "minutes": 20,
-                    "note": "Signs in (CAC). Removes a test list or library, and a test person in the group Visitors, if one is still there. A test person still in the group PFM Office is a leftover: this step reports it as FAILED and the Clean step at the end removes the person. The last round removed all, so it should find nothing. Counts only.",
+                    "note": "Signs in (CAC). Removes a test list, library or Visitors member left by the last round. A test person still in PFM Office is reported as FAILED; the last step removes them.",
                     "estimate": 2,
                     "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
                     "needs": [
@@ -212,10 +216,10 @@
                     "doing": "Making the test list and library."
                 },
                 {
-                    "name": "T20 Give PFM Office the edit-all level r2",
+                    "name": "T20 Give PFM Office the edit-all level r3",
                     "title": "Check the lists and give PFM Office its level",
                     "dir": "T20",
-                    "file": "90161Z-T20-provision-lists-r2.ps1",
+                    "file": "90161Z-T20-provision-lists-r3.ps1",
                     "minutes": 30,
                     "note": "Signs in (CAC). Checks the 12 app lists: makes what is missing and puts the columns of its 18 views back. Then makes the group PFM Office and its level if missing, and reads them back.",
                     "estimate": 4,
@@ -228,12 +232,12 @@
                     "doing": "Giving PFM Office its permission level."
                 },
                 {
-                    "name": "T19 Add the tier T-0 r4",
-                    "title": "Add the tier T-0 to the waivers list",
+                    "name": "T19 Set the 15-day suspense and the stage 6 target r5",
+                    "title": "Set 15 business days and the stage 6 target",
                     "dir": "T19",
-                    "file": "90161Z-T19-list-update-r4.ps1",
+                    "file": "90161Z-T19-list-update-r5.ps1",
                     "minutes": 20,
-                    "note": "Signs in (CAC). Adds the choice T-0 to the column Tier of the waivers list and keeps every choice that is there. A second run changes nothing.",
+                    "note": "Signs in (CAC). Sets the coordination suspense from 20 to 15 business days (DAFMAN 90-161 5.2) and the stage 6 target from 25 to 20. Other values stay and are reported.",
                     "estimate": 2,
                     "help": "Send the results as they are.",
                     "needs": [
@@ -241,7 +245,7 @@
                         "net-site",
                         "site-rights"
                     ],
-                    "doing": "Adding the tier T-0 to the waivers list."
+                    "doing": "Setting the suspense to 15 business days and the stage 6 target to 20."
                 },
                 {
                     "name": "T21 Add the second person r9",
@@ -280,7 +284,7 @@
                     ],
                     "after": [
                         "T21 Add the second person r9",
-                        "T20 Give PFM Office the edit-all level r2"
+                        "T20 Give PFM Office the edit-all level r3"
                     ],
                     "doing": "Putting the second person in PFM Office."
                 },
@@ -290,7 +294,7 @@
                     "kind": "guide",
                     "dir": "T21",
                     "file": "",
-                    "note": "You need one person of your office for about 10 minutes. You send that person the link of your test row. The person opens the link, types an X at the end of the Title, and selects Save. It shows that a PFM Office member can edit a row of another person.",
+                    "note": "You need one person of your office for about 10 minutes. They open the link of your test row, type an X at the end of the Title and select Save.",
                     "guide": [
                         "1. Ask the second person to stay at a computer for about 10 minutes.",
                         "2. Open Teams.",
@@ -441,11 +445,11 @@
                     ]
                 },
                 {
-                    "name": "T24 Import the full solution r4: choose the file",
+                    "name": "T24 Import the full solution r5: choose the file",
                     "title": "Start the import of the full flows",
                     "kind": "guide",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-flows-r3.zip",
+                    "file": "90161Z-T24-full-flows-r4.zip",
                     "note": "You start the import of the full 90-161.Z flows (every flow On). The next step finishes it. About 4 minutes.",
                     "guide": [
                         "1. Select \"Open in browser\" above.",
@@ -482,7 +486,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Import the full solution r4: finish",
+                    "name": "T24 Import the full solution r5: finish",
                     "title": "Finish the import of the full flows",
                     "kind": "guide",
                     "dir": "T24",
@@ -516,7 +520,7 @@
                     ],
                     "estimate": 5,
                     "after": [
-                        "T24 Import the full solution r4: choose the file"
+                        "T24 Import the full solution r5: choose the file"
                     ],
                     "doneLog": "Confirmed by you: imported the full solution.",
                     "answers": [
@@ -578,7 +582,7 @@
                     "doing": "Looking for an import log."
                 },
                 {
-                    "name": "T24 Turn on all 8 flows r4",
+                    "name": "T24 Turn on all 8 flows r5",
                     "title": "Turn on all 8 flows",
                     "kind": "guide",
                     "dir": "T24",
@@ -603,7 +607,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T24 Import the full solution r4: finish"
+                        "T24 Import the full solution r5: finish"
                     ],
                     "answers": [
                         {
@@ -626,7 +630,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Check the flows after the import r4",
+                    "name": "T24 Check the flows after the import r5",
                     "title": "Check the flows and their connections",
                     "kind": "guide",
                     "dir": "T24",
@@ -648,7 +652,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T24 Turn on all 8 flows r4"
+                        "T24 Turn on all 8 flows r5"
                     ],
                     "answers": [
                         {
@@ -697,7 +701,7 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Turn on all 8 flows r4"
+                        "T24 Turn on all 8 flows r5"
                     ],
                     "doing": "Adding the row that starts the health flow."
                 },
@@ -718,7 +722,7 @@
                     ],
                     "after": [
                         "T21 Make the probe list r9",
-                        "T24 Turn on all 8 flows r4"
+                        "T24 Turn on all 8 flows r5"
                     ],
                     "doing": "Making the list view with the button."
                 },
@@ -776,13 +780,13 @@
                     ]
                 },
                 {
-                    "name": "T24 Full solution test, part 1 r4",
+                    "name": "T24 Full solution test, part 1 r5",
                     "title": "Prepare the full flow test",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r4.ps1",
+                    "file": "90161Z-T24-full-solution-test-r5.ps1",
                     "args": "-Part 1",
                     "minutes": 60,
-                    "note": "Signs in (CAC). Writes the settings rows (Test mode Yes) and fake rows, then waits for 2 flows that check the list every 15 minutes. About 35 minutes.",
+                    "note": "Signs in (CAC). Writes the settings rows (Test mode Yes) and fake rows, then waits for 2 flows: one checks the list every minute, the other every 15 minutes. About 35 minutes.",
                     "estimate": 35,
                     "help": "Send the results as they are. A FAIL here is a finding about a flow.",
                     "needs": [
@@ -791,12 +795,12 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Turn on all 8 flows r4"
+                        "T24 Turn on all 8 flows r5"
                     ],
                     "doing": "Running the first part of the flow test (it waits for 2 flow checks)."
                 },
                 {
-                    "name": "T24 Run F02 once and F04 once r4",
+                    "name": "T24 Run F02 once and F04 once r5",
                     "title": "Run two of the flows by hand",
                     "kind": "guide",
                     "dir": "T24",
@@ -825,7 +829,7 @@
                     ],
                     "estimate": 5,
                     "after": [
-                        "T24 Full solution test, part 1 r4"
+                        "T24 Full solution test, part 1 r5"
                     ],
                     "doneLog": "Confirmed by you: ran F02 and F04.",
                     "url": "https://make.powerautomate.appsplatform.us/",
@@ -836,10 +840,10 @@
                     ]
                 },
                 {
-                    "name": "T24 Full solution test, part 2 r4",
+                    "name": "T24 Full solution test, part 2 r5",
                     "title": "Check what the two flows did",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r4.ps1",
+                    "file": "90161Z-T24-full-solution-test-r5.ps1",
                     "args": "-Part 2",
                     "minutes": 30,
                     "note": "Signs in (CAC). Checks what the two flows did: review dates, review rows and the status-report log row. About 4 minutes.",
@@ -851,12 +855,12 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Run F02 once and F04 once r4"
+                        "T24 Run F02 once and F04 once r5"
                     ],
                     "doing": "Running the second part of the flow test."
                 },
                 {
-                    "name": "T24 Find the F04 e-mail r4",
+                    "name": "T24 Find the F04 e-mail r5",
                     "title": "Find the test e-mail of the status report",
                     "kind": "guide",
                     "dir": "T24",
@@ -874,7 +878,7 @@
                     "marker": "90161Z-T24-email-looked.txt",
                     "estimate": 3,
                     "after": [
-                        "T24 Full solution test, part 2 r4"
+                        "T24 Full solution test, part 2 r5"
                     ],
                     "answers": [
                         {
@@ -928,7 +932,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Run F02 again r4",
+                    "name": "T24 Run F02 again r5",
                     "title": "Run the review flow a second time",
                     "kind": "guide",
                     "dir": "T24",
@@ -952,7 +956,7 @@
                     ],
                     "estimate": 2,
                     "after": [
-                        "T24 Find the F04 e-mail r4"
+                        "T24 Find the F04 e-mail r5"
                     ],
                     "doneLog": "Confirmed by you: ran F02 again.",
                     "url": "https://make.powerautomate.appsplatform.us/",
@@ -963,10 +967,10 @@
                     ]
                 },
                 {
-                    "name": "T24 Full solution test, part 3 r4",
+                    "name": "T24 Full solution test, part 3 r5",
                     "title": "Check that the second run added no row",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r4.ps1",
+                    "file": "90161Z-T24-full-solution-test-r5.ps1",
                     "args": "-Part 3",
                     "minutes": 20,
                     "note": "Signs in (CAC). Checks that the second run of the review flow made no second review row. Nothing is removed here. About 2 minutes.",
@@ -978,7 +982,7 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Run F02 again r4"
+                        "T24 Run F02 again r5"
                     ],
                     "doing": "Running the third part of the flow test."
                 },
@@ -1003,10 +1007,10 @@
                     "doing": "Reading what the flows wrote."
                 },
                 {
-                    "name": "T24 Clean up r4",
+                    "name": "T24 Clean up r5",
                     "title": "Remove the full test rows",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r4.ps1",
+                    "file": "90161Z-T24-full-solution-test-r5.ps1",
                     "args": "-Part 4",
                     "minutes": 15,
                     "note": "Signs in (CAC). Moves every fake row of the full test to the site Recycle Bin and puts PFM Settings back. Runs even when earlier steps failed.",
@@ -1065,7 +1069,7 @@
                     "estimate": 3,
                     "doneLog": "Confirmed by you: removed the 2 test flows.",
                     "after": [
-                        "T24 Import the full solution r4: finish"
+                        "T24 Import the full solution r5: finish"
                     ],
                     "hide": [
                         "skip"
@@ -1077,93 +1081,93 @@
             "collect": [
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-r7.txt",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-window-r8.txt",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-home-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-home-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-empty-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-empty-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-queue-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-queue-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-reviews-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-reviews-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step8-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-step8-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-confirm-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-confirm-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-sendback-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-sendback-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-waves-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-waves-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step11-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-step11-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step12-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-step12-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step13-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-step13-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-pub-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-pub-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-settings-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-settings-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-loading-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-loading-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-failed-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-failed-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-noperm-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-noperm-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-remindall-r7.png",
-                    "step": "T22 Open the 90-161.Z window r7"
+                    "name": "90161Z-T22-card-remindall-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T17",
@@ -1203,22 +1207,22 @@
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part1-r1.txt",
-                    "step": "T24 Full solution test, part 1 r4"
+                    "step": "T24 Full solution test, part 1 r5"
                 },
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part2-r1.txt",
-                    "step": "T24 Full solution test, part 2 r4"
+                    "step": "T24 Full solution test, part 2 r5"
                 },
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part3-r1.txt",
-                    "step": "T24 Full solution test, part 3 r4"
+                    "step": "T24 Full solution test, part 3 r5"
                 },
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part4-r1.txt",
-                    "step": "T24 Clean up r4"
+                    "step": "T24 Clean up r5"
                 },
                 {
                     "dir": "T21",
@@ -1227,13 +1231,13 @@
                 },
                 {
                     "dir": "T20",
-                    "name": "90161Z-T20-provision-lists-r2.txt",
-                    "step": "T20 Give PFM Office the edit-all level r2"
+                    "name": "90161Z-T20-provision-lists-r3.txt",
+                    "step": "T20 Give PFM Office the edit-all level r3"
                 },
                 {
                     "dir": "T19",
-                    "name": "90161Z-T19-list-update-r4.txt",
-                    "step": "T19 Add the tier T-0 r4"
+                    "name": "90161Z-T19-list-update-r5.txt",
+                    "step": "T19 Set the 15-day suspense and the stage 6 target r5"
                 },
                 {
                     "dir": "T21",
@@ -1244,6 +1248,47 @@
                     "dir": "T21",
                     "name": "90161Z-T21-probe-office-r9.txt",
                     "step": "T21 Give the second person PFM Office r9"
+                }
+            ],
+            "fetch": [],
+            "apps": [
+                {
+                    "name": "90-161.Z: Publications and Forms Management",
+                    "summary": "Round R35 r1: the window, PFM Office level, tier T-0, second person, import by upgrade, form and button, full flow test. Fake data.",
+                    "steps": [
+                        "T22 Open the 90-161.Z window r8",
+                        "T22 Did the window open r8",
+                        "T22 Answer: look and cards r8",
+                        "T21 Check the test site is clean r9",
+                        "T21 Make the probe list r9",
+                        "T20 Give PFM Office the edit-all level r3",
+                        "T19 Set the 15-day suspense and the stage 6 target r5",
+                        "T21 Add the second person r9",
+                        "T21 Give the second person PFM Office r9",
+                        "T21 Second person edits your row r9",
+                        "T21 Power Automate shows your connections r9",
+                        "T21 Open the test page r9",
+                        "T21 Put a test header on the list form r9",
+                        "T21 Look at the list form r9",
+                        "T24 Import the full solution r5: choose the file",
+                        "T24 Import the full solution r5: finish",
+                        "T17 Import log reader r3",
+                        "T24 Turn on all 8 flows r5",
+                        "T24 Check the flows after the import r5",
+                        "T21 Start the health flow r9",
+                        "T21 Make the list view with the flow button r9",
+                        "T21 Use the list button r9",
+                        "T24 Full solution test, part 1 r5",
+                        "T24 Run F02 once and F04 once r5",
+                        "T24 Full solution test, part 2 r5",
+                        "T24 Find the F04 e-mail r5",
+                        "T24 Run F02 again r5",
+                        "T24 Full solution test, part 3 r5",
+                        "T21 Read the test results r9",
+                        "T24 Clean up r5",
+                        "T21 Remove the test list and library r9",
+                        "T21 Remove the 2 test flows r9"
+                    ]
                 }
             ],
             "cleanup": [
@@ -2110,47 +2155,50 @@
                 {
                     "path": "T20\\90161Z-T20-provision-lists-r1.ps1",
                     "kind": "glob"
-                }
-            ],
-            "fetch": [],
-            "apps": [
+                },
                 {
-                    "name": "90-161.Z: Publications and Forms Management",
-                    "summary": "Round R35 r1: the window, PFM Office level, tier T-0, second person, import by upgrade, form and button, full flow test. Fake data.",
-                    "steps": [
-                        "T22 Open the 90-161.Z window r7",
-                        "T22 Did the window open r7",
-                        "T22 Answer: look and cards r7",
-                        "T21 Check the test site is clean r9",
-                        "T21 Make the probe list r9",
-                        "T20 Give PFM Office the edit-all level r2",
-                        "T19 Add the tier T-0 r4",
-                        "T21 Add the second person r9",
-                        "T21 Give the second person PFM Office r9",
-                        "T21 Second person edits your row r9",
-                        "T21 Power Automate shows your connections r9",
-                        "T21 Open the test page r9",
-                        "T21 Put a test header on the list form r9",
-                        "T21 Look at the list form r9",
-                        "T24 Import the full solution r4: choose the file",
-                        "T24 Import the full solution r4: finish",
-                        "T17 Import log reader r3",
-                        "T24 Turn on all 8 flows r4",
-                        "T24 Check the flows after the import r4",
-                        "T21 Start the health flow r9",
-                        "T21 Make the list view with the flow button r9",
-                        "T21 Use the list button r9",
-                        "T24 Full solution test, part 1 r4",
-                        "T24 Run F02 once and F04 once r4",
-                        "T24 Full solution test, part 2 r4",
-                        "T24 Find the F04 e-mail r4",
-                        "T24 Run F02 again r4",
-                        "T24 Full solution test, part 3 r4",
-                        "T21 Read the test results r9",
-                        "T24 Clean up r4",
-                        "T21 Remove the test list and library r9",
-                        "T21 Remove the 2 test flows r9"
-                    ]
+                    "path": "T19\\90161Z-T19-list-update-r4.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T19\\90161Z-T19-list-*-r4.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T20\\90161Z-T20-provision-lists-r2.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T20\\90161Z-T20-*-r2.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r7.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r7.png",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-window-r7.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T24\\90161Z-T24-full-solution-test-r4.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T24\\90161Z-T24-full-flows-r3.zip",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-*-r8.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-*-r8.txt",
+                    "kind": "glob"
                 }
             ]
         }

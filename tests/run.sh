@@ -267,7 +267,7 @@ assert rv['OPRResponse']['choices'] == ['Certify Current', 'Requires Revision', 
 assert rv['Product']['lookup']['list'] == 'PFMProductIndex' and rv['FollowUpAction']['lookup']['list'] == 'PFMPublications'
 steps = S['PFMProcessSteps']['seed']
 assert [s['StepNumber'] for s in steps] == list(range(0, 13)) and 'Privacy' in steps[5]['Title']
-assert {s['StepNumber']: s.get('TargetBusinessDays') for s in steps if s.get('TargetBusinessDays')} == {2: 60, 6: 25, 7: 20, 8: 10, 9: 10, 11: 15}
+assert {s['StepNumber']: s.get('TargetBusinessDays') for s in steps if s.get('TargetBusinessDays')} == {2: 60, 6: 20, 7: 20, 8: 10, 9: 10, 11: 15}
 PY
 
 python3 - <<'PY' && ok "sample CSVs match schema columns and choices" || bad "sample CSVs"

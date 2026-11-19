@@ -31,7 +31,7 @@ Each flow's first step (inside the Try scope) is SharePoint Get items on the lis
 | CoordinationSuspenseBusinessDays | F03 | Default suspense in business days (weekdays; no holiday list; DAFMAN 90-161 5.2, 5.1.4.3; PFM 19 Nov 26, was 20 working days of 14 Nov 26; key unchanged; T19 r5 moves a site value of 20 to 15) | 15 | 15 |
 | SharedMailbox | F03, F06 | Shared mailbox to send from (Send As); optional | empty: the flow owner's mailbox sends | empty |
 
-Stage 6 (Formal coordination) has a target of 25 working days: 20 for coordination plus 5 for adjudication (PFM 14 Nov 26; schemas/lists/PFMProcessSteps.json, StepNumber 6).
+Stage 6 (Formal coordination) has a target of 20 business days: 15 for coordination plus 5 for adjudication (PFM 19 Nov 26, was 25 = 20 + 5 of 14 Nov 26; T19 r5 moves a site value of 25 to 20; schemas/lists/PFMProcessSteps.json, StepNumber 6).
 
 ## Flows
 

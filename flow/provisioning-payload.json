@@ -4185,7 +4185,7 @@
     "DAFMANRef": "3.4, 5.1, 5.1.5",
     "ExitCondition": "All coordinators responded or marked N/A; all comments adjudicated (5.1.8.1, 2.8.13). An open nonconcur may go on to Legal and Certification (PFM 1A, Figure A5.1 step 4)",
     "IsOptional": false,
-    "TargetBusinessDays": 25,
+    "TargetBusinessDays": 20,
     "AppliesTo": {
      "__metadata": {
       "type": "Collection(Edm.String)"

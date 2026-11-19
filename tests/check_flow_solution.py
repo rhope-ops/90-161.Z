@@ -140,16 +140,16 @@ for src in sorted(B.DEFS.glob("*.json")):
                 if u not in cols and u not in {"ID", "Id"}: bad(f"{src.name} {name}: column '{u}' not in {title}")
 
 # R27 (PFM 14 and 16 Nov 26): F03, F05 and F06 read the six moved values from PFM Settings rows and add no "[TEST] " prefix. Fails if a def
-# (or a zip) still holds "[TEST]" or reads a moved variable; every Settings key a flow reads is a seed row; the stage 6 target is 25 (PFM 14 Nov 26).
+# (or a zip) still holds "[TEST]" or reads a moved variable; every Settings key a flow reads is a seed row; the stage 6 target is 20 (PFM 19 Nov 26: 15 + 5; was 25).
 settings_seed = {r["Title"]: r for r in json.loads((ROOT / "schemas" / "lists" / "PFMSettings.json").read_text(encoding="utf-8"))["seed"]}
-MOVED_KEYS = {"FlowsPaused": "No", "TestMode": "Yes", "ReminderLeadDays": "5", "EscalationLagDays": "3", "CoordinationSuspenseBusinessDays": "20", "SharedMailbox": ""}
+MOVED_KEYS = {"FlowsPaused": "No", "TestMode": "Yes", "ReminderLeadDays": "5", "EscalationLagDays": "3", "CoordinationSuspenseBusinessDays": "15", "SharedMailbox": ""}
 for k, v in MOVED_KEYS.items():
     r = settings_seed.get(k)
     if not r: bad(f"PFMSettings.json seed has no row {k}"); continue
     if r["SettingValue"] != v: bad(f"PFMSettings.json seed {k}={r['SettingValue']!r}, expected {v!r}")
     if "DAFMAN" not in r["SettingNotes"] and "PFM 2026-11-1" not in r["SettingNotes"]: bad(f"PFMSettings.json seed {k}: SettingNotes cite no source")
 steps = json.loads((ROOT / "schemas" / "lists" / "PFMProcessSteps.json").read_text(encoding="utf-8"))["seed"]
-if [s["TargetBusinessDays"] for s in steps if s["StepNumber"] == 6] != [25]: bad("PFMProcessSteps.json: stage 6 TargetBusinessDays must be 25 (PFM 14 Nov 26)")
+if [s["TargetBusinessDays"] for s in steps if s["StepNumber"] == 6] != [20]: bad("PFMProcessSteps.json: stage 6 TargetBusinessDays must be 20 (PFM 19 Nov 26)")
 # R28 (PFM 17 Nov 26): F01, F02 and F04 read PFM Settings too, so all six flows start the same way.
 r27_defs = [s for s in sorted(B.DEFS.glob("*.json")) if re.match(r"90161Z-F0[1-6]-", s.name)]
 if len(r27_defs) != 6: bad(f"expected the six flow defs F01 to F06, found {[s.name for s in r27_defs]}")

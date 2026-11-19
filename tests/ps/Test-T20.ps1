@@ -91,7 +91,7 @@ function Invoke-T19([string]$Mode) {
 # The Tier column of the fake PFM Waivers list (its data holds the choices).
 function Get-TierColumn { return @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMWaivers' })[0].FieldList | Where-Object { $_.InternalName -eq 'Tier' })[0] }
 $r = Invoke-T19 'PlanOnly'
-Test-That 'T19 plan: 6 items, Tier with T-0 first, no sign-in' ($r.Code -eq 0 -and $r.Text -match 'PLAN 5-Tier choices in PFM Waivers: T-0, T-1, T-2, T-3, Non-Tiered' -and $r.Out[-1] -eq 'PLAN columns=3 choice columns=2 settings=1') $r.Text
+Test-That 'T19 plan: 6 items, Tier with T-0 first, no sign-in' ($r.Code -eq 0 -and $r.Text -match 'PLAN 5-Tier choices in PFM Waivers: T-0, T-1, T-2, T-3, Non-Tiered' -and $r.Out[-1] -eq 'PLAN columns=3 choice columns=2 settings=1 steps=1' -and $r.Text -match 'PLAN 7-stage6-target step 6 = 20 in PFM Process Steps') $r.Text
 Test-That 'T20 built a new site with T-0 already (the payload)' (((Get-TierColumn).Data.Choices -join ',') -eq 'T-0,T-1,T-2,T-3,Non-Tiered')
 $r = Invoke-T19 'Check'
 Test-That 'T19 check on a new site: nothing to change' ($r.Code -eq 0 -and $r.Text -match 'LISTCHECK done, changes a run would make=0, items with problems=0') $r.Text
@@ -123,6 +123,16 @@ $r = Invoke-T19 ''
 Test-That 'T19 setting: an empty value is set to 15' ($r.Code -eq 0 -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 6-suspense-setting PASS set to 15') $r.Text
 $r = Invoke-T19 ''
 Test-That 'T19 setting: 15 is present and stays (idempotent)' ($r.Code -eq 0 -and $setRow.SettingValue -eq '15' -and $r.Text -match 'ITEM 6-suspense-setting PASS present, 15') $r.Text
+# Stage 6 target (PFM 19 Nov 26: 15 + 5 = 20 business days): 25 moves to 20, any other value stays.
+$stepRow = @(@($global:FakeSP.Lists | Where-Object { $_.RootFolder.Name -eq 'PFMProcessSteps' })[0].Items | Where-Object { [string]$_.StepNumber -eq '6' })[0]
+Test-That 'T19 stage 6: a new site has the seed target 20' ([string]$stepRow.TargetBusinessDays -eq '20') ([string]$stepRow.TargetBusinessDays)
+$stepRow.TargetBusinessDays = 25
+$r = Invoke-T19 ''
+Test-That 'T19 stage 6: 25 becomes 20' ($r.Code -eq 0 -and [string]$stepRow.TargetBusinessDays -eq '20' -and $r.Text -match 'ITEM 7-stage6-target PASS set to 20 \(was 25\)') $r.Text
+$stepRow.TargetBusinessDays = 23
+$r = Invoke-T19 ''
+Test-That 'T19 stage 6: 23 is left as it is and reported' ($r.Code -eq 0 -and [string]$stepRow.TargetBusinessDays -eq '23' -and $r.Text -match 'ITEM 7-stage6-target INFO kept, 23') $r.Text
+$stepRow.TargetBusinessDays = 20
 # One value: the T19 r5 setting (new value 15, old value 20), the schema seed row and the default of F03 r7 agree (PFM 19 Nov 26).
 $t19Text = Get-Content -LiteralPath $script19 -Raw
 $f03Text = Get-Content -LiteralPath (Join-Path $Root 'flow/solution/defs/90161Z-F03-suspense-reminders-r7.json') -Raw
