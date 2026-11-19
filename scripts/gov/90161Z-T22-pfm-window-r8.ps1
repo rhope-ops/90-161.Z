@@ -17,25 +17,25 @@
   the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
   R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its 7 parts
-  from its own folder, 90161Z-T22-<part>-r7.ps1 (cards, types, ui, parts, grid, window, measure).
+  from its own folder, 90161Z-T22-<part>-r8.ps1 (cards, types, ui, parts, grid, window, measure).
   Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r7.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r8.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r7.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  check answers), 90161Z-T22-window-bounds.json (last size and place) and 90161Z-T22-card-<card>-r7.png (one per card) in
+  Outputs: 90161Z-T22-window-r8.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  check answers), 90161Z-T22-window-bounds.json (last size and place) and 90161Z-T22-card-<card>-r8.png (one per card) in
   the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r7.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r8.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r7.txt, 90161Z-T22-window-bounds.json and the card PNG files in the T22 folder (or -TestDir);
+  Writes: 90161Z-T22-window-r8.txt, 90161Z-T22-window-bounds.json and the card PNG files in the T22 folder (or -TestDir);
   with -Measure only the file given and the card PNG files in its folder; with -Opened nothing.
   Credentials: none.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
 $task = 'T22'
-$Rev = 'r7'
+$Rev = 'r8'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -125,7 +125,7 @@ function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'window', 'measure')
-# The full path of part $Name: 90161Z-T22-<name>-r7.ps1 in this file's folder.
+# The full path of part $Name: 90161Z-T22-<name>-r8.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
