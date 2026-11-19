@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 18 Nov 26 (Round R30a and R30b are open).
+Updated: 19 Nov 26 (R30a and R30b done; no open round).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,58 +26,14 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R30a r1 (run first): the flow steps again, with a Power Automate check first
-
-**For:** runs again the flow steps that failed in R29a on Power Automate errors: the health flow, the button flow I make by hand and the export reader, the list button, the import of the full flows and the full flow test. A first step checks that Power Automate shows my connections. The logo and the second person passed in R29a, so they do not run again.
-**Time:** about 2 hours with waits; about 60 minutes of my own work (estimate).
-**Changes:** on the test site: a probe list and library, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end; the solution "90-161.Z flows" is upgraded and stays. On my computer: my OneDrive folder RADE\90-161.Z and one export file in Downloads. Before Run, the window lists every file.
-**Steps:**
-1. Press Copy script next to the link below.
-2. Open the Start menu.
-3. Type: ISE
-4. Open Windows PowerShell ISE (not "Run as administrator").
-5. Select File > New.
-6. Click in the white script pane.
-7. Press Ctrl+V.
-8. Press F5. The RADE window opens.
-9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-10. Press Run.
-11. Do each step the window shows, until the log says DONE.
-12. At DONE, select Send in the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R30a-round-r1.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R30a PASSED" or "90161Z R30a NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error".
-
-### Round R30b r1 (run after R30a): my 90-161.Z window r4
-
-**For:** tests the fixes from my R29b screenshots (the "Your Work" line, the "See the 0 findings" link, the Action Status card and the Full History button), high contrast through Windows Settings, and a script check that every control has a name for Narrator. Then 5 questions on its look.
-**Time:** about 20 minutes (estimate).
-**Changes:** nothing on the test site or in Power Automate. On my computer: the T22 folder in my OneDrive folder RADE\90-161.Z (the window scripts and their result file). For 2 checks I turn high contrast on and off again in Windows Settings (Windows+U, Contrast themes); the check bar says each action. All data in the window is FAKE; nothing is read, saved or sent. Before Run, the window lists every file.
-**Steps:**
-1. Press Copy script next to the link below.
-2. Open the Start menu.
-3. Type: ISE
-4. Open Windows PowerShell ISE (not "Run as administrator").
-5. Select File > New.
-6. Click in the white script pane.
-7. Press Ctrl+V.
-8. Press F5. The RADE window opens.
-9. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-10. Press Run.
-11. Do each check in the bar at the bottom of the 90-161.Z window.
-12. Close the 90-161.Z window with its X.
-13. Answer the 5 questions in the RADE window (3 cards, then 2).
-14. At DONE, select Send in the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R30b-round-r1.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R30b PASSED" or "90161Z R30b NEEDS REVIEW", every file in the results folder attached). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If the 90-161.Z window does not open, send the results as they are.
+None. Claude builds the next round after the R30 questions are answered.
 
 ## Done
 
+- Round R30a r1 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: Power Automate shows my connections (new first step); the test list, library and form header were made by script; the test site was clean at the start and at the end. Failed: the same 3 Power Automate steps, again with portal errors during a Microsoft 365 fault (health flow import, button flow I make by hand, full flow import), and the form look: the link opens the new-entry page, which has no layout pencil. Skipped: 17 steps that needed them. Next round: the clean-up asks me to remove a flow only if it was made:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30a-results.md
+- Round R30b r1 (18 Nov 26): needs review. Window checks 11 of 12: Narrator names now pass; high contrast "on" fails. My answers: the "Your Work" line and the Action Status card are still not right; the look is "close, with small changes", with 8 notes for RADE:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r30b-results.md
 - Round R29a r5 (18 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the second person saved a row on the test list (T4, the first pass); the new 90-161.Z logo is the site logo and thumbnail; the test site was clean at the start and at the end. Failed: 3 Power Automate steps, each with a portal error about connections ("try again later"): the health flow import, the button flow I make by hand, and the full flow import. Skipped: 17 steps that needed them, the full flow test included. The flow fixes are still untested and run again in the next round:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-18-r29a-results.md
 - Round R29b r6 (18 Nov 26, second run): needs review. Window checks 9 of 12 (Narrator off now passes); the same 2 contrast checks and the Narrator names check fail; my 4 screenshots are 4 look defects, fixed in R30. Details are in the same file as r5.
