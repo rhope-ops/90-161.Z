@@ -65,6 +65,9 @@ function Add-T4Test($Rows, [int]$MeId) {
   $t4a = @($Rows | Where-Object { ([string]$_.Title).Trim() -eq 'T4a' -and $MeId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $MeId })
   $st = Read-State $script:dir
   if (-not $st -and $others.Count -eq 0) { $script:lines.Add('T4 NOT RUN: no second person in this round (T4 passed in R29a)'); return }
+  # R35 (19 Nov 26): a second person was added for EDITALL only, and no step asked for a new row, so T4 read FAIL. T4 counts only
+  # when the round asked (T4Asked=yes in the state file) or a row by another person is there.
+  if ($others.Count -eq 0 -and -not ($st -and $st['T4Asked'] -eq 'yes')) { $script:lines.Add('T4 NOT RUN: this round did not ask the second person to add a row (T4 passed in R29a)'); return }
   $addedText = $(if (-not $st) { 'not tried (no state file)' } elseif ($st['WasMember'] -eq 'yes') { 'already a member' } else { 'yes' })
   $t4pass = ($others.Count -ge 1)
   $counts = '(rows=' + $others.Count + '; T4a rows=' + $t4a.Count + '; person in the Visitors group=' + $addedText + ')'

@@ -565,6 +565,9 @@ $env:T21_TEST_ADDRESS = $fakeAddr
 $null = Invoke-T21 'Person'
 Remove-Item Env:T21_TEST_ADDRESS
 $r = Invoke-T21 'Read' @{ PollSeconds = 1; WaitMinutes = 0.03 }; Note $r
+Test-That 'Read r10 (R35): a second person but no add-a-row step: T4 NOT RUN, no T4 RESULT line' ($r.Text -match 'T4 NOT RUN: this round did not ask the second person to add a row' -and $r.Text -notmatch '(?m)^RESULT T4 ') $r.Text
+Add-Content -LiteralPath (Join-Path $t21 '90161Z-T21-person-state-r3.txt') -Value 'T4Asked=yes'
+$r = Invoke-T21 'Read' @{ PollSeconds = 1; WaitMinutes = 0.03 }; Note $r
 Test-That 'Read r10: no row by the second person: T4 FAILED with a plain reason about Contribute, no way C' ($r.Text -match 'T4 FAILED: .*=FAIL \(rows=0' -and $r.Text -match 'does not hold Contribute on this list' -and $r.Text -notmatch 'way C|flow writes the row') $r.Text
 $script = $script9
 
