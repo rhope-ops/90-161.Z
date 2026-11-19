@@ -6,6 +6,21 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | S10 C: flow e-mails keep their content (titles, status), because they stay inside DoD365. Scope: F03, F04, F06. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
+| 2026-11-19 | Flow steps: if they fail again on a new day, the PFM sends the exact Error line to the tenant help desk the same day; the flow steps stay in the next round. The probe fallback is open: R32 finding 4. | PFM | [R32 results](reviews/2026-11-18-r32-results.md) |
+| 2026-11-19 | Lock: "move the lock up" (the PFM); already done on main as engine-v21 by PR 170, so no second move. Scope: lock. | PFM | scripts/rade.lock.json |
+| 2026-11-19 | Form look: keep one look step in each round as a watch (the agent REC was to drop them). Scope: rounds after R32. | PFM | [R31a results](reviews/2026-11-18-r31a-results.md) |
+| 2026-11-19 | App writes: list-level Contribute on the intake lists only; the site stays Read (R16 W11). Scope: 90-161.Z app. | PFM | [handoff detail](reviews/2026-11-18-handoff-detail.md) |
+| 2026-11-19 | S9 A: a handover runbook (co-owners, connection swap, re-own steps) and a co-owner on each flow now. Scope: 90-161.Z flows. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
+| 2026-11-19 | F2 A and B: give PFM Office a permission level that edits all items now, and test it with a second person in the next round. Scope: T02/T20 permissions. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
+| 2026-11-19 | F1 A: F05 creates Legal rows when an action enters step 7 by any path (Guidance Memorandum, DAFMAN 5.1.7). Scope: F05. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
+| 2026-11-19 | F3 C: F01 and F05 check PFM Publications every 15 minutes (was every minute). Scope: F01, F05. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
+| 2026-11-19 | S5.3 A: keep the present count (20 working days, no holiday list) for the first import; a PFM Holidays setting comes later. Scope: F03. | PFM | [flow README](../flow/solution/README.md) |
+| 2026-11-19 | Retire the T02 provisioning flow (T20 replaced it in R25) and rewrite docs/power-automate-provisioning.md in the next build. | PFM | [handoff detail](reviews/2026-11-18-handoff-detail.md) |
+| 2026-11-19 | SPAR (SharePoint admin app) waits until after the pilot: no build and no look-only check before then. Replaces the agent REC of 15 Nov. | PFM | [handoff detail](reviews/2026-11-18-handoff-detail.md) |
+| 2026-11-19 | S8 closed: no old site to retire; the site in use is the isolated site (the PFM, 19 Nov). Scope: sweep S8. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
+| 2026-11-19 | S3 A: the tier list adds T-0 (DAFMAN Attachment 10), as the waiver rule 4.4A names it. Scope: lists and validator. | PFM | [sweep](reviews/2026-11-13-sweep-decisions.md) |
+| 2026-11-19 | The wing PowerPoint master is a separate project, not 90-161.Z: it leaves this repo's open items (rows of 2026-11-13). | PFM | - |
 | 2026-11-18 | R32 and R33 move to engine-v21 before they run ("Yes, move to engine-v21"): r2, with the bundle hash; the hand steps that deleted the saved checks leave go.md. Scope: R32, R33. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
 | 2026-11-18 | RADE lock moves to release engine-v21 (RADE b005bad, serial 16) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Window r6: D1 also on the Publications card (yes). The label that sits about 7 px below its title in the "Needs You Today" rows, and 2 px in rows blocks (the worker's reading of the code, not measured): fix in the next window revision (r7), not in R32. | PFM | [R31b results](reviews/2026-11-18-r31b-results.md) |
