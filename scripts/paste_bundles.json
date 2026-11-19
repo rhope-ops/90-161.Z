@@ -24,9 +24,9 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R30a-round-r1.ps1",
-      "round": "R30a",
-      "title": "Round R30a r1: the flow steps again (health flow, button flow and export reader, view button, full flows and the full flow test), with a Power Automate check first",
+      "out": "scripts/gov/paste/90161Z-R31a-round-r1.ps1",
+      "round": "R31a",
+      "title": "Round R31a r1: the flow steps a third time (health flow, button flow and export reader, view button, full flows and the full flow test), with clearer cards",
       "files": [
         {
           "dir": "T17",
@@ -139,14 +139,15 @@
               "kind": "pick",
               "choices": [
                 "Yes",
-                "No"
+                "No SharePoint connection"
               ]
             }
           ],
           "doneLog": "Confirmed by you: Power Automate shows the connections.",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt"
+          "urlConfig": "90161Z-flow-portal.txt",
+          "doneText": "The list loaded"
         },
         {
           "name": "T21 Import the health flow r5: choose the file",
@@ -229,8 +230,7 @@
               "choices": [
                 "Yes, and I selected a connection",
                 "Yes, but no connection could be made",
-                "No such box",
-                "The import was refused"
+                "No such box"
               ]
             },
             {
@@ -505,15 +505,16 @@
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You look at the test list form for the test header and the menu item \"Configure layout\". About 3 minutes.",
+          "note": "You open a new row of the test list in its side panel and look for the test header and the menu item \"Configure layout\". About 3 minutes.",
           "guide": [
             "1. In the browser, select the tab \"90-161.Z test page\".",
-            "2. Select \"Open the new row form\".",
-            "3. Look at the top of the form for the text \"90-161.Z test header\".",
-            "4. At the top of the form, select \"Edit form\" (a pencil).",
-            "5. Look at the menu that opened for \"Configure layout\".",
-            "6. Select \"Cancel\".",
-            "If the tab or the form is missing: select \"Skip\"."
+            "2. Select \"Open the probe list\".",
+            "3. At the top of the list, select \"+ New\".",
+            "4. Look at the top of the panel that opened for the text \"90-161.Z test header\".",
+            "5. At the top right of the panel, select \"Edit form\" (a pencil).",
+            "6. Look at the menu that opened for \"Configure layout\".",
+            "7. Select \"Cancel\" in the panel.",
+            "If the tab, the list or the panel does not open: select \"It failed\"."
           ],
           "marker": "90161Z-T21-form-looked.txt",
           "estimate": 3,
@@ -537,11 +538,12 @@
               "choices": [
                 "Yes",
                 "No",
-                "I found no form menu"
+                "I found no Edit form pencil"
               ]
             }
           ],
-          "doneLog": "Confirmed by you: looked at the form."
+          "doneLog": "Confirmed by you: looked at the form.",
+          "doneText": "I looked at the form"
         },
         {
           "name": "T21 Use the list button r6",
@@ -576,8 +578,7 @@
               "choices": [
                 "A button Run the test flow",
                 "No button",
-                "The plain list",
-                "An error"
+                "The plain list"
               ]
             },
             {
@@ -587,12 +588,12 @@
               "choices": [
                 "The flow ran",
                 "The flow was not found",
-                "Another error",
                 "No panel opened"
               ]
             }
           ],
-          "doneLog": "Confirmed by you: used the button."
+          "doneLog": "Confirmed by you: used the button.",
+          "doneText": "I tried the button"
         },
         {
           "name": "T24 Import the full solution r2: choose the file",
@@ -847,15 +848,26 @@
             {
               "key": "f04-tables",
               "prompt": "Does it show 2 or more tables, each headed Step and a number?",
-              "kind": "yesno"
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No",
+                "No e-mail to look at"
+              ]
             },
             {
               "key": "f04-to",
               "prompt": "Is the To line the alert address you typed (your own address)?",
-              "kind": "yesno"
+              "kind": "pick",
+              "choices": [
+                "Yes",
+                "No",
+                "No e-mail to look at"
+              ]
             }
           ],
-          "doneLog": "Confirmed by you: looked at the F04 e-mail."
+          "doneLog": "Confirmed by you: looked at the F04 e-mail.",
+          "doneText": "I looked"
         },
         {
           "name": "T24 Run F02 again r2",
@@ -990,28 +1002,28 @@
           "doneLog": "Confirmed by you: removed.",
           "url": "https://make.powerautomate.appsplatform.us/",
           "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-          "urlConfig": "90161Z-flow-portal.txt"
+          "urlConfig": "90161Z-flow-portal.txt",
+          "after": [
+            "T21 Import the health flow r5: choose the file"
+          ]
         },
         {
-          "name": "T21 Remove the button flow and solution r6",
-          "title": "Delete the button flow and its solution",
+          "name": "T21 Remove the button flow r6",
+          "title": "Delete the button flow you made",
           "kind": "guide",
           "dir": "T21",
           "file": "",
-          "note": "You delete the button flow you made and the solution \"90-161.Z probe button\". About 3 minutes.",
+          "note": "You delete the button flow you made. It runs only because you made the flow. About 2 minutes.",
           "guide": [
-            "1. On the left, select \"Solutions\" (it can be under \"More\").",
-            "2. Select the solution \"90-161.Z probe button\".",
-            "3. In the row of the flow \"90161Z T21 Probe Button hand r5\", select the three dots.",
-            "4. Select \"Delete from this environment\".",
-            "5. Select \"Delete\".",
-            "6. Select the Back arrow at the top left to return to the list of solutions.",
-            "7. In the row of \"90-161.Z probe button\", select the three dots.",
-            "8. Select \"Delete from this environment\".",
-            "9. Select \"Delete\".",
-            "If a flow or the solution is not in the list: skip it.",
+            "1. Select \"Open in browser\" above.",
+            "2. On the left, select \"Solutions\" (it can be under \"More\").",
+            "3. Select the solution \"90-161.Z probe button\".",
+            "4. In the row of the flow \"90161Z T21 Probe Button hand r5\", select the three dots.",
+            "5. Select \"Delete from this environment\".",
+            "6. Select \"Delete\".",
+            "If the flow is not in the list: skip it.",
             "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
-            "If one does not delete: select \"It failed\".",
+            "If the flow does not delete: select \"It failed\".",
             "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
           ],
           "marker": "90161Z-T21-removed.txt",
@@ -1019,7 +1031,41 @@
             "net-flow"
           ],
           "estimate": 5,
-          "doneLog": "Confirmed by you: removed."
+          "doneLog": "Confirmed by you: removed.",
+          "after": [
+            "T21 Button flow by hand r5: make the flow"
+          ],
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "urlConfig": "90161Z-flow-portal.txt"
+        },
+        {
+          "name": "T21 Remove the button solution r6",
+          "title": "Delete the button flow solution",
+          "kind": "guide",
+          "dir": "T21",
+          "file": "",
+          "note": "You delete the solution \"90-161.Z probe button\". It runs only because the solution was made. About 2 minutes.",
+          "guide": [
+            "1. Select \"Open in browser\" above.",
+            "2. On the left, select \"Solutions\" (it can be under \"More\").",
+            "3. In the row of \"90-161.Z probe button\", select the three dots.",
+            "4. Select \"Delete from this environment\".",
+            "5. Select \"Delete\".",
+            "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
+            "If the solution does not delete: select \"It failed\".",
+            "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
+          ],
+          "marker": "90161Z-T21-removed.txt",
+          "needs": [
+            "net-flow"
+          ],
+          "estimate": 5,
+          "doneLog": "Confirmed by you: removed.",
+          "after": [
+            "T21 Button flow by hand r5: make a solution"
+          ],
+          "url": "https://make.powerautomate.appsplatform.us/",
+          "urlConfig": "90161Z-flow-portal.txt"
         }
       ],
       "collect": [
@@ -1791,7 +1837,7 @@
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R30a r1: Power Automate check, health flow, button flow and export, list form and view button, full flows and the full flow test. Fake data.",
+          "summary": "Round R31a r1: Power Automate check, health flow, button flow and export, list form and view button, full flows and the full flow test. Fake data.",
           "steps": [
             "T21 Check the test site is clean r6",
             "T21 Make the probe list r6",
@@ -1824,65 +1870,66 @@
             "T24 Clean up r2",
             "T21 Remove the test list and library r6",
             "T21 Remove the health flow and solution r6",
-            "T21 Remove the button flow and solution r6"
+            "T21 Remove the button flow r6",
+            "T21 Remove the button solution r6"
           ]
         }
       ]
     },
     {
-      "out": "scripts/gov/paste/90161Z-R30b-round-r1.ps1",
-      "round": "R30b",
-      "title": "Round R30b r1: the 90-161.Z window r4 (look fixes, contrast through Windows Settings, a control-name check), then the look questions",
+      "out": "scripts/gov/paste/90161Z-R31b-round-r1.ps1",
+      "round": "R31b",
+      "title": "Round R31b r1: the 90-161.Z window r5 (logo and title, high contrast, 2 look checks in the window, a picture of each card), then the look questions",
       "files": [
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-pfm-window-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-pfm-window-r5.ps1"
         },
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-cards-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-cards-r5.ps1"
         },
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-types-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-types-r5.ps1"
         },
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-ui-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-ui-r5.ps1"
         },
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-parts-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-parts-r5.ps1"
         },
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-grid-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-grid-r5.ps1"
         },
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-window-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-window-r5.ps1"
         },
         {
           "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-measure-r4.ps1"
+          "src": "scripts/gov/90161Z-T22-measure-r5.ps1"
         }
       ],
       "steps": [
         {
-          "name": "T22 Open the 90-161.Z window r4",
-          "title": "Open the 90-161.Z window and do its 12 checks",
+          "name": "T22 Open the 90-161.Z window r5",
+          "title": "Open the 90-161.Z window and do its 14 checks",
           "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r4.ps1",
+          "file": "90161Z-T22-pfm-window-r5.ps1",
           "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data. Do each of the 12 checks in the bar at the bottom, then select Pass or Fail. Contrast now uses Windows+U. Then close the window.",
+          "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 14 checks in the bar at the bottom, then select Pass or Fail. Then close the window.",
           "estimate": 15,
           "help": "Send the results as they are. The step can be run again."
         },
         {
-          "name": "T22 Did the window open r4",
+          "name": "T22 Did the window open r5",
           "title": "Check that the window opened",
           "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r4.ps1",
+          "file": "90161Z-T22-pfm-window-r5.ps1",
           "args": "-Opened",
           "minutes": 2,
           "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
@@ -1890,7 +1937,7 @@
           "help": "Send the results as they are."
         },
         {
-          "name": "T22 Answer: look and cards r4",
+          "name": "T22 Answer: look and cards r5",
           "title": "Answer 3 questions about the window look",
           "kind": "guide",
           "dir": "T22",
@@ -1902,7 +1949,7 @@
           "marker": "90161Z-T22-judged-look.txt",
           "estimate": 2,
           "after": [
-            "T22 Did the window open r4"
+            "T22 Did the window open r5"
           ],
           "answers": [
             {
@@ -1928,42 +1975,98 @@
             }
           ],
           "doneLog": "Confirmed by you: judged the look."
-        },
-        {
-          "name": "T22 Answer: the screenshot fixes r4",
-          "title": "Answer 2 questions about the fixes from your screenshots",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 2 questions about the fixes from your screenshots. About 1 minute.",
-          "guide": [
-            "1. Answer each of the next 2 cards."
-          ],
-          "marker": "90161Z-T22-judged-fixes.txt",
-          "estimate": 2,
-          "after": [
-            "T22 Did the window open r4"
-          ],
-          "answers": [
-            {
-              "key": "w-crumb",
-              "prompt": "On the card FAKE OI 33-101: does the line \"Your Work > FAKE OI 33-101\" read as one line?",
-              "kind": "yesno"
-            },
-            {
-              "key": "w-status",
-              "prompt": "On the same card: does the Action Status card end level with the main card?",
-              "kind": "yesno"
-            }
-          ],
-          "doneLog": "Confirmed by you: judged the fixes."
         }
       ],
       "collect": [
         {
           "dir": "T22",
-          "name": "90161Z-T22-window-r4.txt",
-          "step": "T22 Open the 90-161.Z window r4"
+          "name": "90161Z-T22-window-r5.txt",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-home-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-empty-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-queue-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-reviews-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step8-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-confirm-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-sendback-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-waves-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step11-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step12-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step13-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-pub-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-settings-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-loading-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-failed-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-noperm-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-remindall-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
         }
       ],
       "cleanup": [
@@ -2072,7 +2175,7 @@
           "kind": "dir"
         },
         {
-          "path": "T07\\90161Z-T07-seal-prep-r4.ps1",
+          "path": "T07\\90161Z-T07-seal-prep-r5.ps1",
           "kind": "glob"
         },
         {
@@ -2184,7 +2287,7 @@
           "kind": "glob"
         },
         {
-          "path": "T16\\90161Z-T16-site-setup-r4.ps1",
+          "path": "T16\\90161Z-T16-site-setup-r5.ps1",
           "kind": "glob"
         },
         {
@@ -2576,7 +2679,7 @@
           "kind": "dir"
         },
         {
-          "path": "T21\\90161Z-T21-probe-r4.ps1",
+          "path": "T21\\90161Z-T21-probe-r5.ps1",
           "kind": "glob"
         },
         {
@@ -2662,18 +2765,61 @@
         {
           "path": "T16\\90161Z-T16-logo-r12.txt",
           "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-cards-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-types-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-ui-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-parts-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-grid-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-measure-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-fixes.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-card-*-r5.png",
+          "kind": "glob"
         }
       ],
       "fetch": [],
       "apps": [
         {
           "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R30b r1: the 90-161.Z window r4 with fake data and its 12 checks, then 5 questions on its look. Fake data.",
+          "summary": "Round R31b r1: the 90-161.Z window r5 with fake data and its 14 checks, then 3 questions on its look. Fake data.",
           "steps": [
-            "T22 Open the 90-161.Z window r4",
-            "T22 Did the window open r4",
-            "T22 Answer: look and cards r4",
-            "T22 Answer: the screenshot fixes r4"
+            "T22 Open the 90-161.Z window r5",
+            "T22 Did the window open r5",
+            "T22 Answer: look and cards r5"
           ]
         }
       ]

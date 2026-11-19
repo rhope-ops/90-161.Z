@@ -1,14 +1,16 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r4, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
+  90-161.Z Task 22 r5, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
   generated into this file, and the few names it needs from the window.
 .DESCRIPTION
   The block between the rade-ui markers is written by scripts/build_task_scripts.py from the pinned RADE commit
   (scripts/rade.lock.json); never edit it here. It runs inside the main script's try block, after $ui.Form exists,
   and fills $ui. The lines above the block give it what it reads from a RADE window: $apps (one test application, so
-  the layout self-check runs), $dot, $round and Test-Deploy.
-  Inputs: $ui with $ui.Form (made by the main script). Outputs: the $ui members of the shared UI file.
-  Run: not alone; 90161Z-T22-pfm-window-r4.ps1 dot-sources it from its own folder.
+  the layout self-check runs), $dot, $round and Test-Deploy. The lines after the block choose the colors for Windows
+  high contrast (R31 W2): Select-T22Color and $ui.UseColors (the window part applies them: $wn.Recolor).
+  Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the shared UI file, $ui.HcRole,
+  $ui.OwnPc, $ui.OwnC, $ui.High, $ui.UseColors and the function Select-T22Color.
+  Run: not alone; 90161Z-T22-pfm-window-r5.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -296,3 +298,31 @@ $ui.Check = {
     foreach ($l in @(& $ui.Measure $card)) { $ui.LayBad.Add([string]$l) }
   } catch { $ui.LayBad.Add('LAYOUT ' + $card + ' the self-check stopped: ' + (ConvertTo-Masked ([string]$_.Exception.Message))) } }
 # <<< rade-ui
+# ---- High contrast (R31 W2; R30b check 10: the window kept its own colors when a contrast theme came on)
+# With Windows high contrast on, the window paints with the system colors of the theme instead of its own palette.
+# The role of each color: backgrounds become Window, text and lines WindowText, muted text GrayText, the action
+# Highlight, a button that is not available ButtonFace. The rail turns round: navy (its background) becomes WindowText
+# and its light text Window, so it stays readable. One table serves $pc and $ui.C: a hashtable key ignores case, and
+# each name the two share (navy, ink, track, white) has one role in both. Yellow fills become Window: dark text on the
+# theme's Highlight color can be hard to read.
+$ui.HcRole = @{ ink = 'WindowText'; muted = 'GrayText'; surface = 'Window'; line = 'WindowText'; navy = 'WindowText'; onPrimaryMuted = 'Window'
+  accentFill = 'Window'; primary = 'Highlight'; track = 'GrayText'; redTint = 'Window'; amberTint = 'Window'; greenTint = 'Window'; white = 'Window'
+  blue = 'Highlight'; yellow = 'Window'; green = 'WindowText'; greenInk = 'WindowText'; red = 'WindowText'; gray = 'GrayText'; edge = 'WindowText'
+  hair = 'GrayText'; off = 'ButtonFace'; offInk = 'GrayText' }
+function Select-T22Color([bool]$High, [hashtable]$Own, [hashtable]$Role) {
+  # The colors to paint with: a new table with the keys of $Own. $High false: the colors of $Own. $High true: for each
+  # key the system color its role names in $Role (a key with no role gets WindowText, so no text is lost). $Own is not
+  # changed. The measure part checks this choice without switching the Windows theme (tests/ps/Test-T22Layout.ps1).
+  $out = @{}
+  foreach ($k in @($Own.Keys)) {
+    if ($High) { $r = [string]$Role[$k]; if (-not $r) { $r = 'WindowText' }; $out[$k] = [System.Drawing.SystemColors]::$r }
+    else { $out[$k] = $Own[$k] } }
+  return $out
+}
+# The window's own colors, kept before any change, and whether the system colors are in use.
+$ui.OwnPc = $pc.Clone(); $ui.OwnC = $ui.C.Clone(); $ui.High = $false
+# Puts the colors for $High into $pc and $ui.C in place (every builder and every paint handler reads them there).
+$ui.UseColors = { param([bool]$High)
+  $a = Select-T22Color $High $ui.OwnPc $ui.HcRole; foreach ($k in @($a.Keys)) { $pc[$k] = $a[$k] }
+  $b = Select-T22Color $High $ui.OwnC $ui.HcRole; foreach ($k in @($b.Keys)) { $ui.C[$k] = $b[$k] }
+  $ui.High = $High }
