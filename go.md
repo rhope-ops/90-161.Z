@@ -26,7 +26,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R33 r2: the paste-size test, one paste of 1 MB
+### Round R33 r3: the paste-size test, one paste of 1 MB
 
 **For:** finds out if a paste of 1 MB works, so the rounds need no size limit. It is also the first run of RADE engine-v21: I compare the script code, and I read 1 check line that the report does not hold (does my computer need the "Bypass" setting). The round holds RADE, one padding file (6,000 lines of fixed text, no data) and one check that the file arrived whole.
 **Time:** about 5 minutes (estimate).
@@ -49,7 +49,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 15. Press Run.
 16. At DONE, select Send in the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R33-round-r2.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R33-round-r3.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R33 PASSED" or "90161Z R33 NEEDS REVIEW", the result file attached). Then tell Claude the e-mail is sent, and "Bypass: ran" or "Bypass: blocked".
 **If it fails:** if the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R33 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R33 did not paste". That is a valid result of this test.
