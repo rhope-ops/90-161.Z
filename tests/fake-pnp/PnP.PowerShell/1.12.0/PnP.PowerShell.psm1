@@ -23,6 +23,35 @@ namespace Microsoft.SharePoint.Client {
 '@
 }
 
+# One fake permission level as plain hashtables (Id, Name, RoleTypeKind, BasePermissions with High and Low). Hashtables, not
+# [pscustomobject]: in Windows PowerShell 5.1 a [pscustomobject]@{} cast written inside a method call (List.Add) or nested in
+# another one is not always a real PSCustomObject, and "$x.Low = ..." on such an object can add a property to its wrapper
+# that ConvertTo-Json does not write (the test saw its own change; the script got the old value). A hashtable key is the
+# same object on 5.1 and 7. Returns the level.
+function New-FakeLevel([int]$Id, [string]$Name, [int]$Kind, $High, $Low) {
+  $bits = @{ High = $High; Low = $Low }
+  $level = @{ Id = $Id; Name = $Name; RoleTypeKind = $Kind; BasePermissions = $bits }
+  return $level
+}
+
+# Change the permission bits of a fake level by its name (keys of its hashtable). Takes the name, High and Low (a string or
+# a number, as a test needs); returns nothing.
+function Set-FakeLevelBits([string]$Name, $High, $Low) {
+  $hit = @($global:FakeSP.Levels | Where-Object { $_['Name'] -eq $Name })
+  if (-not $hit.Count) { throw ('FAKE: no level named ' + $Name) }
+  $hit[0]['BasePermissions']['High'] = $High; $hit[0]['BasePermissions']['Low'] = $Low
+}
+
+# The levels as the REST answer writes them. Real SharePoint writes SP.BasePermissions High and Low as JSON strings; with
+# $global:FakeSP.BitsAsNumbers on, they are written as JSON numbers (so the script is proved for both). Returns JSON text.
+function Get-FakeLevelJson {
+  $out = @($global:FakeSP.Levels | ForEach-Object {
+      $h = $_['BasePermissions']['High']; $l = $_['BasePermissions']['Low']
+      if ($global:FakeSP.BitsAsNumbers) { $h = [long]$h; $l = [long]$l } else { $h = [string]$h; $l = [string]$l }
+      @{ Id = [int]$_['Id']; Name = [string]$_['Name']; RoleTypeKind = [int]$_['RoleTypeKind']; BasePermissions = @{ High = $h; Low = $l } } })
+  return (@{ value = $out } | ConvertTo-Json -Depth 5 -Compress)
+}
+
 # Reset the fake site: an empty site with one Documents library, no groups and the 4 standard permission levels (with the
 # real permission bits of SharePoint Online). Takes nothing; returns nothing.
 function New-FakeSite {
@@ -30,7 +59,7 @@ function New-FakeSite {
     Levels = (New-Object System.Collections.ArrayList); WebRoles = @{} }
   foreach ($lv in @(@(1073741829, 'Full Control', 5, '2147483647', '4294705151'), @(1073741830, 'Edit', 6, '432', '1011030767'),
       @(1073741827, 'Contribute', 3, '432', '1011028719'), @(1073741826, 'Read', 2, '176', '138612833'))) {
-    $null = $global:FakeSP.Levels.Add([pscustomobject]@{ Id = $lv[0]; Name = $lv[1]; RoleTypeKind = $lv[2]; BasePermissions = [pscustomobject]@{ High = $lv[3]; Low = $lv[4] } })
+    $null = $global:FakeSP.Levels.Add((New-FakeLevel $lv[0] $lv[1] $lv[2] $lv[3] $lv[4]))
   }
   $docs = Add-FakeList 'Documents' 101 'Shared Documents'
   $null = $docs
@@ -155,7 +184,7 @@ function Get-FakeRestAnswer([string]$path) {
   }
   # Groups get the Id of their place in the list (1, 2, ...); levels and roles on the site (T20 r2).
   if ($path -eq 'web/sitegroups') { $i = 0; return (@{ value = @($global:FakeSP.Groups | ForEach-Object { $i++; @{ Id = $i; Title = $_ } }) } | ConvertTo-Json -Depth 4 -Compress) }
-  if ($path -eq 'web/roledefinitions') { return (@{ value = @($global:FakeSP.Levels) } | ConvertTo-Json -Depth 5 -Compress) }
+  if ($path -eq 'web/roledefinitions') { return (Get-FakeLevelJson) }
   if ($path -match '^web/roleassignments/getbyprincipalid\((\d+)\)/roledefinitionbindings$') {
     if (-not $global:FakeSP.WebRoles.ContainsKey([int]$Matches[1])) { throw 'FAKE 404: the principal holds no role on the site' }
     return (@{ value = @($global:FakeSP.WebRoles[[int]$Matches[1]] | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Depth 4 -Compress)
@@ -250,14 +279,15 @@ function Send-FakeWebRest([string]$path, $b) {
   }
   if ($path -eq 'web/roledefinitions') {
     if ($b.__metadata.type -ne 'SP.RoleDefinition' -or $b.BasePermissions.__metadata.type -ne 'SP.BasePermissions') { throw 'FAKE 400: SP.RoleDefinition with SP.BasePermissions expected' }
-    if (@($global:FakeSP.Levels | Where-Object { $_.Name -eq $b.Name }).Count) { throw ('FAKE 500: a level named ' + $b.Name + ' exists') }
-    $id = [int](($global:FakeSP.Levels | ForEach-Object { $_.Id } | Measure-Object -Maximum).Maximum) + 1
-    $null = $global:FakeSP.Levels.Add([pscustomobject]@{ Id = $id; Name = [string]$b.Name; RoleTypeKind = 0; BasePermissions = [pscustomobject]@{ High = [string]$b.BasePermissions.High; Low = [string]$b.BasePermissions.Low } })
+    if (@($global:FakeSP.Levels | Where-Object { $_['Name'] -eq $b.Name }).Count) { throw ('FAKE 500: a level named ' + $b.Name + ' exists') }
+    $id = [int](($global:FakeSP.Levels | ForEach-Object { $_['Id'] } | Measure-Object -Maximum).Maximum) + 1
+    $level = New-FakeLevel $id ([string]$b.Name) 0 ([string]$b.BasePermissions.High) ([string]$b.BasePermissions.Low)
+    $null = $global:FakeSP.Levels.Add($level)
     return ''
   }
   if ($path -match '^web/roleassignments/addroleassignment\(principalid=(\d+),roledefid=(\d+)\)$') {
     $p = [int]$Matches[1]; $d = [int]$Matches[2]
-    if ($p -lt 1 -or $p -gt @($global:FakeSP.Groups).Count -or -not @($global:FakeSP.Levels | Where-Object { $_.Id -eq $d }).Count) { throw 'FAKE 404: no such group or level' }
+    if ($p -lt 1 -or $p -gt @($global:FakeSP.Groups).Count -or -not @($global:FakeSP.Levels | Where-Object { $_['Id'] -eq $d }).Count) { throw 'FAKE 404: no such group or level' }
     if (@($global:FakeSP.WebRoles[$p]) -contains $d) { throw 'FAKE 500: the group holds that level already' }
     $global:FakeSP.WebRoles[$p] = @(@($global:FakeSP.WebRoles[$p]) | Where-Object { $_ }) + $d; return ''
   }
@@ -286,4 +316,4 @@ function Invoke-PnPSPRestMethod {
 }
 
 Export-ModuleMember -Function Connect-PnPOnline, Disconnect-PnPOnline, Get-PnPContext, Get-PnPList, Invoke-PnPSPRestMethod, New-FakeSite, Add-FakeList,
-  Get-PnPField, Add-PnPFieldFromXml, Get-PnPListItem, Set-PnPListItem
+  Set-FakeLevelBits, Get-PnPField, Add-PnPFieldFromXml, Get-PnPListItem, Set-PnPListItem

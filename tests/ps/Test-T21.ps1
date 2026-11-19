@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T21-probe-r8.ps1 and its modules 90161Z-T21-<part>-r8.ps1 (R35 probe, parts Make, Person, Office, Run, Look,
+# Tests scripts/gov/90161Z-T21-probe-r8.ps1 and its modules 90161Z-T21-<part>-r8.ps1 (R34 probe, parts Make, Person, Office, Run, Look,
 # Form, View, Open, Read, Clean) against a small fake site (pwsh 7, also Windows PowerShell 5.1 through tests/ps/Invoke-Ps51.ps1).
 # The fake PnP cmdlets are defined here (functions in this file); only an empty PnP.PowerShell 1.12.0 module is put on the
 # module path so the script's "is PnP installed" check passes. It proves the script's logic and output; the real service is
@@ -154,7 +154,7 @@ function Get-FakeRestAnswer([string]$path) {
   if ($path -match "^web/lists\(guid'([^']+)'\)$") { return (@{ WriteSecurity = (Get-FakeList $Matches[1]).WriteSecurity } | ConvertTo-Json -Compress) }
   if ($path -match "^web/lists\(guid'([^']+)'\)/getusereffectivepermissions\(@u\)$") { return (Get-FakeEffective (Get-FakeList $Matches[1])) }
   if ($path -eq 'web/currentuser') { return (@{ Id = 11 } | ConvertTo-Json -Compress) }
-  if ($path -match '^web/sitegroups/getbyid\((\d+)\)/users$') { return (@{ value = @(@($global:F.GroupUsers[[int]$Matches[1]]) | Where-Object { $_ } | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Compress) }
+  if ($path -match '^web/sitegroups/getbyid\((\d+)\)/users$') { if ([int]$Matches[1] -eq $global:F.FailGroupRead) { throw 'FAKE 404: no such group' }; return (@{ value = @(@($global:F.GroupUsers[[int]$Matches[1]]) | Where-Object { $_ } | ForEach-Object { @{ Id = $_ } }) } | ConvertTo-Json -Compress) }
   if ($path -match "^web/siteusers/getbyemail\('([^']+)'\)$") {
     $a = [uri]::UnescapeDataString($Matches[1])
     if (-not $global:F.Users.ContainsKey($a) -or $global:F.NoGetByEmail) { throw ('FAKE 404 user ' + $a) }
@@ -387,9 +387,9 @@ $edit = @($lst.Items | Where-Object { $_.Title -match '^EDITALL R35[0-9a-f]{8}$'
 Test-That 'Office: exit 0, the person in PFM Office, the last line' ($r.Code -eq 0 -and $r.Text -match 'OFFICE second person in PFM Office: yes; status: added and listed in the group' -and (@($global:F.GroupUsers[9]) -contains 31) -and $r.Out[-1] -eq 'PROBE Office done: passed=5 failed=0') $r.Text
 Test-That 'Office: edit own rows on the probe list, the group holds the level on it, one EDITALL row by you' ($lst.WriteSecurity -eq 2 -and (@($lst.Roles[9]) -join ',') -eq '1073741930' -and $r.Text -match 'o3-level PASS .*given now=yes' -and $edit.Count -eq 1 -and $edit[0].Author.LookupId -eq 11) $r.Text
 Test-That 'Office: the read-back says the person can edit every row; the edit form link is a test-run note' ($r.Text -match 'o5-person PASS person in PFM Office=yes; can edit every row of the probe list now=yes' -and $r.Text -match 'o6-link INFO .*clipboard=no \(test run\)') $r.Text
-Test-That 'Office: the office state file holds only 3 numbers or flags; no address on screen or in the file' ($oText -match '(?m)^UserId=31\r?$' -and $oText -match '(?m)^GroupId=9\r?$' -and $oText -match '(?m)^WasMember=no\r?$' -and $oText -notmatch '@|fake|person' -and $r.Text -notmatch 'second\.person|@' -and $r.File -notmatch 'second\.person|@') ($oText + $r.Text)
+Test-That 'Office: the office state file holds only numbers (group, the people added); no address on screen or in the file' ($oText -match '(?m)^UserIds=31\r?$' -and $oText -match '(?m)^GroupId=9\r?$' -and $oText -notmatch '@|fake|person' -and $r.Text -notmatch 'second\.person|@' -and $r.File -notmatch 'second\.person|@') ($oText + $r.Text)
 $r = Invoke-T21 'Office'; Note $r
-Test-That 'Office twice: no second row, no second role, the person still counts as added' ($r.Code -eq 0 -and @($lst.Items | Where-Object { $_.Title -like 'EDITALL *' }).Count -eq 1 -and @($lst.Roles[9]).Count -eq 1 -and $r.Text -match 'given now=no' -and $r.Text -match 'made now=no' -and (Get-Content -LiteralPath $officeState -Raw) -match 'WasMember=no') $r.Text
+Test-That 'Office twice: no second row, no second role, the person still counts as added' ($r.Code -eq 0 -and @($lst.Items | Where-Object { $_.Title -like 'EDITALL *' }).Count -eq 1 -and @($lst.Roles[9]).Count -eq 1 -and $r.Text -match 'given now=no' -and $r.Text -match 'made now=no' -and (Get-Content -LiteralPath $officeState -Raw) -match '(?m)^UserIds=31\r?$') $r.Text
 $r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r
 Test-That 'Read: EDITALL FAILED while the second person has not saved your row, with the next step' ($r.Text -match 'EDITALL FAILED: a PFM Office member who is not the author edits the row=FAIL \(EDITALL rows by you=1; saved by the second person=0\); next: ' -and @($r.Out | Where-Object { $_ -eq 'RESULT EDITALL FAIL' }).Count -eq 1) $r.Text
 $edit[0].Editor = [pscustomobject]@{ LookupId = 31 }; $r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r
@@ -398,6 +398,13 @@ $edit[0].Editor = [pscustomobject]@{ LookupId = 32 }; $r = Invoke-T21 'Read' @{ 
 Test-That 'Read: a save by a person who is not the one on file does not count' ($r.Text -match 'EDITALL FAILED: .*saved by the second person=0') $r.Text
 $r = Invoke-T21 'Clean'; Note $r
 Test-That 'Clean: takes the person out of PFM Office and Visitors, deletes both state files' ($r.Code -eq 0 -and -not (@($global:F.GroupUsers[9]) -contains 31) -and -not (@($global:F.GroupUsers[7]) -contains 31) -and -not (Test-Path -LiteralPath $officeState) -and -not (Test-Path -LiteralPath $state) -and $r.Text -match 'c1b-office PASS' -and $r.Out[-1] -eq 'PROBE Clean done: passed=4 failed=0') $r.Text
+# Review 19 Nov 26: persons A (still on file) and B are both recorded and removed; a failed c1b never stops c2 and c3.
+New-Site; $null = Invoke-T21 'Make'; $env:T21_TEST_ADDRESS = $fakeAddr; $null = Invoke-T21 'Person'; $null = Invoke-T21 'Office'; Remove-Item -LiteralPath $state
+$env:T21_TEST_ADDRESS = 'member.person@fake.example'; $null = Invoke-T21 'Person'; Remove-Item Env:T21_TEST_ADDRESS; $r = Invoke-T21 'Office'; Note $r
+Test-That 'Office with a new person while an earlier one is on file: both in the state file, a NOTE' ((Get-Content -LiteralPath $officeState -Raw) -match '(?m)^UserIds=31,32\r?$' -and $r.Text -match 'NOTE o5: a person from an earlier run is still on file' -and (@($global:F.GroupUsers[9]) -join ',') -eq '3,31,32') $r.Text; $global:F.FailGroupRead = 9; $r = Invoke-T21 'Clean'; Note $r
+Test-That 'Clean: a failed read of PFM Office is a c1b FAIL; the list and library are still recycled; the state file is kept' ($r.Code -eq 0 -and $r.Text -match 'ITEM c1b-office FAIL PFM Office could not be cleaned: ' -and $global:F.Recycled.Count -eq 2 -and (Test-Path -LiteralPath $officeState)) $r.Text
+$global:F.FailGroupRead = 0; $r = Invoke-T21 'Clean'; Note $r
+Test-That 'Clean again: removes both recorded people from PFM Office and deletes the state file' ($r.Text -match 'c1b-office PASS .*\(2; state file deleted\)' -and (@($global:F.GroupUsers[9]) -join ',') -eq '3' -and -not (Test-Path -LiteralPath $officeState)) $r.Text
 # The cases where the test cannot prove anything: no second person, no level, no group, a person who edits every row already.
 New-Site; $null = Invoke-T21 'Make'; $r = Invoke-T21 'Office'; Note $r
 Test-That 'Office without Person: FAIL, nobody added, no state file' ($r.Code -eq 0 -and $r.Text -match 'o5-person FAIL no second person on file: run the part Person first' -and $r.Text -match 'OFFICE second person in PFM Office: no' -and -not (Test-Path -LiteralPath $officeState)) $r.Text

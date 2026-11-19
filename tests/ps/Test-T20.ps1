@@ -56,7 +56,7 @@ Test-That 'site: Created is indexed on the activity log' ([bool]@($log.FieldList
 Test-That 'site: Title column renamed' (@(@($ours | Where-Object { $_.RootFolder.Name -eq 'PFMOffices' })[0].FieldList | Where-Object { $_.InternalName -eq 'Title' })[0].Title -eq 'Office')
 Test-That 'site: versioning on' (@($ours | Where-Object { -not $_.EnableVersioning }).Count -eq 0)
 # F2 A (PFM 19 Nov 26): the group PFM Office holds a level with the bits of Edit plus Override List Behaviors (0x100) on the site.
-$lv = @($global:FakeSP.Levels | Where-Object { $_.Name -eq 'PFM Office Edit All Items' })
+$lv = @($global:FakeSP.Levels | Where-Object { $_['Name'] -eq 'PFM Office Edit All Items' })
 $gi = [array]::IndexOf(@($global:FakeSP.Groups), 'PFM Office') + 1
 $okLevel = $lv.Count -eq 1 -and $lv[0].BasePermissions.Low -eq [string](1011030767 -bor 0x100) -and $lv[0].BasePermissions.High -eq '432'
 Test-That 'create: group PFM Office, the level (Edit + Override List Behaviors) and its role on the site, read back' ($okLevel -and $gi -gt 0 -and @($global:FakeSP.WebRoles[$gi]) -contains $lv[0].Id -and $r.Text -match 'CREATED for PFM Office: group=1 level=1 level given to the group=1' -and $r.Text -match 'ITEM P01-pfm-office PASS') $r.Text
@@ -114,10 +114,22 @@ $r = Invoke-T19 ''
 Test-That 'T19 second run: changes nothing' ($r.Code -eq 0 -and $r.Text -match 'LISTUPDATE done, changes made=0, items with problems=0' -and ((Get-TierColumn).Data.Choices -join ',') -eq $tier) $r.Text
 
 # ---- PFM Office edge cases (F2 A): a level of that name that lacks Override List Behaviors is reported, never changed ----
-$lv[0].BasePermissions.Low = '1011030767'
+# The fake keeps levels as hashtables and changes them with Set-FakeLevelBits (Windows PowerShell 5.1: a property set on a
+# [pscustomobject] made inside a method call did not reach the JSON the script read). Both JSON forms: strings (as SharePoint
+# writes SP.BasePermissions) and numbers.
+Set-FakeLevelBits 'PFM Office Edit All Items' '432' '1011030767'
 $r = Invoke-T20 ''
 Test-That 'a level named PFM Office Edit All Items without Override List Behaviors: FAIL, not changed' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors' -and $lv[0].BasePermissions.Low -eq '1011030767') ('code=' + $r.Code + ' low=' + $lv[0].BasePermissions.Low + ' text=' + (@($r.Out) -join ' | '))
-$lv[0].BasePermissions.Low = [string](1011030767 -bor 0x100)
+$global:FakeSP.BitsAsNumbers = $true
+$r = Invoke-T20 ''
+Test-That 'the same level, its bits written as JSON numbers: FAIL as well' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors') (@($r.Out) -join ' | ')
+Set-FakeLevelBits 'PFM Office Edit All Items' 432 (1011030767 -bor 0x100)
+$r = Invoke-T20 ''
+Test-That 'a level with Edit plus Override List Behaviors, bits as JSON numbers: PASS' ($r.Code -eq 0 -and $r.Text -match 'ITEM P01-pfm-office PASS') (@($r.Out) -join ' | ')
+$global:FakeSP.BitsAsNumbers = $false
+Set-FakeLevelBits 'PFM Office Edit All Items' '432' ([string](1011030767 -bor 0x100))
+$r = Invoke-T20 ''
+Test-That 'the same level, bits as JSON strings again: PASS' ($r.Code -eq 0 -and $r.Text -match 'ITEM P01-pfm-office PASS') (@($r.Out) -join ' | ')
 
 $r = Invoke-T20 'Check'
 Test-That 'provisioned site: the check fails with 12 lists' ($r.Code -eq 1 -and $r.Text -match 'ITEM b-lists FAIL still on the site \(12\)') $r.Text

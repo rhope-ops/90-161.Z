@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 20 list provisioning by PnP r2 (round R35; PFM 19 Nov 26, F2 A: the PFM Office level; PFM 14 Nov 26: lists
+  90-161.Z Task 20 list provisioning by PnP r2 (round R34; PFM 19 Nov 26, F2 A: the PFM Office level; PFM 14 Nov 26: lists
   by PnP; PFM 15 Nov 26: clean install in R25). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: builds the 12 PFM lists on a site from the payload the retired T02 r12 flow used
@@ -249,8 +249,8 @@ $OfficeGroupText = 'Publications and Forms Manager (PFM) office: the people who 
 $OfficeLevel = 'PFM Office Edit All Items'
 $OfficeLevelText = 'Edit, plus Override List Behaviors: edits every row, also on lists set to edit own rows (90-161.Z, PFM 2026-11-19).'
 # SharePoint permission bits (SP.BasePermissions, low word): EditListItems 0x4; CancelCheckout 0x100 ("Override List Behaviors").
-$EditItemsBit = 0x4
-$OverrideBit = 0x100
+$EditItemsBit = [long]0x4
+$OverrideBit = [long]0x100
 # The RoleTypeKind of the site's Edit level (SP.RoleType Editor = 6): found by kind, so a site in another language works too.
 $EditRoleKind = 6
 
@@ -275,11 +275,17 @@ function Get-WebBinding([int]$PrincipalId) {
   try { return @(Get-RestValue $uri | ForEach-Object { [int]$_.Id }) } catch { return @() }
 }
 
-# True when a level holds every permission of another level (both from Get-RoleLevel), plus the extra bits given.
+# One word (High or Low) of SP.BasePermissions as a number, whatever JSON type it came in: SharePoint writes a string, and on
+# Windows PowerShell 5.1 ConvertFrom-Json makes a JSON number an Int32 or an Int64 by its size. Parsed from its invariant text.
+function ConvertTo-PermissionWord($Value) { return [long]::Parse(([string]$Value).Trim(), [Globalization.CultureInfo]::InvariantCulture) }
+
+# True when a level holds every permission of another level (both from Get-RoleLevel) plus the extra bits given, checked bit
+# by bit in both 32-bit words.
 function Test-LevelPermission($Level, $Base, [long]$Extra) {
-  $low = [long]$Level.BasePermissions.Low; $high = [long]$Level.BasePermissions.High
-  $wantLow = [long]$Base.BasePermissions.Low -bor $Extra; $wantHigh = [long]$Base.BasePermissions.High
-  return ((($low -band $wantLow) -eq $wantLow) -and (($high -band $wantHigh) -eq $wantHigh))
+  $have = @((ConvertTo-PermissionWord $Level.BasePermissions.Low), (ConvertTo-PermissionWord $Level.BasePermissions.High))
+  $want = @(((ConvertTo-PermissionWord $Base.BasePermissions.Low) -bor $Extra), (ConvertTo-PermissionWord $Base.BasePermissions.High))
+  for ($w = 0; $w -lt 2; $w++) { for ($i = 0; $i -lt 32; $i++) { $bit = [long]1 -shl $i; if (($want[$w] -band $bit) -and -not ($have[$w] -band $bit)) { return $false } } }
+  return $true
 }
 
 <#
@@ -311,7 +317,8 @@ function Grant-OfficeLevel([bool]$Write) {
     if (-not $edit) { throw ('LEVEL Edit not found on the site: the level ' + $OfficeLevel + ' is made from it. The lists are done.') }
     if ($Write) {
       Write-Host ('  Making the permission level ' + $OfficeLevel + ' ...')
-      $bits = @{ __metadata = @{ type = 'SP.BasePermissions' }; High = [string]$edit.BasePermissions.High; Low = [string]([long]$edit.BasePermissions.Low -bor $OverrideBit) }
+      $low = (ConvertTo-PermissionWord $edit.BasePermissions.Low) -bor $OverrideBit
+      $bits = @{ __metadata = @{ type = 'SP.BasePermissions' }; High = [string](ConvertTo-PermissionWord $edit.BasePermissions.High); Low = [string]$low }
       $body = @{ __metadata = @{ type = 'SP.RoleDefinition' }; Name = $OfficeLevel; Description = $OfficeLevelText; BasePermissions = $bits }
       $null = Invoke-Rest 'Post' '_api/web/roledefinitions' ($body | ConvertTo-Json -Depth 5 -Compress)
       $level = Get-RoleLevel $OfficeLevel 0

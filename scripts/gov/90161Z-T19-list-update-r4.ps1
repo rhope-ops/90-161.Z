@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 19 list update r4 (round R35; PFM 19 Nov 26, S3 A: the tier T-0). Windows PowerShell 5.1, the installed
+  90-161.Z Task 19 list update r4 (round R34; PFM 19 Nov 26, S3 A: the tier T-0). Windows PowerShell 5.1, the installed
   PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: brings the lists of a site that exists up to the list schemas (schemas/lists) where T20 cannot: T20 skips

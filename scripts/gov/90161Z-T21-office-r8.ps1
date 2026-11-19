@@ -13,8 +13,9 @@
   list has its own permissions since Make), so the test needs no change to a PFM list.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: on the probe list: "edit own rows", the PFM Office level for the group PFM Office and 1 row titled EDITALL; the
-          second person in the group PFM Office; on this computer the state file 90161Z-T21-office-state-r8.txt (3 numbers or
-          flags) and the clipboard (the row's edit form link). Clean removes the person from the group again.
+          second person in the group PFM Office; on this computer the state file 90161Z-T21-office-state-r8.txt (numbers
+          only: the group Id and the user Id of each person this part added and Clean has not removed yet) and the clipboard
+          (the row's edit form link). Clean removes every recorded person from the group again.
   Credentials: none of its own (the main file signs in).
   Run: not alone; powershell.exe -File 90161Z-T21-probe-r8.ps1 -Part Office loads it.
 #>
@@ -84,11 +85,32 @@ function Add-OfficeRow {
   return $id
 }
 
+# The office state file: GroupId=<n> and UserIds=<n>,<n> (each person this part added to PFM Office that Clean has not
+# removed yet). Returns @{ GroupId; UserIds } or $null when there is no file. Numbers only, never an address or a name.
+function Read-OfficeState {
+  $f = Join-Path $script:dir $OfficeStateName
+  if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { return $null }
+  $h = @{ GroupId = 0; UserIds = @() }
+  foreach ($l in @(Get-Content -LiteralPath $f)) {
+    if ([string]$l -match '^GroupId=(\d+)$') { $h.GroupId = [int]$Matches[1] }
+    if ([string]$l -match '^UserIds=([\d,]*)$') { $h.UserIds = @($Matches[1] -split ',' | Where-Object { $_ } | ForEach-Object { [int]$_ }) }
+  }
+  return $h
+}
+# Writes the office state file (the group Id and the user Ids still to remove); deletes it when no Id is left.
+function Write-OfficeState([int]$GroupId, [int[]]$UserIds) {
+  $f = Join-Path $script:dir $OfficeStateName
+  if (-not @($UserIds).Count) { Remove-Item -LiteralPath $f -ErrorAction SilentlyContinue; return }
+  Set-Content -LiteralPath $f -Value @(('GroupId=' + $GroupId), ('UserIds=' + (@($UserIds) -join ','))) -Encoding ASCII
+}
+
 <#
 .SYNOPSIS
   Office, step o5: puts the second person of the part Person into the group PFM Office and reads back that the person
   can now edit every row of the probe list. A person who could do that before is not used: the test would prove nothing.
-  The numbers are saved in the office state file before the change, so Clean can remove the person even if this stops.
+  The person's Id is added to the office state file before the change, so Clean can remove the person even if this
+  stops. Every person this part adds is recorded: a person from an earlier run that Clean has not removed yet stays on
+  file next to the new one, and Clean removes both (review of 19 Nov 26). A person who was a member before is not recorded.
 .PARAMETER GroupId
   The Id of the group PFM Office.
 .PARAMETER List
@@ -110,10 +132,12 @@ function Add-OfficeMember([int]$GroupId, $List) {
     Add-Item 'o5-person' 'FAIL' 'the second person can edit every row already, without PFM Office: use a person who is only a Visitor'
     return 'the person can edit every row already'
   }
-  if (-not (Test-Path -LiteralPath (Join-Path $script:dir $OfficeStateName) -PathType Leaf)) {
-    $stateLines = @(('UserId=' + $uid), ('GroupId=' + $GroupId), ('WasMember=' + $(if ($was) { 'yes' } else { 'no' })))
-    Set-Content -LiteralPath (Join-Path $script:dir $OfficeStateName) -Value $stateLines -Encoding ASCII
-  }
+  $st = Read-OfficeState
+  $ids = @(); if ($st) { $ids = @($st.UserIds) }
+  if (@($ids | Where-Object { $_ -ne $uid }).Count) { $script:lines.Add('NOTE o5: a person from an earlier run is still on file for PFM Office; Clean removes both') }
+  if (-not $was -and $ids -notcontains $uid) { $ids += $uid }
+  $mine = $ids -contains $uid
+  if ($ids.Count) { Write-OfficeState $GroupId $ids }
   if (-not $was) {
     Write-Now ('Adding the second person to the group ' + $OfficeGroup)
     try { $null = Add-PnPGroupMember -LoginName $loginName -Group $GroupId -ErrorAction Stop } catch { $null = $_ }
@@ -123,7 +147,7 @@ function Add-OfficeMember([int]$GroupId, $List) {
   $loginName = $null
   $text = 'person in PFM Office=' + $(if ($in) { 'yes' } else { 'no' }) + '; can edit every row of the probe list now=' + $(if ($can) { 'yes' } else { 'no' })
   Add-Item 'o5-person' $(if ($can) { 'PASS' } else { 'FAIL' }) $text
-  return $(if ($was) { 'already a member (Clean leaves the person in the group)' } elseif ($in) { 'added and listed in the group' } else { 'the add was refused' })
+  return $(if (-not $mine) { 'already a member (Clean leaves the person in the group)' } elseif ($in) { 'added and listed in the group' } else { 'the add was refused' })
 }
 
 <#
@@ -153,22 +177,26 @@ function Invoke-OfficePart {
 
 <#
 .SYNOPSIS
-  Clean, step c1b: removes the second person from the group PFM Office again (by the office state file), unless the person
-  was a member before the test; then deletes that state file. Adds one ITEM line.
+  Clean, step c1b: removes every person on the office state file from the group PFM Office again, then deletes the file
+  (it keeps the Ids that are still in the group). A failure is its own FAIL line and never stops the later Clean steps.
 .OUTPUTS
   None.
 #>
 function Clear-OfficeMember {
-  $f = Join-Path $script:dir $OfficeStateName
-  if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { Add-Item 'c1b-office' 'INFO' 'no PFM Office test on file (nothing to remove)'; return }
-  $h = @{}; foreach ($l in @(Get-Content -LiteralPath $f)) { if ([string]$l -match '^(\w+)=(.*)$') { $h[$Matches[1]] = $Matches[2].Trim() } }
-  $uid = [int]$h['UserId']; $gid = [int]$h['GroupId']
-  if ($h['WasMember'] -ne 'yes' -and (Get-GroupMemberId $gid) -contains $uid) {
-    Write-Now ('Removing the second person from the group ' + $OfficeGroup)
-    try { $null = Invoke-Rest 'Post' ('_api/web/sitegroups/getbyid(' + $gid + ')/users/removebyid(' + $uid + ')') '{}' } catch { $null = $_ }
-  }
-  $still = $h['WasMember'] -ne 'yes' -and (Get-GroupMemberId $gid) -contains $uid
-  if (-not $still) { Remove-Item -LiteralPath $f -ErrorAction Stop }
-  $text = $(if ($still) { 'the second person is still in PFM Office (state file kept; run Clean again)' } else { 'the second person is not in PFM Office because of this test (state file deleted)' })
-  Add-Item 'c1b-office' $(if ($still) { 'FAIL' } else { 'PASS' }) $text
+  $st = Read-OfficeState
+  if (-not $st -or -not @($st.UserIds).Count) { Add-Item 'c1b-office' 'INFO' 'no PFM Office test on file (nothing to remove)'; Write-OfficeState 0 @(); return }
+  try {
+    $members = Get-GroupMemberId $st.GroupId
+    foreach ($uid in @($st.UserIds | Where-Object { $members -contains $_ })) {
+      Write-Now ('Removing a person of this test from the group ' + $OfficeGroup)
+      try { $null = Invoke-Rest 'Post' ('_api/web/sitegroups/getbyid(' + $st.GroupId + ')/users/removebyid(' + $uid + ')') '{}' } catch { $null = $_ }
+    }
+    $members = Get-GroupMemberId $st.GroupId
+    $still = @($st.UserIds | Where-Object { $members -contains $_ })
+    Write-OfficeState $st.GroupId $still
+    $n = @($st.UserIds).Count
+    $text = 'the people of this test are not in PFM Office (' + $n + '; state file deleted)'
+    if ($still.Count) { $text = 'still in PFM Office: ' + $still.Count + ' of ' + $n + ' (state file kept; run Clean again)' }
+    Add-Item 'c1b-office' $(if ($still.Count) { 'FAIL' } else { 'PASS' }) $text
+  } catch { Add-Item 'c1b-office' 'FAIL' ('PFM Office could not be cleaned: ' + (Format-Detail ([string]$_.Exception.Message)) + ' (state file kept; run Clean again)') }
 }

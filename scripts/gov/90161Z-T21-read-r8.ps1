@@ -83,11 +83,9 @@ function Add-T4Test($Rows, [int]$MeId) {
 #>
 function Add-EditAllTest($Rows, [int]$MeId) {
   $mine = @($Rows | Where-Object { ([string]$_.Title) -like 'EDITALL *' -and $MeId -gt 0 -and (Get-AuthorId $_) -eq $MeId })
-  $f = Join-Path $script:dir $OfficeStateName
-  $uid = 0
-  if (Test-Path -LiteralPath $f -PathType Leaf) { foreach ($l in @(Get-Content -LiteralPath $f)) { if ([string]$l -match '^UserId=(\d+)$') { $uid = [int]$Matches[1] } } }
-  if (-not $uid -and -not $mine.Count) { $script:lines.Add('EDITALL NOT RUN: no PFM Office test in this round'); return }
-  $byOther = @($mine | Where-Object { $e = Get-EditorId $_; $e -gt 0 -and $e -ne $MeId -and (-not $uid -or $e -eq $uid) })
+  $st = Read-OfficeState; $ids = @(); if ($st) { $ids = @($st.UserIds) }   # the people the part Office added (module office)
+  if (-not $ids.Count -and -not $mine.Count) { $script:lines.Add('EDITALL NOT RUN: no PFM Office test in this round'); return }
+  $byOther = @($mine | Where-Object { $e = Get-EditorId $_; $e -gt 0 -and $e -ne $MeId -and (-not $ids.Count -or $ids -contains $e) })
   $pass = ($byOther.Count -ge 1)
   $counts = ' (EDITALL rows by you=' + $mine.Count + '; saved by the second person=' + $byOther.Count + ')'
   $piece = @('a PFM Office member who is not the author edits the row=' + $(if ($pass) { 'PASS' } else { 'FAIL' }) + $counts)
