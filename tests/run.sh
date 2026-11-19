@@ -353,9 +353,9 @@ unset RADE_DIR
 out=$(python3 scripts/bump_lock.py --test 2>&1); [ $? -eq 0 ] && ok "bump_lock release-lock checks ($out)" || { echo "$out"; bad "bump_lock release-lock checks"; }
 out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
-# engine-v8 on: the header names every engine code file of the lock ("<file>, sha256 <12 hex>"); each must match.
-# The engine file itself must be in the list, or nh counts 1 (no loop that passes on an empty list).
-ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1'))];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
+# engine-v8 on: the header names every engine code file of the lock ("<file>, sha256 <12 hex>"); each must match (the engine file itself must be in the list, or nh counts 1).
+# engine-v21 on: engine/rade_hash.py (build time only) is in the lock but not in the header; the stale check above covers it (the bundle must equal what the locked files build).
+ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1')) and k != 'engine/rade_hash.py'];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
 nh=0; [ -n "$ef" ] || nh=1; for f in $ef; do
   nh=$((nh + $(grep -L "${f%%=*}, sha256 ${f#*=}[;)]" scripts/gov/paste/*.ps1 | wc -l))); done
 nb=$(python3 -c "import json;print(len(json.load(open('scripts/paste_bundles.json'))['bundles']))"); [ "$out" = "PASTE bundles=$nb stale=0" ] && [ "$nh" -eq 0 ] && ok "paste bundles current and built by the pinned engine ($out; bundles naming another engine: $nh)" || bad "paste bundles: $out; bundles naming another engine: $nh (run python3 scripts/build_paste_bundles.py with RADE_DIR not set)"
@@ -576,9 +576,9 @@ for b in scripts/gov/paste/*.ps1; do
   [[ " $nd " != *" pnp "* ]] || grep -q "^You cannot deploy yet: a check is FAILED or NOT RUN" "$te/out.txt" || { echo "check gate did not stop the deploy"; tw=$((tw+1)); }
   # Review R17 MAJOR 1: a fresh install (no 90-161.Z folder anywhere) finds OneDrive and can write there.
   grep -q "^  PASSED: Your OneDrive folder is set up" "$te/out.txt" && grep -q "^  PASSED: Files can be saved in OneDrive" "$te/out.txt" || { echo "fresh install: OneDrive checks"; grep "OneDrive" "$te/out.txt"; tw=$((tw+1)); }
-  # Saved checks (R17, PFM 14 Nov 26): a second run uses the PASSED results saved by the first, and still runs the others.
+  # Saved checks (R17, PFM 14 Nov 26): a second run uses the PASSED results saved by the first (OneDrive), and still runs the others (engine-v21 on: the PowerShell version check is one).
   USERPROFILE="$te/u/test1234" pwsh -NoProfile -File "$te/b.ps1" > "$te/out2.txt" 2>&1
-  grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check: $(LC_ALL=C date +"%-d %b %y")" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
+  grep -q "^  PASSED: Your OneDrive folder is set up. Last check: $(LC_ALL=C date +"%-d %b %y")" "$te/out2.txt" && ! grep -q "^  PASSED: PowerShell is version 5.1 or newer. Last check:" "$te/out2.txt" && { [[ " $nd " != *" pnp "* ]] || grep -q "^  FAILED: The SharePoint tool" "$te/out2.txt"; } || { echo "saved checks not used on the second run"; grep "^  [A-Z]" "$te/out2.txt"; tw=$((tw+1)); }
 done; rm -rf "$te"
 [ "$ab" -eq 0 ] && [ "$tw" -eq 0 ] && ok "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw; Enter path = round bundle test)" || bad "Enter starts the run (bundles where Enter is not the primary button or Ready has no primary Run: $ab; writes after N: $tw)"
 else sk "Enter starts the run"; fi

@@ -8,10 +8,10 @@ and a new file name; the old file leaves. Rule text: .claude/skills/round/SKILL.
     python3 scripts/bundle_revision.py --test    # self-test with fake files (no git)
 
 --raise changes only the working tree: in scripts/paste_bundles.json the "out" name and the "Round <id> r<N>" title
-prefix, the same file name in go.md, and it deletes the old bundle file. Rebuild afterwards
+prefix, the bundle's path in its go.md link, and it deletes the old bundle file and its stored hash file. Rebuild afterwards
 (python3 scripts/build_paste_bundles.py). It needs origin/main; fetch first.
 Network: none (it runs local git read commands on origin/main; it does not fetch).
-Writes: --raise only: scripts/paste_bundles.json, go.md, and deletes the old bundle files; the check and --test write
+Writes: --raise only: scripts/paste_bundles.json, go.md, and deletes the old bundle and hash files; the check and --test write
 nothing in the repo (--test uses a temp folder).
 Credentials: none.
 """
@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CONFIG = "scripts/paste_bundles.json"   # the round definitions; each bundle has "out", "round" and "title"
 GO = "go.md"                            # the PFM's task page links an open round's bundle by file name
 REV_RE = re.compile(r"-r(\d+)\.ps1$")   # the revision at the end of a bundle file name
+HASH_EXT = ".sha256.json"               # the stored hash file the RADE engine writes beside a bundle (engine-v21 on)
 
 
 def next_name(out):
@@ -96,7 +97,8 @@ def changed_on_main(root, read_main):
 
 def raise_revisions(root, read_main):
     """Give every bundle that main has the next revision: new "out" name and title prefix in the round definitions,
-    the new file name in go.md, and the old bundle file deleted. Text edits keep the files' layout.
+    the new path in the bundle's go.md link, and the old bundle file and its stored hash file deleted. Text edits keep
+    the files' layout.
 
     Args:
         root: the repository folder.
@@ -119,8 +121,9 @@ def raise_revisions(root, read_main):
         cfg_text = cfg_text.replace('"out": "%s"' % old, '"out": "%s"' % new)
         cfg_text = cfg_text.replace('"title": "Round %s r%d' % (b["round"], n), '"title": "Round %s r%d' % (b["round"], n + 1))
         if go_text is not None:
-            go_text = go_text.replace(Path(old).name, Path(new).name)
+            go_text = go_text.replace(old, new)   # only the bundle's link (its path), not the bare file name in other text
         (root / old).unlink(missing_ok=True)
+        (root / (old + HASH_EXT)).unlink(missing_ok=True)   # the stored hash of the old bundle leaves with it
         moved.append((old, new))
     (root / CONFIG).write_text(cfg_text, encoding="utf-8")
     if go_text is not None:
@@ -143,7 +146,8 @@ def self_test():
             {"out": "scripts/gov/paste/90161Z-R01-round-r6.ps1", "round": "R01", "title": "Round R01 r6: on main"},
             {"out": "scripts/gov/paste/90161Z-R02-round-r1.ps1", "round": "R02", "title": "Round R02 r1: new"}]}
         (root / CONFIG).write_text(json.dumps(cfg, indent=2), encoding="utf-8")
-        (root / GO).write_text("link .../90161Z-R01-round-r6.ps1\n", encoding="utf-8")
+        (root / GO).write_text("link .../scripts/gov/paste/90161Z-R01-round-r6.ps1\nDone: 90161Z-R01-round-r6.ps1 ran\n", encoding="utf-8")
+        (root / ("scripts/gov/paste/90161Z-R01-round-r6.ps1" + HASH_EXT)).write_text("{}", encoding="utf-8")
         main = {"scripts/gov/paste/90161Z-R01-round-r6.ps1": b"built on main"}
         (root / "scripts/gov/paste/90161Z-R01-round-r6.ps1").write_bytes(b"built on main")
         (root / "scripts/gov/paste/90161Z-R02-round-r1.ps1").write_bytes(b"new round")
@@ -160,10 +164,12 @@ def self_test():
         new = bundles(root)
         fails += [b["out"] for b in new] != ["scripts/gov/paste/90161Z-R01-round-r7.ps1", "scripts/gov/paste/90161Z-R02-round-r1.ps1"]
         fails += [b["title"] for b in new] != ["Round R01 r7: on main", "Round R02 r1: new"]
-        fails += (root / GO).read_text(encoding="utf-8") != "link .../90161Z-R01-round-r7.ps1\n"
+        # only the link changes: a bare file name in other text (a Done line) keeps the revision that ran
+        fails += (root / GO).read_text(encoding="utf-8") != "link .../scripts/gov/paste/90161Z-R01-round-r7.ps1\nDone: 90161Z-R01-round-r6.ps1 ran\n"
         fails += (root / "scripts/gov/paste/90161Z-R01-round-r6.ps1").exists()
+        fails += (root / ("scripts/gov/paste/90161Z-R01-round-r6.ps1" + HASH_EXT)).exists()   # its stored hash left too
         fails += changed_on_main(root, read) != []                       # after the raise: nothing on main changes
-    print("BUNDLEREV cases=11 fails=%d" % fails)
+    print("BUNDLEREV cases=12 fails=%d" % fails)
     return 1 if fails else 0
 
 
