@@ -24,855 +24,6 @@
   },
   "bundles": [
     {
-      "out": "scripts/gov/paste/90161Z-R30b-round-r1.ps1",
-      "round": "R30b",
-      "title": "Round R30b r1: the 90-161.Z window r4 (look fixes, contrast through Windows Settings, a control-name check), then the look questions",
-      "files": [
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-pfm-window-r4.ps1"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-cards-r4.ps1"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-types-r4.ps1"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-ui-r4.ps1"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-parts-r4.ps1"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-grid-r4.ps1"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-window-r4.ps1"
-        },
-        {
-          "dir": "T22",
-          "src": "scripts/gov/90161Z-T22-measure-r4.ps1"
-        }
-      ],
-      "steps": [
-        {
-          "name": "T22 Open the 90-161.Z window r4",
-          "title": "Open the 90-161.Z window and do its 12 checks",
-          "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r4.ps1",
-          "minutes": 30,
-          "note": "Opens your 90-161.Z window with fake data. Do each of the 12 checks in the bar at the bottom, then select Pass or Fail. Contrast now uses Windows+U. Then close the window.",
-          "estimate": 15,
-          "help": "Send the results as they are. The step can be run again."
-        },
-        {
-          "name": "T22 Did the window open r4",
-          "title": "Check that the window opened",
-          "dir": "T22",
-          "file": "90161Z-T22-pfm-window-r4.ps1",
-          "args": "-Opened",
-          "minutes": 2,
-          "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
-          "estimate": 1,
-          "help": "Send the results as they are."
-        },
-        {
-          "name": "T22 Answer: look and cards r4",
-          "title": "Answer 3 questions about the window look",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 3 questions about the look of the window. About 2 minutes.",
-          "guide": [
-            "1. Answer each of the next 3 cards."
-          ],
-          "marker": "90161Z-T22-judged-look.txt",
-          "estimate": 2,
-          "after": [
-            "T22 Did the window open r4"
-          ],
-          "answers": [
-            {
-              "key": "w-look",
-              "prompt": "Does the window look like your vision of the 90-161.Z app?",
-              "kind": "pick",
-              "choices": [
-                "Yes, as it is",
-                "Close, with small changes",
-                "Partly",
-                "No"
-              ]
-            },
-            {
-              "key": "w-cards",
-              "prompt": "Did every card open and fit with no scroll bar?",
-              "kind": "yesno"
-            },
-            {
-              "key": "w-change",
-              "prompt": "What would you change first? One line, no names.",
-              "kind": "text"
-            }
-          ],
-          "doneLog": "Confirmed by you: judged the look."
-        },
-        {
-          "name": "T22 Answer: the screenshot fixes r4",
-          "title": "Answer 2 questions about the fixes from your screenshots",
-          "kind": "guide",
-          "dir": "T22",
-          "file": "",
-          "note": "You answer 2 questions about the fixes from your screenshots. About 1 minute.",
-          "guide": [
-            "1. Answer each of the next 2 cards."
-          ],
-          "marker": "90161Z-T22-judged-fixes.txt",
-          "estimate": 2,
-          "after": [
-            "T22 Did the window open r4"
-          ],
-          "answers": [
-            {
-              "key": "w-crumb",
-              "prompt": "On the card FAKE OI 33-101: does the line \"Your Work > FAKE OI 33-101\" read as one line?",
-              "kind": "yesno"
-            },
-            {
-              "key": "w-status",
-              "prompt": "On the same card: does the Action Status card end level with the main card?",
-              "kind": "yesno"
-            }
-          ],
-          "doneLog": "Confirmed by you: judged the fixes."
-        }
-      ],
-      "collect": [
-        {
-          "dir": "T22",
-          "name": "90161Z-T22-window-r4.txt",
-          "step": "T22 Open the 90-161.Z window r4"
-        }
-      ],
-      "cleanup": [
-        {
-          "path": "T02",
-          "kind": "dir"
-        },
-        {
-          "path": "T03",
-          "kind": "dir"
-        },
-        {
-          "path": "T04",
-          "kind": "dir"
-        },
-        {
-          "path": "T05",
-          "kind": "dir"
-        },
-        {
-          "path": "T06",
-          "kind": "dir"
-        },
-        {
-          "path": "T13",
-          "kind": "dir"
-        },
-        {
-          "path": "T07\\90161Z-T07-seal-test-r*.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T07\\90161Z-T07-seal-prep-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T07\\90161Z-T07-seal-prep-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T10\\90161Z-T10-brief-check-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T01\\90161Z-T01-renderer-test-r8.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T01\\90161Z-T01-result-r8.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T09\\90161Z-T09-epubs-collect-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-partb-form-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R09",
-          "kind": "dir"
-        },
-        {
-          "path": "Rounds\\R10",
-          "kind": "dir"
-        },
-        {
-          "path": "T09\\90161Z-T09-save-pages-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T12\\90161Z-T09-save-pages-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T15\\90161Z-T15-env-inventory-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-pnp-signin-test-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-pnp-result-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T15\\90161Z-T15-inventory-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T07\\90161Z-T07-seal-prep-r3.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-outlook-check-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T10",
-          "kind": "dir"
-        },
-        {
-          "path": "Rounds\\R11",
-          "kind": "dir"
-        },
-        {
-          "path": "T07\\90161Z-T07-seal-prep-r4.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-partb-form-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-partb-rows-r1.json",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-rights-result-r2.json",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R12",
-          "kind": "dir"
-        },
-        {
-          "path": "T14\\90161Z-T14-site-logo-r1.png",
-          "kind": "glob"
-        },
-        {
-          "path": "T14\\90161Z-T14-site-logo-thumb-r1.png",
-          "kind": "glob"
-        },
-        {
-          "path": "T14\\90161Z-T14-site-logo-r2.png",
-          "kind": "glob"
-        },
-        {
-          "path": "T14\\90161Z-T14-site-logo-r3.png",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r7.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r7.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T14\\90161Z-T14-site-logo-thumb-r2.png",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r6.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r6.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r2.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R13",
-          "kind": "dir"
-        },
-        {
-          "path": "T11\\90161Z-T11-rights-probe-r3.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-rights-result-r3.json",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-flows-solution-r1.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r3.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R14",
-          "kind": "dir"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-test-r1.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-rights-probe-r4.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-rights-result-r4.json",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r4.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r4.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R15",
-          "kind": "dir"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-test-r2.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T11\\90161Z-T11-rights-probe-r5.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r5.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r5.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-test-a-r3.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-test-b-r3.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-result-a-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-result-b-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-b-started.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r8.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r8.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T14",
-          "kind": "dir"
-        },
-        {
-          "path": "Rounds\\R16",
-          "kind": "dir"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-test-a-r4.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-result-a-r4.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-export-read-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r9.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r9.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R17",
-          "kind": "dir"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-test-a-r5.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-result-a-r5.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-import-log-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-import-log-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T17\\90161Z-T17-solution-a-started.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r10.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r10.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R18",
-          "kind": "dir"
-        },
-        {
-          "path": "Rounds\\R19",
-          "kind": "dir"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-flows-r1.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-test-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part1-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part2-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-test-publication.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-imported.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-f03-ran.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-flows-r2.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T19\\90161Z-T19-list-update-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T19\\90161Z-T19-list-update-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-flows-r3.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R20",
-          "kind": "dir"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-flows-r4.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-test-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T19\\90161Z-T19-list-update-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T19\\90161Z-T19-list-update-r2.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part1-r2.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part2-r2.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-test-publications-r2.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R21",
-          "kind": "dir"
-        },
-        {
-          "path": "T19\\90161Z-T19-list-update-r3.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T19\\90161Z-T19-list-update-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-test-r3.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part1-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part2-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R22",
-          "kind": "dir"
-        },
-        {
-          "path": "Rounds\\R23",
-          "kind": "dir"
-        },
-        {
-          "path": "T20",
-          "kind": "dir"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r11.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part1-r4.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part2-r4.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "Rounds\\R24",
-          "kind": "dir"
-        },
-        {
-          "path": "Rounds\\R25",
-          "kind": "dir"
-        },
-        {
-          "path": "Rounds\\R26",
-          "kind": "dir"
-        },
-        {
-          "path": "T21\\files",
-          "kind": "dir"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-*-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe*-r1.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-app-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-*-imported.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-aib-looked.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-app-*.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-second-person.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-removed.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-*-r2.*",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-*-r4.*",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-flows-r5.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-test-publications-r4.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-test-r5.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-flows-r6.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part1-r5.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-part2-r5.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-test-publications-r5.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-*ed.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-slice1-f03-ran.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-resubmitted.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T18\\90161Z-T18-email-looked.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-r3.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-r3.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-*-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-links-r3.html",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-*-looked.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-button-used.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-pfm-window-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-window-r1.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-judged.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T23",
-          "kind": "dir"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-r4.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-r4.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-*-r4.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-links-r4.html",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-button-flow-r4.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-window-r2.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-list1-read.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-list2-read.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-judged-access.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-R28-frame-answered.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-R28-install-checked.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T24\\90161Z-T24-full-flows-r1.zip",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-r5.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T21\\90161Z-T21-probe-*-r5.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T24\\90161Z-T24-full-solution-test-r1.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-pfm-window-r2.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-pfm-window-r3.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-window-r3.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T22\\90161Z-T22-judged-look.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-site-setup-r12.ps1",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-setup-r12.txt",
-          "kind": "glob"
-        },
-        {
-          "path": "T16\\90161Z-T16-logo-r12.txt",
-          "kind": "glob"
-        }
-      ],
-      "fetch": [],
-      "apps": [
-        {
-          "name": "90-161.Z: Publications and Forms Management",
-          "summary": "Round R30b r1: the 90-161.Z window r4 with fake data and its 12 checks, then 5 questions on its look. Fake data.",
-          "steps": [
-            "T22 Open the 90-161.Z window r4",
-            "T22 Did the window open r4",
-            "T22 Answer: look and cards r4",
-            "T22 Answer: the screenshot fixes r4"
-          ]
-        }
-      ]
-    },
-    {
       "out": "scripts/gov/paste/90161Z-R31a-round-r1.ps1",
       "round": "R31a",
       "title": "Round R31a r1: the flow steps a third time (health flow, button flow and export reader, view button, full flows and the full flow test), with clearer cards",
@@ -2720,6 +1871,950 @@
             "T21 Remove the health flow and solution r6",
             "T21 Remove the button flow r6",
             "T21 Remove the button solution r6"
+          ]
+        }
+      ]
+    },
+    {
+      "out": "scripts/gov/paste/90161Z-R31b-round-r1.ps1",
+      "round": "R31b",
+      "title": "Round R31b r1: the 90-161.Z window r5 (logo and title, high contrast, 2 look checks in the window, a picture of each card), then the look questions",
+      "files": [
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-pfm-window-r5.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-cards-r5.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-types-r5.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-ui-r5.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-parts-r5.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-grid-r5.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-window-r5.ps1"
+        },
+        {
+          "dir": "T22",
+          "src": "scripts/gov/90161Z-T22-measure-r5.ps1"
+        }
+      ],
+      "steps": [
+        {
+          "name": "T22 Open the 90-161.Z window r5",
+          "title": "Open the 90-161.Z window and do its 14 checks",
+          "dir": "T22",
+          "file": "90161Z-T22-pfm-window-r5.ps1",
+          "minutes": 30,
+          "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 14 checks in the bar at the bottom, then select Pass or Fail. Then close the window.",
+          "estimate": 15,
+          "help": "Send the results as they are. The step can be run again."
+        },
+        {
+          "name": "T22 Did the window open r5",
+          "title": "Check that the window opened",
+          "dir": "T22",
+          "file": "90161Z-T22-pfm-window-r5.ps1",
+          "args": "-Opened",
+          "minutes": 2,
+          "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
+          "estimate": 1,
+          "help": "Send the results as they are."
+        },
+        {
+          "name": "T22 Answer: look and cards r5",
+          "title": "Answer 3 questions about the window look",
+          "kind": "guide",
+          "dir": "T22",
+          "file": "",
+          "note": "You answer 3 questions about the look of the window. About 2 minutes.",
+          "guide": [
+            "1. Answer each of the next 3 cards."
+          ],
+          "marker": "90161Z-T22-judged-look.txt",
+          "estimate": 2,
+          "after": [
+            "T22 Did the window open r5"
+          ],
+          "answers": [
+            {
+              "key": "w-look",
+              "prompt": "Does the window look like your vision of the 90-161.Z app?",
+              "kind": "pick",
+              "choices": [
+                "Yes, as it is",
+                "Close, with small changes",
+                "Partly",
+                "No"
+              ]
+            },
+            {
+              "key": "w-cards",
+              "prompt": "Did every card open and fit with no scroll bar?",
+              "kind": "yesno"
+            },
+            {
+              "key": "w-change",
+              "prompt": "What would you change first? One line, no names.",
+              "kind": "text"
+            }
+          ],
+          "doneLog": "Confirmed by you: judged the look."
+        }
+      ],
+      "collect": [
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-window-r5.txt",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-home-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-empty-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-queue-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-reviews-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step8-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-confirm-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-sendback-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-waves-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step11-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step12-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-step13-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-pub-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-settings-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-loading-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-failed-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-noperm-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        },
+        {
+          "dir": "T22",
+          "name": "90161Z-T22-card-remindall-r5.png",
+          "step": "T22 Open the 90-161.Z window r5"
+        }
+      ],
+      "cleanup": [
+        {
+          "path": "T02",
+          "kind": "dir"
+        },
+        {
+          "path": "T03",
+          "kind": "dir"
+        },
+        {
+          "path": "T04",
+          "kind": "dir"
+        },
+        {
+          "path": "T05",
+          "kind": "dir"
+        },
+        {
+          "path": "T06",
+          "kind": "dir"
+        },
+        {
+          "path": "T13",
+          "kind": "dir"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-test-r*.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T10\\90161Z-T10-brief-check-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T01\\90161Z-T01-renderer-test-r8.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T01\\90161Z-T01-result-r8.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T09\\90161Z-T09-epubs-collect-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-partb-form-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R09",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R10",
+          "kind": "dir"
+        },
+        {
+          "path": "T09\\90161Z-T09-save-pages-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T12\\90161Z-T09-save-pages-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T15\\90161Z-T15-env-inventory-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-pnp-signin-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-pnp-result-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T15\\90161Z-T15-inventory-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-outlook-check-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T10",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R11",
+          "kind": "dir"
+        },
+        {
+          "path": "T07\\90161Z-T07-seal-prep-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-partb-form-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-partb-rows-r1.json",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-result-r2.json",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R12",
+          "kind": "dir"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-r1.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-thumb-r1.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-r2.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-r3.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r7.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r7.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T14\\90161Z-T14-site-logo-thumb-r2.png",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r6.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r6.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R13",
+          "kind": "dir"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-probe-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-result-r3.json",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-flows-solution-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R14",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-probe-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-result-r4.json",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R15",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-r2.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T11\\90161Z-T11-rights-probe-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-b-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-b-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-b-started.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r8.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r8.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T14",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R16",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-export-read-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r9.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r9.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R17",
+          "kind": "dir"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-test-a-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-result-a-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-import-log-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-import-log-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T17\\90161Z-T17-solution-a-started.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r10.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r10.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R18",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R19",
+          "kind": "dir"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publication.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-imported.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-f03-ran.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r2.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R20",
+          "kind": "dir"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publications-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R21",
+          "kind": "dir"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T19\\90161Z-T19-list-update-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R22",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R23",
+          "kind": "dir"
+        },
+        {
+          "path": "T20",
+          "kind": "dir"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r11.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "Rounds\\R24",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R25",
+          "kind": "dir"
+        },
+        {
+          "path": "Rounds\\R26",
+          "kind": "dir"
+        },
+        {
+          "path": "T21\\files",
+          "kind": "dir"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe*-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-app-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-*-imported.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-aib-looked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-app-*.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-second-person.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-removed.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-*-r2.*",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-*-r4.*",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r5.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publications-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-test-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-flows-r6.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part1-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-part2-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-test-publications-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-*ed.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-slice1-f03-ran.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-resubmitted.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T18\\90161Z-T18-email-looked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r3.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-links-r3.html",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-*-looked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-button-used.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r1.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T23",
+          "kind": "dir"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r4.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-links-r4.html",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-button-flow-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r2.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-list1-read.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-list2-read.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-access.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-R28-frame-answered.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-R28-install-checked.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T24\\90161Z-T24-full-flows-r1.zip",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-r5.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T21\\90161Z-T21-probe-*-r5.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T24\\90161Z-T24-full-solution-test-r1.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r2.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r3.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r3.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-look.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-site-setup-r12.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-setup-r12.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T16\\90161Z-T16-logo-r12.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-pfm-window-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-cards-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-types-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-ui-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-parts-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-grid-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-measure-r4.ps1",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-window-r4.txt",
+          "kind": "glob"
+        },
+        {
+          "path": "T22\\90161Z-T22-judged-fixes.txt",
+          "kind": "glob"
+        }
+      ],
+      "fetch": [],
+      "apps": [
+        {
+          "name": "90-161.Z: Publications and Forms Management",
+          "summary": "Round R31b r1: the 90-161.Z window r5 with fake data and its 14 checks, then 3 questions on its look. Fake data.",
+          "steps": [
+            "T22 Open the 90-161.Z window r5",
+            "T22 Did the window open r5",
+            "T22 Answer: look and cards r5"
           ]
         }
       ]
