@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | F05 gets a second trigger on PFM Endorsements, so an answer after "All Comments Adjudicated = Yes" is handled. Scope: F05, R36. | PFM | flow/solution/README.md F05 point a |
+| 2026-11-19 | PFM Publications gets a Closed Date column; F04 and stage counts leave out rows with a Closed Date. Scope: lists, F04, R36. | PFM | flow/solution/README.md choice 9 |
+| 2026-11-19 | An endorsement suspense starts at the row's Created date, Legal rows included. Scope: F03, F05, R36. | PFM | flow/solution/README.md choice 4 |
+| 2026-11-19 | Flows find lists by GUID, not by title, so a list rename does not break them. Scope: all flows, R36. | PFM | flow/solution/README.md choice 11 |
 | 2026-11-19 | F05 checks every 1 minute in the test rounds; the pilot interval is decided after R35, from its run counts. Scope: F05. | PFM | docs/reviews/2026-11-18-r34-plan.md point 2 |
 | 2026-11-19 | Rule 4.4A warning: Claude writes a design for R36; the PFM approves it before the build. Scope: R36. | PFM | docs/reviews/2026-11-18-r34-plan.md point 8 |
 | 2026-11-19 | The PFM asks for the tests/run.sh fix (hidden Skip prompt) in R36; lane C, diff shown before merge. Scope: R36. | PFM | docs/reviews/2026-11-18-r34-plan.md point 6 |

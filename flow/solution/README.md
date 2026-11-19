@@ -52,7 +52,7 @@ Why F02 uses a recurrence: the 6-month review task opens on a date, not on an ed
 
 ## F05 routing: open points (draft)
 
-- a. The gate runs on an edit of the Publications row. An endorser answer alone does not start it; the PFM's "All Comments Adjudicated = Yes" edit does. Option: a second trigger on PFM Endorsements (or a child flow) if answers arrive after that edit.
+- a. Decided (PFM 19 Nov 26; R36): add a second trigger on PFM Endorsements. Was: the gate runs on an edit of the Publications row. An endorser answer alone does not start it; the PFM's "All Comments Adjudicated = Yes" edit does. Option: a second trigger on PFM Endorsements (or a child flow) if answers arrive after that edit.
 - b. Steps are found by StepNumber 6 and 7 (seed data). A wing that renumbers its steps must change the flow.
 - c. The Privacy office is mandatory, so it also gets a Formal Coordination row, although step 5 is a separate Privacy review. Option: skip the Privacy role at step 6 when a Privacy Review row exists.
 - e. If PFM Offices has no active mandatory office (other than Legal), F05 creates no rows and the step waits with no warning. Option: log or e-mail the PFM.
@@ -67,14 +67,14 @@ R28 (PFM 17 Nov 26: every agent recommendation and the draft values below are ap
 1. Endorsement routing: decided A (PFM S5A, 2026-11-14): F05.
 2. Polling interval: decided (PFM 19 Nov 26, F3 C): F01 checks every 15 minutes; F05 checks every minute again from r5 (PFM 19 Nov 26, R35); F06 still checks every minute. Still open: whether F01 should log every edit instead of state changes.
 3. Decided (PFM, 2026-11-19; replaces 20 working days of 14 Nov 26): 15 business days (weekdays only; DAFMAN 90-161 5.2, 5.1.4.3), no holiday list, no hand edits (the CoordinationSuspenseBusinessDays setting).
-4. Suspense start: the draft starts it on the first weekday run after the row exists. Options: start when the step moves to Formal Coordination (needs routing); use the row's Created date. Legal rows get no default suspense yet (F05 creates them; their start could be the row's Created date). Privacy Review rows do get one.
+4. Suspense start: decided (PFM 19 Nov 26; R36): the row's Created date, Legal rows included. Was: the draft starts it on the first weekday run after the row exists. Options: start when the step moves to Formal Coordination (needs routing); use the row's Created date. Legal rows get no default suspense yet (F05 creates them; their start could be the row's Created date). Privacy Review rows do get one.
 5. 5.2.2 (30 calendar days) is applied to the Guard Applicability and Reserve Applicability roles only; the process model says whether it covers wing-to-unit coordination is open (gap check).
 6. Decided (PFM, 2026-11-14): reminder 5 weekdays before, escalation 3 working days after, copied to the AO and Requester; sent from the shared mailbox in the PFM Settings row SharedMailbox (Send As; R27), else from the flow owner's mailbox (the fallback for wings without Send As).
 7. Run time of F02 (draft: same as F03) and whether Date columns are date-only (the flows read the first 10 characters; a date-time column in Central could shift a day).
 8. Done in F03 r3: the tiers use the later of DueDate and ExtensionDate (5.2.1).
-9. "Open action" for F04 and for stage counts: PFM Publications has no closed flag, so F04 lists every row. Options: exclude rows at the last step; add a closed status or date.
+9. "Open action" for F04 and for stage counts: decided (PFM 19 Nov 26; R36): a Closed Date column; rows with one are left out. Was: PFM Publications has no closed flag, so F04 lists every row. Options: exclude rows at the last step; add a closed status or date.
 10. F04 recipient: typed at run time (draft). Option: the person who runs it (needs the Office 365 Users connector, "Get my profile (V2)").
-11. List names: titles (draft) or list GUIDs in the environment variables. GUIDs are safer if a list is renamed.
+11. List names: decided (PFM 19 Nov 26; R36): list GUIDs. Was: titles (draft) or list GUIDs in the environment variables. GUIDs are safer if a list is renamed.
 12. F02 also skips opening a second Periodic review when one was opened in the current cycle and already answered; the brief says only "if none open".
 13. E-mail text has no link to the item (the list URL names are not in the repo). Option: add a pfm_ list-URL variable.
 14. The publisher is PFM with option value prefix 89127, as in the PFM's R18 export (flow/solution/export-sample); a new environment creates PFM with these values.
