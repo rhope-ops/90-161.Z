@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | RADE lock moves to release engine-v25 (RADE f06737f, serial 19) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | RADE lock moves to release engine-v24 (RADE e863459, serial 18) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | Stage 6 (Formal coordination) target = 20 business days: 15 coordination + 5 adjudication. Replaces 25 (14 Nov 26). T19 r5 moves 25 to 20 on the site. | PFM | flow/solution/README.md |
 | 2026-11-19 | Newest-RADE check: behind = FAIL only for a change to the lock, the bundle list or a round bundle (or no merge base); any other change gets a NOTE. Scope: tests/run.sh. | PFM | scripts/rade_newest.py |

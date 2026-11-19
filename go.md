@@ -26,7 +26,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R35 r1: my window r8, F05 every minute, 15 business days, the clearer cards, and the full flow test again
+### Round R35 r2: my window r8, F05 every minute, 15 business days, the clearer cards, and the full flow test again
 
 **For:** the next large round after R34, in one paste of about 1 MB. It has 32 steps:
 - My 90-161.Z window r8: the logo follows high contrast, and no column head is cut in a narrow grid (18 checks).
@@ -52,7 +52,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 15. Do each step the RADE window shows, until the log says DONE.
 16. At DONE, select Send in the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R35-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R35-round-r2.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R35 PASSED" or "90161Z R35 NEEDS REVIEW", every file in the results folder attached, the 17 pictures too). Then tell Claude the e-mail is sent.
 **If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R35 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R35 did not paste". If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error". If the 90-161.Z window does not open, go on with the steps the RADE window shows.

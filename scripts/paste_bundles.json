@@ -24,9 +24,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R35-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R35-round-r2.ps1",
             "round": "R35",
-            "title": "Round R35 r1: the 90-161.Z window r8, F05 every minute, 15 business days, the clearer import and second person cards, and the full flow test again",
+            "title": "Round R35 r2: the 90-161.Z window r8, F05 every minute, 15 business days, the clearer import and second person cards, and the full flow test again",
             "files": [
                 {
                     "dir": "T22",
@@ -1254,7 +1254,7 @@
             "apps": [
                 {
                     "name": "90-161.Z: Publications and Forms Management",
-                    "summary": "Round R35 r1: the window, PFM Office level, tier T-0, second person, import by upgrade, form and button, full flow test. Fake data.",
+                    "summary": "Round R35 r2: window r8, 15 business days, list access, second person, import by upgrade, form and button, full flow test. Fake data.",
                     "steps": [
                         "T22 Open the 90-161.Z window r8",
                         "T22 Did the window open r8",
