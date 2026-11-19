@@ -12,7 +12,7 @@ Source: the PFM's answers 1A and 2A on the preview canvas https://claude.ai/arti
 5. Every screen name in "quotes", every time; one action per line; a fallback starts with "If" and holds one action.
 6. No codes or build words in a note or title ("slice", "probe solution", "estimate"); a time is "about N minutes", once, in the note.
 7. No line about what is not on the screen; no unnumbered line between numbered lines.
-8. US spelling (gray, license). One Done button: `doneText` is not set (the engine default "Done").
+8. US spelling (gray, license). One Done button: `doneText` is not set (the engine default "Done"), except on a look step (a step with questions), which may name what was done in 30 characters or fewer (B6, the PFM, 18 Nov 26).
 9. Seen: T18 and T21 share the same 8 opening lines; REC (agent): one shared "import a solution" part in the bundle source.
 
 check_guide_text.py adds checks for 1, 2, 7 (unnumbered line in the list), 8 (doneText) and "Grey"; the fresh reader checks the rest.

@@ -37,7 +37,8 @@ Limits (a pass here is not proof that a step is clear; the fresh-reader check in
 Runner text rules (docs/reviews/2026-11-17-runner-polish.md, the PFM, 17 Nov 26), checked on every step of the manifest
 (check_step_rules): a step FAILS with no `title`, a title over 56 characters or with a code (T<NN>, r<N>, F<NN>, R<NN>)
 or build word (slice, probe solution, estimate), a note with a code or build word, a guide over 10 numbered lines or a
-line over 100 characters, an unnumbered line between numbered lines, a set `doneText`, the word "grey", a line "Return
+line over 100 characters, an unnumbered line between numbered lines, a `doneText` on a step with no questions (B6, the
+PFM 18 Nov 26: only a look step, one with `answers`, names what was done; at most 30 characters), the word "grey", a line "Return
 to the RADE window" or "Select Done ...", and a card with an address whose line 1 is not `Select "Open in browser" above.`
 
 No baseline and no exemption: every step must pass (the R26 r1 baseline was removed with R26 r2, 16 Nov 26).
@@ -151,8 +152,12 @@ def check_step_rules(s):
         shown += [a.get('prompt', '')] + list(a.get('choices', []))
     if any(re.search(r'\bgrey', x, re.I) for x in shown):
         out.append('"grey": use gray')
-    if s.get('doneText'):
-        out.append('sets doneText "%s"' % s['doneText'])
+    # B6 (the PFM, 18 Nov 26): a look step (one with questions) may name what was done; every other card keeps "Done".
+    done = s.get('doneText', '')
+    if done and not s.get('answers'):
+        out.append('sets doneText "%s" on a step with no questions' % done)
+    if len(done) > 30:
+        out.append('doneText is %d characters (limit 30)' % len(done))
     guide = s.get('guide', [])
     nums = [i for i, g in enumerate(guide) if NUMBERED.match(g)]
     if len(nums) > LINES_MAX:
@@ -265,6 +270,7 @@ BAD_RULES = [
     ({'title': 'a', 'guide': ['1. Select ' + 'x' * 100]}, 'line over 100'),
     ({'title': 'a', 'guide': ['1. Select A.', 'If x: select B.', '2. Select C.']}, 'unnumbered line sits'),
     ({'title': 'a', 'doneText': 'Done: x'}, 'sets doneText'),
+    ({'title': 'a', 'doneText': 'x' * 31, 'answers': [{'prompt': 'Is it?', 'kind': 'yesno'}]}, 'doneText is 31'),
     ({'title': 'a', 'guide': ['1. Select the Grey box.']}, '"grey"'),
     ({'title': 'a', 'note': 'The greyed box.'}, '"grey"'),
     ({'title': 'a', 'help': 'A grey box.'}, '"grey"'),
@@ -320,6 +326,9 @@ def self_test_rules():
     ok_step['help'] = 'Press F5 to run it.'
     if check_step_rules(ok_step):
         errs.append('good rules step failed: %s' % check_step_rules(ok_step))
+    look = dict(ok_step, doneText='I looked at the form', answers=[{'key': 'k', 'prompt': 'Is it there?', 'kind': 'yesno'}])
+    if check_step_rules(look):
+        errs.append('good look step (B6 doneText) failed: %s' % check_step_rules(look))
     for s, want in BAD_RULES:
         if not any(want in f for f in check_step_rules(s)):
             errs.append('bad rules step not found (%s): %s -> %s' % (want, s, check_step_rules(s)))
