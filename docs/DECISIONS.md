@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | Window r6: D1 also on the Publications card (yes). The label that sits about 7 px below its title in the "Needs You Today" rows, and 2 px in rows blocks: fix in the next window revision (r7), not in R32. | PFM | [R31b results](reviews/2026-11-18-r31b-results.md) |
 | 2026-11-18 | RADE lock moves to release engine-v20 (RADE bdbe873, serial 15) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | One paste for each round again; no bundle size limit (was 600 KB, 2026-11-14): the size test left tests/run.sh. R32 (about 750 KB) and R33 (1 MB) find the largest paste that works. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
 | 2026-11-18 | R32 scope from the RADE plan "proof and hardening": lock to engine-v19, then engine-v20 ("Yes, move"); stage 1 (console paste); flow items 5.4 and 5.5 as hand steps; button rules B1-B7 with the v20 fields. Scope: R32. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
