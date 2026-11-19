@@ -1,0 +1,57 @@
+{
+  "displayName": "90161Z T21 Probe Health r6",
+  "description": "R34 probe (task T21, fake data only; fallback A, the PFM 18 Nov 26): a flow of the solution 90-161.Z flows, so it is imported by upgrade and runs on the SharePoint connection reference the solution already has. On a RUN-HEALTH row in the list 90161Z Probe it writes one RESULT row (HEALTH): the flow ran. It no longer lists flows (r5 needed the Power Automate Management connector, whose new connection could not be loaded in R29a to R32). The list is named, not looked up at import, so the import does not need the list. Environment variable: Site URL.",
+  "connections": [
+    "shared_sharepointonline"
+  ],
+  "triggers": {
+    "When_an_item_is_created": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "conditions": [
+        {
+          "expression": "@startsWith(triggerBody()?['Title'],'RUN-HEALTH')"
+        }
+      ],
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnNewItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "H_row": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "RESULT",
+          "item/ProbeTest": "HEALTH",
+          "item/ProbeWay": "a",
+          "item/ProbeResult": "PASS",
+          "item/ProbeDetail": "@concat('the flow ran on the SharePoint connection of the solution; command row ', string(triggerBody()?['ID']))"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  }
+}

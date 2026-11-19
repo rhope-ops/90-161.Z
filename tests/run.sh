@@ -33,7 +33,7 @@ grp val 'scripts/gov/Test-Publication.ps1' 'scripts/gov/Publication.Common.ps1' 
 grp seal 'scripts/gov/90161Z-T07-*' 'scripts/build_test_seals.py' 'tests/ps/Test-SealTrim.ps1' 'tests/fixtures/seal*'
 grp t20 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*' 'tests/ps/Test-T20.ps1' 'tests/fake-pnp/*' 'schemas/lists/*' \
   'flow/provisioning-payload.json' 'scripts/build_flow_payload.py'
-grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' 'samples/90161Z-T21-*' 'scripts/build_probe_samples.py'
+grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/src/*' 'tests/ps/Test-T21.ps1' 'samples/90161Z-T21-*' 'scripts/build_probe_samples.py' 'flow/solution/90161Z-T24-*'
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py'
 grp t22 'scripts/gov/90161Z-T22-*'
@@ -172,7 +172,7 @@ python3 scripts/build_flow_solution.py --check >/dev/null && python3 tests/check
 # export values; no environmentvariabledefinition.xml has an XML declaration. R19: only A r5 (no variable, layout of the R18 export).
 python3 - <<'PYEOF' && ok "solution import test zip valid (A r5: no variable, R18 export layout)" || bad "solution import test zips"
 import zipfile, glob, xml.dom.minidom as md
-zips = sorted(glob.glob('flow/solution/90161Z-T17-solution-test-*.zip')) + ['flow/solution/90161Z-T24-full-flows-r2.zip']
+zips = sorted(glob.glob('flow/solution/90161Z-T17-solution-test-*.zip')) + ['flow/solution/90161Z-T24-full-flows-r3.zip']
 assert len(zips) == 2 and zips[0].endswith('-test-a-r5.zip'), zips
 for path in zips:
     z = zipfile.ZipFile(path); n = z.namelist()

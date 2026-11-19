@@ -1,19 +1,19 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r6, module "person": the parts Person (the second person for test T4) and Clean (removes the
+  90-161.Z Task 21 probe r7, module "person": the parts Person (the second person for test T4) and Clean (removes the
   person, the list and the library again).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r6.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
-  Inputs: the values the main file sets ($site, $dir, $StateName, $ButtonIdName, $ListTitle, $ListFolder, $LibTitle,
-  $LibFolder, $TestDir, $NoLaunch) and the helpers of the module "common". Outputs: result lines through Add-Item.
+  Loaded by 90161Z-T21-probe-r7.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Inputs: the values the main file sets ($site, $dir, $StateName, $ListTitle, $ListFolder, $LibTitle, $LibFolder,
+  $TestDir, $NoLaunch) and the helpers of the module "common". Outputs: result lines through Add-Item.
   The second person's e-mail address is read in a small window and used in memory only: it is never written to a file,
   a result line or an output stream (tests/ps/Test-T21.ps1 checks this text).
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: Person: adds one person to the site's Visitors group; on this computer the state file (3 numbers or flags) and
           the clipboard (the new row form link). Clean: removes that person from the group again, moves the probe list
-          and library to the site Recycle Bin, deletes the state file and the flow ID file.
+          and library to the site Recycle Bin, deletes the state file.
   Credentials: none of its own (the main file signs in); no password is asked for.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r6.ps1 -Part Person (or Clean) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r7.ps1 -Part Person (or Clean) loads it.
 #>
 
 function Read-PersonAddress {
@@ -83,11 +83,13 @@ function Add-VisitorMember([int]$VisitorId, [int]$UserId, [string]$LoginName) {
 #>
 function Add-SecondPerson([int]$VisitorId) {
   $result = @{ State = 'no'; Why = '' }
+  Write-Now 'Asking for the address of the second person in a small window'
   $personAddr = Read-PersonAddress
   $addrOk = ($personAddr -match '^[^@\s]+@[^@\s]+\.[^@\s]+$')
   if (-not $addrOk) { Add-Item 'p2-person' 'FAIL' 'no valid address was given in the window'; $result.Why = 'no valid address was given' }
   else {
     $userId = 0; $loginName = ''
+    Write-Now 'Looking for the second person on the site'
     try {
       $raw = Invoke-Rest 'Post' '_api/web/ensureuser' (@{ logonName = ('i:0#.f|membership|' + $personAddr) } | ConvertTo-Json -Compress)
       if ($raw -match '"Id"\s*:\s*(\d+)') { $userId = [int]$Matches[1] }
@@ -104,6 +106,7 @@ function Add-SecondPerson([int]$VisitorId) {
     if ($userId -le 0) { Add-Item 'p2-person' 'FAIL' 'the person was not found on this site'; $result.Why = 'the person was not found on this site' }
     else {
       Add-Item 'p2-person' 'PASS' 'the person was found on this site (the site user number is saved in the state file, no address and no name)'
+      Write-Now 'Adding the second person to the Visitors group'
       $result = Add-VisitorMember $VisitorId $userId $loginName
       $isIn = ($result.State -eq 'yes' -or $result.State -eq 'was')
       $inText = $(if ($result.State -eq 'no' -or $result.State -eq 'other') { 'no' } else { 'yes' })
@@ -121,6 +124,7 @@ function Add-SecondPerson([int]$VisitorId) {
   clipboard.
 #>
 function Invoke-PersonPart {
+  Write-Now 'Looking for the probe list and the Visitors group'
   $lst = Find-ByFolder $ListFolder
   if (-not $lst) { throw 'LIST not found: run -Part Make first.' }
   $visitorId = Get-VisitorGroupId
@@ -153,6 +157,7 @@ function Clear-SecondPerson {
     try { Remove-Item -LiteralPath (Join-Path $script:dir $StateName) -ErrorAction Stop } catch { $null = $_ }
     return
   }
+  Write-Now 'Removing the second person from the Visitors group'
   try {
     $uid = [int]$state['UserId']; $gid = 0
     if ($state['GroupId'] -match '^\d+$') { $gid = [int]$state['GroupId'] }
@@ -172,14 +177,16 @@ function Clear-SecondPerson {
 <#
 .SYNOPSIS
   The part Clean: runs each step on its own, even if an earlier one failed. First the person, then the two objects (found
-  by their folder name), to the site Recycle Bin (restorable for 93 days). The solutions are removed by hand.
+  by their folder name), to the site Recycle Bin (restorable for 93 days). The probe flows stay in the solution.
 #>
 function Invoke-CleanPart {
+  Write-Now 'Looking for a second person on file'
   Clear-SecondPerson
   foreach ($o in @(@('c2-list', $ListTitle, $ListFolder), @('c3-library', $LibTitle, $LibFolder))) {
     try {
       $x = Find-ByFolder $o[2]
       if (-not $x) { Add-Item $o[0] 'PASS' ('"' + $o[1] + '" was not on the site (nothing to remove)'); continue }
+      Write-Now ('Moving ' + $o[1] + ' to the site Recycle Bin')
       # R29a finding 7: the command returns the Recycle Bin item ID; it is not shown (it reached the log as a raw table).
       $null = Remove-PnPList -Identity ([string]$x.Id) -Recycle -Force -ErrorAction Stop
       $still = Find-ByFolder $o[2]
@@ -187,7 +194,6 @@ function Invoke-CleanPart {
       Add-Item $o[0] $(if (-not $still) { 'PASS' } else { 'FAIL' }) ('"' + $o[1] + '" ' + $text)
     } catch { Add-Item $o[0] 'FAIL' ('"' + $o[1] + '" could not be removed: ' + (Format-Detail ([string]$_.Exception.Message)) + ' (run Clean again)') }
   }
-  try { $bf2 = Join-Path $script:dir $ButtonIdName; if (Test-Path -LiteralPath $bf2 -PathType Leaf) { Remove-Item -LiteralPath $bf2 -ErrorAction Stop } } catch { $null = $_ }
-  $solutions = '"90-161.Z probe", "90-161.Z probe health" and "90-161.Z probe button"'
-  $script:lines.Add('NOTE by hand: delete the solutions ' + $solutions + ' if they are there (Power Automate, Solutions). This script does not touch them')
+  $flows = '"90161Z T21 Probe Health r6" and "90161Z T21 Probe Button r6"'
+  $script:lines.Add('NOTE the probe flows ' + $flows + ' are flows of the solution "90-161.Z flows"; this script does not touch flows or solutions')
 }
