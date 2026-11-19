@@ -278,7 +278,8 @@ $wn.MeasureScaled = {
   .PARAMETER K
   The factor (1.5: the PFM's 150 %).
   .OUTPUTS
-  A table: K, Dpi, Sc8 (8 px at 100 %, at this scale) and Cards (Key, Level or Error).
+  A table: K, Dpi, Sc8 (8 px at 100 %, at this scale), Cards (Key, Level or Error) and (R7 W2) Wheel ($wn.MeasureWheel)
+  or WheelError.
   #>
   param([double]$K)
   $keep = @{ Dpi = $ui.Dpi; FontK = $ui.FontK; F = $ui.F; Crumb = $wn.CrumbFont; Step = $wn.StepFonts }
@@ -293,6 +294,8 @@ $wn.MeasureScaled = {
       try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts) }
       catch { $c['Error'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
       $cards.Add($c) }
+    # R7 (W2): the mouse wheel at this scale too; a wheel case that cannot run is kept as its error (the test names it).
+    try { $res['Wheel'] = (& $wn.MeasureWheel) } catch { $res['Wheel'] = $null; $res['WheelError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   } finally {
     if ($wn.StepFonts -and -not [object]::ReferenceEquals($wn.StepFonts, $keep.Step)) { foreach ($x in @($wn.StepFonts.A) + @($wn.StepFonts.B)) { $made.Add($x) } }
     $ui.Dpi = $keep.Dpi; $ui.FontK = $keep.FontK; $ui.F = $keep.F; $wn.CrumbFont = $keep.Crumb; $wn.StepFonts = $keep.Step

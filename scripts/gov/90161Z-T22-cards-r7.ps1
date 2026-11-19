@@ -116,7 +116,7 @@ $Checks = @(
   @{ Key = 'status'; Text = 'On the same card: pass if the caption "ACTION STATUS" is level with the first line of the main card beside it.' },
   @{ Key = 'chip'; Text = 'On the same card, look at the format check. Pass if the label "Passed" is level with the text beside it.' },
   @{ Key = 'pubcol'; Text = 'Select All Actions in the list on the left. Pass if the publication titles, such as "Recall", start in one column.' },
-  @{ Key = 'wheel'; Text = 'Put the pointer on the middle of the card "Your Work". Turn the mouse wheel. Pass if the card scrolls.' },
+  @{ Key = 'wheel'; Text = 'Put the pointer on the middle of the card "Your Work". Turn the mouse wheel. Pass if the card scrolls, or if the whole card shows with no scroll bar.' },
   @{ Key = 'pubnum'; Text = 'Select "All Actions". Pass if each publication number shows whole, with no dots.' }
 )
 # The cards, in the order the window builds them. A card: Rail (the rail item it lights), Title and Sub or Crumb and

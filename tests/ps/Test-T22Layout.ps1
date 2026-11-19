@@ -20,7 +20,8 @@
 # beside text (check, list rows, rows blocks, the chips row) is level with its first text line, with the list chips of
 # Your Work and the rows chips of step 8 measured (W3). Once: a mouse-wheel turn on the middle of the first card of Your
 # Work (not on the scroll bar), sent to the button with the focus, scrolls the main column; one on a grid that can
-# still scroll scrolls the grid, not the main column (W2; the window's own filter is called, no real pointer moves).
+# still scroll scrolls the grid, not the main column (W2, at the 3 scales; the routing function on the control tree and
+# the window's own filter are each called, no real pointer moves).
 # Each line shows the measured numbers.
 # Last line: "T22LAYOUT pass=N fail=0" (tests/ps/Invoke-Ps51.ps1 runs it on the ps51 Windows job).
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
@@ -228,22 +229,24 @@ one turn towards you on the middle of the first card of Your Work (a button has 
 down, with the pointer on a part of the card (not on the main column or its scroll bar); one turn on a grid that could
 still scroll moved the grid's first row and not the main column (when the card had such a grid).
 .PARAMETER M
-The measure file (Wheel with Route and Filter, WheelError).
+The measure file, or one scale of it (Wheel with Route and Filter, WheelError).
+.PARAMETER At
+The scale, as text (it starts each line).
 #>
-function Test-Wheel($M) {
+function Test-Wheel($M, [string]$At) {
   $w = $M.Wheel
-  if (-not $w) { Test-That 'wheel: measured' $false ('no wheel facts' + $(if ($M.WheelError) { '; error: ' + $M.WheelError } else { '' })); return }
+  if (-not $w) { Test-That ($At + ' wheel: measured') $false ('no wheel facts' + $(if ($M.WheelError) { '; error: ' + $M.WheelError } else { '' })); return }
   foreach ($way in @(@{ K = 'Route'; T = 'routing function on the control tree' }, @{ K = 'Filter'; T = 'window filter, message as Windows sends it' })) {
     $c = $w.($way.K)
-    if (-not $c) { Test-That ('wheel (' + $way.T + '): measured') $false 'no facts'; continue }
+    if (-not $c) { Test-That ($At + ' wheel (' + $way.T + '): measured') $false 'no facts'; continue }
     $onCard = ([string]$c.Under -and [string]$c.Under -notmatch '"Main column"$' -and [string]$c.Under -notmatch '^Form ')
     $ok = ([bool]$c.Scrolls -and [bool]$c.Handled -and $onCard -and [int]$c.After -gt [int]$c.Before)
     $nums = 'card ' + $w.Card + ' scrolls ' + $c.Scrolls + '; pointer on ' + $c.Under + '; taken ' + $c.Handled + '; scroll position ' + $c.Before + ' -> ' + $c.After
-    Test-That ('wheel (' + $way.T + '): the card scrolls from a point on the card, not the scroll bar') $ok $nums
-    if ($null -eq $c.GridBefore) { Write-Host ('T22LAYOUT note wheel (' + $way.T + '): no grid on the card could still scroll'); continue }
+    Test-That ($At + ' wheel (' + $way.T + '): the card scrolls from a point on the card, not the scroll bar') $ok $nums
+    if ($null -eq $c.GridBefore) { Write-Host ('T22LAYOUT note ' + $At + ' wheel (' + $way.T + '): no grid on the card could still scroll'); continue }
     $ok = ([bool]$c.GridHandled -and [int]$c.GridAfter -gt [int]$c.GridBefore -and [int]$c.MainAfter -eq [int]$c.MainBefore)
     $nums = 'pointer on ' + $c.GridUnder + '; taken ' + $c.GridHandled + '; first row ' + $c.GridBefore + ' -> ' + $c.GridAfter + '; main column ' + $c.MainBefore + ' -> ' + $c.MainAfter
-    Test-That ('wheel (' + $way.T + '): the grid under the pointer scrolls, the card stays') $ok $nums }
+    Test-That ($At + ' wheel (' + $way.T + '): the grid under the pointer scrolls, the card stays') $ok $nums }
 }
 $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGuid().ToString('N'))
 [void](New-Item -ItemType Directory -Path $tmp)
@@ -273,10 +276,10 @@ try {
     if ($bad.Count) { $nums += ' (' + (@($bad | ForEach-Object { [string]$_.Key + ': ' + $_.Error }) -join '; ') + ')' }
     if ($m.ScaledError) { $nums += '; error: ' + $m.ScaledError }
     Test-That 'D1 to D4 measured at 1.25 x and 1.5 x' ($scaled.Count -eq 2 -and $bad.Count -eq 0) $nums
-    foreach ($s in $scaled) { Test-Level @($s.Cards) ([double]$s.Sc8) ('dpi ' + $s.Dpi + ' (' + $s.K + ' x)') }
+    foreach ($s in $scaled) { $at = 'dpi ' + $s.Dpi + ' (' + $s.K + ' x)'; Test-Level @($s.Cards) ([double]$s.Sc8) $at; Test-Wheel $s $at }
     $empty = @($m.EmptyNames | Where-Object { $_ })
     Test-That 'every button, link and text box has an accessible name' ($empty.Count -eq 0) ('without a name: ' + $empty.Count + $(if ($empty.Count) { ' (' + ($empty -join ', ') + ')' } else { '' }))
-    Test-Wheel $m
+    Test-Wheel $m ('dpi ' + $m.Dpi)
     Test-RailHead $m
     Test-Contrast $m
     Test-CardPng $m $tmp
