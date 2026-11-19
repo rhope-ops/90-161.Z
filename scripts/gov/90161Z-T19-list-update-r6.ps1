@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 19 list update r6 (round R36; PFM 19 Nov 26: the Closed Date column and the Event Type choice Waiver Warning; r5: 15 business days, and S3 A: the tier T-0). Windows PowerShell 5.1, the installed
+  90-161.Z Task 19 list update r6 (round R36; PFM 19 Nov 26: the Closed Date column and the Event Type choice Waiver Warning; r5: 15 business days,
+  and S3 A: the tier T-0). Windows PowerShell 5.1, the installed
   PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: brings the lists of a site that exists up to the list schemas (schemas/lists) where T20 cannot: T20 skips

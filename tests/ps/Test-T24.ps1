@@ -2,7 +2,8 @@
 # the import) against the strict fake site of tests/fake-pnp (pwsh 7, also Windows PowerShell 5.1 through tests/ps/Invoke-Ps51.ps1).
 # It uses the committed solution flow/solution/90161Z-T24-full-flows-r5.zip and proves: every placeholder is replaced by the GUID of
 # its list, entries without one are copied byte for byte, a missing list or a left placeholder stops with a clear line and leaves no
-# ready zip, and the zip the round saved is not changed. The real service is proved only by a gov device round.
+# ready zip, and the zip the round saved is not changed. R36 also: part 1 waits one full F01 check before each F01 count (W11, with a fake
+# clock) and holds the F08 test of the 4.4A design (W5). The real service is proved only by a gov device round.
 # Last line: "T24 pass=N fail=0".
 # Network: none (the site is a fake in memory; the fake address host is example.test).
 # Writes: a temporary folder under the system temp folder, removed at the end.
@@ -27,7 +28,8 @@ $script = Join-Path $Root 'scripts/gov/90161Z-T24-full-solution-test-r6.ps1'
 $source = Join-Path $Root 'flow/solution/90161Z-T24-full-flows-r5.zip'
 $zipIn = Join-Path $t24 '90161Z-T24-full-flows-r5.zip'
 $zipOut = Join-Path $t24 '90161Z-T24-full-flows-r5-ready.zip'
-$titles = @('PFM Publications', 'PFM Activity Log', 'PFM Reviews', 'PFM Endorsements', 'PFM Product Index', 'PFM Process Steps', 'PFM Offices', 'PFM Settings', 'PFM Waivers')   # R36: PFM Waivers for F08
+$titles = @('PFM Publications', 'PFM Activity Log', 'PFM Reviews', 'PFM Endorsements', 'PFM Product Index', 'PFM Process Steps', 'PFM Offices', 'PFM Settings',
+  'PFM Waivers')   # R36: PFM Waivers for F08
 
 # Run part 0 against the fake site. Takes nothing; returns a hashtable with Out (lines) and Text (joined).
 function Invoke-T24 {
@@ -128,6 +130,60 @@ Test-That 'no placeholder: the older ready zip is removed' (-not (Test-Path -Lit
 Remove-Item -LiteralPath $zipIn -Force
 $r = Invoke-T24
 Test-That 'no zip stops the part' ($r.Text -match 'STOPPED: SOLUTION ZIP not in the T24 folder: 90161Z-T24-full-flows-r5.zip') $r.Text
+
+# 6. W11 (R35 finding 1): part 1 counts F01 rows only after one full F01 check (16 minutes after the rows were made or changed) and says how
+# long it waits. Wait-FullCheck is taken from the script by its syntax tree and run with a fake clock (Get-Date and Start-Sleep below).
+$text = Get-Content -LiteralPath $script -Raw
+$ast = [System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$null, [ref]$null)
+$fn = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Wait-FullCheck' }, $true))
+Test-That 'Wait-FullCheck is defined once' ($fn.Count -eq 1)
+$full = $(if ($text -match '(?m)^\$F01FullCheck = (\d+)\b') { [int]$Matches[1] } else { -1 })
+Test-That 'the full F01 check is 16 minutes (every 15 minutes, plus 1)' ($full -eq 16) ([string]$full)
+<#
+.SYNOPSIS
+  Runs Wait-FullCheck with a fake clock: Get-Date gives the fake time, Start-Sleep moves it on, Write-Host keeps the lines.
+.PARAMETER Ago
+  Minutes since the rows were made.
+.OUTPUTS
+  System.Collections.Hashtable. Back (the return value), Slept (fake seconds slept) and Shown (the screen lines).
+#>
+function Invoke-FullCheck([double]$Ago) {
+  $clock = @{ Now = [datetime]'2026-11-19T14:00:00'; Slept = 0 }
+  $shown = New-Object System.Collections.Generic.List[string]
+  $back = & {
+    function Get-Date { return $clock.Now }
+    function Start-Sleep([int]$Seconds) { $clock.Now = $clock.Now.AddSeconds($Seconds); $clock.Slept += $Seconds }
+    function Write-Host([string]$Object) { $shown.Add($Object) }
+    $F01FullCheck = $full
+    . ([scriptblock]::Create($fn[0].Extent.Text))
+    Wait-FullCheck $clock.Now.AddMinutes(-$Ago) 'the F01 log rows'
+  }
+  return @{ Back = $back; Slept = $clock.Slept; Shown = @($shown) }
+}
+$w = Invoke-FullCheck 5
+Test-That 'rows made 5 minutes ago: waits 11 minutes and says so' ($w.Back -eq 11 -and $w.Slept -eq 660 -and
+  $w.Shown[0] -eq 'NOW Waiting 11 minutes, until 14:11, so that F01 (it checks every 15 minutes) has made one full check before counting the F01 log rows. Leave this window open.' -and
+  $w.Shown -contains '  1 of 11 minutes left before counting the F01 log rows ...') ($w.Shown -join "`n")
+$w = Invoke-FullCheck 0
+Test-That 'rows made just now: waits the full 16 minutes' ($w.Back -eq 16 -and $w.Slept -eq 960) ('back=' + $w.Back + ' slept=' + $w.Slept)
+$w = Invoke-FullCheck 20
+Test-That 'a full check passed already: no wait, says so' ($w.Back -eq 0 -and $w.Slept -eq 0 -and $w.Shown[0] -like 'NOW One full F01 check has passed already*') ($w.Shown -join "`n")
+# Part 1 calls it before each F01 count, and counts the 8 flows F01 to F08 (W5: F08).
+$p1 = $text.IndexOf("Wait-FullCheck `$made"); $c1 = $text.IndexOf("Count -lt 1 }).Count -eq 0 } 'the F01 log rows'")
+$p2 = $text.IndexOf("Wait-FullCheck `$changed"); $c2 = $text.IndexOf("Count -lt 2 }).Count -eq 0 } 'the F01 log rows'")
+Test-That 'part 1 waits one full F01 check before each F01 count' ($p1 -gt 0 -and $p1 -lt $c1 -and $p2 -gt $c1 -and $p2 -lt $c2) ("$p1 $c1 $p2 $c2")
+Test-That 'part 1 counts the 8 flows F01 to F08' ($text.Contains('$mine.Count -eq 8 -and $on -eq 8'))
+
+# 7. W5 (F08, rule 4.4A): the part 1 test rows are the design's (an office row with you as Leader; T-1 and T-3 with you as approver, T-2 with none),
+# its result lines are the 3 checks, and part 4 removes the waivers and the office row.
+Test-That 'F08 test rows as in the design' ($text -match "w1 = @\(\(\`$Prefix \+ 'F08 waiver T-1 \(delete me\)'\), 'T-1', \`$true\)" -and
+  $text -match "w3 = @\(\(\`$Prefix \+ 'F08 waiver T-3 \(delete me\)'\), 'T-3', \`$true\)" -and
+  $text -match "w2 = @\(\(\`$Prefix \+ 'F08 waiver T-2 no approver \(delete me\)'\), 'T-2', \`$false\)" -and
+  $text.Contains("Leader = `$meId; IsActive = `$false"))
+Test-That 'F08 checks: 1 warning for T-1, none for T-3, none without an approver' ($text.Contains("Add-Line 'f08-warns-t1'") -and $text.Contains("Add-Line 'f08-none-t3'") -and
+  $text.Contains("Add-Line 'f08-none-no-approver'") -and $text.Contains("`$warn['w1'].Count -eq 1 -and [string]`$warn['w1'][0]['EventType'] -eq 'Waiver Warning'"))
+Test-That 'part 4 removes the waivers, their warning rows and the office row' ($text.Contains("foreach (`$k in `$Waivers.Keys) { if (`$state.ContainsKey(`$k)) { try { `$n += Clear-TestWaiver") -and
+  $text.Contains("Remove-PnPListItem -List 'PFM Offices' -Identity ([int]`$state['office'])"))
 
 Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host ('T24 pass=' + $script:pass + ' fail=' + $script:fail)

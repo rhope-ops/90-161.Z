@@ -2,20 +2,26 @@
 .SYNOPSIS
   90-161.Z Task 24 full-solution test, r6. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
   WHAT R6 CHANGES (R36, PFM 19 Nov 26): part 0 (module 90161Z-T24-zip-r6.ps1) writes the 8 list GUIDs into a copy of the solution zip before the import;
-  part 1 counts the 7 flows F01 to F07 (F07 r1); part 2 counts only the Publications rows without a Closed Date (F04 r4). Files keep r1 names.
+  part 1 counts the 8 flows F01 to F08 (F07 r1, F08 r1); part 2 counts only the Publications rows without a Closed Date (F04 r4). Files keep r1 names.
+  W11 (R35 finding 1): part 1 waits one full F01 check (16 minutes after the rows are made or changed) before it counts F01 rows, and says how long.
+  W5: part 1 also tests F08 (rule 4.4A; design approved by the PFM 19 Nov 26): 1 fake office row with you as Leader and 3 fake waivers.
 .DESCRIPTION
   What it is for: proves on the test site that F01 (activity log), F02 (next review due and periodic review task) and F04 (status report e-mail)
   work, and that the full solution imported with every flow On. It runs in parts with hand steps between them (round guide).
   Part 0 (about 1 minute, an estimate; before the import): reads the GUID of each list a placeholder of 90161Z-T24-full-flows-r5.zip names (by its
     title, on your own site only) and writes 90161Z-T24-full-flows-r5-ready.zip, the file to import; stops when a list is missing or a placeholder is left.
-  Part 1 (about 35 minutes, an estimate; most of it is waiting for the 15-minute F01 checks, -PollMinutes; F05 checks every minute, -F05Minutes):
+  Part 1 (about 40 minutes, an estimate; most of it is two waits of 16 minutes for full F01 checks, -PollMinutes; F05 checks every minute, -F05Minutes):
     0. Writes the PFM Settings rows Flows paused = No and Test mode = Yes (their old values are kept in a state file and put back in part 4).
-    a. Reads your own flows in Power Automate and counts the 7 flows F01 to F07 that are On (one try; if it cannot be read, a hand check line).
+    a. Reads your own flows in Power Automate and counts the 8 flows F01 to F08 that are On (one try; if it cannot be read, a hand check line).
+    w. F08 (DAFMAN 90-161 Attachment 10, Table A10.1; rule 4.4A): makes 1 fake PFM Offices row (not active) with you as Leader and 3 fake waivers:
+       T-1 with you as Waiver Approver (warns), T-3 with you (no warning: the wing waives T-3), T-2 with no approver (no warning). At the end of
+       part 1 (F08 checks every 15 minutes, as F01): exactly 1 warning row (Event Type Waiver Warning) in the Activity Log, for the T-1 waiver.
     1. F01 (no DAFMAN paragraph; PFM design) and F05 (DAFMAN 90-161 5.1.7, 5.1.8.2): makes 6 fake publications at once: X, X type, X step and
        X status at the first step of the list, G at step 3 and S at step 7. After the first flow check: each has 1 log row (opened) and S has 1 Legal
-       row per active office with Coordinate Last = Yes. Then at once: a note on X and on S, a new Action Type on X type, Process Step on X step,
+       row per active office with Coordinate Last = Yes. F01 rows are counted only after one full F01 check: part 1 waits until 16 minutes
+       after the rows were made (W11; F01 checks every 15 minutes), then up to -PollMinutes in all. Then at once: a note on X and on S, a new Action Type on X type, Process Step on X step,
        Action Status on X status, and G moved by hand to step 7. After the next check: 1 more log row each for X type, X step and X status, none for
-       X (a note), G has its Legal rows and S has no second Legal row.
+       X (a note), G has its Legal rows and S has no second Legal row (again counted after a 16-minute wait from the changes).
     2. F02 (DAFMAN 90-161 7.4.2 and 7.4.4): makes 4 fake Product Index rows (A: Certified Current Date is later, a wrong Next Review Due; B: Effective
        Date is later, the review window not open yet; C: like A with a periodic review already open; D: Inactive) and 1 review row.
     3. F04 (DAFMAN 90-161 2.6.8): makes 2 fake publications at 2 process steps and notes the newest status-report log row.
@@ -26,7 +32,8 @@
   Part 4 (Clean, about 3 minutes, an estimate; R28 review): moves every fake row to the site Recycle Bin (restorable for 93 days) and puts the PFM
     Settings rows back to their old values. The round runs it with no dependence on the earlier parts, so a failed or skipped part cannot leave the
     Settings changed or the fake rows on the site. It can run again: with no state file it reports that there is nothing to clean.
-  WHAT IT CHANGES ON THE SITE: the fake rows (publications, product index rows, review rows, and the log and Legal rows the flows write for them), two
+  WHAT IT CHANGES ON THE SITE: the fake rows (publications, product index rows, review rows, 1 office row, 3 waiver rows, and the log, warning and
+  Legal rows the flows write for them), two
   PFM Settings rows (put back in part 4). With Test mode = Yes the F04 e-mail goes to the alert address only. Part 0 changes nothing on the site.
   Counts only: no names, offices or addresses are written. The site address stays in Config\90161Z-site.txt on this computer; every output
   line shows it as <SITE> and the DODID as <DODID>. Output: 90161Z-T24-full-test-part0-r1.txt to part4 in the T24 folder (send all five).
@@ -37,7 +44,8 @@
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
   Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r6.ps1 -Part 0 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 0 to 4, -WaitMinutes (default 6: a flow you start with Run),
-  -PollMinutes (default 17: F01 checks every 15 minutes, plus 2), -F05Minutes (default 3: every minute, plus 2), -NoPause; -TestDir: tests only.
+  -PollMinutes (default 17: F01 checks every 15 minutes, plus 2; the count starts after 16 of them), -F05Minutes (default 3: every minute, plus 2),
+  -NoPause; -TestDir: tests only.
 #>
 param([string]$Id, [ValidateSet(0, 1, 2, 3, 4)][int]$Part = 1, [int]$WaitMinutes = 6, [int]$PollMinutes = 17, [int]$F05Minutes = 3, [switch]$NoPause, [string]$TestDir)
 $task = 'T24'
@@ -52,6 +60,12 @@ $TitleG7 = $Prefix + 'F05 G step 3 to 7 (delete me)'
 $TitleS7 = $Prefix + 'F05 S made at 7 (delete me)'
 $TitleF4A = $Prefix + 'F04 A (delete me)'
 $TitleF4B = $Prefix + 'F04 B (delete me)'
+# W5 (F08, rule 4.4A): the fake office row (you as Leader) and the 3 fake waivers. Key: state key, title, tier, approver is you.
+$TitleOffice = $Prefix + 'F08 office (delete me)'
+$Waivers = [ordered]@{ w1 = @(($Prefix + 'F08 waiver T-1 (delete me)'), 'T-1', $true); w3 = @(($Prefix + 'F08 waiver T-3 (delete me)'), 'T-3', $true)
+  w2 = @(($Prefix + 'F08 waiver T-2 no approver (delete me)'), 'T-2', $false) }
+# W11 (R35 finding 1): minutes from the moment the rows are made (or changed) to the first F01 count: one full check (every 15 minutes) plus 1.
+$F01FullCheck = 16
 # Seed values of the two PFM Settings rows this test writes (schemas/lists/PFMSettings.json). Part 4 puts the old values back (these when a row was missing).
 $SeedSettings = [ordered]@{ FlowsPaused = 'No'; TestMode = 'Yes' }
 
@@ -245,6 +259,50 @@ function Wait-ForCheck([scriptblock]$Done, [string]$What, [int]$Minutes = $PollM
   $script:WaitMinutes = $Minutes
   try { return (Wait-Until $Done $What) } finally { $script:WaitMinutes = $keep }
 }
+<#
+.SYNOPSIS
+  W11 (R35 finding 1): waits until one full F01 check has passed since the rows were made or changed ($F01FullCheck minutes; F01
+  checks every 15 minutes), so a count never starts before F01 has looked at the rows. Says how long it waits, then the minutes left
+  once a minute.
+.PARAMETER Since
+  When the rows were made or changed.
+.PARAMETER What
+  What is counted after the wait, for the lines on the screen.
+.OUTPUTS
+  System.Int32. The whole minutes it waited (0 when the time had passed already).
+#>
+function Wait-FullCheck([datetime]$Since, [string]$What) {
+  $until = $Since.AddMinutes($F01FullCheck)
+  $left = [int][Math]::Ceiling(($until - (Get-Date)).TotalMinutes)
+  if ($left -le 0) { Write-Host ('NOW One full F01 check has passed already; counting ' + $What + ' now.'); return 0 }
+  Write-Host ('NOW Waiting ' + $left + ' minutes, until ' + $until.ToString('HH:mm') + ', so that F01 (it checks every 15 minutes) has made one full check' +
+    ' before counting ' + $What + '. Leave this window open.')
+  while ($true) {
+    $rest = ($until - (Get-Date)).TotalSeconds
+    if ($rest -le 0) { break }
+    Start-Sleep -Seconds ([int][Math]::Ceiling([Math]::Min(60, $rest)))
+    $m = [int][Math]::Ceiling(($until - (Get-Date)).TotalMinutes)
+    if ($m -gt 0) { Write-Host ('  ' + $m + ' of ' + $left + ' minutes left before counting ' + $What + ' ...') }
+  }
+  return $left
+}
+function Get-WarningRow([int]$WaiverId) {
+  # The Activity Log rows F08 wrote for one waiver (title "Waiver tier warning: W<ID>"; rule 4.4A).
+  $q = "<View><Query><Where><Eq><FieldRef Name='Title'/><Value Type='Text'>Waiver tier warning: W" + $WaiverId + '</Value></Eq></Where></Query></View>'
+  return @(Get-PnPListItem -List 'PFM Activity Log' -Query $q -ErrorAction Stop)
+}
+function Clear-TestWaiver([int]$WaiverId) {
+  # Moves the F08 warning rows of one fake waiver, then the waiver, to the site Recycle Bin; returns the count.
+  $n = 0
+  foreach ($r in (Get-WarningRow $WaiverId)) { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ }
+  $null = Remove-PnPListItem -List 'PFM Waivers' -Identity $WaiverId -Recycle -Force -ErrorAction Stop
+  return $n + 1
+}
+function Get-MyUserId {
+  # Your own user id on the site (REST web/currentuser on the one site of this task), for the Leader and Waiver Approver of the fake rows.
+  $raw = [string](Invoke-PnPSPRestMethod -Method Get -Url ($site.TrimEnd('/') + '/_api/web/currentuser?$select=Id') -Raw -ErrorAction Stop)
+  return [int]($raw | ConvertFrom-Json).Id
+}
 function Get-SettingValue([string]$Key) {
   # The value of a PFM Settings row, or $null when the row is missing.
   $rows = @(Get-PnPListItem -List 'PFM Settings' -Fields 'Title', 'SettingValue' -ErrorAction Stop | Where-Object { ([string]$_['Title']).Trim() -eq $Key })
@@ -400,18 +458,18 @@ try {
     foreach ($k in $SeedSettings.Keys) { if ((Save-SettingRow $k $SeedSettings[$k]) -eq 'created') { $made++ } else { $upd++ } }
     Add-Line 'a0-settings' 'SET' ('PFM Settings rows made=' + $made + ' updated=' + $upd + '; Flows paused No; Test mode Yes')
 
-    # a. All 7 flows On after the import: your own flows only, filtered by the 90161Z F0 names. One try; a hand check line when it cannot be read.
-    Write-Host 'NOW Counting which of the 7 flows are On.'
+    # a. All 8 flows On after the import: your own flows only, filtered by the 90161Z F0 names. One try; a hand check line when it cannot be read.
+    Write-Host 'NOW Counting which of the 8 flows are On.'
     try {
       $envs = @(Get-PnPPowerPlatformEnvironment -ErrorAction Stop | Where-Object { $_.IsDefault })
       if ($envs.Count -ne 1) { throw [System.InvalidOperationException]::new('default environment not identified') }
       $mine = @(Get-PnPFlow -Environment $envs[0] -ErrorAction Stop | Where-Object { ([string]$_.Properties.DisplayName) -like '90161Z F0*' })
       $on = @($mine | Where-Object { ([string]$_.Properties.State) -eq 'Started' }).Count
-      Add-Line 'a-flows-on' $(if ($mine.Count -eq 7 -and $on -eq 7) { 'PASS' } else { 'FAIL' }) ('flows named 90161Z F01 to F07 found=' + $mine.Count + ' expected=7; On=' + $on + ' expected=7')
+      Add-Line 'a-flows-on' $(if ($mine.Count -eq 8 -and $on -eq 8) { 'PASS' } else { 'FAIL' }) ('flows named 90161Z F01 to F08 found=' + $mine.Count + ' expected=8; On=' + $on + ' expected=8')
     } catch {   # R34: PSInvalidOperationException from PnP (cause not proven): r5 adds its message, masked like every line, as evidence
       $why = ([string]$_.Exception.Message) -replace '\s+', ' '
       Add-Line 'a-flows-on' 'INFO' ('your flows could not be read from here (' + $_.Exception.GetType().Name + ': ' + $why.Substring(0, [Math]::Min(160, $why.Length)) +
-          '). Check by hand: in the solution, all 7 flows F01 to F07 read On')
+          '). Check by hand: in the solution, all 8 flows F01 to F08 read On')
     }
 
     # Leftovers of an earlier run (by title), then the steps the fake rows use.
@@ -420,11 +478,17 @@ try {
         ([string]$_['Title']).EndsWith('(delete me)') })
     $oldProds = @(Get-PnPListItem -List 'PFM Product Index' -Fields 'Title' -ErrorAction Stop | Where-Object { ([string]$_['Title']).StartsWith($Prefix) -and
         ([string]$_['Title']).EndsWith('(delete me)') })
+    $oldWaivers = @(Get-PnPListItem -List 'PFM Waivers' -Fields 'Title' -ErrorAction Stop | Where-Object { ([string]$_['Title']).StartsWith($Prefix) -and
+        ([string]$_['Title']).EndsWith('(delete me)') })
+    $oldOffices = @(Get-PnPListItem -List 'PFM Offices' -Fields 'Title' -ErrorAction Stop | Where-Object { ([string]$_['Title']) -eq $TitleOffice })
     $moved = 0
     foreach ($o in $oldPubs) { $moved += Clear-TestPublication $o.Id }
     foreach ($o in $oldProds) { $moved += Clear-TestProduct $o.Id }
-    if ($oldPubs.Count -or $oldProds.Count) { Add-Line 'b-leftovers' 'SET' ('moved ' + $oldPubs.Count + ' earlier test publication(s) and ' + $oldProds.Count +
-        ' product row(s) and their rows to the Recycle Bin, rows=' + $moved) }
+    foreach ($o in $oldWaivers) { $moved += Clear-TestWaiver $o.Id }
+    foreach ($o in $oldOffices) { $null = Remove-PnPListItem -List 'PFM Offices' -Identity $o.Id -Recycle -Force -ErrorAction Stop; $moved++ }
+    if ($oldPubs.Count -or $oldProds.Count -or $oldWaivers.Count -or $oldOffices.Count) { Add-Line 'b-leftovers' 'SET' ('moved ' + $oldPubs.Count +
+        ' earlier test publication(s), ' + $oldProds.Count + ' product row(s), ' + $oldWaivers.Count + ' waiver(s) and ' + $oldOffices.Count +
+        ' office row(s) and their rows to the Recycle Bin, rows=' + $moved) }
     Write-Host 'NOW Reading the process steps and the Legal offices.'
     $all = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'Title', 'StepNumber' -ErrorAction Stop)
     $steps = @($all | Where-Object { [int]$_['StepNumber'] -ne 6 -and [int]$_['StepNumber'] -ne 7 } | Sort-Object { [int]$_['StepNumber'] })
@@ -436,6 +500,23 @@ try {
     $legal = @(Get-PnPListItem -List 'PFM Offices' -Fields 'Title', 'CoordinateLast', 'IsActive' -ErrorAction Stop |
         Where-Object { [bool]$_['CoordinateLast'] -and [bool]$_['IsActive'] } | ForEach-Object { [string]$_['Title'] })
 
+    # w. F08 (rule 4.4A; W5): the office row and the waivers come first, so the first F01 wait below (16 minutes from the publications)
+    # also covers one full F08 check (every 15 minutes). The office row is not active, so F05 does not route to it.
+    Write-Host 'NOW Making 1 fake office row with you as Leader and 3 fake waivers for F08.'
+    $meId = Get-MyUserId
+    $office = Add-PnPListItem -List 'PFM Offices' -Values @{ Title = $TitleOffice; Leader = $meId; IsActive = $false; MandatoryCoordinator = $false
+      CoordinateLast = $false } -ErrorAction Stop
+    $state['office'] = [string]$office.Id
+    $wv = @{}
+    foreach ($k in $Waivers.Keys) {
+      $v = @{ Title = $Waivers[$k][0]; Tier = $Waivers[$k][1] }
+      if ($Waivers[$k][2]) { $v['WaiverApprover'] = $meId }
+      $wv[$k] = (Add-PnPListItem -List 'PFM Waivers' -Values $v -ErrorAction Stop).Id
+      $state[$k] = [string]$wv[$k]
+    }
+    Save-State $stateFile $state
+    Add-Line 'w-f08-created' 'SET' 'fake office rows made=1 (not active; you as Leader); fake waivers made=3 (T-1 and T-3 with you as Waiver Approver, T-2 with none)'
+
     # 1. F01 (every 15 minutes, F3 C) and F05 (r5: every minute): all fake publications are made together, so F01 needs one check.
     Write-Host 'NOW Making 6 fake publications: 4 for F01 and 2 for F05.'
     $make = [ordered]@{ x = @($TitleX, $steps[0].Id); xt = @($TitleXT, $steps[0].Id); xs = @($TitleXS, $steps[0].Id); xa = @($TitleXA, $steps[0].Id)
@@ -446,6 +527,7 @@ try {
           ProcessStep = $make[$k][1]; ActionStatus = 'On Track' } -ErrorAction Stop).Id
       $state[$k] = [string]$pub[$k]
     }
+    $made = Get-Date   # W11: the first F01 count waits until one full F01 check after this
     Save-State $stateFile $state
     Add-Line 'c-f01-created' 'SET' ('fake publications made=6 (Action Type New, On Track; 4 at step 1 of the list, G at step 3, S at step 7); Legal offices=' + $legal.Count)
     Write-Host ('NOW Waiting up to ' + $F05Minutes + ' minutes for F05 (it checks every minute) to add the Legal rows of S.')
@@ -453,8 +535,11 @@ try {
     $s7 = Test-LegalOnce $pub['s7'] $legal
     Add-Line 'f05-legal-made-at-7' $(if ($s7 -eq 'once' -and $okS) { 'PASS' } else { 'FAIL' }) ('S (made at step 7), within ' + $F05Minutes + ' minutes: ' + $s7 +
         $(if ($legal.Count) { '' } else { '; no active office with Coordinate Last = Yes in PFM Offices' }) + $(if ($okS) { '' } else { '. ' + $F05Late }))
-    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next F01 check (every 15 minutes): F01 logs the 6 new rows.')
-    $ok = Wait-ForCheck { @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 1 }).Count -eq 0 } 'the F01 log rows'
+    $more = [Math]::Max(1, $PollMinutes - $F01FullCheck)   # after the full check, the rest of -PollMinutes (at least 1 minute) for the rows
+    $w1 = Wait-FullCheck $made 'the F01 log rows of the 6 new publications'
+    Write-Host ('NOW Counting the F01 log rows of the 6 new publications (up to ' + $more + ' more minutes if some are not there yet).')
+    $ok = Wait-ForCheck { @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 1 }).Count -eq 0 } 'the F01 log rows' $more
+    Add-Line 'w-f01-wait-1' 'INFO' ('waited ' + $w1 + ' minutes before the first F01 count (one full F01 check: ' + $F01FullCheck + ' minutes after the rows were made)')
     $rows = @(Get-OwnLogRow $pub['x'])
     $d0 = $(if ($rows.Count) { [string]$rows[0]['EventDetails'] } else { '' })
     $one = @($pub.Keys | Where-Object { (Get-OwnLogRow $pub[$_]).Count -eq 1 }).Count
@@ -471,10 +556,13 @@ try {
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['xs'] -Values @{ ProcessStep = $steps[1].Id } -ErrorAction Stop
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['xa'] -Values @{ ActionStatus = 'Stalled' } -ErrorAction Stop
     $null = Set-PnPListItem -List 'PFM Publications' -Identity $pub['g7'] -Values @{ ProcessStep = $step7[0].Id } -ErrorAction Stop
+    $changed = Get-Date   # W11: the second F01 count waits until one full F01 check after this
     Write-Host ('NOW Waiting up to ' + $F05Minutes + ' minutes for F05 (it checks every minute) to add the Legal rows of G.')
     $okG = Wait-ForCheck { (Get-LegalRow $pub['g7']).Count -ge $legal.Count } 'the F05 Legal rows of G' $F05Minutes
-    Write-Host ('NOW Waiting up to ' + $PollMinutes + ' minutes for the next F01 check (every 15 minutes): F01 logs 3 changes.')
-    $ok = Wait-ForCheck { @('xt', 'xs', 'xa' | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 2 }).Count -eq 0 } 'the F01 log rows'
+    $w2 = Wait-FullCheck $changed 'the F01 log rows of the 3 changes'
+    Write-Host ('NOW Counting the F01 log rows of the 3 changes (up to ' + $more + ' more minutes if some are not there yet).')
+    $ok = Wait-ForCheck { @('xt', 'xs', 'xa' | Where-Object { (Get-OwnLogRow $pub[$_]).Count -lt 2 }).Count -eq 0 } 'the F01 log rows' $more
+    Add-Line 'w-f01-wait-2' 'INFO' ('waited ' + $w2 + ' minutes before the second F01 count (one full F01 check: ' + $F01FullCheck + ' minutes after the changes)')
     Write-Host 'NOW Waiting 2 minutes to see that F01 and F05 add no more rows.'
     Start-Sleep -Seconds 120
     # Key: item name, the changed column, the state F01 logs.
@@ -496,6 +584,19 @@ try {
         $F05Minutes + ' minutes=' + $okG + ': ' + $g7 + $(if ($okG) { '' } else { '. ' + $F05Late }))
     $s7 = Test-LegalOnce $pub['s7'] $legal
     Add-Line 'f05-no-duplicate' $(if ($s7 -eq 'once') { 'PASS' } else { 'FAIL' }) ('S after a second F05 run at step 7 (a note edit): ' + $s7)
+
+    # w. F08 (rule 4.4A): the waivers were made before both 16-minute waits, so F08 (every 15 minutes) has checked them at least twice by now.
+    Write-Host 'NOW Reading the F08 warning rows of the 3 fake waivers.'
+    $warn = @{}
+    foreach ($k in $Waivers.Keys) { $warn[$k] = @(Get-WarningRow $wv[$k]) }
+    $d8 = $(if ($warn['w1'].Count) { [string]$warn['w1'][0]['EventDetails'] } else { '' })
+    $good = $warn['w1'].Count -eq 1 -and [string]$warn['w1'][0]['EventType'] -eq 'Waiver Warning' -and $d8.StartsWith('Tier T-1; approver ') -and $d8.Contains('Table A10.1 approver: T-1: ')
+    Add-Line 'f08-warns-t1' $(if ($good) { 'PASS' } else { 'FAIL' }) ('T-1 waiver with you as Waiver Approver (you lead an office row): warning rows=' + $warn['w1'].Count +
+        ' expected=1 (Event Type Waiver Warning; the tier and the Table A10.1 approver in the details)' + $(if ($warn['w1'].Count) { '' } else { '. Check that F08 is On and read its run history' }))
+    Add-Line 'f08-none-t3' $(if ($warn['w3'].Count -eq 0) { 'PASS' } else { 'FAIL' }) (
+        'T-3 waiver with you as Waiver Approver (the wing waives T-3): warning rows=' + $warn['w3'].Count + ' expected=0')
+    Add-Line 'f08-none-no-approver' $(if ($warn['w2'].Count -eq 0) { 'PASS' } else { 'FAIL' }) ('T-2 waiver with no Waiver Approver: warning rows=' + $warn['w2'].Count + ' expected=0')
+    Add-Line 'f08-hand' 'INFO' 'the warning e-mail (alert address Inbox: exactly 1, subject 90-161.Z waiver tier warning: W<ID> (T-1)) is checked by you'
 
     # 2. F02: 4 fake Product Index rows, 1 review row. Fixed day 15 of this month, so every date is exact (no month-end rounding).
     $today = (Get-Date).Date
@@ -567,6 +668,10 @@ try {
       $n = 0; $gone = 0
       foreach ($k in 'x', 'xt', 'xs', 'xa', 'g7', 's7', 'fa', 'fb') { if ($state.ContainsKey($k)) { try { $n += Clear-TestPublication ([int]$state[$k]) } catch { $gone++ } } }
       foreach ($k in 'p1', 'p2', 'p3', 'p4') { if ($state.ContainsKey($k)) { try { $n += Clear-TestProduct ([int]$state[$k]) } catch { $gone++ } } }
+      foreach ($k in $Waivers.Keys) { if ($state.ContainsKey($k)) { try { $n += Clear-TestWaiver ([int]$state[$k]) } catch { $gone++ } } }
+      if ($state.ContainsKey('office')) {
+        try { $null = Remove-PnPListItem -List 'PFM Offices' -Identity ([int]$state['office']) -Recycle -Force -ErrorAction Stop; $n++ } catch { $gone++ }
+      }
       if ($state.ContainsKey('reportBase')) {
         foreach ($r in (Get-ReportLogRow ([int]$state['reportBase']))) { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity $r.Id -Recycle -Force -ErrorAction Stop; $n++ }
       }
