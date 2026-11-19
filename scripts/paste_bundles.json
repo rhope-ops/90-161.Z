@@ -94,7 +94,7 @@
                 },
                 {
                     "dir": "T24",
-                    "src": "scripts/gov/90161Z-T24-full-solution-test-r3.ps1"
+                    "src": "scripts/gov/90161Z-T24-full-solution-test-r4.ps1"
                 },
                 {
                     "dir": "T24",
@@ -319,7 +319,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Import the full solution r3: choose the file",
+                    "name": "T24 Import the full solution r4: choose the file",
                     "title": "Start the import of the full flows",
                     "kind": "guide",
                     "dir": "T24",
@@ -360,7 +360,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Import the full solution r3: finish",
+                    "name": "T24 Import the full solution r4: finish",
                     "title": "Finish the import of the full flows",
                     "kind": "guide",
                     "dir": "T24",
@@ -393,7 +393,7 @@
                     ],
                     "estimate": 5,
                     "after": [
-                        "T24 Import the full solution r3: choose the file"
+                        "T24 Import the full solution r4: choose the file"
                     ],
                     "doneLog": "Confirmed by you: imported the full solution.",
                     "answers": [
@@ -424,7 +424,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Turn on all 8 flows r3",
+                    "name": "T24 Turn on all 8 flows r4",
                     "title": "Turn on all 8 flows",
                     "kind": "guide",
                     "dir": "T24",
@@ -449,7 +449,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T24 Import the full solution r3: finish"
+                        "T24 Import the full solution r4: finish"
                     ],
                     "answers": [
                         {
@@ -472,7 +472,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Check the flows after the import r3",
+                    "name": "T24 Check the flows after the import r4",
                     "title": "Check the flows and their connections",
                     "kind": "guide",
                     "dir": "T24",
@@ -494,7 +494,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T24 Turn on all 8 flows r3"
+                        "T24 Turn on all 8 flows r4"
                     ],
                     "answers": [
                         {
@@ -528,7 +528,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Add a second owner to each flow r3",
+                    "name": "T24 Add a second owner to each flow r4",
                     "title": "Add a second owner to each app flow",
                     "kind": "guide",
                     "dir": "T24",
@@ -538,7 +538,7 @@
                         "1. Select \"Open in browser\" above.",
                         "2. On the left, select \"Solutions\" (it can be under \"More\").",
                         "3. Select the solution \"90-161.Z flows\".",
-                        "4. Select the flow \"90161Z F01 Activity Log r2\".",
+                        "4. Select the flow \"90161Z F01 Activity Log r3\".",
                         "5. Select \"Share\" at the top.",
                         "6. In the box under \"Owners\", type the name of a person in your office who agreed to help.",
                         "7. Select that person in the list.",
@@ -556,7 +556,7 @@
                     ],
                     "estimate": 8,
                     "after": [
-                        "T24 Turn on all 8 flows r3"
+                        "T24 Turn on all 8 flows r4"
                     ],
                     "answers": [
                         {
@@ -592,7 +592,7 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Turn on all 8 flows r3"
+                        "T24 Turn on all 8 flows r4"
                     ],
                     "doing": "Adding the row that starts the health flow."
                 },
@@ -613,7 +613,7 @@
                     ],
                     "after": [
                         "T21 Make the probe list r7",
-                        "T24 Turn on all 8 flows r3"
+                        "T24 Turn on all 8 flows r4"
                     ],
                     "doing": "Making the list view with the button."
                 },
@@ -671,14 +671,14 @@
                     ]
                 },
                 {
-                    "name": "T24 Full solution test, part 1 r3",
+                    "name": "T24 Full solution test, part 1 r4",
                     "title": "Prepare the full flow test",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r3.ps1",
+                    "file": "90161Z-T24-full-solution-test-r4.ps1",
                     "args": "-Part 1",
                     "minutes": 60,
-                    "note": "Signs in (CAC). Writes the PFM Settings rows (Test mode Yes) and fake rows, checks the first flow, then prepares two more. About 15 minutes.",
-                    "estimate": 15,
+                    "note": "Signs in (CAC). Writes the settings rows (Test mode Yes) and fake rows, then waits for 2 flows that check the list every 15 minutes. About 35 minutes.",
+                    "estimate": 35,
                     "help": "Send the results as they are. A FAIL here is a finding about a flow.",
                     "needs": [
                         "pnp",
@@ -686,12 +686,12 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Turn on all 8 flows r3"
+                        "T24 Turn on all 8 flows r4"
                     ],
-                    "doing": "Running the first part of the flow test."
+                    "doing": "Running the first part of the flow test (it waits for 2 flow checks)."
                 },
                 {
-                    "name": "T24 Run F02 once and F04 once r3",
+                    "name": "T24 Run F02 once and F04 once r4",
                     "title": "Run two of the flows by hand",
                     "kind": "guide",
                     "dir": "T24",
@@ -720,7 +720,7 @@
                     ],
                     "estimate": 5,
                     "after": [
-                        "T24 Full solution test, part 1 r3"
+                        "T24 Full solution test, part 1 r4"
                     ],
                     "doneLog": "Confirmed by you: ran F02 and F04.",
                     "url": "https://make.powerautomate.appsplatform.us/",
@@ -731,10 +731,10 @@
                     ]
                 },
                 {
-                    "name": "T24 Full solution test, part 2 r3",
+                    "name": "T24 Full solution test, part 2 r4",
                     "title": "Check what the two flows did",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r3.ps1",
+                    "file": "90161Z-T24-full-solution-test-r4.ps1",
                     "args": "-Part 2",
                     "minutes": 30,
                     "note": "Signs in (CAC). Checks what the two flows did: review dates, review rows and the status-report log row. About 4 minutes.",
@@ -746,12 +746,12 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Run F02 once and F04 once r3"
+                        "T24 Run F02 once and F04 once r4"
                     ],
                     "doing": "Running the second part of the flow test."
                 },
                 {
-                    "name": "T24 Find the F04 e-mail r3",
+                    "name": "T24 Find the F04 e-mail r4",
                     "title": "Find the test e-mail of the status report",
                     "kind": "guide",
                     "dir": "T24",
@@ -769,7 +769,7 @@
                     "marker": "90161Z-T24-email-looked.txt",
                     "estimate": 3,
                     "after": [
-                        "T24 Full solution test, part 2 r3"
+                        "T24 Full solution test, part 2 r4"
                     ],
                     "answers": [
                         {
@@ -823,7 +823,7 @@
                     ]
                 },
                 {
-                    "name": "T24 Run F02 again r3",
+                    "name": "T24 Run F02 again r4",
                     "title": "Run the review flow a second time",
                     "kind": "guide",
                     "dir": "T24",
@@ -847,7 +847,7 @@
                     ],
                     "estimate": 2,
                     "after": [
-                        "T24 Find the F04 e-mail r3"
+                        "T24 Find the F04 e-mail r4"
                     ],
                     "doneLog": "Confirmed by you: ran F02 again.",
                     "url": "https://make.powerautomate.appsplatform.us/",
@@ -858,10 +858,10 @@
                     ]
                 },
                 {
-                    "name": "T24 Full solution test, part 3 r3",
+                    "name": "T24 Full solution test, part 3 r4",
                     "title": "Check that the second run added no row",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r3.ps1",
+                    "file": "90161Z-T24-full-solution-test-r4.ps1",
                     "args": "-Part 3",
                     "minutes": 20,
                     "note": "Signs in (CAC). Checks that the second run of the review flow made no second review row. Nothing is removed here. About 2 minutes.",
@@ -873,7 +873,7 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T24 Run F02 again r3"
+                        "T24 Run F02 again r4"
                     ],
                     "doing": "Running the third part of the flow test."
                 },
@@ -898,10 +898,10 @@
                     "doing": "Reading what the flows wrote."
                 },
                 {
-                    "name": "T24 Clean up r3",
+                    "name": "T24 Clean up r4",
                     "title": "Remove the full test rows",
                     "dir": "T24",
-                    "file": "90161Z-T24-full-solution-test-r3.ps1",
+                    "file": "90161Z-T24-full-solution-test-r4.ps1",
                     "args": "-Part 4",
                     "minutes": 15,
                     "note": "Signs in (CAC). Moves every fake row of the full test to the site Recycle Bin and puts PFM Settings back. Runs even when earlier steps failed.",
@@ -960,7 +960,7 @@
                     "estimate": 3,
                     "doneLog": "Confirmed by you: removed the 2 test flows.",
                     "after": [
-                        "T24 Import the full solution r3: finish"
+                        "T24 Import the full solution r4: finish"
                     ],
                     "hide": [
                         "skip"
@@ -1098,22 +1098,22 @@
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part1-r1.txt",
-                    "step": "T24 Full solution test, part 1 r3"
+                    "step": "T24 Full solution test, part 1 r4"
                 },
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part2-r1.txt",
-                    "step": "T24 Full solution test, part 2 r3"
+                    "step": "T24 Full solution test, part 2 r4"
                 },
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part3-r1.txt",
-                    "step": "T24 Full solution test, part 3 r3"
+                    "step": "T24 Full solution test, part 3 r4"
                 },
                 {
                     "dir": "T24",
                     "name": "90161Z-T24-full-test-part4-r1.txt",
-                    "step": "T24 Clean up r3"
+                    "step": "T24 Clean up r4"
                 },
                 {
                     "dir": "T21",
@@ -1973,6 +1973,10 @@
                 {
                     "path": "T24\\90161Z-T24-full-solution-test-r2.ps1",
                     "kind": "glob"
+                },
+                {
+                    "path": "T24\\90161Z-T24-full-solution-test-r3.ps1",
+                    "kind": "glob"
                 }
             ],
             "fetch": [],
@@ -1991,22 +1995,22 @@
                         "T21 Open the test page r7",
                         "T21 Put a test header on the list form r7",
                         "T21 Look at the list form r7",
-                        "T24 Import the full solution r3: choose the file",
-                        "T24 Import the full solution r3: finish",
-                        "T24 Turn on all 8 flows r3",
-                        "T24 Check the flows after the import r3",
-                        "T24 Add a second owner to each flow r3",
+                        "T24 Import the full solution r4: choose the file",
+                        "T24 Import the full solution r4: finish",
+                        "T24 Turn on all 8 flows r4",
+                        "T24 Check the flows after the import r4",
+                        "T24 Add a second owner to each flow r4",
                         "T21 Start the health flow r7",
                         "T21 Make the list view with the flow button r7",
                         "T21 Use the list button r7",
-                        "T24 Full solution test, part 1 r3",
-                        "T24 Run F02 once and F04 once r3",
-                        "T24 Full solution test, part 2 r3",
-                        "T24 Find the F04 e-mail r3",
-                        "T24 Run F02 again r3",
-                        "T24 Full solution test, part 3 r3",
+                        "T24 Full solution test, part 1 r4",
+                        "T24 Run F02 once and F04 once r4",
+                        "T24 Full solution test, part 2 r4",
+                        "T24 Find the F04 e-mail r4",
+                        "T24 Run F02 again r4",
+                        "T24 Full solution test, part 3 r4",
                         "T21 Read the test results r7",
-                        "T24 Clean up r3",
+                        "T24 Clean up r4",
                         "T21 Remove the test list and library r7",
                         "T21 Remove the 2 test flows r7"
                     ]
