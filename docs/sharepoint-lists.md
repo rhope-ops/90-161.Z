@@ -1,6 +1,6 @@
 # SharePoint lists and provisioning script
 
-> Status (15 Nov 26): the lists are built by `scripts/gov/90161Z-T20-provision-lists-r2.ps1` (by PnP, from flow/provisioning-payload.json; its header gives the modes and what it changes; first device run: Round R25) . The provisioning flow of task T02 is retired (the PFM, 19 Nov 26): docs/power-automate-provisioning.md section 6. The sections on the older script left this file with that script on 15 Nov 26.
+> Status (15 Nov 26): the lists are built by `scripts/gov/90161Z-T20-provision-lists-r3.ps1` (by PnP, from flow/provisioning-payload.json; its header gives the modes and what it changes; first device run: Round R25) . The provisioning flow of task T02 is retired (the PFM, 19 Nov 26): docs/power-automate-provisioning.md section 6. The sections on the older script left this file with that script on 15 Nov 26.
 
 Status: draft (Agent, 2026-11-10; names updated per PFM 2026-11-11). Implements docs/ARCHITECTURE.md sections 3 and 4, docs/process-model.md, and the Product Index (DAFMAN 90-161 6.4.2). Nothing here is a PFM decision. No site, person or office data is in the repo.
 

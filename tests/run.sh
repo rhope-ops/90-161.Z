@@ -216,7 +216,7 @@ q = gv[0]['body']['ViewQuery']
 assert q.index('<Where>') < q.index('<GroupBy') < q.index('<OrderBy>'), q
 assert [r['body']['__metadata']['type'] for r in p['rows']].count('SP.Data.PFMSeriesListItem') == 39
 st = {r['body']['Title']: r['body']['SettingValue'] for r in p['rows'] if r['body']['__metadata']['type'] == 'SP.Data.PFMSettingsListItem'}
-assert st == {'CoordinationSuspenseBusinessDays': '20', 'GuardReserveApplicabilityCalendarDays': '30', 'PublicationsSiteName': '', 'PublicationsListUrl': '', 'PFMOfficeMailbox': '', 'EscalationWeekdays': '', 'RecordsFreeze': '', 'FlowsPaused': 'No', 'TestMode': 'Yes', 'ReminderLeadDays': '5', 'EscalationLagDays': '3', 'SharedMailbox': ''}, st
+assert st == {'CoordinationSuspenseBusinessDays': '15', 'GuardReserveApplicabilityCalendarDays': '30', 'PublicationsSiteName': '', 'PublicationsListUrl': '', 'PFMOfficeMailbox': '', 'EscalationWeekdays': '', 'RecordsFreeze': '', 'FlowsPaused': 'No', 'TestMode': 'Yes', 'ReminderLeadDays': '5', 'EscalationLagDays': '3', 'SharedMailbox': ''}, st
 nums = [r['body']['SeriesNumber'] for r in p['rows'] if 'SeriesNumber' in r['body']]
 assert len(set(nums)) == 39 and 16 in nums and 17 in nums
 gets = [a for a in d if a.startswith('Get_') and a.endswith('_ID')]
@@ -611,7 +611,7 @@ fb=0; for b in scripts/gov/paste/*.ps1; do grep -q "Outlook draft could not be c
 python3 - <<'PYEOF' && ok "T19 list update: column XML and the Action Status and Tier choices (T-0 first) match schemas/lists" || bad "T19 list update differs from schemas/lists"
 import json, re, sys
 sys.path.insert(0, 'scripts'); import build_flow_payload as B
-s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r4.ps1', encoding='utf-8').read()
+s = B.load(); t = open('scripts/gov/90161Z-T19-list-update-r5.ps1', encoding='utf-8').read()
 rows = re.findall(r"@\{ List = '([^']+)'; Name = '(\w+)'\s+Xml = '([^']+)' \}", t)
 assert len(rows) == 3, rows
 by_title = {v['title']: v for v in s.values()}

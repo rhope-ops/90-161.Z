@@ -422,7 +422,7 @@ $global:F.EditAllUsers = @(31); $r = Invoke-T21 'Office'
 Test-That 'Office with a person who edits every row already: FAIL, not added, no state file' ($r.Text -match 'o5-person FAIL the second person can edit every row already' -and -not (@($global:F.GroupUsers[9]) -contains 31) -and -not (Test-Path -LiteralPath $officeState)) $r.Text
 New-Site; $r = Invoke-T21 'Office'
 Test-That 'Office without the list: STOPPED and exit 1' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LIST not found') $r.Text
-$t20Text = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r2.ps1') -Raw; $probeText = Get-Content -LiteralPath $script -Raw
+$t20Text = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r3.ps1') -Raw; $probeText = Get-Content -LiteralPath $script -Raw
 Test-That 'Office: the group and level names are the ones T20 r2 makes' ($t20Text -match "(?m)^\`$OfficeGroup = 'PFM Office'$" -and $t20Text -match "(?m)^\`$OfficeLevel = 'PFM Office Edit All Items'$" -and $probeText -match "(?m)^\`$script:OfficeGroup = 'PFM Office'$" -and $probeText -match "(?m)^\`$script:OfficeLevel = 'PFM Office Edit All Items'$")
 
 # ---- Run ----

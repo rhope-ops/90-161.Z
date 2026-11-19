@@ -25,7 +25,7 @@ Columns, views and their DAFMAN references: `schemas/lists/*.json` (one file per
 
 ## 2. How the lists are made (task T20)
 
-The script is `scripts/gov/90161Z-T20-provision-lists-r2.ps1`. You run it through RADE, in a round (go.md, "How a paste task (round) works"). It signs in to the site with PnP.PowerShell and builds the lists from `flow/provisioning-payload.json`. That file is generated from `schemas/lists/*.json`. The script header gives its modes and what it changes on the site. In short, a run on a clean site does this:
+The script is `scripts/gov/90161Z-T20-provision-lists-r3.ps1`. You run it through RADE, in a round (go.md, "How a paste task (round) works"). It signs in to the site with PnP.PowerShell and builds the lists from `flow/provisioning-payload.json`. That file is generated from `schemas/lists/*.json`. The script header gives its modes and what it changes on the site. In short, a run on a clean site does this:
 1. Creates the 12 lists under their URL names, with versioning on.
 2. Adds the columns (199) and views (18).
 3. Adds the 88 starting rows to PFM Offices, PFM Series, PFM Process Steps and PFM Settings.
@@ -87,4 +87,4 @@ The T02 flow is no longer the way to make the lists. Do not run it on a new site
 1. Edit `schemas/lists/<URL name>.json`. Names follow the rules in docs/DECISIONS.md (2026-11-11); `tests/check_names.py` fails on a name that breaks them.
 2. Run `python3 scripts/build_flow_payload.py`. Never hand-edit the payload.
 3. Run `tests/run.sh` (pass = `TESTS pass=N fail=0`).
-4. A list that already exists on the site is not changed by a run. Add a new column by hand in List settings, with the same internal name, or plan an update script (T19 is the model: `scripts/gov/90161Z-T19-list-update-r4.ps1`, which adds new choices to an existing column, for example the tier T-0 in r4).
+4. A list that already exists on the site is not changed by a run. Add a new column by hand in List settings, with the same internal name, or plan an update script (T19 is the model: `scripts/gov/90161Z-T19-list-update-r5.ps1`, which adds new choices to an existing column, for example the tier T-0 in r4).

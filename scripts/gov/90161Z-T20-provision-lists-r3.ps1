@@ -1,18 +1,19 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 20 list provisioning by PnP r2 (round R34; PFM 19 Nov 26, F2 A: the PFM Office level; PFM 14 Nov 26: lists
+  90-161.Z Task 20 list provisioning by PnP r3 (round R35; PFM 19 Nov 26, F2 A: the PFM Office level; PFM 14 Nov 26: lists
   by PnP; PFM 15 Nov 26: clean install in R25). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: builds the 12 PFM lists on a site from the payload the retired T02 r12 flow used
   (provisioning-payload.json, generated from schemas/lists by scripts/build_flow_payload.py): lists, columns, views, seed
   rows, display titles, indexes and "edit own rows". r2 also gives the group PFM Office a permission level that edits every
-  row. About 5 minutes (an estimate).
+  row. r3 also reads back the access to the 12 lists.
+  About 5 minutes (an estimate).
   Modes:
     -PlanOnly  No sign-in, no network. Prints the counts in the payload.
     -Check     Signs in and READS only. Reports what 90-161.Z left on the site (lists, the 90-161.Z library, result files,
-               the probe's test group). A clean site passes. Result: 90161Z-T20-clean-check-r2.txt.
+               the probe's test group). A clean site passes. Result: 90161Z-T20-clean-check-r3.txt.
     -DryRun    Signs in and READS only. Prints what a run would create.
-    (none)     Creates what is missing, then checks every list against the payload. Result: 90161Z-T20-provision-lists-r2.txt.
+    (none)     Creates what is missing, then checks every list against the payload. Result: 90161Z-T20-provision-lists-r3.txt.
   WHAT IT CHANGES ON THE SITE (create mode only). It never deletes a list, a column, a view, a row, a group or a level. One
   thing it sets again on every run: the columns shown by its own 18 views (a column that a person added to one of these
   views is taken out again; the list's default view is not touched):
@@ -27,6 +28,8 @@
        permission that lets a person edit every row of a list set to "edit own rows") when it is missing, and gives that
        level to the group on the site. A level with that name that is there already is not changed; the check reports it.
   A second run skips what is there, so a run that stopped can be run again.
+  r3 (R34 plan, open point 12): the read-back also checks that each of the 12 lists inherits its permissions from the site or,
+  with its own, gives the group PFM Office the level. The read-backs of the level and the lists are in 90161Z-T20-access-r3.ps1.
   How: the POST requests of the payload go through Invoke-PnPSPRestMethod (the same requests the flow sent); the 23 MERGE
   updates go through CSOM (Update, ExecuteQuery), the way T16 and T19 already write on this computer. Step 6 uses the
   SharePoint REST requests for groups, levels and role assignments, through the same cmdlet.
@@ -42,7 +45,7 @@
           Config\90161Z-site.txt when the site address is typed outside RADE. -Check, -DryRun and -PlanOnly change nothing
           on the site.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T20-provision-lists-r2.ps1 (RADE does this).
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T20-provision-lists-r3.ps1 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -NoPause. -PayloadPath and -TestDir are for
   the tests in tests/run.sh.
 #>
@@ -220,7 +223,8 @@ function Get-RestValue([string]$Uri) {
 function Get-SiteList {
   # Every list on the site that is not hidden, with the folder name it was created under (that name does not change when
   # the title does, so it finds a list before and after its rename).
-  return @(Get-RestValue ('_api/web/lists?$select=Id,Title,ItemCount,EnableVersioning,BaseTemplate,Hidden,RootFolder/Name&$expand=RootFolder&$top=1000') | Where-Object { -not $_.Hidden })
+  $q = '_api/web/lists?$select=Id,Title,ItemCount,EnableVersioning,BaseTemplate,Hidden,HasUniqueRoleAssignments,RootFolder/Name&$expand=RootFolder&$top=1000'
+  return @(Get-RestValue $q | Where-Object { -not $_.Hidden })
 }
 
 function Find-OurList($SiteLists, [string]$Internal) {
@@ -248,8 +252,7 @@ $OfficeGroupText = 'Publications and Forms Manager (PFM) office: the people who 
 # "edit own rows" (PFM Publications and PFM Endorsements, PFM 10A), so the Alternate and the Acting PFM need it (sweep F2).
 $OfficeLevel = 'PFM Office Edit All Items'
 $OfficeLevelText = 'Edit, plus Override List Behaviors: edits every row, also on lists set to edit own rows (90-161.Z, PFM 2026-11-19).'
-# SharePoint permission bits (SP.BasePermissions, low word): EditListItems 0x4; CancelCheckout 0x100 ("Override List Behaviors").
-$EditItemsBit = [long]0x4
+# SharePoint permission bit (SP.BasePermissions, low word): CancelCheckout 0x100 ("Override List Behaviors"); EditListItems is in the access module.
 $OverrideBit = [long]0x100
 # The RoleTypeKind of the site's Edit level (SP.RoleType Editor = 6): found by kind, so a site in another language works too.
 $EditRoleKind = 6
@@ -336,27 +339,11 @@ function Grant-OfficeLevel([bool]$Write) {
   return $made
 }
 
-<#
-.SYNOPSIS
-  Step 7, the read-back of step 6: PASS when the group holds the level on the site and the level holds Edit plus Edit Items and Override List Behaviors; else FAIL (typed list: PS 5.1).
-.OUTPUTS
-  System.String. One ITEM line.
-#>
-function Test-OfficeLevel {
-  $gid = Get-GroupId $OfficeGroup; $level = Get-RoleLevel $OfficeLevel 0; $edit = Get-RoleLevel '' $EditRoleKind
-  $bad = New-Object System.Collections.Generic.List[string]; $need = [long]($EditItemsBit -bor $OverrideBit); if ($level -and -not $edit) { $bad.Add('the site has no Edit level to compare') }
-  if (-not $gid) { $bad.Add('the group ' + $OfficeGroup + ' is not on the site') }; if (-not $level) { $bad.Add('the level ' + $OfficeLevel + ' is not on the site') }
-  if ($level -and $edit) { $ok = [bool](Test-LevelPermission $level $edit $need); if (-not $ok) { $bad.Add('the level lacks a permission of Edit or Override List Behaviors') } }
-  if ($level -and $gid) { $held = @(Get-WebBinding $gid); if ($held -notcontains [int]$level.Id) { $bad.Add('the group does not hold the level on the site') } }
-  if ($bad.Count -gt 0) { return ('ITEM P01-pfm-office FAIL ' + ($bad -join '; ') + ' (this script never changes a level that is there)') }
-  return ('ITEM P01-pfm-office PASS the group "' + $OfficeGroup + '" holds the level "' + $OfficeLevel + '" on the site (Edit plus Override List Behaviors)')
-}
-
 $secret = @()
 $site = ''
 $lines = New-Object System.Collections.Generic.List[string]
 $dir = ''
-$Rev = 'r2'
+$Rev = 'r3'
 $resultName = '90161Z-T20-provision-lists-' + $Rev + '.txt'
 if ($Check) { $resultName = '90161Z-T20-clean-check-' + $Rev + '.txt' }
 try {
@@ -369,6 +356,10 @@ try {
     Write-Host ('PLAN lists=' + $plan.Count + ' fields=' + $nf + ' views=' + $nv + ' rows=' + @($p.rows).Count + ' updates=' + @($p.updates).Count + ' permissions=' + @($p.permissions).Count)
     exit 0
   }
+  # The read-backs are dot-sourced here, in this script's scope, so they see the values and helpers above.
+  $accessFile = Join-Path $PSScriptRoot '90161Z-T20-access-r3.ps1'
+  if (-not (Test-Path -LiteralPath $accessFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T20-access-r3.ps1 is not in the folder of this script. Run the round again.' }
+  . $accessFile
   $who = Get-TaskId $Id
   $id = $who.Id
   $secret = $who.Secret
@@ -578,6 +569,7 @@ try {
         }
       }
       $lines.Add((Test-OfficeLevel))
+      $lines.Add((Test-ListAccess $plan $siteLists))
       $lines.Add('AFTER lists on the site=' + @($plan.Keys | Where-Object { Find-OurList $siteLists $_ }).Count + ' of ' + $plan.Count)
     }
     $nf = @($lines | Where-Object { $_ -cmatch '^ITEM \S+ FAIL\b' }).Count
