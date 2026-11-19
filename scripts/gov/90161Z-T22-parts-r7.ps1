@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r6, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r7, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
@@ -10,7 +10,7 @@
   helpers $wn.LineH, $wn.PageTop and $wn.TextMid give the text middles that the window, the measure part and the
   layout self-check compare (one rule for D1 to D3).
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r6.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r7.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
