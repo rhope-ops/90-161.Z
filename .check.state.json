@@ -127,7 +127,6 @@
     "tests/ps/Test-T21.ps1::Get-FakeRestAnswer": 1,
     "tests/ps/Test-T21.ps1::Get-PnPContext": 1,
     "tests/ps/Test-T21.ps1::Invoke-PnPSPRestMethod": 1,
-    "tests/ps/Test-T21.ps1::New-FakeExport": 1,
     "tests/ps/Test-T21.ps1::Send-FakeListRest": 1,
     "tests/ps/Test-T21.ps1::Send-FakeRest": 1
    },
@@ -166,7 +165,7 @@
     "tests/fake-pnp/PnP.PowerShell/1.12.0/PnP.PowerShell.psm1": 304,
     "tests/ps/Test-Mask.ps1": 341,
     "tests/ps/Test-T20.ps1": 495,
-    "tests/ps/Test-T21.ps1": 544,
+    "tests/ps/Test-T21.ps1": 522,
     "tests/run.sh": 963
    },
    "parse": {},
@@ -174,7 +173,6 @@
     "scripts/build_decision_brief.js": 1,
     "scripts/build_flow_package.py": 1,
     "scripts/build_flow_payload.py": 1,
-    "scripts/build_flow_solution.py": 1,
     "scripts/build_list_mockup.py": 1,
     "scripts/build_messy_draft.py": 1,
     "scripts/build_paste_bundles.py": 1,

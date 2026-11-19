@@ -1,23 +1,28 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe, r6 (round R30). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 21 probe, r7 (round R34). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  What it is for: the device side of the R30 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10
-  passed); R29a proved T4 (a second person writes a row). R30 runs again what R29a could not: the health flow r5 (imported
-  alone; it checks only that your own flows are On, because the Power Automate Management connector has no run-history
-  action), the trigger of a "For a selected item" flow that the PFM made by hand (read from the export file), and 2 looks
-  (a list form with a header, a view with a button that starts that flow). Excel is not repeated (R27: no Automate tab).
+  What it is for: the device side of the T21 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10
+  passed); R29a proved T4 (a second person writes a row). The 2 probe flows are now flows of the solution "90-161.Z flows"
+  (fallback A, the PFM 18 Nov 26: a new solution and a hand-made flow failed in R29a to R32 with "The connections could
+  not be loaded"; an upgrade of that solution works): "90161Z T21 Probe Health r6" answers a command row with a result row,
+  and "90161Z T21 Probe Button r6" is started by a list view button. Excel is not repeated (R27: no Automate tab).
   This script makes the list and library the tests need, adds the second person to the site's Visitors group (and removes
   the person again), formats the list form and a view, starts the health flow, reads what the people and the flows wrote,
   and removes everything it made. Fake data only (the fake workbook comes from scripts/build_probe_samples.py). Counts,
   status codes and field names only: no names, addresses or text from the tenant.
-  WHAT R6 CHANGES: (1) the Clean part no longer prints the Recycle Bin item IDs of the list and the library (R29a finding 7:
+  WHAT R7 CHANGES: (1) the health flow writes its row without the Power Automate Management connector, so HEALTH now tests
+  that the flow ran on the SharePoint connection of the solution (it no longer counts flows). (2) View takes the button
+  flow's ID from the button-flow-id block of the look module, which scripts/build_flow_solution.py writes at build time
+  (the ID is the same on every build); the Export part, its module and the flow ID file are gone. (3) BUTTON counts the
+  rows titled BTN-FLOW that the button flow writes. (4) Before each action that takes time a part prints one line
+  "NOW <what it does>" for the RADE window; a NOW line is not a result line and is not in the result file.
+  WHAT R6 CHANGED: (1) the Clean part no longer prints the Recycle Bin item IDs of the list and the library (R29a finding 7:
   a raw RecycleBinItemId table reached the log). (2) The parts Form and View run the two halves of Look on their own, so the
   round can show the list form when the form header passed, whatever the view result (R29a finding 6); Look still runs both.
   (3) The script is split into modules (code standard, S1): this file holds the start, the shared blocks and the result
-  file; the parts live in the files 90161Z-T21-<part>-r6.ps1 in the same folder, which this file loads by name. The
-  results are the same as r5 apart from (1) and the r6 in the result file names. (4) Read: with no state file and no row
-  by another person, T4 is not counted: one line "T4 NOT RUN" and no RESULT line (R30a has no person steps).
+  file; the parts live in the files 90161Z-T21-<part>-r7.ps1 in the same folder, which this file loads by name.
+  (4) Read: with no state file and no row by another person, T4 is not counted: one line "T4 NOT RUN" and no RESULT line.
   Parts (-Part):
     Make   (about 1 minute, an estimate)  Makes the library "90161Z Probe Files" and the list "90161Z Probe" (columns
            ProbeTest, ProbeWay, ProbeResult, ProbeDetail; its own permissions: the site's copied, then Contribute for the
@@ -28,45 +33,42 @@
            sign-in it adds that person to the site's Visitors group and saves only the number of the site user (no address,
            no name) in the state file 90161Z-T21-person-state-r3.txt in the T21 folder, so that Clean can find the person.
            It also puts the link of the new row form on the clipboard. Prints "added to Visitors: yes" or "no" and a status.
-    Run    (a few seconds, an estimate)  Adds 1 command row (RUN-HEALTH) that starts the health flow; it answers within minutes.
+    Run    (a few seconds, an estimate)  Adds 1 command row (RUN-HEALTH) that starts the health flow "90161Z T21 Probe
+           Health r6"; it answers within minutes.
     Look   (about 1 minute, an estimate)  Runs Form, then View.
     Form   (about 1 minute, an estimate)  Sets a header on the list form (the content type's form formatting) and reads it back.
-    View   (about 1 minute, an estimate)  Makes the view "ProbeButton" with a button that starts the hand-made button flow (a
-           view formatting with the action executeFlow; the flow's ID comes from the file the Export part saved).
-    Export (a few seconds; no sign-in)  Reads the newest solution export zip (last 3 hours; Downloads, Desktop, Documents or
-           the T21 folder) whose customizations.xml names a flow "... Probe Button ...". If no flow has that name and the
-           newest export holds exactly 1 flow, it reads that flow whatever its name and writes "name matched=no". Writes to
-           the result only the trigger's type, kind, connector operationId and parameter NAMES (never a value, site, list ID
-           or address). Saves the flow's ID in 90161Z-T21-button-flow-r5.txt in the T21 folder (not a result file).
+    View   (about 1 minute, an estimate)  Makes the view "ProbeButton" with a button that starts the button flow "90161Z
+           T21 Probe Button r6" (a view formatting with the action executeFlow; the flow's ID is in the look module).
     Open   (a few seconds; no sign-in)  Writes the test page again and opens it in the browser.
     Read   (about 1 to 5 minutes, an estimate)  Waits up to -WaitMinutes (default 4) for the health flow's row, then prints
-           one line each for HEALTH, T4 and BUTTON (counts only; the button flow's rows are the ones titled BTN-HAND).
+           one line each for HEALTH, T4 and BUTTON (counts only; the button flow's rows are the ones titled BTN-FLOW).
     Clean  (about 1 minute, an estimate)  Removes the second person from the Visitors group again (found by the saved
            number; then deletes the state file), then moves the list and the library to the site Recycle Bin (restorable
-           for 93 days). Each step runs even if an earlier one failed, and the part can be run again. The solutions are
-           removed by hand (the part says so). The round runs it twice: first (-Label first), last (-Label last).
+           for 93 days). Each step runs even if an earlier one failed, and the part can be run again. The 2 probe flows
+           stay in the solution "90-161.Z flows" (the part says so). The round runs it twice: first (-Label first), last
+           (-Label last).
   WHAT IT CHANGES ON THE SITE: Make adds the two objects, their columns, their permissions and two files. Person adds one
-  person to the Visitors group. Run adds 1 row. Form sets one form formatting; View adds one view. Read, Open and Export
-  change nothing on the site. Clean undoes Person and recycles the two objects. On this computer: the T21 folder (the test
-  page, the state file, the flow ID file). Every output line shows the site as <SITE> and the DODID as <DODID>; the test
-  page holds the site address and stays on this computer (it is not a result file).
-  Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell; Export
-           and Open use no network (Open hands the test page to the browser).
-  Writes: the site objects listed above; on this computer the T21 folder (result files, test page, state and flow ID
-          files, the fake workbook) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
+  person to the Visitors group. Run adds 1 row. Form sets one form formatting; View adds one view. Read and Open change
+  nothing on the site. Clean undoes Person and recycles the two objects. On this computer: the T21 folder (the test
+  page, the state file). Every output line shows the site as <SITE> and the DODID as <DODID>; the test page holds the
+  site address and stays on this computer (it is not a result file).
+  Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell; Open
+           uses no network (it hands the test page to the browser).
+  Writes: the site objects listed above; on this computer the T21 folder (result files, test page, state file, the fake
+          workbook) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T21-probe-<part>-r6.txt (make, person, run, look, form, view, export, read) or -clean-<label>-r6.txt in
+  Output: 90161Z-T21-probe-<part>-r7.txt (make, person, run, look, form, view, read) or -clean-<label>-r7.txt in
   the T21 folder (send them back). Each test line (HEALTH, T4, BUTTON, FORM, VIEW) is followed by "RESULT <test> PASS" or
   "RESULT <test> FAIL", so the RADE step counts what the part read (R28 finding 7). Last line of each part: PROBE <part>
   done: passed=<n> failed=<n>. Exit code 0 when the part ran to its end (a FAILED test is a result); exit 1 only when the
   part could not run (sign-in, missing list, missing module file).
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T21-probe-r6.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T21-probe-r7.ps1 -Part <part> (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part, -Label, -WaitMinutes, -NoPause.
   -PollSeconds, -TestDir and -NoLaunch are for the tests in tests/run.sh (tests/ps/Test-T21.ps1).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
-  The part to run: Make, Person, Run, Look, Form, View, Open, Export, Read or Clean.
+  The part to run: Make, Person, Run, Look, Form, View, Open, Read or Clean.
 .PARAMETER Label
   For Clean: first or last (it goes into the result file name).
 .PARAMETER WaitMinutes
@@ -80,7 +82,7 @@
 .PARAMETER NoLaunch
   Test runs only: do not open the browser or use the clipboard.
 #>
-param([string]$Id, [ValidateSet('Make', 'Person', 'Run', 'Look', 'Form', 'View', 'Open', 'Export', 'Read', 'Clean')][string]$Part,
+param([string]$Id, [ValidateSet('Make', 'Person', 'Run', 'Look', 'Form', 'View', 'Open', 'Read', 'Clean')][string]$Part,
   [ValidateSet('', 'first', 'last')][string]$Label = '', [double]$WaitMinutes = 14, [switch]$NoPause, [int]$PollSeconds = 20,
   [string]$TestDir, [switch]$NoLaunch)
 $task = 'T21'
@@ -90,17 +92,16 @@ $script:LibFolder = '90161ZProbeFiles'
 $script:ListTitle = '90161Z Probe'
 $script:ListFolder = '90161ZProbe'
 $script:BookName = '90161Z-T21-fake-book-r1.xlsx'
-# The test page and the flow ID file keep their r5 names: the round's sample page (samples/90161Z-T21-links-r5.html) has
-# that name, and no check ties them to the script revision.
+# The test page keeps its r5 name: the round's sample page (samples/90161Z-T21-links-r5.html) has that name, and no check
+# ties it to the script revision.
 $script:LinksName = '90161Z-T21-links-r5.html'
 # The state file keeps its r3 name: Clean finds a person that an earlier round added through it.
 $script:StateName = '90161Z-T21-person-state-r3.txt'
-$script:ButtonIdName = '90161Z-T21-button-flow-r5.txt'
 $script:ViewTitle = 'ProbeButton'
 $script:HeaderText = '90-161.Z test header'
-$Rev = 'r6'
+$Rev = 'r7'
 # The modules this file loads from its own folder (round skill section 2: scripts that load each other keep fixed names).
-$ModuleNames = @('common', 'make', 'person', 'look', 'export', 'read')
+$ModuleNames = @('common', 'make', 'person', 'look', 'read')
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -225,7 +226,7 @@ $fatal = $false
 $script:fmtError = ''
 try {
   $ErrorActionPreference = 'Stop'
-  if (-not $Part) { throw 'PART not given: use -Part Make, Person, Run, Look, Form, View, Open, Export, Read or Clean.' }
+  if (-not $Part) { throw 'PART not given: use -Part Make, Person, Run, Look, Form, View, Open, Read or Clean.' }
   # The modules are dot-sourced here, in this script's scope, so their functions see the values above.
   foreach ($moduleName in $ModuleNames) {
     $moduleFile = Join-Path $PSScriptRoot ('90161Z-T21-' + $moduleName + '-' + $Rev + '.ps1')
@@ -244,9 +245,8 @@ try {
   $site = Get-SiteAddress $configDir
   $lines.Add('TASK T21 probe ' + $Rev + ', part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + $(if ($Part -eq 'Read') { ', wait-minutes=' + $WaitMinutes } else { '' }))
 
-  # Export and Open work on this computer only; every other part signs in first.
-  if ($Part -eq 'Export') { Invoke-ExportPart }
-  elseif ($Part -eq 'Open') { Invoke-OpenPart }
+  # Open works on this computer only; every other part signs in first.
+  if ($Part -eq 'Open') { Invoke-OpenPart }
   else {
     Connect-ProbeSite
     switch ($Part) {

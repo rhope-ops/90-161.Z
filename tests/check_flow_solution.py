@@ -58,8 +58,12 @@ def expr_ok(s, where):
     elif "@{" in s or "@(" in s: bad(f"{where}: '@{{' or '@(' inside a non-expression string")
 
 counts = dict(defs=0, actions=0, columns=0, strings=0)
+# R34 (fallback A, the PFM 18 Nov 26): the T21 probe flows Health and Button are flows of the solution, on the probe list that the
+# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r7.ps1 and its make module).
+PROBE_DEFS = {"90161Z-T21-probe-health-r6.json", "90161Z-T21-probe-button-r6.json"}
+PROBE_LIST, PROBE_COLS = "90161Z Probe", {"Title", "ProbeTest", "ProbeWay", "ProbeResult", "ProbeDetail"}
 connrefs_declared = set()
-cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r2.zip"
+cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r3.zip"
 zf = zipfile.ZipFile(cz)
 for n in zf.namelist():
     if n.endswith(".xml"): minidom.parseString(zf.read(n))
@@ -80,7 +84,7 @@ for n in zf.namelist():
 
 for src in sorted(B.DEFS.glob("*.json")):
     counts["defs"] += 1
-    if not re.fullmatch(r"90161Z-F\d{2}-[a-z0-9-]+-r\d+", src.stem): bad(f"BAD name {src.name}: use 90161Z-F<NN>-<slug>-r<N>")
+    if not re.fullmatch(r"90161Z-(F\d{2}|T21-probe)-[a-z0-9-]+-r\d+", src.stem): bad(f"BAD name {src.name}: use 90161Z-F<NN>-<slug>-r<N> (or 90161Z-T21-probe-<slug>-r<N>)")
     d = json.loads(src.read_text(encoding="utf-8"))
     if not d.get("triggers") or not d.get("actions"): bad(f"{src.name}: needs a trigger and actions")
     for s in strings(d):
@@ -114,6 +118,11 @@ for src in sorted(B.DEFS.glob("*.json")):
         # R20 finding 1: "Update item" (PatchItem) fails flow activation without item/Title (a required column).
         if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in p:
             bad(f"{src.name} {name}: PatchItem without item/Title (activation fails: R20 finding 1)")
+        if "table" in p and src.name in PROBE_DEFS:   # R34: a probe flow names its list (made by T21 Make), as the r5 health flow did
+            if p["table"] != PROBE_LIST: bad(f"{src.name} {name}: table must be the probe list '{PROBE_LIST}'")
+            for k in p:
+                if k.startswith("item/") and k.split("/")[1] not in PROBE_COLS: bad(f"{src.name} {name}: column '{k}' not in the probe list")
+            continue
         if "table" in p:
             m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
             title = env_list.get(m.group(1)) if m else None
@@ -241,17 +250,43 @@ for z in SLICES:
         for wid in ("ebafde19-9c84-50b7-9f36-6d1081350355", "dcdb2f79-1310-5048-8dae-cf0144bd576e"):
             if wid not in sol: bad(f"{z.name}: R20 workflow ID {wid} missing: the import would add a second copy")
 
+def check_probe_flows(zz, cust_xml, zname):
+    """R34 (fallback A): the upgrade must need no new connection, so check the probe flows and the whole solution zip.
+
+    Args:
+        zz: the open solution zip.
+        cust_xml: its customizations.xml text.
+        zname: the zip name for the messages.
+    """
+    sp = B.conn_logical("shared_sharepointonline")
+    blob = "\n".join(zz.read(n).decode("utf-8", "replace") for n in zz.namelist())
+    if "shared_flowmanagement" in blob or "Power Automate Management" in blob: bad(f"{zname}: the Power Automate Management connector is in the solution")
+    for n in zz.namelist():
+        if not re.match(r"Workflows/90161ZT21Probe", n): continue
+        w = json.loads(zz.read(n).decode("utf-8"))["properties"]
+        refs = {(k, r["connection"]["connectionReferenceLogicalName"]) for k, r in w["connectionReferences"].items()}
+        if refs != {("shared_sharepointonline", sp)}: bad(f"{zname} {n}: a probe flow must use only the SharePoint reference {sp}: {sorted(refs)}")
+    names = set(re.findall(r'connectionreferencelogicalname="([^"]+)"', cust_xml))
+    if names != {sp, B.conn_logical("shared_office365")}: bad(f"{zname}: connection references {sorted(names)}; an upgrade must add none")
+    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r7.ps1").read_text(encoding="utf-8")
+    bid = B.guid("workflow", "90161Z-T21-probe-button").lower()
+    if f"$ButtonFlowId = '{bid}'" not in look or f'WorkflowId="{{{bid}}}"' not in cust_xml: bad(f"{zname}: the T21 look script does not name the button flow's workflow ID {bid}")
+
+
 # R28: the full solution (R28, PFM 17 Nov 26: "the full solution with every flow On") holds F01 to F06, every flow On (StateCode 1), the
 # same unique name as the slice (so it upgrades it), and every environment variable its flows read.
 with zipfile.ZipFile(cz) as zz:
     c, sol = zz.read("customizations.xml").decode("utf-8"), zz.read("solution.xml").decode("utf-8")
-    if len(re.findall(r'<RootComponent type="29"', sol)) != 6: bad(f"{cz.name}: must hold exactly the six flows F01 to F06")
-    if c.count("<StateCode>1</StateCode>") != 6 or "<StateCode>0</StateCode>" in c: bad(f"{cz.name}: every flow must import On")
+    if len(re.findall(r'<RootComponent type="29"', sol)) != 8: bad(f"{cz.name}: must hold exactly 8 flows: F01 to F06 and the 2 T21 probe flows (R34)")
+    if c.count("<StateCode>1</StateCode>") != 8 or "<StateCode>0</StateCode>" in c: bad(f"{cz.name}: every flow must import On")
     if "<UniqueName>PFM90161Z</UniqueName>" not in sol: bad(f"{cz.name}: unique name must be PFM90161Z (the slice's), so the import upgrades it")
     flows_in_zip = sorted(re.findall(r"Workflows/90161ZF(\d\d)[A-Za-z0-9]+-", "\n".join(zz.namelist())))
     if flows_in_zip != ["01", "02", "03", "04", "05", "06"]: bad(f"{cz.name}: flows in the zip {flows_in_zip}")
     envs_full = {n.split("/")[1] for n in zz.namelist() if n.startswith("environmentvariabledefinitions/")}
     if envs_full != {s for s, _, _ in B.ENV}: bad(f"{cz.name}: environment variables {sorted(envs_full)} differ from the list in the builder")
+    probe_in_zip = sorted(re.findall(r"Workflows/(90161ZT21Probe(?:Health|Button)r\d+)-", "\n".join(zz.namelist())))
+    if probe_in_zip != ["90161ZT21ProbeButtonr6", "90161ZT21ProbeHealthr6"]: bad(f"{cz.name}: probe flows in the zip {probe_in_zip}")
+    check_probe_flows(zz, c, cz.name)
     slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r6.zip").read("solution.xml").decode("utf-8")
     for wid in re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', slice_sol):
         if f'id="{{{wid}}}"' not in sol: bad(f"{cz.name}: slice flow {wid} is not in the full solution (the import would not upgrade it)")
@@ -296,6 +331,15 @@ for src in r27_defs:
 # (it reads Action Type, Process Step and Action Status only).
 f04 = next(s for s in r27_defs if "-F04-" in s.name).read_text(encoding="utf-8")
 if "Test_mode" not in f04 or "parameters('Alert e-mail (pfm_AlertEmail)'), triggerBody()?['text']" not in f04: bad("F04: test mode must send to the alert address")
+# F04 r3 (R32 finding 9): each head sits over its column (heads and cells share one alignment) and the Number column shows the
+# number (the row's own, else its Product Index row's) or a dash.
+f04_try = json.loads(f04)["actions"]["Try"]["actions"]["For_each_process_step"]["actions"]["If_any_actions"]["actions"]
+f04_html = f04_try["Append_stage_section"]["inputs"]["value"]
+th, td = re.findall(r"'<th style=\\?\"([^\"\\]+)\\?\">'", f04_html), re.findall(r"'<td style=\\?\"([^\"\\]+)\\?\">'", f04_html)
+if not (th and td and th == td and "text-align:left" in th[0]): bad(f"F04: heads and cells must share one alignment: th {th} td {td}")
+if "replace(replace(body('Create_HTML_table'), '<th>'" not in f04_html: bad("F04: the table heads and cells are not styled")
+num = f04_try["Create_HTML_table"]["inputs"]["columns"][0]
+if num["header"] != "Number" or "'-'" not in num["value"] or "PublicationNumber" not in num["value"] or "['Product']?['Value']" not in num["value"]: bad(f"F04: the Number column must show the number or a dash: {num}")
 f01 = json.loads(next(s for s in r27_defs if "-F01-" in s.name).read_text(encoding="utf-8"))
 f01_state = json.dumps(f01["actions"]["Try"]["actions"]["Current_state"]["inputs"])
 if sorted(re.findall(r"\['(\w+)'\]", f01_state)) != sorted(["ActionType", "ProcessStep", "ActionStatus", "Value", "Value", "Value"]): bad(f"F01: the logged state must read exactly Action Type, Process Step and Action Status: {f01_state}")
@@ -381,4 +425,4 @@ for zname, (nwf, ncr) in T21_EXPECT.items():
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
-print(f"PASS flow solution: t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")
+print(f"PASS flow solution: flows_in_r3=8 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")

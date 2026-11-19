@@ -1,0 +1,43 @@
+{
+  "displayName": "90161Z T21 Probe Button r6",
+  "description": "R34 probe (task T21, fake data only; fallback A, the PFM 18 Nov 26): replaces the button flow the PFM made by hand until R32. A flow of the solution 90-161.Z flows (imported by upgrade, the SharePoint connection reference the solution already has). Started by the button of the view ProbeButton on the list 90161Z Probe (view formatting, action executeFlow with this flow's ID, which scripts/build_flow_solution.py writes into the T21 script). Writes one row titled BTN-FLOW to that list. Manual trigger (kind Button), as F04 has: the trigger For a selected item is not used, because its operation is not known (R27 finding 4). The list is named, not looked up at import. Environment variable: Site URL.",
+  "connections": [
+    "shared_sharepointonline"
+  ],
+  "triggers": {
+    "manual": {
+      "type": "Request",
+      "kind": "Button",
+      "inputs": {
+        "schema": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      }
+    }
+  },
+  "actions": {
+    "B_row": {
+      "runAfter": {},
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "PostItem"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "90161Z Probe",
+          "item/Title": "BTN-FLOW",
+          "item/ProbeTest": "BUTTON",
+          "item/ProbeWay": "b",
+          "item/ProbeResult": "PASS",
+          "item/ProbeDetail": "the button flow ran on the SharePoint connection of the solution"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  }
+}
