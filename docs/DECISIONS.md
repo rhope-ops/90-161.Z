@@ -8,6 +8,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 |---|---|---|---|
 | 2026-11-18 | Kit 3.2.0 by sync (kit commit 18896fc in `.check.lock`; kit pull request 62; no v3.2.0 tag yet, so synced from the merge commit; the kit 3.2.0 plan the owner approved on 2026-11-18): no rule text. `check_settings.py --migrate` renewed the kit header block of `.check` (comment lines only: the `content-max-bytes` help line is added, and the last header line names the PFM, as this repo's copy of the kit does; no setting changed); new optional setting `audit-duplicate-ignore`; kit-only docs and wording fixes. | PFM | - |
 | 2026-11-19 | Kit 3.1.0 by sync (88185f0, tag v3.1.0): an optional `content-max-bytes` setting for the content check; no rule text. Kit plan 2026-11-19. | PFM | - |
+| 2026-11-18 | Button rules B1-B7 approved: B3, B5-B7 and Skip text in R31 (this repo); hiding buttons, B2 and E3 in RADE. Scope: R31 and the RADE brief. | PFM | [R30 screen audit](reviews/2026-11-18-r30-screen-audit.md) |
+| 2026-11-18 | Look notes L1-L8: RECs approved as written; L1, L2 (header), L3-L8 to RADE; L2 (T22 rail) in R31; L6 app tour at deploy. | PFM | [RADE brief](reviews/2026-11-18-rade-brief-r31.md) |
+| 2026-11-18 | R31 saves a screenshot of each 90-161.Z window card (fake data) to the results folder, for the next screen audit. Scope: R31. | PFM | [R30 screen audit](reviews/2026-11-18-r30-screen-audit.md) |
 | 2026-11-18 | R31 form look: fallback A (open the list, "+ New", side panel "Edit form"). Scope: R31. | PFM | [R30 screen audit](reviews/2026-11-18-r30-screen-audit.md) |
 | 2026-11-18 | R30b check 10: the 90-161.Z window kept its own colors under a contrast theme (the PFM: yes). Scope: R31. | PFM | [R30 screen audit](reviews/2026-11-18-r30-screen-audit.md) |
 | 2026-11-18 | Kit 3.0.0 by sync (67e7766): in a private repo the pull-request Action does not run; public repos keep it. Kit PR 56. | PFM | - |
