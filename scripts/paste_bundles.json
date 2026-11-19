@@ -118,7 +118,8 @@
                     "minutes": 30,
                     "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 14 checks in the bar at the bottom, then select Pass or Fail. Then close the window.",
                     "estimate": 15,
-                    "help": "Send the results as they are. The step can be run again."
+                    "help": "Send the results as they are. The step can be run again.",
+                    "doing": "Opening the 90-161.Z window."
                 },
                 {
                     "name": "T22 Did the window open r5",
@@ -129,7 +130,8 @@
                     "minutes": 2,
                     "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
                     "estimate": 1,
-                    "help": "Send the results as they are."
+                    "help": "Send the results as they are.",
+                    "doing": "Reading the result of the window step."
                 },
                 {
                     "name": "T22 Answer: look and cards r5",
@@ -137,11 +139,7 @@
                     "kind": "guide",
                     "dir": "T22",
                     "file": "",
-                    "note": "You answer 3 questions about the look of the window. About 2 minutes.",
-                    "guide": [
-                        "1. Answer each of the next 3 cards."
-                    ],
-                    "marker": "90161Z-T22-judged-look.txt",
+                    "note": "3 questions about the look of the window. About 2 minutes.",
                     "estimate": 2,
                     "after": [
                         "T22 Did the window open r5"
@@ -169,7 +167,7 @@
                             "kind": "text"
                         }
                     ],
-                    "doneLog": "Confirmed by you: judged the look."
+                    "answersOnly": true
                 },
                 {
                     "name": "T21 Check the test site is clean r6",
@@ -185,7 +183,8 @@
                         "pnp",
                         "net-site",
                         "site-rights"
-                    ]
+                    ],
+                    "doing": "Checking that the test site is clean."
                 },
                 {
                     "name": "T21 Make the probe list r6",
@@ -201,7 +200,8 @@
                         "pnp",
                         "net-site",
                         "site-rights"
-                    ]
+                    ],
+                    "doing": "Making the test list and library."
                 },
                 {
                     "name": "T21 Power Automate shows your connections r6",
@@ -240,7 +240,10 @@
                     "url": "https://make.powerautomate.appsplatform.us/",
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
                     "urlConfig": "90161Z-flow-portal.txt",
-                    "doneText": "The list loaded"
+                    "doneText": "The list loaded",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T21 Import the health flow r5: choose the file",
@@ -278,7 +281,10 @@
                     "doneLog": "Confirmed by you: chose the file.",
                     "url": "https://make.powerautomate.appsplatform.us/",
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
+                    "urlConfig": "90161Z-flow-portal.txt",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T21 Import the health flow r5: connections",
@@ -336,7 +342,10 @@
                             ]
                         }
                     ],
-                    "doneLog": "Confirmed by you: imported the health flow."
+                    "doneLog": "Confirmed by you: imported the health flow.",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T17 Import log reader r2",
@@ -345,7 +354,8 @@
                     "file": "90161Z-T17-import-log-r2.ps1",
                     "minutes": 5,
                     "note": "Runs only if an import failed: copies the error rows of an import log saved in the last 3 hours, addresses masked. Otherwise it reports SKIPPED.",
-                    "estimate": 1
+                    "estimate": 1,
+                    "doing": "Looking for an import log."
                 },
                 {
                     "name": "T21 Open the test page r6",
@@ -359,7 +369,8 @@
                     "help": "Send the results as they are.",
                     "after": [
                         "T21 Make the probe list r6"
-                    ]
+                    ],
+                    "doing": "Opening the test page."
                 },
                 {
                     "name": "T21 Start the health flow r6",
@@ -378,7 +389,8 @@
                     ],
                     "after": [
                         "T21 Import the health flow r5: connections"
-                    ]
+                    ],
+                    "doing": "Adding the row that starts the health flow."
                 },
                 {
                     "name": "T21 Button flow by hand r5: make a solution",
@@ -412,6 +424,9 @@
                     "urlConfig": "90161Z-flow-portal.txt",
                     "after": [
                         "T21 Power Automate shows your connections r6"
+                    ],
+                    "hide": [
+                        "skip"
                     ]
                 },
                 {
@@ -444,7 +459,10 @@
                     "after": [
                         "T21 Button flow by hand r5: make a solution"
                     ],
-                    "doneLog": "Confirmed by you: set the trigger."
+                    "doneLog": "Confirmed by you: set the trigger.",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T21 Button flow by hand r5: site and list",
@@ -471,7 +489,10 @@
                     "after": [
                         "T21 Button flow by hand r5: make the flow"
                     ],
-                    "doneLog": "Confirmed by you: set the site and list."
+                    "doneLog": "Confirmed by you: set the site and list.",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T21 Button flow by hand r5: the action",
@@ -504,7 +525,10 @@
                     "after": [
                         "T21 Button flow by hand r5: site and list"
                     ],
-                    "doneLog": "Confirmed by you: saved the button flow."
+                    "doneLog": "Confirmed by you: saved the button flow.",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T21 Button flow by hand r5: export the solution",
@@ -537,7 +561,10 @@
                     "after": [
                         "T21 Button flow by hand r5: the action"
                     ],
-                    "doneLog": "Confirmed by you: exported the button solution."
+                    "doneLog": "Confirmed by you: exported the button solution.",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T21 Read the export r6",
@@ -551,7 +578,8 @@
                     "help": "Send the results as they are. No value, site or address is written.",
                     "after": [
                         "T21 Button flow by hand r5: export the solution"
-                    ]
+                    ],
+                    "doing": "Reading the export file."
                 },
                 {
                     "name": "T21 Make the list view with the flow button r6",
@@ -571,7 +599,8 @@
                     "after": [
                         "T21 Make the probe list r6",
                         "T21 Read the export r6"
-                    ]
+                    ],
+                    "doing": "Making the list view with the button."
                 },
                 {
                     "name": "T21 Use the list button r6",
@@ -589,9 +618,7 @@
                         "6. Select \"Run\".",
                         "7. If the panel asks you to continue or to allow a connection: select \"Continue\".",
                         "8. Wait until the panel says the flow ran, or shows an error.",
-                        "If you see an error: wait 5 minutes, reload the list page, and try 1 more time.",
-                        "If the panel still shows an error: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
+                        "If you see an error: wait 5 minutes, reload the list page, and try 1 more time."
                     ],
                     "marker": "90161Z-T21-button-used.txt",
                     "estimate": 4,
@@ -616,12 +643,17 @@
                             "choices": [
                                 "The flow ran",
                                 "The flow was not found",
+                                "An error",
                                 "No panel opened"
                             ]
                         }
                     ],
                     "doneLog": "Confirmed by you: used the button.",
-                    "doneText": "I tried the button"
+                    "doneText": "I tried the button",
+                    "hide": [
+                        "failed",
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T24 Import the full solution r2: choose the file",
@@ -658,6 +690,9 @@
                     "urlConfig": "90161Z-flow-portal.txt",
                     "after": [
                         "T21 Power Automate shows your connections r6"
+                    ],
+                    "hide": [
+                        "skip"
                     ]
                 },
                 {
@@ -719,6 +754,9 @@
                                 "I did not see"
                             ]
                         }
+                    ],
+                    "hide": [
+                        "skip"
                     ]
                 },
                 {
@@ -764,7 +802,10 @@
                     "doneLog": "Confirmed by you: all flows On.",
                     "url": "https://make.powerautomate.appsplatform.us/",
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
+                    "urlConfig": "90161Z-flow-portal.txt",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T24 Check the flows after the import r2",
@@ -817,7 +858,10 @@
                     "doneText": "I checked the flows",
                     "url": "https://make.powerautomate.appsplatform.us/",
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
+                    "urlConfig": "90161Z-flow-portal.txt",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T24 Add a second owner to one flow r2",
@@ -882,7 +926,8 @@
                     ],
                     "after": [
                         "T24 Turn on all 6 flows r2"
-                    ]
+                    ],
+                    "doing": "Running the first part of the flow test."
                 },
                 {
                     "name": "T24 Run F02 once and F04 once r2",
@@ -919,7 +964,10 @@
                     "doneLog": "Confirmed by you: ran F02 and F04.",
                     "url": "https://make.powerautomate.appsplatform.us/",
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
+                    "urlConfig": "90161Z-flow-portal.txt",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T24 Full solution test, part 2 r2",
@@ -938,7 +986,8 @@
                     ],
                     "after": [
                         "T24 Run F02 once and F04 once r2"
-                    ]
+                    ],
+                    "doing": "Running the second part of the flow test."
                 },
                 {
                     "name": "T24 Find the F04 e-mail r2",
@@ -978,9 +1027,15 @@
                             "kind": "pick",
                             "choices": [
                                 "Yes",
-                                "No",
-                                "No e-mail to look at"
-                            ]
+                                "No"
+                            ],
+                            "showIf": {
+                                "key": "f04-found",
+                                "in": [
+                                    "Inbox",
+                                    "Junk Email"
+                                ]
+                            }
                         },
                         {
                             "key": "f04-to",
@@ -988,13 +1043,23 @@
                             "kind": "pick",
                             "choices": [
                                 "Yes",
-                                "No",
-                                "No e-mail to look at"
-                            ]
+                                "No"
+                            ],
+                            "showIf": {
+                                "key": "f04-found",
+                                "in": [
+                                    "Inbox",
+                                    "Junk Email"
+                                ]
+                            }
                         }
                     ],
                     "doneLog": "Confirmed by you: looked at the F04 e-mail.",
-                    "doneText": "I looked"
+                    "doneText": "I looked",
+                    "hide": [
+                        "failed",
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T24 Run F02 again r2",
@@ -1026,7 +1091,10 @@
                     "doneLog": "Confirmed by you: ran F02 again.",
                     "url": "https://make.powerautomate.appsplatform.us/",
                     "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt"
+                    "urlConfig": "90161Z-flow-portal.txt",
+                    "hide": [
+                        "skip"
+                    ]
                 },
                 {
                     "name": "T24 Full solution test, part 3 r2",
@@ -1045,7 +1113,8 @@
                     ],
                     "after": [
                         "T24 Run F02 again r2"
-                    ]
+                    ],
+                    "doing": "Running the third part of the flow test."
                 },
                 {
                     "name": "T21 Read the test results r6",
@@ -1064,7 +1133,8 @@
                     ],
                     "after": [
                         "T21 Make the probe list r6"
-                    ]
+                    ],
+                    "doing": "Reading what the flows wrote."
                 },
                 {
                     "name": "T24 Remove the second owner r2",
@@ -1113,7 +1183,8 @@
                         "pnp",
                         "net-site",
                         "site-rights"
-                    ]
+                    ],
+                    "doing": "Moving the test rows to the Recycle Bin."
                 },
                 {
                     "name": "T21 Remove the test list and library r6",
@@ -1129,7 +1200,8 @@
                         "pnp",
                         "net-site",
                         "site-rights"
-                    ]
+                    ],
+                    "doing": "Removing the test list and library."
                 },
                 {
                     "name": "T21 Remove the health flow and solution r6",
@@ -2196,7 +2268,8 @@
                     "minutes": 2,
                     "note": "Reads the padding file the round saved and checks that every line is there. Changes nothing and uses no network.",
                     "estimate": 1,
-                    "help": "Send the results as they are."
+                    "help": "Send the results as they are.",
+                    "doing": "Checking the padding file."
                 }
             ],
             "collect": [

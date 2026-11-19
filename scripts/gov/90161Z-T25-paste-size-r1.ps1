@@ -13,6 +13,9 @@
   "FAKE padding line <N, 6 digits> for the 90-161.Z paste-size test: no data, only letters to make the paste larger. .........."
   and the last line is "END OF PADDING lines=6000".
   Output: the file above (the round collects it) and lines that start with ITEM, then PASS or FAIL.
+  Network: none.
+  Writes: 90161Z-T25-paste-size-r1.txt in the T25 folder.
+  Credentials: none.
   Parameters (used by RADE): -Id, -NoPause.
 #>
 param([string]$Id, [switch]$NoPause)

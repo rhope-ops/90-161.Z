@@ -28,7 +28,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ### Round R32 r1: my 90-161.Z window r6 and the flow steps, in one paste
 
-**For:** one paste for the whole round again. First my 90-161.Z window r6 with 4 alignment fixes (the Action Status caption, the "Your Work" line, the "Passed" label, and the publication titles in a column) and 16 checks. Then the flow steps a fourth time (health flow, button flow and export reader, list button, full flows and the full flow test), with 2 new hand steps: I check that the 6 flows are On with good connections, and I add a second owner to one flow (I remove the person again at the end). The paste is about 750 KB, larger than any before. It runs on RADE engine-v19, which shows if my computer needs the "Bypass" setting; for that, every check must run again, so I first delete the saved check results. At the end I paste the same text once in the PowerShell console, to see if RADE starts there too.
+**For:** one paste for the whole round again. First my 90-161.Z window r6 with 4 alignment fixes (the Action Status caption, the "Your Work" line, the "Passed" label, and the publication titles in a column) and 16 checks. Then the flow steps a fourth time (health flow, button flow and export reader, list button, full flows and the full flow test), with 2 new hand steps: I check that the 6 flows are On with good connections, and I add a second owner to one flow (I remove the person again at the end). The paste is about 750 KB, larger than any before. It runs on RADE engine-v20: the cards show only the buttons that have a use, the card frame stays in one place, RADE shows a short tour at its first start and asks for other feedback at the end. Its check "RADE can run its scripts" now shows if my computer needs the "Bypass" setting; for that, every check must run again, so I first delete the saved check results. At the end I paste the same text once in the PowerShell console, to see if RADE starts there too.
 **Time:** about 2.5 hours with waits; about 80 minutes of my own work (estimate).
 **Changes:** on the test site: a probe list and library, fake rows and a list view are made and removed again at the end; the full test rows are moved to the site Recycle Bin at the end. In Power Automate: "90-161.Z probe health" is imported and "90-161.Z probe button" is made by me, and both are deleted at the end if they were made; the solution "90-161.Z flows" is upgraded and stays; one flow gets a second owner, removed at the end. On my computer: I delete RADE\Config\rade-checks.json (the saved check results; RADE makes it again), and the round writes my OneDrive folder RADE\90-161.Z (the window scripts, their result file and 17 pictures of the window cards with fake data) and one export file in Downloads. For 3 window checks I turn high contrast on and off in Windows Settings (Windows+U, Contrast themes). Before Run, the window lists every file.
 **Steps:**
@@ -43,20 +43,22 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 9. Click in the white script pane.
 10. Press Ctrl+V.
 11. Press F5. The RADE window opens.
-12. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
-13. Press Run.
-14. Do each check in the bar at the bottom of the 90-161.Z window.
-15. Close the 90-161.Z window with its X.
-16. Do each step the RADE window shows, until the log says DONE.
-17. At DONE, select Send in the Outlook draft that opens.
-18. Press Copy script next to the link below again.
-19. Open the Start menu.
-20. Type: PowerShell
-21. Open Windows PowerShell (not ISE, not "Run as administrator").
-22. Press Ctrl+V in the blue window.
-23. Wait up to 5 minutes for a RADE window.
-24. If a RADE window opens, select Exit in it.
-25. Close the blue window.
+12. If RADE shows its tour first, select "Next" on each card.
+13. If the last tour card shows, select "Close the tour".
+14. If the window shows a button "90-161.Z: Publications and Forms Management", select it.
+15. Press Run.
+16. Do each check in the bar at the bottom of the 90-161.Z window.
+17. Close the 90-161.Z window with its X.
+18. Do each step the RADE window shows, until the log says DONE.
+19. At DONE, select Send in the Outlook draft that opens.
+20. Press Copy script next to the link below again.
+21. Open the Start menu.
+22. Type: PowerShell
+23. Open Windows PowerShell (not ISE, not "Run as administrator").
+24. Press Ctrl+V in the blue window.
+25. Wait up to 5 minutes for a RADE window.
+26. If a RADE window opens, select Exit in it.
+27. Close the blue window.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R32-round-r1.ps1
 

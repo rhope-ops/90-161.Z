@@ -33,7 +33,7 @@ function Test-Deploy { return $false }
 try { $gx = [System.Drawing.Graphics]::FromHwnd([IntPtr]::Zero); $ui.ScreenDpi = [double]$gx.DpiX; $gx.Dispose() } catch { $null = $_ }
 $ui.FormDpi = { try { $d = [double]$ui.Form.CurrentAutoScaleDimensions.Width; if ($d -gt 0) { $ui.Dpi = $d } } catch { $null = $_ } }
 $ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }   # a size at 100 % in screen pixels, for parts made or drawn after the form has scaled
-# Colors: one meaning each. Navy = text and focus; Air Force blue = the action and progress; yellow = RADE waits for you;
+# Colors: one meaning each. Navy = text and focus; Air Force blue = the action and progress; yellow = your turn;
 # dark red = FAILED, NEEDS REVIEW and the one destructive action; green = passed. Contrast on white: ink 15.6, gray 5.9,
 # blue 7.7, red 9.3, green word 6.4, control edge 3.7 to 1. Non-text parts (R28) are at least 3 to 1 against white: the bar track and the edge of a button that is not available are Track (#7F93A8, 3.2 to 1), the status light has a 1 px navy line.
 $ui.C = @{ Navy = [System.Drawing.Color]::FromArgb(11, 37, 69); Blue = [System.Drawing.Color]::FromArgb(0, 83, 159); Yellow = [System.Drawing.Color]::FromArgb(255, 213, 32)
@@ -164,6 +164,70 @@ $ui.Ink = { param($C)
       if ($hit -ge 0) { $v = $hit; $got = $true } } finally { $bm.Dispose() } } catch { $null = $_ }
   if ($got) { $ui.Inks[$k] = $v }; return $v }   # only a measure is kept; the estimate is tried again next time
 $ui.SetLeft = { param($C, [int]$L) $L = [math]::Max(0, $L); $m = $C.Margin; if ($m.Left -ne $L) { $C.Margin = New-Object System.Windows.Forms.Padding($L, $m.Top, $m.Right, $m.Bottom) } }
+# ---- Text that RADE draws ink-tight (L2, the Administrator, 2026-11-19: the header)
+# A label keeps empty room above its capitals and under its baseline (about 5 and 7 px for the word RADE), so two labels
+# can never be 9 px apart ink to ink. The word RADE and the application name are panels that draw their own text and are
+# exactly as tall as the ink: from the top of the capitals to the baseline (the word) or to the bottom of a "g" (a name).
+# $ui.FontInk measures those rows for a font one time: "H" and "g" drawn into a bitmap by Windows. Without a bitmap (the
+# test stand-ins) it gives an estimate from the text height.
+$ui.FontInks = @{}
+# The first and last row and column of a bitmap that hold ink (a pixel that differs from white). Takes the bitmap; gives
+# back @{ Top; Bottom; Left; Right } (Bottom and Right are one past the ink), or $null when the bitmap has no ink.
+$ui.InkScan = { param($Bm)
+  $t = -1; $b = -1; $l = $Bm.Width; $r = -1
+  for ($y = 0; $y -lt $Bm.Height; $y++) { for ($x = 0; $x -lt $Bm.Width; $x++) { $px = $Bm.GetPixel($x, $y)
+      if ((255 - $px.R) + (255 - $px.G) + (255 - $px.B) -gt 90) { if ($t -lt 0) { $t = $y }; $b = $y; if ($x -lt $l) { $l = $x }; if ($x -gt $r) { $r = $x } } } }
+  if ($t -lt 0) { return $null }
+  return @{ Top = $t; Bottom = $b + 1; Left = $l; Right = $r + 1 } }
+# Draws a text in black on a white bitmap, as $ui.InkPaint draws it (no padding, one line), and gives back its ink box
+# ($ui.InkScan), or $null when nothing can be drawn (no System.Drawing bitmap). Takes the text and the font.
+$ui.InkOf = { param([string]$Text, $Font)
+  try { $fl = [System.Windows.Forms.TextFormatFlags]'Left, Top, NoPadding, NoPrefix, SingleLine'
+    $sz = [System.Windows.Forms.TextRenderer]::MeasureText($Text, $Font, (New-Object System.Drawing.Size(100000, 0)), $fl)
+    $bm = New-Object System.Drawing.Bitmap(([math]::Max(1, [int]$sz.Width + 4)), ([math]::Max(1, [int]$sz.Height + 4)))
+    try { $g = [System.Drawing.Graphics]::FromImage($bm); $g.Clear([System.Drawing.Color]::White)
+      [System.Windows.Forms.TextRenderer]::DrawText($g, $Text, $Font, (New-Object System.Drawing.Point(0, 0)), [System.Drawing.Color]::Black, [System.Drawing.Color]::White, $fl); $g.Dispose()
+      return (& $ui.InkScan $bm) } finally { $bm.Dispose() } } catch { return $null } }
+# The rows of a font's ink in a text cell: Top = the top of the capitals, Base = the baseline (one past the bottom of "H"),
+# Bottom = one past the bottom of "g". Measured one time for each font; an estimate when it cannot be measured.
+$ui.FontInk = { param($Font)
+  $k = [string]$Font.Name + '|' + $Font.SizeInPoints + '|' + $Font.Style; if ($ui.FontInks.ContainsKey($k)) { return $ui.FontInks[$k] }
+  $h = 18; try { $h = [int][System.Windows.Forms.TextRenderer]::MeasureText('Hg', $Font).Height } catch { $null = $_ }   # no measure: the height of the form font
+  $v = @{ Top = [int][math]::Round($h * 0.27); Base = [int][math]::Round($h * 0.8); Bottom = $h }
+  $a = & $ui.InkOf 'H' $Font; $d = & $ui.InkOf 'g' $Font
+  if ($a -and $d) { $v = @{ Top = [int]$a.Top; Base = [int]$a.Bottom; Bottom = [int][math]::Max($a.Bottom, $d.Bottom) }; $ui.FontInks[$k] = $v }   # only a measure is kept
+  return $v }
+# Makes a panel that draws its own Text ink-tight. Takes the font, the color, the screen-reader name and whether the
+# panel keeps room for descenders ($true: a name; $false: capitals only, the panel ends on the baseline). Gives back the
+# panel; $ui.InkFit sizes it when its text changes and when the window has its scale.
+$ui.InkText = { param($Font, $Color, [string]$Name, [bool]$Desc)
+  $p = New-Object System.Windows.Forms.Panel; $p.Font = $Font; $p.ForeColor = $Color; $p.BackColor = $ui.C.White; $p.Margin = (& $ui.Pad 0 0 0 0); $p.Size = New-Object System.Drawing.Size(1, 1)
+  $p.AccessibleRole = 'StaticText'; $p.AccessibleName = $Name; $p.Tag = @{ Desc = $Desc; Left = 0; MaxW = 0 }; $p.Visible = $false
+  $p.Add_Paint({ & $ui.InkPaint $this $_.Graphics }); $p.Add_TextChanged({ & $ui.InkFit $this }); $p }
+# Sizes an ink-tight panel to its text: as wide as the ink (at most Tag.MaxW when that is set: the text then ends with
+# "...") and as tall as the font's ink rows. Does nothing before the window has its scale. Takes the panel.
+$ui.InkFit = { param($P)
+  if (-not $ui.Scaled) { return }
+  try { $fi = & $ui.FontInk $P.Font; $h = $(if ($P.Tag.Desc) { $fi.Bottom } else { $fi.Base }) - $fi.Top; $w = 1; $P.Tag.Left = 0
+    if ($P.Text) { $box = & $ui.InkOf ([string]$P.Text) $P.Font
+      if ($box) { $P.Tag.Left = [int]$box.Left; $w = [int]$box.Right - [int]$box.Left }
+      else { $w = [int][System.Windows.Forms.TextRenderer]::MeasureText([string]$P.Text, $P.Font).Width } }
+    if ([int]$P.Tag.MaxW -gt 0) { $w = [math]::Min($w, [int]$P.Tag.MaxW) }
+    $ns = New-Object System.Drawing.Size(([math]::Max(1, $w)), ([math]::Max(1, $h))); if ($P.Width -ne $ns.Width -or $P.Height -ne $ns.Height) { $P.Size = $ns }
+    if ($P.Text) { $P.AccessibleName = [string]$P.Text }; $P.Invalidate() } catch { $null = $_ } }   # no size now: the next fit sizes it
+# Draws the text of an ink-tight panel: moved left and up by the empty room of its text cell, so the ink starts at the
+# panel's left and top edge; a text wider than the panel ends with "...". Takes the panel and its Graphics.
+$ui.InkPaint = { param($P, $G)
+  try { $G.Clear($P.BackColor); if (-not $P.Text) { return }
+    $fi = & $ui.FontInk $P.Font; $l = [int]$P.Tag.Left
+    [System.Windows.Forms.TextRenderer]::DrawText($G, [string]$P.Text, $P.Font, (New-Object System.Drawing.Rectangle((-$l), (-[int]$fi.Top), ($P.ClientSize.Width + $l), ([int]$fi.Bottom + 4))), $P.ForeColor, $P.BackColor, [System.Windows.Forms.TextFormatFlags]'Left, Top, NoPadding, NoPrefix, SingleLine, EndEllipsis') } catch { $null = $_ } }   # drawing never stops the window
+# Where the ink of a control is, measured on what Windows drew (DrawToBitmap; the first 240 px of its width): gives back
+# @{ Top; Bottom; Left; Right } in the control's own pixels, or its whole box when it cannot be measured. Takes the control.
+$ui.InkBox = { param($C)
+  $all = @{ Top = 0; Bottom = [int]$C.Height; Left = 0; Right = [int]$C.Width }
+  try { $w = [math]::Max(1, [math]::Min([int]$C.Width, (& $ui.Sc 240))); $h = [math]::Max(1, [int]$C.Height); $bm = New-Object System.Drawing.Bitmap($w, $h)
+    try { $C.DrawToBitmap($bm, (New-Object System.Drawing.Rectangle(0, 0, $w, $h))); $box = & $ui.InkScan $bm; if ($box) { return $box } } finally { $bm.Dispose() } } catch { $null = $_ }   # no bitmap (the test stand-ins): the whole box
+  return $all }
 # ---- Long words and one-line texts
 # A word wider than the line (no space in it) is cut into pieces that fit, one per line: it wraps by character and is
 # never clipped (R7 review). Only what the window shows changes; the report keeps the text.
@@ -235,11 +299,36 @@ $ui.EdgeBad = { param([string]$Card, $Edges)
 $ui.HeadBad = { param([string]$Card, $Title, $Sub)
   if ([int]$Title.X -eq [int]$Sub.X) { return @() }
   return @('LAYOUT ' + $Card + ' header ' + $Sub.N + ' edge: starts at ' + $Sub.X + ', ' + $Title.N + ' starts at ' + $Title.X) }
-# GapBad (R29b V1): without an application logo, the name is G1 (scaled) under the word RADE, within 1 px. Takes the card,
-# the measured gap and the gap it must be; gives back the defect lines.
-$ui.GapBad = { param([string]$Card, [int]$Gap, [int]$Want)
-  if ([math]::Abs($Gap - $Want) -le 1) { return @() }
-  return @('LAYOUT ' + $Card + ' header gap: ' + $Gap + ' between WordL and AppL, the gap is ' + $Want) }
+# HeadRuleBad (L2, the Administrator, 2026-11-19; it replaces the 4 px box gap of R29b V1): without an application logo,
+# under the word RADE comes a gap, a thin line as wide as the word's ink and on its left edge, the same gap, then the
+# capitals of the application name. Takes the card, the measured numbers @{ WordBottom; WordLeft; WordW; RuleTop;
+# RuleBottom; RuleLeft; RuleW; AppTop } (AppTop $null: a name with no capital, digit or tall letter is not measured) and
+# the gap it must be (4 px, scaled); the tolerance is 1 px, scaled. Gives back the defect lines.
+$ui.HeadRuleBad = { param([string]$Card, $M, [int]$Want)
+  $out = @(); $tol = [math]::Max(1, (& $ui.Sc 1))
+  $g1 = [int]$M.RuleTop - [int]$M.WordBottom; if ([math]::Abs($g1 - $Want) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header gap: ' + $g1 + ' between the word RADE and the line, the gap is ' + $Want) }
+  if ($null -ne $M.AppTop) { $g2 = [int]$M.AppTop - [int]$M.RuleBottom; if ([math]::Abs($g2 - $Want) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header gap: ' + $g2 + ' between the line and the application name, the gap is ' + $Want) } }
+  if ([math]::Abs([int]$M.RuleW - [int]$M.WordW) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header line: ' + $M.RuleW + ' wide, the word RADE is ' + $M.WordW) }
+  if ([math]::Abs([int]$M.RuleLeft - [int]$M.WordLeft) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header line: starts at ' + $M.RuleLeft + ', the word RADE starts at ' + $M.WordLeft) }
+  return $out }
+# AboveBad (L3, the Administrator, 2026-11-19): a label above its box. The label's bottom is not under the box's top, the
+# box starts on the card's edge and it is as wide as the card's text (from the edge to the end of the text column), each
+# within 1 px (scaled). Takes the card and @{ LabelBottom; BoxTop; BoxLeft; BoxW; Edge; TextW }; gives back the defect lines.
+$ui.AboveBad = { param([string]$Card, $M)
+  $out = @(); $tol = [math]::Max(1, (& $ui.Sc 1))
+  if ([int]$M.BoxTop -lt [int]$M.LabelBottom) { $out += ('LAYOUT ' + $Card + ' FieldRow label: its bottom is at ' + $M.LabelBottom + ', the box starts at ' + $M.BoxTop) }
+  if ([math]::Abs([int]$M.BoxLeft - [int]$M.Edge) -gt $tol) { $out += ('LAYOUT ' + $Card + ' FieldBox edge: starts at ' + $M.BoxLeft + ', the card edge is ' + $M.Edge) }
+  if ([math]::Abs([int]$M.BoxW - [int]$M.TextW) -gt $tol) { $out += ('LAYOUT ' + $Card + ' FieldBox width: ' + $M.BoxW + ', the card text is ' + $M.TextW + ' wide') }
+  return $out }
+# FrameBad (L1, the Administrator, 2026-11-19): the card frame. The header row starts at the frame's fixed top (so it is at
+# the same place on every card of one window size), and the frame is as tall as its minimum at least, each within 1 px
+# (scaled). A card that had to move up to fit (Moved) is not measured. Takes the card and @{ Top; WantTop; H; MinH; Moved };
+# gives back the defect lines.
+$ui.FrameBad = { param([string]$Card, $M)
+  $out = @(); $tol = [math]::Max(1, (& $ui.Sc 1)); if ($M.Moved) { return $out }
+  if ([math]::Abs([int]$M.Top - [int]$M.WantTop) -gt $tol) { $out += ('LAYOUT ' + $Card + ' frame: the header row is at ' + $M.Top + ', the fixed top is ' + $M.WantTop) }
+  if ([int]$M.H + $tol -lt [int]$M.MinH) { $out += ('LAYOUT ' + $Card + ' frame: ' + $M.H + ' high, the minimum is ' + $M.MinH) }
+  return $out }
 # TickBad (R29b N3): the step's time or count (@{ N; Top; H }) has its vertical center within 1 px of the bar's (@{ Top; H }),
 # at any scale (the tolerance is not scaled).
 $ui.TickBad = { param([string]$Card, $Bar, $Tick)
