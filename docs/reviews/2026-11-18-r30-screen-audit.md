@@ -22,6 +22,7 @@ The engine draws the same 3 buttons on every hand step: **Done**, **It failed** 
 | B4 | "Skip" only where skipping is safe and has a meaning; its text says that meaning ("Not now", "Nothing to delete"). | Round definitions; RADE to hide it |
 | B5 | A step whose thing was never made is skipped by the round, not shown (the PFM's R30a note). | Round definitions (`After`) |
 | B6 | "Done" names what the person did when the step is a look ("I looked at the form"). | Round definitions (`DoneText`) |
+| B7 | A question about a screen comes while that screen is open. | T22 (questions in its check bar) or the round order |
 
 ## Every hand step in R30
 
@@ -41,7 +42,7 @@ The engine draws the same 3 buttons on every hand step: **Done**, **It failed** 
 | 17 | R30a | Remove the health flow and solution | Done, It failed, Skip | Shown although the import failed (the PFM's note) | Runs only if step 2 passed; else SKIPPED with "nothing was made" (B5) |
 | 18 | R30a | Remove the button flow and solution | Done, It failed, Skip | Must run if the empty solution was made; the flow part only if step 5 passed | Runs if step 4 passed; the card names only what was made (B5) |
 | 19 | R30b | Answer: look and cards | Done, It failed, Skip; then 3 questions | The card has no task, only "answer the next cards" | The 3 questions at once (B2) |
-| 20 | R30b | Answer: the screenshot fixes | Done, It failed, Skip; then 2 questions | Same (the PFM's screenshot) | The 2 questions at once (B2) |
+| 20 | R30b | Answer: the screenshot fixes | Done, It failed, Skip; then 2 questions | Same (the PFM's screenshot); also asked after the 90-161.Z window is closed, so the card cannot be seen (the PFM's "No" answers are not valid) | Ask while the window is open, or keep the window open until the questions are answered (B2, B7) |
 
 Count: 20 hand steps; 20 show a button with no use or a doubled meaning; 4 need a RADE change (B2 for 19-20 and 1; conditional questions for 15), the rest are fixes in this repo.
 
@@ -65,5 +66,5 @@ Not covered by this audit: the RADE start, file-list, checks and done screens, a
 
 1. Form look: fallback **A** (open the list, select "+ New", use the side panel with "Edit form").
 2. High contrast: **yes**, the 90-161.Z window kept its own colors when the theme came on. So check 10 fails because the window ignores the Windows contrast theme, not because of the steps. A fix: the window uses the system colors when high contrast is on.
-3. V2 and V4: the PFM sends a screenshot of the whole card.
+3. V2 and V4: the PFM sends a screenshot of the whole card. Later the same day, the PFM said the "No" answers were in error: the questions came after the window was closed.
 4. Screenshots: the 17:57 one shows that the title is not on the logo's midpoint and that the logo has a white background (L2); the 18:03 one shows "It failed" and "Skip" on a card with only questions (S1).
