@@ -74,6 +74,8 @@ def test_refusals():
     refuses('H before M', svg(path('H 10 Z')), 'start with M')
     refuses('empty path data', svg(path('')), 'start with M')
     refuses('too few numbers', svg(path('M 10', 'fill="none"')), 'numbers')
+    refuses('L with one number at the end', svg(path('M 10 10 L 20', 'fill="none"')), 'numbers')
+    refuses('L with no number at the end', svg(path('M 10 10 L', 'fill="none"')), 'numbers')
     refuses('missing d attribute', svg('<path fill="none"/>'), 'start with M')
 
 
