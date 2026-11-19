@@ -16,15 +16,17 @@ The engine draws the same 3 buttons on every hand step: **Done**, **It failed** 
 
 | # | Rule | Where it is fixed |
 |---|---|---|
-| B1 | A card shows a button only when that button leads to a different result. | Round definitions (this repo) |
+| B1 | A card shows a button only when that button leads to a different result. | RADE engine (an option to hide a button; a step can only rename one today) |
 | B2 | A step that only asks questions shows its first question at once: no Done, It failed or Skip. | RADE engine (new option) |
-| B3 | When a question already records a failure, the card has no "It failed" button (or the question loses its failure choice): 1 way to report a failure. | Round definitions |
-| B4 | "Skip" only where skipping is safe and has a meaning; its text says that meaning ("Not now", "Nothing to delete"). | Round definitions; RADE to hide it |
+| B3 | 1 way to report a failure: the question loses its failure choice (this repo, now), or the card loses "It failed" (RADE option). | This repo or RADE engine |
+| B4 | "Skip" only where skipping is safe and has a meaning; its text says that meaning ("Not now", "Nothing to delete"). | Rename: this repo (`SkipText`); hide: RADE engine |
 | B5 | A step whose thing was never made is skipped by the round, not shown (the PFM's R30a note). | Round definitions (`After`) |
 | B6 | "Done" names what the person did when the step is a look ("I looked at the form"). | Round definitions (`DoneText`) |
 | B7 | A question about a screen comes while that screen is open. | T22 (questions in its check bar) or the round order |
 
 ## Every hand step in R30
+
+"#" is the hand-step number in this audit, not the step number in the round reports.
 
 | # | Round | Step | Buttons today | Problem | Fix (rule) |
 |---|---|---|---|---|---|
@@ -39,12 +41,12 @@ The engine draws the same 3 buttons on every hand step: **Done**, **It failed** 
 | 13 | R30a | Turn on all 6 flows | Done, It failed, Skip; then 1 question | Skip has no use | Done, It failed (B4) |
 | 14, 16 | R30a | Run F02 and F04; run F02 again | Done, It failed, Skip | Skip has no use | Done, It failed (B4) |
 | 15 | R30a | Find the F04 e-mail | Done, It failed, Skip; then 3 questions | Answer "Not found" overlaps with It failed; after "Not found", questions 2 and 3 (tables, To line) ask about an e-mail that is not there | Done = "I looked"; no It failed; questions 2-3 only after "Inbox" or "Junk Email" (B3, B6; the last part needs a RADE option) |
-| 17 | R30a | Remove the health flow and solution | Done, It failed, Skip | Shown although the import failed (the PFM's note) | Runs only if step 2 passed; else SKIPPED with "nothing was made" (B5) |
-| 18 | R30a | Remove the button flow and solution | Done, It failed, Skip | Must run if the empty solution was made; the flow part only if step 5 passed | Runs if step 4 passed; the card names only what was made (B5) |
+| 17 | R30a | Remove the health flow and solution | Done, It failed, Skip | Shown although the import failed (the PFM's note) | Runs only if step 3 (the import finish) passed; else SKIPPED with "nothing was made" (B5) |
+| 18 | R30a | Remove the button flow and solution | Done, It failed, Skip | Must run if the empty solution was made; the flow part only if step 5 passed | 2 steps: delete the flow (after step 5), delete the solution (after step 4) (B5) |
 | 19 | R30b | Answer: look and cards | Done, It failed, Skip; then 3 questions | The card has no task, only "answer the next cards" | The 3 questions at once (B2) |
 | 20 | R30b | Answer: the screenshot fixes | Done, It failed, Skip; then 2 questions | Same (the PFM's screenshot); also asked after the 90-161.Z window is closed, so the card cannot be seen (the PFM's "No" answers are not valid) | Ask while the window is open, or keep the window open until the questions are answered (B2, B7) |
 
-Count: 20 hand steps; 20 show a button with no use or a doubled meaning; 4 need a RADE change (B2 for 19-20 and 1; conditional questions for 15), the rest are fixes in this repo.
+Count: 20 hand steps; each shows a button with no use or a doubled meaning. Possible in this repo now: B5 (`After`), B6 (`DoneText`), renamed Skip (`SkipText`), a failure choice removed from a question (B3), the question order (B7). Needs a RADE change: hiding any button (B1, B3, B4), questions at once (B2), questions that depend on an earlier answer (step 15). **Confidence: high** (step fields read in the bundle).
 
 Not covered by this audit: the RADE start, file-list, checks and done screens, and the 17 cards of the 90-161.Z window (T22). They are drawn by code with no fixed screenshots here. Proposal: the T22 step already opens all 17 cards by script; R31 can also save a screenshot of each card (fake data only) into the results folder, and RADE can do the same for its own screens. Then the audit covers every screen from pictures, not from code alone.
 
@@ -53,7 +55,7 @@ Not covered by this audit: the RADE start, file-list, checks and done screens, a
 | # | Note | Comment | REC | Owner |
 |---|---|---|---|---|
 | L1 | The card height changes and the screen jumps; fix bounds so "Step x of x" stays put | Agree; it is the main cause of the "malfunction" look. The card fits its height to each step's text. A fixed card frame (a minimum and a maximum height, the text scrolls inside) and a fixed header row for "Step x of x" stop the jump. | Fixed frame and fixed header row | RADE engine |
-| L2 | "90-161.Z" too low under the RADE title; a thin line between them as wide as "RADE"; title not on the logo's midpoint; logo has a white background | Agree on all 4. The title must center on the logo's vertical midpoint. The white is the logo's own white disc (`scripts/logo_draw.py` draws a transparent PNG; the disc is in the design), which looks like a box on the navy header. | Center alignment and divider (RADE); a logo version for dark backgrounds without the white disc (this repo) | RADE engine and this repo |
+| L2 | "90-161.Z" too low under the RADE title; a thin line between them as wide as "RADE"; title not on the logo's midpoint; logo has a white background | Agree on all 4. The first 2 are the RADE header. The 17:57 screenshot is the rail of the 90-161.Z window (T22), not RADE: our code puts the logo in a white box on the navy rail (`$logo.BackColor = $ui.C.White`), and it places the title at 18 px while the logo's middle is at 36 px (`scripts/gov/90161Z-T22-window-r4.ps1`, `RailHead`). | RADE: title spacing and divider. This repo (T22): no white box (navy or transparent), title centered on the logo's midpoint | RADE engine and this repo |
 | L3 | "Your answer" is to the left of its box | Agree. A label above the box is the usual form layout and gives the box the full width. | Label above the box | RADE engine |
 | L4 | A place for free feedback at the end of a round | Agree. Today your notes go into the e-mail body (as in R30a), where the report cannot keep them. One optional last card "Anything else about this round or the app?" puts them in the report file. | Optional last card in every round | RADE engine |
 | L5 | "Your turn." and "RADE is working..." instead of "RADE is waiting for you" | Agree. The card already says "your turn" at the top, so the side text repeats it in other words. 2 fixed states, the same words every time. | Use your 2 phrases | RADE engine |
@@ -67,4 +69,4 @@ Not covered by this audit: the RADE start, file-list, checks and done screens, a
 1. Form look: fallback **A** (open the list, select "+ New", use the side panel with "Edit form").
 2. High contrast: **yes**, the 90-161.Z window kept its own colors when the theme came on. So check 10 fails because the window ignores the Windows contrast theme, not because of the steps. A fix: the window uses the system colors when high contrast is on.
 3. V2 and V4: the PFM sends a screenshot of the whole card. Later the same day, the PFM said the "No" answers were in error: the questions came after the window was closed.
-4. Screenshots: the 17:57 one shows that the title is not on the logo's midpoint and that the logo has a white background (L2); the 18:03 one shows "It failed" and "Skip" on a card with only questions (S1).
+4. Screenshots: the 17:57 one (the 90-161.Z window rail) shows that the title is not on the logo's midpoint and that the logo has a white background (L2); the 18:03 one shows "It failed" and "Skip" on a card with only questions (S1).
