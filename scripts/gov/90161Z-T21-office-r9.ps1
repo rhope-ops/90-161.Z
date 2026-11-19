@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r8, module "office": the part Office, the device test of the PFM Office level (PFM 19 Nov 26,
+  90-161.Z Task 21 probe r9, module "office": the part Office, the device test of the PFM Office level (PFM 19 Nov 26,
   F2 B): a PFM Office member who is not a row's author can edit that row on a list set to "edit own rows".
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r8.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r9.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($dir, $site, $ListTitle, $ListFolder, $OfficeGroup, $OfficeLevel,
   $OfficeStateName, $StateName, $NoLaunch) and the helpers of the module "common"; the second person is the one the part
   Person found (its state file holds the site user number), so no address is asked again. Outputs: result lines through
@@ -13,11 +13,11 @@
   list has its own permissions since Make), so the test needs no change to a PFM list.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: on the probe list: "edit own rows", the PFM Office level for the group PFM Office and 1 row titled EDITALL; the
-          second person in the group PFM Office; on this computer the state file 90161Z-T21-office-state-r8.txt (numbers
+          second person in the group PFM Office; on this computer the state file 90161Z-T21-office-state-r9.txt (numbers
           only: the group Id and the user Id of each person this part added and Clean has not removed yet) and the clipboard
           (the row's edit form link). Clean removes every recorded person from the group again.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r8.ps1 -Part Office loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r9.ps1 -Part Office loads it.
 #>
 
 # SharePoint permission bits (SP.BasePermissions, low word): EditListItems 0x4; CancelCheckout 0x100 ("Override List Behaviors").
@@ -179,6 +179,9 @@ function Invoke-OfficePart {
 .SYNOPSIS
   Clean, step c1b: removes every person on the office state file from the group PFM Office again, then deletes the file
   (it keeps the Ids that are still in the group). A failure is its own FAIL line and never stops the later Clean steps.
+  R35 (W8): with -Label first (the check before the test) a recorded person who is still in PFM Office is a leftover of an
+  earlier test: it is a FAIL line that says what to do, and nobody is removed (the Clean at the end, -Label last, removes
+  the person). The group PFM Office and its level stay: they are app setup (T20), not leftovers.
 .OUTPUTS
   None.
 #>
@@ -187,6 +190,16 @@ function Clear-OfficeMember {
   if (-not $st -or -not @($st.UserIds).Count) { Add-Item 'c1b-office' 'INFO' 'no PFM Office test on file (nothing to remove)'; Write-OfficeState 0 @(); return }
   try {
     $members = Get-GroupMemberId $st.GroupId
+    if ($Label -eq 'first') {
+      $left = @($st.UserIds | Where-Object { $members -contains $_ })
+      if ($left.Count) {
+        Add-Item 'c1b-office' 'FAIL' ('leftover: ' + $left.Count + ' test person(s) from an earlier test still in the group ' + $OfficeGroup + ' (state file kept). What to do: run this round to its last Clean step, which removes them, or remove them from the group ' + $OfficeGroup + ' by hand and run this step again')
+      } else {
+        Write-OfficeState $st.GroupId @()
+        Add-Item 'c1b-office' 'PASS' ('no test person is left in ' + $OfficeGroup + ' (state file deleted)')
+      }
+      return
+    }
     foreach ($uid in @($st.UserIds | Where-Object { $members -contains $_ })) {
       Write-Now ('Removing a person of this test from the group ' + $OfficeGroup)
       try { $null = Invoke-Rest 'Post' ('_api/web/sitegroups/getbyid(' + $st.GroupId + ')/users/removebyid(' + $uid + ')') '{}' } catch { $null = $_ }

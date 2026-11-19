@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe, r8 (round R34). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 21 probe, r9 (round R35). Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: the device side of the T21 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10
   passed); R29a proved T4 (a second person writes a row). The 2 probe flows are now flows of the solution "90-161.Z flows"
@@ -24,7 +24,7 @@
   a raw RecycleBinItemId table reached the log). (2) The parts Form and View run the two halves of Look on their own, so the
   round can show the list form when the form header passed, whatever the view result (R29a finding 6); Look still runs both.
   (3) The script is split into modules (code standard, S1): this file holds the start, the shared blocks and the result
-  file; the parts live in the files 90161Z-T21-<part>-r8.ps1 in the same folder, which this file loads by name.
+  file; the parts live in the files 90161Z-T21-<part>-r9.ps1 in the same folder, which this file loads by name.
   (4) Read: with no state file and no row by another person, T4 is not counted: one line "T4 NOT RUN" and no RESULT line.
   Parts (-Part):
     Make   (about 1 minute, an estimate)  Makes the library "90161Z Probe Files" and the list "90161Z Probe" (columns
@@ -38,7 +38,7 @@
            It also puts the link of the new row form on the clipboard. Prints "added to Visitors: yes" or "no" and a status.
     Office (about 1 minute, an estimate; after Person and after T20 r2)  Sets "edit own rows" on the probe list, gives
            the group PFM Office the level "PFM Office Edit All Items" on it, writes 1 row titled EDITALL (you are its
-           author), puts the second person of Person into PFM Office (state file 90161Z-T21-office-state-r8.txt: numbers
+           author), puts the second person of Person into PFM Office (state file 90161Z-T21-office-state-r9.txt: numbers
            only) and reads back that the person can edit every row. The row's edit form link goes on the clipboard: the
            second person opens it, changes the row and saves it.
     Run    (a few seconds, an estimate)  Adds 1 command row (RUN-HEALTH) that starts the health flow "90161Z T21 Probe
@@ -67,12 +67,12 @@
   Writes: the site objects listed above; on this computer the T21 folder (result files, test page, state files, the fake
           workbook) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T21-probe-<part>-r8.txt (make, person, office, run, look, form, view, read) or -clean-<label>-r8.txt in
+  Output: 90161Z-T21-probe-<part>-r9.txt (make, person, office, run, look, form, view, read) or -clean-<label>-r9.txt in
   the T21 folder (send them back). Each test line (HEALTH, T4, EDITALL, BUTTON, FORM, VIEW) is followed by "RESULT <test> PASS" or
   "RESULT <test> FAIL", so the RADE step counts what the part read (R28 finding 7). Last line of each part: PROBE <part>
   done: passed=<n> failed=<n>. Exit code 0 when the part ran to its end (a FAILED test is a result); exit 1 only when the
   part could not run (sign-in, missing list, missing module file).
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T21-probe-r8.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T21-probe-r9.ps1 -Part <part> (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part, -Label, -WaitMinutes, -NoPause.
   -PollSeconds, -TestDir and -NoLaunch are for the tests in tests/run.sh (tests/ps/Test-T21.ps1).
 .PARAMETER Id
@@ -111,10 +111,10 @@ $script:StateName = '90161Z-T21-person-state-r3.txt'
 # its own state file for Clean.
 $script:OfficeGroup = 'PFM Office'
 $script:OfficeLevel = 'PFM Office Edit All Items'
-$script:OfficeStateName = '90161Z-T21-office-state-r8.txt'
+$script:OfficeStateName = '90161Z-T21-office-state-r9.txt'
 $script:ViewTitle = 'ProbeButton'
 $script:HeaderText = '90-161.Z test header'
-$Rev = 'r8'
+$Rev = 'r9'
 # The modules this file loads from its own folder (round skill section 2: scripts that load each other keep fixed names).
 $ModuleNames = @('common', 'make', 'person', 'office', 'look', 'read')
 

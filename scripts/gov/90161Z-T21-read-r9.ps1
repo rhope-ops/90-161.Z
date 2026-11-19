@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r8, module "read": the parts Run (the command row that starts the health flow) and Read (the
+  90-161.Z Task 21 probe r9, module "read": the parts Run (the command row that starts the health flow) and Read (the
   results of HEALTH, T4, EDITALL and BUTTON).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r8.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r9.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($dir, $ListTitle, $ListFolder, $WaitMinutes, $pollEvery) and the helpers of the
   module "common"; the rows of the probe list and the second person's state files (Person, Office). Outputs: result lines (counts only)
   through Add-Item and Add-Test.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: Run: 1 row on the probe list. Read: nothing.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r8.ps1 -Part Run (or Read) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r9.ps1 -Part Run (or Read) loads it.
 #>
 
 # The part Run: adds 1 command row (RUN-HEALTH) that starts the health flow; the Read part waits for its answer.
