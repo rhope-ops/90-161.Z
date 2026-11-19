@@ -29,7 +29,7 @@ Service accounts are not available in practice (PFM, 12 Nov). Flows run on the P
 | Group | Made by | Members | Rights |
 |---|---|---|---|
 | PFM Office (SharePoint group) | Setup (T20 r2 makes it when missing) | PFM, Alternate PFM, Acting PFM, people who work the org box | The level "PFM Office Edit All Items" on the site: Edit plus Override List Behaviors, so its members edit every row (PFM F2 A, 2026-11-19; docs/power-automate-provisioning.md section 4); the 90-161.Z library; only group with edit on config lists (P2A) |
-| Wing access group (existing; type per P6) | Exists | All wing members | Read on all lists; create and edit own rows on PFM Publications and PFM Endorsements (10A); read on Published |
+| Wing access group (existing; type per P6) | Exists | All wing members | Read on the site and all lists; Contribute on the 3 intake lists only (section 7, PFM 19 Nov 26); edit own rows only on PFM Publications and PFM Endorsements (10A); read on Published |
 | Site Owners (existing) | Exists | Site owners | Unchanged; not used by the app |
 
 - **REC:** Q13: the owner of PFM Office is PFM Office itself, so any member can add an Acting PFM when no site owner is reachable.
@@ -80,3 +80,21 @@ Answered 12 Nov: 15A 16A 17A 18A (with the user told the originals are theirs to
 | Q18 | Originals after the copy (14B) | A: leave them; the PFM sets the old library to read-only after checking the copy. B: delete originals after the check. C: leave both open | A: no data loss, no drift |
 
 Intake screen text after the copy (18A, PFM 12 Nov): "Your original files are not changed. 90-161.Z works from its own copies. You may keep, move or delete the originals as you see fit. Tip: set the old library to read-only so no one edits a copy that 90-161.Z does not see."
+
+## 7. App writes: Contribute on the intake lists (PFM 19 Nov 26)
+
+Decision (docs/DECISIONS.md, 19 Nov 26; it replaces way C, a flow that writes with the PFM's connection): wing users, the site's associated Visitors group, get list-level Contribute on the intake lists only. The site stays Read. The Power Apps app writes with the user's own rights, so this is what lets a wing user submit a request, an endorser entry or a DAF Form 847 recommendation.
+
+| Intake list | Why it is an intake list | Source |
+|---|---|---|
+| PFM Publications | The request: the AO submits it in the app; edit own rows (10A) | docs/ARCHITECTURE.md (UI row, Process step 1, risk row on edit own rows) |
+| PFM Endorsements | The endorser entry: customers enter their endorsers; edit own rows (10A) | docs/ARCHITECTURE.md (goal G3, UI row, risk row on edit own rows) |
+| PFM Recommendations | DAF Form 847 intake | docs/ARCHITECTURE.md (Data row) |
+
+Every other list (PFM Waivers, PFM Reviews, PFM Activity Log, PFM Offices, PFM Series, PFM Process Steps, PFM Settings, PFM Guidance, PFM Product Index) keeps inheriting from the site: Read for wing users, written by flows and the PFM Office.
+
+- T20 r4 (scripts/gov/90161Z-T20-provision-lists-r4.ps1) sets it. For each intake list: if the list inherits, it gets its own permissions with the site's role assignments copied (so the PFM Office level stays); then the Visitors group gets the level Contribute on that list when it does not hold it. A second run changes nothing. It works only on this site (no other host), reads first, and never changes the site's own permissions.
+- Read-back: one line per list, `ITEM W01` to `W03`: PASS when the list has its own permissions and Visitors hold Contribute on it; FAIL names the reason (no Visitors group, no Contribute level, the list inherits, the role is missing).
+- "Edit own rows" is unchanged: Contribute lets a person add rows, and the list setting keeps each person to their own rows on PFM Publications and PFM Endorsements; the PFM Office level still edits every row.
+- Proof on the device: T21 test T4 (a second person who is a Visitors member saves a row through the list form) expects PASS. Run T20 r4 first so the app lists have the role; the T21 probe list gets it from its Make part. R16 W11 showed that a Read-only user gets Contribute on such a list.
+- Open: the wing access group may be a different group from the site's Visitors group on a site (P6). T20 r4 uses the associated Visitors group only; if the wing group is another group, name it before the round.
