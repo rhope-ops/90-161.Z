@@ -13,7 +13,9 @@
   (r8 kept 900 px at 100 % and scrolled sideways on half a laptop); a side column 32 % of the page, the columns stacked
   when the main one would be under 480 px at 100 %; low-priority grid columns hidden in a narrow grid ($GridDrop); more
   rows in a Fill grid on a taller window. The layout is computed once per new size ($wn.Plan), never while the window
-  paints, from the size, the scale and the fonts only, never from a count, a date or a status. R4 to R8 (R30 to R35):
+  paints, from the size, the scale and the fonts only, never from a count, a date or a status. Added by the PFM (19 Nov
+  26): a single column is at most 1200 px wide at 100 % (was 1000), and plain text in a card wraps at about 75 characters
+  of the body font (Get-T22ProseWidth; docs/app/screen-map.md "Window size"). R4 to R8 (R30 to R35):
   the part headers. This file loads its 7 parts, 90161Z-T22-<part>-r9.ps1 ($PartRev; renamed from r8 in R36, one revision
   per task), and replaces their layout blocks.
   Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
@@ -154,15 +156,21 @@ function Get-T22Layout([int]$ClientW, [int]$ClientH, [double]$Dpi, [double]$Font
   $L['RailW'] = [int]($(if ($L.Wide) { 220 } elseif ($ClientW -lt $p.NarrowAt * $k) { $p.RailNarrow } else { 200 }) * $k)
   foreach ($n in 'PadX', 'Top', 'Bottom', 'ColGap', 'ColsTop', 'BarPad', 'Reserve') { $L[$n] = [int][math]::Round($p[$n] * $L.S) }
   $L['PageW'] = [int][math]::Max([math]::Round($p.PageMin * $k), $ClientW - $L.RailW - $ScrollW - 2 * $L.PadX)
-  foreach ($n in 'MainMin', 'SideMin') { $L[$n] = [int][math]::Round($p[$n] * $k) }; $L['OneColMax'] = [int][math]::Round(1000 * $k)
+  foreach ($n in 'MainMin', 'SideMin') { $L[$n] = [int][math]::Round($p[$n] * $k) }; $L['OneColMax'] = [int][math]::Round(1200 * $k)
   foreach ($n in 'SideShare', 'CardPadK', 'CardY', 'CardGap', 'Hide', 'SideAt') { $L[$n] = $p[$n] }; $L['FormW'] = [int]($p.FormMin[0] * $k); $L['FormH'] = [int]($p.FormMin[1] * $k)
   return $L }
+$ProseChars = 75   # the prose measure in characters (PFM 19 Nov 26; USWDS typography default 75, WCAG 2.2 1.4.8 at most 80)
+# The prose width in pixels: $ProseChars times the average character width of the body font $Font at the current dpi
+# (the 52 letters a to z and A to Z, measured, divided by 52); 0 without a font. docs/app/screen-map.md "Window size".
+function Get-T22ProseWidth($Font) { if (-not $Font) { return 0 }; $abc = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  $w = [Windows.Forms.TextRenderer]::MeasureText($abc, $Font, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width
+  return [int][math]::Round($ProseChars * $w / [double]$abc.Length) }
 # The side column width at 100 % that card $Card (key $Key) asks for: Your Work 300 (420 on a wide window), else its Side.
 function Get-T22Side100([string]$Key, $Card, [bool]$Wide) {
   if ($Key -eq 'home' -or $Key -eq 'empty') { return $(if ($Wide) { 420 } else { 300 }) }
   return [int]$Card.Side }
 # The columns of a card at layout $L, page width $PageW, side width $Side100 asked (Get-T22Side100) and $Count columns:
-# @{ Main; Side; Stacked }. One column is as wide as the page, at most 1000 px at 100 %; stacked ones are each the page.
+# @{ Main; Side; Stacked }. One column is as wide as the page, at most 1200 px at 100 % (PFM 19 Nov 26); stacked: the page.
 function Get-T22ColumnPlan($L, [int]$PageW, [int]$Side100, [int]$Count) {
   if ($Count -le 1) { return @{ Main = [int][math]::Min($PageW, $L.OneColMax); Side = 0; Stacked = $false } }
   $side = [int][math]::Round($Side100 * $L.K)
@@ -269,12 +277,12 @@ try {
   $wn.LayoutRev = 'r9'; $wn.Host = $form; $wn.Stacked = $false; $wn.LKey = ''; $wn.LCount = 0; $wn.BarFor = $null
   # The r8 blocks that the r9 blocks below call (each r9 block of the same name wraps one).
   $wn.Card8 = $wn.Card; $wn.GridHeight8 = $wn.GridHeight; $wn.GridCols8 = $wn.GridCols; $wn.GridFill8 = $wn.GridFill
-  $wn.Filter8 = $wn.Blocks.filter; $wn.LevelFacts8 = $wn.LevelFacts; $wn.Hook8 = $wn.Hook
+  $wn.Filter8 = $wn.Blocks.filter; $wn.LevelFacts8 = $wn.LevelFacts; $wn.Hook8 = $wn.Hook; $wn.P8 = $wn.Blocks.p; $wn.Err8 = $wn.Blocks.err
   # The layout of the current size, scale and fonts: computed again only when one of them changed (once per new size).
   $wn.Plan = { $h = $wn.Host.ClientSize; $fs = [double]$ui.FontK * [double]$ui.FontDpi / 96.0
     $key = [string]$h.Width + 'x' + $h.Height + '|' + $ui.Dpi + '|' + $fs + '|' + $wn.LayoutRev; if ($key -eq $wn.LKey) { return }
     $wn.L = Get-T22Layout $h.Width $h.Height $ui.Dpi $fs ([Windows.Forms.SystemInformation]::VerticalScrollBarWidth) $wn.LayoutRev
-    $wn.LKey = $key; $wn.LCount++ }
+    $wn.L['ProseW'] = Get-T22ProseWidth $ui.F.Body; $wn.LKey = $key; $wn.LCount++ }
   # A gap of $Px pixels at 100 %, at the layout's scale (the font's in r9).
   $wn.G = { param([double]$Px) return [int][math]::Round($Px * $wn.L.S) }
   # The side padding of a section card whose card data gives $PadX (at 100 %).
@@ -403,6 +411,11 @@ try {
   # The search row above the All Actions grid wraps inside its card (r8: one row of fixed widths, wider than a narrow card).
   $wn.Blocks.filter = { param($Parent, $b, [int]$W) $null = $b; & $wn.Filter8 $Parent
     $f = $Parent.Controls[$Parent.Controls.Count - 1]; $f.WrapContents = $true; $f.MaximumSize = [Drawing.Size]::new($W, 0) }
+  # A plain text block (a paragraph, a note, a gray notice box; never a grid) wraps at the prose measure of the layout
+  # (ProseW, about 75 characters of the body font; PFM 19 Nov 26), or at the card width when that is less.
+  $wn.Blocks.p = { param($Parent, $b, [int]$W) & $wn.P8 $Parent $b ([math]::Min($W, [int]$wn.L.ProseW)) }
+  # An error notice wraps at the same prose measure.
+  $wn.Blocks.err = { param($Parent, $b, [int]$W) & $wn.Err8 $Parent $b ([math]::Min($W, [int]$wn.L.ProseW)) }
   # The level facts (measure part) also say whether the card's columns were stacked (then no caption is leveled: D1).
   $wn.LevelFacts = { $f = & $wn.LevelFacts8; $f['Stacked'] = [bool]$wn.Stacked; return $f }
   $wn.BarFit = {

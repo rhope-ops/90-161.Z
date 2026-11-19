@@ -41,6 +41,8 @@ The PFM asked for less dead space, sizing from the current screen, and one stabl
 - The page is as wide as the window (r8 kept at least 900 px at 100 % and scrolled sideways on half a laptop). A side column takes 32 % of the page, at least 300 px (the narrowest side column of r8) and at most its card's own width; when the main column would be under 480 px at 100 %, the columns go one under the other. The rail is 176 px under a 1100 px window, 200 up to 1500, 220 from 1500. The smallest window is 600 x 480 at 100 %.
 - A grid too narrow for all its columns hides, in this order: Weekdays, Action, Signature, Comments, Step, Due, Since. Publication, With, Status, Office and Answer always show. A grid that fills the card shows more rows on a taller window.
 - In a narrow list row, the button goes under the text when the text would keep less than 160 px at 100 % beside it.
+- A card with a single column is at most 1200 px wide at 100 % (the PFM, 19 Nov 26; was 1000 px). `OneColMax` in `Get-T22Layout`.
+- Plain text in a card (paragraphs, notes, notices, guidance; not grids or tables) wraps at a measure of about 75 characters of the body font, or at the card width when that is less (the PFM, 19 Nov 26). The width is 75 times the font's average character width at the current dpi (the 52 letters a to z and A to Z, measured, divided by 52): `Get-T22ProseWidth`, computed with the layout, so it changes only on a resize or a scale change. Sources: USWDS typography, prose measure default 75 characters (https://designsystem.digital.gov/components/typography/); WCAG 2.2 success criterion 1.4.8 Visual Presentation, at most 80 characters (https://www.w3.org/WAI/WCAG22/Understanding/visual-presentation).
 
 ## 1. Rules for every screen
 
