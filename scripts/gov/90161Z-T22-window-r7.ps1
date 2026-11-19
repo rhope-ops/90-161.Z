@@ -318,6 +318,9 @@ $wn.Show = {
   $script:cardsOpened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
   $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @(); $wn.ChipRows = @()
   $ui.Wrap = @{}; $ui.Boxes = @(); $ui.Hot = $null; $ui.Down = $null
+  # R7 (W2): the main column goes back to its top first, so the page is placed in unscrolled pixels (placed while the
+  # column was scrolled, the page kept that offset and the new card started lower, with empty space above it).
+  $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
   $form.SuspendLayout(); $page.SuspendLayout()
   foreach ($x in @($page.Controls)) { $page.Controls.Remove($x); $x.Dispose() }
   $wide = ($form.ClientSize.Width -ge (& $wn.Sc 1500)); $wn.Wide = $wide
