@@ -382,7 +382,7 @@ print('ok changed, serial %s = main + 1, on top of main lock commit %s' % (want,
 PYEOF
 )
 [ "${lb%% *}" = "ok" ] && ok "RADE lock bump (${lb#ok })" || bad "RADE lock bump: ${lb#FAIL }"
-# No bundle size limit (the PFM, 2026-11-19; was 600 KB): R32 and R33 find the largest paste that works.
+# No bundle size limit (the PFM, 2026-11-18; was 600 KB): R32 and R33 find the largest paste that works.
 # T16 r12 -LogoOnly (R29, PFM 17 Nov 26 logo places 1A): items a, b, d, e and f sit inside "if ($connected -and -not $LogoOnly)",
 # only c-logo runs outside it, and the logo item uses read-only PnP calls (no Set-, Add-, New-, Remove- or Invoke-).
 python3 - <<'PYT16' && ok "T16 r12 -LogoOnly runs only the read-only logo check" || bad "T16 r12 -LogoOnly runs more than the read-only logo check"

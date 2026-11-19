@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-18 | One paste for each round again; no bundle size limit (was 600 KB, 2026-11-14): the size test left tests/run.sh. R32 (about 750 KB) and R33 (1 MB) find the largest paste that works. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
+| 2026-11-18 | R32 scope from the RADE plan "proof and hardening": lock to engine-v19, stage 1 (console paste by hand), flow items 5.4 (second owner) and 5.5 (flow check), both hand steps. Scope: R32. | PFM | [R32 plan](reviews/2026-11-18-r32-plan.md) |
+| 2026-11-18 | R31b: the 4 screenshots are 4 alignment defects D1-D4 (caption level, crumb, "Passed" label, publication titles in a column); fix in window r6. Scope: R32. | PFM | [R31b results](reviews/2026-11-18-r31b-results.md) |
+| 2026-11-18 | R31a form look: verified by fallback A; the "Configure layout" question and the 2 form steps leave the round (agent REC, not yet approved). | Agent | [R31a results](reviews/2026-11-18-r31a-results.md) |
 | 2026-11-18 | RADE lock moves to release engine-v19 (RADE 430de3c, serial 15) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-18 | Kit 3.2.0 by sync (kit commit 18896fc in `.check.lock`; kit pull request 62; no v3.2.0 tag yet, so synced from the merge commit; the kit 3.2.0 plan the owner approved on 2026-11-18): no rule text. `check_settings.py --migrate` renewed the kit header block of `.check` (comment lines only: the `content-max-bytes` help line is added, and the last header line names the PFM, as this repo's copy of the kit does; no setting changed); new optional setting `audit-duplicate-ignore`; kit-only docs and wording fixes. | PFM | - |
 | 2026-11-19 | Kit 3.1.0 by sync (88185f0, tag v3.1.0): an optional `content-max-bytes` setting for the content check; no rule text. Kit plan 2026-11-19. | PFM | - |
