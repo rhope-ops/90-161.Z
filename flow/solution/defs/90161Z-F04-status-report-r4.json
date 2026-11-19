@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F04 Status Report r3",
-  "description": "Run on demand. E-mails the person named at run time an HTML table of PFM Publications actions grouped by Process Step (DECISIONS 2026-11-11: status report to anyone at any time; DAFMAN 90-161 2.6.8). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused and Test mode read from PFM Settings; in test mode the report goes to the alert address only and the body names the intended recipient; failure e-mail to the alert address. r3 (R34, R32 finding 9): each column head is left-aligned like its cells (the heads were centered over left-aligned cells), and the Number column shows the publication number (the row's own Publication Number, else the number of its Product Index row) or a dash when the row has none.",
+  "displayName": "90161Z F04 Status Report r4",
+  "description": "Run on demand. E-mails the person named at run time an HTML table of PFM Publications actions grouped by Process Step (DECISIONS 2026-11-11: status report to anyone at any time; DAFMAN 90-161 2.6.8). r2 (R28, PFM 17 Nov 26): Try scope, Flows paused and Test mode read from PFM Settings; in test mode the report goes to the alert address only and the body names the intended recipient; failure e-mail to the alert address. r3 (R34, R32 finding 9): each column head is left-aligned like its cells (the heads were centered over left-aligned cells), and the Number column shows the publication number (the row's own Publication Number, else the number of its Product Index row) or a dash when the row has none. r4 (R36, PFM 19 Nov 26, README choice 9): only open actions: a PFM Publications row with a Closed Date is left out of the tables and of the count in the log row.",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
@@ -174,6 +174,7 @@
             "parameters": {
               "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
               "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+              "$filter": "ClosedDate eq null",
               "$top": 5000
             },
             "authentication": "@parameters('$authentication')"
@@ -182,7 +183,8 @@
             "paginationPolicy": {
               "minimumItemCount": 5000
             }
-          }
+          },
+          "description": "r4 (R36, PFM 19 Nov 26): open actions only; a row with a Closed Date is closed and is left out"
         },
         "For_each_process_step": {
           "runAfter": {

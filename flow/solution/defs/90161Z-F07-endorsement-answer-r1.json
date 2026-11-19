@@ -1,0 +1,286 @@
+{
+  "displayName": "90161Z F07 Endorsement Answer r1",
+  "description": "When a PFM Endorsements row has an answer (Endorsement Status is not Not Started) and its publication is at process step 6 (Formal coordination) and not On Hold, Cancelled or Complete: writes the publication row's own Title back to it, so F05 runs on that row again and adds the Legal rows and moves the step to 7 when every other row has an answer and all comments are adjudicated. Without it, an answer that comes after the All Comments Adjudicated = Yes edit started nothing (README F05 point a; PFM 19 Nov 26: a second trigger on PFM Endorsements; a flow takes one trigger, so it is this flow). The touch changes no other column, so F01 logs nothing and F06 does nothing. Checks every minute, one at a time, as F05. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.1, 5.1.8.2.",
+  "connections": [
+    "shared_sharepointonline",
+    "shared_office365"
+  ],
+  "triggers": {
+    "When_an_item_is_created_or_modified": {
+      "type": "OpenApiConnection",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnUpdatedItems"
+        },
+        "parameters": {
+          "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+          "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')"
+        },
+        "authentication": "@parameters('$authentication')"
+      },
+      "runtimeConfiguration": {
+        "concurrency": {
+          "runs": 1
+        }
+      },
+      "conditions": [
+        {
+          "expression": "@not(equals(coalesce(triggerBody()?['EndorsementStatus']?['Value'], 'Not Started'), 'Not Started'))"
+        }
+      ]
+    }
+  },
+  "actions": {
+    "Try": {
+      "runAfter": {},
+      "type": "Scope",
+      "actions": {
+        "Get_settings": {
+          "runAfter": {},
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Settings (pfm_ListSettings)')",
+              "$top": 500
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "R27 (PFM 14 Nov 26): the flow values are rows of PFM Settings, read once at the start. F07 reads only Flows paused (missing or empty: No)."
+        },
+        "Filter_FlowsPaused": {
+          "runAfter": {
+            "Get_settings": [
+              "Succeeded"
+            ]
+          },
+          "type": "Query",
+          "inputs": {
+            "from": "@body('Get_settings')?['value']",
+            "where": "@equals(item()?['Title'], 'FlowsPaused')"
+          }
+        },
+        "Setting_flows_paused": {
+          "runAfter": {
+            "Filter_FlowsPaused": [
+              "Succeeded"
+            ]
+          },
+          "type": "Compose",
+          "inputs": "@equals(toLower(trim(coalesce(if(empty(body('Filter_FlowsPaused')), '', first(body('Filter_FlowsPaused'))?['SettingValue']), ''))), 'yes')"
+        },
+        "If_flows_paused": {
+          "runAfter": {
+            "Setting_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "equals": [
+              "@outputs('Setting_flows_paused')",
+              true
+            ]
+          },
+          "actions": {
+            "Stop_flows_are_paused": {
+              "runAfter": {},
+              "type": "Terminate",
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Get_publication": {
+          "runAfter": {
+            "If_flows_paused": [
+              "Succeeded"
+            ]
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItem"
+            },
+            "parameters": {
+              "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+              "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+              "id": "@triggerBody()?['Publication']?['Id']"
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "The PFM Publications row of the answered endorsement row"
+        },
+        "If_action_open": {
+          "runAfter": {
+            "Get_publication": [
+              "Succeeded"
+            ]
+          },
+          "type": "If",
+          "expression": {
+            "and": [
+              {
+                "not": {
+                  "equals": [
+                    "@coalesce(string(body('Get_publication')?['ProcessStep']?['Id']), '')",
+                    ""
+                  ]
+                }
+              },
+              {
+                "equals": [
+                  "@contains(createArray('On Hold', 'Cancelled', 'Complete'), coalesce(body('Get_publication')?['ActionStatus']?['Value'], ''))",
+                  false
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Get_process_step": {
+              "runAfter": {},
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "GetItem"
+                },
+                "parameters": {
+                  "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                  "table": "@parameters('List PFM Process Steps (pfm_ListProcessSteps)')",
+                  "id": "@body('Get_publication')?['ProcessStep']?['Id']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "If_step_6": {
+              "runAfter": {
+                "Get_process_step": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If",
+              "expression": {
+                "equals": [
+                  "@body('Get_process_step')?['StepNumber']",
+                  6
+                ]
+              },
+              "actions": {
+                "Touch_the_publication_row": {
+                  "runAfter": {},
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline",
+                      "connectionName": "shared_sharepointonline",
+                      "operationId": "PatchItem"
+                    },
+                    "parameters": {
+                      "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
+                      "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+                      "id": "@body('Get_publication')?['ID']",
+                      "item/Title": "@body('Get_publication')?['Title']"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "description": "Writes the same Title only: a change F05 sees, while Action Type, Process Step, Action Status and Held Since stay as they are, so F01 logs nothing and F06 does nothing"
+                }
+              },
+              "else": {
+                "actions": {}
+              },
+              "description": "Step 6 (Formal coordination) only: F05 checks there whether every row has an answer (DAFMAN 90-161 5.1, 5.1.8.2)"
+            }
+          },
+          "else": {
+            "actions": {}
+          },
+          "description": "As F05: no touch when the action has no step or is On Hold, Cancelled or Complete (F05 does nothing then)"
+        }
+      }
+    },
+    "Failed_actions": {
+      "runAfter": {
+        "Try": [
+          "Failed",
+          "TimedOut"
+        ]
+      },
+      "type": "Query",
+      "inputs": {
+        "from": "@result('Try')",
+        "where": "@or(equals(item()?['status'], 'Failed'), equals(item()?['status'], 'TimedOut'))"
+      }
+    },
+    "Failure_lines": {
+      "runAfter": {
+        "Failed_actions": [
+          "Succeeded"
+        ]
+      },
+      "type": "Select",
+      "inputs": {
+        "from": "@body('Failed_actions')",
+        "select": "@concat('<li><b>', replace(coalesce(item()?['name'], 'step'), '_', ' '), '</b>: ', coalesce(item()?['error']?['message'], item()?['error']?['code'], 'no error text'), '</li>')"
+      }
+    },
+    "E-mail_the_failure": {
+      "runAfter": {
+        "Failure_lines": [
+          "Succeeded"
+        ]
+      },
+      "type": "OpenApiConnection",
+      "inputs": {
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365",
+          "connectionName": "shared_office365",
+          "operationId": "SendEmailV2"
+        },
+        "authentication": "@parameters('$authentication')",
+        "parameters": {
+          "emailMessage/To": "@parameters('Alert e-mail (pfm_AlertEmail)')",
+          "emailMessage/Subject": "@concat('90-161.Z flow failed: F07 ', coalesce(workflow()?['tags']?['flowDisplayName'], ''))",
+          "emailMessage/Body": "@concat('<p>A 90-161.Z flow stopped with an error. Nothing after the failed step ran.</p>', '<p><b>Flow:</b> ', coalesce(workflow()?['tags']?['flowDisplayName'], 'F07'), '<br><b>Started:</b> ', convertTimeZone(utcNow(), 'UTC', 'Central Standard Time', 'dd MMM yy HHmm'), ' Central', '<br><b>Endorsement row:</b> ', string(triggerBody()?['ID']), '</p>', '<p><b>Failed step:</b></p><ul>', join(body('Failure_lines'), ''), '</ul>', '<p><b>What to do:</b> 1. Open the failed run: <a href=\"https://make.powerautomate.appsplatform.us/environments/', workflow()?['tags']?['environmentName'], '/flows/', workflow()?['name'], '/runs/', workflow()?['run']?['name'], '\">run details</a> (or open this flow and its 28-day run history; the failed run has the start time above). 2. Fix the cause the step names (for example a list name or a connection). 3. Select Resubmit on that run: the flow starts again from the beginning and adds only what is missing.</p>', '<p>This message is sent by the 90-161.Z publications flow.</p>')",
+          "emailMessage/Importance": "High"
+        }
+      }
+    },
+    "End_as_failed": {
+      "runAfter": {
+        "E-mail_the_failure": [
+          "Succeeded",
+          "Failed"
+        ]
+      },
+      "type": "Terminate",
+      "inputs": {
+        "runStatus": "Failed",
+        "runError": {
+          "code": "StepFailed",
+          "message": "A step failed; the alert address was e-mailed. Fix the cause, then Resubmit this run."
+        }
+      }
+    }
+  }
+}
