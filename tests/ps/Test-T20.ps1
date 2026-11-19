@@ -117,17 +117,9 @@ Test-That 'T19 second run: changes nothing' ($r.Code -eq 0 -and $r.Text -match '
 # The fake keeps levels as hashtables and changes them with Set-FakeLevelBits (Windows PowerShell 5.1: a property set on a
 # [pscustomobject] made inside a method call did not reach the JSON the script read). Both JSON forms: strings (as SharePoint
 # writes SP.BasePermissions) and numbers.
-# PROBE (temporary, R34): the script's own two functions run here on the same values, with the pieces printed.
-$src = Get-Content -LiteralPath $script -Raw
-Invoke-Expression ([regex]::Match($src, '(?ms)^function ConvertTo-PermissionWord\b.*?^function Test-LevelPermission\b.*?^\}').Value)
-$pl = [pscustomobject]@{ BasePermissions = [pscustomobject]@{ High = '432'; Low = '1011030767' } }
-$pE = [long]0x4; $pO = [long]0x100; $px = ($pE -bor $pO)
-$probe = 'PROBE extra=' + $px + '/' + $px.GetType().Name + ' word=' + (ConvertTo-PermissionWord '1011030767') + '/' + (ConvertTo-PermissionWord '1011030767').GetType().Name +
-  ' shl8=' + ([long]1 -shl 8) + ' want8=' + (((ConvertTo-PermissionWord '1011030767') -bor $px) -band ([long]1 -shl 8)) + ' have8=' + ((ConvertTo-PermissionWord '1011030767') -band ([long]1 -shl 8)) +
-  ' result=' + (@(Test-LevelPermission $pl $pl $px) -join ',') + ' count=' + @(Test-LevelPermission $pl $pl $px).Count
 Set-FakeLevelBits 'PFM Office Edit All Items' '432' '1011030767'
 $r = Invoke-T20 ''
-Test-That 'a level named PFM Office Edit All Items without Override List Behaviors: FAIL, not changed' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors' -and $lv[0].BasePermissions.Low -eq '1011030767') ('code=' + $r.Code + ' low=' + $lv[0].BasePermissions.Low + ' text=' + $probe)
+Test-That 'a level named PFM Office Edit All Items without Override List Behaviors: FAIL, not changed' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors' -and $lv[0].BasePermissions.Low -eq '1011030767') (@($r.Out) -join ' | ')
 $global:FakeSP.BitsAsNumbers = $true
 $r = Invoke-T20 ''
 Test-That 'the same level, its bits written as JSON numbers: FAIL as well' ($r.Code -eq 1 -and $r.Text -match 'ITEM P01-pfm-office FAIL the level lacks a permission of Edit or Override List Behaviors') (@($r.Out) -join ' | ')
