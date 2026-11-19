@@ -1,6 +1,6 @@
 # Sweep decisions for the PFM (13 Nov 26)
 
-Answered 14 Nov 26: S1 = the lists go on a new site, so T02 r10 builds all 12 from scratch (no upgrade flow; the PFM first chose A, then said the site is new); S4 confirm all 33, S5 item 1 A, R09 live. Still open: S2, S3, S5 items 3-15, S6 (AGENTS.md lines, T09 allow entry), S7, S8-S11; second-look F1-F5 wait for a go (14 Nov).
+Answered 14 Nov 26: S1 = the lists go on a new site, so T02 r10 builds all 12 from scratch (no upgrade flow; the PFM first chose A, then said the site is new); S4 confirm all 33, S5 item 1 A, R09 live. Answered 19 Nov 26 (docs/DECISIONS.md): S3 A, S5.3 A, S8 closed, S9 A, F1 A, F2 A and B, F3 C. Still open: S2, S5 items 4-15, S6, S7, S10, S11, F4, F5.
 
 Written for PR rhope-ops/90-161.Z#10 (merged 13 Nov 26). The open items below still need the PFM. Each "Rec" is Claude's recommendation, not a decision. Answer by number (for example "S1 A, S2 approve, S5 all Rec").
 
