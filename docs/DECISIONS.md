@@ -7,6 +7,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | Date | Decision | By | Detail |
 |---|---|---|---|
 | 2026-11-20 | Rule text approved: "No reconnaissance" and "Data boundary" are marked (cannot be changed); Data boundary names the round results e-mail exception until the test rounds end (replaces the 2026-11-14 exception row as the home). Scope: AGENTS.md. | PFM | [rule check](reviews/2026-11-20-rule-conflict.md) |
+| 2026-11-20 | Kit 6.0.0 synced from merge commit 43ad952 (tag v6.0.0 not made yet): new default 'Skills', `efficiency` merged into `audit`, `data-change` rewritten, `skill_use.py`; kept: nothing to move. | Agent | https://github.com/rhope-ops/archimedes_lever/blob/main/docs/CHANGELOG.md |
 | 2026-11-20 | R38 runs on RADE engine-v29 and the T22 window adopts UI standard v1 now (fixed button sizes, rail contrast), not in R39. Scope: R38, T22 r11. | PFM | [UI standard plan](reviews/2026-11-19-ui-standard-plan.md) Step 2 |
 | 2026-11-20 | RADE lock moves to release engine-v29 (RADE e503386, serial 22) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-20 | Narrow window: the Since column leaves the Your Work grid when the publication column and all heads do not fit (wide windows keep it). Scope: T22 r11 and the app window. | PFM | [R37 results](reviews/2026-11-20-r37-results.md) finding 3 |

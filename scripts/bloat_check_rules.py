@@ -57,7 +57,7 @@ def start_read(root, cfg):
         (lines, bytes, ~tokens, [(file, bytes)] largest first).
     """
     import bloat_check_skills  # scripts/bloat_check_skills.py: kept apart (code standard C4)
-    lines, size = 0, bloat_check_skills.listing_bytes(root)
+    lines, size = 0, bloat_check_skills.listing_bytes(root, cfg.get("third_party", []))[0]
     files = [("skill and agent descriptions", size)] if size else []
     for rel in START_READ + cfg.get("start_read", []):
         p = root / rel
@@ -315,6 +315,13 @@ def rules_report(root, cfg, gate=False):
     problems = []
     if n_lines > b["rules_file_lines"]:
         problems.append(f"{RULES_FILE} over the line cap ({n_lines} > {b['rules_file_lines']})")
+    if cfg.get("third_party"):
+        import bloat_check_skills  # scripts/bloat_check_skills.py: kept apart (code standard C4)
+        third = bloat_check_skills.listing_bytes(root, cfg["third_party"])[1] // 4
+        out[0] += f" · third-party ~{third:,} tokens (cap {b['third_party_tokens']:,})"
+        if third > b["third_party_tokens"]:
+            problems.append(f"third-party skills and agents over their cap (~{third:,} > {b['third_party_tokens']:,} "
+                            "tokens: the `audit-third-party` entries in .check)")
     if load > b["session_load_tokens"]:
         problems.append(f"session load over the cap (~{load:,} > {b['session_load_tokens']:,} tokens: the start-read files "
                         "plus the skill and agent descriptions)")

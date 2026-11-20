@@ -1,6 +1,6 @@
 ---
 name: scout
-description: Read-only Haiku scout for codebase searches, file lists and summaries of test, check or log output; returns a short report with file paths and line numbers. Decides nothing.
+description: Read-only Haiku scout: codebase searches, file lists, summaries of test or log output, with paths and line numbers. Decides nothing.
 model: haiku
 tools: Read, Grep, Glob
 ---

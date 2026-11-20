@@ -30,6 +30,9 @@ It measures:
                   docs/NEXT_PROMPT.md, the `audit-start-read:` files, and the skill and agent names and descriptions.
                   Caps for every repo (KIT_CAPS; a project can lower one, never raise it): 5,000 tokens (warning at
                   4,500) and 200 lines of AGENTS.md; over a cap fails --rules
+    third-party   the names and descriptions of the skills and agents that `.check` names in `audit-third-party:`
+                  lines: counted apart from the session load, against their own kit cap of 1,500 tokens (the PFM,
+                  2026-11-20); over it fails --rules
     rules         list items in AGENTS.md (any marker, any indent; a wrapped line is part of its item): the kit
                   sections (the header, "## Commands" and the numbered ranking in "## Order of authority" are not
                   counted) and "## Project rules" (there a paragraph or a table row counts too), each against its
@@ -50,7 +53,7 @@ It measures:
     timings       (--time) wall time of each named command against its recorded baseline; (--compare) times that
                   a script measured itself: NAME is a timings key, NAME:STEP one of its "steps". Slower means over
                   max_slowdown (default +25%) and over min_slowdown_seconds (default 0.5 s), so noise on a small step
-                  does not warn. A slowdown starts .claude/skills/efficiency/SKILL.md
+                  does not warn. A slowdown starts .claude/skills/audit/SKILL.md "A slow run"
 
 Settings: the `audit-` lines of `.check` (scripts/check_settings.py reads them and lists the keys; all are optional,
 and a line that is not valid fails --rules):
@@ -280,8 +283,8 @@ def compare_times(cfg, pairs, record=False):
         return f"TIME  baseline recorded for {n} time(s) in {STATE}", []
     if slow:
         return ("WARN  slower than the baseline: " + "; ".join(slow) +
-                ". Next: .claude/skills/efficiency/SKILL.md (a measured slowdown starts it)"), slow
-    tail = f"; no baseline yet for {len(new)} ({', '.join(new)}): .claude/skills/efficiency/SKILL.md, Record a baseline" if new else ""
+                ". Next: .claude/skills/audit/SKILL.md, A slow run (a measured slowdown starts it)"), slow
+    tail = f"; no baseline yet for {len(new)} ({', '.join(new)}): .claude/skills/audit/SKILL.md, Record a baseline" if new else ""
     return f"TIME  baseline: {n - len(new)} of {n} within the limit{tail}", []
 
 

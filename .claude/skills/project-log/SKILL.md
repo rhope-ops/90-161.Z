@@ -1,6 +1,6 @@
 ---
 name: project-log
-description: Use before you write or change a project log row, and when a decision, milestone, breakthrough or miss happens in a turn.
+description: Use before you write or change a project log row, and when a decision, milestone, breakthrough or miss happens.
 ---
 
 # Project log: how to write a row

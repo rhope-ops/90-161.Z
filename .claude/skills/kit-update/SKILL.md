@@ -1,6 +1,6 @@
 ---
 name: kit-update
-description: Use when a project takes a new release of the archimedes_lever kit, when a kit-update pull request is open, when scripts/drift.py or the kit lock shows a difference, when you want to change a kit file or kit rule from inside a project, and for a project's first sync.
+description: Use when a project takes a kit release or has a kit-update pull request, when drift.py or the kit lock shows a difference, to change a kit file or rule from a project, and for a first sync.
 ---
 
 # Take a kit update
@@ -47,3 +47,7 @@ Something that does not fit: change the kit so that it fits (below). Do not edit
 Bring one change by hand only when the PFM asks for it: copy the kit file as it is (never a changed copy), run `python3 scripts/check_lock.py --relock <file>` so that the lock accepts it (a relock needs the PFM's request, and each check run lists it as an override), and record what was skipped and why in docs/DECISIONS.md.
 
 A kit file with code-standard debt cannot be accepted by a project: the code-standard ratchet has no adopt path for a kit file, so the project's push fails until the kit fixes the file. Report it to the kit owner (docs/KIT_HANDOFF.md names it); do not relock the file to get past the check.
+
+## After a kit release merges (in the kit repo)
+
+The kit owner (named in docs/KIT_HANDOFF.md) measures the session load of each synced repo with the new files first (`python3 scripts/bloat_check.py --brief` on a dry run), opens the sync pull request in each synced repo (the steps above), and updates that repo's row on the fleet page that KIT_HANDOFF names.

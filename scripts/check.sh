@@ -19,7 +19,8 @@
 #   4. the content check of all tracked files (when the settings file .check exists; in GitHub Actions the "checks"
 #      workflow's content step does it; with --no-content the caller does it: the pre-push hook scans files and pushed
 #      commits in one run),
-#   5. scripts/check.local.sh, when it exists: this project's own tests (SKIP when missing: the review gate in
+#   5. the fleet format (scripts/fleet_harvest.py --check), when .check has the line `fleet: on`,
+#   6. scripts/check.local.sh, when it exists: this project's own tests (SKIP when missing: the review gate in
 #      .claude/skills/deliver/SKILL.md then guards main).
 # The checks run in parallel: each one works on its own temporary files. CHECK_SERIAL=1 runs them one at a time.
 # Prints one PASS/FAIL/SKIP line per check, the output of each failed check, a TIME line (wall time and the 3 slowest
@@ -291,6 +292,8 @@ extension() {
 extension check_content_local scripts/check_content_local.py scripts/check_content_scan.py scripts/check_content_finders.py
 extension code_standard_gate scripts/code_standard_gate.py scripts/code_standard.py scripts/code_standard_parse.py \
   scripts/code_standard_docs.py scripts/check_settings.py
+selftest skill_use scripts/skill_use.py -- python3 scripts/skill_use.py --test
+selftest fleet_harvest scripts/fleet_harvest.py scripts/fleet_harvest_test.py -- python3 scripts/fleet_harvest.py --test
 selftest check_blocks scripts/check_blocks.py .claude/settings.json -- python3 scripts/check_blocks.py --test
 selftest check_lock scripts/check_lock.py -- python3 scripts/check_lock.py --test
 selftest first_use_check scripts/first_use_check.py scripts/check_blocks.py scripts/check_content.py scripts/check_content_scan.py -- python3 scripts/first_use_check.py --test
@@ -350,6 +353,11 @@ else
   run "content check" python3 scripts/check_content.py --all
 fi
 
+# The fleet format (docs/reviews/2026-11-19-fleet-contract.md): both lanes, only where .check has the line `fleet: on`.
+if [ -f scripts/fleet_harvest.py ] && grep -Eq '^[[:space:]]*fleet: on[[:space:]]*$' .check 2>/dev/null; then
+  run "fleet format" python3 scripts/fleet_harvest.py --check
+fi
+
 if [ -f scripts/check.local.sh ]; then
   if [ "$lane" = fast ]; then
     run "project checks (check.local.sh --fast)" bash scripts/check.local.sh --fast
@@ -381,7 +389,7 @@ wall=$(( $(now) - t0 ))
 timeline="TIME  $lane lane $(secs "$wall") s wall; slowest: ${slow%, }"
 echo "$timeline"
 [ "$lane" = full ] && items=("check=$(secs "$wall")" ${items[@]+"${items[@]}"})
-if [ -f scripts/bloat_check.py ] && [ "${#items[@]}" -gt 0 ]; then  # warn only: .claude/skills/efficiency/SKILL.md
+if [ -f scripts/bloat_check.py ] && [ "${#items[@]}" -gt 0 ]; then  # warn only: .claude/skills/audit/SKILL.md "A slow run"
   rec=""; [ "$record" = 1 ] && [ "$fail" -eq 0 ] && rec=--record
   python3 scripts/bloat_check.py --compare "${items[@]}" $rec 2>&1 | tail -n 1
 fi

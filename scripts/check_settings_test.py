@@ -71,6 +71,7 @@ def test_settings(root, git):
         assert why in fails(audit_config, root), "an audit- line that is not valid fails: " + line
     assert code_config(root) == CODE_DEFAULTS, "a bad audit- line does not fail the code standard"
     test_gate_keys(root)
+    test_third_party(root)
     (root / CHECK).write_bytes(b"\xff\xfec\x00o\x00")
     assert "UTF-8" in fails(code_config, root), "a .check that is not UTF-8 fails"
     (root / CHECK).write_text("code-max-function-lines: 40\n")
@@ -92,6 +93,26 @@ def test_settings(root, git):
         assert fails(load_state, root), "a state file that is not valid fails: " + bad
     assert NAMES_CHECK.search("| x | `.check` |") and NAMES_CHECK.search("see .check.") \
         and not NAMES_CHECK.search(".check.lock and .check.state.json and x.check"), "a row names .check itself"
+
+
+def test_third_party(root):
+    """Self-test of `audit-third-party:` (the PFM, 2026-11-20): a list key, written back as the same lines; a typo
+    and a raised cap fail.
+    Args:
+        root: a temporary git repo; its `.check` is left empty at the end.
+    """
+    (root / CHECK).write_text("audit-third-party: .claude/skills/a\naudit-third-party: .claude/agents/b-*.md\n")
+    cfg = audit_config(root)
+    assert cfg["third_party"] == [".claude/skills/a", ".claude/agents/b-*.md"], "both lines are read: %s" % cfg
+    assert audit_lines(cfg) == ["audit-third-party: .claude/skills/a", "audit-third-party: .claude/agents/b-*.md"], \
+        "and written back as the same lines"
+    assert "third_party_tokens" in KIT_CAPS and AUDIT_DEFAULTS["budgets"]["third_party_tokens"] == 1500, "a kit cap"
+    (root / CHECK).write_text("audit-budget-third_party_tokens: 1000\n")
+    assert audit_config(root)["budgets"]["third_party_tokens"] == 1000, "a project can lower it"
+    for line in ("audit-third_party: x", "audit-budget-third_party_tokens: 1501", "audit-third-party:"):
+        (root / CHECK).write_text(line + "\n")
+        assert fails(audit_config, root), "a line that is not valid fails: " + line
+    (root / CHECK).write_text("")
 
 
 def test_gate_keys(root):

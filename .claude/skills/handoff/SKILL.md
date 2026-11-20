@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Use when a session ends with work open, before a long pause or a compaction, when the PFM asks for a handoff or a resume prompt, and at the start of a session that continues earlier work.
+description: Use when a session ends with work open, before a pause, compaction or new chat, when the PFM asks for a handoff, a resume prompt or to archive, when you title a session, and when a session continues earlier work.
 ---
 
 # Handoff
@@ -17,12 +17,27 @@ AGENTS.md "Handoff" points here. The next session cannot see this chat: it reads
    - Open (in order): the next steps, one line each, with what "done" is.
    - Needs the PFM: each open decision in one line, with its options and the recommendation.
    - Do not: approaches that failed, with one line of why.
+   - Where `.check` has the line `fleet: on`: also "Fleet format" below.
 3. Put detailed evidence (logs, tables, review findings) in its own file in the place AGENTS.md "Handoff" names (`YYYY-MM-DD-<topic>.md`), and link it.
 4. A decision by the PFM: a row in docs/DECISIONS.md (date, scope, what it replaces). Full tier: a story event also gets a project log row (the `project-log` skill).
 5. Deliver it like any change (`.claude/skills/deliver/SKILL.md`): a handoff alone is lane A.
-6. In the turn summary, give a resume prompt: one code block, at most 100 words, that stands alone (goal, state, approved decisions, next step, full links). Its first line is the next session's title without the date and pull request number (`RADE · Build round R31`), so that session starts named and adds its own date (under "Session names").
+6. In the turn summary, give a resume prompt. This step is its home; other skills point here.
+   - One code block, at most 100 words, that stands alone: goal, state, approved decisions, next step, full links.
+   - Its first line is the next session's title without the date and pull request number (`RADE · Build round R31`), so that session starts named and adds its own date ("Session names").
+   - Each claim in it is true on origin now (a commit that is pushed, a pull request that exists): the next session checks them.
+7. Before you say a session can be archived: step 6 of "Session names".
 
 In the kit clone itself (the KIT line at start), docs/NEXT_PROMPT.md is the template that projects get: do not fill it. The kit's own handoff file is docs/KIT_HANDOFF.md, with the same sections.
+
+## Fleet format
+
+Only where `.check` has the line `fleet: on` (the PFM, 2026-11-19). `scripts/check.sh` runs the format check (`scripts/fleet_harvest.py --check`).
+
+- Under `Updated:`, the line `Next update: YYYY-MM-DD, <what it delivers>`.
+- A section `## Timeline` after State, with lines `- YYYY-MM-DD · <milestone> · planned` (or `done`).
+- Each "Needs the PFM" line: `- D<n> · <question or action> · Options: <A> / <B> · REC: <option>` (an action: `Options: done / not done`).
+- `D<n>` is the next free ID of docs/DECISIONS.md, whose rows start with an `ID` column (D1 = oldest, never reused; `python3 scripts/fleet_harvest.py --add-ids` adds the column once). The decided item keeps its ID in its DECISIONS.md row.
+- Port and harvest steps: https://github.com/rhope-ops/archimedes_lever/blob/main/docs/fleet.md.
 
 ## Session names
 

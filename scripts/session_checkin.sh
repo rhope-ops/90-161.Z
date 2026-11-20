@@ -147,7 +147,7 @@ origin=$(git remote get-url origin 2>/dev/null); origin=${origin%/}; origin=${or
 if [ "$(printf '%s' "$origin" | tr '[:upper:]' '[:lower:]')" != "archimedes_lever" ] && [ -f scripts/check_blocks.py ] && ! python3 scripts/check_blocks.py --placeholders >/dev/null 2>&1; then
   echo "warning: template placeholders remain; run scripts/bootstrap.sh"
 fi
-# This run's time against the "checkin" baseline in .check.state.json (warn only; .claude/skills/efficiency/SKILL.md).
+# This run's time against the "checkin" baseline in .check.state.json (warn only; .claude/skills/audit/SKILL.md "A slow run").
 case "$t0" in *N|'') ;; *) [ -f scripts/bloat_check.py ] && python3 scripts/bloat_check.py \
   --compare "checkin=$(awk -v a="$t0" -v b="$(date +%s%N)" 'BEGIN {printf "%.1f", (b - a) / 1e9}')" 2>&1 | tail -n 1 ;; esac
 exit 0
