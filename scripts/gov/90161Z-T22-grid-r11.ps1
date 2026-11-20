@@ -219,8 +219,8 @@ $wn.FitGrid = {
   $excess = $sum - $room; if ($excess -le 0) { return $false }
   $kinds = $G.Tag.Kind; $cols = @($G.Tag.Cols)
   $heads = @{}; foreach ($c in $cols) { $heads[[string]$c.N] = [int](& $wn.HeadMin $c) }
-  $free = @($G.Columns | Where-Object { $_.Visible -and @('pub', 'chip') -notcontains [string]$kinds[$_.Name] })   # R11: a chip column keeps its chip whole
-  $gave = 0
+  # As r10: every column but pub can give width (ps51 W7: a chip that could not give crushed the other heads)
+  $free = @($G.Columns | Where-Object { $_.Visible -and [string]$kinds[$_.Name] -ne 'pub' }); $gave = 0
   foreach ($pass in 'above head', 'under head') {
     foreach ($k in @($free | Sort-Object { $_.Width - [int]$heads[$_.Name] } -Descending)) {
       if ($excess -le 0) { break }
@@ -278,27 +278,32 @@ $wn.GridEdges = {
   .PARAMETER G
   The grid ($wn.Grid).
   .OUTPUTS
-  @{ Grid; Width (the client width); Bar; Edge; Col (the column that reaches it) }.
+  @{ Grid; Width (the client width); Bar; Edge; Col (the column that reaches it); Fits (R11, ps51 W7: the chips' extra
+  width fits beside every whole head at this width; when it does not, the heads come first and the edge is not judged) }.
   #>
   param($G)
   $pd = & $ui.Sc 10; $left = 0; $edge = 0; $name = ''; $cols = @($G.Tag.Cols)
   $shown = @($G.Columns | Sort-Object DisplayIndex | Where-Object { $_.Visible }); $lastName = $(if ($shown.Count) { [string]$shown[-1].Name } else { '' })
+  $heads = 0; $extra = 0   # R11: the room all heads take, and what the chips need above their heads (Fits)
   foreach ($k in $shown) {
     $c = @($cols | Where-Object { [string]$_.N -eq $k.Name }) | Select-Object -First 1
-    if ($c.K -ne 'chip' -and [string]$k.Name -ne $lastName) { $left += $k.Width; continue }
+    if ($c.K -ne 'chip' -and [string]$k.Name -ne $lastName) { $heads += $(if ($c.K -eq 'pub') { $k.Width } else { [int](& $wn.HeadMin $c) }); $left += $k.Width; continue }
     $f = $(if ($c.K -eq 'with' -or $c.K -eq 'bold' -or $c.K -eq 'chip') { $ui.F.SmallB } else { $ui.F.Small }); $w = 0
     foreach ($r in @($G.Tag.Shown)) { $w = [math]::Max($w, (& $wn.TextW (& $wn.CellText $c $r) $f)) }
     if ($c.K -eq 'chip') { if ($w -gt 0) { $w += & $ui.Sc 20 } }
     elseif ($c.K -eq 'pub') { $w = 0 }   # the pub column is checked by its own cut test (W1)
     $e = $left + $pd + $(if ($c.K -eq 'chip') { $w } else { [math]::Min($w, [math]::Max(0, $k.Width - 2 * $pd)) })
     if ($w -gt 0 -and $e -gt $edge) { $edge = $e; $name = [string]$k.Name }
+    if ($c.K -eq 'chip' -and $w -gt 0) { $extra += [math]::Max(0, $w + 2 * $pd + 1 - [int](& $wn.HeadMin $c)) }
+    $heads += $(if ($c.K -eq 'pub') { $k.Width } else { [int](& $wn.HeadMin $c) })
     $left += $k.Width }
-  return @{ Grid = [string]$G.AccessibleName; Width = [int]$G.ClientSize.Width; Bar = [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth; Edge = [int]$edge; Col = $name } }
+  $bar = [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth; $wd = [int]$G.ClientSize.Width
+  return @{ Grid = [string]$G.AccessibleName; Width = $wd; Bar = $bar; Edge = [int]$edge; Col = $name; Fits = ($wd - $bar - 2 - $heads -ge $extra) } }
 # R11 (R38): the LAYOUT line of grid $G when a chip or text ends closer than the scroll bar's width to the grid's right
 # edge (none when it does not).
 $wn.EdgeCheck = { param($G, [string]$Card)
   $e = & $wn.GridEdges $G
-  if ($e.Edge -gt $e.Width - $e.Bar) {
+  if ($e.Fits -and $e.Edge -gt $e.Width - $e.Bar) {
     return ('LAYOUT ' + $Card + ' R11 grid ' + $e.Grid + ': column ' + $e.Col + ' ends at ' + $e.Edge + ', the grid is ' + $e.Width + ' wide with a scroll bar of ' + $e.Bar) }
   return $null }
 # R7 (W1): the height of one line of a pub cell, in pixels: the larger of the link font's height and its card line height.

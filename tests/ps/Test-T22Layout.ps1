@@ -271,6 +271,8 @@ function Test-EdgeBar([string]$Key, $Edges, [string]$At) {
   foreach ($e in @($Edges)) {
     $room = [int]$e.Width - [int]$e.Bar
     $nums = 'content of "' + $e.Col + '" ends at ' + $e.Edge + ' px; the grid is ' + $e.Width + ' wide, scroll bar ' + $e.Bar + ', so at most ' + $room + ' px'
+    # Too narrow for every whole head and the chip (ps51 W7 at 100 %): the heads come first (W7 above); the edge is not judged.
+    if ($e.Fits -eq $false) { Write-Host ('  T22LAYOUT INFO ' + $At + ' R11 ' + $Key + ' ' + $e.Grid + ': too narrow for every head and the chip; edge not judged (' + $nums + ')'); continue }
     Test-That ($At + ' R11 ' + $Key + ' ' + $e.Grid + ': no chip or text closer to the right edge than the scroll bar') ([int]$e.Edge -le $room) $nums }
 }
 <#
