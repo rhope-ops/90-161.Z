@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 20 Nov 26 (Round R38 r1 ready).
+Updated: 20 Nov 26 (Round R38 r1 done).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,48 +26,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R38 r1: a new row by a second person first, the site logo in Fulcrum colors, and my window r11
-
-**Before I start: ask one person in my office to help for 5 minutes, at the start of this round.** The test of a new row by a second person has waited 3 rounds. The person only needs a computer, Teams and access to the test site.
-
-**For:** the round after R37, short on purpose: 13 steps. Everything that passed in R36 and R37 left the round (the sample in Word, the list changes, the flow import and the full flow test).
-- First: a second person adds one new row to the test list (about 5 minutes for them).
-- The site logo in its Fulcrum colors (thumbnail and header, by hand), then a read-back.
-- RADE engine-v29: pause and resume (if the window closes or I remove my CAC, the round resumes where it stopped), and the new RADE look: buttons of fixed sizes, the Sofia Sans font, and a Maintenance button.
-- My 90-161.Z window r11: XXX XXX instead of FAKE in the data (a spacing test), status column that does not touch the scroll bar, the Fulcrum logo in light and dark mode, buttons of fixed sizes as in RADE, and no Since column when the window is narrow. 3 checks, then 3 questions.
-**Time:** about 40 minutes; about 25 minutes of my own work (estimate). The second person needs about 5 minutes, about 5 minutes after I start.
-**Changes:** on the test site: a probe list and library are made and removed again at the end; the second person is added to Visitors and removed at the end; I set the site logo and thumbnail to the Fulcrum logo by hand. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files, 17 pictures of the window cards with fake data, one text file and one picture for each Feedback comment I save, and a resume file of the round in Rounds\R38). Before Run, the window lists every file.
-**Steps:**
-1. Ask the second person to be ready at a computer now.
-2. Open https://rhope-ops.github.io/RADE.
-3. Write down the code next to R38.
-4. Press Copy script next to the link below.
-5. Open the Start menu.
-6. Type: ISE
-7. Open Windows PowerShell ISE (not "Run as administrator").
-8. Select File > New.
-9. Click in the white script pane.
-10. Press Ctrl+V.
-11. Press F5. The RADE window opens.
-12. Look at the title bar of the RADE window: the code after the word "script" must be the code you wrote down.
-13. If the window shows a button "90-161.Z", select it.
-14. Press Run.
-15. Do each step the RADE window shows, until the 90-161.Z window opens.
-16. When the 90-161.Z window opens: do each check in its bottom bar.
-17. If a card does not look right: select "Feedback" in the bottom bar.
-18. In the box "What does not look right? One line, no names.", type what is wrong.
-19. Select "Save".
-20. Close the 90-161.Z window with its X.
-21. Do the steps the RADE window still shows, until the log says DONE.
-22. At DONE, select Send in the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R38-round-r1.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R38 PASSED" or "90161Z R38 NEEDS REVIEW", every file in the results folder attached). The round never puts a script file in the results. Then tell Claude the e-mail is sent.
-**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): do steps 4 to 13 again, then select "Resume at step N of M" (it takes the place of Run). Steps that ended keep their results; the step that was cut off runs again. New in this round (RADE engine-v29): not yet tried on my computer.
-**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R38 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R38 did not paste". If the second person cannot open the link: select "The link did not open" and go on. If the 90-161.Z window does not open, go on with the steps the RADE window shows.
+No open task. Round R39 comes next.
 
 ## Done
+
+- Round R38 r1 (20 Nov 26): needs review. Checks 12 of 12, Window OK, 12 of 13 steps passed. Passed: the second person added a new row (first time, after 3 rounds), the site logo and thumbnail in Fulcrum colors with the read-back, and in my window r11 the All Actions status column and the whole names. Needs work: on Your Work the status column still touches the scroll bar, 2 text boxes are too short, the first open of a card is slow, 3 RADE answer cards have too many buttons, and 1 RADE button text is cut. No script file in the results:
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-20-r38-results.md
 
 - Round R37 r1 (20 Nov 26): needs review. Checks 14 of 14, Window OK, 32 of 35 steps passed. Passed: my window r10 (18 of 18 checks, 0 layout defects, Fulcrum logo), the sample in Word, the list changes, the flow import with all 10 flows On, the health flow, the list button, and the full flow test end to end for the first time. Needs work: a script file in the results (the e-mail was blocked; fixed), the status column touches the scroll bar. Not tested: the second person row (I skipped it):
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-20-r37-results.md

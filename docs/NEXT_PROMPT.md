@@ -1,10 +1,9 @@
 # Next prompt: 90-161.Z
 
-Updated 2026-11-20 10:05 Central (R38 r1 on main, PR 189). Full open items: [handoff detail](reviews/2026-11-18-handoff-detail.md).
+Updated 2026-11-20 13:30 Central (R38 results). Full open items: [handoff detail](reviews/2026-11-18-handoff-detail.md).
 
 ## Open
 
-1. R38 r1 (13 steps; T4 by a second person first; site logo Fulcrum; window r11): the PFM runs it this afternoon (https://rhope-ops.github.io/RADE). Ask for a second person every round until T4 passes (PFM 20 Nov 26).
-2. [R37 results](reviews/2026-11-20-r37-results.md): 20 steps retired ([verified.json](reviews/verified.json)). R35 to R37 e-mails trashed.
-3. Lock: engine-v29 (pause/resume, Fulcrum logo, no scripts at collect, UI standard v1). Not verified on a device: Resume and Paused cards, CAC removal text. RADE UI file split into T22 parts ui and ui2 (build_task_scripts.py split_ui).
-4. Next rounds: [phases.md](phases.md) "Rounds from R38". Open: Sofia Sans in T22, F01 log rows, T06 (GenAI.mil extraction by hand).
+1. [R38 results](reviews/2026-11-20-r38-results.md): 12 of 13 passed. T4 PASS (second person row; first time) and site logo PASS: 4 steps retired ([verified.json](reviews/verified.json)). Open: Your Work grid 957 > 935 px and text boxes 39 < 45 px (T22 r12), card first-open lag (measure in r12), Feedback png pattern counts as missing, RADE answer cards B5/B1 (RADE session). R38 e-mail trashed after merge.
+2. Lock: engine-v29 (pause/resume, Fulcrum logo, no scripts at collect, UI standard v1). Not verified on a device: Resume and Paused cards, CAC removal text. RADE UI file split into T22 parts ui and ui2 (build_task_scripts.py split_ui).
+3. Next: build R39 in a new session ([phases.md](phases.md) "Rounds from R38"), with T22 r12 from the R38 findings. Also open: Sofia Sans in T22, F01 log rows, T06 (GenAI.mil extraction by hand).
