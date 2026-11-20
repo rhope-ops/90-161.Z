@@ -165,7 +165,8 @@ $wn.DropCols = { param($Cols, [int]$W, $Pw, $Rows = @())
   while ($true) {
     $need = [int](& $wn.PubMin $cols $Pw)
     foreach ($c in $cols) { if ($c.K -ne 'pub') { $hm = [int](& $wn.HeadMin $c)
-        $need += $(if ($c.K -eq 'chip' -and @($Rows).Count) { [math]::Max($hm, [int](& $wn.ValueMin $c $Rows)) } else { $hm }) } }
+        $sb = [math]::Max((& $ui.Sc 10), [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth)   # ValueMin keeps a scroll bar right of a chip; $avail has taken it off already
+        $need += $(if ($c.K -eq 'chip' -and @($Rows).Count) { [math]::Max($hm, [int](& $wn.ValueMin $c $Rows) - $sb) } else { $hm }) } }
     $drop = @($cols | Where-Object { $_.Drop }) | Select-Object -Last 1
     if ($need -le $avail -or -not $drop) { return ,$cols }
     $cols = @($cols | Where-Object { $_ -ne $drop }) } }

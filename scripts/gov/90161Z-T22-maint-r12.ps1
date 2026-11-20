@@ -25,6 +25,7 @@ param([string]$Id, [ValidateSet('Install', 'Read')][string]$Part = 'Read', [swit
 $task = 'T22'
 $Rev = 'r12'
 $FreshHours = 6   # a Diagnose report or a backup older than this is not from this round
+$BackupLists = 11   # the lists the R39 manifest names in "backup" (scripts/paste_bundles.json): fewer saved is a FAIL
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -178,7 +179,8 @@ function Get-DiagnoseResult([string]$App) {
   $text = @(Get-Content -LiteralPath $f.FullName)
   $n = @{}; foreach ($k in 'PASS', 'FINDING', 'NOTE') { $n[$k] = @($text | Where-Object { $_ -like ($k + ': *') }).Count }
   $out = @('DIAGNOSE report made ' + $f.LastWriteTime.ToString('yyyy-MM-dd HH:mm') + ': pass=' + $n.PASS + ' findings=' + $n.FINDING + ' notes=' + $n.NOTE)
-  foreach ($l in @($text | Where-Object { $_ -like 'FINDING: *' } | Select-Object -First 20)) { $out += ('DIAGNOSE ' + (Hide-Site ([string]$l) '')) }
+  $site = [string]$env:RADE_SITE   # the site RADE holds (no question here); empty outside RADE: the generic masks still apply
+  foreach ($l in @($text | Where-Object { $_ -like 'FINDING: *' } | Select-Object -First 20)) { $out += ('DIAGNOSE ' + (Hide-Site ([string]$l) $site)) }
   return $out + @('RESULT DIAGNOSE PASS')   # the report exists: what it found is for the PFM to judge (the answers)
 }
 
@@ -201,10 +203,30 @@ function Get-BackupResult([string]$App) {
   foreach ($j in $json) {
     $name = [IO.Path]::GetFileNameWithoutExtension($j.Name); $csv = Test-Path -LiteralPath (Join-Path $new.FullName ($name + '.csv')) -PathType Leaf
     $rows = 'unreadable'   # RADE writes one JSON array of rows (engine-v30, 13-maintenance.ps1)
-    try { $v = Get-Content -LiteralPath $j.FullName -Raw | ConvertFrom-Json; $rows = [string]@($v).Count } catch { $bad++ }
+    try { $rows = [string](Get-JsonRowCount $j.FullName) } catch { $bad++ }
     if (-not $csv) { $bad++ }
     $out += ('BACKUP list "' + $name + '": rows=' + $rows + ' csv=' + $(if ($csv) { 'yes' } else { 'no' })) }
-  return $out + @('RESULT BACKUP ' + $(if ($json.Count -and -not $bad) { 'PASS' } else { 'FAIL' }))
+  if ($json.Count -lt $BackupLists) { $out += ('BACKUP ' + $json.Count + ' of ' + $BackupLists + ' lists saved') }
+  return $out + @('RESULT BACKUP ' + $(if ($json.Count -ge $BackupLists -and -not $bad) { 'PASS' } else { 'FAIL' }))
+}
+
+<#
+.SYNOPSIS
+  The number of rows in one backup JSON file (one array of rows; RADE engine-v30). Reads no value into the result.
+.DESCRIPTION
+  Windows PowerShell 5.1 ConvertFrom-Json stops on a long text (its JSON length limit); then the .NET reader with no
+  length limit counts it.
+.PARAMETER Path
+  The JSON file.
+.OUTPUTS
+  The row count.
+#>
+function Get-JsonRowCount([string]$Path) {
+  $raw = [IO.File]::ReadAllText($Path)
+  try { $v = $raw | ConvertFrom-Json; return @($v).Count } catch {   # a variable: 5.1 writes the array as one object
+    Add-Type -AssemblyName System.Web.Extensions
+    $s = New-Object System.Web.Script.Serialization.JavaScriptSerializer; $s.MaxJsonLength = [int]::MaxValue
+    return @($s.DeserializeObject($raw)).Count }
 }
 
 $lines = New-Object System.Collections.Generic.List[string]

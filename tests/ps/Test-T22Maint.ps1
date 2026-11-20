@@ -20,7 +20,7 @@ With an install record of 90-161.Z 0.1.0.
 .PARAMETER Report
 With a Diagnose report (1 PASS, 1 FINDING with a fake URL, 1 NOTE).
 .PARAMETER Csv
-With the CSV copy beside the backup's JSON file.
+With the CSV copy beside the JSON file of PFM Waivers (10 more fake lists, empty, always have theirs).
 .OUTPUTS
 The T22 folder of the fake app folder.
 #>
@@ -35,6 +35,7 @@ function Get-FakeRade([bool]$Record, [bool]$Report, [bool]$Csv) {
     Set-Content -LiteralPath (Join-Path $d 'diagnose-1.txt') -Value $txt }
   $b = Join-Path (Join-Path $app 'Backups') 'b1'; $null = New-Item -ItemType Directory -Path $b -Force
   Set-Content -LiteralPath (Join-Path $b 'PFM Waivers.json') -Value '[{"Title":"FAKE 1"},{"Title":"FAKE 2"}]'
+  foreach ($i in 1..10) { Set-Content -LiteralPath (Join-Path $b ('FAKE List ' + $i + '.json')) -Value '[]'; Set-Content -LiteralPath (Join-Path $b ('FAKE List ' + $i + '.csv')) -Value '' }
   if ($Csv) { Set-Content -LiteralPath (Join-Path $b 'PFM Waivers.csv') -Value '"Title"' }
   return (Join-Path $app 'T22')
 }

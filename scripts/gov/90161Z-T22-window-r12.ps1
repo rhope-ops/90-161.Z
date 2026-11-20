@@ -318,7 +318,7 @@ $wn.TimeLines = {
   #>
   foreach ($k in @($wn.Times.Keys)) { $v = @($wn.Times[$k])
     $later = $(if ($v.Count -gt 1) { ' later-max=' + (@($v | Select-Object -Skip 1 | Measure-Object -Maximum).Maximum) } else { '' })
-    $lines.Add('CARDTIME ' + $k + ' first=' + $v[0] + $later + ' opens=' + $v.Count) }
+    $lines.Add('CARDTIME ' + $k + ' first=' + $v[0] + $later + ' opens=' + $v.Count + ' (ms to build, before paint; a resize counts as an open)') }
   if (-not $wn.Times.Count) { $lines.Add('CARDTIME none (no card opened after the start)') } }
 $wn.LoadBounds = {
   <#

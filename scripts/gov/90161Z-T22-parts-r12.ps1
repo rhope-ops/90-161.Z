@@ -315,6 +315,8 @@ $wn.BoxFrame = { param($Tb, [int]$W)
   $fr.Margin = $Tb.Margin; $Tb.Margin = & $ui.Pad 0 0 0 0; $Tb.BorderStyle = 'None'; $Tb.Width = $W - 2 * $pad - 2
   $Tb.Location = [Drawing.Point]::new($pad, [int][math]::Max(0, ($h - 2 - $Tb.Height) / 2)); [void]$fr.Controls.Add($Tb)
   $fr.Add_Click({ [void]$this.Controls[0].Focus() }); $ui.Boxes = @($ui.Boxes) + @($fr)
+  # The ring is drawn by the frame's parent ($ui.Ring); $ui.Cue repaints only the box's own parent (the frame), as RADE's frame does (engine 03-card.ps1)
+  $Tb.Add_GotFocus({ try { $this.Parent.Parent.Invalidate() } catch { $null = $_ } }); $Tb.Add_LostFocus({ try { $this.Parent.Parent.Invalidate() } catch { $null = $_ } })
   return $fr }
 $wn.Blocks.input = {
   <#
