@@ -1053,12 +1053,14 @@
                     "guide": [
                         "1. In the browser, select the tab \"90-161.Z test page\".",
                         "2. Select \"Open the list with the button\".",
-                        "3. Look at the first row for a button \"Run the test flow\".",
-                        "4. In the first row, select \"Run the test flow\".",
-                        "5. Look at the panel that opened for a button \"Run\".",
-                        "6. Select \"Run\".",
-                        "7. If the panel asks you to continue or to allow a connection: select \"Continue\".",
-                        "8. Wait until the panel says the flow ran, or shows an error.",
+                        "3. If the view name at the top right of the list says \"All Items\": select \"All Items\".",
+                        "4. If a menu of views opened: select \"ProbeButton\".",
+                        "5. Look at the first row for a button \"Run the test flow\".",
+                        "6. In the first row, select \"Run the test flow\".",
+                        "7. Look at the panel that opened for a button \"Run\".",
+                        "8. Select \"Run\".",
+                        "9. If the panel asks you to continue or to allow a connection: select \"Continue\".",
+                        "10. Wait until the panel says the flow ran, or shows an error.",
                         "If you see an error: wait 5 minutes, reload the list page, and try 1 more time."
                     ],
                     "marker": "90161Z-T21-button-used.txt",
@@ -1068,8 +1070,18 @@
                     ],
                     "answers": [
                         {
+                            "key": "btn-view",
+                            "prompt": "Which view did the link open first?",
+                            "kind": "pick",
+                            "choices": [
+                                "ProbeButton",
+                                "All Items",
+                                "Another view"
+                            ]
+                        },
+                        {
                             "key": "btn-show",
-                            "prompt": "What did the list show in each row?",
+                            "prompt": "What did the ProbeButton view show in each row?",
                             "kind": "pick",
                             "choices": [
                                 "A button Run the test flow",
