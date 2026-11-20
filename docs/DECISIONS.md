@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | Rule text approved: "No reconnaissance" and "Data boundary" are marked (cannot be changed); Data boundary names the round results e-mail exception until the test rounds end (replaces the 2026-11-14 exception row as the home). Scope: AGENTS.md. | PFM | [rule check](reviews/2026-11-20-rule-conflict.md) |
 | 2026-11-20 | Kit 6.0.0 synced from merge commit 43ad952 (tag v6.0.0 not made yet): new default 'Skills', `efficiency` merged into `audit`, `data-change` rewritten, `skill_use.py`; kept: nothing to move. | Agent | https://github.com/rhope-ops/archimedes_lever/blob/main/docs/CHANGELOG.md |
 | 2026-11-20 | R38 runs on RADE engine-v29 and the T22 window adopts UI standard v1 now (fixed button sizes, rail contrast), not in R39. Scope: R38, T22 r11. | PFM | [UI standard plan](reviews/2026-11-19-ui-standard-plan.md) Step 2 |
 | 2026-11-20 | RADE lock moves to release engine-v29 (RADE e503386, serial 22) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
@@ -296,7 +297,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-14 | Lists by PnP: RADE builds the site objects from schemas/lists; the provisioning flow retires after one round proves list creation. Replaces 12 Nov 1A and 1B and 10 Nov (lists by flow). | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-14 | No reconnaissance, hardened: never anything malicious or that could be misconstrued as malicious. Open reads of SharePoint data with my own account are allowed. Any doubt: ask the owner first. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Tests: no change. Rounds are the Windows PowerShell 5.1 test; cloud tests stay on PowerShell 7; a 5.1 fault is fixed when a round finds it. Replaces "how to move it is open" below. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
-| 2026-11-14 | Round results e-mail: the allowed owner-only exception to the DoD365 boundary rule until the test rounds end. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
+| 2026-11-14 | Round results e-mail: the allowed owner-only exception to the DoD365 boundary rule until the test rounds end. Replaced 2026-11-20: the home is now AGENTS.md "Data boundary". | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | Flow health: a round tests a health flow with the Power Automate Management connector (own flows only); then choose between it and heartbeat rows. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |
 | 2026-11-14 | AGENTS.md Deployable package line: PnP.PowerShell and Windows PowerShell 5.1 are on every NIPR computer; fallbacks are for rights that differ, not for PowerShell to SharePoint. | PFM | AGENTS.md |
 | 2026-11-14 | Immutable rule: nothing like network reconnaissance may occur in RADE or in any app (fixed hosts, the one site given, own flows only). Cannot be changed, like the DoD365 boundary rule. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/engine.md |

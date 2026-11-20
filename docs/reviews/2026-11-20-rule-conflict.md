@@ -40,3 +40,23 @@ Reviewer: the `reviewer` subagent, fresh context, Opus tier. Findings 2 and 4 of
 | 6 | MINOR | This record named only the old hash. | Fixed: this section. |
 
 rule-conflict-check: 354411cc6b38
+
+## Third change: "No reconnaissance" and "Data boundary" (text approved by the PFM, 20 Nov 26)
+
+```text
+  + No reconnaissance (the PFM, 2026-11-14; cannot be changed): ... (only the marker changed)
+  + Data boundary (2026-11-14; cannot be changed): ... no app writes data across the boundary, except the PFM's round results e-mail until the test rounds end. Use fake data.
+```
+
+Reviewer: the `reviewer` subagent, fresh context, Opus tier. No MAJOR. Closes MAJOR 1 and 2 of the rerun above.
+
+| # | Severity | Finding | Action |
+|---|---|---|---|
+| 1 | MINOR | The exception follows only the clause "no app writes"; "government data stays in DoD365" has none. | To the PFM (a text change). |
+| 2 | MINOR | "Until the test rounds end" has no defined end (pilot?). | To the PFM with item 1. |
+| 3 | MINOR | Overlap with "Round results". | Recorded. |
+| 4 | MINOR | The 2026-11-14 exception row was not marked replaced. | Fixed. |
+| 5 | MINOR (existing) | "Data boundary" repeats parts of "Secrets and personal data" and "Public repo". | Recorded. |
+| 6 | MINOR | This record lacked a section for this change. | Fixed: this section. |
+
+rule-conflict-check: a59ae29dcdf1
