@@ -43,5 +43,9 @@ check('an Open tasks section with no "###" counts 0', count(empty, t).open === 0
 check('old "## Round (open, date)" headings still count', count(old, t).open === 1);
 check('"Open questions" does not make cards open', count(other, t).open === 0);
 check('heading text is escaped', !/<b>x<\/b>/.test(count(esc, t).body) && /&lt;b&gt;/.test(count(esc, t).body));
+const round = '# T\n## Open tasks\n### Round A\n1. Copy the script.\nhttps://raw.githubusercontent.com/o/r/main/scripts/gov/paste/90161Z-R01-test.ps1\nhttps://example.com/notes.md\n';
+check('a round script card has an Open as .txt button', (count(round, t).body.match(/data-txt=/g) || []).length === 1 && /Open as \.txt/.test(count(round, t).body));
+check('a round script card has no .ps1 link and no Copy link', !/<a href="[^"]*\.ps1"/.test(count(round, t).body) && (count(round, t).body.match(/data-copy=/g) || []).length === 1);
+check('the .txt name replaces .ps1', t.txtName('https://x/y/90161Z-R01-test.ps1') === '90161Z-R01-test.txt');
 console.log(fail ? 'GO PAGE FAIL: ' + fail : 'GO PAGE PASS');
 process.exit(fail ? 1 : 0);
