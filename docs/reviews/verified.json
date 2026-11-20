@@ -1,5 +1,5 @@
 {
-    "_doc": "Steps that passed on the gov device and leave the rounds (PFM, 19 Nov 26: a step leaves after 1 pass with unchanged content; a change of its content or a failure brings it back; R37 is the first round without them). One entry per step: the step name without its revision, the revision that passed, each pass (round, results file, results row), what it tested, its files, and content_sha256: the SHA-256 of the step definition in scripts/paste_bundles.json (JSON with sorted keys) and of each file, with every revision token (r<digits>) written as r<N>, so a revision raise alone is no change. Hashes are of the R36 r1 definition on main (commit 7dc8a78) for the first 5 entries and of the R37 r1 definition (commit c5503b6) for the entries added 20 Nov 26. R38 (UI standard plan, Step 2) adds the build check that reads this file.",
+    "_doc": "Steps that passed on the gov device and leave the rounds (PFM, 19 Nov 26: a step leaves after 1 pass with unchanged content; a change of its content or a failure brings it back; R37 is the first round without them). One entry per step: the step name without its revision, the revision that passed, each pass (round, results file, results row), what it tested, its files, and content_sha256: the SHA-256 of the step definition in scripts/paste_bundles.json (JSON with sorted keys) and of each file, with every revision token (r<digits>) written as r<N>, so a revision raise alone is no change. Hashes are of the R36 r1 definition on main (commit 7dc8a78) for the first 5 entries and of the R37 r1 definition (commit c5503b6) for the entries added 20 Nov 26 from R37, and of the R38 r1 definition (commit aef5b2d) for the 4 entries from R38. R38 (UI standard plan, Step 2) adds the build check that reads this file.",
     "steps": [
         {
             "step": "T21 Second person edits your row",
@@ -528,6 +528,79 @@
             "files": [],
             "content_sha256": {
                 "step": "9966a61dce27ac96286ce9163ab3502a42f08745fdad56456298d610d0b640c0"
+            }
+        },
+        {
+            "step": "T21 Second person adds a row",
+            "revision": "r11",
+            "passed": [
+                {
+                    "round": "R38",
+                    "results": "docs/reviews/2026-11-20-r38-results.md",
+                    "row": "T21 Second person adds a row r11: PASSED; t4a-row = The row was saved; T21 read: RESULT T4 PASS (rows=1)"
+                }
+            ],
+            "tested": "T4: a Visitors member who is not the PFM adds a new row with the list form (Visitors have Contribute on the list).",
+            "files": [],
+            "content_sha256": {
+                "step": "732ec0b66c22fe2a94acdc82a34bf5776635ef8adf423923a64d5cc86b6eb897"
+            }
+        },
+        {
+            "step": "T16 Site logo: thumbnail",
+            "revision": "r13",
+            "passed": [
+                {
+                    "round": "R38",
+                    "results": "docs/reviews/2026-11-20-r38-results.md",
+                    "row": "T16 Site logo r13: thumbnail: PASSED; logo-thumb = Yes"
+                }
+            ],
+            "tested": "The PFM sets the site thumbnail to the Fulcrum logo by hand. The PNG is not committed (scripts/logo_png.py draws it): its hash is of the drawn bytes.",
+            "files": [
+                "assets/logo/build/90161Z-logo-512.png"
+            ],
+            "content_sha256": {
+                "step": "cdaf65e4993ce36c1b66752e33a37ff8c1c09829e5832011e562bc747c0951e3",
+                "assets/logo/build/90161Z-logo-512.png": "49c348e64b3bd52b20f944cc05a286ff1797bbc160f4a201f9f1e6193b39da6d"
+            }
+        },
+        {
+            "step": "T16 Site logo: header logo",
+            "revision": "r13",
+            "passed": [
+                {
+                    "round": "R38",
+                    "results": "docs/reviews/2026-11-20-r38-results.md",
+                    "row": "T16 Site logo r13: header logo: PASSED; logo-header = The Fulcrum logo"
+                }
+            ],
+            "tested": "The PFM sets the site header logo to the Fulcrum logo by hand. The PNG hash is of the drawn bytes (as above).",
+            "files": [
+                "assets/logo/build/90161Z-logo-512.png"
+            ],
+            "content_sha256": {
+                "step": "1b4204452d2c097472c979cbcf64c751597ea856f323490f65083a9e4f28adaf",
+                "assets/logo/build/90161Z-logo-512.png": "49c348e64b3bd52b20f944cc05a286ff1797bbc160f4a201f9f1e6193b39da6d"
+            }
+        },
+        {
+            "step": "T16 Read the site logo back",
+            "revision": "r12",
+            "passed": [
+                {
+                    "round": "R38",
+                    "results": "docs/reviews/2026-11-20-r38-results.md",
+                    "row": "T16 Read the site logo back r12: PASSED; c-logo PASS"
+                }
+            ],
+            "tested": "The header logo reads back as a logo saved by Change the look.",
+            "files": [
+                "scripts/gov/90161Z-T16-site-setup-r12.ps1"
+            ],
+            "content_sha256": {
+                "step": "52baa5d3f2447f44603241c72049f830fe8b879e777d2ab3db678411de4be9db",
+                "scripts/gov/90161Z-T16-site-setup-r12.ps1": "cfbea6d35f2b78c7c669d8b77aa0d18ea04a686eff2b12af3edb7a2fb0b67a74"
             }
         }
     ]
