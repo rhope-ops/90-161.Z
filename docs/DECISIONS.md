@@ -6,6 +6,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | UI standard plan approved (R38): cross-app standard in RADE, RADE contrast themes, screen walk, test retirement. Scope: RADE, 90-161.Z, next apps. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md |
+| 2026-11-20 | Buttons: fixed width set (action, wide, compact), no fit-to-text; primary button last, at the right end of the action row. Scope: all apps (UI standard v1). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B1, B5 |
+| 2026-11-20 | A round step leaves the rounds after 1 pass with unchanged content (revision lines ignored); a change or a failure brings it back. Scope: all rounds from R38. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md Step 2 |
 | 2026-11-20 | T22 window: the same logo rule as the bookmark page, Fulcrum in light mode and USAF in dark mode; built in R37 with window r9. Scope: T22 window, R37. | PFM | docs/NEXT_PROMPT.md item 5 |
 | 2026-11-20 | Bookmark page logo: Delta Fulcrum colours in light mode, USAF in dark mode; the page supports more-contrast and forced-colour (Windows contrast theme) modes. Scope: index.html. | PFM | [index.html](../index.html) |
 | 2026-11-19 | 90-161.Z logo = Delta, USAF colours, version without the phrase; drawn in code (logo_draw.py). Ships with the next round, not before. RADE keeps Rho. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/Kwrd4D84GffcrxtZ2qUzBZ |
