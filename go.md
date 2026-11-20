@@ -51,13 +51,14 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 12. Look at the title bar of the RADE window: the code after the word "script" must be the code you wrote down.
 13. If the window shows a button "90-161.Z", select it.
 14. Press Run.
-15. Do each step the RADE window shows, until the log says DONE.
+15. Do each step the RADE window shows.
 16. When the 90-161.Z window opens: do each check in its bottom bar.
 17. If a card does not look right: select "Feedback" in the bottom bar.
 18. In the box "What does not look right? One line, no names.", type what is wrong.
 19. Select "Save".
 20. Close the 90-161.Z window with its X.
-21. At DONE, select Send in the Outlook draft that opens.
+21. Do the steps the RADE window still shows, until the log says DONE.
+22. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R38-round-r1.ps1
 

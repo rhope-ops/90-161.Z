@@ -219,7 +219,8 @@ $wn.FitGrid = {
   $excess = $sum - $room; if ($excess -le 0) { return $false }
   $kinds = $G.Tag.Kind; $cols = @($G.Tag.Cols)
   $heads = @{}; foreach ($c in $cols) { $heads[[string]$c.N] = [int](& $wn.HeadMin $c) }
-  $free = @($G.Columns | Where-Object { $_.Visible -and @('pub', 'chip') -notcontains [string]$kinds[$_.Name] })   # R11: a chip column keeps its chip whole; $gave = 0
+  $free = @($G.Columns | Where-Object { $_.Visible -and @('pub', 'chip') -notcontains [string]$kinds[$_.Name] })   # R11: a chip column keeps its chip whole
+  $gave = 0
   foreach ($pass in 'above head', 'under head') {
     foreach ($k in @($free | Sort-Object { $_.Width - [int]$heads[$_.Name] } -Descending)) {
       if ($excess -le 0) { break }
