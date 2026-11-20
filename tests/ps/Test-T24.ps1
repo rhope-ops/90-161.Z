@@ -216,6 +216,10 @@ $r2 = Invoke-MyUser ('{"d":{"Id":7,"LoginName":"' + $fake + '"}}')
 Test-That 'Get-MyUser reads the verbose answer' ($r2.Id -eq 7 -and $r2.Login -eq $fake) ('id=' + $r2.Id)
 $r3 = Invoke-MyUser '{}'
 Test-That 'Get-MyUser gives 0 and empty for an empty answer' ($r3.Id -eq 0 -and $r3.Login -eq '') ('id=' + $r3.Id)
+$fh = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Hide-Login' }, $true))
+. ([scriptblock]::Create($fh[0].Extent.Text))
+$hid = Hide-Login ('The specified user ' + $fake + ' could not be found. Also fake.user@example.test.') @{ Id = 1; Login = $fake }
+Test-That 'Hide-Login masks the sign-in name and its address' (-not $hid.Contains('fake.user') -and $hid.Contains('<YOU>')) $hid
 Test-That 'F08 checks: 1 warning for T-1, none for T-3, none without an approver' ($text.Contains("Add-Line 'f08-warns-t1'") -and $text.Contains("Add-Line 'f08-none-t3'") -and
   $text.Contains("Add-Line 'f08-none-no-approver'") -and $text.Contains("`$warn['w1'].Count -eq 1 -and [string]`$warn['w1'][0]['EventType'] -eq 'Waiver Warning'"))
 Test-That 'part 4 removes the waivers, their warning rows and the office row' ($text.Contains("foreach (`$k in `$Waivers.Keys) { if (`$state.ContainsKey(`$k)) { try { `$n += Clear-TestWaiver") -and

@@ -9,9 +9,10 @@ A script that signs in to the site also holds the site-common block (Get-SiteAdd
 between the same kind of markers; a Get-SiteAddress outside that block fails the check.
 A script that waits for a flow (T18, T24) holds the wait-common block (Wait-Until; code standard S1, rule C5) between its own
 markers; it is written only into a script that has them.
-A script with the app-logo markers gets $AppLogoPng: the 90-161.Z logo (PFM 17 Nov 26: logo on the T22 window, 1A; Delta since PFM 19 Nov 26) as a
-128 px PNG in base64 text, drawn from the master assets/logo/90161Z-logo.svg by scripts/logo_draw.py (pure Python, the
-same bytes on every machine; scripts/logo_png.py keeps the hash record; the PNGs stay uncommitted, PFM 2A). The RADE runner keeps RADE's own logo (Rho Bold) from the pinned engine.
+A script with the app-logo markers gets $AppLogoPng and $AppLogoFulcrumPng: the 90-161.Z logo (PFM 17 Nov 26: logo on the T22 window, 1A; Delta since
+PFM 19 Nov 26) as 128 px PNGs in base64 text, drawn from the masters assets/logo/90161Z-logo.svg (USAF colours, Windows dark mode) and, from R37,
+assets/logo/90161Z-logo-fulcrum.svg (Fulcrum colours, Windows light mode; PFM 19 Nov 26) by scripts/logo_draw.py (pure Python, the
+same bytes on every machine; scripts/logo_png.py keeps one hash record per master; the PNGs stay uncommitted, PFM 2A). The RADE runner keeps RADE's own logo (Rho Bold) from the pinned engine.
 A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1 of the same pinned commit, SHA-256 checked the
 same way) as it is: the window reuses RADE's colors, fonts, buttons, card text boxes and layout self-check (T22 r2, 17 Nov 26).
 Usage: python3 scripts/build_task_scripts.py [--check]
@@ -28,7 +29,7 @@ ASKS_DODID = "Read-Host 'DODID"
 BLOCKS = [(SRC, BEGIN, END)] + [(ROOT / f'scripts/gov/src/{n}.ps1', BEGIN.replace('task-common', n), END.replace('task-common', n)) for n in ('site-common', 'wait-common')]
 SITE = ROOT / 'scripts/gov/src/site-common.ps1'   # the block whose functions must not live outside it
 LOGO = 'app-logo'
-BLOCKS.append((LOGO, '# >>> app-logo: generated from assets/logo/90161Z-logo.svg by scripts/build_task_scripts.py (do not edit)', '# <<< app-logo'))
+BLOCKS.append((LOGO, '# >>> app-logo: generated from assets/logo/90161Z-logo.svg and 90161Z-logo-fulcrum.svg by scripts/build_task_scripts.py (do not edit)', '# <<< app-logo'))
 UI = 'rade-ui'
 BLOCKS.append((UI, '# >>> rade-ui: generated from the pinned RADE shared UI file by scripts/build_task_scripts.py (do not edit)', '# <<< rade-ui'))
 GENERATED = (LOGO, UI)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
@@ -40,14 +41,21 @@ CHECK = []   # set by main: a --check run never writes the logo record
 
 
 def logo_text():
-    """Build the PowerShell text of the logo block, once per run. Takes nothing; returns text."""
-    # The 90-161.Z logo, 128 px (one render for every script; scripts/logo_png.py).
+    """Build the PowerShell text of the logo block, once per run.
+
+    Returns: the text of $AppLogoPng and $AppLogoFulcrumPng (base64 rows), the same on every call of the run.
+    """
+    # The 90-161.Z logo, 128 px, in USAF colours ($AppLogoPng) and in Fulcrum colours ($AppLogoFulcrumPng): one render of
+    # each for every script (scripts/logo_png.py).
     if not _logo:
         sys.path.insert(0, str(ROOT / 'scripts'))
         import logo_png
-        b64 = base64.b64encode(logo_png.png(128, bool(CHECK))).decode('ascii')
-        rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
-        _logo.append('$AppLogoPng = @(\n' + ',\n'.join("  '" + r + "'" for r in rows) + "\n) -join ''\n")
+        text = ''
+        for var, master in (('AppLogoPng', 'usaf'), ('AppLogoFulcrumPng', 'fulcrum')):
+            b64 = base64.b64encode(logo_png.png(128, bool(CHECK), master)).decode('ascii')
+            rows = [b64[i:i + 100] for i in range(0, len(b64), 100)]
+            text += '$' + var + ' = @(\n' + ',\n'.join("  '" + r + "'" for r in rows) + "\n) -join ''\n"
+        _logo.append(text)
     return _logo[0]
 
 
