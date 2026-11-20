@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | Bookmark page logo: Delta Fulcrum colours in light mode, USAF in dark mode; the page supports more-contrast and forced-colour (Windows contrast theme) modes. Scope: index.html. | PFM | [index.html](../index.html) |
 | 2026-11-19 | 90-161.Z logo = Delta, USAF colours, version without the phrase; drawn in code (logo_draw.py). Ships with the next round, not before. RADE keeps Rho. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/Kwrd4D84GffcrxtZ2qUzBZ |
 | 2026-11-19 | App writes: wing users get list-level Contribute on the intake lists only; the site stays Read (replaces way C for T4). Scope: R36, T20/T21. | PFM | docs/reviews/2026-11-19-r36-plan.md W12 |
 | 2026-11-19 | R36 plan approved after the R35 results (W1 to W14). Scope: R36. | PFM | docs/reviews/2026-11-19-r36-plan.md |
