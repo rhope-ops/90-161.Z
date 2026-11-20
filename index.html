@@ -67,6 +67,7 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
 .file .fn a{font-weight:600;word-break:break-all}
 .file .fu{display:block;font-size:.75rem;color:var(--mut);word-break:break-all}
 .file button{min-height:36px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} /* screen-reader-only live region for button results */
 .done-list li{color:var(--fg)}
 .grp{margin:22px 0 8px}
 .grp>h2{font-size:1rem;font-weight:650;letter-spacing:.02em;color:var(--mut);margin:0 0 10px;padding-left:2px}
@@ -274,6 +275,7 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
 <path transform="translate(256.00 256.00) scale(0.29304029304029305 -0.29304029304029305) translate(-263 -335.5)" d="M486 221Q486 124 423.5 59.0Q361 -6 261 -6Q163 -6 101.5 56.5Q40 119 40 213Q40 295 100.0 352.5Q160 410 245 410Q265 410 305 402L307 404Q294 412 263.5 428.0Q233 444 211.0 457.0Q189 470 165.5 488.0Q142 506 129.0 528.0Q116 550 116 574Q116 621 147.0 649.0Q178 677 227 677Q280 677 324.5 643.5Q369 610 387 560H361Q344 600 308.5 627.0Q273 654 231 654Q204 654 184.0 639.5Q164 625 164 600Q164 582 188.0 561.5Q212 541 247.5 522.0Q283 503 325.0 473.5Q367 444 402.5 411.5Q438 379 462.0 329.0Q486 279 486 221ZM393 202Q393 247 381.5 285.5Q370 324 338.0 353.0Q306 382 258 382Q194 382 163.0 340.0Q132 298 132 234Q132 199 138.5 164.5Q145 130 160.0 96.5Q175 63 204.0 42.5Q233 22 272 22Q393 22 393 202Z" fill="#15171D" stroke="#15171D" stroke-width="81.9" stroke-linejoin="round"/>
 <path transform="translate(256.00 256.00) scale(0.29304029304029305 -0.29304029304029305) translate(-263 -335.5)" d="M486 221Q486 124 423.5 59.0Q361 -6 261 -6Q163 -6 101.5 56.5Q40 119 40 213Q40 295 100.0 352.5Q160 410 245 410Q265 410 305 402L307 404Q294 412 263.5 428.0Q233 444 211.0 457.0Q189 470 165.5 488.0Q142 506 129.0 528.0Q116 550 116 574Q116 621 147.0 649.0Q178 677 227 677Q280 677 324.5 643.5Q369 610 387 560H361Q344 600 308.5 627.0Q273 654 231 654Q204 654 184.0 639.5Q164 625 164 600Q164 582 188.0 561.5Q212 541 247.5 522.0Q283 503 325.0 473.5Q367 444 402.5 411.5Q438 379 462.0 329.0Q486 279 486 221ZM393 202Q393 247 381.5 285.5Q370 324 338.0 353.0Q306 382 258 382Q194 382 163.0 340.0Q132 298 132 234Q132 199 138.5 164.5Q145 130 160.0 96.5Q175 63 204.0 42.5Q233 22 272 22Q393 22 393 202Z" fill="#F3EEE4" stroke="#F3EEE4" stroke-width="27.299999999999997" stroke-linejoin="round"/>
 </svg><div class="ttl"><h1>90-161.Z</h1><p class="sub">Publications and Forms Management</p></div><div class="count" id="hc" aria-live="polite"></div></div></header><main id="m"><p class="mut">Loading…</p></main>
+<p id="say" class="sr" aria-live="polite"></p>
 <script>
 (function(){
 var SRC='https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md';
@@ -299,34 +301,49 @@ function fileCard(u){
   var h=u.indexOf('http')===0?u:'https://'+u, name=h.split('/').pop();
   // A round script has no .ps1 link and no Copy link (PFM 20 Nov 26): Open as .txt takes the link's place, to read the script before pasting it.
   if(isRound(h))return '<div class="file"><span class="fn"><strong>'+esc(name)+'</strong></span>'+
-    '<button type="button" data-txt="'+esc(h)+'" data-label="Open as .txt" aria-label="Open as .txt: save '+esc(txtName(h))+' to read the script before you paste it">Open as .txt</button>'+
+    '<button type="button" data-txt="'+esc(h)+'" data-label="Open as .txt"'+
+    ' aria-label="Open as .txt: save '+esc(txtName(h))+' to read the script before you paste it">Open as .txt</button>'+
     '<button type="button" class="primary" data-script="'+esc(h)+'" aria-label="Copy the whole script '+esc(name)+'">Copy script</button></div>';
   return '<div class="file"><span class="fn"><a href="'+esc(h)+'">'+esc(name)+'</a><span class="fu">'+esc(h)+'</span></span>'+
     '<button type="button" data-copy="'+esc(h)+'" aria-label="Copy link to '+esc(name)+'">Copy link</button></div>';
 }
-function blocked(b){b.textContent='Copy blocked: use Open as .txt, then Ctrl+A, Ctrl+C in Notepad';b.disabled=true}
+var FAILED={}; // round scripts whose preload failed: no button can get them until Reload
+/** say(t): tells screen readers a button result through the hidden live region #say. */
+function say(t){var e=document.getElementById('say');if(e)e.textContent=t}
+/** loadFailed(b): the script never loaded, so neither button can work; Reload is the only way on. */
+function loadFailed(b){b.textContent='Could not load the script: press Reload';b.disabled=true;say(b.textContent)}
+/** blocked(b): the script loaded but the browser blocked the clipboard; the .txt file still has it. */
+function blocked(b){b.textContent='Copy blocked: use Open as .txt, then Ctrl+A, Ctrl+C in Notepad';b.disabled=true;say(b.textContent)}
 function copyScript(b){
   var h=b.getAttribute('data-script'),t=SCRIPTS[h];
-  if(typeof t!=='string'){if(b.getAttribute('data-state')==='loading'){b.textContent='Still loading; press again in a moment'}else{blocked(b)}return}
-  var ok=function(){b.textContent='Copied ('+t.split('\n').length.toLocaleString()+' lines). Now paste in ISE.';setTimeout(function(){b.textContent='Copy script'},4000)};
+  if(typeof t!=='string'){
+    if(b.getAttribute('data-state')==='loading'){b.textContent='Still loading; press again in a moment'}else{loadFailed(b)}
+    return}
+  var ok=function(){b.textContent='Copied ('+t.split('\n').length.toLocaleString()+' lines). Now paste in ISE.';say(b.textContent);setTimeout(function(){b.textContent='Copy script'},4000)};
   var viaArea=function(){var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();var r=false;try{r=document.execCommand('copy')}catch(e){}document.body.removeChild(a);return r};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){viaArea()?ok():blocked(b)})}else{viaArea()?ok():blocked(b)}
 }
 /** txtName(h): the .txt file name for script link h (name.ps1 -> name.txt). */
 function txtName(h){return h.split('/').pop().replace(/\.ps1$/i,'')+'.txt'}
-/** openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26). The label comes back from data-label, so a second click cannot keep the "Saved" text. */
+/** openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26).
+    The label comes back from data-label, so a second click cannot keep the "Saved" text. */
 function openTxt(b){
   var h=b.getAttribute('data-txt'),t=SCRIPTS[h],lbl=b.getAttribute('data-label');
-  if(typeof t!=='string'){b.textContent='Not loaded yet: wait, or press Reload';setTimeout(function(){b.textContent=lbl},4000);return}
+  if(typeof t!=='string'){
+    b.textContent=FAILED[h]?'Could not load the script: press Reload':'Still loading; press again in a moment';say(b.textContent);
+    setTimeout(function(){b.textContent=lbl},4000);return}
   var u=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');
   a.href=u;a.download=txtName(h);a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(u)},10000);
-  b.textContent='Saved '+a.download+'. Open it from Downloads.';setTimeout(function(){b.textContent=lbl},4000);
+  b.textContent='Saved '+a.download+'. Open it from Downloads.';say(b.textContent);
+  setTimeout(function(){b.textContent=lbl},4000);
 }
 function preload(m){
   Array.prototype.forEach.call(m.querySelectorAll('button[data-script]'),function(b){
     var h=b.getAttribute('data-script');b.textContent='Copy script (loading)';b.setAttribute('data-state','loading');
-    fetch(h,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(function(t){SCRIPTS[h]=t;b.removeAttribute('data-state');b.disabled=false;b.textContent='Copy script'}).catch(function(){b.removeAttribute('data-state');blocked(b)});
+    fetch(h,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()})
+      .then(function(t){SCRIPTS[h]=t;b.removeAttribute('data-state');b.disabled=false;b.textContent='Copy script'})
+      .catch(function(){FAILED[h]=true;b.removeAttribute('data-state');loadFailed(b)});
   });
 }
 function folderBox(lbl,path){
@@ -441,7 +458,11 @@ function render(md){
 }
 /** wire(m): copy and .txt buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print. */
 function wire(m){
-  m.addEventListener('click',function(e){var s=e.target.closest&&e.target.closest('button[data-script]');if(s){e.preventDefault();copyScript(s);return}var v=e.target.closest&&e.target.closest('button[data-txt]');if(v){e.preventDefault();openTxt(v);return}var b=e.target.closest&&e.target.closest('button[data-copy]');if(b){e.preventDefault();copy(b.getAttribute('data-copy'),b)}});
+  m.addEventListener('click',function(e){
+    var f=function(sel){return e.target.closest&&e.target.closest(sel)};
+    var s=f('button[data-script]');if(s){e.preventDefault();copyScript(s);return}
+    var v=f('button[data-txt]');if(v){e.preventDefault();openTxt(v);return}
+    var b=f('button[data-copy]');if(b){e.preventDefault();copy(b.getAttribute('data-copy'),b)}});
   preload(m);
   var all=function(){return Array.prototype.slice.call(m.querySelectorAll('details.sec'))};
   all().forEach(function(d){d.addEventListener('toggle',function(){var s=load();s[d.getAttribute('data-name')]=d.open;save(s)})});
