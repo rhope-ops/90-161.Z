@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | Narrow window: the Since column leaves the Your Work grid when the publication column and all heads do not fit (wide windows keep it). Scope: T22 r11 and the app window. | PFM | [R37 results](reviews/2026-11-20-r37-results.md) finding 3 |
 | 2026-11-20 | RADE lock moves to release engine-v28 (RADE 9d424ff, serial 22) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-20 | "No scripts in results" is a hard project rule, marked "(cannot be changed)"; revised text approved (adds the pointer to scripts/check_collect.py). Replaces "only No reconnaissance is hard" of the 2026-11-18 row. Scope: AGENTS.md. | PFM | [rule check](reviews/2026-11-20-rule-conflict.md) |
 | 2026-11-20 | No scripts in results: a round never collects or sends a .ps1 or other script file (R37 e-mail blocked). Rule text approved; AGENTS.md Project rules. Scope: all rounds. | PFM | [R37 results](reviews/2026-11-20-r37-results.md) |
