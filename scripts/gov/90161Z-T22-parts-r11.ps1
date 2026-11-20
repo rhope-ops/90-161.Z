@@ -1,9 +1,10 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r10, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r11, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
+  R11 (R38; PFM 20 Nov 26): only the revision changed.
   Each builder makes Windows Forms controls with the RADE look ($ui, from the ui part) and adds them to a parent.
   R4 (R30 V3): a format check with 0 findings shows no link (Test-CheckLink, in the cards part). The grid block is
   built by the grid part. R6 (R31b D3): the chip of a check block is level with the first line of its text; the
@@ -12,7 +13,7 @@
   "Needs You Today", the rows blocks, the chips row with its step line, the notice) is placed by one rule,
   $wn.ChipTops, and kept in $wn.ChipRows with its text.
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.

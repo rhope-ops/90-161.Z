@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r10, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
+  90-161.Z Task 22 r11, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
   generated into this file, and the few names it needs from the window.
 .DESCRIPTION
+  R11 (R38; PFM 20 Nov 26): only the revision changed.
   The block between the rade-ui markers is written by scripts/build_task_scripts.py from the pinned RADE commit
   (scripts/rade.lock.json); never edit it here. It runs inside the main script's try block, after $ui.Form exists,
   and fills $ui. The lines above the block give it what it reads from a RADE window: $apps (one test application, so
@@ -10,7 +11,7 @@
   high contrast (R31 W2): Select-T22Color and $ui.UseColors (the window part applies them: $wn.Recolor).
   Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the shared UI file, $ui.HcRole,
   $ui.OwnPc, $ui.OwnC, $ui.High, $ui.UseColors and the function Select-T22Color.
-  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.

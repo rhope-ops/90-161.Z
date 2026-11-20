@@ -1,11 +1,12 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r10 (round R37). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r11 (round R37). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
+  R11 (R38; PFM 20 Nov 26): revision r11 for round R38: 3 checks, "XXX XXX " fake names, the status chips clear of the scroll bar, the Fulcrum logo in both modes.
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
   file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it; below 1280 x 720
-  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 18 checks one at a
+  (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 3 checks (R11; r10 had 18) one at a
   time with Pass and Fail (PFM 17 Nov 26); each layout defect is one line "FAIL LAYOUT ..." and "PASS layout" is one line when
   there is none (the runner counts these words).
   WHAT R10 CHANGES (round R37; r9 was the dynamic sizing that failed its Windows tests and is not in this revision):
@@ -14,8 +15,8 @@
   line; PFM 19 Nov 26). A grid whose columns are wider than it gives the excess back ($wn.FitGrids; R36 finding 3: the
   home grid was 9 px short). Feedback (UI standard B13, PFM 19 Nov 26): a link on the check bar, in the same place on
   every card, opens a small box "What does not look right?"; Save writes the comment and a picture of the window into
-  the T22 folder as 90161Z-T22-feedback-<card>-r10.txt and .png and adds a FEEDBACK line; at the close
-  90161Z-T22-feedback-r10.txt lists them (or none).
+  the T22 folder as 90161Z-T22-feedback-<card>-r11.txt and .png and adds a FEEDBACK line; at the close
+  90161Z-T22-feedback-r11.txt lists them (or none).
   WHAT R8 CHANGED (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
   in 2 system colors, and in its own colors again when it goes off ($wn.LogoImage, Pfm.Logo); every rail build checks
   the logo's colors (a LOGO line; a W7 LAYOUT line when they are wrong). No column head of a grid is shortened with
@@ -30,27 +31,27 @@
   the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
   R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its parts
-  from its own folder, 90161Z-T22-<part>-r10.ps1 (cards, types, ui, parts, grid, logo, window, feedback, measure; R10 adds
+  from its own folder, 90161Z-T22-<part>-r11.ps1 (cards, types, ui, parts, grid, logo, window, feedback, measure; R10 adds
   logo and feedback).
-  Inputs: the 9 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
+  Inputs: the 9 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 3 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r10.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r11.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r10.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r10.png (one per
-  card) and the feedback files (90161Z-T22-feedback-r10.txt, and a .txt and a .png per comment) in the T22 folder.
+  Outputs: 90161Z-T22-window-r11.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r11.png (one per
+  card) and the feedback files (90161Z-T22-feedback-r11.txt, and a .txt and a .png per comment) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r10.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r11.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r10.txt, 90161Z-T22-window-bounds.json, the card PNG files and the feedback files in the T22
+  Writes: 90161Z-T22-window-r11.txt, 90161Z-T22-window-bounds.json, the card PNG files and the feedback files in the T22
   folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
   with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
   Credentials: none.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
 $task = 'T22'
-$Rev = 'r10'
+$Rev = 'r11'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -194,7 +195,7 @@ function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'logo', 'window', 'feedback', 'measure')
-# The full path of part $Name: 90161Z-T22-<name>-r10.ps1 in this file's folder.
+# The full path of part $Name: 90161Z-T22-<name>-r11.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
