@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r8, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r10, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
@@ -22,13 +22,13 @@
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r8.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r10.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -39,7 +39,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r8.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r10.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -524,8 +524,8 @@ $wn.MeasureRun = {
   The form is shown far off the screen (it is never seen) so that its controls have handles and can be drawn into
   bitmaps; it builds every card as a normal run does ($wn.Build: layout self-check, accessible names and the card
   pictures, saved next to the JSON file, included), then measures D1 to D4 of every card at 1.25 x and 1.5 x (R6,
-  with W1 and W3 of R7), the mouse wheel (R7 W2), the rail head, the high-contrast color choice and (R8 W7) the
-  logo with high contrast on and off.
+  with W1 and W3 of R7), the mouse wheel (R7 W2), the rail head, the high-contrast color choice, (R10) the Feedback
+  link with one saved comment and the two own-color logos, and (R8 W7) the logo with high contrast on and off.
   .PARAMETER Path
   The JSON file to write.
   #>
@@ -534,6 +534,7 @@ $wn.MeasureRun = {
   $form.StartPosition = 'Manual'; $form.ShowInTaskbar = $false; $form.Location = [Drawing.Point]::new(-20000, -20000)
   $form.Show(); [Windows.Forms.Application]::DoEvents()
   & $ui.FormDpi; $form.BackColor = $pc.surface
+  $wn.Light = [bool](& $wn.AppsLight)   # R10: the rail logo of this computer's app mode, as $wn.Recolor 'start' sets it in a normal run
   $all = New-Object System.Collections.Generic.List[object]
   # A card that cannot be measured is kept with its error and place, and the run goes on (the test names it).
   & $wn.Build { param($k) try { $all.Add((& $wn.MeasureCard $k)) } catch { $all.Add([ordered]@{ Key = $k; Error = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }) } }
@@ -555,6 +556,9 @@ $wn.MeasureRun = {
   # The rail head and the color choice: a step that cannot be measured is kept as its error (the test names it).
   try { $res['Head'] = @(& $wn.MeasureHead) } catch { $res['Head'] = @(); $res['HeadError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   try { $res['Contrast'] = @(& $wn.MeasureContrast) } catch { $res['Contrast'] = @(); $res['ContrastError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
+  # R10 (R37): the Feedback link and one saved comment (B13); the two own-color logos by app mode.
+  try { $res['Feedback'] = (& $wn.MeasureFeedback) } catch { $res['Feedback'] = $null; $res['FeedbackError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
+  try { $res['Theme'] = (& $wn.MeasureTheme) } catch { $res['Theme'] = $null; $res['ThemeError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   # R8 (R35 W7): the rail logo rebuilt with high contrast on and off (last: it rebuilds the rail, the bar and the card).
   try { $res['Logo'] = @(& $wn.MeasureLogo) } catch { $res['Logo'] = @(); $res['LogoError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   Set-Content -LiteralPath $Path -Value ($res | ConvertTo-Json -Depth 10) -Encoding UTF8

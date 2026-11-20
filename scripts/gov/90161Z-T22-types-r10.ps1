@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r8, part "types": the C# source of the window's own drawn controls, as text.
+  90-161.Z Task 22 r10, part "types": the C# source of the window's own drawn controls, as text.
 .DESCRIPTION
   Pfm.Gfx (rounded shapes), Pfm.Chip (a rounded status chip), Pfm.Card (a card with a thin edge and an optional top
   bar), Pfm.Steps (the 12 step dots), Pfm.RailItem (a rail button), Pfm.LinkText (R30 V2: the link of a crumb, drawn
@@ -11,7 +11,7 @@
   RADE shared UI file). The end of this file compiles the text with Add-Type, once per process; the main script loads
   this file after Windows Forms and System.Drawing.
   Inputs: none. Outputs: the compiled types Pfm.* and Rade.Native (a failed Rade.Native only leaves the caret visible).
-  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.

@@ -91,7 +91,7 @@ LIST_TITLES = {   # list variable -> the list title in schemas/lists (the placeh
     "pfm_ListWaivers": "PFM Waivers",   # R36: F08 r1 (rule 4.4A, design approved by the PFM 19 Nov 26) watches this list
     "pfm_ListSettings": "PFM Settings",   # R27: the flows read their six values from rows of this list
 }
-# R36: the placeholder text. The T24 task script (scripts/gov/90161Z-T24-full-solution-test-r6.ps1, $ListGuidMark) finds it by this
+# R36: the placeholder text. The T24 task script (scripts/gov/90161Z-T24-full-solution-test-r7.ps1, $ListGuidMark) finds it by this
 # mark and fails when one is left after its write; tests/check_flow_solution.py checks that both use the same mark.
 LIST_GUID_MARK = "90161Z-LIST-GUID"
 

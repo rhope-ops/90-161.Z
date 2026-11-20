@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 24 r6, module "checks": the F08 warning check of part 1 and the parts 2, 3 and 4 of the full-solution test
+  90-161.Z Task 24 r7, module "checks": the F08 warning check of part 1 and the parts 2, 3 and 4 of the full-solution test
   (split from the main file in R36 to keep it under the code standard's file size cap; the code is unchanged).
 .DESCRIPTION
-  Loaded by 90161Z-T24-full-solution-test-r6.ps1 (dot-sourced from the same folder after the sign-in); it does nothing when it
+  Loaded by 90161Z-T24-full-solution-test-r7.ps1 (dot-sourced from the same folder after the sign-in); it does nothing when it
   is run alone. Inputs: the values and helpers of the main file ($Waivers, $stateFile, $state, Add-Line, Get-RowsFor,
   Get-LocalDate, Wait-Until, Read-State, Save-State, Clear-TestPublication, Clear-TestProduct, Get-ReportLogRow,
   Restore-TestSetting). Outputs: ITEM lines through Add-Line.
@@ -11,9 +11,36 @@
   Writes: the site rows the main file's header lists (part 4 moves the fake rows to the site Recycle Bin and puts the two
           PFM Settings rows back); on this computer part 4 deletes the state file.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T24-full-solution-test-r6.ps1 -Part <1 to 4> loads it.
+  Run: not alone; powershell.exe -File 90161Z-T24-full-solution-test-r7.ps1 -Part <1 to 4> loads it.
 #>
 
+<#
+.SYNOPSIS
+  R7 (R37): masks your sign-in name, and the address in it, as <YOU> in a text (a server message can name it).
+.PARAMETER Text
+  The text to mask.
+.PARAMETER Me
+  Your user from Get-MyUser, or $null.
+.OUTPUTS
+  System.String. The text with <YOU> for the sign-in name and its address part.
+#>
+function Hide-Login([string]$Text, $Me) {
+  if (-not ($Me -and $Me.Login)) { return $Text }
+  # -replace is case-insensitive: a server message can write the sign-in name in another case.
+  foreach ($x in @($Me.Login, ($Me.Login -split '\|')[-1]) | Where-Object { $_ -and $_.Length -ge 3 } | Sort-Object Length -Descending) {
+    $Text = $Text -replace [regex]::Escape($x), '<YOU>' }
+  return $Text
+}
+function Get-MyUser {
+  # Your own user on the site (REST web/currentuser on the one site of this task), for the Leader and Waiver Approver of the fake rows.
+  # Returns @{ Id (0 when not read); Login (your sign-in name, '' when not read) }. R7 (R36 finding 2): the person fields take Login as text,
+  # because a number from a function reached PnP as an empty user name. Login is never written to the output.
+  $raw = [string](Invoke-PnPSPRestMethod -Method Get -Url ($site.TrimEnd('/') + '/_api/web/currentuser?$select=Id,LoginName') -Raw -ErrorAction Stop)
+  $j = $raw | ConvertFrom-Json
+  if ($j.PSObject.Properties['d']) { $j = $j.d }   # the verbose answer form keeps the fields under d
+  $uid = 0; [void][int]::TryParse([string]$j.Id, [ref]$uid)
+  return @{ Id = $uid; Login = ([string]$j.LoginName).Trim() }
+}
 function Get-WarningRow([int]$WaiverId) {
   # The Activity Log rows F08 wrote for one waiver (title "Waiver tier warning: W<ID>"; rule 4.4A).
   $q = "<View><Query><Where><Eq><FieldRef Name='Title'/><Value Type='Text'>Waiver tier warning: W" + $WaiverId + '</Value></Eq></Where></Query></View>'

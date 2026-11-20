@@ -1,4 +1,4 @@
-# Tests part 0 of scripts/gov/90161Z-T24-full-solution-test-r6.ps1 (R36, PFM 19 Nov 26: the list GUIDs go into the solution zip before
+# Tests part 0 of scripts/gov/90161Z-T24-full-solution-test-r7.ps1 (R37: your own user before the first write; R36, PFM 19 Nov 26: the list GUIDs go into the solution zip before
 # the import) against the strict fake site of tests/fake-pnp (pwsh 7, also Windows PowerShell 5.1 through tests/ps/Invoke-Ps51.ps1).
 # It uses the committed solution flow/solution/90161Z-T24-full-flows-r5.zip and proves: every placeholder is replaced by the GUID of
 # its list, entries without one are copied byte for byte, a missing list or a left placeholder stops with a clear line and leaves no
@@ -24,7 +24,7 @@ $t24 = Join-Path $work 'T24'
 $null = New-Item -ItemType Directory -Path $t24 -Force
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T24-full-solution-test-r6.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T24-full-solution-test-r7.ps1'
 $source = Join-Path $Root 'flow/solution/90161Z-T24-full-flows-r5.zip'
 $zipIn = Join-Path $t24 '90161Z-T24-full-flows-r5.zip'
 $zipOut = Join-Path $t24 '90161Z-T24-full-flows-r5-ready.zip'
@@ -134,7 +134,7 @@ Test-That 'no zip stops the part' ($r.Text -match 'STOPPED: SOLUTION ZIP not in 
 # 6. W11 (R35 finding 1): part 1 counts F01 rows only after one full F01 check (16 minutes after the rows were made or changed) and says how
 # long it waits. Wait-FullCheck is taken from the script by its syntax tree and run with a fake clock (Get-Date and Start-Sleep below).
 # The main file and its module checks (R36: the F08 check and parts 2 to 4 moved there to keep the main file under the cap).
-$text = (Get-Content -LiteralPath $script -Raw) + (Get-Content -LiteralPath (Join-Path (Split-Path -Parent $script) '90161Z-T24-checks-r6.ps1') -Raw)
+$text = (Get-Content -LiteralPath $script -Raw) + (Get-Content -LiteralPath (Join-Path (Split-Path -Parent $script) '90161Z-T24-checks-r7.ps1') -Raw)
 $ast = [System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$null, [ref]$null)
 $fn = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Wait-FullCheck' }, $true))
 Test-That 'Wait-FullCheck is defined once' ($fn.Count -eq 1)
@@ -183,7 +183,43 @@ Test-That 'part 1 counts the 8 flows F01 to F08' ($text.Contains('$mine.Count -e
 Test-That 'F08 test rows as in the design' ($text -match "w1 = @\(\(\`$Prefix \+ 'F08 waiver T-1 \(delete me\)'\), 'T-1', \`$true\)" -and
   $text -match "w3 = @\(\(\`$Prefix \+ 'F08 waiver T-3 \(delete me\)'\), 'T-3', \`$true\)" -and
   $text -match "w2 = @\(\(\`$Prefix \+ 'F08 waiver T-2 no approver \(delete me\)'\), 'T-2', \`$false\)" -and
-  $text.Contains("Leader = `$meId; IsActive = `$false"))
+  $text.Contains("Leader = `$meLogin; IsActive = `$false") -and $text.Contains("`$v['WaiverApprover'] = `$meLogin"))
+
+# 8. R7 (R36 finding 2: "The specified user  could not be found."): part 1 reads your own user before its first write and stops
+# when the ID or the sign-in name is empty; Get-MyUser reads both answer forms (fake answers, fake sign-in name).
+$u1 = $text.IndexOf('$me = Get-MyUser'); $w1 = $text.IndexOf('Save-SettingRow $k $SeedSettings[$k]')
+Test-That 'part 1 reads your user before the Settings write' ($u1 -gt 0 -and $w1 -gt $u1) ("$u1 $w1")
+Test-That 'part 1 stops on an empty user before any write' ($text.Contains('if ($me.Id -le 0 -or -not $me.Login) {') -and
+  $text.IndexOf('if ($me.Id -le 0 -or -not $me.Login) {') -lt $w1)
+$fu = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-MyUser' }, $true))
+Test-That 'Get-MyUser is defined once' ($fu.Count -eq 1)
+<#
+.SYNOPSIS
+  Runs Get-MyUser with a fake REST answer.
+.PARAMETER Answer
+  The JSON text the fake Invoke-PnPSPRestMethod gives back.
+.OUTPUTS
+  System.Collections.Hashtable. Id and Login as Get-MyUser gives them.
+#>
+function Invoke-MyUser([string]$Answer) {
+  return (& {
+      # The fake REST call: the answer given, for any address.
+      function Invoke-PnPSPRestMethod { return $Answer }
+      $site = 'https://example.test/sites/fake'
+      . ([scriptblock]::Create($fu[0].Extent.Text))
+      Get-MyUser })
+}
+$fake = 'i:0#.f|membership|fake.user@example.test'
+$r1 = Invoke-MyUser ('{"Id":12,"LoginName":"' + $fake + '"}')
+Test-That 'Get-MyUser reads the short answer' ($r1.Id -eq 12 -and $r1.Login -eq $fake) ('id=' + $r1.Id)
+$r2 = Invoke-MyUser ('{"d":{"Id":7,"LoginName":"' + $fake + '"}}')
+Test-That 'Get-MyUser reads the verbose answer' ($r2.Id -eq 7 -and $r2.Login -eq $fake) ('id=' + $r2.Id)
+$r3 = Invoke-MyUser '{}'
+Test-That 'Get-MyUser gives 0 and empty for an empty answer' ($r3.Id -eq 0 -and $r3.Login -eq '') ('id=' + $r3.Id)
+$fh = @($ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Hide-Login' }, $true))
+. ([scriptblock]::Create($fh[0].Extent.Text))
+$hid = Hide-Login ('The specified user ' + $fake + ' could not be found. Also fake.user@example.test.') @{ Id = 1; Login = $fake }
+Test-That 'Hide-Login masks the sign-in name and its address' (-not $hid.Contains('fake.user') -and $hid.Contains('<YOU>')) $hid
 Test-That 'F08 checks: 1 warning for T-1, none for T-3, none without an approver' ($text.Contains("Add-Line 'f08-warns-t1'") -and $text.Contains("Add-Line 'f08-none-t3'") -and
   $text.Contains("Add-Line 'f08-none-no-approver'") -and $text.Contains("`$warn['w1'].Count -eq 1 -and [string]`$warn['w1'][0]['EventType'] -eq 'Waiver Warning'"))
 Test-That 'part 4 removes the waivers, their warning rows and the office row' ($text.Contains("foreach (`$k in `$Waivers.Keys) { if (`$state.ContainsKey(`$k)) { try { `$n += Clear-TestWaiver") -and

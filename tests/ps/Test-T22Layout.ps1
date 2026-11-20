@@ -1,10 +1,10 @@
-# Tests the look of the T22 PFM window r8 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
+# Tests the look of the T22 PFM window r10 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
 # round R31: the rail head W1, the high-contrast colors W2 and the card pictures W4).
 # Network: none.
 # Writes: one temporary folder with the measure file and the card pictures of the window; removed at the end.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Windows only: elsewhere the one line "T22LAYOUT SKIP ..." and exit 0.
-# Runs scripts/gov/90161Z-T22-pfm-window-r8.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
+# Runs scripts/gov/90161Z-T22-pfm-window-r10.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
 # off-screen, measured and closed; no question) and checks what it wrote: each crumb's link and rest have one font and size
 # (V2), the ink gap after the link is at most 8 px at 100 % (V2), step 8 has no "See the 0 findings" link (V3), step 8's
 # Action Status card ends within 2 px of the main card (V4), Full History is drawn like the other white secondary
@@ -26,6 +26,9 @@
 # no column head of any grid is shortened (each head needs no more width than its cell gave). Once: the rail logo,
 # rebuilt with high contrast on, has only the 2 system colors and differs from its own colors; rebuilt with it off,
 # it is its own colors again (no change of the Windows theme).
+# R10 (R37), once: the Feedback link is on every card in one place and one saved comment writes a PNG of the window,
+# the comment and the list (B13); the Fulcrum and USAF logos differ and the rail shows the one for the app mode; no
+# grid has columns wider than itself (R36 finding 3).
 # Each line shows the measured numbers.
 # Last line: "T22LAYOUT pass=N fail=0" (tests/ps/Invoke-Ps51.ps1 runs it on the ps51 Windows job).
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
@@ -123,7 +126,39 @@ function Test-Logo($M) {
 }
 <#
 .SYNOPSIS
-Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r8.png, saved in the folder of
+Checks Feedback (R10, R37, UI standard B13): the link is on every card, on the check bar, named and in one place; one
+FAKE comment saved through the Save code wrote a real PNG picture of the window, the comment text file and the list.
+.PARAMETER M
+The measure file (Feedback, FeedbackError).
+#>
+function Test-Feedback($M) {
+  $f = $M.Feedback; $err = $(if ($M.FeedbackError) { '; error: ' + $M.FeedbackError } else { '' })
+  $ok = [bool]($f -and [int]$f.Cards -gt 0 -and [int]$f.WithLink -eq [int]$f.Cards -and [int]$f.Places -eq 1 -and ([string]$f.Name).Trim())
+  $nums = 'cards ' + $f.Cards + ' (want more than 0), with the link ' + $f.WithLink + ' (want ' + $f.Cards + '), places ' + $f.Places + ' (want 1)'
+  Test-That 'Feedback link on every card, in one place, named' $ok ($nums + ', name "' + $f.Name + '" (want a name)' + $err)
+  $ok = [bool]($f -and $f.PngSig -and [int]$f.PngBytes -gt 1000 -and ([string]$f.Base) -eq ('90161Z-T22-feedback-home-' + $M.Rev))
+  $nums = 'file ' + $f.Base + '.png (want 90161Z-T22-feedback-home-' + $M.Rev + '.png), ' + $f.PngBytes + ' bytes (want more than 1000)'
+  Test-That 'Feedback save writes a PNG of the window' $ok ($nums + ', PNG signature ' + $f.PngSig + $err)
+  $ok = [bool]($f -and $f.TxtHasComment -and $f.ListHasIt -and ([string]$f.LinkText) -eq 'Feedback (1 saved)')
+  $nums = 'comment in the text file ' + $f.TxtHasComment + ', in the list ' + $f.ListHasIt
+  Test-That 'Feedback save writes the comment and the list' $ok ($nums + ', link "' + $f.LinkText + '" (want "Feedback (1 saved)")' + $err)
+}
+<#
+.SYNOPSIS
+Checks the logo by Windows app mode (R10, R37; PFM 19 Nov 26): the Fulcrum and the USAF logo are both 128 x 128 and
+differ, and the rail shows the one for the app mode of this computer (light: Fulcrum; dark: USAF).
+.PARAMETER M
+The measure file (Theme, ThemeError).
+#>
+function Test-Theme($M) {
+  $t = $M.Theme; $err = $(if ($M.ThemeError) { '; error: ' + $M.ThemeError } else { '' })
+  $ok = [bool]($t -and [string]$t.Fulcrum -eq '128x128' -and [string]$t.Usaf -eq '128x128' -and [int]$t.Diff -gt 0)
+  Test-That 'two logos: Fulcrum (light mode) and USAF (dark mode)' $ok ('Fulcrum ' + $t.Fulcrum + ', USAF ' + $t.Usaf + ', pixels that differ ' + $t.Diff + $err)
+  Test-That 'the rail logo matches the app mode' ([bool]($t -and [int]$t.ShownDiff -eq 0)) ('light mode ' + $t.Light + ', pixels that differ from its own logo ' + $t.ShownDiff + $err)
+}
+<#
+.SYNOPSIS
+Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r10.png, saved in the folder of
 the measure file, and the first one is not blank (at least 3 colors in a 20 x 20 grid of its pixels).
 .PARAMETER M
 The measure file (Cards, Pngs).
@@ -297,7 +332,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGu
 try {
   $file = Join-Path $tmp 'measure.json'
   $engine = (Get-Process -Id $PID).Path
-  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r8.ps1'
+  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r10.ps1'
   $ErrorActionPreference = 'Continue'   # the child's error output is shown below, not thrown here
   $log = @(& $engine -NoProfile -ExecutionPolicy Bypass -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'
@@ -328,6 +363,10 @@ try {
     Test-Contrast $m
     Test-Logo $m
     Test-CardPng $m $tmp
+    Test-Feedback $m
+    Test-Theme $m
+    $cut = @(@($m.LayoutDefects) | Where-Object { [string]$_ -match ' columns need ' })
+    Test-That 'no grid has columns wider than itself (R36 finding 3)' ($cut.Count -eq 0) ('grids with wider columns: ' + $cut.Count + $(if ($cut.Count) { ' (' + ($cut -join '; ') + ')' } else { '' }))
   }
 } finally { Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue }
 Write-Host ('T22LAYOUT pass=' + $script:pass + ' fail=' + $script:fail)

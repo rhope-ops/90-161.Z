@@ -276,7 +276,7 @@ def check_probe_flows(zz, cust_xml, zname):
 
 def check_list_placeholders(zz, zname):
     """R36 (README choice 11): every list variable's default is the placeholder of its list, in the variable file and in each flow's
-    parameters, so the T24 task script (r6, module zip) can write the GUIDs; it finds them by the same mark and names the r5 zip.
+    parameters, so the T24 task script (r7, module zip) can write the GUIDs; it finds them by the same mark and names the r5 zip.
 
     Args:
         zz: the open full solution zip.
@@ -290,9 +290,9 @@ def check_list_placeholders(zz, zname):
         for k, v in json.loads(zz.read(n).decode("utf-8"))["properties"]["definition"]["parameters"].items():
             s = v.get("metadata", {}).get("schemaName", "")
             if s in B.LIST_TITLES and v["defaultValue"] != B.list_placeholder(B.LIST_TITLES[s]): bad(f"{zname} {n}: {k} default is not the placeholder")
-    t24 = (ROOT / "scripts" / "gov" / "90161Z-T24-zip-r6.ps1").read_text(encoding="utf-8")   # T24 r6, module zip (part 0)
-    if f"$ListGuidMark = '{B.LIST_GUID_MARK}'" not in t24: bad(f"T24 r6 module zip: $ListGuidMark is not the builder's mark {B.LIST_GUID_MARK}")
-    if f"'{zname}'" not in t24: bad(f"T24 r6 module zip does not name the solution zip {zname}")
+    t24 = (ROOT / "scripts" / "gov" / "90161Z-T24-zip-r7.ps1").read_text(encoding="utf-8")   # T24 r7, module zip (part 0)
+    if f"$ListGuidMark = '{B.LIST_GUID_MARK}'" not in t24: bad(f"T24 r7 module zip: $ListGuidMark is not the builder's mark {B.LIST_GUID_MARK}")
+    if f"'{zname}'" not in t24: bad(f"T24 r7 module zip does not name the solution zip {zname}")
 
 # R28: the full solution (R28, PFM 17 Nov 26: "the full solution with every flow On") holds F01 to F06, every flow On (StateCode 1), the
 # same unique name as the slice (so it upgrades it), and every environment variable its flows read. R36 (r5): F07 and F08 join, so 10 flows.

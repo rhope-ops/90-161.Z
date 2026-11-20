@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r8, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
+  90-161.Z Task 22 r10, part "ui": the RADE shared UI file (colors, fonts, buttons, card text boxes, layout self-check),
   generated into this file, and the few names it needs from the window.
 .DESCRIPTION
   The block between the rade-ui markers is written by scripts/build_task_scripts.py from the pinned RADE commit
@@ -10,7 +10,7 @@
   high contrast (R31 W2): Select-T22Color and $ui.UseColors (the window part applies them: $wn.Recolor).
   Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the shared UI file, $ui.HcRole,
   $ui.OwnPc, $ui.OwnC, $ui.High, $ui.UseColors and the function Select-T22Color.
-  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -58,8 +58,10 @@ $ui.FontScale = { $ui.FontK = 1.0; $ui.FontDpi = 96.0
 # word. Sent = headline (semibold 22); Body = paragraphs, step lines, help line (12); Small = second lines, notes, box text
 # (10); SmallB = semibold 10: the line in capitals, labels, every button, key numbers, the Record's heads and result words.
 # Link = SmallB underlined (a link is marked by more than color). Word = RADE in the logo line. Mono = the Record's text box only.
+# Turn = Body size, bold: the "Your turn" line of a card where RADE waits for the person.
 $ui.F = @{ Small = $ui.Form.Font; SmallB = (& $ui.Font 'Segoe UI Semibold' 10 $null); Body = (& $ui.Font 'Segoe UI' 12 $null); Sent = (& $ui.Font 'Segoe UI Semibold' 22 $null)
-  Link = (& $ui.Font 'Segoe UI Semibold' 10 ([Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline'))); Word = (& $ui.Font 'Segoe UI' 15 $ui.Bold); Mono = (& $ui.Font 'Consolas' 9 $null) }
+  Link = (& $ui.Font 'Segoe UI Semibold' 10 ([Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline'))); Word = (& $ui.Font 'Segoe UI' 15 $ui.Bold); Mono = (& $ui.Font 'Consolas' 9 $null)
+  Turn = (& $ui.Font 'Segoe UI' 12 $ui.Bold) }   # Turn: "Your turn" above the headline (the Administrator, 2026-11-19: bold, in the accent color)
 # Sizes, in pixels at 100 % (docs/window-design.md "Sizes"): one place for the button sizes and the gaps between the
 # parts of a card. Action = a card's buttons; compact = a button beside a box and the Record's "Back"; a link is 28 high.
 # Gaps are on the scale 4, 8, 12, 16, 24. A button or link has a 4 px margin (room for the 2 px focus ring), so two
@@ -78,6 +80,13 @@ $ui.Wrap = @{}
 # text, so the parts under it never move when the text changes (the Run card's now-doing line: the Administrator, 2026-11-19,
 # "the cancel button jumps up and down"). Its text is cut to n lines with $ui.FitLines.
 $ui.Hold = @{}
+# A text box with a least number of lines ($ui.MinLines[box] = n): at least n lines tall, also with no text (the line in
+# capitals: the "Your turn" line under it never moves up on a card with no line).
+$ui.MinLines = @{}
+# A text box that shows changing values ($ui.Range[box] = every text it can show on this card, set by $ui.SetCard): it is as
+# wide and as tall as the largest of them, so a new value never moves or resizes a part of the card (the Administrator,
+# 2026-11-19: "values cause fluttering and distortion as things fly around").
+$ui.Range = @{}
 $ui.GetWrap = { param($C) if ($C -is [System.Windows.Forms.TextBox]) { return [int]$ui.Wrap[$C] }; return [int]$C.MaximumSize.Width }
 $ui.SetWrap = { param($C, [int]$W) if ($C -is [System.Windows.Forms.TextBox]) { $ui.Wrap[$C] = $W; & $ui.Reflow $C } else { $C.MaximumSize = New-Object System.Drawing.Size($W, 0) } }
 $ui.Reflow = { param($T)
@@ -85,10 +94,17 @@ $ui.Reflow = { param($T)
     if ($n -gt 0) {   # a fixed number of lines: as wide as its wrap width, n lines tall
       $w = [int]$ui.Wrap[$T]; $one = & $ui.Meas 'Ag' $T.Font 100000
       $ns = New-Object System.Drawing.Size($(if ($w -gt 0) { $w + (& $ui.Sc 4) } else { $one.Width }), ($n * $one.Height + (& $ui.Sc 2))); if ($T.Width -ne $ns.Width -or $T.Height -ne $ns.Height) { $T.Size = $ns }; return }
-    if (-not $txt) { return }
-    $sl = & $ui.Sc 4; $w = [int]$ui.Wrap[$T]; $one = & $ui.Meas $txt $T.Font 100000; $sz = $one
-    if ($w -gt 0 -and $one.Width -gt $w) { $sz = & $ui.Meas $txt $T.Font $w; $bw = $w + $sl } else { $bw = $one.Width + 2 * $sl }
-    $ns = New-Object System.Drawing.Size($bw, ($sz.Height + (& $ui.Sc 2))); if ($T.Width -ne $ns.Width -or $T.Height -ne $ns.Height) { $T.Size = $ns } } catch { $null = $_ } }
+    $all = @(@($ui.Range[$T]) + @($txt) | Where-Object { $_ }); $m = [int]$ui.MinLines[$T]; if (-not $all.Count -and $m -le 0) { return }   # its text and its range
+    $w = [int]$ui.Wrap[$T]; $bw = 0; $bh = 0
+    foreach ($x in $all) { $s = & $ui.TextSize ([string]$x) $T.Font $w; $bw = [math]::Max($bw, $s.Width); $bh = [math]::Max($bh, $s.Height) }
+    if ($m -gt 0) { $bw = [math]::Max($bw, (& $ui.Sc 4)); $bh = [math]::Max($bh, ($m * (& $ui.Meas 'Ag' $T.Font 100000).Height + (& $ui.Sc 2))) }
+    $ns = New-Object System.Drawing.Size($bw, $bh); if ($T.Width -ne $ns.Width -or $T.Height -ne $ns.Height) { $T.Size = $ns } } catch { $null = $_ } }
+# The size a card text box needs for one text: as the edit control wraps it at the wrap width (0: no wrap), with the few
+# pixels the control keeps at its edges. Takes the text, the font and the wrap width; gives back the size.
+$ui.TextSize = { param([string]$Txt, $Font, [int]$W)
+  $sl = & $ui.Sc 4; $one = & $ui.Meas $Txt $Font 100000; $sz = $one
+  if ($W -gt 0 -and $one.Width -gt $W) { $sz = & $ui.Meas $Txt $Font $W; $bw = $W + $sl } else { $bw = $one.Width + 2 * $sl }
+  return (New-Object System.Drawing.Size($bw, ($sz.Height + (& $ui.Sc 2)))) }
 $ui.Menu = New-Object System.Windows.Forms.ContextMenuStrip; $ui.Menu.AccessibleName = 'Text menu'
 $ui.MenuCopy = $ui.Menu.Items.Add('Copy'); $ui.MenuAll = $ui.Menu.Items.Add('Select All')
 # Copy gives the text as written (R28 N4): a word that RADE broke to fit a line is whole again (the break is a lone line feed), and the
@@ -266,6 +282,18 @@ $ui.InkBox = { param($C)
 # as the window's labels (R24 job: TextRenderer's default flags gave 3 to 9 px more than a label uses).
 $ui.Probe = New-Object System.Windows.Forms.Label; $ui.Probe.AutoSize = $true; $ui.Probe.UseMnemonic = $false; $ui.Trash = @(@($ui.Trash) | Where-Object { $_ }) + @($ui.Probe)   # disposed when the window has closed
 $ui.WordW = { param([string]$T, $F) try { $ui.Probe.Font = $F; $ui.Probe.Text = $T; return [int]$ui.Probe.PreferredSize.Width } catch { return [int][System.Windows.Forms.TextRenderer]::MeasureText($T, $F).Width } }
+$ui.Most = @{}   # the widest values of each label of changing values ($ui.FixW)
+# A label that shows changing values (a percent, a count, a time; $ui.Most[label] = the widest values it can show) keeps one
+# size: as wide as the widest of them and one line tall, so nothing beside it moves when the value changes (the
+# Administrator, 2026-11-19). A value wider than all of them still fits: the label grows for it. Does nothing before the
+# window has its scale (Windows Forms would scale the size again). Takes the label; gives back nothing.
+$ui.FixW = { param($L) if (-not $ui.Scaled) { return }
+  try { $w = 0; foreach ($x in @(@($ui.Most[$L]) + @([string]$L.Text) | Where-Object { $_ })) { $w = [math]::Max($w, (& $ui.WordW ([string]$x) $L.Font)) }
+    $ui.Probe.Font = $L.Font; $ui.Probe.Text = '0'; $h = [int]$ui.Probe.PreferredSize.Height; if ($L.AutoSize) { $L.AutoSize = $false }
+    if ($L.Width -ne $w -or $L.Height -ne $h) { $L.Size = New-Object System.Drawing.Size($w, $h) } } catch { $null = $_ } }   # no measure: the next fit sets it
+# The height of one line of text in a font, as Windows draws it (TextRenderer: on a 150 % screen it can be taller than
+# what a text box gives itself; R35 "Field line cut: one line needs 32 high, has 27"). Takes the font; gives back pixels.
+$ui.LineH = { param($Font) [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $Font).Height }
 $ui.BreakLong = { param([string]$T, $F, [int]$W)
   if ($W -le 0 -or -not $T) { return $T }
   $parts = foreach ($ln in ($T -split '(\r?\n)')) {   # line by line; the line breaks are kept
@@ -426,7 +454,7 @@ $ui.Check = {
         # A cut line (R28 N9: the run card's status line was cut through its middle): a control with text is at least one line of its
         # font tall, also a label that ends with "..." by rule. A rich text box (the lines of a hand step) is as tall as its text.
         if ($c.Text -and ($c -is [System.Windows.Forms.Label] -or $c -is [System.Windows.Forms.ButtonBase] -or $c -is [System.Windows.Forms.TextBoxBase])) {
-          $lh = [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $c.Font).Height; if ($c -is [System.Windows.Forms.TextBoxBase]) { $lh = [int][math]::Floor($lh * 0.8) }   # an edit control draws a line with less padding
+          $lh = [int](& $ui.LineH $c.Font); if ($c -is [System.Windows.Forms.TextBoxBase]) { $lh = [int][math]::Floor($lh * 0.8) }   # an edit control draws a line with less padding
           if ($c.ClientSize.Height + 1 -lt $lh) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' line cut: one line needs ' + $lh + ' high, has ' + $c.ClientSize.Height) } }
         if ($c -is [System.Windows.Forms.RichTextBox] -and $ui.GuideNeed -and [object]::ReferenceEquals($c, $ui.Guide)) { $gn = [int](& $ui.GuideNeed); if ($gn -gt $c.ClientSize.Height + 1) { $ui.LayBad.Add('LAYOUT ' + $card + ' Guide text: needs ' + $gn + ' high, has ' + $c.ClientSize.Height) } }
         $isText = ($c -is [System.Windows.Forms.Label] -or $c -is [System.Windows.Forms.ButtonBase])

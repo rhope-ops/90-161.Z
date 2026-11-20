@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r8 (round R35). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r10 (round R37). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
@@ -8,7 +8,15 @@
   (at 100 %) the main column scrolls. Esc goes back one card. Close it with its X. A bar at the bottom shows 18 checks one at a
   time with Pass and Fail (PFM 17 Nov 26); each layout defect is one line "FAIL LAYOUT ..." and "PASS layout" is one line when
   there is none (the runner counts these words).
-  WHAT R8 CHANGES (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
+  WHAT R10 CHANGES (round R37; r9 was the dynamic sizing that failed its Windows tests and is not in this revision):
+  the rail logo has the Fulcrum colors when Windows apps use light mode (AppsUseLightTheme 1 or missing) and the USAF
+  colors in dark mode (0), and the 2 system colors with high contrast on, as in r8 ($wn.AppsLight, $wn.LogoOwn; a THEME
+  line; PFM 19 Nov 26). A grid whose columns are wider than it gives the excess back ($wn.FitGrids; R36 finding 3: the
+  home grid was 9 px short). Feedback (UI standard B13, PFM 19 Nov 26): a link on the check bar, in the same place on
+  every card, opens a small box "What does not look right?"; Save writes the comment and a picture of the window into
+  the T22 folder as 90161Z-T22-feedback-<card>-r10.txt and .png and adds a FEEDBACK line; at the close
+  90161Z-T22-feedback-r10.txt lists them (or none).
+  WHAT R8 CHANGED (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
   in 2 system colors, and in its own colors again when it goes off ($wn.LogoImage, Pfm.Logo); every rail build checks
   the logo's colors (a LOGO line; a W7 LAYOUT line when they are wrong). No column head of a grid is shortened with
   dots in a narrow grid: each column keeps its head's width ($wn.HeadMin); the layout self-check writes a W7 LAYOUT
@@ -21,26 +29,28 @@
   main card (D1); the crumb's link and rest have one size and one text middle (D2); the label "Passed" is level with
   the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
-  R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its 7 parts
-  from its own folder, 90161Z-T22-<part>-r8.ps1 (cards, types, ui, parts, grid, window, measure).
-  Inputs: the 7 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
+  R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its parts
+  from its own folder, 90161Z-T22-<part>-r10.ps1 (cards, types, ui, parts, grid, logo, window, feedback, measure; R10 adds
+  logo and feedback).
+  Inputs: the 9 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 18 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r8.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r10.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r8.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  check answers), 90161Z-T22-window-bounds.json (last size and place) and 90161Z-T22-card-<card>-r8.png (one per card) in
-  the T22 folder.
+  Outputs: 90161Z-T22-window-r10.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r10.png (one per
+  card) and the feedback files (90161Z-T22-feedback-r10.txt, and a .txt and a .png per comment) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r8.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r10.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r8.txt, 90161Z-T22-window-bounds.json and the card PNG files in the T22 folder (or -TestDir);
-  with -Measure only the file given and the card PNG files in its folder; with -Opened nothing.
+  Writes: 90161Z-T22-window-r10.txt, 90161Z-T22-window-bounds.json, the card PNG files and the feedback files in the T22
+  folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
+  with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
   Credentials: none.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
 $task = 'T22'
-$Rev = 'r8'
+$Rev = 'r10'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -108,6 +118,60 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   Set-Content -LiteralPath $Log -Value $Lines -Encoding UTF8
 }
 # <<< task-common
+# R10 (R37 r1): Hide-Site masks a Feedback comment like every site result line (e-mail addresses, URLs, GUIDs). This window
+# never signs in and never calls Get-SiteAddress.
+# >>> site-common: generated from scripts/gov/src/site-common.ps1 by scripts/build_task_scripts.py (do not edit)
+function Get-SiteAddress([string]$ConfigDir) {
+  # One entry (PFM 15 Nov 26): the address RADE holds (RADE_SITE, from its "Site address" box) is used with no question;
+  # outside RADE the one saved in Config\90161Z-site.txt is used. Only when neither exists does a question open (once).
+  # To change the site, use "Change the site address" in RADE. Kept only on this computer (the repo is public).
+  $ok = '^https://[^/\s]+/sites/[^/\s]+'
+  $v = ([string]$env:RADE_SITE).Trim()
+  if ($v -match $ok) { return $v }
+  $f = Join-Path $ConfigDir '90161Z-site.txt'
+  if (Test-Path -LiteralPath $f -PathType Leaf) { $v = ([string](Get-Content -LiteralPath $f -TotalCount 1)).Trim(); if ($v -match $ok) { return $v } }
+  # RADE runs a step with no window, so a question there would wait unseen: stop with the fix instead.
+  if ($env:RADE_CONTRACT) { throw 'SITE ADDRESS not set. Complete the "Site address" box in RADE, then run this step again.' }
+  $v = ([string](Read-Host 'Site address (it starts with https://; it is kept only on this computer), then press Enter')).Trim()
+  if ($v -notmatch $ok) { throw 'SITE ADDRESS not given or not a site address (https://<host>/sites/<name>). Run again.' }
+  if (-not (Test-Path -LiteralPath $ConfigDir -PathType Container)) { [void](New-Item -ItemType Directory -Path $ConfigDir -Force) }
+  Set-Content -LiteralPath $f -Value $v -Encoding UTF8
+  return $v
+}
+
+function Hide-Site([string]$Text, [string]$Site) {
+  <#
+  .SYNOPSIS
+  Masks e-mail addresses, the site, its host, path, name and tenant, other URLs, cloud and .mil hosts and GUIDs in a
+  result text. Not masked: display names, office symbols, phone numbers, user ids, computer names.
+  .PARAMETER Text
+  The text to clean (a result line or an error message).
+  .PARAMETER Site
+  The site address (https://<host>/sites/<name>), or an empty text for the generic rules only.
+  .OUTPUTS
+  System.String. The text with each match replaced by a placeholder such as <EMAIL>, <SITE> or <GUID>.
+  #>
+  # The address only (name, @ or %40, host; encoded characters and an apostrophe inside the name count as part of it),
+  # first: the host rules below would
+  # keep its name part.
+  $Text = $Text -replace '(?:[\w.+=-]|%[0-9A-Fa-f]{2}|(?<=\w)[''\u2019](?=\w))+(?:@|%40)[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*(?:%[0-9A-Fa-f]{2})*', '<EMAIL>'
+  if ($Site) {
+    $Text = $Text -replace [regex]::Escape($Site.TrimEnd('/')), '<SITE>'
+    try {
+      $u = [uri]$Site; $p = $u.AbsolutePath.TrimEnd('/'); $leaf = ($p -split '/')[-1]   # $p is /sites/<name>: also in URL-encoded form
+      $set = @(, @($u.Host, '<SITE-HOST>', ''))   # literal text, placeholder, word boundary (tenant and site name only, 3+ letters)
+      if ($p.Length -gt 1) { $set += @($p, '<SITE-PATH>', ''), @([uri]::EscapeDataString($p), '<SITE-PATH>', ''), @($leaf, '<SITE-NAME>', '\b') }
+      $set += , @(($u.Host -split '\.')[0], '<TENANT>', '\b')
+      foreach ($s in $set) { if ($s[2] -eq '' -or $s[0].Length -ge 3) { $Text = $Text -replace ($s[2] + [regex]::Escape($s[0]) + $s[2]), $s[1] } }
+    } catch { $null = $_ }
+  }
+  # Pattern and mask pairs. The GUID has no \b: guid%27<id> must be masked too.
+  $g = @('https?://\S+', '<URL>', '\b[\w.-]+\.(sharepoint|onmicrosoft|microsoftonline|windows)\.(com|us|net|mil)\b', '<TENANT-HOST>',
+    '\b[\w.-]+\.mil\b', '<HOST>', '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}', '<GUID>')
+  for ($i = 0; $i -lt $g.Count; $i += 2) { $Text = $Text -replace $g[$i], $g[$i + 1] }
+  return $Text
+}
+# <<< site-common
 $OpenedHours = 3   # a result file older than this is from an earlier round (review R30): -Opened does not trust it
 # The -Opened line for the result file in $Dir: PASS when it was written in the last $OpenedHours hours, its last
 # "CARDS opened" line counts more than 0 cards and no line starts with STOPPED:, else FAIL (also when it is missing).
@@ -129,8 +193,8 @@ if ($Opened) {   # no window, no file: one line about the last run, exit 1 on FA
 function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.InvocationInfo.ScriptName)) + ':' + $Err.InvocationInfo.ScriptLineNumber) }
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
-$Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'window', 'measure')
-# The full path of part $Name: 90161Z-T22-<name>-r8.ps1 in this file's folder.
+$Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'logo', 'window', 'feedback', 'measure')
+# The full path of part $Name: 90161Z-T22-<name>-r10.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
@@ -187,11 +251,11 @@ try {
   $page = New-Object System.Windows.Forms.FlowLayoutPanel; $page.FlowDirection = 'TopDown'; $page.WrapContents = $false; $page.AutoSize = $true; $page.AutoSizeMode = 'GrowAndShrink'
   $page.BackColor = $pc.surface; [void]$main.Controls.Add($page)
   $form.Controls.Add($main); $form.Controls.Add($rail)
-  $wn = @{ Cur = ''; Prev = 'home'; Notice = ''; Err = ''; Field = @{}; Gridsel = $null; Wide = $false; RailBtn = @(); Secs = @() }
+  $wn = @{ Cur = ''; Prev = 'home'; Notice = ''; Err = ''; Field = @{}; Gridsel = $null; Wide = $false; RailBtn = @(); Secs = @(); Light = $true }
   # The crumb's link font (R30 V2): the crumb's own font, underlined; the same family and size as the rest of the crumb.
   try { $wn.CrumbFont = New-Object System.Drawing.Font($ui.F.Small, [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline'))
     $ui.Trash = @($ui.Trash) + @($wn.CrumbFont) } catch { $wn.CrumbFont = $ui.F.Small }
-  foreach ($part in 'parts', 'grid', 'window', 'measure') { . (Get-PartPath $part) }
+  foreach ($part in 'parts', 'grid', 'logo', 'window', 'feedback', 'measure') { . (Get-PartPath $part) }
   if ($Measure) { & $wn.MeasureRun $Measure } else { & $wn.Hook; [void]$form.ShowDialog() }
   $wn.Ready = $false
   $dpi = 96; try { $g = $form.CreateGraphics(); $dpi = [int]$g.DpiX; $g.Dispose() } catch { $null = $_ }

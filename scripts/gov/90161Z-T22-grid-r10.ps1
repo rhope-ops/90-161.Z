@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r8, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r10, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
@@ -16,7 +16,7 @@
   the width of its head ($wn.HeadMin, $wn.GridCols), and every painted head keeps what it needed and had (Tag.Heads)
   for the measure part and the layout self-check.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -154,6 +154,51 @@ $wn.Grid = {
   $g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled = $true; $e.SuppressKeyPress = $true; if ($s.CurrentRow) { & $wn.Later $s $s.CurrentRow.Index } } })
   [void]$Parent.Controls.Add($g); $g.ClearSelection(); $wn.Gridsel = $g
   if ($b.Count) { $wn.CountText = [string]$b.Count; $wn.CountBox = & $wn.Txt $Parent ($b.Count -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq = $g } }
+$wn.FitGrids = {
+  <#
+  .SYNOPSIS
+  R10 (R37; R36 finding 3: the home grid "Who has it now" columns needed 810 px, the grid had 801): after a card is laid
+  out, each grid on the page whose visible columns are wider than it can show gives the excess back.
+  .DESCRIPTION
+  The room is the grid's client width, less its vertical scroll bar when that shows. The excess comes off the minimum
+  widths of the columns that are not the pub column, the column with the most width above its head first ($wn.HeadMin),
+  never under its head; only when that is not enough, under the head (never under 2 px). Then the grid lays out its
+  columns again (a 1 px size change makes the fill columns share the room again). The layout self-check
+  ($wn.ScrollCheck) still measures the result, so a grid that does not fit stays a defect.
+  .OUTPUTS
+  The number of grids changed.
+  #>
+  $n = 0; $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) { foreach ($c in $st.Pop().Controls) {
+      if ($c -is [Windows.Forms.DataGridView]) { if (& $wn.FitGrid $c) { $n++ } }
+      elseif ($c.Controls.Count) { $st.Push($c) } } }
+  return $n }
+$wn.FitGrid = {
+  <#
+  .SYNOPSIS
+  R10: fits one grid (see $wn.FitGrids): lowers column minimums by the excess of its visible columns over its room.
+  .PARAMETER G
+  The grid (its Tag holds the column kinds and the column list, $wn.Grid).
+  .OUTPUTS
+  $true when it changed a column, else $false.
+  #>
+  param($G)
+  $sum = 0; foreach ($k in $G.Columns) { if ($k.Visible) { $sum += $k.Width } }
+  $bar = @($G.Controls | Where-Object { $_ -is [Windows.Forms.VScrollBar] -and $_.Visible }).Count
+  $room = $G.ClientSize.Width - $(if ($bar) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
+  $excess = $sum - $room; if ($excess -le 0) { return $false }
+  $kinds = $G.Tag.Kind; $cols = @($G.Tag.Cols)
+  $heads = @{}; foreach ($c in $cols) { $heads[[string]$c.N] = [int](& $wn.HeadMin $c) }
+  $free = @($G.Columns | Where-Object { $_.Visible -and [string]$kinds[$_.Name] -ne 'pub' }); $gave = 0
+  foreach ($pass in 'above head', 'under head') {
+    foreach ($k in @($free | Sort-Object { $_.Width - [int]$heads[$_.Name] } -Descending)) {
+      if ($excess -le 0) { break }
+      $floor = $(if ($pass -eq 'above head') { [math]::Max(2, [int]$heads[$k.Name]) } else { 2 })
+      $give = [math]::Min($excess, $k.Width - $floor); if ($give -le 0) { continue }
+      $k.MinimumWidth = [math]::Max(2, [math]::Min($k.MinimumWidth, $k.Width - $give)); $excess -= $give; $gave++ } }
+  if (-not $gave) { return $false }   # excess, but no column could give any width back: nothing changed
+  $G.Width = $G.Width - 1; $G.Width = $G.Width + 1   # the fill columns share the room again
+  return $true }
 # The widest number (as a link) and the widest title of the pub values ("number|title") of $Rows, in pixels, measured as
 # $wn.PaintPub draws them. All rows, not only the shown ones, so a filter does not move the title column.
 $wn.PubWidths = { param($Rows)

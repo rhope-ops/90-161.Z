@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r8, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r10, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   $wn.Show builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
@@ -17,87 +17,16 @@
   R8 (R35 W7, R34 finding 7): with high contrast on, the rail logo is drawn in 2 system colors and back in its own
   colors when it goes off ($wn.LogoImage); each rail build checks the logo it shows ($wn.LogoFacts and $wn.LogoBad in
   the measure part: a LOGO line, and a LAYOUT line when the logo has the wrong colors).
-  The rail logo is the app-logo block below, written by scripts/build_task_scripts.py (never edit it here).
+  The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
+  R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
+  app mode (the logo part); a grid wider than its room gives the excess back ($wn.FitGrids in the grid part).
   Credentials: none.
 #>
-# >>> app-logo: generated from assets/logo/90161Z-logo.svg by scripts/build_task_scripts.py (do not edit)
-$AppLogoPng = @(
-  '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'
-) -join ''
-# <<< app-logo
 $wn.Press = {
   <#
   .SYNOPSIS
@@ -155,22 +84,13 @@ $wn.HeadParts = {
   $nm.Location = [Drawing.Point]::new((& $wn.Sc 64), ($top + [int][math]::Round(($side - $nh) / 2.0)))
   [void]$Into.Controls.Add($nm); $out.Name = $nm
   return $out }
-# R8 (R35 W7): the 2 system colors of the logo with high contrast on: the dark disc and Z take Window, the light rings,
-# page and arc take WindowText (the rail behind it is WindowText, so the disc stands out from the rail).
-$wn.LogoRole = @{ Dark = 'Window'; Light = 'WindowText' }
-# R8 (R35 W7): the logo picture for high contrast $High: its own colors when off; when on, a copy in the 2 system colors
-# of $wn.LogoRole (Pfm.Logo.TwoTone; each pixel keeps its cover).
-$wn.LogoImage = { param([bool]$High)
-  $img = [Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($AppLogoPng))))
-  if (-not $High) { return $img }
-  $d = [string]$wn.LogoRole.Dark; $l = [string]$wn.LogoRole.Light
-  try { return [Pfm.Logo]::TwoTone($img, [Drawing.SystemColors]::$d, [Drawing.SystemColors]::$l) } finally { $img.Dispose() } }
 # The rail head: the logo and the app name ($wn.HeadParts; kept in $wn.Logo and $wn.AppName for the measure part) and the
 # line under them. R8 (R35 W7): then the logo check: one LOGO line, and a LAYOUT line when its colors are wrong.
 $wn.RailHead = {
   $h = & $wn.HeadParts $rail $ui.F.Word; $wn.Logo = $h.Logo; $wn.AppName = $h.Name
   try { $lf = & $wn.LogoFacts; $bad = @(& $wn.LogoBad $lf); foreach ($x in $bad) { $ui.LayBad.Add([string]$x) }
-    if ($lf.Shown) { $lines.Add('LOGO ' + $(if ($lf.High) { 'high contrast on: system colors' } else { 'high contrast off: own colors' }) + ', other pixels ' + $lf.Other +
+    if ($lf.Shown) { $lines.Add('LOGO ' + $(if ($lf.High) { 'high contrast on: system colors' } elseif ($wn.Light) { 'high contrast off, light mode: own colors (Fulcrum)' }
+        else { 'high contrast off, dark mode: own colors (USAF)' }) + ', other pixels ' + $lf.Other +
         ', changed pixels ' + $lf.Diff + $(if ($bad.Count) { ' (wrong colors)' } else { ' (right colors)' })) } }
   catch { $lines.Add('NOTE the logo check stopped: ' + ([string]$_.Exception.Message)) }
   $sb = & $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $sb.BackColor = $pc.navy; $sb.Text = 'Publications and Forms'; $sb.Visible = $true
@@ -351,6 +271,7 @@ $wn.Show = {
   & $wn.ShowCols $c $Key $cw $wide
   $page.ResumeLayout($true); $form.ResumeLayout($true)
   & $wn.LevelCaps; & $wn.Align
+  $null = & $wn.FitGrids   # R10 (R37): a grid whose columns are wider than it gives the excess back
   $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
   $form.AcceptButton = $wn.Primary
   $ui.CardAt = $ui.Clock.Elapsed.TotalMilliseconds
@@ -417,7 +338,9 @@ $wn.BarLayout = {
   $pw = [math]::Max($wn.BarPass.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarPass.MinimumSize.Width)
   $fw = [math]::Max($wn.BarFail.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarFail.MinimumSize.Width)
   $bh = [math]::Max($wn.BarPass.Height, $wn.BarFail.Height)
-  $tw = [math]::Max((& $wn.Sc 200), $w - 2 * $pad - $pw - $fw - 2 * $gap)
+  # R10 (R37, B13): the Feedback link sits left of Pass, in the same place on every card; the check text gets the rest.
+  $kw = $(if ($wn.FbLink) { [math]::Max($wn.FbLink.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.FbLink.MinimumSize.Width) + 2 * $gap } else { 0 })
+  $tw = [math]::Max((& $wn.Sc 200), $w - 2 * $pad - $pw - $fw - 2 * $gap - $kw)
   $th = 0; foreach ($c in $Checks) { $m = & $ui.Meas ([string]$c.Text) $ui.F.Body $tw; $th = [math]::Max($th, [int]$m.Height) }
   $th += (& $wn.Sc 6)
   $nh = [int]$wn.BarNo.PreferredSize.Height
@@ -425,7 +348,8 @@ $wn.BarLayout = {
   $wn.BarNo.Location = [Drawing.Point]::new($pad, $pad)
   $wn.BarText.Location = [Drawing.Point]::new($pad, ($pad + $nh + (& $wn.Sc 2))); & $ui.SetWrap $wn.BarText $tw; $wn.BarText.Size = [Drawing.Size]::new($tw, $th)
   $by = [int](($wn.Bar.Height - $bh) / 2)
-  $wn.BarPass.Location = [Drawing.Point]::new(($w - $pad - $fw - $gap - $pw), $by); $wn.BarFail.Location = [Drawing.Point]::new(($w - $pad - $fw), $by) }
+  $wn.BarPass.Location = [Drawing.Point]::new(($w - $pad - $fw - $gap - $pw), $by); $wn.BarFail.Location = [Drawing.Point]::new(($w - $pad - $fw), $by)
+  if ($wn.FbLink) { $wn.FbLink.Location = [Drawing.Point]::new(($wn.BarPass.Left - $kw + $gap), [int](($wn.Bar.Height - $wn.FbLink.Height) / 2)) } }
 $wn.BuildBar = {
   <#
   .SYNOPSIS
@@ -440,13 +364,16 @@ $wn.BuildBar = {
     $x.Add_SizeChanged({ & $wn.Round $this 4 })
     $x.Add_Click({ $r = ([string]$this.Tag).ToUpperInvariant(); & $wn.Answer $r })
     [void]$bar.Controls.Add($x); if ($n -eq 'Pass') { $wn.BarPass = $x } else { $wn.BarFail = $x } }
+  # R10 (R37, B13): Feedback, a link on the bar (the same place on every card); it asks for a comment on the card shown.
+  $fb = & $ui.LinkBtn (& $wn.FeedbackText); $fb.AccessibleName = 'Feedback on this card'; $fb.Visible = $true
+  $fb.Add_Click({ if (& $ui.Settled) { & $wn.FeedbackAsk $wn.Cur } }); [void]$bar.Controls.Add($fb); $wn.FbLink = $fb
   $wn.Bar = $bar; $wn.BarNo = $no; $wn.BarText = $tx
   $form.Controls.Add($bar); $main.BringToFront()
   & $wn.BarShow; & $wn.BarLayout }
 # The layout self-check runs 350 ms after a card changed; a new size rebuilds the card 250 ms after the last size change.
 $wn.Ready = $false; $wn.LastW = 0; $wn.LastH = 0
 $wn.CheckTimer = New-Object System.Windows.Forms.Timer; $wn.CheckTimer.Interval = 350
-$wn.CheckTimer.Add_Tick({ $wn.CheckTimer.Stop(); try { & $ui.Check; & $wn.ScrollCheck } catch { $null = $_ } })
+$wn.CheckTimer.Add_Tick({ $wn.CheckTimer.Stop(); try { $null = & $wn.FitGrids; & $ui.Check; & $wn.ScrollCheck } catch { $null = $_ } })
 $wn.SizeTimer = New-Object System.Windows.Forms.Timer; $wn.SizeTimer.Interval = 250
 $wn.SizeTimer.Add_Tick({ $wn.SizeTimer.Stop()
     if ($form.ClientSize.Width -ne $wn.LastW -or $form.ClientSize.Height -ne $wn.LastH) {
@@ -482,7 +409,7 @@ $wn.Build = {
   & $wn.State 'shown'
   $wn.LastW = $form.ClientSize.Width; $wn.LastH = $form.ClientSize.Height
   foreach ($k in $Cards.Keys) {
-    $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k; [Windows.Forms.Application]::DoEvents(); & $ui.Check; & $wn.ScrollCheck; & $wn.NameScan $k $page
+    $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k; [Windows.Forms.Application]::DoEvents(); $null = & $wn.FitGrids; & $ui.Check; & $wn.ScrollCheck; & $wn.NameScan $k $page
     & $wn.SavePng $k
     if ($Each) { & $Each $k } }
   & $wn.NameScan 'rail' $rail; & $wn.NameScan 'bar' $wn.Bar
@@ -497,17 +424,23 @@ $wn.Recolor = {
   rail, the check bar (the current check stays) and the card on the page, so every part takes the new colors; nothing
   happens when the setting did not change. Each change adds one CONTRAST line to the result.
   .PARAMETER When
-  'start' or 'changed' (R8: or a name the measure part gives).
+  'start' or 'changed' (R8: or a name the measure part gives). R10 (R37): a change of the Windows app mode (light or
+  dark) rebuilds too, so the logo takes its Fulcrum or USAF colors; it adds one THEME line.
   .PARAMETER Force
   R8 (R35 W7): $true or $false to use instead of the Windows setting (the measure part rebuilds the window both ways
   with no change of the Windows theme); $null: the Windows setting.
   #>
   param([string]$When, $Force = $null)
   $high = $(if ($null -ne $Force) { [bool]$Force } else { [bool][Windows.Forms.SystemInformation]::HighContrast })
-  if ($When -ne 'start' -and $high -eq [bool]$ui.High) { return }
+  $light = [bool](& $wn.AppsLight)   # R10 (R37): the logo follows the Windows app mode too
+  $highNew = ($When -eq 'start' -or $high -ne [bool]$ui.High); $lightNew = ($When -eq 'start' -or $light -ne [bool]$wn.Light)
+  if (-not $highNew -and -not $lightNew) { return }
+  $wn.Light = $light
   & $ui.UseColors $high; $wn.Fills = & $wn.FillsOf
   $form.BackColor = $pc.surface; $main.BackColor = $pc.surface; $page.BackColor = $pc.surface; $rail.BackColor = $pc.navy
-  $lines.Add('CONTRAST ' + $When + ': high contrast ' + $(if ($high) { 'on, the window uses the system colors' } else { 'off, the window uses its own colors' }))
+  if ($highNew) { $lines.Add('CONTRAST ' + $When + ': high contrast ' + $(if ($high) { 'on, the window uses the system colors' } else { 'off, the window uses its own colors' })) }
+  if ($lightNew) { $lines.Add('THEME ' + $When + ': Windows apps use ' + $(if ($light) { 'light mode, the logo has the Fulcrum colors' } else { 'dark mode, the logo has the USAF colors' }) +
+      $(if ($high) { ' (shown in the system colors while high contrast is on)' } else { '' })) }
   if ($When -eq 'start') { return }
   $form.SuspendLayout()
   foreach ($x in @($rail.Controls)) { $rail.Controls.Remove($x); $x.Dispose() }
@@ -566,6 +499,6 @@ $wn.Hook = {
         $_.Handled = $true; $_.SuppressKeyPress = $true }
       elseif ($_.Control -and $_.KeyCode -ge [Windows.Forms.Keys]::D1 -and $_.KeyCode -le [Windows.Forms.Keys]::D5) {
         $n = [int]$_.KeyCode - [int][Windows.Forms.Keys]::D1; $wn.Notice = ''; $wn.Err = ''; & $wn.Show ([string]$RailItems[$n].Go); $_.Handled = $true; $_.SuppressKeyPress = $true } })
-  $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds })
+  $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds; & $wn.FeedbackList })
   $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null }
       & $wn.WheelOff }) }

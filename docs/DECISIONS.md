@@ -6,6 +6,18 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | RADE lock moves to release engine-v27 (RADE 32f64a2, serial 21) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
+| 2026-11-19 | App font: Sofia Sans Condensed for titles, Sofia Sans for text (one open family, shipped as files), Segoe UI fallback; web pages too. Scope: all apps (UI standard v1, B7). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B7 |
+| 2026-11-19 | Every card (RADE and app windows) gets "Feedback": the PFM types a comment and it saves a snapshot of the app window with it into the results. Scope: all apps (UI standard v1, B13). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B13 |
+| 2026-11-19 | R37 is a large round the PFM runs on 20 Nov 26: everything built overnight that does not break testing; test retirement starts in R37; "second person edits" retires, "second person adds" stays. | PFM | docs/reviews/2026-11-19-ui-standard-plan.md R37 |
+| 2026-11-19 | A separate RADE session builds UI standard v1 (Step 1) now, in parallel with the R36 intake and R37 here. Scope: RADE. | PFM | docs/reviews/2026-11-19-ui-standard-plan.md Step 1 |
+| 2026-11-19 | Replaced same day by the Sofia Sans row: App font: Public Sans (open font, shipped as a file), Segoe UI fallback. Scope: all apps (B7). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B7 |
+| 2026-11-19 | UI standard plan approved (R38): cross-app standard in RADE, RADE contrast themes, screen walk, test retirement. Scope: RADE, 90-161.Z, next apps. | PFM | docs/reviews/2026-11-19-ui-standard-plan.md |
+| 2026-11-19 | Buttons: fixed width set (action, wide, compact), no fit-to-text; primary button last, at the right end of the action row. Scope: all apps (UI standard v1). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B1, B5 |
+| 2026-11-19 | A round step leaves the rounds after 1 pass with unchanged content (revision lines ignored); a change or a failure brings it back. Scope: all rounds from R38. | PFM | docs/reviews/2026-11-19-ui-standard-plan.md Step 2 |
+| 2026-11-19 | T22 window: the same logo rule as the bookmark page, Fulcrum in light mode and USAF in dark mode; built in R37 with window r9. Scope: T22 window, R37. | PFM | docs/NEXT_PROMPT.md item 5 |
+| 2026-11-19 | Bookmark page logo: Delta Fulcrum colours in light mode, USAF in dark mode; the page supports more-contrast and forced-colour (Windows contrast theme) modes. Scope: index.html. | PFM | [index.html](../index.html) |
+| 2026-11-19 | 90-161.Z logo = Delta, USAF colours, version without the phrase; drawn in code (logo_draw.py). Ships with the next round, not before. RADE keeps Rho. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/Kwrd4D84GffcrxtZ2qUzBZ |
 | 2026-11-20 | R36 ships with window r8 again; window r9 (dynamic sizing) failed its first Windows tests (values moved controls 2 to 14 px, 3 cards scrolled sideways at 956 x 1081, queue grid 27 px short) and moves to R37 with engine-v27. Scope: R36, R37. | PFM | docs/reviews/2026-11-19-r36-plan.md W13 |
 | 2026-11-19 | RADE lock moves to release engine-v26 (RADE 29fd57d, serial 20) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | App writes: wing users get list-level Contribute on the intake lists only; the site stays Read (replaces way C for T4). Scope: R36, T20/T21. | PFM | docs/reviews/2026-11-19-r36-plan.md W12 |
@@ -125,7 +137,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-17 | If R29 on the new engine is over 600 KB, split it: R29a (fixes, T21, T24) and R29b (T22 window, T4), each with its own bundle and e-mail. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | Lock moves to the RADE release with the R28 fixes (N1, N4, N6, N8-N10, answer cut, logo) when it ships; R29 is built on it. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | R29 logo places (1A): 90-161.Z logo on the T22 PFM window, index.html band, T16 logo check, site logo and thumbnail; RADE runner keeps Rho Bold. PNGs stay uncommitted, built from the SVG (2A). | PFM | docs/NEXT_PROMPT.md item 4 |
-| 2026-11-17 | 90-161.Z logo = W2 Flap 26: route arc, page with a sliced Z, small folded flap; Rho Bold frame and colors. Master assets/logo/; ships in R29. RADE keeps Rho Bold. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU |
+| 2026-11-17 | Replaced 19 Nov 26: 90-161.Z logo = W2 Flap 26: route arc, page with a sliced Z, small folded flap; Rho Bold frame and colors. Master assets/logo/; ships in R29. RADE keeps Rho Bold. Scope: 90-161.Z. | PFM | https://claude.ai/artifact/JGvznbY3bkzE63NEcDGGEU |
 | 2026-11-17 | R29 = the R28 fixes (health flow checks only On, export reader, T22 window, T24 card, notes N2 N3 N6 N7) + full T24 test + logo; RADE Diagnose and Back up move to R30. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T22 checks show inside the test window, one at a time, with Pass and Fail; no list to remember (note N5). Scope: T22 window test. | PFM | docs/reviews/2026-11-17-r28-results.md |
 | 2026-11-17 | T4 second-person step stays in R29: a colleague is free. Way C not built yet. Scope: round R29. | PFM | docs/reviews/2026-11-17-r28-results.md |

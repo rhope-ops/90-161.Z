@@ -3,217 +3,35 @@
 
 Why: the logo PNGs go into task scripts and round bundles, so every build must give the same bytes. A browser render
 (the old scripts/build_logo.js) differs between Chromium builds; this code gives the same pixels on every machine.
-What it draws: the subset of SVG that the logo uses, read from the SVG file itself:
+What it draws: the subset of SVG that the logo uses, read from the SVG file itself (Delta logo, the PFM, 2026-11-19):
+  <g> with transform and the paint attributes below, which its children inherit;
   <circle> filled, stroked, or stroked with stroke-dasharray and round caps;
-  <path> with absolute M, L, H, V, A and Z, filled and/or stroked (round caps and joins);
-  clip-path="url(#id)" that points at a <clipPath> of <rect> elements.
-Any other element or command stops with an error, so a new logo design cannot be drawn wrong in silence.
-How: each pixel gets each shape's coverage from its signed distance to the shape's edge (one pixel of soft edge), and
-the shapes are painted in order ("over"). Output: 8-bit RGBA PNG, transparent outside the disc, compressed by zlib.
+  <line> stroked with round caps;
+  <path> with absolute M, L, H, V, Q, C, A and Z, one or more sub-paths, filled (nonzero rule) and/or stroked (round
+    caps and joins); Q and C are cut into fixed straight steps (8 and 16), so the result is the same on every machine;
+  transform with translate, rotate, scale and matrix; fill-opacity; clip-path="url(#id)" to a <clipPath> of <rect>.
+Any other element, attribute or command stops with an error, so a new logo design cannot be drawn wrong in silence.
+How: each pixel centre is mapped back into the shape's own coordinates (so a stroke under scale(1 1.7) gets the right
+width), and gets the shape's coverage from its signed distance to the shape's edge (one pixel of soft edge). The
+shapes are painted in order ("over"). Output: 8-bit RGBA PNG, transparent outside the disc, compressed by zlib.
+Limit: under a scale that differs in x and y the edge sits exactly right, but its one pixel of soft edge uses the
+average scale (the square root of the determinant), so it is a little wider or narrower in one direction.
+Reading the SVG (elements, transforms, paths) is in scripts/logo_svg.py; this file draws.
+Speed: a grid of the segments near each point, and bands of rows for the fill test, keep a 512 px drawing short.
 Limit: the PNG bytes depend on the zlib build (the same with zlib 1.2 and 1.3; zlib-ng may differ); the pixels do not.
 Usage: python3 scripts/logo_draw.py SIZE OUT.png   (or import: draw(svg_text, size) -> PNG bytes; pixels() -> RGBA)
 Run target: Python 3.8+, standard library only.
 """
 import math
-import re
 import struct
 import sys
-import xml.etree.ElementTree as ET
 import zlib
 from pathlib import Path
 
-NS = '{http://www.w3.org/2000/svg}'
-VIEW = 512.0   # the SVG viewBox is 0 0 512 512 (checked in shapes())
+from logo_svg import apply, invert, shapes
 
-
-# ---------------------------------------------------------------- reading the SVG ------------------------------------
-
-def shapes(svg_text):
-    """Read the SVG and return its painted shapes in order, as dicts: kind ('circle' or 'path'), the geometry, fill and
-    stroke colors (None or (r, g, b) 0-255), stroke width, dash list and the clip rectangles (or None)."""
-    root = ET.fromstring(svg_text)
-    if root.get('viewBox') != '0 0 512 512':
-        raise SystemExit('logo_draw: the viewBox must be 0 0 512 512')
-    clips = {c.get('id'): [clip_rect(r) for r in c] for c in root.iter(NS + 'clipPath') if refuse_clip(c)}
-    out = []
-    for el in root:
-        tag = el.tag.replace(NS, '')
-        if tag in ('title', 'defs', 'desc'):
-            continue
-        if tag not in ('circle', 'path'):
-            raise SystemExit('logo_draw: element <%s> is not supported' % tag)
-        refuse_unsupported(el, tag)
-        s = {'kind': tag, 'fill': color(el.get('fill', '#000000')), 'stroke': color(el.get('stroke', 'none')),
-             'width': float(el.get('stroke-width', '1')), 'dash': [float(x) for x in el.get('stroke-dasharray', '').split()],
-             'clip': None}
-        clip = el.get('clip-path')
-        if clip:
-            s['clip'] = find_clip(clips, clip)
-        if tag == 'circle':
-            s['c'], s['r'] = (float(el.get('cx')), float(el.get('cy'))), float(el.get('r'))
-        else:
-            s['segs'], s['closed'] = path_segments(el.get('d'))
-            refuse_fill(s)
-        out.append(s)
-    return out
-
-
-SUPPORTED = {'cx', 'cy', 'r', 'd', 'fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap',
-             'stroke-linejoin', 'clip-path'}
-
-
-def refuse_unsupported(el, tag):
-    """Stop when a shape uses an attribute or value this drawing does not handle: only round caps and joins (the
-    distance method draws them round), a two-value dash and only on a circle, and no opacity or transform."""
-    extra = set(el.attrib) - SUPPORTED
-    if extra:
-        raise SystemExit('logo_draw: attribute(s) %s on <%s> are not supported' % (sorted(extra), tag))
-    d = el.get('d', '').upper()
-    if d.count('M') > 1 or d.count('Z') > 1 or ('Z' in d and d.rstrip()[-1:] != 'Z'):
-        raise SystemExit('logo_draw: a path must be one sub-path (one M, and Z only as the last command)')
-    if el.get('stroke', 'none') != 'none':
-        open_end = (tag == 'path' and 'Z' not in d) or bool(el.get('stroke-dasharray'))   # a stroke with free ends
-        corners = tag == 'path' and len(re.findall(r'[LHVAZ]', d)) > 1                    # a stroke with joins (Z draws one)
-        if open_end and el.get('stroke-linecap') != 'round':
-            raise SystemExit('logo_draw: a stroke with free ends needs stroke-linecap="round" (other caps are not drawn)')
-        if corners and el.get('stroke-linejoin') != 'round':
-            raise SystemExit('logo_draw: a stroke with corners needs stroke-linejoin="round" (other joins are not drawn)')
-    dash = el.get('stroke-dasharray', '').split()
-    if dash and (tag != 'circle' or len(dash) != 2):
-        raise SystemExit('logo_draw: stroke-dasharray needs two values and works on a <circle> only')
-
-
-def find_clip(clips, text):
-    """Return the clip rectangles for a clip-path="url(#id)" value. Stops with a message when the value is not url(#id)
-    or the id is unknown.
-
-    Args:
-        clips: the clip rectangles by clipPath id.
-        text: the attribute value.
-
-    Returns:
-        The list of rectangles.
-    """
-    m = re.fullmatch(r'url\(#([\w-]+)\)', text)
-    if m is None:
-        raise SystemExit('logo_draw: clip-path %r is not of the form url(#id)' % text)
-    if m.group(1) not in clips:
-        raise SystemExit('logo_draw: clip-path refers to #%s, which is no <clipPath> in the file' % m.group(1))
-    return clips[m.group(1)]
-
-
-def refuse_fill(s):
-    """Stop when a filled path cannot be filled correctly. A fill needs a closed path (Z), or it would silently get no
-    fill; the even-odd fill test handles lines only, not arcs.
-
-    Args:
-        s: a path shape from shapes().
-    """
-    if s['fill'] is None:
-        return
-    if not s['closed']:
-        raise SystemExit('logo_draw: a filled path must end with Z (an open path would get no fill); use fill="none" for a line')
-    if any(g[0] == 'arc' for g in s['segs']):
-        raise SystemExit('logo_draw: a filled path with an arc (A) is not supported; fill="none" and a stroke work')
-
-
-def refuse_clip(clip):
-    """Stop when a <clipPath> holds anything but plain <rect> elements or has attributes other than its id; True."""
-    if not len(clip):
-        raise SystemExit('logo_draw: an empty <clipPath> is not supported (it would hide the shape)')
-    if set(clip.attrib) - {'id'}:
-        raise SystemExit('logo_draw: <clipPath> attribute(s) %s are not supported' % sorted(set(clip.attrib) - {'id'}))
-    for r in clip:
-        if r.tag != NS + 'rect' or set(r.attrib) - {'x', 'y', 'width', 'height'}:
-            raise SystemExit('logo_draw: a <clipPath> may hold only <rect x y width height> elements')
-    return True
-
-
-def clip_rect(r):
-    """Return (x, y, width, height) of a clip <rect>."""
-    try:
-        return tuple(float(r.get(k)) for k in ('x', 'y', 'width', 'height'))
-    except (TypeError, ValueError):
-        raise SystemExit('logo_draw: a clip <rect> needs x, y, width and height as plain numbers')
-
-
-def color(text):
-    """Return (r, g, b) for "#RRGGBB", or None for "none"."""
-    if text == 'none':
-        return None
-    if not re.fullmatch(r'#[0-9A-Fa-f]{6}', text):
-        raise SystemExit('logo_draw: color %r is not #RRGGBB' % text)
-    return tuple(int(text[k:k + 2], 16) for k in (1, 3, 5))
-
-
-def path_segments(d):
-    """Return (segments, closed) for a path's "d" text (see parse_path), with a clean stop for bad numbers.
-
-    Args:
-        d: the path text, or None.
-
-    Returns:
-        The tuple (segments, closed). Stops with a message, not a Python error, when a command has too few numbers or a
-        letter where a number belongs.
-    """
-    try:
-        return parse_path(d)
-    except (IndexError, ValueError, TypeError):
-        raise SystemExit('logo_draw: a path command has too few or bad numbers: %r' % d)
-
-
-def parse_path(d):
-    """Return (segments, closed) for a path's "d" text. A segment is ('line', p0, p1) or ('arc', center, radius,
-    start angle, sweep angle). Only absolute M, L, H, V, A and Z are allowed.
-
-    Args:
-        d: the path text, or None.
-
-    Returns:
-        The tuple (segments, closed). Stops with a message for a path that does not start with M.
-    """
-    tokens = re.findall(r'[A-Za-z]|-?\d*\.?\d+', d or '')
-    segs, pos, start, k, closed = [], None, None, 0, False
-    if not tokens or tokens[0] != 'M':
-        raise SystemExit('logo_draw: a path must start with M (found %r)' % (tokens[0] if tokens else 'nothing'))
-    while k < len(tokens):
-        cmd = tokens[k]; k += 1
-        if cmd == 'M':
-            pos = start = (float(tokens[k]), float(tokens[k + 1])); k += 2
-        elif cmd in 'LHV':
-            n = {'L': 2, 'H': 1, 'V': 1}[cmd]
-            vals = [float(x) for x in tokens[k:k + n]]; k += n
-            if len(vals) != n:   # the slice stops short at the end of the text
-                raise IndexError(cmd)   # path_segments turns this into the "too few or bad numbers" message
-            new = tuple(vals) if cmd == 'L' else ((vals[0], pos[1]) if cmd == 'H' else (pos[0], vals[0]))
-            segs.append(('line', pos, new)); pos = new
-        elif cmd == 'A':
-            rx, ry, rot, large, sweep, x, y = [float(x) for x in tokens[k:k + 7]]; k += 7
-            if rx != ry or rot != 0:
-                raise SystemExit('logo_draw: only circular arcs without rotation are supported')
-            segs.append(arc_segment(pos, (x, y), rx, bool(large), bool(sweep))); pos = (x, y)
-        elif cmd == 'Z':
-            segs.append(('line', pos, start)); pos, closed = start, True
-        else:
-            raise SystemExit('logo_draw: path command %r is not supported' % cmd)
-    return segs, closed
-
-
-def arc_segment(p0, p1, r, large, sweep):
-    """Return ('arc', center, r, start angle, sweep angle) for an SVG arc from p0 to p1 (the endpoint-to-center
-    conversion of the SVG specification, for a circle). A positive sweep angle goes the way of rising angles (y down)."""
-    mx, my = (p0[0] - p1[0]) / 2, (p0[1] - p1[1]) / 2
-    d2 = mx * mx + my * my
-    if d2 == 0 or r <= 0:
-        raise SystemExit('logo_draw: an arc needs a radius above 0 and an end point different from its start point')
-    f = math.sqrt(max(0.0, r * r / d2 - 1)) * (-1 if large == sweep else 1)
-    cx = (p0[0] + p1[0]) / 2 + f * my
-    cy = (p0[1] + p1[1]) / 2 - f * mx
-    a0 = math.atan2(p0[1] - cy, p0[0] - cx)
-    da = (math.atan2(p1[1] - cy, p1[0] - cx) - a0) % (2 * math.pi)
-    if not sweep:
-        da -= 2 * math.pi
-    return ('arc', (cx, cy), r, a0, da)
+VIEW = 512.0   # the SVG viewBox is 0 0 512 512 (logo_svg.shapes checks it)
+MAX_CELLS = 2000000   # the most grid cells one path may fill (the Delta logo needs about 20 000 at 512 px)
 
 
 # ---------------------------------------------------------------- distances ------------------------------------------
@@ -233,14 +51,87 @@ def seg_distance(seg, x, y):
     return min(math.hypot(x - ex, y - ey) for ex, ey in ends)
 
 
-def inside_polygon(segs, x, y):
-    """Even-odd test: True when (x, y) is inside the closed path made of line segments."""
-    inside = False
-    for seg in segs:
+def seg_box(seg):
+    """Return the box of a line or arc segment.
+
+    Args:
+        seg: a ('line', p0, p1) or ('arc', center, radius, start angle, sweep angle) segment.
+
+    Returns:
+        (x0, y0, x1, y1). An arc's box holds its end points and each axis point (0, 90, 180, 270 degrees) it passes.
+    """
+    if seg[0] == 'line':
         (ax, ay), (bx, by) = seg[1], seg[2]
-        if (ay > y) != (by > y) and x < ax + (y - ay) * (bx - ax) / (by - ay):
-            inside = not inside
-    return inside
+        return min(ax, bx), min(ay, by), max(ax, bx), max(ay, by)
+    (cx, cy), r, a0, da = seg[1], seg[2], seg[3], seg[4]
+    angles = [a0, a0 + da] + [a0 + t for t in (k * math.pi / 2 - a0 for k in range(-8, 9))
+                              if (0 <= t <= da if da >= 0 else da <= t <= 0)]
+    xs = [cx + r * math.cos(a) for a in angles]
+    ys = [cy + r * math.sin(a) for a in angles]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+class Index:
+    """The segments of one path, sorted into a square grid (for the nearest-edge distance) and into bands of rows
+    (for the fill test), so each pixel looks only at the segments near it."""
+
+    def __init__(self, segs, reach):
+        """Build the grid with cells `reach` units wide: a point needs the exact distance only up to `reach` (beyond
+        it the coverage is 0 or 1), so the 3 x 3 cells around it hold every segment that matters.
+
+        Args:
+            segs: the path's segments (all sub-paths together), in the shape's own coordinates.
+            reach: the largest distance that changes the coverage (half the stroke width plus one pixel).
+        """
+        self.cell = max(reach, 1e-6)
+        self.reach = reach
+        self.grid, self.bands = {}, {}
+        cells = 0
+        for seg in segs:   # count first: a huge shape on a fine grid would take hours (review, 20 Nov 26)
+            x0, y0, x1, y1 = seg_box(seg)
+            cells += (math.floor(x1 / self.cell) - math.floor(x0 / self.cell) + 1) * \
+                (math.floor(y1 / self.cell) - math.floor(y0 / self.cell) + 1)
+            if cells > MAX_CELLS:
+                raise SystemExit('logo_draw: a path is too large for its stroke width (more than %d grid cells)' % MAX_CELLS)
+        for n, seg in enumerate(segs):
+            x0, y0, x1, y1 = seg_box(seg)
+            for i in range(int(math.floor(x0 / self.cell)), int(math.floor(x1 / self.cell)) + 1):
+                for j in range(int(math.floor(y0 / self.cell)), int(math.floor(y1 / self.cell)) + 1):
+                    self.grid.setdefault((i, j), []).append(n)
+            if seg[0] == 'line':
+                for j in range(int(math.floor(y0 / self.cell)), int(math.floor(y1 / self.cell)) + 1):
+                    self.bands.setdefault(j, []).append(seg)
+        self.segs = segs
+
+    def distance(self, x, y):
+        """Return the distance from a point to the nearest segment.
+
+        Args:
+            x: the point's x in the shape's own coordinates.
+            y: the point's y.
+
+        Returns:
+            The distance, or a value above `reach` when no segment is that near (the coverage is then 0 or 1).
+        """
+        i, j = int(math.floor(x / self.cell)), int(math.floor(y / self.cell))
+        best = self.reach * 2 + 1
+        seen = set()
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for n in self.grid.get((i + di, j + dj), ()):
+                    if n not in seen:
+                        seen.add(n)
+                        best = min(best, seg_distance(self.segs[n], x, y))
+        return best
+
+    def inside(self, x, y):
+        """Nonzero rule: True when the closed line segments wind around (x, y) (a ray to the right, SVG's default)."""
+        wind = 0
+        for seg in self.bands.get(int(math.floor(y / self.cell)), ()):
+            (ax, ay), (bx, by) = seg[1], seg[2]
+            if (ay <= y) != (by <= y) and x < ax + (y - ay) * (bx - ax) / (by - ay):
+                wind += 1 if by > ay else -1
+        return wind != 0
 
 
 def dash_distance(s, x, y):
@@ -265,9 +156,9 @@ def dash_distance(s, x, y):
     return best
 
 
-def coverages(s, x, y, px):
-    """Return (fill coverage, stroke coverage) of shape `s` at point (x, y), 0 to 1, with one pixel (`px` SVG units) of
-    soft edge, after the clip rectangles."""
+def coverages(s, x, y, px, index):
+    """Return (fill coverage, stroke coverage) of shape `s` at point (x, y) in the shape's own coordinates, 0 to 1,
+    with one pixel (`px` units of the shape) of soft edge, after the clip rectangles. `index` is the path's Index."""
     cov = lambda d: max(0.0, min(1.0, 0.5 - d / px))
     half = s['width'] / 2
     if s['kind'] == 'circle':
@@ -275,9 +166,9 @@ def coverages(s, x, y, px):
         fill = cov(rho - s['r'])
         stroke = cov((dash_distance(s, x, y) if s['dash'] else abs(rho - s['r'])) - half)
     else:
-        edge = min(seg_distance(g, x, y) for g in s['segs'])
-        fill = cov(-edge if inside_polygon(s['segs'], x, y) else edge) if s['closed'] else 0.0
-        stroke = cov(edge - half)
+        edge = index.distance(x, y)
+        fill = cov(-edge if index.inside(x, y) else edge) if s['fill'] else 0.0
+        stroke = cov(edge - half) if s['stroke'] else 0.0
     if s['clip']:
         clip = cov(min(max(rx - x, x - rx - rw, ry - y, y - ry - rh) for rx, ry, rw, rh in s['clip']))
         fill, stroke = fill * clip, stroke * clip
@@ -287,15 +178,25 @@ def coverages(s, x, y, px):
 # ---------------------------------------------------------------- pixels and PNG -------------------------------------
 
 def bounds(s):
-    """Return (x0, y0, x1, y1), the box in SVG units outside which shape `s` paints nothing."""
+    """Return the box outside which a shape paints nothing.
+
+    Args:
+        s: a shape from shapes().
+
+    Returns:
+        (x0, y0, x1, y1) in viewBox units: the shape's own box, padded by half the stroke width and 2 units, mapped by
+        its matrix.
+    """
     pad = s['width'] / 2 + 2
     if s['kind'] == 'circle':
         (cx, cy), r = s['c'], s['r']
-        return cx - r - pad, cy - r - pad, cx + r + pad, cy + r + pad
-    pts = [p for g in s['segs'] for p in ((g[1], g[2]) if g[0] == 'line' else
-                                         ((g[1][0] - g[2], g[1][1] - g[2]), (g[1][0] + g[2], g[1][1] + g[2])))]
-    return (min(p[0] for p in pts) - pad, min(p[1] for p in pts) - pad,
-            max(p[0] for p in pts) + pad, max(p[1] for p in pts) + pad)
+        box = (cx - r - pad, cy - r - pad, cx + r + pad, cy + r + pad)
+    else:
+        boxes = [seg_box(g) for sub in s['subs'] for g in sub['segs']]
+        box = (min(b[0] for b in boxes) - pad, min(b[1] for b in boxes) - pad,
+               max(b[2] for b in boxes) + pad, max(b[3] for b in boxes) + pad)
+    corners = [apply(s['m'], x, y) for x in (box[0], box[2]) for y in (box[1], box[3])]
+    return (min(c[0] for c in corners), min(c[1] for c in corners), max(c[0] for c in corners), max(c[1] for c in corners))
 
 
 def pixels(svg_text, size):
@@ -304,14 +205,21 @@ def pixels(svg_text, size):
     px = VIEW / size
     acc = [[0.0, 0.0, 0.0, 0.0] for _ in range(size * size)]   # premultiplied r, g, b (0-1) and alpha
     for s in shapes(svg_text):
+        inv = invert(s['m'])
+        px_local = px / math.sqrt(abs(s['m'][0] * s['m'][3] - s['m'][1] * s['m'][2]))   # one pixel in shape units
+        index = None
+        if s['kind'] == 'path':
+            reach = (s['width'] / 2 if s['stroke'] else 0.0) + px_local
+            index = Index([g for sub in s['subs'] for g in sub['segs']], reach)
         x0, y0, x1, y1 = bounds(s)
         cols = range(max(0, int(x0 / px)), min(size, int(x1 / px) + 1))
         for j in range(max(0, int(y0 / px)), min(size, int(y1 / px) + 1)):
             y = (j + 0.5) * px
             for i in cols:
-                fill, stroke = coverages(s, (i + 0.5) * px, y, px)
+                lx, ly = apply(inv, (i + 0.5) * px, y)
+                fill, stroke = coverages(s, lx, ly, px_local, index)
                 cell = acc[j * size + i]
-                for rgb, a in ((s['fill'], fill), (s['stroke'], stroke)):
+                for rgb, a in ((s['fill'], fill * s['fill_op']), (s['stroke'], stroke)):
                     if rgb and a > 0:
                         for c in range(3):
                             cell[c] = rgb[c] / 255.0 * a + cell[c] * (1 - a)
@@ -335,8 +243,20 @@ def png_bytes(rows):
 
 
 def draw(svg_text, size):
-    """Return the logo as PNG bytes, `size` x `size` pixels."""
-    return png_bytes(pixels(svg_text, size))
+    """Return the logo as PNG bytes.
+
+    Args:
+        svg_text: the SVG file's text.
+        size: the width and height in pixels.
+
+    Returns:
+        The PNG bytes. Any number error the refusals did not foresee (an overflow, a nan, a division by 0 from extreme
+        but legal values) stops with a "logo_draw:" message too, never a Python traceback (review, 20 Nov 26).
+    """
+    try:
+        return png_bytes(pixels(svg_text, size))
+    except (ArithmeticError, ValueError) as e:
+        raise SystemExit('logo_draw: the drawing failed on extreme numbers (%s: %s)' % (type(e).__name__, e))
 
 
 if __name__ == '__main__':
