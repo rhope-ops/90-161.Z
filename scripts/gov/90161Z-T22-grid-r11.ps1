@@ -125,13 +125,10 @@ $wn.GridCols = {
   $bar = $(if ($PubMin -gt 0) { [math]::Max($Scroll, [Windows.Forms.SystemInformation]::VerticalScrollBarWidth) } else { $Scroll })
   $fixed = 0; $keep = 0; $rest = 0; $n = @($Cols).Count; $avail = $W - $bar - 2
   $pubOwn = [math]::Max(2, [math]::Min([math]::Max((& $wn.Sc 60), $PubMin), $avail - 2 * ($n - 1)))   # a pub column never leaves less than 2 px a column
-  # R11 (ps51 W7 at 96 dpi): a chip column keeps its whole chip only while every other head still fits beside it; else
-  # it shares the room as in r10, so a narrow window never cuts the other heads. $spare = room above all the heads.
-  $spare = $avail; foreach ($c in $Cols) { $spare -= $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $pubOwn } else { [int](& $wn.HeadMin $c) }) }
+  $spare = & $wn.HeadSpare $Cols $avail $PubMin $pubOwn   # R11: a chip is kept whole only while the other heads fit (ps51 W7)
   $own = @{}; $hard = @{}; foreach ($c in $Cols) {
     $isPub = ($c.K -eq 'pub' -and $PubMin -gt 0); $vm = $(if (@($Rows).Count) { [int](& $wn.ValueMin $c $Rows) } else { 0 })
-    $chipKeep = ($c.K -eq 'chip' -and $vm -gt 0 -and ($vm - [int](& $wn.HeadMin $c)) -le $spare)
-    if ($chipKeep) { $spare -= [math]::Max(0, $vm - [int](& $wn.HeadMin $c)) }
+    $chipKeep = ($c.K -eq 'chip' -and $vm -gt 0 -and ($vm - [int](& $wn.HeadMin $c)) -le $spare); if ($chipKeep) { $spare -= [math]::Max(0, $vm - [int](& $wn.HeadMin $c)) }
     $hard[[string]$c.N] = ($isPub -or $chipKeep)
     $o = $(if ($isPub) { $pubOwn } elseif ($chipKeep) { [math]::Max($vm, [int](& $wn.HeadMin $c)) } elseif ($c.W -eq 0) { & $wn.Sc 60 }
       elseif ($vm -gt 0) { [math]::Min((& $wn.Sc $c.W), $vm) } else { & $wn.Sc $c.W }); $own[[string]$c.N] = $o
@@ -152,6 +149,12 @@ $wn.GridCols = {
     $dc.AutoSizeMode='Fill'; $dc.MinimumWidth = $min; $dc.FillWeight = [single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $Scroll) } else { [math]::Max(1, $o) })
     [void]$G.Columns.Add($dc); $kinds[[string]$c.N] = [string]$c.K }
   return $kinds }
+# R11 (R38; ps51 W7 at 96 dpi): the room a grid of width $Avail has above all its column heads (the pub column counts
+# $PubOwn when $PubMin is above 0). $wn.GridCols keeps a status chip whole only while that room holds the chip's extra
+# width, else the chip column shares the room as in r10, so a narrow window never cuts the other heads.
+$wn.HeadSpare = { param($Cols, [int]$Avail, [int]$PubMin, [int]$PubOwn)
+  $spare = $Avail; foreach ($c in $Cols) { $spare -= $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $PubOwn } else { [int](& $wn.HeadMin $c) }) }
+  return $spare }
 $wn.Grid = {
   <#
   .SYNOPSIS
