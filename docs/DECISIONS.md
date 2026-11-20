@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-19 | RADE lock moves to release engine-v27 (RADE 32f64a2, serial 21) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | App font: Sofia Sans Condensed for titles, Sofia Sans for text (one open family, shipped as files), Segoe UI fallback; web pages too. Scope: all apps (UI standard v1, B7). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B7 |
 | 2026-11-19 | Every card (RADE and app windows) gets "Feedback": the PFM types a comment and it saves a snapshot of the app window with it into the results. Scope: all apps (UI standard v1, B13). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B13 |
 | 2026-11-19 | R37 is a large round the PFM runs on 20 Nov 26: everything built overnight that does not break testing; test retirement starts in R37; "second person edits" retires, "second person adds" stays. | PFM | docs/reviews/2026-11-19-ui-standard-plan.md R37 |
