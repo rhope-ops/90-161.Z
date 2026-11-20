@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r12, Maintenance (round R39; the PFM, 20 Nov 26): the test install of 90-161.Z 0.1, and the read-back
+  90-161.Z Task 22 r13, Maintenance (round R39; the PFM, 20 Nov 26): the test install of 90-161.Z 0.1, and the read-back
   of what RADE's Maintenance tools Diagnose and Back up made. Windows PowerShell 5.1 (also 7); no module.
 .DESCRIPTION
   RADE shows its Maintenance screen (Diagnose, Back up) only for an app that a RADE deploy installed (RADE engine-v30,
   engine/ps/window/06-open.ps1). R39 therefore deploys 90-161.Z version 0.1.0 first.
-  -Part Install: the one step of that deploy. It writes 90161Z-T22-install-r12.txt and passes; RADE keeps the install
+  -Part Install: the one step of that deploy. It writes 90161Z-T22-install-r13.txt and passes; RADE keeps the install
   record (RADE\Config\installed). It installs nothing else and changes nothing on the site.
   -Part Read: reads, on this computer only, (1) the install record of 90-161.Z (version and last run state), (2) the
   newest Diagnose report (RADE\90-161.Z\Diagnose\diagnose-*.txt): its PASS, FINDING and NOTE counts and each FINDING
@@ -14,16 +14,16 @@
   boundary"); only counts and list titles go into the result.
   Result lines: RESULT INSTALL, RESULT DIAGNOSE and RESULT BACKUP, each PASS or FAIL. Exit 1 when one is FAIL.
   A report or backup older than $FreshHours hours is from an earlier day and counts as missing.
-  Run: by RADE (powershell.exe -File 90161Z-T22-maint-r12.ps1 -Part Install or -Part Read -NoPause), or by hand in T22.
+  Run: by RADE (powershell.exe -File 90161Z-T22-maint-r13.ps1 -Part Install or -Part Read -NoPause), or by hand in T22.
   Parameters: -Id (the DODID; the profile folder name when not given), -Part, -NoPause, -TestDir (the T22 folder of a
   test; its parent is the app folder and the parent of that the RADE folder).
   Network: none.
-  Writes: Install: 90161Z-T22-install-r12.txt; Read: 90161Z-T22-maint-r12.txt, both in the T22 folder (or -TestDir).
+  Writes: Install: 90161Z-T22-install-r13.txt; Read: 90161Z-T22-maint-r13.txt, both in the T22 folder (or -TestDir).
   Credentials: none.
 #>
 param([string]$Id, [ValidateSet('Install', 'Read')][string]$Part = 'Read', [switch]$NoPause, [string]$TestDir)
 $task = 'T22'
-$Rev = 'r12'
+$Rev = 'r13'
 $FreshHours = 6   # a Diagnose report or a backup older than this is not from this round
 $BackupLists = 11   # the lists the R39 manifest names in "backup" (scripts/paste_bundles.json; tests/ps/Test-T22Maint.ps1 checks they match): fewer is a FAIL
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)

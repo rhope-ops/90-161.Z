@@ -1,14 +1,16 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r12, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 3 in-window checks)
+  90-161.Z Task 22 r13, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
+  R13 (R40; PFM 20 Nov 26, R39 finding 1): the -Again check names the card saved at the last close, by its title
+  (Get-AgainText; the main script gives it the saved card); the closing line of the check bar names no card.
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r12.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r13.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems
-  and the functions Get-SideStatus, Test-CheckLink, Get-CardPlan and Get-CheckPlan.
+  and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan and Get-CheckPlan.
   Run: not alone; the main script loads it (round skill section 2: scripts that load each other stay in one folder).
   Network: none.
   Writes: none.
@@ -99,17 +101,16 @@ $OneOf = "XXX XXX OI 33-101, Key Control"
 # The checks of the check bar, in order. R12 (R39; PFM 20 Nov 26): the Your Work grid (R38 finding 2), the Sofia Sans
 # fonts (docs/phases.md R39), the text box height (R38 finding 2, B1) and the speed of the cards (R38 finding 3). The
 # card to open is named in each text. -Again (the second run of the round): one check, that the window reopened on the
-# card it was closed on. $ChecksDone is the bar text when all are answered.
+# card it was closed on (R13: Get-AgainText names that card). $ChecksDone is the bar text when all are answered; R13
+# (R39 finding 1): it names no card, so the card the person closes the window on is the one the -Again check names.
 $Checks = @(
   @{ Key = 'home-all'; Text = 'Select Your Work in the list on the left. Pass if no status chip touches the scroll bar and each name shows whole.' },
   @{ Key = 'font'; Text = 'Look at the RADE window behind this one. Pass if the titles and text here use the same fonts as the RADE window.' },
   @{ Key = 'box'; Text = 'Select All Actions in the list on the left. Pass if the text box "Find a publication" is not cut at the top or bottom.' },
   @{ Key = 'speed'; Text = 'Select each item in the list on the left once. Pass if each screen opens with no delay that you notice.' }
 )
-$script:ChecksDone = 'All checks done. Last: select All Actions in the list on the left, then close this window with its X.'
-if ($Again) {
-  $Checks = @(@{ Key = 'reopen'; Text = 'Pass if this window opened on All Actions, the screen you closed it on.' })
-  $script:ChecksDone = 'All checks done. Close this window with its X.' }
+$script:ChecksDone = 'All checks done. Close this window with its X.'
+if ($Again) { $Checks = @(@{ Key = 'reopen'; Text = '' }) }   # its text: Get-AgainText, after the cards (it reads their titles)
 # The cards, in the order the window builds them. A card: Rail (the rail item it lights), Title and Sub or Crumb and
 # CrumbGo, Up (the card Esc opens), Side (the right column width at 100 %), Modal, and Cols: columns of sections, each
 # section a list of Blocks (T = the block type; the window module builds each type).
@@ -331,6 +332,30 @@ $Cards.remindall = @{ Rail = 'work'; Crumb = "Your Work $gt Remind all late offi
           @{ T = 'buttons'; Items = @(@{ Text = 'Remind Both Offices'; Kind = 'primary'; Go = 'home'; Note = 'FAKE: 2 reminders are logged as contacts. Nothing was sent.' },
               @{ Text = 'Cancel'; Go = 'home' }) }) }))
 }
+# R13 (R40): the name of card $Key as its head shows it: its title, else the last part of its crumb ('' for no card).
+function Get-CardName([string]$Key) {
+  $c = $Cards[$Key]; if (-not $c) { return '' }
+  if ($c.Title) { return [string]$c.Title }
+  return [string]@(([string]$c.Crumb) -split [regex]::Escape(' ' + $gt + ' '))[-1]
+}
+<#
+.SYNOPSIS
+R13 (R40; R39 finding 1): the text of the -Again check, which names the card saved at the last close.
+.DESCRIPTION
+The window opens on the card saved at the last close ($wn.OpenLast in the window part), so the check names that card
+by its title: "Pass if this window opened on Settings, the screen you closed it on." With no saved card, or one the
+window does not open (unknown or modal), the window opens on Your Work and the check says that no screen was saved.
+.PARAMETER Key
+The card key read from the saved-card file, or '' when there is none.
+.OUTPUTS
+System.String. The check text.
+#>
+function Get-AgainText([string]$Key) {
+  $name = $(if ($Key -and $Cards[$Key] -and -not $Cards[$Key].Modal) { Get-CardName $Key } else { '' })
+  if ($name) { return ('Pass if this window opened on ' + $name + ', the screen you closed it on.') }
+  return 'No screen was saved when this window last closed. Select Fail.'
+}
+if ($Again) { $Checks[0].Text = Get-AgainText '' }   # until the main script has read the saved card (-PlanOnly reads none)
 # The rail items, top to bottom (Ctrl+1 to Ctrl+5 open them in this order).
 $RailItems = @(@{ Key = 'work'; Text = 'Your Work'; Go = 'home'; Badge = '3' }, @{ Key = 'queue'; Text = 'All Actions'; Go = 'queue' },
   @{ Key = 'pub'; Text = 'Publications'; Go = 'pub' }, @{ Key = 'reviews'; Text = 'Reviews Due'; Go = 'reviews' }, @{ Key = 'settings'; Text = 'Settings'; Go = 'settings' })
@@ -403,7 +428,7 @@ function Get-CardPlan {
   foreach ($r in $RailItems) { $out += ('RAIL ' + $r.Text + ' -> ' + $r.Go) }
   return $out
 }
-# The 3 checks as -PlanOnly lines: CHECK <n> <key>: <text> (tests/run.sh reads them).
+# The checks as -PlanOnly lines: CHECK <n> <key>: <text> (tests/run.sh reads them).
 function Get-CheckPlan {
   for ($i = 0; $i -lt $Checks.Count; $i++) { 'CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ': ' + $Checks[$i].Text }
 }

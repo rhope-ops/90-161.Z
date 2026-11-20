@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r12, part "logo": the rail logo of the PFM window: the two logo pictures and which one shows.
+  90-161.Z Task 22 r13, part "logo": the rail logo of the PFM window: the two logo pictures and which one shows.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): one logo, the Fulcrum one, in Windows light and dark mode (high contrast keeps the system colors).
   R11 (R38; PFM 20 Nov 26: "Fulcrum everywhere for now, as this is not an endorsed product"): one logo, the Fulcrum one, in
@@ -11,7 +11,7 @@
   ($wn.AppsLight), for the THEME line only.
   Inputs: $wn, $ui. Outputs: $AppLogoPng and the $wn members below (the window part builds the rail
   head with them; the -Measure run calls $wn.MeasureTheme, below).
-  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Reads: the value AppsUseLightTheme under HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize (read only).
   Writes: nothing.

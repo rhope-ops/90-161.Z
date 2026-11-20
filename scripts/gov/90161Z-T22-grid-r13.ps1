@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r12, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r13, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): column widths come from the widest value, a chip never ends under the scroll bar, the head "Weekdays in step" may wrap, and the layout self-check has the edge test.
@@ -23,7 +23,7 @@
   can say where its content ends ($wn.GridEdges), so the layout self-check ($wn.EdgeCheck) fails a chip or text that
   ends closer to the grid's right edge than the vertical scroll bar is wide.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
