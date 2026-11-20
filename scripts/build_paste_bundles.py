@@ -96,7 +96,21 @@ def render_logo(check):
                 dst.write_bytes(logo_png.png(int(m.group(1)), check))
 
 
+def no_scripts_in_results():
+    """Stop the build when a collect name can match a script (the PFM, 2026-11-20: no scripts in results; R37 finding 1).
+    Takes nothing; exits with the FAIL lines of scripts/check_collect.py when one is bad."""
+    man = ROOT / 'scripts/paste_bundles.json'
+    if not man.exists():   # no round definition, so no collect names (as in render_logo)
+        return
+    sys.path.insert(0, str(ROOT / 'scripts'))
+    import check_collect
+    fails = check_collect.check(json.loads((ROOT / 'scripts/paste_bundles.json').read_text(encoding='utf-8')))
+    if fails:
+        sys.exit('\n'.join(fails))
+
+
 if __name__ == '__main__':
+    no_scripts_in_results()
     e = engine()
     render_logo('--check' in sys.argv[1:])
     sys.exit(subprocess.call([sys.executable, '-B', str(e), '--app-root', str(ROOT)] + [a for a in sys.argv[1:] if a == '--check']))

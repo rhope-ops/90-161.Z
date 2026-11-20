@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r10, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r11, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
+  R11 (R38; PFM 20 Nov 26): the measure file has Edges (the right edge of each grid) and one Fulcrum logo (Theme.Fulcrum, ShownDiff).
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
   card, the rail and the check bar must have an accessible name; the result is one line "RESULT NAMES PASS" or
   "RESULT NAMES FAIL (<n> controls: <card>/<type> "<text>", ...)".
@@ -22,13 +23,13 @@
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r10.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r11.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -39,7 +40,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r10.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r11.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -187,6 +188,19 @@ $wn.LevelHeads = {
           $r['W'] = [int]$h.W; $r['Have'] = [int]$h.Have; $out.Add($r) } }
       elseif ($c.Controls.Count) { $st.Push($c) } } }
   return $out.ToArray() }
+$wn.LevelEdges = {
+  <#
+  .SYNOPSIS
+  R11 (R38): where the chips and last-column text of every grid on the page end, against the grid's right edge.
+  .OUTPUTS
+  One table per grid ($wn.GridEdges): Grid, Width, Bar, Edge, Col, Fits.
+  #>
+  $out = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) {
+    foreach ($c in $st.Pop().Controls) {
+      if ($c -is [Windows.Forms.DataGridView]) { if ($c.Tag -is [hashtable]) { $out.Add((& $wn.GridEdges $c)) } }
+      elseif ($c.Controls.Count) { $st.Push($c) } } }
+  return $out.ToArray() }
 $wn.LevelFacts = {
   <#
   .SYNOPSIS
@@ -197,7 +211,7 @@ $wn.LevelFacts = {
   W3): for each chip beside text ($wn.ChipRows: check, list, rows, chips, notice), its kind, the middle of the chip and
   of the first line of its text. Pubs (D4, R7 W1): $wn.LevelPubs. Heads (R8 W7): $wn.LevelHeads.
   .OUTPUTS
-  A table: Caps, Crumb, Chips, Pubs, Heads.
+  A table: Caps, Crumb, Chips, Pubs, Heads, Edges (R11: $wn.LevelEdges).
   #>
   $mainSec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
   $line = $(if ($mainSec) { & $wn.FirstLine $mainSec.Card } else { $null })
@@ -209,7 +223,7 @@ $wn.LevelFacts = {
   $chips = @(foreach ($r in @($wn.ChipRows)) {
       $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['Kind'] = [string]$r.Kind; $c['ChipMid'] = (& $wn.TextMid $r.Chip)
       $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
-  $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs); $f['Heads'] = @(& $wn.LevelHeads)
+  $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs); $f['Heads'] = @(& $wn.LevelHeads); $f['Edges'] = @(& $wn.LevelEdges)
   return $f }
 # R7 (W1): the cut cells of one measured pub grid $P ($wn.LevelPubs), one short text per row: "row <n> number 120>96"
 # when its number, title or lines needed more pixels than the cell gave; none when every cell holds its text.
@@ -323,7 +337,7 @@ $wn.MeasureScaled = {
     $res['K'] = $K; $res['Dpi'] = $ui.Dpi; $res['Sc8'] = (& $wn.Sc 8)
     foreach ($key in $Cards.Keys) {
       $c = [ordered]@{}; $c['Key'] = $key
-      try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts) }
+      try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts); $c['Btn'] = @(& $wn.BtnLines) }
       catch { $c['Error'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
       $cards.Add($c) }
     # R7 (W2): the mouse wheel at this scale too; a wheel case that cannot run is kept as its error (the test names it).
@@ -335,6 +349,14 @@ $wn.MeasureScaled = {
     foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
   $res['Cards'] = $cards.ToArray()
   return $res }
+# R11 (R38; UI standard v1, B1): the B1 lines ($ui.BtnBad) of every shown RADE button of the page, at the scale in use
+# (the self-check runs at the window's own scale only; this one runs at 1.25 x and 1.5 x too). None when all are right.
+$wn.BtnLines = {
+  $out = New-Object System.Collections.Generic.List[string]; $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) { foreach ($c in $st.Pop().Controls) {
+      if ($c -is [Windows.Forms.Button] -and $c.Visible -and $ui.BtnKind.ContainsKey($c)) { foreach ($l in @(& $ui.BtnBad 'scaled' ([string]$c.AccessibleName) $c)) { $out.Add([string]$l) } }
+      elseif ($c.Controls.Count) { $st.Push($c) } } }
+  return $out.ToArray() }
 $wn.LogoFacts = {
   <#
   .SYNOPSIS
@@ -533,7 +555,7 @@ $wn.MeasureRun = {
   $wn.PngDir = Split-Path -Parent $Path
   $form.StartPosition = 'Manual'; $form.ShowInTaskbar = $false; $form.Location = [Drawing.Point]::new(-20000, -20000)
   $form.Show(); [Windows.Forms.Application]::DoEvents()
-  & $ui.FormDpi; $form.BackColor = $pc.surface
+  & $ui.FormDpi; $ui.Scaled = $true; $form.BackColor = $pc.surface   # R11: as the window part sets it
   $wn.Light = [bool](& $wn.AppsLight)   # R10: the rail logo of this computer's app mode, as $wn.Recolor 'start' sets it in a normal run
   $all = New-Object System.Collections.Generic.List[object]
   # A card that cannot be measured is kept with its error and place, and the run goes on (the test names it).

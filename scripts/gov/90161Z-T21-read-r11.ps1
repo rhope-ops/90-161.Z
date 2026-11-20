@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r10, module "read": the parts Run (the command row that starts the health flow) and Read (the
+  90-161.Z Task 21 probe r11, module "read": the parts Run (the command row that starts the health flow) and Read (the
   results of HEALTH, T4, EDITALL and BUTTON).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r10.ps1 (dot-sourced from the same folder); it does nothing when it is run alone. r10 (PFM 19 Nov 26): T4 expects PASS through list-level Contribute for the Visitors
+  Loaded by 90161Z-T21-probe-r11.ps1 (dot-sourced from the same folder); it does nothing when it is run alone. r10 (PFM 19 Nov 26): T4 expects PASS through list-level Contribute for the Visitors
   group; the FAIL text no longer points to way C (a flow), which the PFM replaced.
   Inputs: the values the main file sets ($dir, $ListTitle, $ListFolder, $WaitMinutes, $pollEvery) and the helpers of the
   module "common"; the rows of the probe list and the second person's state files (Person, Office). Outputs: result lines (counts only)
@@ -11,7 +11,7 @@
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: Run: 1 row on the probe list. Read: nothing.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r10.ps1 -Part Run (or Read) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r11.ps1 -Part Run (or Read) loads it.
 #>
 
 # The part Run: adds 1 command row (RUN-HEALTH) that starts the health flow; the Read part waits for its answer.
@@ -39,8 +39,10 @@ function Add-HealthTest($Rows, [int]$HealthFloor) {
   $name = 'a health flow on the SharePoint connection of the solution='
   $h = $null
   if ($HealthFloor -gt 0) { $h = Find-Result @($Rows | Where-Object { $_.Id -gt $HealthFloor }) 'HEALTH' 'a' }
-  if (-not $HealthFloor) { Add-Test 'HEALTH' @($name + 'FAIL (no command row: run the health step first)') $false }
-  elseif (-not $h) {
+  # R11 (R38; PFM 20 Nov 26: rounds drop steps that passed): no command row means this round did not start the health
+  # flow, so one NOT RUN line, no RESULT line, not counted (HEALTH passed in R36 and R37).
+  if (-not $HealthFloor) { $script:lines.Add('HEALTH NOT RUN: this round did not start the health flow (HEALTH passed in R36 and R37)'); return }
+  if (-not $h) {
     $why = 'no result row after the wait: the flow did not run; check that "90161Z T21 Probe Health r6" reads On in the solution "90-161.Z flows"'
     Add-Test 'HEALTH' @($name + 'FAIL (' + $why + ')') $false
   } else {
@@ -127,6 +129,9 @@ function Invoke-ReadPart {
   Add-EditAllTest $rows $meId
   # BUTTON: the button flow "90161Z T21 Probe Button r6", started by the view button, wrote one row titled BTN-FLOW.
   $btn = @($rows | Where-Object { ([string]$_.Title).Trim() -like 'BTN-FLOW*' })
-  Add-Test 'BUTTON' @('b a view button starts a flow=' + $(if ($btn.Count) { 'PASS' } else { 'FAIL' }) + ' (rows titled BTN-FLOW=' + $btn.Count + ')') ($btn.Count -ge 1)
+  # R11 (R38): with no BTN-FLOW row and no RUN-HEALTH row the round ran no flow step, so BUTTON did not run (one NOT RUN
+  # line, not counted; BUTTON passed in R36 and R37). A round with flow steps still reports BUTTON FAIL when the row is missing.
+  if (-not $btn.Count -and -not $healthFloor) { $script:lines.Add('BUTTON NOT RUN: this round ran no flow step (BUTTON passed in R36 and R37)') }
+  else { Add-Test 'BUTTON' @('b a view button starts a flow=' + $(if ($btn.Count) { 'PASS' } else { 'FAIL' }) + ' (rows titled BTN-FLOW=' + $btn.Count + ')') ($btn.Count -ge 1) }
   $script:lines.Add('NOTE FORM and VIEW: what the screen showed is left to the answers you give in the RADE window (this script does not read them)')
 }

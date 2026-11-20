@@ -1,4 +1,4 @@
-# Project phases and rounds to the pilot (15 Nov 26)
+# Project phases and rounds to the pilot (15 Nov 26; updated 20 Nov 26)
 
 Status: the PFM's phase order (12 Nov 26; [DECISIONS.md](DECISIONS.md) rows of 2026-11-12 and 2026-11-13, full text in [decisions-archive.md](decisions-archive.md); where those rows cite docs/phases.md they mean [the version of 12 Nov 26](https://github.com/rhope-ops/90-161.Z/blob/5e376e1/docs/phases.md), which also holds the options not chosen) and the roadmap the PFM asked for on 15 Nov 26: round counts, no dates, to the pilot. The PFM approved the round order on 15 Nov 26 (1A). The exit criteria and the estimate are agent recommendations (**REC:**) until the PFM approves them. Evidence for every row: [reviews/2026-11-15-roadmap-evidence.md](reviews/2026-11-15-roadmap-evidence.md).
 
@@ -6,19 +6,33 @@ Status: the PFM's phase order (12 Nov 26; [DECISIONS.md](DECISIONS.md) rows of 2
 
 | # | Phase | State (15 Nov 26) | Proof | REC: exit criterion (pass or fail) |
 |---|---|---|---|---|
-| 1 | Deployment engine (RADE) | Install runs work: engine-v6 ran R25 (answers in the window work; restore after minimize and one alignment item do not). Not built: Diagnose, Back up, Restore, Uninstall; the install record (`marker`) | [R25](reviews/2026-11-15-r25-results.md) | A round passes each of the 5 run types, and the site holds the install record |
+| 1 | Deployment engine (RADE) | 20 Nov 26: engine-v27 ran R37 with 0 layout defects at 150 %. Next (PFM 20 Nov 26): pause and resume after a closed window, a removed CAC or a restart; no script files in results; Fulcrum logo. Earlier: install runs work: engine-v6 ran R25. Not built: Diagnose, Back up, Restore, Uninstall; the install record (`marker`) | [R25](reviews/2026-11-15-r25-results.md) | A round passes each of the 5 run types, and the site holds the install record |
 | 2 | Function, use, scale | Design decided (roles, backup, digest). 0 built | [roles-and-permissions.md](roles-and-permissions.md), [backup-and-restore.md](backup-and-restore.md) | The role re-assign screen passes a round; a Restore dry run shows the right counts; a co-owner re-binds a connection (P19) |
 | 3 | Lists, security, intake | 12 lists and 88 rows on a clean test site, made by PnP in R25 (15 of 15); rights form answered 17 of 17 (open: P18, P19, S14). Not run: the dry run against schemas/lists; intake | [R12](reviews/2026-11-14-r12-results.md), [R13](reviews/2026-11-14-r13-results.md) | PnP makes the 12 lists on a clean site and a dry run then reports 0 differences from [schemas/lists](../schemas/lists) |
 | 4 | App UX and text | Screen map r1 approved (25 screens); clickable previews restored 15 Nov; palette provisional | [app/screen-map.md](app/screen-map.md) | Palette values final (Task 12) |
 | 5 | Flow rules, provisioning | The T02 flow is retired (R25 proved T20; the PFM, 19 Nov 26). The flow and app rules of design check r7 are not built | [power-automate-provisioning.md](power-automate-provisioning.md), [NEXT_PROMPT.md](NEXT_PROMPT.md) State | T02 flow removed; provisioning and setup docs rewritten for PnP; the r7 rules are in the flows and the app |
-| 6 | Flows build | Slice 1 passed end to end (F03, F05, F06). F01, F02, F04 drafted, never imported. Settings-row values not built | [R22](reviews/2026-11-15-r22-results.md), [flow/solution/README.md](../flow/solution/README.md) | The full solution imports with every flow On; each of F01 to F06 has a passed device check; 6 values come from PFM Settings rows |
-| 7 | Front end: PFM window and list forms (PFM 16 Nov 26; replaces the canvas app) | 0 built. A 5-card window preview and plain list forms are in R26 r2. The 13 Nov screen map (25 Power Apps screens) is not valid any more; the cards of [app/screen-map.md](app/screen-map.md) section 0 stay | [R26 results](reviews/2026-11-16-r26-results.md), [DECISIONS.md](DECISIONS.md) rows of 2026-11-16 | REC: every card of screen-map section 0 exists as a list form or a window card; text contrast 4.5:1 measured; a Read-only user enters data in a form; an endorser answer is recorded |
+| 6 | Flows build | 20 Nov 26: the full solution imports with all 10 flows On (R36, R37) and the full flow test passed end to end (F01, F02, F04, F05, F08; R37). Slice 1 passed earlier (F03, F05, F06). Settings-row values not built | [R22](reviews/2026-11-15-r22-results.md), [flow/solution/README.md](../flow/solution/README.md) | The full solution imports with every flow On; each of F01 to F06 has a passed device check; 6 values come from PFM Settings rows |
+| 7 | Front end: PFM window and list forms (PFM 16 Nov 26; replaces the canvas app) | 20 Nov 26: the window preview r10 (17 cards, fake data) passed 18 of 18 checks with 0 layout defects (R37); list button and form header passed. Open: T4 (a Visitors member adds a row; needs a second person), pause and resume (PFM 20 Nov 26), real list data. The cards of [app/screen-map.md](app/screen-map.md) section 0 stay | [R26 results](reviews/2026-11-16-r26-results.md), [DECISIONS.md](DECISIONS.md) rows of 2026-11-16 | REC: every card of screen-map section 0 exists as a list form or a window card; text contrast 4.5:1 measured; a Read-only user enters data in a form; an endorser answer is recorded |
 | 8 | Pilot on the test site | Not started | [rights-test-plan.md](rights-test-plan.md) rows P18, P19 | Start: a second account with fewer rights installs from zero and takes 1 fake publication through every process step |
 | 9 | Handover (how-to, kit repo, releases) | Not started; outside this roadmap | - | - |
 
 Scale note (REC from 12 Nov 26, estimate, not measured): PFM Activity Log reaches the 5,000-item view threshold in about 2.5 years at 2,000 rows a year (50 actions x 40 events); index Created and Action ID when the list is made; a yearly archive flow.
 
-## Rounds to the pilot (order approved by the PFM, 15 Nov 26)
+## Rounds from R38 (20 Nov 26)
+
+R26 to R37 used the round numbers of the table below for probes and fixes; the capabilities in it that are still open move here. The PFM (20 Nov 26): stack each round as much as possible, drop redundant checks, ask for a second person until T4 passes. A step leaves the rounds after 1 pass with unchanged content ([verified.json](reviews/verified.json)).
+
+| Round | Proves | Needs first | If it fails |
+|---|---|---|---|
+| R38 | T4 early (a second person adds a row: asked for at the top of go.md and in the runner); T22 window r11 (XXX XXX spacing data, status column fit, Fulcrum logo in every mode: 3 hand checks); site logo set to Fulcrum and read back; RADE engine-v29: pause and resume, no-script results, UI standard v1 in the RADE window and the 90-161.Z window | A second person for about 5 minutes | T4: a flow writes the row with the PFM's connection |
+| R39 | Sofia Sans in the 90-161.Z window (UI standard v1 buttons and contrast are in R38); the 90-161.Z window resumes its last card | R38 results | Segoe UI |
+| R40 | RADE Diagnose, Back up, Restore (Maintenance screen); Settings-row values in F03, F05, F06 | RADE Maintenance build | Backup by hand per [backup-and-restore.md](backup-and-restore.md) |
+| R41 | Real list data in the window (read-only); endorser answer by list form | R38 T4 | The PFM works in list views |
+| R42 | Install from zero by a second account with fewer rights; rights rows P18, P19; then the pilot | R40, R41 | The documented fallback for each missing right |
+
+Estimate (agent REC, Confidence low): 5 rounds to the pilot if each passes once; 7 to 8 expected (R24 to R37: about 1.5 rounds per capability).
+
+## Rounds to the pilot (order approved by the PFM, 15 Nov 26) (history)
 
 The PFM approved the order of the rounds, and on 15 Nov 26 the probe round as the next round (R26). What moved between rounds after that approval is an agent **REC:** the health-flow probe and paste timing from R25 to R27, and the install record to R35.
 
