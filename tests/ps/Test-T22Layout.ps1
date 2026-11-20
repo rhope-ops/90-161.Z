@@ -1,10 +1,11 @@
-# Tests the look of the T22 PFM window r10 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
+# R11 (R38; PFM 20 Nov 26): Test-EdgeBar: no grid chip or text ends closer to the grid's right edge than a scroll bar is wide.
+# Tests the look of the T22 PFM window r11 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
 # round R31: the rail head W1, the high-contrast colors W2 and the card pictures W4).
 # Network: none.
 # Writes: one temporary folder with the measure file and the card pictures of the window; removed at the end.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Windows only: elsewhere the one line "T22LAYOUT SKIP ..." and exit 0.
-# Runs scripts/gov/90161Z-T22-pfm-window-r10.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
+# Runs scripts/gov/90161Z-T22-pfm-window-r11.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
 # off-screen, measured and closed; no question) and checks what it wrote: each crumb's link and rest have one font and size
 # (V2), the ink gap after the link is at most 8 px at 100 % (V2), step 8 has no "See the 0 findings" link (V3), step 8's
 # Action Status card ends within 2 px of the main card (V4), Full History is drawn like the other white secondary
@@ -27,7 +28,7 @@
 # rebuilt with high contrast on, has only the 2 system colors and differs from its own colors; rebuilt with it off,
 # it is its own colors again (no change of the Windows theme).
 # R10 (R37), once: the Feedback link is on every card in one place and one saved comment writes a PNG of the window,
-# the comment and the list (B13); the Fulcrum and USAF logos differ and the rail shows the one for the app mode; no
+# the comment and the list (B13); the rail shows the Fulcrum logo in both app modes; no
 # grid has columns wider than itself (R36 finding 3).
 # Each line shows the measured numbers.
 # Last line: "T22LAYOUT pass=N fail=0" (tests/ps/Invoke-Ps51.ps1 runs it on the ps51 Windows job).
@@ -145,20 +146,21 @@ function Test-Feedback($M) {
 }
 <#
 .SYNOPSIS
-Checks the logo by Windows app mode (R10, R37; PFM 19 Nov 26): the Fulcrum and the USAF logo are both 128 x 128 and
-differ, and the rail shows the one for the app mode of this computer (light: Fulcrum; dark: USAF).
+Checks the logo (R11, R38; PFM 20 Nov 26: Fulcrum in Windows light and dark mode): the Fulcrum logo is 128 x 128, and the rail
+shows it whatever the app mode of this computer is.
 .PARAMETER M
 The measure file (Theme, ThemeError).
 #>
 function Test-Theme($M) {
   $t = $M.Theme; $err = $(if ($M.ThemeError) { '; error: ' + $M.ThemeError } else { '' })
-  $ok = [bool]($t -and [string]$t.Fulcrum -eq '128x128' -and [string]$t.Usaf -eq '128x128' -and [int]$t.Diff -gt 0)
-  Test-That 'two logos: Fulcrum (light mode) and USAF (dark mode)' $ok ('Fulcrum ' + $t.Fulcrum + ', USAF ' + $t.Usaf + ', pixels that differ ' + $t.Diff + $err)
-  Test-That 'the rail logo matches the app mode' ([bool]($t -and [int]$t.ShownDiff -eq 0)) ('light mode ' + $t.Light + ', pixels that differ from its own logo ' + $t.ShownDiff + $err)
+  $ok = [bool]($t -and [string]$t.Fulcrum -eq '128x128')
+  Test-That 'one logo: Fulcrum, in light and dark mode' $ok ('Fulcrum ' + $t.Fulcrum + $err)
+  $nums = 'light mode ' + $t.Light + ', pixels that differ from the Fulcrum logo ' + $t.ShownDiff + $err
+  Test-That 'the rail logo is the Fulcrum logo in this app mode' ([bool]($t -and [int]$t.ShownDiff -eq 0)) $nums
 }
 <#
 .SYNOPSIS
-Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r10.png, saved in the folder of
+Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r11.png, saved in the folder of
 the measure file, and the first one is not blank (at least 3 colors in a 20 x 20 grid of its pixels).
 .PARAMETER M
 The measure file (Cards, Pngs).
@@ -254,6 +256,25 @@ function Test-HeadCut([string]$Key, $Heads, [string]$At) {
 }
 <#
 .SYNOPSIS
+Checks the right edge of the grids of one card at one scale (R11, R38; the PFM's R37 picture: the status chips "Due 20 Nov
+26" touched the scroll bar): in each grid, the chips and the text of the last column end at least the width of a vertical
+scroll bar before the grid's right edge, whether the bar shows or not. A card with a pub grid ($levelPubs) must have one.
+.PARAMETER Key
+The card key.
+.PARAMETER Edges
+The measured grids (Grid, Width, Bar, Edge, Col).
+.PARAMETER At
+The scale, as text (it starts each line).
+#>
+function Test-EdgeBar([string]$Key, $Edges, [string]$At) {
+  if ($levelPubs -contains $Key -and -not @($Edges).Count) { Test-That ($At + ' R11 ' + $Key + ': grid right edge measured') $false 'no grid measured' }
+  foreach ($e in @($Edges)) {
+    $room = [int]$e.Width - [int]$e.Bar
+    $nums = 'content of "' + $e.Col + '" ends at ' + $e.Edge + ' px; the grid is ' + $e.Width + ' wide, scroll bar ' + $e.Bar + ', so at most ' + $room + ' px'
+    Test-That ($At + ' R11 ' + $Key + ' ' + $e.Grid + ': no chip or text closer to the right edge than the scroll bar') ([int]$e.Edge -le $room) $nums }
+}
+<#
+.SYNOPSIS
 Checks D1 to D4 (R6, the R31b defects) on the alignment facts (Level) of every card measured at one scale.
 .DESCRIPTION
 D1: on each card of $levelCaps, each Action Status caption's middle is within the tolerance of the main card's first
@@ -297,7 +318,8 @@ function Test-Level($Cards, [double]$Sc8, [string]$At) {
       $how = $(if ($beside) { 'beside: widest number ends at ' + $num + ', gap ' + $p.Gap } else { 'under: titles above their number bottom ' + $low.Count })
       $nums = 'rows drawn ' + $n + '; title x ' + ($xs -join ', ') + '; ' + $how
       Test-That ($At + ' D4 ' + $k + ' ' + $p.Grid + ': titles start in one column') $ok $nums }
-    Test-HeadCut $k @($lv.Heads | Where-Object { $_ }) $At }
+    Test-HeadCut $k @($lv.Heads | Where-Object { $_ }) $At
+    Test-EdgeBar $k @($lv.Edges | Where-Object { $_ }) $At }
 }
 <#
 .SYNOPSIS
@@ -332,7 +354,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGu
 try {
   $file = Join-Path $tmp 'measure.json'
   $engine = (Get-Process -Id $PID).Path
-  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r10.ps1'
+  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r11.ps1'
   $ErrorActionPreference = 'Continue'   # the child's error output is shown below, not thrown here
   $log = @(& $engine -NoProfile -ExecutionPolicy Bypass -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'

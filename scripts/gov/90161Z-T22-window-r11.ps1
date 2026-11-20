@@ -1,8 +1,10 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r10, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r11, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
+  R11 (R38; PFM 20 Nov 26): the layout self-check tests the grid edges against the scroll bar (R11 LAYOUT line); the logo and
+  THEME lines name Fulcrum in both modes; the checks are the 3 of the cards part.
   $wn.Show builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
   line in one font (V2: its link is a Pfm.LinkText in the crumb's font, underlined, with no padding); the last cards of
   the columns end on one line when the card has an Action Status card (V4). $wn.Build builds every card once (layout
@@ -17,10 +19,10 @@
   R8 (R35 W7, R34 finding 7): with high contrast on, the rail logo is drawn in 2 system colors and back in its own
   colors when it goes off ($wn.LogoImage); each rail build checks the logo it shows ($wn.LogoFacts and $wn.LogoBad in
   the measure part: a LOGO line, and a LAYOUT line when the logo has the wrong colors).
-  The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight).
+  The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
@@ -89,8 +91,8 @@ $wn.HeadParts = {
 $wn.RailHead = {
   $h = & $wn.HeadParts $rail $ui.F.Word; $wn.Logo = $h.Logo; $wn.AppName = $h.Name
   try { $lf = & $wn.LogoFacts; $bad = @(& $wn.LogoBad $lf); foreach ($x in $bad) { $ui.LayBad.Add([string]$x) }
-    if ($lf.Shown) { $lines.Add('LOGO ' + $(if ($lf.High) { 'high contrast on: system colors' } elseif ($wn.Light) { 'high contrast off, light mode: own colors (Fulcrum)' }
-        else { 'high contrast off, dark mode: own colors (USAF)' }) + ', other pixels ' + $lf.Other +
+    $own = 'high contrast off: own colors (Fulcrum, light and dark mode)'
+    if ($lf.Shown) { $lines.Add('LOGO ' + $(if ($lf.High) { 'high contrast on: system colors' } else { $own }) + ', other pixels ' + $lf.Other +
         ', changed pixels ' + $lf.Diff + $(if ($bad.Count) { ' (wrong colors)' } else { ' (right colors)' })) } }
   catch { $lines.Add('NOTE the logo check stopped: ' + ([string]$_.Exception.Message)) }
   $sb = & $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $sb.BackColor = $pc.navy; $sb.Text = 'Publications and Forms'; $sb.Visible = $true
@@ -382,10 +384,21 @@ $ui.Trash = @($ui.Trash) + @($wn.CheckTimer, $wn.SizeTimer)
 # Grid columns wider than their grid, and a main column that scrolls sideways at 1280 or wider, are layout defects; a
 # card whose main column scrolls down is noted in $wn.Scrolled.
 $wn.ScrollCheck = {
+  <#
+  .SYNOPSIS
+  The layout self-check of the card on the page: grids wider than themselves, the content of a grid ending closer to its
+  right edge than a scroll bar is wide (R11), a main column that scrolls sideways at 1280 or wider.
+  .DESCRIPTION
+  Adds one LAYOUT line to $ui.LayBad for each defect; a card whose main column scrolls down is noted in $wn.Scrolled.
+  .OUTPUTS
+  None.
+  #>
   $st = New-Object System.Collections.Stack; $st.Push($page)
   while ($st.Count) { foreach ($c in $st.Pop().Controls) {
       if ($c -is [Windows.Forms.DataGridView]) { $sum = 0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width } }
-        if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' + $c.ClientSize.Width) } }
+        if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' + $c.ClientSize.Width) }
+        $edge = & $wn.EdgeCheck $c $wn.Cur   # R11 (R38): no chip or text ends closer than a scroll bar's width to the grid's right edge
+        if ($edge) { $ui.LayBad.Add($edge) } }
       elseif ($c.Controls.Count) { $st.Push($c) } } }
   $logicalW = [int]($form.ClientSize.Width / ([math]::Max(0.5, $ui.Dpi / 96.0)))
   if ($logicalW -ge 1280 -and $main.HorizontalScroll.Visible) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' the main column scrolls sideways at ' + $form.ClientSize.Width + 'x' + $form.ClientSize.Height) }
@@ -425,7 +438,7 @@ $wn.Recolor = {
   happens when the setting did not change. Each change adds one CONTRAST line to the result.
   .PARAMETER When
   'start' or 'changed' (R8: or a name the measure part gives). R10 (R37): a change of the Windows app mode (light or
-  dark) rebuilds too, so the logo takes its Fulcrum or USAF colors; it adds one THEME line.
+  dark) adds one THEME line; R11 (R38): it no longer rebuilds, the logo is the Fulcrum one in both modes.
   .PARAMETER Force
   R8 (R35 W7): $true or $false to use instead of the Windows setting (the measure part rebuilds the window both ways
   with no change of the Windows theme); $null: the Windows setting.
@@ -439,9 +452,9 @@ $wn.Recolor = {
   & $ui.UseColors $high; $wn.Fills = & $wn.FillsOf
   $form.BackColor = $pc.surface; $main.BackColor = $pc.surface; $page.BackColor = $pc.surface; $rail.BackColor = $pc.navy
   if ($highNew) { $lines.Add('CONTRAST ' + $When + ': high contrast ' + $(if ($high) { 'on, the window uses the system colors' } else { 'off, the window uses its own colors' })) }
-  if ($lightNew) { $lines.Add('THEME ' + $When + ': Windows apps use ' + $(if ($light) { 'light mode, the logo has the Fulcrum colors' } else { 'dark mode, the logo has the USAF colors' }) +
+  if ($lightNew) { $lines.Add('THEME ' + $When + ': Windows apps use ' + $(if ($light) { 'light mode, the logo has the Fulcrum colors' } else { 'dark mode, the logo has the Fulcrum colors too' }) +
       $(if ($high) { ' (shown in the system colors while high contrast is on)' } else { '' })) }
-  if ($When -eq 'start') { return }
+  if ($When -eq 'start' -or -not $highNew) { return }   # R11: an app mode change alone changes no color of the window
   $form.SuspendLayout()
   foreach ($x in @($rail.Controls)) { $rail.Controls.Remove($x); $x.Dispose() }
   $wn.RailBtn = @(); & $wn.BuildRail
