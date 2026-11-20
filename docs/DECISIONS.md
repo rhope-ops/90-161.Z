@@ -6,7 +6,11 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-20 | App font: Public Sans (open font, shipped as a file each app loads itself), Segoe UI as the fallback when the file cannot load. Scope: all apps (UI standard v1, B7). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B7 |
+| 2026-11-20 | App font: Sofia Sans Condensed for titles, Sofia Sans for text (one open family, shipped as files), Segoe UI fallback; web pages too. Scope: all apps (UI standard v1, B7). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B7 |
+| 2026-11-20 | Every card (RADE and app windows) gets "Feedback": the PFM types a comment and it saves a snapshot of the app window with it into the results. Scope: all apps (UI standard v1, B13). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B13 |
+| 2026-11-20 | R37 is a large round the PFM runs on 21 Nov 26: everything built overnight that does not break testing; test retirement starts in R37; "second person edits" retires, "second person adds" stays. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md R37 |
+| 2026-11-20 | A separate RADE session builds UI standard v1 (Step 1) now, in parallel with the R36 intake and R37 here. Scope: RADE. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md Step 1 |
+| 2026-11-20 | Replaced same day by the Sofia Sans row: App font: Public Sans (open font, shipped as a file), Segoe UI fallback. Scope: all apps (B7). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B7 |
 | 2026-11-20 | UI standard plan approved (R38): cross-app standard in RADE, RADE contrast themes, screen walk, test retirement. Scope: RADE, 90-161.Z, next apps. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md |
 | 2026-11-20 | Buttons: fixed width set (action, wide, compact), no fit-to-text; primary button last, at the right end of the action row. Scope: all apps (UI standard v1). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B1, B5 |
 | 2026-11-20 | A round step leaves the rounds after 1 pass with unchanged content (revision lines ignored); a change or a failure brings it back. Scope: all rounds from R38. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md Step 2 |
