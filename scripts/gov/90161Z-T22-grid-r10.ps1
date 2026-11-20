@@ -189,13 +189,14 @@ $wn.FitGrid = {
   $excess = $sum - $room; if ($excess -le 0) { return $false }
   $kinds = $G.Tag.Kind; $cols = @($G.Tag.Cols)
   $heads = @{}; foreach ($c in $cols) { $heads[[string]$c.N] = [int](& $wn.HeadMin $c) }
-  $free = @($G.Columns | Where-Object { $_.Visible -and [string]$kinds[$_.Name] -ne 'pub' })
+  $free = @($G.Columns | Where-Object { $_.Visible -and [string]$kinds[$_.Name] -ne 'pub' }); $gave = 0
   foreach ($pass in 'above head', 'under head') {
     foreach ($k in @($free | Sort-Object { $_.Width - [int]$heads[$_.Name] } -Descending)) {
       if ($excess -le 0) { break }
       $floor = $(if ($pass -eq 'above head') { [math]::Max(2, [int]$heads[$k.Name]) } else { 2 })
       $give = [math]::Min($excess, $k.Width - $floor); if ($give -le 0) { continue }
-      $k.MinimumWidth = [math]::Max(2, [math]::Min($k.MinimumWidth, $k.Width - $give)); $excess -= $give } }
+      $k.MinimumWidth = [math]::Max(2, [math]::Min($k.MinimumWidth, $k.Width - $give)); $excess -= $give; $gave++ } }
+  if (-not $gave) { return $false }   # excess, but no column could give any width back: nothing changed
   $G.Width = $G.Width - 1; $G.Width = $G.Width + 1   # the fill columns share the room again
   return $true }
 # The widest number (as a link) and the widest title of the pub values ("number|title") of $Rows, in pixels, measured as

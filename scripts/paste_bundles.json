@@ -277,7 +277,7 @@
                     "file": "90161Z-T21-probe-r10.ps1",
                     "args": "-Part Clean -Label first",
                     "minutes": 20,
-                    "note": "Signs in (CAC). Removes a test list, library or Visitors member left by the last round. A test person still in PFM Office is reported as FAILED; the last step removes them.",
+                    "note": "Signs in (CAC). Removes a test list, library or Visitors member left by the last round. If an earlier round left a test person in PFM Office, this step reports FAILED and the last step removes them.",
                     "estimate": 2,
                     "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
                     "needs": [
@@ -377,9 +377,9 @@
                     "kind": "guide",
                     "dir": "T21",
                     "file": "",
-                    "note": "You need one person of your office for about 10 minutes. They open the new row form, type the title you send them and select Save. Then they stay for one more step.",
+                    "note": "You need one person of your office for about 5 minutes. They open the new row form, type the title you send them and select Save.",
                     "guide": [
-                        "1. Ask the second person to stay at a computer for about 10 minutes.",
+                        "1. Ask the second person to stay at a computer for about 5 minutes.",
                         "2. Open Teams.",
                         "3. Select \"Chat\".",
                         "4. Select \"New chat\".",
@@ -428,25 +428,6 @@
                         "T21 Make the probe list r10"
                     ],
                     "doing": "Opening the test page."
-                },
-                {
-                    "name": "T21 Put a test header on the list form r10",
-                    "title": "Put a test header on the list form",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r10.ps1",
-                    "args": "-Part Form",
-                    "minutes": 20,
-                    "note": "Signs in (CAC). Puts a test header on the probe list form and reads it back.",
-                    "estimate": 2,
-                    "help": "Send the results as they are.",
-                    "needs": [
-                        "pnp",
-                        "net-site",
-                        "site-rights"
-                    ],
-                    "after": [
-                        "T21 Make the probe list r10"
-                    ]
                 },
                 {
                     "name": "T24 Write the list IDs into the import file r7",
@@ -614,8 +595,9 @@
                         "3. Select the solution \"90-161.Z flows\".",
                         "4. Look at the column \"Status\" of each of the 10 flows.",
                         "5. Remember each flow that reads Off (a question follows).",
-                        "6. If a flow reads Off: select that flow.",
+                        "6. Select the first flow that reads Off.",
                         "7. If you selected a flow: select \"Turn on\".",
+                        "8. For each other flow that reads Off: select that flow and \"Turn on\".",
                         "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
                         "If a flow will not turn on: select \"It failed\".",
                         "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
@@ -915,7 +897,7 @@
                     "guide": [
                         "1. In the browser, select the tab \"90-161.Z test page\".",
                         "2. Select \"Open the list with the button\".",
-                        "3. If the view name at the top right of the list says \"All Items\": select \"All Items\".",
+                        "3. If the top right of the list shows \"All Items\": select \"All Items\" to open the menu of views.",
                         "4. If a menu of views opened: select \"ProbeButton\".",
                         "5. Look at the first row for a button \"Run the test flow\".",
                         "6. In the first row, select \"Run the test flow\".",
@@ -1100,7 +1082,7 @@
                         },
                         {
                             "key": "f04-to",
-                            "prompt": "Is the To line the alert address you typed (your own address)?",
+                            "prompt": "Is the To line your own work e-mail address?",
                             "kind": "pick",
                             "choices": [
                                 "Yes",
@@ -1278,7 +1260,7 @@
                     "file": "90161Z-T21-probe-r10.ps1",
                     "args": "-Part Clean -Label last",
                     "minutes": 20,
-                    "note": "Signs in (CAC). Takes the second person out of Visitors and PFM Office, and moves the probe list and library to the site Recycle Bin. Runs even when earlier steps failed.",
+                    "note": "Signs in (CAC). Takes the second person out of Visitors (and out of PFM Office if an earlier round left them there), and moves the probe list and library to the Recycle Bin. Runs after any failure.",
                     "estimate": 2,
                     "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
                     "needs": [
@@ -1294,7 +1276,7 @@
                     "kind": "guide",
                     "dir": "T21",
                     "file": "",
-                    "note": "You delete the 2 test flows from the solution. The solution and the 8 app flows stay. It runs only because the import finished. About 3 minutes.",
+                    "note": "You delete the 2 test flows from the solution. The solution and the 8 app flows stay. This step shows only when the import finished. About 3 minutes.",
                     "guide": [
                         "1. Select \"Open in browser\" above.",
                         "2. On the left, select \"Solutions\" (it can be under \"More\").",
@@ -1474,11 +1456,6 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-form-r10.txt",
-                    "step": "T21 Put a test header on the list form r10"
-                },
-                {
-                    "dir": "T21",
                     "name": "90161Z-T21-probe-run-r10.txt",
                     "step": "T21 Start the health flow r10"
                 },
@@ -1552,7 +1529,6 @@
                         "T21 Ask for a new row r10",
                         "T21 Second person adds a row r10",
                         "T21 Open the test page r10",
-                        "T21 Put a test header on the list form r10",
                         "T24 Write the list IDs into the import file r7",
                         "T24 Import the full solution r7: choose the file",
                         "T24 Import the full solution r7: finish",

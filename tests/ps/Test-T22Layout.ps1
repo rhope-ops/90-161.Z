@@ -134,11 +134,14 @@ The measure file (Feedback, FeedbackError).
 function Test-Feedback($M) {
   $f = $M.Feedback; $err = $(if ($M.FeedbackError) { '; error: ' + $M.FeedbackError } else { '' })
   $ok = [bool]($f -and [int]$f.Cards -gt 0 -and [int]$f.WithLink -eq [int]$f.Cards -and [int]$f.Places -eq 1 -and ([string]$f.Name).Trim())
-  Test-That 'Feedback link on every card, in one place, named' $ok ('cards ' + $f.Cards + ', with the link ' + $f.WithLink + ', places ' + $f.Places + ', name "' + $f.Name + '"' + $err)
+  $nums = 'cards ' + $f.Cards + ' (want more than 0), with the link ' + $f.WithLink + ' (want ' + $f.Cards + '), places ' + $f.Places + ' (want 1)'
+  Test-That 'Feedback link on every card, in one place, named' $ok ($nums + ', name "' + $f.Name + '" (want a name)' + $err)
   $ok = [bool]($f -and $f.PngSig -and [int]$f.PngBytes -gt 1000 -and ([string]$f.Base) -eq ('90161Z-T22-feedback-home-' + $M.Rev))
-  Test-That 'Feedback save writes a PNG of the window' $ok ('file ' + $f.Base + '.png, ' + $f.PngBytes + ' bytes, PNG signature ' + $f.PngSig + $err)
+  $nums = 'file ' + $f.Base + '.png (want 90161Z-T22-feedback-home-' + $M.Rev + '.png), ' + $f.PngBytes + ' bytes (want more than 1000)'
+  Test-That 'Feedback save writes a PNG of the window' $ok ($nums + ', PNG signature ' + $f.PngSig + $err)
   $ok = [bool]($f -and $f.TxtHasComment -and $f.ListHasIt -and ([string]$f.LinkText) -eq 'Feedback (1 saved)')
-  Test-That 'Feedback save writes the comment and the list' $ok ('comment in the text file ' + $f.TxtHasComment + ', in the list ' + $f.ListHasIt + ', link "' + $f.LinkText + '"' + $err)
+  $nums = 'comment in the text file ' + $f.TxtHasComment + ', in the list ' + $f.ListHasIt
+  Test-That 'Feedback save writes the comment and the list' $ok ($nums + ', link "' + $f.LinkText + '" (want "Feedback (1 saved)")' + $err)
 }
 <#
 .SYNOPSIS

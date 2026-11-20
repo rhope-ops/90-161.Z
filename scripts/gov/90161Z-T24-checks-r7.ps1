@@ -26,7 +26,9 @@
 #>
 function Hide-Login([string]$Text, $Me) {
   if (-not ($Me -and $Me.Login)) { return $Text }
-  foreach ($x in @($Me.Login, ($Me.Login -split '\|')[-1]) | Where-Object { $_ -and $_.Length -ge 3 } | Sort-Object Length -Descending) { $Text = $Text.Replace($x, '<YOU>') }
+  # -replace is case-insensitive: a server message can write the sign-in name in another case.
+  foreach ($x in @($Me.Login, ($Me.Login -split '\|')[-1]) | Where-Object { $_ -and $_.Length -ge 3 } | Sort-Object Length -Descending) {
+    $Text = $Text -replace [regex]::Escape($x), '<YOU>' }
   return $Text
 }
 function Get-MyUser {

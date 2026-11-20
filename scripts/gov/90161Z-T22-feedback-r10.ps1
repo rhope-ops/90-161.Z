@@ -8,21 +8,24 @@
   Inputs: $form, $ui, $wn, $who, $dir, $Rev, $lines. Outputs: the $wn members below.
   Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: per saved comment 90161Z-T22-feedback-<card>-r10.txt and .png, and at the close 90161Z-T22-feedback-r10.txt, in
-  the T22 folder (or -TestDir); with -Measure in the folder of the measure file.
+  Writes: per saved comment 90161Z-T22-feedback-<card>-r10.txt and .png (a name already in the folder: <card>-2, and so
+  on), and at the close it adds this run's lines to 90161Z-T22-feedback-r10.txt, in the T22 folder (or -TestDir); with
+  -Measure in the folder of the measure file. Nothing that is already there is overwritten.
   Credentials: none.
 #>
 # R10 (R37; PFM 19 Nov 26, UI standard B13): Feedback on every card. The link opens a small comment box; Save writes the
 # comment and a picture of the window as it was when the link was selected, into the T22 folder (the round sends them):
-# 90161Z-T22-feedback-<card>-r10.txt and .png (a second comment on the same card: <card>-2, and so on). Each save adds a
-# FEEDBACK line to the result file; at the close 90161Z-T22-feedback-r10.txt lists every comment file (or none), so the
-# round always finds one feedback file. With -Measure the files go to the folder of the measure file.
+# 90161Z-T22-feedback-<card>-r10.txt and .png (a second comment on the same card, in this run or an earlier window run of
+# the same round: <card>-2, and so on). Each save adds a FEEDBACK line to the result file; at the close each run adds its
+# lines to 90161Z-T22-feedback-r10.txt (every comment file, or none), so the round always finds one feedback file and a
+# second run keeps the first run's lines. With -Measure the files go to the folder of the measure file.
 $wn.FeedbackN = @{}; $wn.FeedbackAll = New-Object System.Collections.Generic.List[string]
 # The link text: "Feedback", and how many comments were saved.
 $wn.FeedbackText = { if ($wn.FeedbackAll.Count) { return ('Feedback (' + $wn.FeedbackAll.Count + ' saved)') }; return 'Feedback' }
 # The folder the feedback files go to: the T22 folder, or the measure folder.
 $wn.FeedbackDir = { if ($dir) { return $dir }; return [string]$wn.PngDir }
 # The base name of comment $N on card $Key: 90161Z-T22-feedback-<card>-r10, or <card>-<N> from the second one on.
+# $wn.FeedbackSave raises $N past every name whose .txt or .png is already in the folder (an earlier window run).
 $wn.FeedbackName = { param([string]$Key, [int]$N)
   return ('90161Z-T22-feedback-' + $Key + $(if ($N -gt 1) { '-' + $N } else { '' }) + '-' + $Rev) }
 # A picture of the whole window as it is now (Control.DrawToBitmap). The caller disposes it.
@@ -34,8 +37,10 @@ $wn.FeedbackSave = {
   .SYNOPSIS
   Saves one comment on card $Key: the text file and the window picture $Shot, in the feedback folder.
   .DESCRIPTION
-  The comment is masked like every result line (the DODID shows as <DODID>). Adds a FEEDBACK line to the result and
-  the base name to $wn.FeedbackAll. A save that fails is a NOTE line, not a stop.
+  The comment is masked with the shared rules (Hide-Site: e-mail addresses, the RADE site, URLs, .mil hosts and GUIDs;
+  then the DODID shows as <DODID>, like every result line). The name is new: a name whose .txt or .png is already in the
+  folder is skipped. Adds a FEEDBACK line to the result and the base name to $wn.FeedbackAll, and shows the new count
+  on the Feedback link. A save that fails is a NOTE line, not a stop.
   .PARAMETER Key
   The card key.
   .PARAMETER Text
@@ -49,12 +54,18 @@ $wn.FeedbackSave = {
   $into = & $wn.FeedbackDir
   if (-not $into) { $lines.Add('NOTE feedback not saved: no folder'); return '' }
   try {
-    $n = 1 + [int]$wn.FeedbackN[$Key]; $wn.FeedbackN[$Key] = $n; $base = & $wn.FeedbackName $Key $n
+    $n = 1 + [int]$wn.FeedbackN[$Key]; $base = & $wn.FeedbackName $Key $n
+    while ((Test-Path -LiteralPath (Join-Path $into ($base + '.txt'))) -or (Test-Path -LiteralPath (Join-Path $into ($base + '.png')))) {
+      $n++; $base = & $wn.FeedbackName $Key $n }   # an earlier window run of the round saved this name: never overwrite it
+    $wn.FeedbackN[$Key] = $n
     $Shot.Save((Join-Path $into ($base + '.png')), [System.Drawing.Imaging.ImageFormat]::Png)
-    $t = ([string]$Text).Trim(); if ($who) { $t = ConvertTo-Masked $t $who.Secret }
+    $t = Hide-Site (([string]$Text).Trim()) ([string]$env:RADE_SITE); if ($who) { $t = ConvertTo-Masked $t $who.Secret }
     $body = @(('FEEDBACK card ' + $Key + ', window ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')), 'What does not look right:', $t)
     Set-Content -LiteralPath (Join-Path $into ($base + '.txt')) -Value $body -Encoding UTF8
     $wn.FeedbackAll.Add($base); $lines.Add('FEEDBACK ' + $Key + ': ' + $base + '.txt and ' + $base + '.png')
+    # The link shows the count here, in the one save code that the Save button and -Measure both run (R37 r1 ps51: the
+    # count was set only by the Save button, so the measured save left the link at "Feedback").
+    if ($wn.FbLink) { $wn.FbLink.Text = & $wn.FeedbackText; if ($wn.BarLayout) { & $wn.BarLayout } }
     return $base
   } catch { $lines.Add('NOTE feedback not saved: ' + ([string]$_.Exception.Message)); return '' } }
 $wn.FeedbackAsk = {
@@ -73,9 +84,9 @@ $wn.FeedbackAsk = {
     $dlg = New-Object System.Windows.Forms.Form; $dlg.Text = 'Feedback on this card'; $dlg.FormBorderStyle = 'FixedDialog'; $dlg.StartPosition = 'CenterParent'
     $dlg.MinimizeBox = $false; $dlg.MaximizeBox = $false; $dlg.ShowInTaskbar = $false; $dlg.Font = $ui.F.Body; $dlg.AutoScaleMode = 'None'
     $pad = & $wn.Sc 16; $bw = & $wn.Sc 120; $bh = & $wn.Sc 36; $tw = & $wn.Sc 460
-    $lb = New-Object System.Windows.Forms.Label; $lb.Text = 'What does not look right?'; $lb.AutoSize = $true; $lb.Location = [Drawing.Point]::new($pad, $pad)
+    $lb = New-Object System.Windows.Forms.Label; $lb.Text = 'What does not look right? One line, no names.'; $lb.AutoSize = $true; $lb.Location = [Drawing.Point]::new($pad, $pad)
     $tb = New-Object System.Windows.Forms.TextBox; $tb.Multiline = $true; $tb.AcceptsReturn = $true; $tb.ScrollBars = 'Vertical'; $tb.WordWrap = $true
-    $tb.AccessibleName = 'What does not look right?'; $tb.Size = [Drawing.Size]::new($tw, (& $wn.Sc 120))
+    $tb.AccessibleName = 'What does not look right? One line, no names.'; $tb.Size = [Drawing.Size]::new($tw, (& $wn.Sc 120))
     $tb.Location = [Drawing.Point]::new($pad, ($pad + $lb.PreferredHeight + (& $wn.Sc 8)))
     $by = $tb.Bottom + $pad
     $ok = New-Object System.Windows.Forms.Button; $ok.Text = 'Save'; $ok.AccessibleName = 'Save the comment'; $ok.DialogResult = 'OK'; $ok.Size = [Drawing.Size]::new($bw, $bh)
@@ -84,15 +95,16 @@ $wn.FeedbackAsk = {
     $dlg.Controls.AddRange(@($lb, $tb, $no, $ok)); $dlg.CancelButton = $no
     $dlg.ClientSize = [Drawing.Size]::new(($tw + 2 * $pad), ($by + $bh + $pad))
     if ([string]$dlg.ShowDialog($form) -eq 'OK' -and ([string]$tb.Text).Trim()) {
-      if (& $wn.FeedbackSave $Key $tb.Text $shot) { $wn.FbLink.Text = & $wn.FeedbackText; & $wn.BarLayout } }
+      $null = & $wn.FeedbackSave $Key $tb.Text $shot }   # the save also shows the new count on the link
   } catch { $lines.Add('NOTE the feedback box did not open: ' + ([string]$_.Exception.Message)) }
   finally { if ($dlg) { $dlg.Dispose() }; if ($shot) { $shot.Dispose() } } }
-# At the close: 90161Z-T22-feedback-r10.txt lists every comment of this run (or says there is none).
+# At the close: adds this run's lines to 90161Z-T22-feedback-r10.txt (every comment of this run, or none); the lines of
+# an earlier window run of the round stay.
 $wn.FeedbackList = {
   $into = & $wn.FeedbackDir; if (-not $into) { return }
   $body = @('FEEDBACK window ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ': comments saved=' + $wn.FeedbackAll.Count)
   foreach ($b in $wn.FeedbackAll) { $body += ('  ' + $b + '.txt and ' + $b + '.png') }
-  try { Set-Content -LiteralPath (Join-Path $into ('90161Z-T22-feedback-' + $Rev + '.txt')) -Value $body -Encoding UTF8 }
+  try { Add-Content -LiteralPath (Join-Path $into ('90161Z-T22-feedback-' + $Rev + '.txt')) -Value $body -Encoding UTF8 }
   catch { $lines.Add('NOTE the feedback list was not saved: ' + ([string]$_.Exception.Message)) } }
 $wn.MeasureFeedback = {
   <#

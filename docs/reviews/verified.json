@@ -89,6 +89,30 @@
             "content_sha256": {
                 "step": "f93be21557bd65c8735ad76063c3c2d674ec90ef6c919cd83ae1bf03e81a6a24"
             }
+        },
+        {
+            "step": "T21 Put a test header on the list form",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R35",
+                    "results": "docs/reviews/2026-11-19-r35-results.md",
+                    "row": "T21 Open the test page; put a test header on the list form; look at the list form r9: PASSED; PASSED (3 of 3); PASSED, form-header = \"Yes\""
+                },
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T21 Open the test page; put a test header on the list form; look at the list form r10: PASSED (2 of 2); PASSED (3 of 3); PASSED, form-header = \"Yes\""
+                }
+            ],
+            "tested": "The script sets a header on the probe list form (the content type's form formatting) and reads it back (part Form). It left R37 with its look step: no later step or T21 read needs the header.",
+            "files": [
+                "scripts/gov/90161Z-T21-look-r10.ps1"
+            ],
+            "content_sha256": {
+                "step": "93a9d43b84e1fdf2ff885e8417e4d9c2d81a78c4eff6c2271fc8c03d0e659bd6",
+                "scripts/gov/90161Z-T21-look-r10.ps1": "8bf4c9a1b5b287c15c7fc4b90e7ce1e9fe7caac5f955b9651b5bc4f7c0e02814"
+            }
         }
     ]
 }
