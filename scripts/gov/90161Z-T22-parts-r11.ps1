@@ -264,7 +264,8 @@ $wn.ListRow = {
   param($Parent, $It, [int]$W, [int]$Tx)
   $p = & $wn.Panel $W 0
   $bw = 0; $btn = $null
-  if ($It.Btn) { $btn = & $wn.Button $It.Btn 'compact'; $btn.AutoSize = $true; $bw = [math]::Max($btn.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $btn.MinimumSize.Width) }
+  # R11 (UI standard v1, B1): the button keeps the fixed size RADE gives it (compact 96 x 30, or 160 x 30 for a longer label)
+  if ($It.Btn) { $btn = & $wn.Button $It.Btn 'compact'; $bw = [int]$btn.Width }
   $tw = $W - $Tx - $bw - (& $wn.Sc 16) - (& $wn.Sc 8)
   $y = & $wn.Sc 8
   $t1 = & $wn.Txt $p $It.Title $ui.F.SmallB $ui.C.Ink 0 $tw 'Item' $null
@@ -275,7 +276,6 @@ $wn.ListRow = {
   if ($It.Sub) { $t2 = & $wn.Txt $p $It.Sub $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t2.Location = [Drawing.Point]::new($Tx, $y); $y = $t2.Bottom + (& $wn.Sc 2) }
   if ($It.Detail) { $t3 = & $wn.Txt $p $It.Detail $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t3.Location = [Drawing.Point]::new($Tx, $y); $y = $t3.Bottom }
   if ($btn) {
-    $btn.Size = [Drawing.Size]::new($bw, $btn.MinimumSize.Height)
     $btn.Location = [Drawing.Point]::new(($W - $bw - (& $wn.Sc 4)), [math]::Max((& $wn.Sc 6), [int](($y + (& $wn.Sc 8) - $btn.Height) / 2))); [void]$p.Controls.Add($btn) }
   & $wn.Fit $p 8; [void]$Parent.Controls.Add($p) }
 # A list of rows with a line between them; the texts of all rows start after the widest chip.

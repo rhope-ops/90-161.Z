@@ -110,7 +110,7 @@ $wn.BuildRail = {
   foreach ($r in $RailItems) {
     $x = New-Object Pfm.RailItem; $x.Text = $r.Text; $x.AccessibleName = $r.Text; $x.Tag = $r.Key; $x.Font = $ui.F.Body; $x.BoldFont = $ui.F.SmallB
     $x.Back = $pc.navy; $x.OnBack = $ui.C.White; $x.Fore = $pc.onPrimaryMuted; $x.OnFore = $pc.navy; $x.HotLine = $pc.onPrimaryMuted; $x.FocusLine = $pc.accentFill
-    $x.FocusOn = $pc.navy; $x.BadgeFill = $pc.accentFill; $x.BadgeText = $pc.ink
+    $x.FocusOn = $pc.navy; $x.BadgeFill = $pc.accentFill; $x.BadgeText = $pc.ink; $x.BackColor = $x.Back; $x.ForeColor = $x.Fore   # R11 (B10)
     if ($r.Badge) { $x.Badge = [string]$r.Badge; $x.AccessibleName = $r.Text + ', ' + $r.Badge + ' items need you' }
     $x.Size = [Drawing.Size]::new(((& $wn.Sc 200) - 2 * (& $wn.Sc 12)), (& $wn.Sc 44)); $x.Location = [Drawing.Point]::new((& $wn.Sc 12), $y); $y += (& $wn.Sc 48)
     $x.Add_Click({ if (& $ui.Settled) { $script:presses++; $wn.Notice = ''; $wn.Err = ''; $key = [string]$this.Tag; $go = 'home'
@@ -267,7 +267,9 @@ $wn.Show = {
   $wn.MainH = $main.ClientSize.Height; $padX = & $wn.Sc 28
   $cw = [math]::Max((& $wn.Sc 900), $main.ClientSize.Width - [Windows.Forms.SystemInformation]::VerticalScrollBarWidth - 2 * $padX)
   $page.Location = [Drawing.Point]::new($padX, (& $wn.Sc 22)); $page.Margin = & $ui.Pad 0 0 0 0; $page.Padding = & $ui.Pad 0 0 0 (& $wn.Sc 22)
-  foreach ($r in $wn.RailBtn) { $r.On = ([string]$r.Tag -eq [string]$c.Rail); $r.Invalidate() }
+  # R11 (UI standard v1, B10): ForeColor and BackColor hold the painted colors, so the contrast rule reads what shows
+  foreach ($r in $wn.RailBtn) { $r.On = ([string]$r.Tag -eq [string]$c.Rail)
+    $r.BackColor = $(if ($r.On) { $r.OnBack } else { $r.Back }); $r.ForeColor = $(if ($r.On) { $r.OnFore } else { $r.Fore }); $r.Invalidate() }
   & $wn.ShowHead $c $cw
   $page.PerformLayout(); $wn.HeadH = [int]$page.PreferredSize.Height
   & $wn.ShowCols $c $Key $cw $wide
@@ -337,8 +339,7 @@ $wn.BarLayout = {
   #>
   if (-not $wn.Bar) { return }
   $w = $form.ClientSize.Width; $pad = & $wn.Sc 16; $gap = & $wn.Sc 8
-  $pw = [math]::Max($wn.BarPass.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarPass.MinimumSize.Width)
-  $fw = [math]::Max($wn.BarFail.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.BarFail.MinimumSize.Width)
+  $pw = [int]$wn.BarPass.Width; $fw = [int]$wn.BarFail.Width   # R11 (B1): the fixed RADE sizes
   $bh = [math]::Max($wn.BarPass.Height, $wn.BarFail.Height)
   # R10 (R37, B13): the Feedback link sits left of Pass, in the same place on every card; the check text gets the rest.
   $kw = $(if ($wn.FbLink) { [math]::Max($wn.FbLink.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.FbLink.MinimumSize.Width) + 2 * $gap } else { 0 })
