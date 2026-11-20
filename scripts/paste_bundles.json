@@ -26,7 +26,7 @@
         {
             "out": "scripts/gov/paste/90161Z-R36-round-r1.ps1",
             "round": "R36",
-            "title": "Round R36 r1: the window r9, the sample publication with its Word helpers, list IDs by script, the waiver warning flow and the full flow test",
+            "title": "Round R36 r1: the window r8 again, the sample publication with its Word helpers, list IDs by script, the waiver warning flow and the full flow test",
             "files": [
                 {
                     "dir": "T22",
@@ -184,7 +184,7 @@
                     "dir": "T22",
                     "file": "90161Z-T22-pfm-window-r8.ps1",
                     "minutes": 30,
-                    "note": "Opens your 90-161.Z window with fake data. Do the 18 checks in the bar at the bottom (Pass or Fail). Drag a window edge to make it narrower, then wider. Then close it.",
+                    "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 18 checks in the bar at the bottom, then select Pass or Fail. Then close the window.",
                     "estimate": 15,
                     "help": "Send the results as they are. The step can be run again.",
                     "doing": "Opening the 90-161.Z window."
@@ -2619,18 +2619,6 @@
                 },
                 {
                     "path": "T07\\90161Z-T07-seal-test-r5.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-*-r7.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-*-r7.png",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T22\\90161Z-T22-window-r7.txt",
                     "kind": "glob"
                 },
                 {

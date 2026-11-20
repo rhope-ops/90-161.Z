@@ -29,7 +29,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 ### Round R36 r1: my window r8 again, the sample publication in Word, list access, the flows by name and the full flow test
 
 **For:** the round after R35, in one paste of about 1.3 MB. It has 40 steps:
-- My 90-161.Z window r8 again (the new sizing comes in R37): 18 checks, then 4 questions.
+- My 90-161.Z window r8 again (the new sizing comes in R37): 18 checks, then 3 questions.
 - The sample publication made in Word again, now with the Word helper file, once plain and once with 2 fake test seals.
 - List changes on the test site: the column Closed Date and the warning type for waivers; the site Visitors may now add rows on the 3 lists people write to. A second person adds one new row and changes one row that I made.
 - The flows: a script writes my list IDs into the import file, so the import no longer asks for list names. Then I read the state of each of the 10 flows by name, and the full flow test runs with the new waiver warning flow.

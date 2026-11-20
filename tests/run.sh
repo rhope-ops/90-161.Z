@@ -614,7 +614,7 @@ for title, name, ch in got:
 PYEOF
 # T22 PFM window test r8 (R35 W7; R34 W1; R32 defects W1 to W3): the cards and the 18 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
 # Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), each card has one blue button, the text is ASCII and FAKE,
-# r1 to r8 are gone, r9 is the main file and its parts (no other), no '0 findings' link (V3), the UI block is current, the colors are docs/palette.json tokens.
+# r1 to r7 are gone, r8 is the main file and its parts (no other), no '0 findings' link (V3), the UI block is current, the colors are docs/palette.json tokens.
 if [ "${on[t22]}" = 1 ]; then
 python3 - <<'PYT22' && ok "T22 window preview cards (r8)" || bad "T22 window preview cards (r8)"
 import json, re, subprocess, pathlib
