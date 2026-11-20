@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | R39 moves the lock to engine-v30 (Diagnose, Back up) and lists all 12 app lists in the manifest field "backup". Scope: R39. | PFM | https://github.com/rhope-ops/RADE/pull/143 |
 | 2026-11-20 | No session archives itself: it says when it is ready, and the PFM reviews and archives (texts approved). Kit 6.1.0 synced from merge commit 012dc9f (no tag yet); kept: nothing to move. | PFM | https://github.com/rhope-ops/archimedes_lever/pull/87 |
 | 2026-11-20 | The pilot starts on the day the PFM declares it in their own message (recorded here); from then on a round sends no results e-mail: results stay in DoD365. Scope: Data boundary, rounds. | PFM | [phases.md](phases.md) |
 | 2026-11-20 | Rule text approved: the Data boundary exception (round results e-mail) covers the whole line and ends when the pilot starts. Scope: AGENTS.md. | PFM | [rule check](reviews/2026-11-20-rule-conflict.md) |
