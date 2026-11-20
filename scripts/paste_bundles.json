@@ -46,6 +46,10 @@
                 },
                 {
                     "dir": "T22",
+                    "src": "scripts/gov/90161Z-T22-ui2-r11.ps1"
+                },
+                {
+                    "dir": "T22",
                     "src": "scripts/gov/90161Z-T22-parts-r11.ps1"
                 },
                 {

@@ -194,7 +194,7 @@ if ($Opened) {   # no window, no file: one line about the last run, exit 1 on FA
 function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.InvocationInfo.ScriptName)) + ':' + $Err.InvocationInfo.ScriptLineNumber) }
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
-$Parts = @('cards', 'types', 'ui', 'parts', 'grid', 'logo', 'window', 'feedback', 'measure')
+$Parts = @('cards', 'types', 'ui', 'ui2', 'parts', 'grid', 'logo', 'window', 'feedback', 'measure')
 # The full path of part $Name: 90161Z-T22-<name>-r11.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
@@ -240,7 +240,7 @@ try {
   $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true; $form.ShowInTaskbar = $true
   $form.Opacity = 0   # shown when the cards are built, at the size and place the PFM gave it
   $ui.Form = $form; $ui.Dpi = 96.0; $ui.FontK = 1.0; $ui.FontDpi = 96.0
-  . (Get-PartPath 'ui')
+  . (Get-PartPath 'ui'); . (Get-PartPath 'ui2')   # R11: the RADE shared UI file in 2 parts (600-line cap)
   $form.BackColor = $pc.surface
   $ui.Trash = @(@($ui.Trash) | Where-Object { $_ }) + @($ui.Menu)
   $ui.Clock = [System.Diagnostics.Stopwatch]::StartNew(); $ui.CardAt = 0; $ui.GuardMs = 400; $ui.Busy = $false; $ui.Always = @{}; $ui.Boxes = @()

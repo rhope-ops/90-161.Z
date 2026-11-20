@@ -33,7 +33,11 @@ LOGO = 'app-logo'
 BLOCKS.append((LOGO, '# >>> app-logo: generated from assets/logo/90161Z-logo-fulcrum.svg by scripts/build_task_scripts.py (do not edit)', '# <<< app-logo'))
 UI = 'rade-ui'
 BLOCKS.append((UI, '# >>> rade-ui: generated from the pinned RADE shared UI file by scripts/build_task_scripts.py (do not edit)', '# <<< rade-ui'))
-GENERATED = (LOGO, UI)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
+# R38 (engine-v29, 599 lines): the shared UI file is split into 2 blocks so each window part stays under the 600-line file
+# cap (code standard C4); UI2 holds the second half, from the first top-level "$ui." line past the middle (ui_text).
+UI2 = 'rade-ui-2'
+BLOCKS.append((UI2, '# >>> rade-ui-2: generated from the pinned RADE shared UI file (second half) by scripts/build_task_scripts.py (do not edit)', '# <<< rade-ui-2'))
+GENERATED = (LOGO, UI, UI2)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
 _logo = []
 _ui = []
 
@@ -60,15 +64,33 @@ def logo_text():
     return _logo[0]
 
 
-def ui_text():
-    """Read the pinned shared UI file from the locked engine, once per run. Takes nothing; returns text with LF line ends."""
+def ui_text(part=1):
+    """Read the pinned shared UI file from the locked engine, once per run, and give one of its 2 halves.
+
+    Takes part (1 = the first half, 2 = the second); returns text with LF line ends. The halves join to the whole file.
+    """
     # The pinned shared UI file, fetched and hash-checked by the bundle builder (one fetch for every script).
     if not _ui:
         sys.path.insert(0, str(ROOT / 'scripts'))
         import build_paste_bundles as B
         lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
-        _ui.append((B.fetch(lock) / 'engine/rade_ui.ps1').read_text(encoding='utf-8').replace('\r\n', '\n').rstrip('\n') + '\n')
-    return _ui[0]
+        text = (B.fetch(lock) / 'engine/rade_ui.ps1').read_text(encoding='utf-8').replace('\r\n', '\n').rstrip('\n') + '\n'
+        _ui.extend(split_ui(text))
+    return _ui[part - 1]
+
+
+def split_ui(text):
+    """Split the shared UI text in 2 at the first top-level "$ui." line past its middle with every brace before it closed.
+
+    Takes the text; returns (first, second), which join to the text. Stops the build when no such line exists.
+    """
+    lines = text.split('\n')
+    depth = 0
+    for i, line in enumerate(lines):
+        if i >= len(lines) // 2 and depth == 0 and line.startswith('$ui.'):
+            return '\n'.join(lines[:i]) + '\n', '\n'.join(lines[i:])
+        depth += line.count('{') - line.count('}')
+    sys.exit('FAIL the RADE shared UI file has no top-level $ui. line past its middle to split at (scripts/build_task_scripts.py split_ui)')
 
 
 def body(src=SRC):
@@ -76,7 +98,9 @@ def body(src=SRC):
     if src == LOGO:
         return logo_text()
     if src == UI:
-        return ui_text()
+        return ui_text(1)
+    if src == UI2:
+        return ui_text(2)
     text = src.read_text(encoding='utf-8').replace('\r\n', '\n')
     return text[text.index('\nfunction ') + 1:].rstrip('\n') + '\n'
 
