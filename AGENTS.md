@@ -76,7 +76,7 @@ These are defaults: how work normally goes here. The method is yours unless the 
 - Gov device (2026-11-13): no Claude app there and no e-mail sent to it; scripts do every step they can in the RADE round, go.md only the rest: `.claude/skills/round/SKILL.md`.
 - What people see (2026-11-14): plain, professional English; go.md and runner text meet the round skill's usability bar.
 - Round results (2026-11-15): Gmail and result e-mails: only as the round skill says.
-- No scripts in results (the PFM, 2026-11-20; cannot change): a round never collects or sends a .ps1 or other script file; the bundle build fails a collect pattern that can match one.
+- No scripts in results (the PFM, 2026-11-20; cannot be changed): a round never collects or sends a .ps1 or other script file; the bundle build fails a collect pattern that can match one: scripts/check_collect.py.
 - Next-step link (2026-11-15): to open a round or task, link https://rhope-ops.github.io/RADE, never go.md.
 - Delivery (2026-11-15): one pull request per round or request; merge by hand only through the gates in `.claude/skills/deliver/PROJECT.md`.
 - Code standard (2026-11-17): all code is modular, clearly commented and human inspectable: docs/code-standard-90-161.md.
