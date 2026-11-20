@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | App font: Public Sans (open font, shipped as a file each app loads itself), Segoe UI as the fallback when the file cannot load. Scope: all apps (UI standard v1, B7). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B7 |
 | 2026-11-20 | UI standard plan approved (R38): cross-app standard in RADE, RADE contrast themes, screen walk, test retirement. Scope: RADE, 90-161.Z, next apps. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md |
 | 2026-11-20 | Buttons: fixed width set (action, wide, compact), no fit-to-text; primary button last, at the right end of the action row. Scope: all apps (UI standard v1). | PFM | docs/reviews/2026-11-20-ui-standard-plan.md B1, B5 |
 | 2026-11-20 | A round step leaves the rounds after 1 pass with unchanged content (revision lines ignored); a change or a failure brings it back. Scope: all rounds from R38. | PFM | docs/reviews/2026-11-20-ui-standard-plan.md Step 2 |

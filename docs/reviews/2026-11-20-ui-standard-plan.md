@@ -26,6 +26,7 @@ A Design canvas artifact: 6 key screens (RADE Ready, Your turn, Fail, Record; T2
 - `docs/ui-standard.md` (new, the one home): rules B1 to B12 below, each with its pass/fail check and where it runs. `docs/window-design.md` keeps only RADE-window specifics, links to the standard, and loses its stale lines (title-bar hash, file locations).
 - `engine/ui-tokens.json` (new): colour roles (light hex, dark hex, SystemColors role), sizes, gaps, type, field widths. `rade_build.py` writes `$ui.C`/`$ui.Z` from it; `index.html` CSS variables are generated from it.
 - `engine/rade_ui.ps1`: `$ui.Color(role)` (token, or SystemColor when `SystemInformation.HighContrast`), `$ui.Recolor(form)` on `SystemEvents.UserPreferenceChanged` (BeginInvoke to the UI thread, detach on close); `Style`, `Face`, `Own` use only `$ui.Color`; primary text = HighlightText. Generalises T22's `Select-T22Color` / `$wn.Recolor`.
+- Font: `engine/fonts/PublicSans-*.ttf` (OFL licence file beside it) loaded by `$ui` through a private font collection (no install, no admin); Segoe UI when the load fails; web pages load the same files.
 - `$ui.Btn`: fixed width classes, all sizes through `$ui.Sc`. `$ui.Check` gains the new rules and `-Inventory` (one JSON line per control).
 - RADE window (`engine/ps/window/*`): one Back pattern, primary last on the right, insets and field widths from tokens.
 - `index.html`: tokens from the JSON, prefers-contrast and forced-colors blocks (pattern from 90-161.Z `index.html`), `.btn` as the window.
@@ -42,7 +43,7 @@ A Design canvas artifact: 6 key screens (RADE Ready, Your turn, Fail, Record; T2
 | B4 | One Back: compact "Back (Esc)" at the left of the action row; Esc = Back/Up everywhere; Record (F2) and Help (F1) are links only. | Self-check flags a second Back/Record control |
 | B5 | One primary per card, last at the right end of the action row; Enter clicks it; danger never next to primary. | Self-check: one primary, rightmost |
 | B6 | Gaps 4/8/12/16/24 only; one side inset token (24). | Self-check |
-| B7 | 4 type styles; field widths S 240, M 420, L 600. | Engine test: no font or width outside `$ui` |
+| B7 | Font Public Sans (DEC 20 Nov 26), Segoe UI fallback; 4 type styles; field widths S 240, M 420, L 600. | Engine test: no font or width outside `$ui`; Windows job: Public Sans loaded, fallback used when the file is missing |
 | B8 | One meaning per colour role; text 4.5:1 (WCAG 1.4.3), non-text 3:1 (1.4.11) in light and dark. | Python ratio check on `ui-tokens.json` (Linux CI) |
 | B9 | Contrast themes: every role maps to a SystemColors pair (Window/WindowText, Highlight/HighlightText, ButtonFace/ButtonText, GrayText, HotTrack for focus). | Windows job with a contrast theme: control colours equal the mapped pairs |
 | B10 | Navigation frame at any size: status light, logo, (rail when the app has one; icons below 900 px), crumbs, card, sticky action row, links. Body scrolls, action row stays. No sideways scroll at 640×480 at 200 % (1.4.10). | Self-check at 7 sizes × 4 scales |
