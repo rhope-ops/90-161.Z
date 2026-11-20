@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | Kit 6.0.0 synced from merge commit 43ad952 (tag v6.0.0 not made yet): new default 'Skills', `efficiency` merged into `audit`, `data-change` rewritten, `skill_use.py`; kept: nothing to move. | Agent | https://github.com/rhope-ops/archimedes_lever/blob/main/docs/CHANGELOG.md |
 | 2026-11-20 | RADE Maintenance card: keep Diagnose, Back up and Restore; one "Maintenance" button opens its own screen with them and Update/Repair, built far enough to be tested. Scope: RADE (UI standard v1). | PFM | https://github.com/rhope-ops/RADE/pull/136 |
 | 2026-11-20 | Answer-choice buttons hold 33 characters at most (write-in answers keep 10,000); a compact label that does not fit 96 px gets 160 x 30. Scope: RADE (UI standard v1). | PFM | https://github.com/rhope-ops/RADE/pull/136 |
 | 2026-11-20 | RADE content check skips engine/fonts/*.ttf so the Sofia Sans font files (OFL) can ship. Scope: RADE. | PFM | https://github.com/rhope-ops/RADE/pull/136 |

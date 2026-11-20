@@ -9,6 +9,8 @@ Network: none.
 Writes: none.
 Credentials: none.
 """
+import fnmatch
+import json
 import re
 
 
@@ -94,14 +96,50 @@ def main_skills(root):
     return 1 if fails else 0
 
 
-def listing_bytes(root):
+def kit_files(root):
+    """The skill and agent files that can never count as third-party: the kit files in a project's `.check.lock`.
+    It fails closed: with no lock (the kit clone itself has none), a lock that cannot be read, or a lock with no files,
+    every skill and agent file there is one, so a glob cannot move the kit's own text out of the session load.
+
+    Args:
+        root: the repo root (a Path).
+
+    Returns:
+        A set of repo-relative paths.
+    """
+    found = sorted((root / ".claude/skills").glob("*/SKILL.md")) + sorted((root / ".claude/agents").glob("*.md"))
+    every = {f.relative_to(root).as_posix() for f in found}
+    try:
+        files = json.loads((root / ".check.lock").read_text(encoding="utf-8")).get("files")
+    except (ValueError, OSError, AttributeError):
+        return every
+    return set(files) if isinstance(files, dict) and files else every
+
+
+def listing_bytes(root, third_party=()):
     """Bytes of the names and descriptions of .claude/skills/*/SKILL.md and .claude/agents/*.md: Claude Code puts
-    them in every session's context, so they count toward the session load."""
-    total = 0
+    them in every session's context, so they count toward the session load.
+
+    Args:
+        root: the repo root (a Path).
+        third_party: the `audit-third-party` globs; a skill folder or agent file they match is counted apart,
+            except a kit file (in `.check.lock`, or in the kit itself): a glob cannot move the kit's own text out.
+
+    Returns:
+        (bytes of the own skills and agents, bytes of the third-party ones).
+    """
+    own = third = 0
+    kit = kit_files(root) if third_party else set()
     for f in sorted((root / ".claude/skills").glob("*/SKILL.md")) + sorted((root / ".claude/agents").glob("*.md")):
         fm = skill_frontmatter(f.read_text(encoding="utf-8", errors="replace")) or {}
-        total += len((fm.get("name", "") + fm.get("description", "")).encode())
-    return total
+        size = len((fm.get("name", "") + fm.get("description", "")).encode())
+        rel = f.relative_to(root).as_posix()
+        names = (rel, rel.rsplit("/", 1)[0]) if rel.endswith("/SKILL.md") else (rel,)
+        if rel not in kit and any(fnmatch.fnmatchcase(n, g.rstrip("/")) for n in names for g in third_party):
+            third += size
+        else:
+            own += size
+    return own, third
 
 
 # One home per rule (the PFM, 2026-11-18): a rule that AGENTS.md states must not be stated again, or the other

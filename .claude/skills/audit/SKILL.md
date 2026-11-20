@@ -1,13 +1,57 @@
 ---
 name: audit
-description: Use when the PFM asks for a bloat, drift, rule or speed audit, when the check-in says AUDIT DUE and the PFM agrees, and before a release.
+description: Use when a run is slower than its baseline or the PFM says something is slow, before you record a time baseline or add a repeated process, for an audit the PFM asks for (bloat, drift, rules, speed, skill use), on AUDIT DUE, and before a release.
 ---
 
-# Bloat, drift and assumption audit
+# Slow runs and the full audit
+
+AGENTS.md "Caps and audit" points here. Two procedures: a slow run (one operation slower than its baseline: read only that section), and the full audit.
+
+## A slow run
+
+A slowdown that nobody looks at grows: agents add steps, and each one seems small. So each repeatable process compares its time with a baseline, and a slowdown starts this section. Warn only: a slowdown never fails a check (the PFM, 2026-11-16).
+
+### Where times are compared
+
+| Process | Compared | Baseline in `.check.state.json` |
+|---|---|---|
+| `scripts/check.sh` (full lane) | Wall time and each step | `timings.check.seconds`, `timings.check.steps` |
+| `scripts/check.sh --fast` | Each step (its total depends on what changed) | `timings.check.steps` |
+| `scripts/session_checkin.sh` | Its run time | `timings.checkin.seconds` |
+| Pre-push hook | The content check run | `timings.push-guard.seconds` |
+| `python3 scripts/bloat_check.py --time` | Each timing with a `cmd` | `timings.<name>.seconds` |
+
+Slower means both: over `max_slowdown` (default +25%) and over `min_slowdown_seconds` (default 0.5 s), per timing. The second limit stops noise on a step of 0.1 s.
+
+### Steps
+
+1. Confirm. Get 3 runs of the slow process. A run the hook makes next counts as one: do not run a lane by hand that the hook runs next (AGENTS.md "Checks"). A slowdown in 1 of 3 runs is noise (a shared CPU): say so in the report and stop. `CHECK_SERIAL=1 scripts/check.sh` times each step alone.
+2. Find the cause. List what changed since the baseline: `git log --stat <baseline commit>..HEAD -- <files of the slow step>`. Profile the slow step (`time`, `python3 -X importtime`, `python3 -m cProfile -s cumtime`) and name the top 3 costs. Compare with a scratch worktree at the baseline commit (`git worktree add <scratch dir> <commit>`).
+3. Fix the cause. A skipped test, a removed check or a raised limit is not a fix (AGENTS.md "Guards and checks").
+4. Prove it. Give the median of 3 runs before and after, the command and the machine (cores) in the report.
+5. Record a baseline (below), in the same branch as the fix.
+
+When the cause is spread over many files (layers of small additions), stop and propose the full audit (below) to the PFM.
+
+### Record a baseline
+
+- Check lanes: run the full lane 3 times; `scripts/check.sh --record` after the 3rd pass stores each step; then `python3 scripts/bloat_check.py --compare check=<median wall time> --record` sets the wall time to the median of the 3 runs.
+- One time: `python3 scripts/bloat_check.py --compare NAME=SECONDS --record` (NAME as in the table; `check:<step>` for one step). Use the median of 3 runs.
+- Commands with a `cmd`: `python3 scripts/bloat_check.py --time --record`.
+- Commit the change to `.check.state.json`, with the before and after numbers in the commit message.
+- A new baseline after a fix, or for a new step, is routine. A slower baseline with no fix (accepting the cost) needs the PFM's approval: put it under Suggest, with the numbers.
+
+### Time a new repeatable process
+
+- A command people or hooks run: add a timing with its `cmd` to `timings` in `.check.state.json`, then record it.
+- A script that runs itself (a hook, the check-in): measure the run and call `bloat_check.py --compare NAME=SECONDS`, as `scripts/session_checkin.sh` does.
+- An agent procedure (deliver, a review, an audit): write its start and end time in the report. When it runs a 2nd time, propose a script for it under Suggest.
+
+## The full audit: bloat, drift and assumptions
 
 The full periodic audit that AGENTS.md "Caps and audit" names. Claude or a person can run it, and only when the PFM asks: when the check-in says AUDIT DUE, tell the PFM and ask (about 1 hour of agent time).
 
-Due: every 14 days or 300 commits to main, whichever comes first, and before a release. The PFM may set other values in `.check` (`audit-every-days:`, `audit-every-commits:`). One operation slower than its baseline: `.claude/skills/efficiency/SKILL.md`; it proposes this audit when the cause is spread over many files.
+Due: every 14 days or 300 commits to main, whichever comes first, and before a release. The PFM may set other values in `.check` (`audit-every-days:`, `audit-every-commits:`).
 
 Why: two audits of one project found layered bloat that made a simple operation 5x slower (116.6 s to 23.4 s after the fix). Each layer looked reasonable when an agent added it. Agents add; they seldom remove. This audit finds what to remove and proposes it.
 
@@ -59,7 +103,7 @@ Every item below finds; it does not fix. A fix that removes, shortens, rewords, 
 16. Handoff and memory rot: NEXT_PROMPT.md, memory files and review folders that keep closed items, old links and repeated status. Keep the handoff at its line budget; archive reviews older than 90 days into a single index.
 17. Agent-made helpers: one-off scripts, debug files, scratch copies, "_v2"/"_new"/"_old" files and extra wrappers left by agents. Each needs a caller or a recorded reason; if it has neither, propose its removal.
 18. Defensive layering: try/except, fallbacks, retries, validation and comments added by agents "to be safe" that hide errors or duplicate a check one layer up. Keep the one check at the right layer.
-19. Hooks and tools: hook run time per session and per turn (time each one), permission and allow-list sprawl, MCP servers, skills and plugins nobody uses.
+19. Hooks and tools: hook run time per session and per turn (time each one), permission and allow-list sprawl, MCP servers, skills and plugins nobody uses. Skill use, where the host has session records (a Claude cloud session: `list_events` with kinds `assistant` and `user` for the last 10 or more sessions of the project; each large result is saved to a file): `python3 scripts/skill_use.py <saved files>` prints the calls per skill, agent type and tool. A skill with 0 calls: propose a better description, a merge or its removal.
 20. Delegation overhead: briefs that restate AGENTS.md (point to it instead), reviews that re-run the same checks, parallel agents on work too small to split.
 21. Output verbosity: reports, commit messages and docs written by agents that are longer than their content. Shorten templates at the source.
 
@@ -83,7 +127,7 @@ Assumptions that nobody checked are drift that has not happened yet.
 ## Step 5: record
 
 1. Write `docs/reviews/YYYY-MM-DD-bloat-audit.md` (or the place AGENTS.md "Project rules" names): the before/after table, findings by category with evidence, fixes made, proposals for the PFM, the assumption table, the tech-debt register.
-2. Update `.check.state.json`: `audit`: `last_audit` (date, commit on main after the fixes, report path) and new `timings` baselines (`--time --record`; the lanes as `.claude/skills/efficiency/SKILL.md` "Record a baseline" says). In `.check`: `audit-duplicate-ignore:` globs for generated or reference files that only the duplicate scan should skip, `audit-ignore:` for files no audit measure should read (each new glob is a proposal: it hides files from the scan).
+2. Update `.check.state.json`: `audit`: `last_audit` (date, commit on main after the fixes, report path) and new `timings` baselines (`--time --record`; the lanes as "Record a baseline" above says). In `.check`: `audit-duplicate-ignore:` globs for generated or reference files that only the duplicate scan should skip, `audit-ignore:` for files no audit measure should read (each new glob is a proposal: it hides files from the scan).
 3. Log the audit in the project log (milestone; a breakthrough when a fix removes a blocker or saves 25%+ time).
 4. Ask the PFM the open questions together, each with options and a recommendation. Removal proposals: make the 5 with the largest saving on a second branch and open one pull request for them, one commit for each item, with a table in its text: what, where, why it exists (or "not found"), evidence it is unused, saving, risk. Ask the PFM to approve each item in a question dialog, drop the commits that are not approved, then deliver it (`.claude/skills/deliver/SKILL.md`). List the other proposals in the report for the next audit; a long list is not approved, so it removes nothing.
 

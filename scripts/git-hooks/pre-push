@@ -244,7 +244,7 @@ if [ -f "$top/.check" ] || [ -f "$top/.pii-guard" ]; then
   g0=$(date +%s%N 2>/dev/null)
   pout=$(printf '%s\n' "$input" | python3 "$guard" "${gargs[@]}" 2>&1); rc=$?
   [ -n "$pout" ] && printf '%s\n' "$pout" >&2
-  # Compare the guard's time with its baseline (warn only; .claude/skills/efficiency/SKILL.md). Needs date +%N (GNU).
+  # Compare the guard's time with its baseline (warn only; .claude/skills/audit/SKILL.md "A slow run"). Needs date +%N (GNU).
   case "$g0" in *N|'') ;; *) [ -f "$top/scripts/bloat_check.py" ] && [ "$carries" = 1 ] && python3 "$top/scripts/bloat_check.py" \
     --project "$top" --compare "push-guard=$(awk -v a="$g0" -v b="$(date +%s%N)" 'BEGIN {printf "%.1f", (b - a) / 1e9}')" 2>&1 | tail -n 1 >&2 ;; esac
   if [ "$rc" -ne 0 ]; then

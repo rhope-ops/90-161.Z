@@ -25,7 +25,7 @@ The kit owns this file and the check. A project gets both by sync. It sets its o
 | C9 | No magic values: a fixed number, path, address or limit is a named constant with a comment that says where it comes from. | **(review)** |
 | C10 | Each Python and PowerShell file parses. | **(check)** |
 | C2 full | Opt-in: a project sets the line `code-c2: full` in its `.check`. Then each function longer than 10 lines also documents each parameter and its return value, in the form its language's own help tools read. Python: a docstring with an `Args:` section that names each parameter (not `self` or `cls`) and a `Returns:` section when it returns a value (PEP 257). PowerShell: comment-based help (.SYNOPSIS or .DESCRIPTION) with one `.PARAMETER` per parameter, placed where `Get-Help` finds it (about_Comment_Based_Help). JavaScript: a `/** */` JSDoc block directly above, with one `@param` per parameter and `@returns` when it returns a value. Shell: the C2 comment only. | **(check)** [scripts/code_standard_docs.py](../scripts/code_standard_docs.py); **(review)** true and useful |
-| C11 | Lean: no dead code, no unused option, no second way to do the same job; prefer the standard library over a new dependency. A change does not make a check run slower than its baseline (.claude/skills/efficiency/SKILL.md). | **(review)**; time: `scripts/check.sh` TIME line |
+| C11 | Lean: no dead code, no unused option, no second way to do the same job; prefer the standard library over a new dependency. A change does not make a check run slower than its baseline (.claude/skills/audit/SKILL.md "A slow run"). | **(review)**; time: `scripts/check.sh` TIME line |
 
 ## The ratchet
 
