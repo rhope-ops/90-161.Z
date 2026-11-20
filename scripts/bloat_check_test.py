@@ -206,7 +206,7 @@ def caps_and_paths_cases(bloat, ro, caps):
     cfg = bloat.load_config(ro)
     assert cfg["budgets"]["session_load_tokens"] == 5000 and cfg["budgets"]["rules_file_lines"] == 50, "a project can lower a kit cap"
     assert bloat.ignored("ref/a/b.md", cfg) and not bloat.ignored("docs/a.md", cfg), "audit-ignore globs are read"
-    for bad in ("audit-budget-session_load_tokens: 999999\n", "audit-budget-rule_file_lines: 50\n", "audit-every-days: soon\n"):
+    for bad in ("audit-budget-session_load_tokens: 999999\n", "audit-budget-third_party_tokens: 1501\n", "audit-budget-rule_file_lines: 50\n", "audit-every-days: soon\n"):
         settings(ro, bad)
         with contextlib.redirect_stdout(io.StringIO()) as w:
             assert bloat.main_rules(ro) == 1 and bad.split(":")[0] in w.getvalue(), "a raised kit cap, an unknown key and a bad value fail --rules: " + bad
@@ -215,6 +215,7 @@ def caps_and_paths_cases(bloat, ro, caps):
     skill = ro / ".claude/skills/s"; skill.mkdir(parents=True)
     (skill / "SKILL.md").write_text("---\nname: s\ndescription: " + "d" * 400 + "\n---\nAn agent never merges this.\n")
     assert bloat.start_read(ro, caps)[2] >= 100, "skill names and descriptions count in the session load"
+    third_party_cases(bloat, ro, caps)
     import bloat_check_skills
     table = [("agents merge", r"never merges", ["AGENTS.md"])]
     assert bloat_check_skills.second_homes(ro, table) == [
@@ -235,6 +236,47 @@ def caps_and_paths_cases(bloat, ro, caps):
     (ro / "docs").mkdir(); (ro / "docs/gone.md").write_text("x")
     (ro / "scripts").mkdir(); (ro / "scripts/gone.sh").write_text("x"); (ro / "scripts/gone2.py").write_text("x"); (ro / "scripts/tool.sh").write_text("x"); (ro / "scripts/gone3.sh").write_text("x")
     assert bloat.rules_report(ro, caps)[1] == [], "paths exist: pass"
+
+
+def third_party_cases(bloat, ro, caps):
+    """The `audit-third-party` globs: a matched skill folder or agent file leaves the session load and counts
+    against its own cap (the PFM, 2026-11-20).
+
+    Args:
+        bloat: the bloat_check module.
+        ro: a temporary repo that holds the skill `s` (a 400-character description).
+        caps: the default audit settings.
+    """
+    import bloat_check_skills
+    agents = ro / ".claude/agents"; agents.mkdir(parents=True)
+    (agents / "vendor-a.md").write_text("---\nname: vendor-a\ndescription: " + "e" * 200 + "\n---\nBody.\n")
+    both = bloat_check_skills.listing_bytes(ro)
+    assert bloat_check_skills.listing_bytes(ro, [".claude/*"])[1] == 0, "no lock (or the kit clone): nothing is third-party"
+    (ro / ".check.lock").write_text("{bad json")
+    assert bloat_check_skills.listing_bytes(ro, [".claude/*"])[1] == 0, "an unreadable lock fails closed"
+    (ro / ".check.lock").write_text("{}")
+    assert bloat_check_skills.listing_bytes(ro, [".claude/*"])[1] == 0, "a lock with no files list fails closed"
+    (ro / ".check.lock").write_text(json.dumps({"files": {}}))
+    assert bloat_check_skills.listing_bytes(ro, [".claude/*"])[1] == 0, "a lock with an empty files list fails closed"
+    (ro / ".check.lock").write_text(json.dumps({"files": {"scripts/x.py": "x"}}))
+    assert both[1] == 0 and both[0] >= 600, "without globs every skill and agent is the project's own"
+    split = bloat_check_skills.listing_bytes(ro, [".claude/skills/s", ".claude/agents/vendor-*.md"])
+    assert split[0] == 0 and split[1] == both[0], "a matched skill folder and agent file count apart"
+    assert bloat_check_skills.listing_bytes(ro, [".claude/skills/s/"])[1] > 0, "a trailing slash matches the folder"
+    (ro / ".check.lock").write_text(json.dumps({"files": {".claude/skills/s/SKILL.md": "x"}}))
+    assert bloat_check_skills.listing_bytes(ro, [".claude/skills/*"])[1] == 0, "a kit-locked skill is never third-party"
+    (ro / ".check.lock").write_text(json.dumps({"files": {"scripts/x.py": "x"}}))
+    cfg = {**caps, "third_party": [".claude/skills/s", ".claude/agents/vendor-a.md"]}
+    assert bloat.start_read(ro, cfg)[2] < bloat.start_read(ro, caps)[2], "third-party descriptions leave the session load"
+    rows, problems = bloat.rules_report(ro, cfg)
+    assert "third-party ~" in rows[0] and not any("third-party" in p for p in problems), "under its cap: reported only"
+    assert "third-party" not in bloat.rules_report(ro, caps)[0][0], "no globs: no third-party report"
+    tight = {**cfg, "budgets": {**caps["budgets"], "third_party_tokens": 10}}
+    assert any("third-party skills and agents over their cap" in p for p in bloat.rules_report(ro, tight)[1]), \
+        "over its own cap fails"
+    (ro / ".check.lock").unlink()
+    assert bloat.rules_report(ro, tight)[1] == bloat.rules_report(ro, caps)[1], "with no lock nothing leaves the load"
+    (agents / "vendor-a.md").unlink(); agents.rmdir()
 
 
 def conflict_gate_cases(bloat, ro, caps):
@@ -339,7 +381,7 @@ def compare_cases(bloat, root):
     line, slow = bloat.compare_times(json.loads(json.dumps(tc)), [("check", 4.4), ("check:a", 2.4), ("check:tiny", 0.3)])
     assert not slow and line.startswith("TIME  baseline: 3 of 3"), "within +25%, or under 0.5 s slower: ok"
     line, slow = bloat.compare_times(json.loads(json.dumps(tc)), [("check", 5.2), ("check:a", 2.0), ("check:new", 1.0)])
-    assert slow == ["check 5.2 s (baseline 4.0 s, +30%)"] and line.startswith("WARN") and "efficiency" in line, "a slowdown warns and names the skill"
+    assert slow == ["check 5.2 s (baseline 4.0 s, +30%)"] and line.startswith("WARN") and "skills/audit/SKILL.md" in line, "a slowdown warns and names the skill"
     line, _ = bloat.compare_times(json.loads(json.dumps(tc)), [("check:new", 1.0)])
     assert "no baseline yet for 1 (check:new)" in line and "Record a baseline" in line, "no baseline: says how to record one"
     rec = json.loads(json.dumps(tc))
