@@ -193,7 +193,7 @@ $wn.LevelEdges = {
   .SYNOPSIS
   R11 (R38): where the chips and last-column text of every grid on the page end, against the grid's right edge.
   .OUTPUTS
-  One table per grid ($wn.GridEdges): Grid, Width, Bar, Edge, Col.
+  One table per grid ($wn.GridEdges): Grid, Width, Bar, Edge, Col, Fits.
   #>
   $out = New-Object System.Collections.Generic.List[object]; $st = New-Object System.Collections.Stack; $st.Push($page)
   while ($st.Count) {

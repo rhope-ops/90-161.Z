@@ -73,9 +73,9 @@ function ConvertTo-QueueRow([string[]]$Lines) {
 $GridHome = @(ConvertTo-HomeRow ($HomeRows -split "`n"))
 $GridQueue = @(ConvertTo-QueueRow ($QueueRows -split "`n"))
 # Grid columns: N = name, W = width at 100 % (0 = takes the rest; at most: R11 a short column is as wide as its values), K = how the cell is
-# drawn, H = header text when not N, HW = the head may wrap to 2 lines (R11).
+# drawn, H = header text when not N, HW = the head may wrap to 2 lines (R11), Drop = leaves when the heads do not fit (R11; PFM 20 Nov 26).
 $ColsNarrow = @(@{ N = 'Publication'; W = 0; K = 'pub' }, @{ N = 'Step'; W = 128; K = 'plain' }, @{ N = 'With'; W = 170; K = 'with' },
-  @{ N = 'Since'; W = 64; K = 'since' }, @{ N = 'Due'; W = 72; K = 'plain' }, @{ N = 'Status'; W = 104; K = 'chip' })
+  @{ N = 'Since'; W = 64; K = 'since'; Drop = $true }, @{ N = 'Due'; W = 72; K = 'plain' }, @{ N = 'Status'; W = 104; K = 'chip' })
 $ColsWide = @(@{ N = 'Publication'; W = 0; K = 'pub' }, @{ N = 'Action'; W = 136; K = 'plain' }, @{ N = 'Step'; W = 136; K = 'plain' },
   @{ N = 'With'; W = 184; K = 'with' }, @{ N = 'Since'; W = 120; K = 'since' }, @{ N = 'Due'; W = 72; K = 'plain' },
   @{ N = 'Status'; W = 104; K = 'chip' })

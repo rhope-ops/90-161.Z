@@ -125,10 +125,10 @@ $wn.GridCols = {
   $bar = $(if ($PubMin -gt 0) { [math]::Max($Scroll, [Windows.Forms.SystemInformation]::VerticalScrollBarWidth) } else { $Scroll })
   $fixed = 0; $keep = 0; $rest = 0; $n = @($Cols).Count; $avail = $W - $bar - 2
   $pubOwn = [math]::Max(2, [math]::Min([math]::Max((& $wn.Sc 60), $PubMin), $avail - 2 * ($n - 1)))   # a pub column never leaves less than 2 px a column
-  $spare = & $wn.HeadSpare $Cols $avail $PubMin $pubOwn   # R11: a chip is kept whole only while the other heads fit (ps51 W7)
-  $own = @{}; $hard = @{}; foreach ($c in $Cols) {
+  $own = @{}; $hard = @{}; $spare = & $wn.HeadSpare $Cols $avail $PubMin $pubOwn; foreach ($c in $Cols) {   # R11: a chip is kept only while the heads fit
     $isPub = ($c.K -eq 'pub' -and $PubMin -gt 0); $vm = $(if (@($Rows).Count) { [int](& $wn.ValueMin $c $Rows) } else { 0 })
-    $chipKeep = ($c.K -eq 'chip' -and $vm -gt 0 -and ($vm - [int](& $wn.HeadMin $c)) -le $spare); if ($chipKeep) { $spare -= [math]::Max(0, $vm - [int](& $wn.HeadMin $c)) }
+    $chipKeep = ($c.K -eq 'chip' -and $vm -gt 0 -and ($vm - [int](& $wn.HeadMin $c)) -le $spare)   # Tag.ChipKept: the edge check judges only a kept chip
+    if ($c.K -eq 'chip') { $wn.ChipKept = $chipKeep; if ($chipKeep) { $spare -= [math]::Max(0, $vm - [int](& $wn.HeadMin $c)) } }
     $hard[[string]$c.N] = ($isPub -or $chipKeep)
     $o = $(if ($isPub) { $pubOwn } elseif ($chipKeep) { [math]::Max($vm, [int](& $wn.HeadMin $c)) } elseif ($c.W -eq 0) { & $wn.Sc 60 }
       elseif ($vm -gt 0) { [math]::Min((& $wn.Sc $c.W), $vm) } else { & $wn.Sc $c.W }); $own[[string]$c.N] = $o
@@ -155,6 +155,16 @@ $wn.GridCols = {
 $wn.HeadSpare = { param($Cols, [int]$Avail, [int]$PubMin, [int]$PubOwn)
   $spare = $Avail; foreach ($c in $Cols) { $spare -= $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $PubOwn } else { [int](& $wn.HeadMin $c) }) }
   return $spare }
+# R11 (R38; the PFM, 20 Nov 26: "hide Since when narrow"): the columns of a grid of width $W with each column marked Drop
+# left out, last first, while the pub column's minimum ($wn.PubMin of the widths $Pw) and every other whole head do not fit
+# beside the scroll bar. Wide windows keep every column.
+$wn.DropCols = { param($Cols, [int]$W, $Pw)
+  $cols = @($Cols); $avail = $W - [Windows.Forms.SystemInformation]::VerticalScrollBarWidth - 2
+  while ($true) {
+    $need = [int](& $wn.PubMin $cols $Pw); foreach ($c in $cols) { if ($c.K -ne 'pub') { $need += [int](& $wn.HeadMin $c) } }
+    $drop = @($cols | Where-Object { $_.Drop }) | Select-Object -Last 1
+    if ($need -le $avail -or -not $drop) { return ,$cols }
+    $cols = @($cols | Where-Object { $_ -ne $drop }) } }
 $wn.Grid = {
   <#
   .SYNOPSIS
@@ -171,13 +181,13 @@ $wn.Grid = {
   param($Parent, $b, [int]$W, $Ctx)
   $cols = @($b.Cols)
   if ($wn.Wide -and $b.ColsWide) { $wf = 0; foreach ($c in $b.ColsWide) { $wf += (& $wn.Sc $c.W) }; if ($wf + (& $wn.Sc 137) -le $W) { $cols = @($b.ColsWide) } }
-  $rows = @($b.Rows); $hs = & $wn.GridHeight $b $Ctx
+  $rows = @($b.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols $cols $W $pw; $hs = & $wn.GridHeight $b $Ctx
   $g = & $wn.GridNew ([string]$b.Name) $W $hs
   $scroll = $(if ($hs.Full -gt $hs.H) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
-  $pw = & $wn.PubWidths $rows
-  $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw) $rows
+  $wn.ChipKept = $null; $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw) $rows
   $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
-  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null; Heads = [ordered]@{} }
+  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null
+    Heads = [ordered]@{}; ChipKept = $wn.ChipKept }
   & $wn.GridFill $g $rows
   $g.Add_CellPainting({ param($s, $e) & $wn.PaintCell $s $e })
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
@@ -278,32 +288,30 @@ $wn.GridEdges = {
   .PARAMETER G
   The grid ($wn.Grid).
   .OUTPUTS
-  @{ Grid; Width (the client width); Bar; Edge; Col (the column that reaches it); Fits (R11, ps51 W7: the chips' extra
-  width fits beside every whole head at this width; when it does not, the heads come first and the edge is not judged) }.
+  @{ Grid; Width (the client width); Bar; Edge; Col (the column that reaches it); Fits (R11: the grid has no chip column, or
+  $wn.GridCols kept its chip whole (Tag.ChipKept); when it did not, the heads come first and the edge is not judged) }.
   #>
   param($G)
   $pd = & $ui.Sc 10; $left = 0; $edge = 0; $name = ''; $cols = @($G.Tag.Cols)
   $shown = @($G.Columns | Sort-Object DisplayIndex | Where-Object { $_.Visible }); $lastName = $(if ($shown.Count) { [string]$shown[-1].Name } else { '' })
-  $heads = 0; $extra = 0   # R11: the room all heads take, and what the chips need above their heads (Fits)
   foreach ($k in $shown) {
     $c = @($cols | Where-Object { [string]$_.N -eq $k.Name }) | Select-Object -First 1
-    if ($c.K -ne 'chip' -and [string]$k.Name -ne $lastName) { $heads += $(if ($c.K -eq 'pub') { $k.Width } else { [int](& $wn.HeadMin $c) }); $left += $k.Width; continue }
+    if ($c.K -ne 'chip' -and [string]$k.Name -ne $lastName) { $left += $k.Width; continue }
     $f = $(if ($c.K -eq 'with' -or $c.K -eq 'bold' -or $c.K -eq 'chip') { $ui.F.SmallB } else { $ui.F.Small }); $w = 0
     foreach ($r in @($G.Tag.Shown)) { $w = [math]::Max($w, (& $wn.TextW (& $wn.CellText $c $r) $f)) }
     if ($c.K -eq 'chip') { if ($w -gt 0) { $w += & $ui.Sc 20 } }
     elseif ($c.K -eq 'pub') { $w = 0 }   # the pub column is checked by its own cut test (W1)
     $e = $left + $pd + $(if ($c.K -eq 'chip') { $w } else { [math]::Min($w, [math]::Max(0, $k.Width - 2 * $pd)) })
     if ($w -gt 0 -and $e -gt $edge) { $edge = $e; $name = [string]$k.Name }
-    if ($c.K -eq 'chip' -and $w -gt 0) { $extra += [math]::Max(0, $w + 2 * $pd + 1 - [int](& $wn.HeadMin $c)) }
-    $heads += $(if ($c.K -eq 'pub') { $k.Width } else { [int](& $wn.HeadMin $c) })
     $left += $k.Width }
   $bar = [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth; $wd = [int]$G.ClientSize.Width
-  return @{ Grid = [string]$G.AccessibleName; Width = $wd; Bar = $bar; Edge = [int]$edge; Col = $name; Fits = ($wd - $bar - 2 - $heads -ge $extra) } }
+  return @{ Grid = [string]$G.AccessibleName; Width = $wd; Bar = $bar; Edge = [int]$edge; Col = $name; Fits = ($null -eq $G.Tag.ChipKept -or [bool]$G.Tag.ChipKept) } }
 # R11 (R38): the LAYOUT line of grid $G when a chip or text ends closer than the scroll bar's width to the grid's right
 # edge (none when it does not).
 $wn.EdgeCheck = { param($G, [string]$Card)
   $e = & $wn.GridEdges $G
-  if ($e.Fits -and $e.Edge -gt $e.Width - $e.Bar) {
+  if (-not $e.Fits) { return $null }   # too narrow for every head and the whole chip: the heads come first (Test-EdgeBar prints INFO)
+  if ($e.Edge -gt $e.Width - $e.Bar) {
     return ('LAYOUT ' + $Card + ' R11 grid ' + $e.Grid + ': column ' + $e.Col + ' ends at ' + $e.Edge + ', the grid is ' + $e.Width + ' wide with a scroll bar of ' + $e.Bar) }
   return $null }
 # R7 (W1): the height of one line of a pub cell, in pixels: the larger of the link font's height and its card line height.
