@@ -66,8 +66,8 @@ These are defaults: how work normally goes here. The method is yours unless the 
 
 ## Project rules
 
-- Data boundary (2026-11-14): government data stays in DoD365 and GenAI.mil: no real drafts, publication content, names, e-mails, office symbols or comments in this repo or a chat; no app writes data across the boundary. Use fake data.
-- No reconnaissance (the PFM, 2026-11-14; cannot change): nothing in RADE or any app may look like network reconnaissance (fixed hosts, the one site given, own flows only); any doubt: ask the PFM first.
+- Data boundary (2026-11-14; cannot be changed): government data stays in DoD365 and GenAI.mil: no real drafts, publication content, names, e-mails, office symbols or comments in this repo or a chat; no app writes data across the boundary, except the PFM's round results e-mail until the test rounds end. Use fake data.
+- No reconnaissance (the PFM, 2026-11-14; cannot be changed): nothing in RADE or any app may look like network reconnaissance (fixed hosts, the one site given, own flows only); any doubt: ask the PFM first.
 - Public repo (2026-11-11): never commit the wing's name or location, the site path (only `https://usaf.dps.mil/sites/<your-site>`), DODIDs, seal files or gov-network test details (private log).
 - Source authority (2026-11-11): DAFMAN 90-161 (edition: docs/DECISIONS.md) is the only rule source; cite its paragraph for each stage, time limit and format rule. Wing files lose on any conflict. Format comes from code, never the model.
 - Scope (2026-11-10): ANG wing publications on the wing's own site (DAFMAN 90-161 1.1.3.2, 6.4); 90-161.Z is the system of record for endorsements (no TMT).
