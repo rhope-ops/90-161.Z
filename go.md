@@ -37,25 +37,26 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 **Changes:** on the test site: one script checks the 12 app lists and gives the site Visitors Contribute on 3 lists (the site stays Read); the column Closed Date and the choice Waiver Warning are checked; the settings rows are set to Test mode for the flow test and put back at the end; a probe list and library, fake rows, 3 fake waivers, a fake office row and a list view are made and removed again at the end; the second person is added to Visitors; the full test rows go to the site Recycle Bin at the end. In Power Automate: the solution "90-161.Z flows" is upgraded and stays; its 2 test flows are deleted at the end. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files, 3 PDFs of the fake sample, 17 pictures of the window cards with fake data, and one text file and one picture for each Feedback comment I save). The window only reads my Windows light or dark setting. For 3 window checks I turn high contrast on and off in Windows Settings (Windows+U, Contrast themes). Before Run, the window lists every file.
 **Steps:**
 1. Ask one person in my office to help for 5 minutes in this round.
-2. Open https://rhope-ops.github.io/RADE and write down the code next to R37.
-3. Press Copy script next to the link below.
-4. Open the Start menu.
-5. Type: ISE
-6. Open Windows PowerShell ISE (not "Run as administrator").
-7. Select File > New.
-8. Click in the white script pane.
-9. Press Ctrl+V.
-10. Press F5. The RADE window opens.
-11. Look at the title bar of the RADE window: the code after the word "script" must be the code you wrote down.
-12. If the window shows a button "90-161.Z", select it.
-13. Press Run.
-14. For each check in the bottom bar of the 90-161.Z window: do the check.
-15. If the card on screen does not look right: select "Feedback" in the bottom bar (before the next check).
-16. In the box "What does not look right? One line, no names.", type what is wrong.
-17. Select "Save".
-18. Close the 90-161.Z window with its X.
-19. Do each step the RADE window shows, until the log says DONE.
-20. At DONE, select Send in the Outlook draft that opens.
+2. Open https://rhope-ops.github.io/RADE.
+3. Write down the code next to R37.
+4. Press Copy script next to the link below.
+5. Open the Start menu.
+6. Type: ISE
+7. Open Windows PowerShell ISE (not "Run as administrator").
+8. Select File > New.
+9. Click in the white script pane.
+10. Press Ctrl+V.
+11. Press F5. The RADE window opens.
+12. Look at the title bar of the RADE window: the code after the word "script" must be the code you wrote down.
+13. If the window shows a button "90-161.Z", select it.
+14. Press Run.
+15. For each check in the bottom bar of the 90-161.Z window: do the check.
+16. If the card on screen does not look right: select "Feedback" in the bottom bar (before the next check).
+17. In the box "What does not look right? One line, no names.", type what is wrong.
+18. Select "Save".
+19. Close the 90-161.Z window with its X.
+20. Do each step the RADE window shows, until the log says DONE.
+21. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R37-round-r1.ps1
 

@@ -595,9 +595,8 @@
                         "3. Select the solution \"90-161.Z flows\".",
                         "4. Look at the column \"Status\" of each of the 10 flows.",
                         "5. Remember each flow that reads Off (a question follows).",
-                        "6. Select the first flow that reads Off.",
-                        "7. If you selected a flow: select \"Turn on\".",
-                        "8. For each other flow that reads Off: select that flow and \"Turn on\".",
+                        "6. For each flow that reads Off: select the flow.",
+                        "7. Then select \"Turn on\".",
                         "If you see an error: wait 5 minutes, reload the Power Automate page, and try 1 more time.",
                         "If a flow will not turn on: select \"It failed\".",
                         "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
