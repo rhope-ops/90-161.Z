@@ -1,0 +1,94 @@
+{
+    "_doc": "Steps that passed on the gov device and leave the rounds (PFM, 19 Nov 26: a step leaves after 1 pass with unchanged content; a change of its content or a failure brings it back; R37 is the first round without them). One entry per step: the step name without its revision, the revision that passed, each pass (round, results file, results row), what it tested, its files, and content_sha256: the SHA-256 of the step definition in scripts/paste_bundles.json (JSON with sorted keys) and of each file, with every revision token (r<digits>) written as r<N>, so a revision raise alone is no change. Hashes are of the R36 r1 definition on main (commit 7dc8a78). R38 (UI standard plan, Step 2) adds the build check that reads this file.",
+    "steps": [
+        {
+            "step": "T21 Second person edits your row",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R35",
+                    "results": "docs/reviews/2026-11-19-r35-results.md",
+                    "row": "T21 Second person edits your row r9: PASSED, office-edit = \"The row was saved\"; T21 read: RESULT EDITALL PASS"
+                }
+            ],
+            "tested": "A PFM Office member who is not the author edits a row on a list set to edit own rows (EDITALL; finding 3 of R35). The guide text and the office part did not change from r9 to r10 except the revision.",
+            "files": [
+                "scripts/gov/90161Z-T21-office-r10.ps1",
+                "scripts/gov/90161Z-T21-read-r10.ps1"
+            ],
+            "content_sha256": {
+                "step": "7a53c8c660c98345c2f36caffadf6b10c010e9cdbd0da22f7b53df7de8a0a4ab",
+                "scripts/gov/90161Z-T21-office-r10.ps1": "22f71b5f86d626e10c68315550da6b9df938252b334577c4f442ca138da5d0d3",
+                "scripts/gov/90161Z-T21-read-r10.ps1": "73e575fbe2617689625bafdfd9590cda40ef42da4c739aaae8865a83013d49ee"
+            }
+        },
+        {
+            "step": "T21 Give the second person PFM Office",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R35",
+                    "results": "docs/reviews/2026-11-19-r35-results.md",
+                    "row": "T21 Add the second person r9; give the second person PFM Office r9: PASSED, 4 of 4; 6 of 6"
+                },
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T21 Give the second person PFM Office r10: PASSED, 6 of 6"
+                }
+            ],
+            "tested": "The script puts the second person into PFM Office for the EDITALL test and writes the EDITALL row. It leaves with \"Second person edits your row\", its only use: with the row and no edit, T21 read would report EDITALL FAIL; with neither it reports EDITALL NOT RUN.",
+            "files": [
+                "scripts/gov/90161Z-T21-office-r10.ps1",
+                "scripts/gov/90161Z-T21-probe-r10.ps1"
+            ],
+            "content_sha256": {
+                "step": "5441cb650ace6b6f89c6e13c1fe6c0f4af6fbef70a4a40b0c2be0b3aa4921d4c",
+                "scripts/gov/90161Z-T21-office-r10.ps1": "22f71b5f86d626e10c68315550da6b9df938252b334577c4f442ca138da5d0d3",
+                "scripts/gov/90161Z-T21-probe-r10.ps1": "ef64a064be0be91935f0bf12d320e65661a7cf1ff8e7794fe751e38c28e7a298"
+            }
+        },
+        {
+            "step": "T21 Power Automate shows your connections",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R35",
+                    "results": "docs/reviews/2026-11-19-r35-results.md",
+                    "row": "T21 Power Automate shows your connections r9: PASSED, pa-sharepoint = \"Yes\""
+                },
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T21 Power Automate shows your connections r10: PASSED, pa-sharepoint = \"Yes\""
+                }
+            ],
+            "tested": "Power Automate (the DoD maker portal) loads the PFM's connections and shows a SharePoint connection before the flow steps (a hand step).",
+            "files": [],
+            "content_sha256": {
+                "step": "13096a111af5eb8eaa9bd1c208784a5b86072ec2002b8b20d8c234db58a22b37"
+            }
+        },
+        {
+            "step": "T21 Look at the list form",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R35",
+                    "results": "docs/reviews/2026-11-19-r35-results.md",
+                    "row": "T21 Open the test page; put a test header on the list form; look at the list form r9: PASSED; PASSED (3 of 3); PASSED, form-header = \"Yes\""
+                },
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T21 Open the test page; put a test header on the list form; look at the list form r10: PASSED (2 of 2); PASSED (3 of 3); PASSED, form-header = \"Yes\""
+                }
+            ],
+            "tested": "The new row panel of the probe list shows the form header the script set (a hand step).",
+            "files": [],
+            "content_sha256": {
+                "step": "f93be21557bd65c8735ad76063c3c2d674ec90ef6c919cd83ae1bf03e81a6a24"
+            }
+        }
+    ]
+}

@@ -24,41 +24,49 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R36-round-r1.ps1",
-            "round": "R36",
-            "title": "Round R36 r1: the window r8 again, the sample publication with its Word helpers, list IDs by script, the waiver warning flow and the full flow test",
+            "out": "scripts/gov/paste/90161Z-R37-round-r1.ps1",
+            "round": "R37",
+            "title": "Round R37 r1: the window r10 with the new logo and Feedback on every card, the list button view, the full flow test with its user fix, and the second person adds a row",
             "files": [
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-pfm-window-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-pfm-window-r10.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-cards-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-cards-r10.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-types-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-types-r10.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui-r10.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-parts-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-parts-r10.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-grid-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-grid-r10.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-window-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-logo-r10.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-measure-r8.ps1"
+                    "src": "scripts/gov/90161Z-T22-window-r10.ps1"
+                },
+                {
+                    "dir": "T22",
+                    "src": "scripts/gov/90161Z-T22-feedback-r10.ps1"
+                },
+                {
+                    "dir": "T22",
+                    "src": "scripts/gov/90161Z-T22-measure-r10.ps1"
                 },
                 {
                     "dir": "T01",
@@ -179,21 +187,21 @@
             ],
             "steps": [
                 {
-                    "name": "T22 Open the 90-161.Z window r8",
+                    "name": "T22 Open the 90-161.Z window r10",
                     "title": "Open the 90-161.Z window and do its 18 checks",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r8.ps1",
+                    "file": "90161Z-T22-pfm-window-r10.ps1",
                     "minutes": 30,
-                    "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do each of the 18 checks in the bar at the bottom, then select Pass or Fail. Then close the window.",
+                    "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do the 18 checks in the bar at the bottom. Feedback in the bar saves a comment on a card.",
                     "estimate": 15,
                     "help": "Send the results as they are. The step can be run again.",
                     "doing": "Opening the 90-161.Z window."
                 },
                 {
-                    "name": "T22 Did the window open r8",
+                    "name": "T22 Did the window open r10",
                     "title": "Check that the window opened",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r8.ps1",
+                    "file": "90161Z-T22-pfm-window-r10.ps1",
                     "args": "-Opened",
                     "minutes": 2,
                     "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
@@ -202,7 +210,7 @@
                     "doing": "Reading the result of the window step."
                 },
                 {
-                    "name": "T22 Answer: look and cards r8",
+                    "name": "T22 Answer: look and cards r10",
                     "title": "Answer 3 questions about the window look",
                     "kind": "guide",
                     "dir": "T22",
@@ -210,7 +218,7 @@
                     "note": "3 questions about the look of the window. About 2 minutes.",
                     "estimate": 2,
                     "after": [
-                        "T22 Did the window open r8"
+                        "T22 Did the window open r10"
                     ],
                     "answers": [
                         {
@@ -407,112 +415,6 @@
                     ]
                 },
                 {
-                    "name": "T21 Give the second person PFM Office r10",
-                    "title": "Put the second person in PFM Office",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r10.ps1",
-                    "args": "-Part Office",
-                    "minutes": 20,
-                    "note": "Signs in (CAC). Makes one test row as you, puts the second person in PFM Office for this round, checks that the person can now edit every row, and copies the link of your row.",
-                    "estimate": 2,
-                    "help": "Send the results as they are.",
-                    "needs": [
-                        "pnp",
-                        "net-site",
-                        "site-rights"
-                    ],
-                    "after": [
-                        "T21 Add the second person r10",
-                        "T20 Give Visitors Contribute on the intake lists r4"
-                    ],
-                    "doing": "Putting the second person in PFM Office."
-                },
-                {
-                    "name": "T21 Second person edits your row r10",
-                    "title": "Ask the second person to change your row",
-                    "kind": "guide",
-                    "dir": "T21",
-                    "file": "",
-                    "note": "You need one person of your office for about 10 minutes. They open the link of your test row, type an X at the end of the Title and select Save.",
-                    "guide": [
-                        "1. Ask the second person to stay at a computer for about 10 minutes.",
-                        "2. Open Teams.",
-                        "3. Select \"Chat\".",
-                        "4. Select \"New chat\".",
-                        "5. In the box \"To\", type the e-mail address you gave RADE for the second person.",
-                        "6. Select the chat box.",
-                        "7. Press Ctrl+V (the link of your test row is on the clipboard).",
-                        "8. In the chat box, type: Open this link, add an X to the Title, select Save, tell me if it saved.",
-                        "9. Press Enter.",
-                        "10. Wait for the reply: the row saved, or no permission.",
-                        "If nobody can help now: select \"Skip\" (the test of the PFM Office level then stays open)."
-                    ],
-                    "marker": "90161Z-T21-office-edit.txt",
-                    "estimate": 10,
-                    "after": [
-                        "T21 Give the second person PFM Office r10"
-                    ],
-                    "answers": [
-                        {
-                            "key": "office-edit",
-                            "prompt": "What did the second person see?",
-                            "kind": "pick",
-                            "choices": [
-                                "The row was saved",
-                                "No permission",
-                                "The link did not open",
-                                "Something else"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: the second person tried the row.",
-                    "hide": [
-                        "failed"
-                    ]
-                },
-                {
-                    "name": "T21 Power Automate shows your connections r10",
-                    "title": "Check that Power Automate shows your connections",
-                    "kind": "guide",
-                    "dir": "T21",
-                    "file": "",
-                    "note": "You check that Power Automate can show your connections before the flow steps. About 3 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. If Power Automate asks you to sign in: sign in with your CAC.",
-                        "3. On the left, select \"Connections\" (it can be under \"More\" or \"Data\").",
-                        "4. Wait until the list of connections shows.",
-                        "5. Look in the list for a SharePoint connection.",
-                        "If the page says the connections could not be loaded: wait 5 minutes, then reload the page.",
-                        "If the list still does not show after the reload: select \"It failed\".",
-                        "In the \"It failed\" box, type only the line that starts with \"Error\" (no time stamp or session ID)."
-                    ],
-                    "marker": "90161Z-T21-pa-ready.txt",
-                    "needs": [
-                        "net-flow"
-                    ],
-                    "estimate": 3,
-                    "answers": [
-                        {
-                            "key": "pa-sharepoint",
-                            "prompt": "Is there a SharePoint connection in the list?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No SharePoint connection"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: Power Automate shows the connections.",
-                    "url": "https://make.powerautomate.appsplatform.us/",
-                    "url_source": "Microsoft Learn, Power Automate US Government (https://learn.microsoft.com/power-automate/us-govt): DoD maker portal; editable in the window, remembered in Config (agent value, PFM to confirm in R13)",
-                    "urlConfig": "90161Z-flow-portal.txt",
-                    "doneText": "The list loaded",
-                    "hide": [
-                        "skip"
-                    ]
-                },
-                {
                     "name": "T21 Open the test page r10",
                     "title": "Open the test page",
                     "dir": "T21",
@@ -547,43 +449,6 @@
                     ]
                 },
                 {
-                    "name": "T21 Look at the list form r10",
-                    "title": "Look at the list form",
-                    "kind": "guide",
-                    "dir": "T21",
-                    "file": "",
-                    "note": "You open a new row of the test list in its side panel and look for the test header. About 2 minutes.",
-                    "guide": [
-                        "1. In the browser, select the tab \"90-161.Z test page\".",
-                        "2. Select \"Open the probe list\".",
-                        "3. At the top of the list, select \"+ New\".",
-                        "4. Look at the top of the panel that opened for the text \"90-161.Z test header\".",
-                        "5. Select \"Cancel\" in the panel.",
-                        "If the tab, the list or the panel does not open: select \"It failed\"."
-                    ],
-                    "marker": "90161Z-T21-form-looked.txt",
-                    "estimate": 3,
-                    "after": [
-                        "T21 Put a test header on the list form r10"
-                    ],
-                    "answers": [
-                        {
-                            "key": "form-header",
-                            "prompt": "Did the form show the text \"90-161.Z test header\" at its top?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: looked at the form.",
-                    "doneText": "I looked at the form",
-                    "hide": [
-                        "skip"
-                    ]
-                },
-                {
                     "name": "T24 Write the list IDs into the import file r7",
                     "title": "Prepare the import file for your site",
                     "dir": "T24",
@@ -597,9 +462,6 @@
                         "pnp",
                         "net-site",
                         "site-rights"
-                    ],
-                    "after": [
-                        "T21 Power Automate shows your connections r10"
                     ],
                     "doing": "Writing the list IDs into the import file."
                 },
@@ -1467,93 +1329,98 @@
             "collect": [
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-r8.txt",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-window-r10.txt",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-home-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-feedback-*",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-empty-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-home-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-queue-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-empty-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-reviews-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-queue-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step8-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-reviews-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-confirm-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-step8-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-sendback-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-confirm-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-waves-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-sendback-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step11-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-waves-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step12-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-step11-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step13-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-step12-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-pub-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-step13-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-settings-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-pub-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-loading-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-settings-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-failed-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-loading-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-noperm-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-failed-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-remindall-r8.png",
-                    "step": "T22 Open the 90-161.Z window r8"
+                    "name": "90161Z-T22-card-noperm-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
+                },
+                {
+                    "dir": "T22",
+                    "name": "90161Z-T22-card-remindall-r10.png",
+                    "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
                     "dir": "T01",
@@ -1604,11 +1471,6 @@
                     "dir": "T21",
                     "name": "90161Z-T21-probe-ask-r10.txt",
                     "step": "T21 Ask for a new row r10"
-                },
-                {
-                    "dir": "T21",
-                    "name": "90161Z-T21-probe-office-r10.txt",
-                    "step": "T21 Give the second person PFM Office r10"
                 },
                 {
                     "dir": "T21",
@@ -1675,11 +1537,11 @@
             "apps": [
                 {
                     "name": "90-161.Z",
-                    "summary": "Round R36 r1: window r8 again, sample publication in Word, list access, second person, import with list IDs, flow states by name, full flow test. Fake data.",
+                    "summary": "Round R37 r1: window r10 (new logo, Feedback), second person adds a row, flow import, list button view, full flow test with the user fix. Fake data.",
                     "steps": [
-                        "T22 Open the 90-161.Z window r8",
-                        "T22 Did the window open r8",
-                        "T22 Answer: look and cards r8",
+                        "T22 Open the 90-161.Z window r10",
+                        "T22 Did the window open r10",
+                        "T22 Answer: look and cards r10",
                         "T01 Render the sample publication r10",
                         "T07 Render the sample with 2 test seals r6",
                         "T21 Check the test site is clean r10",
@@ -1689,12 +1551,8 @@
                         "T21 Add the second person r10",
                         "T21 Ask for a new row r10",
                         "T21 Second person adds a row r10",
-                        "T21 Give the second person PFM Office r10",
-                        "T21 Second person edits your row r10",
-                        "T21 Power Automate shows your connections r10",
                         "T21 Open the test page r10",
                         "T21 Put a test header on the list form r10",
-                        "T21 Look at the list form r10",
                         "T24 Write the list IDs into the import file r7",
                         "T24 Import the full solution r7: choose the file",
                         "T24 Import the full solution r7: finish",
@@ -2675,6 +2533,22 @@
                 },
                 {
                     "path": "T01\\90161Z-T01-result-r9.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r8.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r8.png",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-window-r8.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T24\\90161Z-T24-*-r6.ps1",
                     "kind": "glob"
                 }
             ]
