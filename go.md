@@ -34,7 +34,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 - First: a second person adds one new row to the test list (about 5 minutes for them).
 - The site logo in its Fulcrum colors (thumbnail and header, by hand), then a read-back.
 - RADE engine-v29: pause and resume (if the window closes or I remove my CAC, the round resumes where it stopped), and the new RADE look: buttons of fixed sizes, the Sofia Sans font, and a Maintenance button.
-- My 90-161.Z window r11: XXX XXX instead of FAKE in the data (a spacing test), status column that does not touch the scroll bar, and the Fulcrum logo in light and dark mode. 3 checks, then 3 questions.
+- My 90-161.Z window r11: XXX XXX instead of FAKE in the data (a spacing test), status column that does not touch the scroll bar, the Fulcrum logo in light and dark mode, buttons of fixed sizes as in RADE, and no Since column when the window is narrow. 3 checks, then 3 questions.
 **Time:** about 40 minutes; about 25 minutes of my own work (estimate). The second person needs about 5 minutes, about 5 minutes after I start.
 **Changes:** on the test site: a probe list and library are made and removed again at the end; the second person is added to Visitors and removed at the end; I set the site logo and thumbnail to the Fulcrum logo by hand. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files, 17 pictures of the window cards with fake data, one text file and one picture for each Feedback comment I save, and a resume file of the round in Rounds\R38). Before Run, the window lists every file.
 **Steps:**
