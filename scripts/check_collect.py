@@ -8,7 +8,7 @@ What it checks: every collect name in scripts/paste_bundles.json must end in an 
 (.txt .png .pdf .csv .json .log .docx .xlsx); a name that ends in a wildcard, has no extension, or names a script
 extension fails. Used by scripts/build_paste_bundles.py (before every build) and tests/run.sh.
 
-Usage: python3 tests/check_collect.py [--test]   exit 0 = pass, 1 = a bad collect name (each printed as FAIL)."""
+Usage: python3 scripts/check_collect.py [--test]   exit 0 = pass, 1 = a bad collect name (each printed as FAIL)."""
 import json
 import pathlib
 import sys
