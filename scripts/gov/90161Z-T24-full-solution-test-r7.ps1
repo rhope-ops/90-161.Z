@@ -1,17 +1,22 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 24 full-solution test, r6. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
-  WHAT R6 CHANGES (R36, PFM 19 Nov 26): part 0 (module 90161Z-T24-zip-r6.ps1) writes the 8 list GUIDs into a copy of the solution zip before the import;
+  90-161.Z Task 24 full-solution test, r7. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
+  WHAT R7 CHANGES (R37; R36 finding 2: part 1 stopped with "The specified user  could not be found.", an empty user name, at its first person
+  field): part 1 reads your own user on the site (its ID and sign-in name) before it writes anything, and stops with a plain message when either
+  is empty; the person fields of the fake rows (Leader, Waiver Approver) get your sign-in name as text (the form PnP.PowerShell 1.12.0 resolves
+  with EnsureUser), not a number. The sign-in name is never written to the output.
+  WHAT R6 CHANGED (R36, PFM 19 Nov 26): part 0 (module 90161Z-T24-zip-r7.ps1) writes the 8 list GUIDs into a copy of the solution zip before the import;
   part 1 counts the 8 flows F01 to F08 (F07 r1, F08 r1); part 2 counts only the Publications rows without a Closed Date (F04 r4). Files keep r1 names.
   W11 (R35 finding 1): part 1 waits one full F01 check (16 minutes after the rows are made or changed) before it counts F01 rows, and says how long.
   W5: part 1 also tests F08 (rule 4.4A; design approved by the PFM 19 Nov 26): 1 fake office row with you as Leader and 3 fake waivers.
-  The F08 check of part 1 and parts 2 to 4 live in the module 90161Z-T24-checks-r6.ps1 (same folder; loaded after the sign-in).
+  The F08 check of part 1 and parts 2 to 4 live in the module 90161Z-T24-checks-r7.ps1 (same folder; loaded after the sign-in).
 .DESCRIPTION
   What it is for: proves on the test site that F01 (activity log), F02 (next review due and periodic review task) and F04 (status report e-mail)
   work, and that the full solution imported with every flow On. It runs in parts with hand steps between them (round guide).
   Part 0 (about 1 minute, an estimate; before the import): reads the GUID of each list a placeholder of 90161Z-T24-full-flows-r5.zip names (by its
     title, on your own site only) and writes 90161Z-T24-full-flows-r5-ready.zip, the file to import; stops when a list is missing or a placeholder is left.
   Part 1 (about 40 minutes, an estimate; most of it is two waits of 16 minutes for full F01 checks, -PollMinutes; F05 checks every minute, -F05Minutes):
+    00. Reads your own user on the site (ID and sign-in name) and stops, with nothing changed, when either is empty (R7).
     0. Writes the PFM Settings rows Flows paused = No and Test mode = Yes (their old values are kept in a state file and put back in part 4).
     a. Reads your own flows in Power Automate and counts the 8 flows F01 to F08 that are On (one try; if it cannot be read, a hand check line).
     w. F08 (DAFMAN 90-161 Attachment 10, Table A10.1; rule 4.4A): makes 1 fake PFM Offices row (not active) with you as Leader and 3 fake waivers:
@@ -43,7 +48,7 @@
   Writes: the site rows listed under WHAT IT CHANGES ON THE SITE; on this computer the T24 folder (result files, the state file, the ready zip of
           part 0) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r6.ps1 -Part 0 (RADE does this).
+  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r7.ps1 -Part 0 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 0 to 4, -WaitMinutes (default 6: a flow you start with Run),
   -PollMinutes (default 17: F01 checks every 15 minutes, plus 2; the count starts after 16 of them), -F05Minutes (default 3: every minute, plus 2),
   -NoPause; -TestDir: tests only.
@@ -288,10 +293,15 @@ function Wait-FullCheck([datetime]$Since, [string]$What) {
   }
   return $left
 }
-function Get-MyUserId {
-  # Your own user id on the site (REST web/currentuser on the one site of this task), for the Leader and Waiver Approver of the fake rows.
-  $raw = [string](Invoke-PnPSPRestMethod -Method Get -Url ($site.TrimEnd('/') + '/_api/web/currentuser?$select=Id') -Raw -ErrorAction Stop)
-  return [int]($raw | ConvertFrom-Json).Id
+function Get-MyUser {
+  # Your own user on the site (REST web/currentuser on the one site of this task), for the Leader and Waiver Approver of the fake rows.
+  # Returns @{ Id (0 when not read); Login (your sign-in name, '' when not read) }. R7 (R36 finding 2): the person fields take Login as text,
+  # because a number from a function reached PnP as an empty user name. Login is never written to the output.
+  $raw = [string](Invoke-PnPSPRestMethod -Method Get -Url ($site.TrimEnd('/') + '/_api/web/currentuser?$select=Id,LoginName') -Raw -ErrorAction Stop)
+  $j = $raw | ConvertFrom-Json
+  if ($j.PSObject.Properties['d']) { $j = $j.d }   # the verbose answer form keeps the fields under d
+  $uid = 0; [void][int]::TryParse([string]$j.Id, [ref]$uid)
+  return @{ Id = $uid; Login = ([string]$j.LoginName).Trim() }
 }
 function Get-SettingValue([string]$Key) {
   # The value of a PFM Settings row, or $null when the row is missing.
@@ -355,6 +365,7 @@ $stateFile = ''
 $settingsChanged = $false
 $state = @{}
 $site = ''
+$me = $null   # R7: your own user (Get-MyUser); its sign-in name is masked in a STOPPED line
 $lines = New-Object System.Collections.Generic.List[string]
 $dir = ''
 try {
@@ -377,11 +388,19 @@ try {
   Write-Host 'Connecting to the site. If a sign-in window opens, sign in with your CAC.'
   $null = & { Connect-PnPOnline -Url $site -UseWebLogin -ErrorAction Stop } *>&1
   $lines.Add('ROUTE web-login PASS')
-  $checks = Join-Path $PSScriptRoot '90161Z-T24-checks-r6.ps1'   # the module checks (F08 and parts 2 to 4), R36
-  if (-not (Test-Path -LiteralPath $checks -PathType Leaf)) { throw 'MODULE missing: 90161Z-T24-checks-r6.ps1 is not in the folder of this script. Run the round again.' }
+  $checks = Join-Path $PSScriptRoot '90161Z-T24-checks-r7.ps1'   # the module checks (F08 and parts 2 to 4), R36
+  if (-not (Test-Path -LiteralPath $checks -PathType Leaf)) { throw 'MODULE missing: 90161Z-T24-checks-r7.ps1 is not in the folder of this script. Run the round again.' }
   . $checks
 
-  if ($Part -eq 0) { . (Join-Path $PSScriptRoot '90161Z-T24-zip-r6.ps1'); Invoke-ListGuidPart } elseif ($Part -eq 1) {   # 0: the module zip (R36)
+  if ($Part -eq 0) { . (Join-Path $PSScriptRoot '90161Z-T24-zip-r7.ps1'); Invoke-ListGuidPart } elseif ($Part -eq 1) {   # 0: the module zip (R36)
+    # 00. R7 (R36 finding 2): your own user first, before any write, so an empty user stops the part with nothing changed.
+    Write-Host 'NOW Reading your own user on the site.'
+    $me = Get-MyUser
+    if ($me.Id -le 0 -or -not $me.Login) {
+      throw ('YOUR USER could not be read from the site (ID read=' + $(if ($me.Id -gt 0) { 'yes' } else { 'no' }) + '; sign-in name read=' +
+        $(if ($me.Login) { 'yes' } else { 'no' }) + '). Nothing was changed. Sign in again with your CAC and run this step again; if it stops again, send the results as they are.')
+    }
+    Add-Line 'a00-user' 'PASS' 'your own user read from the site (ID and sign-in name; not shown)'
     # 0. The Settings rows the flows read. Test mode Yes: the F04 e-mail goes to the alert address only. The old values are kept for part 4
     # (an earlier unfinished run keeps its first values).
     Write-Host 'NOW Reading the two Settings rows the test changes.'
@@ -442,14 +461,14 @@ try {
     # w. F08 (rule 4.4A; W5): the office row and the waivers come first, so the first F01 wait below (16 minutes from the publications)
     # also covers one full F08 check (every 15 minutes). The office row is not active, so F05 does not route to it.
     Write-Host 'NOW Making 1 fake office row with you as Leader and 3 fake waivers for F08.'
-    $meId = Get-MyUserId
-    $office = Add-PnPListItem -List 'PFM Offices' -Values @{ Title = $TitleOffice; Leader = $meId; IsActive = $false; MandatoryCoordinator = $false
+    $meLogin = [string]$me.Login   # R7: text, so PnP resolves it as a user (EnsureUser); read in step 00
+    $office = Add-PnPListItem -List 'PFM Offices' -Values @{ Title = $TitleOffice; Leader = $meLogin; IsActive = $false; MandatoryCoordinator = $false
       CoordinateLast = $false } -ErrorAction Stop
     $state['office'] = [string]$office.Id
     $wv = @{}
     foreach ($k in $Waivers.Keys) {
       $v = @{ Title = $Waivers[$k][0]; Tier = $Waivers[$k][1] }
-      if ($Waivers[$k][2]) { $v['WaiverApprover'] = $meId }
+      if ($Waivers[$k][2]) { $v['WaiverApprover'] = $meLogin }
       $wv[$k] = (Add-PnPListItem -List 'PFM Waivers' -Values $v -ErrorAction Stop).Id
       $state[$k] = [string]$wv[$k]
     }
@@ -579,6 +598,8 @@ try {
   $lines.Add('FULL SOLUTION part ' + $Part + ' done, items with problems=' + $nf)
 } catch {
   $m = ConvertTo-Masked (Hide-Site ([string]$_) $site) $secret
+  if ($me -and $me.Login) {   # R7: a server message that names your sign-in name (or the address in it) shows <YOU> instead
+    foreach ($x in @($me.Login, ($me.Login -split '\|')[-1]) | Where-Object { $_ -and $_.Length -ge 3 } | Sort-Object Length -Descending) { $m = $m.Replace($x, '<YOU>') } }
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)))
   # Any part: put the Settings rows back from the old values in the state file (once; part 4 sees the flag and does not restore again).
   if ($settingsChanged -and $state.ContainsKey('origFlowsPaused') -and $state.ContainsKey('origTestMode')) {

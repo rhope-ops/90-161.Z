@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 24 r6, module "checks": the F08 warning check of part 1 and the parts 2, 3 and 4 of the full-solution test
+  90-161.Z Task 24 r7, module "checks": the F08 warning check of part 1 and the parts 2, 3 and 4 of the full-solution test
   (split from the main file in R36 to keep it under the code standard's file size cap; the code is unchanged).
 .DESCRIPTION
-  Loaded by 90161Z-T24-full-solution-test-r6.ps1 (dot-sourced from the same folder after the sign-in); it does nothing when it
+  Loaded by 90161Z-T24-full-solution-test-r7.ps1 (dot-sourced from the same folder after the sign-in); it does nothing when it
   is run alone. Inputs: the values and helpers of the main file ($Waivers, $stateFile, $state, Add-Line, Get-RowsFor,
   Get-LocalDate, Wait-Until, Read-State, Save-State, Clear-TestPublication, Clear-TestProduct, Get-ReportLogRow,
   Restore-TestSetting). Outputs: ITEM lines through Add-Line.
@@ -11,7 +11,7 @@
   Writes: the site rows the main file's header lists (part 4 moves the fake rows to the site Recycle Bin and puts the two
           PFM Settings rows back); on this computer part 4 deletes the state file.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T24-full-solution-test-r6.ps1 -Part <1 to 4> loads it.
+  Run: not alone; powershell.exe -File 90161Z-T24-full-solution-test-r7.ps1 -Part <1 to 4> loads it.
 #>
 
 function Get-WarningRow([int]$WaiverId) {

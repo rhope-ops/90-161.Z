@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 24 r6, module "zip": part 0 (R36, PFM 19 Nov 26: flows find lists by GUID). Before the import it reads the GUID of
+  90-161.Z Task 24 r7, module "zip": part 0 (R36, PFM 19 Nov 26: flows find lists by GUID). Before the import it reads the GUID of
   each list that a placeholder of the solution zip names and writes them into a copy of the zip (System.IO.Compression; no module).
 .DESCRIPTION
-  Loaded by 90161Z-T24-full-solution-test-r6.ps1 -Part 0 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T24-full-solution-test-r7.ps1 -Part 0 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the folder the main file sets ($dir) and its Add-Line and Assert-TaskFile.
   A placeholder is '<mark>[<list title>]' (scripts/build_flow_solution.py writes it; tests/check_flow_solution.py checks the mark).
   The zip the round saved is not changed; the ready zip is removed when a list is missing or a placeholder is left.
   Network: the one SharePoint site of the main file (one Get-PnPList per list title in the zip; no list scan), through PnP.PowerShell.
   Writes: on this computer only: the ready zip in the T24 folder and its path on the clipboard. Nothing on the site.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T24-full-solution-test-r6.ps1 -Part 0 loads it.
+  Run: not alone; powershell.exe -File 90161Z-T24-full-solution-test-r7.ps1 -Part 0 loads it.
 #>
 # R36: the placeholder mark of scripts/build_flow_solution.py (LIST_GUID_MARK; tests/check_flow_solution.py checks they match): '<mark>[<list title>]'.
 $ListGuidMark = '90161Z-LIST-GUID'
