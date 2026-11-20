@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | RADE Maintenance card: keep Diagnose, Back up and Restore; one "Maintenance" button opens its own screen with them and Update/Repair, built far enough to be tested. Scope: RADE (UI standard v1). | PFM | https://github.com/rhope-ops/RADE/pull/136 |
+| 2026-11-20 | Answer-choice buttons hold 33 characters at most (write-in answers keep 10,000); a compact label that does not fit 96 px gets 160 x 30. Scope: RADE (UI standard v1). | PFM | https://github.com/rhope-ops/RADE/pull/136 |
+| 2026-11-20 | RADE content check skips engine/fonts/*.ttf so the Sofia Sans font files (OFL) can ship. Scope: RADE. | PFM | https://github.com/rhope-ops/RADE/pull/136 |
+| 2026-11-20 | Merge R37 r1 (PR 187); add "guide": [] to the R37 question-only step in R38 (schema conformance). Scope: R37, R38. | PFM | https://github.com/rhope-ops/90-161.Z/pull/187 |
 | 2026-11-19 | RADE lock moves to release engine-v27 (RADE 32f64a2, serial 21) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | App font: Sofia Sans Condensed for titles, Sofia Sans for text (one open family, shipped as files), Segoe UI fallback; web pages too. Scope: all apps (UI standard v1, B7). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B7 |
 | 2026-11-19 | Every card (RADE and app windows) gets "Feedback": the PFM types a comment and it saves a snapshot of the app window with it into the results. Scope: all apps (UI standard v1, B13). | PFM | docs/reviews/2026-11-19-ui-standard-plan.md B13 |
