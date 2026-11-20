@@ -17,6 +17,42 @@
 #>
 $apps = @(@{ Mode = 'test' })   # one test application, so the layout self-check of the shared UI file runs
 # >>> rade-ui-2: generated from the pinned RADE shared UI file (second half) by scripts/build_task_scripts.py (do not edit)
+$ui.FontInks = @{}
+# The first and last row and column of a bitmap that hold ink (a pixel that differs from white). Takes the bitmap; gives
+# back @{ Top; Bottom; Left; Right } (Bottom and Right are one past the ink), or $null when the bitmap has no ink.
+$ui.InkScan = { param($Bm)
+  $t = -1; $b = -1; $l = $Bm.Width; $r = -1
+  for ($y = 0; $y -lt $Bm.Height; $y++) { for ($x = 0; $x -lt $Bm.Width; $x++) { $px = $Bm.GetPixel($x, $y)
+      if ((255 - $px.R) + (255 - $px.G) + (255 - $px.B) -gt 90) { if ($t -lt 0) { $t = $y }; $b = $y; if ($x -lt $l) { $l = $x }; if ($x -gt $r) { $r = $x } } } }
+  if ($t -lt 0) { return $null }
+  return @{ Top = $t; Bottom = $b + 1; Left = $l; Right = $r + 1 } }
+# Draws a text in black on a white bitmap, as $ui.InkPaint draws it (no padding, one line), and gives back its ink box
+# ($ui.InkScan), or $null when nothing can be drawn (no System.Drawing bitmap). Takes the text and the font.
+$ui.InkOf = { param([string]$Text, $Font)
+  try { $fl = [System.Windows.Forms.TextFormatFlags]'Left, Top, NoPadding, NoPrefix, SingleLine'
+    $sz = [System.Windows.Forms.TextRenderer]::MeasureText($Text, $Font, (New-Object System.Drawing.Size(100000, 0)), $fl)
+    $bm = New-Object System.Drawing.Bitmap(([math]::Max(1, [int]$sz.Width + 4)), ([math]::Max(1, [int]$sz.Height + 4)))
+    try { $g = [System.Drawing.Graphics]::FromImage($bm); $g.Clear([System.Drawing.Color]::White)
+      [System.Windows.Forms.TextRenderer]::DrawText($g, $Text, $Font, (New-Object System.Drawing.Point(0, 0)), [System.Drawing.Color]::Black, [System.Drawing.Color]::White, $fl); $g.Dispose()
+      return (& $ui.InkScan $bm) } finally { $bm.Dispose() } } catch { return $null } }
+# The rows of a font's ink in a text cell: Top = the top of the capitals, Base = the baseline (one past the bottom of "H"),
+# Bottom = one past the bottom of "g". Measured one time for each font; an estimate when it cannot be measured.
+$ui.FontInk = { param($Font)
+  $k = [string]$Font.Name + '|' + $Font.SizeInPoints + '|' + $Font.Style; if ($ui.FontInks.ContainsKey($k)) { return $ui.FontInks[$k] }
+  $h = 18; try { $h = [int][System.Windows.Forms.TextRenderer]::MeasureText('Hg', $Font).Height } catch { $null = $_ }   # no measure: the height of the form font
+  $v = @{ Top = [int][math]::Round($h * 0.27); Base = [int][math]::Round($h * 0.8); Bottom = $h }
+  $a = & $ui.InkOf 'H' $Font; $d = & $ui.InkOf 'g' $Font
+  if ($a -and $d) { $v = @{ Top = [int]$a.Top; Base = [int]$a.Bottom; Bottom = [int][math]::Max($a.Bottom, $d.Bottom) }; $ui.FontInks[$k] = $v }   # only a measure is kept
+  return $v }
+# Makes a panel that draws its own Text ink-tight. Takes the font, the color, the screen-reader name and whether the
+# panel keeps room for descenders ($true: a name; $false: capitals only, the panel ends on the baseline). Gives back the
+# panel; $ui.InkFit sizes it when its text changes and when the window has its scale.
+$ui.InkText = { param($Font, $Color, [string]$Name, [bool]$Desc)
+  $p = New-Object System.Windows.Forms.Panel; $p.Font = $Font; $p.ForeColor = $Color; $p.BackColor = $ui.C.White; $p.Margin = (& $ui.Pad 0 0 0 0); $p.Size = New-Object System.Drawing.Size(1, 1)
+  $p.AccessibleRole = 'StaticText'; $p.AccessibleName = $Name; $p.Tag = @{ Desc = $Desc; Left = 0; MaxW = 0; Cut = $false }; $p.Visible = $false
+  $p.Add_Paint({ & $ui.InkPaint $this $_.Graphics }); $p.Add_TextChanged({ & $ui.InkFit $this }); $p }
+# Sizes an ink-tight panel to its text: as wide as the ink (at most Tag.MaxW when that is set: the text then ends with
+# "...") and as tall as the font's ink rows. Does nothing before the window has its scale. Takes the panel.
 $ui.InkFit = { param($P)
   if (-not $ui.Scaled) { return }
   try { $fi = & $ui.FontInk $P.Font; $h = $(if ($P.Tag.Desc) { $fi.Bottom } else { $fi.Base }) - $fi.Top; $w = 1; $P.Tag.Left = 0
@@ -121,7 +157,6 @@ $ui.WordBad = { param([string]$Card, [string]$Name, [string]$Text, $F, [int]$W)
 $ui.Word = { param($G, [string]$Text, $Font, $Color, [int]$X, [int]$Y, [int]$W, [int]$H, [string]$Flags) [System.Windows.Forms.TextRenderer]::DrawText($G, $Text, $Font, (New-Object System.Drawing.Rectangle($X, $Y, [math]::Max(1, $W), $H)), $Color, [System.Windows.Forms.TextFormatFlags]$Flags) }
 # The size of a text that wraps at a width (the real font; docs/window-design.md "Text lengths").
 $ui.Meas = { param([string]$Text, $Font, [int]$W) [System.Windows.Forms.TextRenderer]::MeasureText($Text, $Font, (New-Object System.Drawing.Size([math]::Max(1, $W), 0)), [System.Windows.Forms.TextFormatFlags]'WordBreak, NoPrefix, TextBoxControl') }
-# ---- The layout self-check
 # ---- The layout self-check (docs/window-design.md "Proof"): in a test round, and in the Windows job, RADE measures each
 # card it showed: a text that needs more room than its control has, a control that a parent cuts, two parts that
 # overlap. The result is one line under "Window: OK" in the results e-mail draft ("PASS layout" or the defects), so a
@@ -197,6 +232,37 @@ $ui.TextNeed = { param($C)
   $w = [int](& $ui.GetWrap $C); $s = & $ui.Meas ([string]$C.Text) $C.Font $(if ($w -gt 0) { $w } else { 100000 }); $h = [int]$s.Height + (& $ui.Sc 2)
   try { $n = [int]$C.GetLineFromCharIndex([math]::Max(0, $C.Text.Length - 1)) + 1; $lh = [int][System.Windows.Forms.TextRenderer]::MeasureText('Ag', $C.Font).Height; if ($n -gt 0 -and $lh -gt 0) { $h = [math]::Max($h, $n * $lh) } } catch { $null = $_ }
   return (New-Object System.Drawing.Size($s.Width, $h)) }
+# ---- UI standard v1 rules of the self-check (the Administrator, 2026-11-20; docs/ui-standard.md, each rule's check)
+# The WCAG relative luminance of a color (0 to 1). Takes the color; gives back a number.
+$ui.Lum = { param($C) $v = foreach ($x in @($C.R, $C.G, $C.B)) { $f = [double]$x / 255.0; if ($f -le 0.04045) { $f / 12.92 } else { [math]::Pow(($f + 0.055) / 1.055, 2.4) } }; 0.2126 * $v[0] + 0.7152 * $v[1] + 0.0722 * $v[2] }
+# The WCAG contrast ratio of two colors (1 to 21). Takes the two colors; gives back a number.
+$ui.Ratio = { param($A, $B) $x = & $ui.Lum $A; $y = & $ui.Lum $B; ([math]::Max($x, $y) + 0.05) / ([math]::Min($x, $y) + 0.05) }
+# B1 (fixed sizes) for one button with an edge: no AutoSize, a size of the set, and a label that fits. Takes the card,
+# the button's name and the button; gives back the defect lines.
+$ui.BtnBad = { param([string]$Card, [string]$Name, $B)
+  $out = @(); $ws = @($ui.Z.CompactW, $ui.Z.ActionW, $ui.Z.WideW | ForEach-Object { & $ui.Sc $_ }); $hs = @($ui.Z.CompactH, $ui.Z.ActionH | ForEach-Object { & $ui.Sc $_ })
+  if ($B.AutoSize) { $out += ('LAYOUT ' + $Card + ' ' + $Name + ' button: AutoSize is on (B1: fixed sizes)') }
+  if ($ws -notcontains [int]$B.Width -or $hs -notcontains [int]$B.Height) { $out += ('LAYOUT ' + $Card + ' ' + $Name + ' button: ' + $B.Width + 'x' + $B.Height + ' is not a size of the set (B1)') }
+  $need = [int][System.Windows.Forms.TextRenderer]::MeasureText([string]$B.Text, $B.Font).Width + (& $ui.Sc 4)
+  if ($B.Text -and $need -gt [int]$B.Width) { $out += ('LAYOUT ' + $Card + ' ' + $Name + ' button text cut: needs ' + $need + ' has ' + $B.Width + ' (B1)') }
+  return $out }
+# B3, B4, B5 for the card's action row: at most one primary button, and it is the last one; at most 3 others ("Back (Esc)"
+# is the Back pattern, not counted). Takes the card and the kinds of the shown buttons in row order; gives back the lines.
+$ui.RowRuleBad = { param([string]$Card, $Kinds)
+  $out = @(); $ks = @($Kinds); $main = @(for ($k = 0; $k -lt $ks.Count; $k++) { if ([string]$ks[$k] -eq 'primary') { $k } })
+  if ($main.Count -gt 1) { $out += ('LAYOUT ' + $Card + ' buttons: ' + $main.Count + ' primary buttons, the rule is one (B4)') }
+  if ($main.Count -eq 1 -and $main[0] -ne $ks.Count - 1) { $out += ('LAYOUT ' + $Card + ' buttons: the primary button is number ' + ($main[0] + 1) + ' of ' + $ks.Count + ', the rule is last (B3)') }
+  if ($ks.Count - $main.Count -gt 3) { $out += ('LAYOUT ' + $Card + ' buttons: ' + ($ks.Count - $main.Count) + ' buttons beside the primary, the rule is 3 at most (B5)') }
+  return $out }
+# Inventory (RADE_INVENTORY = a file path; the Windows job): one JSON line for each control the self-check walks, with
+# the card, the scale, the kind, the screen box, the colors and the accessible name (docs/ui-standard.md "Proof").
+$ui.InvFile = [string]$env:RADE_INVENTORY
+# Writes the inventory line of one control. Takes the card, the control and its screen box.
+$ui.InvLine = { param([string]$Card, $C, $R)
+  try { $o = [ordered]@{ card = $Card; scale = [int][math]::Round($ui.Dpi / 96.0 * 100); high = [bool]$ui.High; kind = $C.GetType().Name; name = (& $ui.NameOf $C)
+      x = [int]$R.Left; y = [int]$R.Top; w = [int]$R.Width; h = [int]$R.Height; fore = '#{0:X6}' -f ($C.ForeColor.ToArgb() -band 0xFFFFFF); back = '#{0:X6}' -f ($C.BackColor.ToArgb() -band 0xFFFFFF)
+      access = [string]$C.AccessibleName; button = [string]$ui.Kinds[$C] }
+    Add-Content -LiteralPath $ui.InvFile -Value (ConvertTo-Json $o -Compress) -Encoding UTF8 -ErrorAction Stop } catch { $null = $_ } }   # the inventory is a test aid: never stop the check
 $ui.Check = {
   if (-not $ui.LayOn -or -not $ui.View) { return }
   if ($ui.Picked -and (Test-Deploy) -and $env:RADE_LAYOUT -ne '1') { return }   # a deploy does not run it, also when the paste has a test application
@@ -213,6 +279,11 @@ $ui.Check = {
       $kids = @($par.Controls | Where-Object { $_.Visible })
       for ($i = 0; $i -lt $kids.Count; $i++) {
         $c = $kids[$i]; $r = $c.RectangleToScreen($c.ClientRectangle); if ($r.Width -le 0 -or $r.Height -le 0) { continue }
+        if ($ui.InvFile) { & $ui.InvLine $card $c $r }
+        if ($ui.Boxes -contains $c -and [int]$c.Height + 1 -lt (& $ui.Sc $ui.Z.CompactH)) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' box: ' + $c.Height + ' high, the rule is ' + (& $ui.Sc $ui.Z.CompactH) + ' (B1; R36: a frame that did not scale cut its line at 150 %)') }
+        if ($c -is [System.Windows.Forms.Button] -and [int]$c.FlatAppearance.BorderSize -gt 0 -and $ui.BtnKind.ContainsKey($c)) { foreach ($l in @(& $ui.BtnBad $card (& $ui.NameOf $c) $c)) { $ui.LayBad.Add([string]$l) } }
+        if ($c.Text -and $c.Enabled -and ($c -is [System.Windows.Forms.Label] -or $c -is [System.Windows.Forms.ButtonBase] -or (& $ui.IsCardText $c))) {   # B10: text at least 4.5:1 on its own background
+          $cr = & $ui.Ratio $c.ForeColor $c.BackColor; if ($cr -lt 4.5) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' contrast: ' + [math]::Round($cr, 2) + ':1, the rule is 4.5:1 (B10)') } }
         if (-not $scroll -and -not $clip.Contains($r)) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' cut: needs ' + $r.Width + 'x' + $r.Height + ' at ' + ($r.Left - $clip.Left) + ',' + ($r.Top - $clip.Top) + ' in ' + $clip.Width + 'x' + $clip.Height) }
         if ($c -is [System.Windows.Forms.Label] -and $c.AutoSize -and $c.MaximumSize.Width -gt 0 -and $c.Text) { $wb = & $ui.WordBad $card (& $ui.NameOf $c) ([string]$c.Text) $c.Font $c.MaximumSize.Width; if ($wb) { $ui.LayBad.Add($wb) } }
         if (& $ui.IsCardText $c) {   # card text boxes are measured as labels are: a word wider than the line, and text that needs more room than the box has
@@ -228,7 +299,7 @@ $ui.Check = {
           if ($c.ClientSize.Height + 1 -lt $lh) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' line cut: one line needs ' + $lh + ' high, has ' + $c.ClientSize.Height) } }
         if ($c -is [System.Windows.Forms.RichTextBox] -and $ui.GuideNeed -and [object]::ReferenceEquals($c, $ui.Guide)) { $gn = [int](& $ui.GuideNeed); if ($gn -gt $c.ClientSize.Height + 1) { $ui.LayBad.Add('LAYOUT ' + $card + ' Guide text: needs ' + $gn + ' high, has ' + $c.ClientSize.Height) } }
         $isText = ($c -is [System.Windows.Forms.Label] -or $c -is [System.Windows.Forms.ButtonBase])
-        if ($isText -and $c.Text -and -not $c.AutoEllipsis) {   # a label or box that ends with "..." by rule is not a defect
+        if ($isText -and $c.Text -and -not $c.AutoEllipsis -and -not $ui.BtnKind.ContainsKey($c)) {   # a label or box that ends with "..." by rule is not a defect; a button of fixed size: B1
           $want = $c.GetPreferredSize((New-Object System.Drawing.Size($c.Width, 0)))
           if ($want.Width -gt $c.Width + 1 -or $want.Height -gt $c.Height + 1) { $ui.LayBad.Add('LAYOUT ' + $card + ' ' + (& $ui.NameOf $c) + ' text: needs ' + $want.Width + 'x' + $want.Height + ' has ' + $c.Width + 'x' + $c.Height) }
         }
@@ -239,6 +310,7 @@ $ui.Check = {
     }
     # Dead space (R28 N9: a large empty area under the run card's text): the card's text panel is as tall as its text when it does not scroll.
     if ($ui.Scroll -and $ui.Body -and -not $ui.RecOn -and -not $ui.Scrolls -and $ui.Scroll.Visible) { $dead = [int]$ui.Scroll.ClientSize.Height - [int]$ui.Body.Height; if ($dead -gt (& $ui.Sc 2)) { $ui.LayBad.Add('LAYOUT ' + $card + ' Scroll dead space: ' + $dead + ' px under the text') } }
+    if (-not $ui.RecOn) { foreach ($l in @(& $ui.RowRuleBad $card @($ui.B | Where-Object { $_.Visible } | ForEach-Object { [string]$ui.Kinds[$_] }))) { $ui.LayBad.Add([string]$l) } }
     foreach ($l in @(& $ui.Measure $card)) { $ui.LayBad.Add([string]$l) }
   } catch { $ui.LayBad.Add('LAYOUT ' + $card + ' the self-check stopped: ' + (ConvertTo-Masked ([string]$_.Exception.Message))) } }
 # <<< rade-ui-2

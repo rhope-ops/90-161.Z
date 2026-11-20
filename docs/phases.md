@@ -24,8 +24,8 @@ R26 to R37 used the round numbers of the table below for probes and fixes; the c
 
 | Round | Proves | Needs first | If it fails |
 |---|---|---|---|
-| R38 | T4 early (a second person adds a row: asked for at the top of go.md and in the runner); T22 window r11 (XXX XXX spacing data, status column fit, Fulcrum logo in every mode: 3 hand checks); site logo set to Fulcrum and read back; pause and resume and no-script results if RADE releases them before R38 ships | A second person for about 5 minutes | T4: a flow writes the row with the PFM's connection |
-| R39 | UI standard v1 in both windows (fixed buttons, Sofia Sans, Maintenance screen); pause and resume, if not in R38; the 90-161.Z window resumes its last card | RADE releases with UI standard v1 | Segoe UI; the old button sizes |
+| R38 | T4 early (a second person adds a row: asked for at the top of go.md and in the runner); T22 window r11 (XXX XXX spacing data, status column fit, Fulcrum logo in every mode: 3 hand checks); site logo set to Fulcrum and read back; RADE engine-v29: pause and resume, no-script results, UI standard v1 in the RADE window | A second person for about 5 minutes | T4: a flow writes the row with the PFM's connection |
+| R39 | UI standard v1 in the 90-161.Z window (fixed buttons, Sofia Sans; RADE has it from R38, engine-v29); the 90-161.Z window resumes its last card | R38 results | Segoe UI; the old button sizes |
 | R40 | RADE Diagnose, Back up, Restore (Maintenance screen); Settings-row values in F03, F05, F06 | RADE Maintenance build | Backup by hand per [backup-and-restore.md](backup-and-restore.md) |
 | R41 | Real list data in the window (read-only); endorser answer by list form | R38 T4 | The PFM works in list views |
 | R42 | Install from zero by a second account with fewer rights; rights rows P18, P19; then the pilot | R40, R41 | The documented fallback for each missing right |

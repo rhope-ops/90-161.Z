@@ -33,7 +33,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 **For:** the round after R37, short on purpose: 13 steps. Everything that passed in R36 and R37 left the round (the sample in Word, the list changes, the flow import and the full flow test).
 - First: a second person adds one new row to the test list (about 5 minutes for them).
 - The site logo in its Fulcrum colors (thumbnail and header, by hand), then a read-back.
-- Pause and resume (RADE engine-v28): if the window closes or I remove my CAC, the round resumes where it stopped.
+- RADE engine-v29: pause and resume (if the window closes or I remove my CAC, the round resumes where it stopped), and the new RADE look: buttons of fixed sizes, the Sofia Sans font, and a Maintenance button.
 - My 90-161.Z window r11: XXX XXX instead of FAKE in the data (a spacing test), status column that does not touch the scroll bar, and the Fulcrum logo in light and dark mode. 3 checks, then 3 questions.
 **Time:** about 40 minutes; about 25 minutes of my own work (estimate). The second person needs about 5 minutes, about 5 minutes after I start.
 **Changes:** on the test site: a probe list and library are made and removed again at the end; the second person is added to Visitors and removed at the end; I set the site logo and thumbnail to the Fulcrum logo by hand. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files, 17 pictures of the window cards with fake data, one text file and one picture for each Feedback comment I save, and a resume file of the round in Rounds\R38). Before Run, the window lists every file.
@@ -64,7 +64,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R38-round-r1.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R38 PASSED" or "90161Z R38 NEEDS REVIEW", every file in the results folder attached). The round never puts a script file in the results. Then tell Claude the e-mail is sent.
-**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): do steps 4 to 13 again, then select "Resume at step N of M" (it takes the place of Run). Steps that ended keep their results; the step that was cut off runs again. New in this round (RADE engine-v28): not yet tried on my computer.
+**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): do steps 4 to 13 again, then select "Resume at step N of M" (it takes the place of Run). Steps that ended keep their results; the step that was cut off runs again. New in this round (RADE engine-v29): not yet tried on my computer.
 **If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R38 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R38 did not paste". If the second person cannot open the link: select "The link did not open" and go on. If the 90-161.Z window does not open, go on with the steps the RADE window shows.
 
 ## Done
