@@ -489,11 +489,8 @@ Test-That 'Read: waits for the health row and ends early; a FAIL row gives HEALT
 New-Site; $null = Invoke-T21 'Make'
 $sw.Restart(); $r = Invoke-T21 'Read' @{ PollSeconds = 1 }
 Test-That 'Read r11 (R38): no command row and no button row: no wait, HEALTH NOT RUN and BUTTON NOT RUN, no RESULT line for either' ($r.Text -match 'WAIT none' -and $sw.Elapsed.TotalSeconds -lt 20 -and $r.Text -match '(?m)^HEALTH NOT RUN: this round did not start the health flow' -and $r.Text -match '(?m)^BUTTON NOT RUN: this round ran no flow step' -and $r.Text -notmatch '(?m)^RESULT (HEALTH|BUTTON) ') $r.Text
-New-Site; $null = Invoke-T21 'Make'
-Add-Row (Get-Probe '90161ZProbe') 'BTN-FLOW' 11
-$r = Invoke-T21 'Read' @{ PollSeconds = 1 }
+New-Site; $null = Invoke-T21 'Make'; Add-Row (Get-Probe '90161ZProbe') 'BTN-FLOW' 11; $r = Invoke-T21 'Read' @{ PollSeconds = 1 }
 Test-That 'Read r11: a button row with no command row still reports BUTTON PASSED (only a round with no flow step skips it)' ($r.Text -match '(?m)^BUTTON PASSED: ' -and $r.Text -match '(?m)^HEALTH NOT RUN') $r.Text
-
 # ---- Clean ----
 New-Site; $null = Invoke-T21 'Make'
 $env:T21_TEST_ADDRESS = $fakeAddr; $null = Invoke-T21 'Person'; Remove-Item Env:T21_TEST_ADDRESS

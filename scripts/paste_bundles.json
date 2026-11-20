@@ -1245,18 +1245,6 @@
                     "kind": "glob"
                 },
                 {
-                    "path": "T16\\90161Z-T16-site-setup-r12.ps1",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-setup-r12.txt",
-                    "kind": "glob"
-                },
-                {
-                    "path": "T16\\90161Z-T16-logo-r12.txt",
-                    "kind": "glob"
-                },
-                {
                     "path": "T22\\90161Z-T22-pfm-window-r4.ps1",
                     "kind": "glob"
                 },
