@@ -189,6 +189,7 @@ for path in zips:
     assert 'type="10018"' not in s, 'connection reference is not a root component in the R18 export'
 PYEOF
 python3 tests/check_names.py && ok "naming rules (PFM 2026-11-11)" || bad "naming rules"
+python3 tests/check_collect.py --test >/dev/null && python3 tests/check_collect.py >/dev/null && ok "no scripts in results: every collect name ends in a result extension (PFM 2026-11-20)" || { python3 tests/check_collect.py; bad "no scripts in results"; }
 out=$(python3 tests/check_logo_draw.py 2>&1); [ $? -eq 0 ] && ok "logo_draw: one good drawing and each clean refusal ($(echo "$out" | tail -1))" || { echo "$out" | grep FAIL; bad "logo_draw refusals"; }
 for f in flow/defs/*.json; do python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" && ok "json $f" || bad "json $f"; done
 

@@ -1316,7 +1316,12 @@
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-feedback-*",
+                    "name": "90161Z-T22-feedback-*.txt",
+                    "step": "T22 Open the 90-161.Z window r10"
+                },
+                {
+                    "dir": "T22",
+                    "name": "90161Z-T22-feedback-*.png",
                     "step": "T22 Open the 90-161.Z window r10"
                 },
                 {
