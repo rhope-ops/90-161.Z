@@ -24,353 +24,88 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R38-round-r1.ps1",
-            "round": "R38",
-            "title": "Round R38 r1: a new row by a second person first, the site logo in Fulcrum colors, and the window r11 (XXX XXX spacing data, status column fit, Fulcrum logo in every mode)",
+            "out": "scripts/gov/paste/90161Z-R39-round-r1.ps1",
+            "round": "R39",
+            "title": "Round R39 r1: my window r12 (the RADE fonts, opens on the last screen, Your Work fits, taller text boxes, screen open times)",
             "files": [
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-pfm-window-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-pfm-window-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-cards-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-cards-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-types-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-types-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui2-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui2-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-parts-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-parts-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-grid-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-grid-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-logo-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-logo-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-window-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-window-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-feedback-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-feedback-r12.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-measure-r11.ps1"
+                    "src": "scripts/gov/90161Z-T22-measure-r12.ps1"
                 },
                 {
-                    "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-probe-r11.ps1"
+                    "dir": "T22",
+                    "src": "assets/fonts/build/90161Z-SofiaSans-Regular.ttf"
                 },
                 {
-                    "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-common-r11.ps1"
+                    "dir": "T22",
+                    "src": "assets/fonts/build/90161Z-SofiaSans-SemiBold.ttf"
                 },
                 {
-                    "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-make-r11.ps1"
+                    "dir": "T22",
+                    "src": "assets/fonts/build/90161Z-SofiaSansCondensed-SemiBold.ttf"
                 },
                 {
-                    "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-person-r11.ps1"
-                },
-                {
-                    "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-look-r11.ps1"
-                },
-                {
-                    "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-read-r11.ps1"
-                },
-                {
-                    "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-office-r11.ps1"
-                },
-                {
-                    "dir": "T21",
-                    "src": "samples/90161Z-T21-links-r5.html"
-                },
-                {
-                    "dir": "T16",
-                    "src": "scripts/gov/90161Z-T16-site-setup-r12.ps1"
-                },
-                {
-                    "dir": "T16",
-                    "src": "assets/logo/build/90161Z-logo-512.png"
+                    "dir": "T22",
+                    "src": "assets/fonts/build/90161Z-OFL.txt"
                 }
             ],
             "steps": [
                 {
-                    "name": "T21 Check the test site is clean r11",
-                    "title": "Check that the last round left nothing on the test site",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
-                    "args": "-Part Clean -Label first",
-                    "minutes": 20,
-                    "note": "Signs in (CAC). Removes a test list, library or Visitors member left by the last round. If an earlier round left a test person in PFM Office, this step reports FAILED and the last step removes them.",
-                    "estimate": 2,
-                    "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
-                    "needs": [
-                        "pnp",
-                        "net-site",
-                        "site-rights"
-                    ],
-                    "doing": "Checking that the test site is clean."
-                },
-                {
-                    "name": "T21 Make the probe list r11",
-                    "title": "Make the test list and library",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
-                    "args": "-Part Make",
-                    "minutes": 20,
-                    "note": "Signs in (CAC). Makes the fake probe list (Visitors get Contribute on this list only) and library, uploads one fake workbook and writes the test page.",
-                    "estimate": 2,
-                    "help": "Send the results as they are. A second run changes nothing.",
-                    "needs": [
-                        "pnp",
-                        "net-site",
-                        "site-rights"
-                    ],
-                    "doing": "Making the test list and library."
-                },
-                {
-                    "name": "T21 Add the second person r11",
-                    "title": "Add the second person to the test site",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
-                    "args": "-Part Person",
-                    "minutes": 20,
-                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group.",
-                    "estimate": 2,
-                    "help": "Send the results as they are. The address is never written to a file; the results show only yes or no.",
-                    "needs": [
-                        "pnp",
-                        "net-site",
-                        "site-rights"
-                    ],
-                    "after": [
-                        "T21 Make the probe list r11"
-                    ],
-                    "doing": "Adding the second person to the Visitors group."
-                },
-                {
-                    "name": "T21 Ask for a new row r11",
-                    "title": "Copy the link of the new row form",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
-                    "args": "-Part Ask",
-                    "minutes": 5,
-                    "note": "Notes on this computer that this round asks the second person for a new row, and puts the link of the new row form on the clipboard. No sign-in.",
-                    "estimate": 1,
-                    "help": "Send the results as they are.",
-                    "after": [
-                        "T21 Add the second person r11"
-                    ],
-                    "doing": "Copying the link of the new row form."
-                },
-                {
-                    "name": "T21 Second person adds a row r11",
-                    "title": "Ask the second person to add one row",
-                    "kind": "guide",
-                    "dir": "T21",
-                    "file": "",
-                    "note": "You need one person of your office for about 5 minutes, now. They open the new row form, type the title you send them and select Save. This test has waited 3 rounds for a second person.",
-                    "guide": [
-                        "1. Ask the second person to stay at a computer for about 5 minutes.",
-                        "2. Open Teams.",
-                        "3. Select \"Chat\".",
-                        "4. Select \"New chat\".",
-                        "5. In the box \"To\", type the e-mail address you gave RADE for the second person.",
-                        "6. Select the chat box.",
-                        "7. Press Ctrl+V (the link of the new row form is on the clipboard).",
-                        "8. In the chat box, type: Open this link, type T4a as the Title, select Save, tell me if it saved.",
-                        "9. Press Enter.",
-                        "10. Wait for the reply: the row saved, or no permission.",
-                        "If the person is not there yet: keep this card open. Skip only if nobody can help today."
-                    ],
-                    "marker": "90161Z-T21-t4a-asked.txt",
-                    "estimate": 5,
-                    "after": [
-                        "T21 Ask for a new row r11"
-                    ],
-                    "answers": [
-                        {
-                            "key": "t4a-row",
-                            "prompt": "What did the second person see?",
-                            "kind": "pick",
-                            "choices": [
-                                "The row was saved",
-                                "No permission",
-                                "The link did not open",
-                                "Something else"
-                            ]
-                        }
-                    ],
-                    "doneLog": "Confirmed by you: the second person tried a new row.",
-                    "hide": [
-                        "failed"
-                    ]
-                },
-                {
-                    "name": "T21 Read the test results r11",
-                    "title": "Read the health, person and button results",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
-                    "args": "-Part Read",
-                    "minutes": 20,
-                    "note": "Signs in (CAC). Reads the test list: did the second person save a new row? Changes nothing.",
-                    "estimate": 3,
-                    "help": "Send the results as they are.",
-                    "needs": [
-                        "pnp",
-                        "net-site",
-                        "site-rights"
-                    ],
-                    "after": [
-                        "T21 Second person adds a row r11"
-                    ],
-                    "doing": "Reading the test list."
-                },
-                {
-                    "name": "T21 Remove the test list and library r11",
-                    "title": "Remove the test person, list and library",
-                    "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
-                    "args": "-Part Clean -Label last",
-                    "minutes": 20,
-                    "note": "Signs in (CAC). Takes the second person out of Visitors (and out of PFM Office if an earlier round left them there), and moves the probe list and library to the Recycle Bin. Runs after any failure.",
-                    "estimate": 2,
-                    "help": "Send the results as they are. Each removal runs even when an earlier one fails.",
-                    "needs": [
-                        "pnp",
-                        "net-site",
-                        "site-rights"
-                    ],
-                    "doing": "Removing the test list and library."
-                },
-                {
-                    "name": "T16 Site logo r13: thumbnail",
-                    "title": "Set the site thumbnail to the new logo",
-                    "kind": "guide",
-                    "dir": "T16",
-                    "file": "90161Z-logo-512.png",
-                    "note": "You set the site thumbnail to the 90-161.Z logo in its Fulcrum colors (dark disc, cream ring, orange quill). The next card sets the header logo. About 3 minutes.",
-                    "guide": [
-                        "1. Select \"Open in browser\" above.",
-                        "2. At the top right of the site, select the gear \"Settings\".",
-                        "3. Select \"Change the look\".",
-                        "4. Select \"Header\".",
-                        "5. Under \"Site logo thumbnail\", select \"Change\".",
-                        "6. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
-                        "7. Select \"Open\".",
-                        "If the page is not your site: type the address you typed in the RADE box \"Site address\".",
-                        "If there is no \"Site logo thumbnail\" box: select \"It failed\"."
-                    ],
-                    "marker": "90161Z-T16-thumb-set.txt",
-                    "needs": [
-                        "net-site"
-                    ],
-                    "estimate": 3,
-                    "doneLog": "Confirmed by you: set the thumbnail.",
-                    "url": "https://usaf.dps.mil/sites/<your-site>",
-                    "url_source": "Your site address, saved by RADE in Config\\90161Z-site.txt when you typed it in the RADE box \"Site address\"; the placeholder is never opened when that file exists",
-                    "urlConfig": "90161Z-site.txt",
-                    "after": []
-                },
-                {
-                    "name": "T16 Site logo r13: header logo",
-                    "title": "Set the site header logo to the new logo",
-                    "kind": "guide",
-                    "dir": "T16",
-                    "file": "90161Z-logo-512.png",
-                    "note": "You set the header logo of the site to the 90-161.Z logo in its Fulcrum colors (dark disc, cream ring, orange quill) and save both. The next step reads the logo back. About 3 minutes.",
-                    "guide": [
-                        "1. Under \"Site logo\", select \"Change\".",
-                        "2. In the box \"File name\", press Ctrl+V (the file path is on the clipboard).",
-                        "3. Select \"Open\".",
-                        "4. Select \"Save\".",
-                        "5. Look at the top left of the site: the Fulcrum logo must show.",
-                        "If \"Save\" stays gray: select \"It failed\"."
-                    ],
-                    "marker": "90161Z-T16-logo-set.txt",
-                    "estimate": 3,
-                    "after": [
-                        "T16 Site logo r13: thumbnail"
-                    ],
-                    "doneLog": "Confirmed by you: set the header logo.",
-                    "answers": [
-                        {
-                            "key": "logo-header",
-                            "prompt": "After Save, what did the site header show at the top left?",
-                            "kind": "pick",
-                            "choices": [
-                                "The Fulcrum logo",
-                                "The old logo",
-                                "No logo",
-                                "Save failed"
-                            ]
-                        },
-                        {
-                            "key": "logo-thumb",
-                            "prompt": "Did the thumbnail take the Fulcrum logo?",
-                            "kind": "pick",
-                            "choices": [
-                                "Yes",
-                                "No",
-                                "There was no thumbnail box"
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "T16 Read the site logo back r12",
-                    "title": "Read the site logo back",
-                    "dir": "T16",
-                    "file": "90161Z-T16-site-setup-r12.ps1",
-                    "args": "-LogoOnly",
-                    "minutes": 10,
-                    "note": "Signs in (CAC). Reads the header logo of the site back. Changes nothing on the site.",
-                    "estimate": 1,
-                    "help": "Send the results as they are. The step can be run again.",
-                    "needs": [
-                        "pnp",
-                        "net-site"
-                    ],
-                    "after": [
-                        "T16 Site logo r13: header logo"
-                    ]
-                },
-                {
-                    "name": "T22 Open the 90-161.Z window r11",
-                    "title": "Open the 90-161.Z window and do its 3 checks",
+                    "name": "T22 Open the 90-161.Z window r12",
+                    "title": "Open the 90-161.Z window and do its 4 checks",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r11.ps1",
+                    "file": "90161Z-T22-pfm-window-r12.ps1",
                     "minutes": 30,
-                    "note": "Opens your 90-161.Z window with fake data and saves a picture of each card. Do the 3 checks in the bar at the bottom. Feedback in the bar saves a comment on a card.",
+                    "note": "Opens your 90-161.Z window with fake data. Do the 4 checks in the bar at the bottom. At the end, select All Actions, then close the window with its X.",
                     "estimate": 15,
                     "help": "Send the results as they are. The step can be run again.",
                     "doing": "Opening the 90-161.Z window."
                 },
                 {
-                    "name": "T22 Did the window open r11",
+                    "name": "T22 Did the window open r12",
                     "title": "Check that the window opened",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r11.ps1",
+                    "file": "90161Z-T22-pfm-window-r12.ps1",
                     "args": "-Opened",
                     "minutes": 2,
                     "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
@@ -379,7 +114,22 @@
                     "doing": "Reading the result of the window step."
                 },
                 {
-                    "name": "T22 Answer: look and cards r11",
+                    "name": "T22 Open the window again r12",
+                    "title": "Open the 90-161.Z window again and do its 1 check",
+                    "dir": "T22",
+                    "file": "90161Z-T22-pfm-window-r12.ps1",
+                    "args": "-Again",
+                    "minutes": 15,
+                    "note": "Opens your 90-161.Z window a second time. It should open on All Actions, the screen you closed it on. Do the 1 check in the bar at the bottom, then close the window.",
+                    "estimate": 3,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "after": [
+                        "T22 Did the window open r12"
+                    ],
+                    "doing": "Opening the 90-161.Z window again."
+                },
+                {
+                    "name": "T22 Answer: look and cards r12",
                     "title": "Answer 3 questions about the window look",
                     "kind": "guide",
                     "guide": [],
@@ -388,7 +138,7 @@
                     "note": "3 questions about the look of the window. About 2 minutes.",
                     "estimate": 2,
                     "after": [
-                        "T22 Did the window open r11"
+                        "T22 Open the window again r12"
                     ],
                     "answers": [
                         {
@@ -419,159 +169,115 @@
             "collect": [
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-r11.txt",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-window-r12.txt",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-feedback-*.txt",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-feedback-*.txt;90161Z-T22-feedback-*.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-feedback-*.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-window-again-r12.txt",
+                    "step": "T22 Open the window again r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-home-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-home-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-empty-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-empty-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-queue-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-queue-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-reviews-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-reviews-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step8-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-step8-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-confirm-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-confirm-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-sendback-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-sendback-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-waves-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-waves-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step11-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-step11-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step12-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-step12-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step13-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-step13-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-pub-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-pub-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-settings-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-settings-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-loading-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-loading-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-failed-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-failed-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-noperm-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
+                    "name": "90161Z-T22-card-noperm-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-remindall-r11.png",
-                    "step": "T22 Open the 90-161.Z window r11"
-                },
-                {
-                    "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-first-r11.txt",
-                    "step": "T21 Check the test site is clean r11"
-                },
-                {
-                    "dir": "T21",
-                    "name": "90161Z-T21-probe-make-r11.txt",
-                    "step": "T21 Make the probe list r11"
-                },
-                {
-                    "dir": "T21",
-                    "name": "90161Z-T21-probe-person-r11.txt",
-                    "step": "T21 Add the second person r11"
-                },
-                {
-                    "dir": "T21",
-                    "name": "90161Z-T21-probe-ask-r11.txt",
-                    "step": "T21 Ask for a new row r11"
-                },
-                {
-                    "dir": "T21",
-                    "name": "90161Z-T21-probe-read-r11.txt",
-                    "step": "T21 Read the test results r11"
-                },
-                {
-                    "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-last-r11.txt",
-                    "step": "T21 Remove the test list and library r11"
-                },
-                {
-                    "dir": "T16",
-                    "name": "90161Z-T16-logo-r12.txt",
-                    "step": "T16 Read the site logo back r12"
+                    "name": "90161Z-T22-card-remindall-r12.png",
+                    "step": "T22 Open the 90-161.Z window r12"
                 }
             ],
             "fetch": [],
             "apps": [
                 {
                     "name": "90-161.Z",
-                    "summary": "Round R38 r1: second person adds a row, site logo in Fulcrum colors, window r11 with 3 checks. Passed steps left. Fake data.",
+                    "summary": "Round R39 r1: window r12 with 4 checks, then once more for the reopen check. Fake data.",
                     "steps": [
-                        "T21 Check the test site is clean r11",
-                        "T21 Make the probe list r11",
-                        "T21 Add the second person r11",
-                        "T21 Ask for a new row r11",
-                        "T21 Second person adds a row r11",
-                        "T21 Read the test results r11",
-                        "T21 Remove the test list and library r11",
-                        "T16 Site logo r13: thumbnail",
-                        "T16 Site logo r13: header logo",
-                        "T16 Read the site logo back r12",
-                        "T22 Open the 90-161.Z window r11",
-                        "T22 Did the window open r11",
-                        "T22 Answer: look and cards r11"
+                        "T22 Open the 90-161.Z window r12",
+                        "T22 Did the window open r12",
+                        "T22 Open the window again r12",
+                        "T22 Answer: look and cards r12"
                     ]
                 }
             ],
@@ -1554,6 +1260,26 @@
                 },
                 {
                     "path": "T22\\90161Z-T22-*-r10.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r11.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r11.png",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r11.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-*-r11.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-probe-*-r11.txt",
                     "kind": "glob"
                 }
             ]

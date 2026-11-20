@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r11, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r12, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): the layout self-check tests the grid edges against the scroll bar (R11 LAYOUT line); the logo and
@@ -22,7 +22,7 @@
   The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
@@ -254,6 +254,7 @@ $wn.Show = {
   #>
   param([string]$Key)
   $c = $Cards[$Key]; if (-not $c) { return }
+  $t0 = $ui.Clock.Elapsed.TotalMilliseconds   # R12 (R38 finding 3): the open time of a card the person opens
   if ($Key -ne $wn.Cur) { if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
   $script:cardsOpened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
   $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @(); $wn.ChipRows = @()
@@ -280,9 +281,45 @@ $wn.Show = {
   $form.AcceptButton = $wn.Primary
   $ui.CardAt = $ui.Clock.Elapsed.TotalMilliseconds
   if ($wn.Focus -eq 'reason' -and $wn.Reason) { [void]$wn.Reason.Focus(); $wn.Focus = '' } elseif ($wn.Primary) { [void]$wn.Primary.Focus() }
-  if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start() } }
+  if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start()
+    if (-not $wn.Times.Contains($Key)) { $wn.Times[$Key] = New-Object System.Collections.Generic.List[int] }
+    $wn.Times[$Key].Add([int]($ui.Clock.Elapsed.TotalMilliseconds - $t0)) } }
 # Where the window place is kept between runs (none with -Measure: no task folder).
 $wn.BoundsFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-bounds.json' } else { '' })
+# R12 (R39; docs/phases.md): the card the window was closed on, opened again at the next start (none with -Measure).
+$wn.LastFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-lastcard.txt' } else { '' })
+$wn.Times = [ordered]@{}   # R12: card key -> the open times in ms of each open by the person (the CARDTIME lines)
+$wn.SaveLast = {
+  <#
+  .SYNOPSIS
+  R12: saves the card the window shows at its close (for a modal card, the card it came from) for the next start.
+  #>
+  try {
+    if (-not $wn.LastFile) { return }
+    $k = $(if ($Cards[$wn.Cur] -and $Cards[$wn.Cur].Modal) { [string]$wn.Prev } else { [string]$wn.Cur })
+    if ($Cards[$k]) { Set-Content -LiteralPath $wn.LastFile -Value $k -Encoding UTF8 }
+  } catch { $lines.Add('NOTE the last card was not saved: ' + ([string]$_.Exception.Message)) } }
+$wn.OpenLast = {
+  <#
+  .SYNOPSIS
+  R12: shows the card saved at the last close, when it is a card that is not modal; else Your Work stays. Adds a
+  LASTCARD line: the card opened, and where it came from.
+  #>
+  $k = ''
+  try { if ($wn.LastFile -and (Test-Path -LiteralPath $wn.LastFile -PathType Leaf)) { $k = ([string](Get-Content -LiteralPath $wn.LastFile -TotalCount 1)).Trim() } } catch { $k = '' }
+  if ($k -and $Cards[$k] -and -not $Cards[$k].Modal) {
+    if ($k -ne 'home') { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k }
+    $lines.Add('LASTCARD opened=' + $k + ' (saved at the last close)') }
+  else { $lines.Add('LASTCARD opened=home (' + $(if ($k) { 'saved card ' + $k + ' not used' } else { 'no saved card' }) + ')') } }
+$wn.TimeLines = {
+  <#
+  .SYNOPSIS
+  R12 (R38 finding 3): one CARDTIME line for each card the person opened: the first open and the slowest later open, in ms.
+  #>
+  foreach ($k in @($wn.Times.Keys)) { $v = @($wn.Times[$k])
+    $later = $(if ($v.Count -gt 1) { ' later-max=' + (@($v | Select-Object -Skip 1 | Measure-Object -Maximum).Maximum) } else { '' })
+    $lines.Add('CARDTIME ' + $k + ' first=' + $v[0] + $later + ' opens=' + $v.Count) }
+  if (-not $wn.Times.Count) { $lines.Add('CARDTIME none (no card opened after the start)') } }
 $wn.LoadBounds = {
   <#
   .SYNOPSIS
@@ -324,7 +361,7 @@ $wn.BarShow = {
     $wn.BarNo.Text = 'Check ' + ($i + 1) + ' of ' + $Checks.Count; $wn.BarText.Text = [string]$Checks[$i].Text
     $wn.BarPass.Visible = $true; $wn.BarFail.Visible = $true }
   else {
-    $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = 'All checks done. Close this window with its X.'
+    $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = $script:ChecksDone   # R12: the first run asks for All Actions before the close (the -Again run checks it)
     $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false } }
 # Keeps the answer (PASS or FAIL) to the current check and shows the next one.
 $wn.Answer = { param([string]$Result)
@@ -492,6 +529,7 @@ $wn.Start = {
     try { & $wn.Recolor 'changed' } catch { $lines.Add('NOTE the colors were not re-applied: ' + ([string]$_.Exception.Message)) } }
   try { [Microsoft.Win32.SystemEvents]::add_UserPreferenceChanged($wn.Pref) } catch { $lines.Add('NOTE no high-contrast change event: ' + ([string]$_.Exception.Message)); $wn.Pref = $null }
   & $wn.WheelOn
+  & $wn.OpenLast   # R12: the card of the last close (before Ready, so its open is not counted as the person's)
   $wn.Ready = $true; $form.Opacity = 1
   try { $form.TopMost = $true; $form.Activate(); $form.TopMost = $false } catch { $null = $_ } }
 $wn.Hook = {
@@ -513,6 +551,6 @@ $wn.Hook = {
         $_.Handled = $true; $_.SuppressKeyPress = $true }
       elseif ($_.Control -and $_.KeyCode -ge [Windows.Forms.Keys]::D1 -and $_.KeyCode -le [Windows.Forms.Keys]::D5) {
         $n = [int]$_.KeyCode - [int][Windows.Forms.Keys]::D1; $wn.Notice = ''; $wn.Err = ''; & $wn.Show ([string]$RailItems[$n].Go); $_.Handled = $true; $_.SuppressKeyPress = $true } })
-  $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds; & $wn.FeedbackList })
+  $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds; & $wn.SaveLast; & $wn.TimeLines; & $wn.FeedbackList })
   $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null }
       & $wn.WheelOff }) }

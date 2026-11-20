@@ -9,7 +9,7 @@ AGENTS.md "Project rules" (Gov device, What people see, Round results) point her
 
 ## 0. Before you start
 
-- One new session for each round; a `worker` on the standard tier unless `.claude/skills/delegate/SKILL.md` says strong (PFM, 2026-11-15).
+- Build the next round in the session that recorded the last results, right after the answers of section 1 step 7 (the PFM, 2026-11-20; replaces 'one new session for each round'); a `worker` on the standard tier unless `.claude/skills/delegate/SKILL.md` says strong (PFM, 2026-11-15).
 - Use the RADE release that exists. An engine change runs in its own RADE session (rhope-ops/RADE, under RADE's rules) at the same time; the round moves to it later (PFM, 2026-11-15).
 - Read the last results file (docs/reviews/<date>-r<NN>-results.md) and the DECISIONS rows for the round.
 - A round holds only steps that test something not yet verified (PFM, 2026-11-14).
@@ -22,6 +22,7 @@ AGENTS.md "Project rules" (Gov device, What people see, Round results) point her
 4. Design a fallback only for a test that FAILED; no fallback before its test has run.
 5. Move the round to "Done" in go.md, with the link to the results file.
 6. Once the results are on main: move an app-drafted round e-mail to Trash and list it by date, time and subject. Any other result e-mail: ask first and act only on the PFM's confirmation in that turn.
+7. Next round: in the same turn as the results, show the PFM one question round for R<NN+1>: the findings to fix, the docs/phases.md row and the steps that leave. When the PFM answers, build and release the round (sections 2 to 6) without waiting for a new request (the PFM, 2026-11-20).
 
 ## 2. Task script
 
