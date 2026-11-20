@@ -30,7 +30,7 @@ No open task. Round R39 comes next.
 
 ## Done
 
-- Round R38 r1 (20 Nov 26): needs review. Checks 12 of 12, Window OK, 12 of 13 steps passed. Passed: the second person added a new row (first pass since the access change in R37), the site logo and thumbnail in Fulcrum colors with the read-back, and in my window r11 the All Actions status column and the whole names. Needs work: on Your Work the status column still touches the scroll bar, 2 text boxes are too short, the first open of a card is slow, 3 RADE answer cards have too many buttons, and 1 RADE button text is cut. No script file in the results:
+- Round R38 r1 (20 Nov 26): needs review. Checks 12 of 12, Window OK, 12 of 13 steps passed. Passed: the second person added a new row (first pass since R29a), the site logo and thumbnail in Fulcrum colors with the read-back, and in my window r11 the All Actions status column and the whole names. Needs work: on Your Work the status column still touches the scroll bar, 2 text boxes are too short, the first open of a card is slow, 3 RADE answer cards have too many buttons, and 1 RADE button text is cut. No script file in the results:
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-20-r38-results.md
 
 - Round R37 r1 (20 Nov 26): needs review. Checks 14 of 14, Window OK, 32 of 35 steps passed. Passed: my window r10 (18 of 18 checks, 0 layout defects, Fulcrum logo), the sample in Word, the list changes, the flow import with all 10 flows On, the health flow, the list button, and the full flow test end to end for the first time. Needs work: a script file in the results (the e-mail was blocked; fixed), the status column touches the scroll bar. Not tested: the second person row (I skipped it):
