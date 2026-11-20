@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 19 Nov 26 (Round R37 r1 ready).
+Updated: 20 Nov 26 (Round R38 r1 ready).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,19 +26,20 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R37 r1: my window r10 with the new logo and Feedback, a new row by a second person, the list button and the full flow test
+### Round R38 r1: a new row by a second person first, the site logo in Fulcrum colors, and my window r11
 
-**For:** the round after R36, in one paste of about 1.3 MB. It has 35 steps:
-- My 90-161.Z window r10: the Delta logo in Fulcrum colours when my Windows apps use light mode and in USAF colours in dark mode, a fix for the grid that was 9 px too narrow, and a "Feedback" link in the bottom bar of every card that saves my comment with a picture of the window. 18 checks, then 3 questions.
-- The sample publication in Word again, plain and with 2 fake test seals; the list access and the 2 list changes again.
-- A second person adds one new row to the test list (the edit test passed in R35 and is no longer in the rounds).
-- The flows: the import, the state of each of the 10 flows by name, the list button (the list now opens the view with the button), and the full flow test, which now reads my own user before it writes anything.
-**Time:** about 3 hours with waits; about 60 minutes of my own work (estimate). The second person needs about 5 minutes, about 40 minutes after I start.
-**Changes:** on the test site: one script checks the 12 app lists and gives the site Visitors Contribute on 3 lists (the site stays Read); the column Closed Date and the choice Waiver Warning are checked; the settings rows are set to Test mode for the flow test and put back at the end; a probe list and library, fake rows, 3 fake waivers, a fake office row and a list view are made and removed again at the end; the second person is added to Visitors; the full test rows go to the site Recycle Bin at the end. In Power Automate: the solution "90-161.Z flows" is upgraded and stays; its 2 test flows are deleted at the end. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files, 3 PDFs of the fake sample, 17 pictures of the window cards with fake data, and one text file and one picture for each Feedback comment I save). The window only reads my Windows light or dark setting. For 3 window checks I turn high contrast on and off in Windows Settings (Windows+U, Contrast themes). Before Run, the window lists every file.
+**Before I start: ask one person in my office to help for 5 minutes, at the start of this round.** The test of a new row by a second person has waited 3 rounds. The person only needs a computer, Teams and access to the test site.
+
+**For:** the round after R37, short on purpose: 13 steps. Everything that passed in R36 and R37 left the round (the sample in Word, the list changes, the flow import and the full flow test).
+- First: a second person adds one new row to the test list (about 5 minutes for them).
+- The site logo in its Fulcrum colors (thumbnail and header, by hand), then a read-back.
+- My 90-161.Z window r11: XXX XXX instead of FAKE in the data (a spacing test), status column that does not touch the scroll bar, and the Fulcrum logo in light and dark mode. 3 checks, then 3 questions.
+**Time:** about 40 minutes; about 25 minutes of my own work (estimate). The second person needs about 5 minutes, about 5 minutes after I start.
+**Changes:** on the test site: a probe list and library are made and removed again at the end; the second person is added to Visitors and removed at the end; I set the site logo and thumbnail to the Fulcrum logo by hand. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files, 17 pictures of the window cards with fake data, and one text file and one picture for each Feedback comment I save). Before Run, the window lists every file.
 **Steps:**
-1. Ask one person in my office to help for 5 minutes in this round.
+1. Ask the second person to be ready at a computer now.
 2. Open https://rhope-ops.github.io/RADE.
-3. Write down the code next to R37.
+3. Write down the code next to R38.
 4. Press Copy script next to the link below.
 5. Open the Start menu.
 6. Type: ISE
@@ -50,20 +51,23 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 12. Look at the title bar of the RADE window: the code after the word "script" must be the code you wrote down.
 13. If the window shows a button "90-161.Z", select it.
 14. Press Run.
-15. For each check in the bottom bar of the 90-161.Z window: do the check.
-16. If the card on screen does not look right: select "Feedback" in the bottom bar (before the next check).
-17. In the box "What does not look right? One line, no names.", type what is wrong.
-18. Select "Save".
-19. Close the 90-161.Z window with its X.
-20. Do each step the RADE window shows, until the log says DONE.
+15. Do each step the RADE window shows, until the log says DONE.
+16. When the 90-161.Z window opens: do each check in its bottom bar.
+17. If a card does not look right: select "Feedback" in the bottom bar.
+18. In the box "What does not look right? One line, no names.", type what is wrong.
+19. Select "Save".
+20. Close the 90-161.Z window with its X.
 21. At DONE, select Send in the Outlook draft that opens.
 
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R37-round-r1.ps1
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R38-round-r1.ps1
 
-**Report:** send the Outlook draft the round makes (subject "90161Z R37 PASSED" or "90161Z R37 NEEDS REVIEW", every file in the results folder attached, the 3 PDFs, the 17 pictures and the Feedback files too). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R37 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R37 did not paste". If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error". If the 90-161.Z window does not open, go on with the steps the RADE window shows. If the Feedback box does not open, write the comment in the answer "What would you change first?" instead.
+**Report:** send the Outlook draft the round makes (subject "90161Z R38 PASSED" or "90161Z R38 NEEDS REVIEW", every file in the results folder attached). The round never puts a script file in the results. Then tell Claude the e-mail is sent.
+**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R38 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R38 did not paste". If the second person cannot open the link: select "The link did not open" and go on. If the 90-161.Z window does not open, go on with the steps the RADE window shows.
 
 ## Done
+
+- Round R37 r1 (20 Nov 26): needs review. Checks 14 of 14, Window OK, 32 of 35 steps passed. Passed: my window r10 (18 of 18 checks, 0 layout defects, Fulcrum logo), the sample in Word, the list changes, the flow import with all 10 flows On, the health flow, the list button, and the full flow test end to end for the first time. Needs work: a script file in the results (the e-mail was blocked; fixed), the status column touches the scroll bar. Not tested: the second person row (I skipped it):
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-20-r37-results.md
 
 - Round R36 r1 (19 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK, 28 of 40 steps passed. Passed: the sample publication with the Word helper file (plain and with 2 test seals), the Visitors access and the 2 list changes by script, the list IDs in the import file, all 10 flows On by name, the health flow and the list button (after I chose the view by hand), my window r8 with 17 of 17 cards and the contrast checks. Needs work: the full flow test stopped at its start ("The specified user could not be found"), so its 6 next steps were skipped; 1 grid in my window is 9 px too narrow; the Enter check failed. Not tested: the second person steps (I skipped them):
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-19-r36-results.md
