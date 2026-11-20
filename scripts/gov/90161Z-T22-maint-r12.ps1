@@ -25,7 +25,7 @@ param([string]$Id, [ValidateSet('Install', 'Read')][string]$Part = 'Read', [swit
 $task = 'T22'
 $Rev = 'r12'
 $FreshHours = 6   # a Diagnose report or a backup older than this is not from this round
-$BackupLists = 11   # the lists the R39 manifest names in "backup" (scripts/paste_bundles.json): fewer saved is a FAIL
+$BackupLists = 11   # the lists the R39 manifest names in "backup" (scripts/paste_bundles.json; tests/ps/Test-T22Maint.ps1 checks they match): fewer is a FAIL
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -198,8 +198,11 @@ function Get-BackupResult([string]$App) {
   $all = @(Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
   $new = $all | Select-Object -First 1
   if (-not $new -or $new.LastWriteTime -lt (Get-Date).AddHours(-$FreshHours)) { return @('BACKUP no backup folder from this round (folders: ' + $all.Count + ')', 'RESULT BACKUP FAIL') }
-  $json = @(Get-ChildItem -LiteralPath $new.FullName -Filter '*.json' -File | Sort-Object Name)
-  $out = @('BACKUP folders=' + $all.Count + '; the newest holds ' + $json.Count + ' lists'); $bad = 0
+  $all2 = @(Get-ChildItem -LiteralPath $new.FullName -Filter '*.json' -File | Sort-Object Name)
+  $json = @($all2 | Where-Object { -not $_.Name.StartsWith('~') })   # '~<n>.json': a file RADE could not give its list name
+  $tilde = $all2.Count - $json.Count
+  $out = @('BACKUP folders=' + $all.Count + '; the newest holds ' + $json.Count + ' lists'); $bad = $tilde
+  if ($tilde) { $out += ('BACKUP ' + $tilde + ' list files without their list name (RADE did not finish naming them)') }
   foreach ($j in $json) {
     $name = [IO.Path]::GetFileNameWithoutExtension($j.Name); $csv = Test-Path -LiteralPath (Join-Path $new.FullName ($name + '.csv')) -PathType Leaf
     $rows = 'unreadable'   # RADE writes one JSON array of rows (engine-v30, 13-maintenance.ps1)

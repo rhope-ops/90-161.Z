@@ -37,7 +37,7 @@ grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py' 'scripts/rade_newest.py'
 grp t22 'scripts/gov/90161Z-T22-*'
-grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1'
+grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1' 'tests/ps/Test-T22Maint.ps1' 'scripts/paste_bundles.json'
 # Lint: the full lane, or a changed scripts/lint.sh, lints every file; else only the changed PowerShell files under scripts/gov.
 lintfiles=()
 if [ "$changed" != '*all*' ] && ! need scripts/lint.sh; then
@@ -54,7 +54,7 @@ bg=$(mktemp -d)
 [ "${on[lint]}" = 1 ] && { scripts/lint.sh "${lintfiles[@]}" >"$bg/lint.out" 2>&1 & lint_pid=$!; }
 [ "${on[t20]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!; }
 [ "${on[t21]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T21.ps1 >"$bg/t21.out" 2>&1 & t21_pid=$!; }
-[ "${on[mask]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-Mask.ps1 >"$bg/mask.out" 2>&1 & mask_pid=$!; }
+[ "${on[mask]}" = 1 ] && { { pwsh -NoProfile -File tests/ps/Test-T22Maint.ps1 && pwsh -NoProfile -File tests/ps/Test-Mask.ps1; } >"$bg/mask.out" 2>&1 & mask_pid=$!; }   # R39: T22 maint first
 # The small pwsh checks (Hide-Site masking, Get-SiteAddress, two-space sentences, opening paragraph, Font binding, T20 -PlanOnly)
 # run in ONE more pwsh process (tests/ps/Invoke-Batch.ps1; bloat audit 3, P1, 2026-11-15), each in its own runspace, each
 # writing <name>.out and <name>.rc to a fresh folder. A missing .rc (the member did not run) or an rc other than 0 = FAIL.
@@ -315,7 +315,7 @@ else sk "T21 probe script on the fake site"; fi
 # Hide-Site (one masking function, scripts/gov/src/site-common.ps1): every pattern, the known limits, and one copy per task script.
 if [ "${on[mask]}" = 1 ]; then
 wait "$mask_pid"; maskrc=$?; out=$(tail -1 "$bg/mask.out")
-case "$maskrc $out" in "0 MASK pass="*" fail=0") ok "Hide-Site masking test ($out)";; *) grep "MASKTEST FAIL" "$bg/mask.out" | cut -c1-300; bad "Hide-Site masking test (exit $maskrc): $out";; esac
+case "$maskrc $out" in "0 MASK pass="*" fail=0") ok "Hide-Site masking test and T22 maint read-back ($(grep '^T22MAINT pass' "$bg/mask.out"); $out)";; *) grep -E "MASKTEST FAIL|T22MAINT FAIL" "$bg/mask.out" | cut -c1-300; bad "Hide-Site masking or T22 maint test (exit $maskrc): $out";; esac
 else sk "Hide-Site masking test"; fi
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
