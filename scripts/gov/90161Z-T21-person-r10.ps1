@@ -1,19 +1,20 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r9, module "person": the parts Person (the second person for test T4) and Clean (removes the
-  person, the list and the library again).
+  90-161.Z Task 21 probe r10, module "person": the parts Person (the second person for test T4), Ask (the round asks that
+  person for a new row, R36) and Clean (removes the person, the list and the library again).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r9.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r10.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($site, $dir, $StateName, $ListTitle, $ListFolder, $LibTitle, $LibFolder,
   $TestDir, $NoLaunch) and the helpers of the module "common". Outputs: result lines through Add-Item.
   The second person's e-mail address is read in a small window and used in memory only: it is never written to a file,
   a result line or an output stream (tests/ps/Test-T21.ps1 checks this text).
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection.
   Writes: Person: adds one person to the site's Visitors group; on this computer the state file (3 numbers or flags) and
-          the clipboard (the new row form link). Clean: removes that person from Visitors and PFM Office again, moves the probe list
+          the clipboard (the new row form link). Ask: the line T4Asked=yes in that state file and the clipboard (the new
+          row form link); nothing on the site. Clean: removes that person from Visitors and PFM Office again, moves the probe list
           and library to the site Recycle Bin, deletes the state file.
   Credentials: none of its own (the main file signs in); no password is asked for.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r9.ps1 -Part Person (or Clean) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r10.ps1 -Part Person (or Ask, or Clean) loads it.
 #>
 
 function Read-PersonAddress {
@@ -142,6 +143,29 @@ function Invoke-PersonPart {
     try { Set-Clipboard -Value ($script:site.TrimEnd('/') + '/Lists/' + $ListFolder + '/NewForm.aspx'); $clip = 'yes' } catch { $clip = 'no' }
   }
   $script:lines.Add('ITEM p4-link INFO the link of the new row form is on the clipboard=' + $clip)
+}
+
+<#
+.SYNOPSIS
+  The part Ask (R36; on this computer only, no sign-in): the round asks the second person to add one new row titled T4a
+  through the new row form. Writes T4Asked=yes into the state file of Person (the other lines stay), so Read counts T4
+  even when no row came (R35: T4 read FAIL when no step had asked), and puts the link of the new row form on the
+  clipboard. With no second person on file it writes nothing and fails.
+#>
+function Invoke-AskPart {
+  Write-Now 'Reading the state file of the second person'
+  $st = Read-State $script:dir
+  if (-not $st) { Add-Item 'k1-asked' 'FAIL' 'no second person on file: run the part Person first'; return }
+  $f = Join-Path $script:dir $StateName
+  $keep = @(Get-Content -LiteralPath $f | Where-Object { [string]$_ -notmatch '^T4Asked=' })
+  Set-Content -LiteralPath $f -Value (@($keep) + 'T4Asked=yes') -Encoding ASCII
+  $ok = ((Read-State $script:dir)['T4Asked'] -eq 'yes')
+  Add-Item 'k1-asked' $(if ($ok) { 'PASS' } else { 'FAIL' }) ('T4Asked=yes in the state file (Read now counts T4)=' + $(if ($ok) { 'yes' } else { 'no' }))
+  $clip = 'no'
+  if ($NoLaunch) { $clip = 'no (test run)' } else {
+    try { Set-Clipboard -Value ($script:site.TrimEnd('/') + '/Lists/' + $ListFolder + '/NewForm.aspx'); $clip = 'yes' } catch { $clip = 'no' }
+  }
+  $script:lines.Add('ITEM k2-link INFO the link of the new row form is on the clipboard=' + $clip)
 }
 
 <#
