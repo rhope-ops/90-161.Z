@@ -67,7 +67,9 @@ def logo_text():
 def ui_text(part=1):
     """Read the pinned shared UI file from the locked engine, once per run, and give one of its 2 halves.
 
-    Takes part (1 = the first half, 2 = the second); returns text with LF line ends. The halves join to the whole file.
+    Args:
+        part: 1 = the first half, 2 = the second.
+    Returns: the text of that half with LF line ends; the 2 halves join to the whole file.
     """
     # The pinned shared UI file, fetched and hash-checked by the bundle builder (one fetch for every script).
     if not _ui:
@@ -82,7 +84,10 @@ def ui_text(part=1):
 def split_ui(text):
     """Split the shared UI text in 2 at the first top-level "$ui." line past its middle with every brace before it closed.
 
-    Takes the text; returns (first, second), which join to the text. Stops the build when no such line exists.
+    Args:
+        text: the whole shared UI file.
+    Returns: (first, second), which join to the text.
+    Raises: SystemExit when no such line exists (the build stops).
     """
     lines = text.split('\n')
     depth = 0
