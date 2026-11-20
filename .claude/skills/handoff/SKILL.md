@@ -48,7 +48,7 @@ The PFM finds sessions by project and task (the PFM, 2026-11-19). The check-in p
 3. Pull request: when the session opens its first pull request, add ` · #<number>` at the end (`RADE · Title bar fix · 2026-11-19 · #118`). Later pull requests do not change the title.
 4. Child sessions: a session you create gets a title of the same form and the same tag.
 5. SESSIONS: list the sessions with this project's tag; report in one line each those that wait on the PFM (status "blocked", or a summary that names an action of the PFM), with their titles.
-6. Archive: when every pull request of the session is merged (its own, and those of the agents and scheduled tasks it started), nothing waits on the PFM, and no agent or scheduled task it started is pending, archive the session as the last step of its turn, after the verify and republish steps of the deliver skill (an archive can be undone; the PFM's standing approval is in the PFM's preferences, 2026-11-19). Otherwise, leave it open.
+6. Archive: never archive a session yourself. When every pull request of the session is merged (its own, and those of the agents and scheduled tasks it started), nothing waits on the PFM, and no agent or scheduled task it started is pending, write in the turn summary that the session is ready for the PFM to review and archive. Archive it only when the PFM asks in their own message (the PFM, 2026-11-20). Otherwise, leave it open.
 
 ## Start from a handoff
 

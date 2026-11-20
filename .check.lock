@@ -1,5 +1,5 @@
 {
- "commit": "43ad95293d425de53e7312827917b390a0029216",
+ "commit": "012dc9f59088643a32b5f24b1cfcf3bbfe790fb7",
  "files": {
   ".claude/agents/reviewer.md": "7e2b8f573511a392ce61f55eb7fa5dd9ac34efbb87561f594cd73e87cac62950",
   ".claude/agents/scout.md": "977d957d96b90c3b8c9d9793456d57401952810b9aa17cb25c34955381771e2d",
@@ -8,8 +8,8 @@
   ".claude/skills/audit/SKILL.md": "78ee99438accae45842c901bf250086a3bc1b9a80e57a586fbe0c51a6f7774e6",
   ".claude/skills/data-change/SKILL.md": "ec02cf99107a2bd1a6f1c5f5d0210059f01907cb19b36a647821f4319b00cfda",
   ".claude/skills/delegate/SKILL.md": "c1767536d497cf9064b90f4da26f09533c78a3b695eb102fd3fae37952fa7ceb",
-  ".claude/skills/deliver/SKILL.md": "4cf08424be16e773699fef6f3fd4a02e41e48ca15f075c51384f30f5ffa85fc6",
-  ".claude/skills/handoff/SKILL.md": "431b97c3d4b920e4e784a1fdd065eaaf219f72cd5bbe07c607ad5d9777d0d892",
+  ".claude/skills/deliver/SKILL.md": "8d3b396999669636ced704ef3f2b3b145f3b64133f623b51570e6e157dfc385d",
+  ".claude/skills/handoff/SKILL.md": "ae0563825adec0ca1e43eb14bb45fa5788741f2acdfd1bdb0d6bc20ec3f94bd8",
   ".claude/skills/kit-update/SKILL.md": "d7fdd83233c2dc6249ee4ca1e741b82e68d1ffd49b0a39c900ee7b2d6e93981d",
   ".claude/skills/personal-data/SKILL.md": "05c751db11e86818649f5c604678efffdea4ac54f75c0f1008bf98e1ee6dd1cb",
   ".claude/skills/project-log/SKILL.md": "deae5510ca1ba93bef2777ffbbdec31543ca08909d7c1a06c1726382778b448a",
@@ -52,5 +52,5 @@
  },
  "kit": "archimedes_lever",
  "overrides": [],
- "version": "6.0.0"
+ "version": "6.1.0"
 }
