@@ -356,7 +356,8 @@ out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine do
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 # engine-v8 on: the header names every engine code file of the lock ("<file>, sha256 <12 hex>"); each must match (the engine file itself must be in the list, or nh counts 1).
 # engine-v21 on: engine/rade_hash.py (build time only) is in the lock but not in the header; the stale check above covers it (the bundle must equal what the locked files build).
-ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1')) and k != 'engine/rade_hash.py'];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
+# engine-v29 on: engine/rade_tokens.py (build time only: the UI tokens into $ui) likewise.
+ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1')) and k not in ('engine/rade_hash.py','engine/rade_tokens.py')];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
 nh=0; [ -n "$ef" ] || nh=1; for f in $ef; do
   nh=$((nh + $(grep -L "${f%%=*}, sha256 ${f#*=}[;)]" scripts/gov/paste/*.ps1 | wc -l))); done
 nb=$(python3 -c "import json;print(len(json.load(open('scripts/paste_bundles.json'))['bundles']))"); [ "$out" = "PASTE bundles=$nb stale=0" ] && [ "$nh" -eq 0 ] && ok "paste bundles current and built by the pinned engine ($out; bundles naming another engine: $nh)" || bad "paste bundles: $out; bundles naming another engine: $nh (run python3 scripts/build_paste_bundles.py with RADE_DIR not set)"
