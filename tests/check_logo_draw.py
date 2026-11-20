@@ -119,13 +119,19 @@ def test_delta_refusals():
     refuses('fill-opacity above 1', svg('<circle cx="256" cy="256" r="50" fill-opacity="2"/>'), 'fill-opacity')
     refuses('bad cx number', svg('<circle cx="a" cy="256" r="50"/>'), 'cx')
     refuses('dash with a comma (review 19 Nov 26)', svg('<circle cx="256" cy="256" r="50" fill="none" stroke="#000000" stroke-dasharray="5,a" stroke-linecap="round"/>'), 'stroke-dasharray')
-    refuses('dash 0 0', svg('<circle cx="256" cy="256" r="50" fill="none" stroke="#000000" stroke-dasharray="0 0" stroke-linecap="round"/>'), 'sum above 0')
+    refuses('dash 0 0', svg('<circle cx="256" cy="256" r="50" fill="none" stroke="#000000" stroke-dasharray="0 0" stroke-linecap="round"/>'), 'sum of 0.01')
     refuses('scale(inf)', svg('<circle cx="256" cy="256" r="50" transform="scale(inf)"/>'), 'bad numbers')
     refuses('matrix with nan', svg('<circle cx="256" cy="256" r="50" transform="matrix(nan 0 0 1 0 0)"/>'), 'bad numbers')
     refuses('line x1 nan', svg('<line x1="nan" y1="0" x2="10" y2="10" stroke="#000000" stroke-linecap="round"/>'), 'x1')
     refuses('path number 1e999', svg(path('M 0 0 L 1e999 0', 'fill="none" stroke="#000000" stroke-linecap="round"')), 'numbers')
     refuses('path with only M', svg(path('M 10 10', 'fill="none"')), 'at least one segment')
     refuses('not well-formed XML', '<svg', 'well-formed')
+    refuses('dash sum tiny (second review)', svg('<circle cx="256" cy="256" r="50" fill="none" stroke="#000000" stroke-dasharray="1e-310 1e-310" stroke-linecap="round"/>'), 'sum of 0.01')
+    refuses('clip rect with inf', svg('<defs><clipPath id="c"><rect x="0" y="0" width="inf" height="nan"/></clipPath></defs><circle cx="256" cy="256" r="50" clip-path="url(#c)"/>'), 'clip')
+    refuses('nested scale(1e200)', svg('<g transform="scale(1e200)"><circle cx="256" cy="256" r="50"/></g>'), 'bad numbers')
+    refuses('nested scales multiply too far', svg('<g transform="scale(1e5)"><circle cx="256" cy="256" r="50" transform="scale(1e5)"/></g>'), 'multiply')
+    refuses('r 1e308', svg('<circle cx="256" cy="256" r="1e308"/>'), 'r=')
+    refuses('path from -1e308 to 1e308', svg(path('M -1e308 0 L 1e308 0', 'fill="none" stroke="#000000" stroke-linecap="round"')), 'numbers')
 
 
 if __name__ == '__main__':

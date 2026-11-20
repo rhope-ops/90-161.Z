@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 
 NS = '{http://www.w3.org/2000/svg}'
 STEPS = {'Q': 8, 'C': 16}   # straight steps per curve command (fixed, so every machine cuts the same way)
+LIMIT = 1e6   # the largest size of any number or matrix entry (the logo uses 0 to 512; huge values would overflow)
 IDENTITY = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)   # an affine matrix (a, b, c, d, e, f) as in SVG matrix()
 
 # Paint attributes a <g> passes on to its children, with the SVG default for each.
@@ -71,7 +72,7 @@ def walk(parent, paint, matrix, clips, out):
             if extra:
                 raise SystemExit('logo_draw: attribute(s) %s on <g> are not supported' % sorted(extra))
             inner = dict(paint, **{k: v for k, v in el.attrib.items() if k in INHERITED})
-            walk(el, inner, multiply(matrix, parse_transform(el.get('transform', ''))), clips, out)
+            walk(el, inner, combine(matrix, el.get('transform', '')), clips, out)
             continue
         if tag not in GEOMETRY:
             raise SystemExit('logo_draw: element <%s> is not supported' % tag)
@@ -79,7 +80,7 @@ def walk(parent, paint, matrix, clips, out):
         if extra:
             raise SystemExit('logo_draw: attribute(s) %s on <%s> are not supported' % (sorted(extra), tag))
         out.append(make_shape(el, tag, dict(paint, **{k: v for k, v in el.attrib.items() if k in INHERITED}),
-                              multiply(matrix, parse_transform(el.get('transform', ''))), clips))
+                              combine(matrix, el.get('transform', '')), clips))
 
 
 def make_shape(el, tag, paint, matrix, clips):
@@ -191,7 +192,10 @@ def refuse_clip(clip):
 def clip_rect(r):
     """Return (x, y, width, height) of a clip <rect>."""
     try:
-        return tuple(float(r.get(k)) for k in ('x', 'y', 'width', 'height'))
+        vals = tuple(float(r.get(k)) for k in ('x', 'y', 'width', 'height'))
+        if not all(in_range(v) for v in vals):
+            raise ValueError(vals)
+        return vals
     except (TypeError, ValueError):
         raise SystemExit('logo_draw: a clip <rect> needs x, y, width and height as plain numbers')
 
@@ -202,9 +206,14 @@ def number(text, name):
         v = float(text)
     except (TypeError, ValueError):
         v = math.nan
-    if not math.isfinite(v):
-        raise SystemExit('logo_draw: %s=%r is not a plain number' % (name, text))
+    if not in_range(v):
+        raise SystemExit('logo_draw: %s=%r is not a plain number from -%g to %g' % (name, text, LIMIT, LIMIT))
     return v
+
+
+def in_range(v):
+    """Return True when v is a finite number from -LIMIT to LIMIT (nan, inf and huge values overflow the drawing)."""
+    return math.isfinite(v) and abs(v) <= LIMIT
 
 
 def dash_list(text):
@@ -218,8 +227,8 @@ def dash_list(text):
         sum is 0 (it would have no length).
     """
     vals = [number(x, 'stroke-dasharray') for x in re.split(r'[\s,]+', text.strip()) if x]
-    if vals and (min(vals) < 0 or sum(vals) <= 0):
-        raise SystemExit('logo_draw: stroke-dasharray %r needs numbers of 0 or more with a sum above 0' % text)
+    if vals and (min(vals) < 0 or sum(vals) < 0.01):
+        raise SystemExit('logo_draw: stroke-dasharray %r needs numbers of 0 or more with a sum of 0.01 or more' % text)
     return vals
 
 
@@ -249,6 +258,22 @@ def multiply(m, n):
     return (a * a2 + c * b2, b * a2 + d * b2, a * c2 + c * d2, b * c2 + d * d2, a * e2 + c * f2 + e, b * e2 + d * f2 + f)
 
 
+def combine(matrix, text):
+    """Return the parent matrix times an element's transform.
+
+    Args:
+        matrix: the parent's matrix to the viewBox.
+        text: the element's transform attribute ('' for none).
+
+    Returns:
+        The product. Stops with a message when an entry grows past LIMIT (nested scales would overflow the drawing).
+    """
+    m = multiply(matrix, parse_transform(text))
+    if not all(in_range(v) for v in m):
+        raise SystemExit('logo_draw: the transforms multiply to a size past %g (%r)' % (LIMIT, text))
+    return m
+
+
 def parse_transform(text):
     """Return the matrix of a transform attribute: translate, rotate (with an optional centre), scale and matrix, in
     order.
@@ -269,7 +294,7 @@ def parse_transform(text):
         name = f.group(1)
         try:
             v = [float(x) for x in re.split(r'[\s,]+', f.group(2).strip()) if x]
-            if not all(math.isfinite(x) for x in v):
+            if not all(in_range(x) for x in v):
                 raise ValueError(text)
         except ValueError:
             raise SystemExit('logo_draw: transform %r has bad numbers' % text)
@@ -330,7 +355,7 @@ def take(tokens, k, n):
     if len(vals) != n or any(re.fullmatch(r'[A-Za-z]', v) for v in vals):
         raise IndexError(n)
     nums = [float(v) for v in vals]
-    if not all(math.isfinite(v) for v in nums):
+    if not all(in_range(v) for v in nums):
         raise ValueError(vals)   # nan or inf: path_segments turns this into the "too few or bad numbers" message
     return nums
 
