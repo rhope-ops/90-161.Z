@@ -26,14 +26,14 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R39 r1: my window r12 with the RADE fonts, the last screen, and taller text boxes
+### Round R39 r1: a test install of 90-161.Z with Diagnose and Back up, and my window r12
 
-**For:** the round after R38, short on purpose: 4 steps, only my 90-161.Z window r12. Everything that passed in R38 left the round (the second person row and the site logo).
-- The window uses the same fonts as the RADE window (Sofia Sans).
-- The window opens on the screen I closed it on: I close it on All Actions, the round opens it again, and I check that it opens there.
-- Fixes from R38: the status column on Your Work, the text box height, and a time log of each screen I open (the first-open delay I saw).
-**Time:** about 20 minutes, all my own work (estimate).
-**Changes:** only on my computer: my OneDrive folder RADE\90-161.Z (scripts, 3 font files and their license file in T22, result files, 17 pictures of the window cards with fake data, one file that keeps the last screen of my window, one text file and one picture for each Feedback comment I save). Old window files of r11 go to the Recycle Bin. Nothing on the site. Before Run, the window lists every file.
+**For:** the round after R38. RADE engine-v30 has a Maintenance screen with Diagnose and Back up, but it shows only for an installed app, so this round first installs a test version 0.1 of 90-161.Z.
+- The test install: RADE records 90-161.Z 0.1 on my computer and makes a RADE shortcut. Nothing on the site changes.
+- Maintenance: Diagnose checks the install; Back up saves 11 of my PFM lists to my computer (the files stay in my OneDrive and never go in the e-mail; the result holds only counts).
+- My 90-161.Z window r12: the RADE fonts, it opens on the screen I closed it on, the status column on Your Work, taller text boxes, and a time log of each screen I open.
+**Time:** about 30 minutes, all my own work (estimate).
+**Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts, 3 font files and their license file in T22, result files, 17 pictures of the window cards with fake data, a file that keeps the last screen of my window, the Diagnose report in Diagnose, the list copies in Backups, one text file and one picture for each Feedback comment I save); RADE\Config\installed (the install record); RADE\rade-runner.ps1 and a RADE shortcut on my Desktop. Old window files of r11 go to the Recycle Bin. On the site: nothing changes (Back up only reads). Before Install and before Run, the window lists every file.
 **Steps:**
 1. Open https://rhope-ops.github.io/RADE.
 2. Write down the code next to R39.
@@ -46,24 +46,39 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 9. Press Ctrl+V.
 10. Press F5. The RADE window opens.
 11. Look at the title bar of the RADE window: the code after the word "script" must be the code you wrote down.
-12. If the window shows a button "90-161.Z", select it.
-13. Press Run.
-14. When the 90-161.Z window opens: do each check in its bottom bar.
-15. If a card does not look right: select "Feedback" in the bottom bar.
-16. In the box "What does not look right? One line, no names.", type what is wrong.
-17. Select "Save".
-18. After the last check, select All Actions in the list on the left.
-19. Close the 90-161.Z window with its X.
-20. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
-21. Close the 90-161.Z window with its X.
-22. Answer the 3 questions in the RADE window.
-23. At DONE, select Send in the Outlook draft that opens.
+12. Select "90-161.Z".
+13. Leave the box "RADE shortcut in" as it is.
+14. Press Install.
+15. At "90-161.Z 0.1.0 is installed.", select Close.
+16. Double-click the RADE shortcut on your Desktop.
+17. Select "90-161.Z".
+18. Select Maintenance.
+19. Select Diagnose.
+20. Note what Diagnose shows, then select Done.
+21. Select Back up.
+22. If a sign-in window opens, sign in with your CAC.
+23. Note what Back up shows, then select Done.
+24. Close the RADE window with its X.
+25. Double-click the RADE shortcut on your Desktop.
+26. Select "90-161.Z R39".
+27. Press Run.
+28. Answer the 2 questions about Diagnose and Back up.
+29. When the 90-161.Z window opens: do each check in its bottom bar.
+30. If a card does not look right: select "Feedback" in the bottom bar.
+31. In the box "What does not look right? One line, no names.", type what is wrong.
+32. Select "Save".
+33. After the last check, select All Actions in the list on the left.
+34. Close the 90-161.Z window with its X.
+35. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
+36. Close the 90-161.Z window with its X.
+37. Answer the 3 questions in the RADE window.
+38. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R39-round-r1.ps1
 
-**Report:** send the Outlook draft the round makes (subject "90161Z R39 PASSED" or "90161Z R39 NEEDS REVIEW", every file in the results folder attached). The round never puts a script file in the results. Then tell Claude the e-mail is sent.
-**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): do steps 3 to 12 again, then select "Resume at step N of M" (it takes the place of Run). Steps that ended keep their results; the step that was cut off runs again.
-**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R39 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R39 did not paste". If the 90-161.Z window does not open, go on with the steps the RADE window shows.
+**Report:** send the Outlook draft the round makes (subject "90161Z R39 PASSED" or "90161Z R39 NEEDS REVIEW", every file in the results folder attached). The test install sends no e-mail. The round never puts a script file or a list copy in the results. Then tell Claude the e-mail is sent.
+**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): double-click the RADE shortcut, select "90-161.Z R39", then select "Resume at step N of M". Before the install exists: do steps 3 to 11 again.
+**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R39 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R39 did not paste". If the install fails: send the line that starts with "What to do" to Claude, then go on with step 26 from a new paste. If Maintenance does not show: answer "did not open" to both questions. If the 90-161.Z window does not open, go on with the steps the RADE window shows.
 
 ## Done
 

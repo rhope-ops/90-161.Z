@@ -649,7 +649,7 @@ assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C =
 after = src.split('# <<< rade-ui', 1)[1]
 assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
 assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
-assert "$Rev = 'r12'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r12.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window']), parts
+assert "$Rev = 'r12'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r12.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
 grids = len(re.findall(r'New-Object System.Windows.Forms.DataGridView\b(?!\w)', src))
 assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and src.count("$dc.AutoSizeMode='Fill'") >= 1, 'every grid fills its columns'
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']

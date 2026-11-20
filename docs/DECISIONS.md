@@ -6,6 +6,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | R39 tests Maintenance: it first deploys a test version 0.1.0 of 90-161.Z (RADE shows Maintenance only for an installed app), then Diagnose and Back up of 11 PFM lists. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
+| 2026-11-20 | R39 scope: docs/phases.md R39 plus the R38 findings; R40 Maintenance tests come into R39; no RADE session for the R38 answer cards now. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
+| 2026-11-20 | Round skill: build the next round in the results session after one question round (section 0 and section 1 step 7; texts approved). Scope: rounds. | PFM | .claude/skills/round/SKILL.md |
 | 2026-11-20 | RADE lock moves to release engine-v30 (RADE c965cd2, serial 23) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-20 | No session archives itself: it says when it is ready, and the PFM reviews and archives (texts approved). Kit 6.1.0 synced from merge commit 012dc9f (no tag yet); kept: nothing to move. | PFM | https://github.com/rhope-ops/archimedes_lever/pull/87 |
 | 2026-11-20 | The pilot starts on the day the PFM declares it in their own message (recorded here); from then on a round sends no results e-mail: results stay in DoD365. Scope: Data boundary, rounds. | PFM | [phases.md](phases.md) |

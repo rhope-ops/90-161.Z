@@ -32,6 +32,7 @@ $tests = @(
   @{ Name = 'Test-T20'; File = 'tests/ps/Test-T20.ps1'; Pattern = '^T20 pass=\d+ fail=0$' },
   @{ Name = 'Test-T21'; File = 'tests/ps/Test-T21.ps1'; Pattern = '^T21 pass=\d+ fail=0$' },
   @{ Name = 'Test-T24'; File = 'tests/ps/Test-T24.ps1'; Pattern = '^T24 pass=\d+ fail=0$' },
+  @{ Name = 'Test-T22Maint'; File = 'tests/ps/Test-T22Maint.ps1'; Pattern = '^T22MAINT pass=\d+ fail=0$' },
   @{ Name = 'Test-T22Layout'; File = 'tests/ps/Test-T22Layout.ps1'; Pattern = '^T22LAYOUT (pass=\d+ fail=0|SKIP .+)$' }
 )
 

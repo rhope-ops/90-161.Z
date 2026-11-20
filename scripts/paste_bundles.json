@@ -26,11 +26,15 @@
         {
             "out": "scripts/gov/paste/90161Z-R39-round-r1.ps1",
             "round": "R39",
-            "title": "Round R39 r1: my window r12 (the RADE fonts, opens on the last screen, Your Work fits, taller text boxes, screen open times)",
+            "title": "Round R39 r1: test install 0.1 with Diagnose and Back up, and my window r12 (RADE fonts, last screen, Your Work fit, taller text boxes, open times)",
             "files": [
                 {
                     "dir": "T22",
                     "src": "scripts/gov/90161Z-T22-pfm-window-r12.ps1"
+                },
+                {
+                    "dir": "T22",
+                    "src": "scripts/gov/90161Z-T22-maint-r12.ps1"
                 },
                 {
                     "dir": "T22",
@@ -90,6 +94,66 @@
                 }
             ],
             "steps": [
+                {
+                    "name": "T22 Record the test install r12",
+                    "title": "Record the test install of 90-161.Z 0.1",
+                    "dir": "T22",
+                    "file": "90161Z-T22-maint-r12.ps1",
+                    "args": "-Part Install",
+                    "minutes": 5,
+                    "note": "The one step of the test install. RADE then keeps an install record, so its Maintenance screen opens for 90-161.Z. Nothing else is installed; nothing on the site changes.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "doing": "Recording the test install."
+                },
+                {
+                    "name": "T22 Read the Diagnose and Back up files r12",
+                    "title": "Read the install record, Diagnose report and backup",
+                    "dir": "T22",
+                    "file": "90161Z-T22-maint-r12.ps1",
+                    "args": "-Part Read",
+                    "minutes": 5,
+                    "note": "Reads on this computer only: the install record, the newest Diagnose report and the newest backup folder. The result holds counts and list titles, never row values.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "doing": "Reading the Diagnose report and the backup."
+                },
+                {
+                    "name": "T22 Answer: Diagnose and Back up r12",
+                    "title": "Answer 2 questions about Diagnose and Back up",
+                    "kind": "guide",
+                    "guide": [],
+                    "dir": "T22",
+                    "file": "",
+                    "note": "2 questions about what Maintenance showed before this run. About 1 minute.",
+                    "estimate": 1,
+                    "answersOnly": true,
+                    "answers": [
+                        {
+                            "key": "m-diag",
+                            "prompt": "What did Diagnose show?",
+                            "kind": "pick",
+                            "choices": [
+                                "No findings",
+                                "Findings",
+                                "Diagnose did not open"
+                            ]
+                        },
+                        {
+                            "key": "m-backup",
+                            "prompt": "What did Back up show?",
+                            "kind": "pick",
+                            "choices": [
+                                "All lists saved",
+                                "Some lists not saved",
+                                "Back up did not open"
+                            ]
+                        }
+                    ],
+                    "after": [
+                        "T22 Read the Diagnose and Back up files r12"
+                    ]
+                },
                 {
                     "name": "T22 Open the 90-161.Z window r12",
                     "title": "Open the 90-161.Z window and do its 4 checks",
@@ -167,6 +231,11 @@
                 }
             ],
             "collect": [
+                {
+                    "dir": "T22",
+                    "name": "90161Z-T22-maint-r12.txt",
+                    "step": "T22 Read the Diagnose and Back up files r12"
+                },
                 {
                     "dir": "T22",
                     "name": "90161Z-T22-window-r12.txt",
@@ -271,13 +340,37 @@
             "fetch": [],
             "apps": [
                 {
-                    "name": "90-161.Z",
-                    "summary": "Round R39 r1: window r12 with 4 checks, then once more for the reopen check. Fake data.",
+                    "name": "90-161.Z R39",
+                    "summary": "Round R39 r1: Diagnose and Back up answers and read-back, then window r12 with 4 checks and the reopen check. Fake data.",
                     "steps": [
+                        "T22 Read the Diagnose and Back up files r12",
+                        "T22 Answer: Diagnose and Back up r12",
                         "T22 Open the 90-161.Z window r12",
                         "T22 Did the window open r12",
                         "T22 Open the window again r12",
                         "T22 Answer: look and cards r12"
+                    ]
+                },
+                {
+                    "name": "90-161.Z",
+                    "summary": "Test install of 90-161.Z 0.1: RADE records it, so Maintenance (Diagnose, Back up) can be tested. Nothing on the site changes.",
+                    "mode": "deploy",
+                    "version": "0.1.0",
+                    "steps": [
+                        "T22 Record the test install r12"
+                    ],
+                    "backup": [
+                        "PFM Activity Log",
+                        "PFM Endorsements",
+                        "PFM Guidance",
+                        "PFM Offices",
+                        "PFM Process Steps",
+                        "PFM Product Index",
+                        "PFM Publications",
+                        "PFM Reviews",
+                        "PFM Series",
+                        "PFM Settings",
+                        "PFM Waivers"
                     ]
                 }
             ],
