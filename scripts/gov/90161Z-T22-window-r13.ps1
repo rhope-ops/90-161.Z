@@ -1,11 +1,14 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r12, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r13, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
+  R13 (R40; PFM 20 Nov 26, R39 finding 2): $wn.Show shows the kept page of a card when it can, and builds the card
+  ($wn.ShowBuild) only when it must change; the keep part holds the kept pages, their rules and the CARDTIME lines.
+  $wn.LastKey reads the card saved at the last close (for $wn.OpenLast and the -Again check).
   R11 (R38; PFM 20 Nov 26): the layout self-check tests the grid edges against the scroll bar (R11 LAYOUT line); the logo and
   THEME lines name Fulcrum in both modes; the checks are the 3 of the cards part.
-  $wn.Show builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
+  $wn.ShowBuild builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
   line in one font (V2: its link is a Pfm.LinkText in the crumb's font, underlined, with no padding); the last cards of
   the columns end on one line when the card has an Action Status card (V4). $wn.Build builds every card once (layout
   self-check, grid check, the accessible-name check of the measure part) and $wn.Hook adds the window's events.
@@ -22,7 +25,7 @@
   The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
@@ -241,54 +244,88 @@ $wn.Align = {
   $low = 0; foreach ($s in $last.Values) { $low = [math]::Max($low, $s.Card.Parent.Top + $s.Card.Bottom) }
   foreach ($s in $last.Values) { $d = $low - ($s.Card.Parent.Top + $s.Card.Bottom); if ($d -gt 0) { $s.Card.MinimumSize = [Drawing.Size]::new($s.Card.MinimumSize.Width, $s.Card.Height + $d) } }
   $page.PerformLayout() }
+$wn.ShowBuild = {
+  <#
+  .SYNOPSIS
+  Builds card $Key on a new page: the head and the columns, the side captions level (D1), the column bottoms in line.
+  .DESCRIPTION
+  R13 (R40): the card goes on its own new page ($wn.NewPage, keep part), which replaces the page shown; the old kept
+  page of this card, if any, goes first ($wn.KeepDrop). The new page is kept ($wn.KeepSave) for the next open.
+  .PARAMETER C
+  The card data.
+  .PARAMETER Key
+  The card key.
+  .PARAMETER Cw
+  The width of the page column.
+  .PARAMETER Sig
+  What the card is built for ($wn.KeepSig).
+  #>
+  param($C, [string]$Key, [int]$Cw, [string]$Sig)
+  $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @(); $wn.ChipRows = @()
+  $ui.Wrap = @{}; $ui.Boxes = @()
+  & $wn.KeepDrop $Key
+  & $wn.PageSwap (& $wn.NewPage)
+  $page.SuspendLayout()
+  $page.Location = [Drawing.Point]::new($wn.PadX, (& $wn.Sc 22)); $page.Margin = & $ui.Pad 0 0 0 0; $page.Padding = & $ui.Pad 0 0 0 (& $wn.Sc 22)
+  & $wn.ShowHead $C $Cw
+  $page.PerformLayout(); $wn.HeadH = [int]$page.PreferredSize.Height
+  & $wn.ShowCols $C $Key $Cw $wn.Wide
+  $page.ResumeLayout($true); $form.ResumeLayout($true)
+  & $wn.LevelCaps; & $wn.Align
+  $null = & $wn.FitGrids   # R10 (R37): a grid whose columns are wider than it gives the excess back
+  & $wn.KeepSave $Key $Sig }
 $wn.Show = {
   <#
   .SYNOPSIS
-  Shows the card $Key: clears the page, builds the head and the columns, levels the side captions (D1), lines up the
-  column bottoms and sets the focus.
+  Shows the card $Key: its kept page when that was built for this size, note and error line, else a new build.
   .DESCRIPTION
   A new card forgets the fields of the last one (a modal card remembers the card to go back to). The main button gets
   the focus (or the reason box after an empty reason) and the Enter key. The layout self-check runs a moment later.
+  R13 (R40, R39 finding 2): the card already shown is always built again (a note, an error line, a resize); another
+  card shows its kept page when $wn.KeepFind has one (no control is built: the open is a hide and a show), else it is
+  built ($wn.ShowBuild). The rules: the keep part's header. The page column width comes from the main column's full
+  width, with or without its scroll bar, so it does not depend on the card shown before (r12 measured the width that
+  was left beside the last card's scroll bar).
   .PARAMETER Key
   The card key in $Cards; an unknown key does nothing.
   #>
   param([string]$Key)
   $c = $Cards[$Key]; if (-not $c) { return }
   $t0 = $ui.Clock.Elapsed.TotalMilliseconds   # R12 (R38 finding 3): the open time of a card the person opens
-  if ($Key -ne $wn.Cur) { if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
+  $again = ($Key -eq $wn.Cur)
+  if (-not $again) { & $wn.KeepLeave; if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
   $script:cardsOpened[$Key] = $true; $wn.Cur = $Key; $ui.View = $Key
-  $wn.Primary = $null; $wn.Gridsel = $null; $wn.Gridq = $null; $wn.Reason = $null; $wn.CountBox = $null; $wn.CrumbLink = $null; $wn.CrumbRest = $null; $wn.Secs = @(); $wn.ChipRows = @()
-  $ui.Wrap = @{}; $ui.Boxes = @(); $ui.Hot = $null; $ui.Down = $null
+  $ui.Hot = $null; $ui.Down = $null
   # R7 (W2): the main column goes back to its top first, so the page is placed in unscrolled pixels (placed while the
   # column was scrolled, the page kept that offset and the new card started lower, with empty space above it).
   $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
-  $form.SuspendLayout(); $page.SuspendLayout()
-  foreach ($x in @($page.Controls)) { $page.Controls.Remove($x); $x.Dispose() }
+  $form.SuspendLayout()
   $wide = ($form.ClientSize.Width -ge (& $wn.Sc 1500)); $wn.Wide = $wide
-  $wn.MainH = $main.ClientSize.Height; $padX = & $wn.Sc 28
-  $cw = [math]::Max((& $wn.Sc 900), $main.ClientSize.Width - [Windows.Forms.SystemInformation]::VerticalScrollBarWidth - 2 * $padX)
-  $page.Location = [Drawing.Point]::new($padX, (& $wn.Sc 22)); $page.Margin = & $ui.Pad 0 0 0 0; $page.Padding = & $ui.Pad 0 0 0 (& $wn.Sc 22)
+  $wn.MainH = $main.ClientSize.Height; $padX = & $wn.Sc 28; $wn.PadX = $padX
+  $cw = [math]::Max((& $wn.Sc 900), $main.Width - [Windows.Forms.SystemInformation]::VerticalScrollBarWidth - 2 * $padX)
   # R11 (UI standard v1, B10): ForeColor and BackColor hold the painted colors, so the contrast rule reads what shows
   foreach ($r in $wn.RailBtn) { $r.On = ([string]$r.Tag -eq [string]$c.Rail)
     $r.BackColor = $(if ($r.On) { $r.OnBack } else { $r.Back }); $r.ForeColor = $(if ($r.On) { $r.OnFore } else { $r.Fore }); $r.Invalidate() }
-  & $wn.ShowHead $c $cw
-  $page.PerformLayout(); $wn.HeadH = [int]$page.PreferredSize.Height
-  & $wn.ShowCols $c $Key $cw $wide
-  $page.ResumeLayout($true); $form.ResumeLayout($true)
-  & $wn.LevelCaps; & $wn.Align
-  $null = & $wn.FitGrids   # R10 (R37): a grid whose columns are wider than it gives the excess back
+  $sig = & $wn.KeepSig $cw
+  $kept = $(if ($again) { $null } else { & $wn.KeepFind $Key $sig }); $wn.KeepUsed = [bool]$kept
+  if ($kept) {   # R13: the kept page: its state back, the page shown in place of the last one, at the top, grids reset
+    & $wn.KeepLoad $kept; & $wn.PageSwap $kept.Page
+    $page.Location = [Drawing.Point]::new($padX, (& $wn.Sc 22)); & $wn.KeepReset $kept
+    $form.ResumeLayout($true) }
+  else { & $wn.ShowBuild $c $Key $cw $sig }
   $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
   $form.AcceptButton = $wn.Primary
   $ui.CardAt = $ui.Clock.Elapsed.TotalMilliseconds
   if ($wn.Focus -eq 'reason' -and $wn.Reason) { [void]$wn.Reason.Focus(); $wn.Focus = '' } elseif ($wn.Primary) { [void]$wn.Primary.Focus() }
-  if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start()
-    if (-not $wn.Times.Contains($Key)) { $wn.Times[$Key] = New-Object System.Collections.Generic.List[int] }
-    $wn.Times[$Key].Add([int]($ui.Clock.Elapsed.TotalMilliseconds - $t0)) } }
+  if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start(); & $wn.KeepTime $Key $t0 } }
 # Where the window place is kept between runs (none with -Measure: no task folder).
 $wn.BoundsFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-bounds.json' } else { '' })
 # R12 (R39; docs/phases.md): the card the window was closed on, opened again at the next start (none with -Measure).
 $wn.LastFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-lastcard.txt' } else { '' })
-$wn.Times = [ordered]@{}   # R12: card key -> the open times in ms of each open by the person (the CARDTIME lines)
+# R13 (R40): the card key saved at the last close, or '' when there is none ($wn.OpenLast; the -Again check names it).
+$wn.LastKey = {
+  try { if ($wn.LastFile -and (Test-Path -LiteralPath $wn.LastFile -PathType Leaf)) { return ([string](Get-Content -LiteralPath $wn.LastFile -TotalCount 1)).Trim() } } catch { $null = $_ }
+  return '' }
 $wn.SaveLast = {
   <#
   .SYNOPSIS
@@ -305,21 +342,11 @@ $wn.OpenLast = {
   R12: shows the card saved at the last close, when it is a card that is not modal; else Your Work stays. Adds a
   LASTCARD line: the card opened, and where it came from.
   #>
-  $k = ''
-  try { if ($wn.LastFile -and (Test-Path -LiteralPath $wn.LastFile -PathType Leaf)) { $k = ([string](Get-Content -LiteralPath $wn.LastFile -TotalCount 1)).Trim() } } catch { $k = '' }
+  $k = & $wn.LastKey
   if ($k -and $Cards[$k] -and -not $Cards[$k].Modal) {
     if ($k -ne 'home') { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k }
     $lines.Add('LASTCARD opened=' + $k + ' (saved at the last close)') }
   else { $lines.Add('LASTCARD opened=home (' + $(if ($k) { 'saved card ' + $k + ' not used' } else { 'no saved card' }) + ')') } }
-$wn.TimeLines = {
-  <#
-  .SYNOPSIS
-  R12 (R38 finding 3): one CARDTIME line for each card the person opened: the first open and the slowest later open, in ms.
-  #>
-  foreach ($k in @($wn.Times.Keys)) { $v = @($wn.Times[$k])
-    $later = $(if ($v.Count -gt 1) { ' later-max=' + (@($v | Select-Object -Skip 1 | Measure-Object -Maximum).Maximum) } else { '' })
-    $lines.Add('CARDTIME ' + $k + ' first=' + $v[0] + $later + ' opens=' + $v.Count + ' (ms to build, before paint; a resize counts as an open)') }
-  if (-not $wn.Times.Count) { $lines.Add('CARDTIME none (no card opened after the start)') } }
 $wn.LoadBounds = {
   <#
   .SYNOPSIS
@@ -361,7 +388,7 @@ $wn.BarShow = {
     $wn.BarNo.Text = 'Check ' + ($i + 1) + ' of ' + $Checks.Count; $wn.BarText.Text = [string]$Checks[$i].Text
     $wn.BarPass.Visible = $true; $wn.BarFail.Visible = $true }
   else {
-    $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = $script:ChecksDone   # R12: the first run asks for All Actions before the close (the -Again run checks it)
+    $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = $script:ChecksDone   # R13: names no card (the -Again check names the card closed on)
     $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false } }
 # Keeps the answer (PASS or FAIL) to the current check and shows the next one.
 $wn.Answer = { param([string]$Result)
@@ -498,6 +525,7 @@ $wn.Recolor = {
   $wn.RailBtn = @(); & $wn.BuildRail
   $form.Controls.Remove($wn.Bar); $wn.Bar.Dispose(); & $wn.BuildBar
   $form.ResumeLayout($true)
+  & $wn.KeepClear   # R13: every kept card has the old colors; each builds again at its next open
   & $wn.Show $wn.Cur; $form.Invalidate($true) }
 # R7 (R32 W2): a new mouse-wheel filter for this window (Pfm.Wheel): a wheel turn anywhere on the main column scrolls
 # the grid under the pointer while that grid can still scroll, else the main column; keys and focus are not touched.

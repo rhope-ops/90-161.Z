@@ -1,31 +1,31 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r12, part "feedback": Feedback on every card of the PFM window (UI standard B13, PFM 19 Nov 26).
+  90-161.Z Task 22 r13, part "feedback": Feedback on every card of the PFM window (UI standard B13, PFM 19 Nov 26).
 .DESCRIPTION
-  R11 (R38; PFM 20 Nov 26): only the revision in the file names changed (90161Z-T22-feedback-<card>-r12.*).
+  R11 (R38; PFM 20 Nov 26): only the revision in the file names changed (90161Z-T22-feedback-<card>-r13.*).
   The window part puts the Feedback link on the check bar (the same place on every card) and calls $wn.FeedbackAsk on
   a click and $wn.FeedbackList at the close; the -Measure run calls $wn.MeasureFeedback (below), which saves one FAKE
   comment through $wn.FeedbackSave.
   Inputs: $form, $ui, $wn, $who, $dir, $Rev, $lines. Outputs: the $wn members below.
-  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: per saved comment 90161Z-T22-feedback-<card>-r12.txt and .png (a name already in the folder: <card>-2, and so
-  on), and at the close it adds this run's lines to 90161Z-T22-feedback-r12.txt, in the T22 folder (or -TestDir); with
+  Writes: per saved comment 90161Z-T22-feedback-<card>-r13.txt and .png (a name already in the folder: <card>-2, and so
+  on), and at the close it adds this run's lines to 90161Z-T22-feedback-r13.txt, in the T22 folder (or -TestDir); with
   -Measure in the folder of the measure file. Nothing that is already there is overwritten.
   Credentials: none.
 #>
 # R10 (R37; PFM 19 Nov 26, UI standard B13): Feedback on every card. The link opens a small comment box; Save writes the
 # comment and a picture of the window as it was when the link was selected, into the T22 folder (the round sends them):
-# 90161Z-T22-feedback-<card>-r12.txt and .png (a second comment on the same card, in this run or an earlier window run of
+# 90161Z-T22-feedback-<card>-r13.txt and .png (a second comment on the same card, in this run or an earlier window run of
 # the same round: <card>-2, and so on). Each save adds a FEEDBACK line to the result file; at the close each run adds its
-# lines to 90161Z-T22-feedback-r12.txt (every comment file, or none), so the round always finds one feedback file and a
+# lines to 90161Z-T22-feedback-r13.txt (every comment file, or none), so the round always finds one feedback file and a
 # second run keeps the first run's lines. With -Measure the files go to the folder of the measure file.
 $wn.FeedbackN = @{}; $wn.FeedbackAll = New-Object System.Collections.Generic.List[string]
 # The link text: "Feedback", and how many comments were saved.
 $wn.FeedbackText = { if ($wn.FeedbackAll.Count) { return ('Feedback (' + $wn.FeedbackAll.Count + ' saved)') }; return 'Feedback' }
 # The folder the feedback files go to: the T22 folder, or the measure folder.
 $wn.FeedbackDir = { if ($dir) { return $dir }; return [string]$wn.PngDir }
-# The base name of comment $N on card $Key: 90161Z-T22-feedback-<card>-r12, or <card>-<N> from the second one on.
+# The base name of comment $N on card $Key: 90161Z-T22-feedback-<card>-r13, or <card>-<N> from the second one on.
 # $wn.FeedbackSave raises $N past every name whose .txt or .png is already in the folder (an earlier window run).
 $wn.FeedbackName = { param([string]$Key, [int]$N)
   return ('90161Z-T22-feedback-' + $Key + $(if ($N -gt 1) { '-' + $N } else { '' }) + '-' + $Rev) }
@@ -99,7 +99,7 @@ $wn.FeedbackAsk = {
       $null = & $wn.FeedbackSave $Key $tb.Text $shot }   # the save also shows the new count on the link
   } catch { $lines.Add('NOTE the feedback box did not open: ' + ([string]$_.Exception.Message)) }
   finally { if ($dlg) { $dlg.Dispose() }; if ($shot) { $shot.Dispose() } } }
-# At the close: adds this run's lines to 90161Z-T22-feedback-r12.txt (every comment of this run, or none); the lines of
+# At the close: adds this run's lines to 90161Z-T22-feedback-r13.txt (every comment of this run, or none); the lines of
 # an earlier window run of the round stay.
 $wn.FeedbackList = {
   $into = & $wn.FeedbackDir; if (-not $into) { return }

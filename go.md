@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 20 Nov 26 (Round R39 r1 done).
+Updated: 20 Nov 26 (Round R40 r1 ready).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -30,7 +30,40 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-No open task. The next round comes here when it is ready.
+### Round R40 r1: my window r13 (faster screens, the reopen check)
+
+**For:** the round after R39. My 90-161.Z window r13 keeps each screen once it is built, so a screen I open again should show with no delay. The reopen check now names the screen I closed the window on. The window logs the build and paint time of each screen I open.
+**Time:** about 15 minutes, all my own work (estimate).
+**Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T22, 17 pictures of the window cards with fake data, the file that keeps the last screen of my window, one text file and one picture for each Feedback comment I save). Old window files of r12 go to the Recycle Bin. On the site: nothing changes. Before Run, the window lists every file.
+**Steps:**
+1. Open https://rhope-ops.github.io/RADE.
+2. Write down the code next to R40.
+3. Press Copy script next to R40.
+4. Open the Start menu.
+5. Type: ISE
+6. Open Windows PowerShell ISE (not "Run as administrator").
+7. Select File > New.
+8. Click in the white script pane.
+9. Press Ctrl+V.
+10. Press F5. The RADE window opens.
+11. Look at the title bar of the RADE window: the code after the word "script" must be the code you wrote down.
+12. Select "90-161.Z R40".
+13. Press Run.
+14. When the 90-161.Z window opens: do each check in its bottom bar.
+15. If a card does not look right: select "Feedback" in the bottom bar.
+16. In the box "What does not look right? One line, no names.", type what is wrong.
+17. Select "Save".
+18. Close the 90-161.Z window with its X.
+19. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
+20. Close the 90-161.Z window with its X.
+21. Answer the 3 questions in the RADE window.
+22. At DONE, select Send in the Outlook draft that opens.
+
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R40-round-r1.ps1
+
+**Report:** send the Outlook draft the round makes (subject "90161Z R40 PASSED" or "90161Z R40 NEEDS REVIEW", every file in the results folder attached). If I run the round a second time, send only the newest draft. The round never puts a script file in the results. Then tell Claude the e-mail is sent.
+**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): double-click the RADE shortcut, select "90-161.Z R40", then select "Resume at step N of M".
+**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R40 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R40 did not paste". If the 90-161.Z window does not open, go on with the steps the RADE window shows.
 
 ## Done
 

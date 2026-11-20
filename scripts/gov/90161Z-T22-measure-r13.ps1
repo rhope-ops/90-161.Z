@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r12, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r13, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
+  R13 (R40): the measure file has Keep (each card opened again from its kept page, $wn.MeasureKeep in the keep part).
   R11 (R38; PFM 20 Nov 26): the measure file has Edges (the right edge of each grid) and one Fulcrum logo (Theme.Fulcrum, ShownDiff).
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
   card, the rail and the check bar must have an accessible name; the result is one line "RESULT NAMES PASS" or
@@ -23,13 +24,13 @@
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r12.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r13.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -40,7 +41,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r12.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r13.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -345,7 +346,7 @@ $wn.MeasureScaled = {
   } finally {
     if ($wn.StepFonts -and -not [object]::ReferenceEquals($wn.StepFonts, $keep.Step)) { foreach ($x in @($wn.StepFonts.A) + @($wn.StepFonts.B)) { $made.Add($x) } }
     $ui.Dpi = $keep.Dpi; $ui.FontK = $keep.FontK; $ui.F = $keep.F; $wn.CrumbFont = $keep.Crumb; $wn.StepFonts = $keep.Step
-    $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
+    & $wn.KeepClear; $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'   # R13: no kept card keeps the scaled fonts disposed below
     foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
   $res['Cards'] = $cards.ToArray()
   return $res }
@@ -570,6 +571,8 @@ $wn.MeasureRun = {
   $res['EmptyNames'] = @($wn.NoName.Keys | ForEach-Object { [string]$_ })
   $res['LayoutDefects'] = @($ui.LayBad)
   $res['Pngs'] = $wn.Pngs.ToArray()
+  # R13 (R40): every card opened again shows its kept card (the keep part); a pass that cannot run is kept as its error.
+  try { $res['Keep'] = @(& $wn.MeasureKeep) } catch { $res['Keep'] = @(); $res['KeepError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   # D1 to D4 at 1.25 x and 1.5 x (R6; the PFM works at 150 %): every card again; a pass that cannot run is kept as its error.
   try { $res['Scaled'] = @(foreach ($k in 1.25, 1.5) { & $wn.MeasureScaled $k }) }
   catch { $res['Scaled'] = @(); $res['ScaledError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }

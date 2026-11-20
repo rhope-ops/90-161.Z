@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T22-maint-r12.ps1 (round R39; the PFM, 20 Nov 26): the test install step and the read-back of
+# Tests scripts/gov/90161Z-T22-maint-r13.ps1 (round R39; the PFM, 20 Nov 26): the test install step and the read-back of
 # RADE's Diagnose report and Back up folder, on fake folders (FAKE data, no site). Also checks that the script's list
 # count ($BackupLists) equals the "backup" titles of the R39 deploy app in scripts/paste_bundles.json (one home).
 # Network: none.
@@ -9,7 +9,7 @@
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
-$script = Join-Path $Root 'scripts/gov/90161Z-T22-maint-r12.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T22-maint-r13.ps1'
 # Record one result. Takes the name, the condition and the output; returns nothing.
 function Test-That([string]$Name, [bool]$Ok, [string]$Out) {
   if ($Ok) { $script:pass++; Write-Host ('T22MAINT PASS ' + $Name) } else { $script:fail++; Write-Host ('T22MAINT FAIL ' + $Name + ': ' + $Out) }
@@ -63,12 +63,12 @@ Test-That 'all there: 3 PASS, exit 0' ($r.Code -eq 0 -and $r.Out -match 'RESULT 
 Test-That 'counts only: the rows, never a value' ($r.Out -match 'BACKUP list "PFM Waivers": rows=2 csv=yes' -and $r.Out -notmatch 'FAKE 1') $r.Out
 $ok = ($r.Out -match 'pass=1 findings=2 notes=1' -and $r.Out -match 'FINDING: b at <URL>' -and $r.Out -notmatch 'example\.')
 Test-That 'a Diagnose finding is masked (a URL, and the site host RADE holds)' $ok $r.Out
-Test-That 'the result file is written' (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-maint-r12.txt')) $r.Out
+Test-That 'the result file is written' (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-maint-r13.txt')) $r.Out
 $d = Get-FakeRade $false $false $false; $dirs += $d; $r = Invoke-Maint $d 'Read'
 $ok = ($r.Code -eq 1 -and $r.Out -match 'RESULT INSTALL FAIL' -and $r.Out -match 'RESULT DIAGNOSE FAIL' -and $r.Out -match 'csv=no' -and $r.Out -match 'RESULT BACKUP FAIL')
 Test-That 'nothing there: 3 FAIL (a backup without its csv fails), exit 1' $ok $r.Out
 $r = Invoke-Maint $d 'Install'
-Test-That 'install step passes and writes its file' ($r.Code -eq 0 -and $r.Out -match 'RESULT INSTALL PASS' -and (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-install-r12.txt'))) $r.Out
+Test-That 'install step passes and writes its file' ($r.Code -eq 0 -and $r.Out -match 'RESULT INSTALL PASS' -and (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-install-r13.txt'))) $r.Out
 $d = Get-FakeRade $true $true $true 3; $dirs += $d; $r = Invoke-Maint $d 'Read'
 Test-That 'fewer lists than the manifest names: FAIL' ($r.Code -eq 1 -and $r.Out -match 'BACKUP 3 of 11 lists saved' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
 $d = Get-FakeRade $true $true $true 11 $true; $dirs += $d; $r = Invoke-Maint $d 'Read'

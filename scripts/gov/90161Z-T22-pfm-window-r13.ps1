@@ -1,8 +1,13 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r12 (round R39). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r13 (round R40). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
-  WHAT R12 CHANGES (round R39; PFM 20 Nov 26: docs/phases.md R39 and the R38 findings): the Sofia Sans fonts of the RADE
+  WHAT R13 CHANGES (round R40; PFM 20 Nov 26: docs/reviews/2026-11-20-r40-plan.md, the R39 findings 1 and 2): each card
+  is built once and kept; a later open shows the kept card again and a card is built again only when it must change
+  (a new size, a field, an error line or a note, a color change: the keep part). CARDTIME lines add the paint time
+  (paint-first=, paint-later-max=) and kept=. The -Again check names the card saved at the last close, by its title;
+  the check bar's closing line names no card. The parts: 11 (R13 adds keep).
+  WHAT R12 CHANGED (round R39; PFM 20 Nov 26: docs/phases.md R39 and the R38 findings): the Sofia Sans fonts of the RADE
   window, from the 3 font files the round puts in the T22 folder (a FONT line; Segoe UI when they are missing); the
   window opens on the card it was closed on (90161Z-T22-window-lastcard.txt; a LASTCARD line); the Your Work grid drops
   Since when its whole chips do not fit (R38 finding 2); one-line text boxes have the compact height in a frame (B1);
@@ -21,8 +26,8 @@
   line; PFM 19 Nov 26). A grid whose columns are wider than it gives the excess back ($wn.FitGrids; R36 finding 3: the
   home grid was 9 px short). Feedback (UI standard B13, PFM 19 Nov 26): a link on the check bar, in the same place on
   every card, opens a small box "What does not look right?"; Save writes the comment and a picture of the window into
-  the T22 folder as 90161Z-T22-feedback-<card>-r12.txt and .png and adds a FEEDBACK line; at the close
-  90161Z-T22-feedback-r12.txt lists them (or none).
+  the T22 folder as 90161Z-T22-feedback-<card>-r13.txt and .png and adds a FEEDBACK line; at the close
+  90161Z-T22-feedback-r13.txt lists them (or none).
   WHAT R8 CHANGED (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
   in 2 system colors, and in its own colors again when it goes off ($wn.LogoImage, Pfm.Logo); every rail build checks
   the logo's colors (a LOGO line; a W7 LAYOUT line when they are wrong). No column head of a grid is shortened with
@@ -37,28 +42,29 @@
   the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
   R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its parts
-  from its own folder, 90161Z-T22-<part>-r12.ps1 (cards, types, ui, parts, grid, logo, window, feedback, measure; R10 adds
-  logo and feedback).
-  Inputs: the 10 part files and the font files (90161Z-SofiaSans*.ttf) next to this file.
+  from its own folder, 90161Z-T22-<part>-r13.ps1 (cards, types, ui, ui2, parts, grid, logo, window, keep, feedback,
+  measure; R10 adds logo and feedback, R11 ui2, R13 keep).
+  Inputs: the 11 part files and the font files (90161Z-SofiaSans*.ttf) next to this file; with -Again, the saved card
+  (90161Z-T22-window-lastcard.txt).
   Parameters: -Id, -NoPause (RADE), -Again (R12: the reopen check only). -PlanOnly prints the cards and the 4 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r12.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r13.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r12.txt (with -Again: 90161Z-T22-window-again-r12.txt) (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r12.png (one per
-  card) and the feedback files (90161Z-T22-feedback-r12.txt, and a .txt and a .png per comment) in the T22 folder.
+  Outputs: 90161Z-T22-window-r13.txt (with -Again: 90161Z-T22-window-again-r13.txt) (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r13.png (one per
+  card) and the feedback files (90161Z-T22-feedback-r13.txt, and a .txt and a .png per comment) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r12.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r13.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r12.txt (or -again-r12.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
+  Writes: 90161Z-T22-window-r13.txt (or -again-r13.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
   folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
   with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
   Credentials: none.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened, [switch]$Again)
 $task = 'T22'
-$Rev = 'r12'
+$Rev = 'r13'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -209,8 +215,8 @@ if ($Opened) {   # no window, no file: one line about the last run, exit 1 on FA
 function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.InvocationInfo.ScriptName)) + ':' + $Err.InvocationInfo.ScriptLineNumber) }
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
-$Parts = @('cards', 'types', 'ui', 'ui2', 'parts', 'grid', 'logo', 'window', 'feedback', 'measure')
-# The full path of part $Name: 90161Z-T22-<name>-r12.ps1 in this file's folder.
+$Parts = @('cards', 'types', 'ui', 'ui2', 'parts', 'grid', 'logo', 'window', 'keep', 'feedback', 'measure')
+# The full path of part $Name: 90161Z-T22-<name>-r13.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + $(if ($Again) { ' (again: the reopen check)' } else { '' }) + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
@@ -273,7 +279,8 @@ try {
   # The crumb's link font (R30 V2): the crumb's own font, underlined; the same family and size as the rest of the crumb.
   try { $wn.CrumbFont = New-Object System.Drawing.Font($ui.F.Small, [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline'))
     $ui.Trash = @($ui.Trash) + @($wn.CrumbFont) } catch { $wn.CrumbFont = $ui.F.Small }
-  foreach ($part in 'parts', 'grid', 'logo', 'window', 'feedback', 'measure') { . (Get-PartPath $part) }
+  foreach ($part in 'parts', 'grid', 'logo', 'window', 'keep', 'feedback', 'measure') { . (Get-PartPath $part) }
+  if ($Again) { $Checks[0].Text = Get-AgainText (& $wn.LastKey) }   # R13 (R39 finding 1): the reopen check names the card saved at the last close
   if ($Measure) { & $wn.MeasureRun $Measure } else { & $wn.Hook; [void]$form.ShowDialog() }
   $wn.Ready = $false
   $dpi = 96; try { $g = $form.CreateGraphics(); $dpi = [int]$g.DpiX; $g.Dispose() } catch { $null = $_ }
