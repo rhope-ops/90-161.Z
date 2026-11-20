@@ -37,7 +37,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 **Steps:**
 1. Open https://rhope-ops.github.io/RADE.
 2. Write down the code next to R39.
-3. Press Copy script next to the link below.
+3. Press Copy script next to R39.
 4. Open the Start menu.
 5. Type: ISE
 6. Open Windows PowerShell ISE (not "Run as administrator").
@@ -54,31 +54,33 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 17. Select "90-161.Z".
 18. Select Maintenance.
 19. Select Diagnose.
-20. Note what Diagnose shows, then select Done.
-21. Select Back up.
-22. If a sign-in window opens, sign in with your CAC.
-23. Note what Back up shows, then select Done.
-24. Close the RADE window with its X.
-25. Double-click the RADE shortcut on your Desktop.
-26. Select "90-161.Z R39".
-27. Press Run.
-28. Answer the 2 questions about Diagnose and Back up.
-29. When the 90-161.Z window opens: do each check in its bottom bar.
-30. If a card does not look right: select "Feedback" in the bottom bar.
-31. In the box "What does not look right? One line, no names.", type what is wrong.
-32. Select "Save".
-33. After the last check, select All Actions in the list on the left.
-34. Close the 90-161.Z window with its X.
-35. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
+20. Look at what Diagnose shows. The round asks about it later.
+21. Select Done.
+22. Select Back up.
+23. If a sign-in window opens, sign in with your CAC.
+24. Look at what Back up shows. The round asks about it later.
+25. Select Done.
+26. Close the RADE window with its X.
+27. Double-click the RADE shortcut on your Desktop.
+28. Select "90-161.Z R39".
+29. Press Run.
+30. Answer the 2 questions about Diagnose and Back up.
+31. When the 90-161.Z window opens: do each check in its bottom bar.
+32. If a card does not look right: select "Feedback" in the bottom bar.
+33. In the box "What does not look right? One line, no names.", type what is wrong.
+34. Select "Save".
+35. After the last check, select All Actions in the list on the left.
 36. Close the 90-161.Z window with its X.
-37. Answer the 3 questions in the RADE window.
-38. At DONE, select Send in the Outlook draft that opens.
+37. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
+38. Close the 90-161.Z window with its X.
+39. Answer the 3 questions in the RADE window.
+40. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R39-round-r1.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R39 PASSED" or "90161Z R39 NEEDS REVIEW", every file in the results folder attached). The test install sends no e-mail. The round never puts a script file or a list copy in the results. Then tell Claude the e-mail is sent.
-**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): double-click the RADE shortcut, select "90-161.Z R39", then select "Resume at step N of M". Before the install exists: do steps 3 to 11 again.
-**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R39 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R39 did not paste". If the install fails: send the line that starts with "What to do" to Claude, then go on with step 26 from a new paste. If Maintenance does not show: answer "did not open" to both questions. If the 90-161.Z window does not open, go on with the steps the RADE window shows.
+**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): double-click the RADE shortcut, select "90-161.Z R39", then select "Resume at step N of M". If there is no RADE shortcut yet: do steps 3 to 11 again.
+**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R39 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R39 did not paste". If the install fails: tell Claude the line that starts with "What to do"; then do steps 3 to 11 again and go on with step 28. If Maintenance does not show: go on with step 26, and answer "did not open" to both questions about Diagnose and Back up. If the 90-161.Z window does not open, go on with the steps the RADE window shows.
 
 ## Done
 
