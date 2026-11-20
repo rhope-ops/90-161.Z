@@ -125,10 +125,15 @@ $wn.GridCols = {
   $bar = $(if ($PubMin -gt 0) { [math]::Max($Scroll, [Windows.Forms.SystemInformation]::VerticalScrollBarWidth) } else { $Scroll })
   $fixed = 0; $keep = 0; $rest = 0; $n = @($Cols).Count; $avail = $W - $bar - 2
   $pubOwn = [math]::Max(2, [math]::Min([math]::Max((& $wn.Sc 60), $PubMin), $avail - 2 * ($n - 1)))   # a pub column never leaves less than 2 px a column
+  # R11 (ps51 W7 at 96 dpi): a chip column keeps its whole chip only while every other head still fits beside it; else
+  # it shares the room as in r10, so a narrow window never cuts the other heads. $spare = room above all the heads.
+  $spare = $avail; foreach ($c in $Cols) { $spare -= $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $pubOwn } else { [int](& $wn.HeadMin $c) }) }
   $own = @{}; $hard = @{}; foreach ($c in $Cols) {
     $isPub = ($c.K -eq 'pub' -and $PubMin -gt 0); $vm = $(if (@($Rows).Count) { [int](& $wn.ValueMin $c $Rows) } else { 0 })
-    $hard[[string]$c.N] = ($isPub -or ($c.K -eq 'chip' -and $vm -gt 0))
-    $o = $(if ($isPub) { $pubOwn } elseif ($c.K -eq 'chip' -and $vm -gt 0) { [math]::Max($vm, [int](& $wn.HeadMin $c)) } elseif ($c.W -eq 0) { & $wn.Sc 60 }
+    $chipKeep = ($c.K -eq 'chip' -and $vm -gt 0 -and ($vm - [int](& $wn.HeadMin $c)) -le $spare)
+    if ($chipKeep) { $spare -= [math]::Max(0, $vm - [int](& $wn.HeadMin $c)) }
+    $hard[[string]$c.N] = ($isPub -or $chipKeep)
+    $o = $(if ($isPub) { $pubOwn } elseif ($chipKeep) { [math]::Max($vm, [int](& $wn.HeadMin $c)) } elseif ($c.W -eq 0) { & $wn.Sc 60 }
       elseif ($vm -gt 0) { [math]::Min((& $wn.Sc $c.W), $vm) } else { & $wn.Sc $c.W }); $own[[string]$c.N] = $o
     if ($c.W -ne 0) { $fixed += $o }; if ($hard[[string]$c.N]) { $keep += $o } else { $rest += $o } }
   $k = $(if ($rest -gt 0 -and $keep + $rest -gt $avail) { [math]::Max(0.0, [double]($avail - $keep) / $rest) } else { 1.0 })
