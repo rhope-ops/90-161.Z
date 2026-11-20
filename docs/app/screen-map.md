@@ -32,7 +32,7 @@ The PFM works in the RADE-style window (scripts/gov/90161Z-T22-pfm-window-r2.ps1
 
 Every action card in the window has the 12-dot step bar and a Change or Skip button (step 13).
 
-#### Window size (proposed in window r9, R36 W13; not yet approved by the PFM)
+#### Window size (window r9, moved to R37 (PFM 20 Nov 26); values shipped for judging: PFM 19 Nov 26; 1200 px cap and 75-character measure: PFM 19 Nov 26)
 
 The PFM asked for less dead space, sizing from the current screen, and one stable layout at any size (R35 findings 4 and 5, docs/reviews/2026-11-19-r35-results.md). Window r9 proposes the rules below; the values live in `$LayoutRevs` of scripts/gov/90161Z-T22-pfm-window-r9.ps1, and `-LayoutPlan` prints them for r8 and r9 at the 4 test sizes.
 

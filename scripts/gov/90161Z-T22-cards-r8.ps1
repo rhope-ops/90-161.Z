@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r9, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 18 in-window checks)
+  90-161.Z Task 22 r8, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 18 in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r9.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r8.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems
   and the functions Get-SideStatus, Test-CheckLink, Get-CardPlan and Get-CheckPlan.

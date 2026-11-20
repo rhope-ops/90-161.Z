@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r9, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r8, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   Names (R30 fallback for check 8, Narrator names): every button, link, check box, choice, text box and list of every
@@ -22,13 +22,13 @@
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r9.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r8.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r9.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r8.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -39,7 +39,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r9.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r8.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -315,7 +315,7 @@ $wn.MeasureScaled = {
   #>
   param([double]$K)
   $keep = @{ Dpi = $ui.Dpi; FontK = $ui.FontK; F = $ui.F; Crumb = $wn.CrumbFont; Step = $wn.StepFonts }
-  $made = New-Object System.Collections.Generic.List[object]; $shownCards = New-Object System.Collections.Generic.List[object]; $res = [ordered]@{}
+  $made = New-Object System.Collections.Generic.List[object]; $cards = New-Object System.Collections.Generic.List[object]; $res = [ordered]@{}
   try {
     $nf = @{}; foreach ($n in @($keep.F.Keys)) { $o = $keep.F[$n]; $x = New-Object System.Drawing.Font($o.FontFamily, [single]($o.Size * $K), $o.Style); $nf[$n] = $x; $made.Add($x) }
     $ui.Dpi = $keep.Dpi * $K; $ui.FontK = $keep.FontK * $K; $ui.F = $nf; $wn.StepFonts = $null
@@ -325,7 +325,7 @@ $wn.MeasureScaled = {
       $c = [ordered]@{}; $c['Key'] = $key
       try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts) }
       catch { $c['Error'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
-      $shownCards.Add($c) }
+      $cards.Add($c) }
     # R7 (W2): the mouse wheel at this scale too; a wheel case that cannot run is kept as its error (the test names it).
     try { $res['Wheel'] = (& $wn.MeasureWheel) } catch { $res['Wheel'] = $null; $res['WheelError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   } finally {
@@ -333,7 +333,7 @@ $wn.MeasureScaled = {
     $ui.Dpi = $keep.Dpi; $ui.FontK = $keep.FontK; $ui.F = $keep.F; $wn.CrumbFont = $keep.Crumb; $wn.StepFonts = $keep.Step
     $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
     foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
-  $res['Cards'] = $shownCards.ToArray()
+  $res['Cards'] = $cards.ToArray()
   return $res }
 $wn.LogoFacts = {
   <#

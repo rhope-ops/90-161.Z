@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | R36 ships with window r8 again; window r9 (dynamic sizing) failed its first Windows tests (values moved controls 2 to 14 px, 3 cards scrolled sideways at 956 x 1081, queue grid 27 px short) and moves to R37 with engine-v27. Scope: R36, R37. | PFM | docs/reviews/2026-11-19-r36-plan.md W13 |
 | 2026-11-19 | RADE lock moves to release engine-v26 (RADE 29fd57d, serial 20) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-19 | App writes: wing users get list-level Contribute on the intake lists only; the site stays Read (replaces way C for T4). Scope: R36, T20/T21. | PFM | docs/reviews/2026-11-19-r36-plan.md W12 |
 | 2026-11-19 | R36 plan approved after the R35 results (W1 to W14). Scope: R36. | PFM | docs/reviews/2026-11-19-r36-plan.md |

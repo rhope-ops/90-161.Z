@@ -30,35 +30,35 @@
             "files": [
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-pfm-window-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-pfm-window-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-cards-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-cards-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-types-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-types-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-parts-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-parts-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-grid-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-grid-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-window-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-window-r8.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-measure-r9.ps1"
+                    "src": "scripts/gov/90161Z-T22-measure-r8.ps1"
                 },
                 {
                     "dir": "T01",
@@ -179,10 +179,10 @@
             ],
             "steps": [
                 {
-                    "name": "T22 Open the 90-161.Z window r9",
+                    "name": "T22 Open the 90-161.Z window r8",
                     "title": "Open the 90-161.Z window and do its 18 checks",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r9.ps1",
+                    "file": "90161Z-T22-pfm-window-r8.ps1",
                     "minutes": 30,
                     "note": "Opens your 90-161.Z window with fake data. Do the 18 checks in the bar at the bottom (Pass or Fail). Drag a window edge to make it narrower, then wider. Then close it.",
                     "estimate": 15,
@@ -190,10 +190,10 @@
                     "doing": "Opening the 90-161.Z window."
                 },
                 {
-                    "name": "T22 Did the window open r9",
+                    "name": "T22 Did the window open r8",
                     "title": "Check that the window opened",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r9.ps1",
+                    "file": "90161Z-T22-pfm-window-r8.ps1",
                     "args": "-Opened",
                     "minutes": 2,
                     "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
@@ -202,40 +202,31 @@
                     "doing": "Reading the result of the window step."
                 },
                 {
-                    "name": "T22 Answer: space and steadiness r9",
-                    "title": "Answer 4 questions about the window look",
+                    "name": "T22 Answer: look and cards r8",
+                    "title": "Answer 3 questions about the window look",
                     "kind": "guide",
                     "dir": "T22",
                     "file": "",
-                    "note": "4 questions about the space in the window and whether it stays steady. About 2 minutes.",
+                    "note": "3 questions about the look of the window. About 2 minutes.",
                     "estimate": 2,
                     "after": [
-                        "T22 Did the window open r9"
+                        "T22 Did the window open r8"
                     ],
                     "answers": [
                         {
-                            "key": "w-space",
-                            "prompt": "Compared with the last window, how much empty space is there?",
+                            "key": "w-look",
+                            "prompt": "Does the window look like your vision of the 90-161.Z app?",
                             "kind": "pick",
                             "choices": [
-                                "Less, it fits more",
-                                "About the same",
-                                "More"
-                            ]
-                        },
-                        {
-                            "key": "w-steady",
-                            "prompt": "Did anything move, jump or flicker while you used the window or changed its size?",
-                            "kind": "pick",
-                            "choices": [
-                                "Nothing moved",
-                                "Something moved once",
-                                "Things moved often"
+                                "Yes, as it is",
+                                "Close, with small changes",
+                                "Partly",
+                                "No"
                             ]
                         },
                         {
                             "key": "w-cards",
-                            "prompt": "Did every card open with no scroll bar at the bottom?",
+                            "prompt": "Did every card open and fit with no scroll bar?",
                             "kind": "yesno"
                         },
                         {
@@ -1464,93 +1455,93 @@
             "collect": [
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-r9.txt",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-window-r8.txt",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-home-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-home-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-empty-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-empty-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-queue-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-queue-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-reviews-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-reviews-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step8-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-step8-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-confirm-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-confirm-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-sendback-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-sendback-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-waves-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-waves-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step11-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-step11-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step12-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-step12-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step13-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-step13-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-pub-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-pub-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-settings-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-settings-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-loading-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-loading-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-failed-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-failed-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-noperm-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-noperm-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-remindall-r9.png",
-                    "step": "T22 Open the 90-161.Z window r9"
+                    "name": "90161Z-T22-card-remindall-r8.png",
+                    "step": "T22 Open the 90-161.Z window r8"
                 },
                 {
                     "dir": "T01",
@@ -1672,11 +1663,11 @@
             "apps": [
                 {
                     "name": "90-161.Z",
-                    "summary": "Round R36 r1: window r9, sample publication in Word, list access, second person, import with list IDs, flow states by name, full flow test. Fake data.",
+                    "summary": "Round R36 r1: window r8 again, sample publication in Word, list access, second person, import with list IDs, flow states by name, full flow test. Fake data.",
                     "steps": [
-                        "T22 Open the 90-161.Z window r9",
-                        "T22 Did the window open r9",
-                        "T22 Answer: space and steadiness r9",
+                        "T22 Open the 90-161.Z window r8",
+                        "T22 Did the window open r8",
+                        "T22 Answer: look and cards r8",
                         "T01 Render the sample publication r10",
                         "T07 Render the sample with 2 test seals r6",
                         "T21 Check the test site is clean r10",
@@ -2631,15 +2622,15 @@
                     "kind": "glob"
                 },
                 {
-                    "path": "T22\\90161Z-T22-*-r8.ps1",
+                    "path": "T22\\90161Z-T22-*-r7.ps1",
                     "kind": "glob"
                 },
                 {
-                    "path": "T22\\90161Z-T22-*-r8.png",
+                    "path": "T22\\90161Z-T22-*-r7.png",
                     "kind": "glob"
                 },
                 {
-                    "path": "T22\\90161Z-T22-window-r8.txt",
+                    "path": "T22\\90161Z-T22-window-r7.txt",
                     "kind": "glob"
                 },
                 {

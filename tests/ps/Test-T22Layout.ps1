@@ -1,10 +1,10 @@
-# Tests the look of the T22 PFM window r9 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
+# Tests the look of the T22 PFM window r8 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
 # round R31: the rail head W1, the high-contrast colors W2 and the card pictures W4).
 # Network: none.
 # Writes: one temporary folder with the measure file and the card pictures of the window; removed at the end.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Windows only: elsewhere the one line "T22LAYOUT SKIP ..." and exit 0.
-# Runs scripts/gov/90161Z-T22-pfm-window-r9.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
+# Runs scripts/gov/90161Z-T22-pfm-window-r8.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
 # off-screen, measured and closed; no question) and checks what it wrote: each crumb's link and rest have one font and size
 # (V2), the ink gap after the link is at most 8 px at 100 % (V2), step 8 has no "See the 0 findings" link (V3), step 8's
 # Action Status card ends within 2 px of the main card (V4), Full History is drawn like the other white secondary
@@ -22,12 +22,10 @@
 # Work (not on the scroll bar), sent to the button with the focus, scrolls the main column; one on a grid that can
 # still scroll scrolls the grid, not the main column (W2, at the 3 scales; the routing function on the control tree and
 # the window's own filter are each called, no real pointer moves).
-# R8 (R35 W7), at the same 3 scales (1.5 x gives the narrowest grids):
+# R8 (R35 W7), at the same 3 scales (1.5 x gives the narrowest grids: the page column is never under 900 px at 100 %):
 # no column head of any grid is shortened (each head needs no more width than its cell gave). Once: the rail logo,
 # rebuilt with high contrast on, has only the 2 system colors and differs from its own colors; rebuilt with it off,
 # it is its own colors again (no change of the Windows theme).
-# R9 (R36 W13): a card whose columns are stacked (a narrow window) has no Action Status caption beside its main card,
-# so D1 needs one only where the columns are side by side. The 4 window sizes: tests/ps/Test-T22Sizes.ps1.
 # Each line shows the measured numbers.
 # Last line: "T22LAYOUT pass=N fail=0" (tests/ps/Invoke-Ps51.ps1 runs it on the ps51 Windows job).
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
@@ -125,7 +123,7 @@ function Test-Logo($M) {
 }
 <#
 .SYNOPSIS
-Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-<rev>.png, saved in the folder of
+Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r8.png, saved in the folder of
 the measure file, and the first one is not blank (at least 3 colors in a 20 x 20 grid of its pixels).
 .PARAMETER M
 The measure file (Cards, Pngs).
@@ -230,7 +228,7 @@ its first text line. D4: each pub grid (one at least on each card of $levelPubs)
 start at one x, and that x is at or after the widest number's end and the gap (titles beside) or each title starts at
 or below its number's bottom (titles under). The tolerance is 1 px at 100 %: Sc8 / 8, at least 1. R7: the chips of
 every kind (Test-ChipLevel, W3) and the cut cells and head of each pub grid (Test-PubCut, W1). R8: the column heads
-of every grid (Test-HeadCut, W7). R9: D1 needs a caption only on a card whose columns are side by side (Level.Stacked).
+of every grid (Test-HeadCut, W7).
 .PARAMETER Cards
 The measured cards (Key, Level) of one scale.
 .PARAMETER Sc8
@@ -243,7 +241,7 @@ function Test-Level($Cards, [double]$Sc8, [string]$At) {
   foreach ($k in @($byKey.Keys | Sort-Object)) {
     $lv = $byKey[$k].Level; if (-not $lv) { continue }
     $caps = @($lv.Caps | Where-Object { $_ })
-    if ($levelCaps -contains $k -and -not $caps.Count -and -not $lv.Stacked) { Test-That ($At + ' D1 ' + $k + ': Action Status caption measured') $false 'no caption measured' }
+    if ($levelCaps -contains $k -and -not $caps.Count) { Test-That ($At + ' D1 ' + $k + ': Action Status caption measured') $false 'no caption measured' }
     foreach ($x in $caps) { $d = [math]::Abs([double]$x.CapMid - [double]$x.LineMid)
       $nums = 'caption "' + $x.Cap + '" middle ' + $x.CapMid + '; first line "' + $x.Line + '" middle ' + $x.LineMid + '; difference ' + $d + ' px'
       Test-That ($At + ' D1 ' + $k + ': caption level with the first line of the main card (+-' + $tol + ' px)') ($d -le $tol) $nums }
@@ -299,7 +297,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGu
 try {
   $file = Join-Path $tmp 'measure.json'
   $engine = (Get-Process -Id $PID).Path
-  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r9.ps1'
+  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r8.ps1'
   $ErrorActionPreference = 'Continue'   # the child's error output is shown below, not thrown here
   $log = @(& $engine -NoProfile -ExecutionPolicy Bypass -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'
