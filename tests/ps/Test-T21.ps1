@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T21-probe-r9.ps1 and its modules 90161Z-T21-<part>-r9.ps1 (R34 probe, parts Make, Person, Office, Run, Look,
+# Tests scripts/gov/90161Z-T21-probe-r10.ps1 and its modules 90161Z-T21-<part>-r10.ps1 (R34 probe, parts Make, Person, Ask, Office, Run, Look,
 # Form, View, Open, Read, Clean) against a small fake site (pwsh 7, also Windows PowerShell 5.1 through tests/ps/Invoke-Ps51.ps1).
 # The fake PnP cmdlets are defined here (functions in this file); only an empty PnP.PowerShell 1.12.0 module is put on the
 # module path so the script's "is PnP installed" check passes. It proves the script's logic and output; the real service is
@@ -14,8 +14,7 @@ function Test-That([string]$Name, [bool]$Ok, [string]$Detail = '') {
   if ($Ok) { $script:pass++; Write-Host ('T21TEST PASS ' + $Name) } else { $script:fail++; Write-Host ('T21TEST FAIL ' + $Name + ' ' + $Detail) }
 }
 $work = Join-Path ([IO.Path]::GetTempPath()) ('t21-' + [guid]::NewGuid().ToString('N'))
-$t21 = Join-Path $work 'T21'
-$null = New-Item -ItemType Directory -Path $t21 -Force
+$t21 = Join-Path $work 'T21'; $null = New-Item -ItemType Directory -Path $t21 -Force
 $modDir = Join-Path $work 'mods/PnP.PowerShell/1.12.0'
 $null = New-Item -ItemType Directory -Path $modDir -Force
 Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psm1') -Value '# empty on purpose: the cmdlets are fakes in tests/ps/Test-T21.ps1'
@@ -23,11 +22,11 @@ Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psd1') -Value "@{ Ro
 $env:PSModulePath = (Join-Path $work 'mods') + [IO.Path]::PathSeparator + $env:PSModulePath
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T21-probe-r9.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T21-probe-r10.ps1'
 $fakeAddr = 'second.person@fake.example'
 # R34: the button flow's ID is the one scripts/build_flow_solution.py writes into the look module (the flow's workflow ID in the
 # solution r3); the test reads it there and checks it against the solution zip below.
-$lookText = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T21-look-r9.ps1') -Raw
+$lookText = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T21-look-r10.ps1') -Raw
 $buttonId = $(if ($lookText -match "(?m)^\`$ButtonFlowId = '([0-9a-f-]{36})'") { $Matches[1] } else { '' })
 
 # ---- the fake site and its cmdlets ----
@@ -39,8 +38,7 @@ function New-Site {
     Visitors = 7; RowId = 100; Gets = 0; OnAdd = $null; OnGet = $null; Query = ''; Groups = @{ 'PFM Office' = 9; 'Members' = 8 }; NoOfficeLevel = $false; EditAllUsers = @()
     Users = @{ 'second.person@fake.example' = 31; 'member.person@fake.example' = 32 }; GroupUsers = @{ 7 = @(3, 4); 9 = @(3) }
     CsomWorks = $true; MergeWorks = $true; AddRefused = $false; RemoveRefused = $false; Views = (New-Object System.Collections.ArrayList); ViewsMade = 0; Added = 0 }
-  $null = Add-SiteList 'Documents' 'Shared Documents' 101
-  $null = Add-SiteList 'Other probe list' 'Lists/OtherProbe' 100
+  $null = Add-SiteList 'Documents' 'Shared Documents' 101; $null = Add-SiteList 'Other probe list' 'Lists/OtherProbe' 100
 }
 # Add a fake list with its content type. Takes the title, folder URL and template number (101 library, 100 list); returns the list object.
 function Add-SiteList([string]$Title, [string]$Folder, [int]$Template) {
@@ -49,8 +47,7 @@ function Add-SiteList([string]$Title, [string]$Folder, [int]$Template) {
   $l = [pscustomobject]@{ Id = [guid]::NewGuid().ToString(); Title = $Title; Folder = ($Folder -split '/')[-1]; Template = $Template; Hidden = $false
     Fields = (New-Object System.Collections.ArrayList); Files = (New-Object System.Collections.ArrayList); Items = (New-Object System.Collections.ArrayList)
     Unique = $false; Roles = @{ 5 = @(1073741829); 7 = @(1073741826) }; CT = $ct; WriteSecurity = 1 }
-  $null = $global:F.Lists.Add($l)
-  return $l
+  $null = $global:F.Lists.Add($l); return $l
 }
 # Find a fake list by id. Takes the id text; returns the list or throws a 404 message.
 function Get-FakeList([string]$Id) { $h = @($global:F.Lists | Where-Object { $_.Id -eq $Id }); if (-not $h.Count) { throw ('FAKE 404 list ' + $Id) }; return $h[0] }
@@ -64,12 +61,9 @@ function Disconnect-PnPOnline { [CmdletBinding()] param() $global:F.Connected = 
 function New-PnPList {
   [CmdletBinding()] param([string]$Title, [string]$Template, [string]$Url)
   if (@($global:F.Lists | Where-Object { $_.Title -eq $Title -or $_.Folder -eq ($Url -split '/')[-1] }).Count) { throw 'FAKE 500: list exists' }
-  $global:F.Created++
-  $null = Add-SiteList $Title $Url $(if ($Template -eq 'DocumentLibrary') { 101 } else { 100 })
-}
+  $global:F.Created++; $null = Add-SiteList $Title $Url $(if ($Template -eq 'DocumentLibrary') { 101 } else { 100 }) }
 # Fake Get-PnPContext: the CSOM route (GetById on lists, content types and views) that gives an object whose property can be set.
 function Get-PnPContext {
-  # The CSOM route: GetById(list).ContentTypes.GetById(id) and .Views.GetById(guid) give an object whose property can be set.
   [CmdletBinding()] param()
   $lists = [pscustomobject]@{}
   $lists | Add-Member -MemberType ScriptMethod -Name GetById -Value {
@@ -91,38 +85,28 @@ function Get-PnPContext {
 # Fake Add-PnPFile: puts a file name into the library with that folder name; counts the upload.
 function Add-PnPFile {
   [CmdletBinding()] param([string]$Path, [string]$Folder)
-  $lib = @($global:F.Lists | Where-Object { $_.Folder -eq $Folder })
-  if (-not $lib.Count) { throw 'FAKE 404 folder' }
-  $null = $lib[0].Files.Add((Split-Path -Leaf $Path)); $global:F.Uploads++
-}
+  $lib = @($global:F.Lists | Where-Object { $_.Folder -eq $Folder }); if (-not $lib.Count) { throw 'FAKE 404 folder' }
+  $null = $lib[0].Files.Add((Split-Path -Leaf $Path)); $global:F.Uploads++ }
 # Fake Add-PnPListItem: adds a row to a list by title and returns it; runs the OnAdd hook when set. R35: the row is yours
 # (author and last editor: you are user 11).
 function Add-PnPListItem {
   [CmdletBinding()] param([string]$List, [hashtable]$Values)
-  $l = Get-FakeListByTitle $List
-  $global:F.RowId++
+  $l = Get-FakeListByTitle $List; $global:F.RowId++
   $item = @{ Id = $global:F.RowId; Title = ''; ProbeTest = ''; ProbeWay = ''; ProbeResult = ''; ProbeDetail = ''; Author = [pscustomobject]@{ LookupId = 11 }; Editor = [pscustomobject]@{ LookupId = 11 } }
   foreach ($k in $Values.Keys) { $item[$k] = $Values[$k] }
-  $null = $l.Items.Add($item)
-  if ($global:F.OnAdd) { & $global:F.OnAdd $l $item }
-  return $item
-}
+  $null = $l.Items.Add($item); if ($global:F.OnAdd) { & $global:F.OnAdd $l $item }
+  return $item }
 # Fake Get-PnPListItem: returns the rows of a list by title; counts the read and runs the OnGet hook when set.
 function Get-PnPListItem {
   [CmdletBinding()] param([string]$List, [string[]]$Fields, [int]$PageSize)
-  $global:F.Gets++
-  if ($global:F.OnGet) { & $global:F.OnGet }
-  return @((Get-FakeListByTitle $List).Items)
-}
+  $global:F.Gets++; if ($global:F.OnGet) { & $global:F.OnGet }
+  return @((Get-FakeListByTitle $List).Items) }
 # Fake Add-PnPView: adds a view to a list by title and counts it.
 function Add-PnPView {
   [CmdletBinding()] param([string]$List, [string]$Title, [string[]]$Fields)
-  $l = Get-FakeListByTitle $List
-  $global:F.ViewsMade++
+  $l = Get-FakeListByTitle $List; $global:F.ViewsMade++
   $v = [pscustomobject]@{ Id = [guid]::NewGuid().ToString(); Title = $Title; ListId = $l.Id; CustomFormatter = '' }
-  $v | Add-Member -MemberType ScriptMethod -Name Update -Value { }
-  $null = $global:F.Views.Add($v)
-}
+  $v | Add-Member -MemberType ScriptMethod -Name Update -Value { }; $null = $global:F.Views.Add($v) }
 # Fake Add-PnPGroupMember: adds a known user (by login name) to a group; throws when refused or unknown.
 function Add-PnPGroupMember {
   [CmdletBinding()] param([string]$LoginName, $Group)
@@ -138,10 +122,8 @@ function Add-PnPGroupMember {
 function Remove-PnPList {
   [CmdletBinding()] param([string]$Identity, [switch]$Recycle, [switch]$Force)
   if (-not $Recycle) { throw 'FAKE: the script must use -Recycle (never a permanent delete)' }
-  $l = Get-FakeList $Identity
-  $global:F.Lists.Remove($l); $null = $global:F.Recycled.Add($l.Title)
-  return [pscustomobject]@{ RecycleBinItemId = [guid]::NewGuid().ToString() }
-}
+  $l = Get-FakeList $Identity; $global:F.Lists.Remove($l); $null = $global:F.Recycled.Add($l.Title)
+  return [pscustomobject]@{ RecycleBinItemId = [guid]::NewGuid().ToString() } }
 # Answer a REST GET of the fake site. Takes the path after /_api/ (no query); returns JSON text, or throws a 404 message.
 function Get-FakeRestAnswer([string]$path) {
   if ($path -eq 'web/lists') {
@@ -269,7 +251,7 @@ function Invoke-T21([string]$Part, [hashtable]$Extra = @{}, [string]$Label = '')
   $Extra2 = @{} + $Extra; if ($Label) { $Extra2['Label'] = $Label }
   $global:LASTEXITCODE = 0
   $out = & $script -Id 'tester01' -Part $Part -NoPause -NoLaunch -TestDir $t21 @Extra2 *>&1 | ForEach-Object { [string]$_ }
-  $file = Join-Path $t21 ('90161Z-T21-probe-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r9.txt')
+  $file = Join-Path $t21 ('90161Z-T21-probe-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r10.txt')
   $r = @{ Code = $LASTEXITCODE; Out = @($out); Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
   if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file }
   return $r
@@ -280,7 +262,7 @@ $nowParts = New-Object System.Collections.Generic.List[string]; $nowInFile = New
 # and a result file that holds one (it must hold none). Takes the run hashtable; returns nothing.
 function Note([hashtable]$R) {
   [void]$allText.AppendLine($R.Text); [void]$allText.AppendLine($R.File)
-  $p = @($R.Out | Where-Object { $_ -match '^TASK T21 probe r9, part (\w+)' } | ForEach-Object { $Matches[1] })
+  $p = @($R.Out | Where-Object { $_ -match '^TASK T21 probe r10, part (\w+)' } | ForEach-Object { $Matches[1] })
   if (@($R.Out | Where-Object { $_ -match '^NOW \S' }).Count -and $p.Count) { $nowParts.Add($p[0]) }
   if ($R.File -match '(?m)^NOW ') { $nowInFile.Add([string]$p) }
 }
@@ -422,7 +404,7 @@ $global:F.EditAllUsers = @(31); $r = Invoke-T21 'Office'
 Test-That 'Office with a person who edits every row already: FAIL, not added, no state file' ($r.Text -match 'o5-person FAIL the second person can edit every row already' -and -not (@($global:F.GroupUsers[9]) -contains 31) -and -not (Test-Path -LiteralPath $officeState)) $r.Text
 New-Site; $r = Invoke-T21 'Office'
 Test-That 'Office without the list: STOPPED and exit 1' ($r.Code -eq 1 -and $r.Text -match 'STOPPED: LIST not found') $r.Text
-$t20Text = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r3.ps1') -Raw; $probeText = Get-Content -LiteralPath $script -Raw
+$t20Text = (Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T20-provision-lists-r4.ps1') -Raw) + (Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T20-access-r4.ps1') -Raw); $probeText = Get-Content -LiteralPath $script -Raw
 Test-That 'Office: the group and level names are the ones T20 r2 makes' ($t20Text -match "(?m)^\`$OfficeGroup = 'PFM Office'$" -and $t20Text -match "(?m)^\`$OfficeLevel = 'PFM Office Edit All Items'$" -and $probeText -match "(?m)^\`$script:OfficeGroup = 'PFM Office'$" -and $probeText -match "(?m)^\`$script:OfficeLevel = 'PFM Office Edit All Items'$")
 
 # ---- Run ----
@@ -480,9 +462,7 @@ Test-That 'Read: HEALTH in the exact form, from the row after the command' ($tl[
 Test-That 'Read: T4 counts rows by other people (a title with a space counts; own rows do not)' ($tl[1] -eq 'T4 PASSED: a list form by a second person (Visitors member)=PASS (rows=2; T4a rows=1; person in the Visitors group=not tried (no state file))') $tl[1]
 Test-That 'Read: BUTTON counts the rows titled BTN-FLOW (the button flow of the solution), not the old hand-made BTN-HAND' ($tl[2] -match '^BUTTON PASSED: b a view button starts a flow=PASS \(rows titled BTN-FLOW=1\)$') $tl[2]
 Test-That 'Read: one RESULT line per test with the separate word PASS (the runner counts it)' ((@($r.Out | Where-Object { $_ -match '^RESULT (HEALTH|T4|BUTTON) PASS$' })).Count -eq 3) $r.Text
-$env:T21_TEST_ADDRESS = $fakeAddr
-$null = Invoke-T21 'Person'
-Remove-Item Env:T21_TEST_ADDRESS
+$env:T21_TEST_ADDRESS = $fakeAddr; $null = Invoke-T21 'Person'; Remove-Item Env:T21_TEST_ADDRESS
 $r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r
 Test-That 'Read: T4 names that the person was added to Visitors' ($r.Text -match 'person in the Visitors group=yes\)') $r.Text
 
@@ -512,9 +492,7 @@ Test-That 'Read: no command row: no wait, HEALTH says to run the health step' ($
 
 # ---- Clean ----
 New-Site; $null = Invoke-T21 'Make'
-$env:T21_TEST_ADDRESS = $fakeAddr
-$null = Invoke-T21 'Person'
-Remove-Item Env:T21_TEST_ADDRESS
+$env:T21_TEST_ADDRESS = $fakeAddr; $null = Invoke-T21 'Person'; Remove-Item Env:T21_TEST_ADDRESS
 Test-That 'Clean setup: the person is in the group and the state file exists' ((@($global:F.GroupUsers[7]) -contains 31) -and (Test-Path -LiteralPath $state))
 $r = Invoke-T21 'Clean'; Note $r
 Test-That 'Clean: removes the person by the saved number, deletes the state file, recycles the 2 objects' ($r.Code -eq 0 -and -not (@($global:F.GroupUsers[7]) -contains 31) -and (@($global:F.GroupUsers[7]) -join ',') -eq '3,4' -and -not (Test-Path -LiteralPath $state) -and ($global:F.Recycled -join '|') -eq '90161Z Probe|90161Z Probe Files' -and $r.Out[-1] -eq 'PROBE Clean done: passed=3 failed=0') $r.Text
@@ -525,9 +503,7 @@ $r = Invoke-T21 'Clean'; Note $r
 Test-That 'Clean twice: nothing more removed, still exit 0' ($global:F.Recycled.Count -eq 2 -and $r.Code -eq 0 -and $r.Text -match 'no second person on file' -and $r.Out[-1] -eq 'PROBE Clean done: passed=3 failed=0')
 
 New-Site; $null = Invoke-T21 'Make'
-$env:T21_TEST_ADDRESS = $fakeAddr
-$null = Invoke-T21 'Person'
-Remove-Item Env:T21_TEST_ADDRESS
+$env:T21_TEST_ADDRESS = $fakeAddr; $null = Invoke-T21 'Person'; Remove-Item Env:T21_TEST_ADDRESS
 $global:F.RemoveRefused = $true
 $r = Invoke-T21 'Clean'; Note $r
 Test-That 'Clean: when the removal is refused, it says so, keeps the state file and still recycles both objects' ($r.Code -eq 0 -and $r.Text -match 'c1-person FAIL the second person could not be removed' -and (Test-Path -LiteralPath $state) -and $global:F.Recycled.Count -eq 2 -and (@($global:F.GroupUsers[7]) -contains 31) -and $r.Out[-1] -eq 'PROBE Clean done: passed=2 failed=1') $r.Text
@@ -548,16 +524,40 @@ Test-That 'Clean with -Label first writes its own result file name' ($r.Code -eq
 # ---- Masking over everything printed and written ----
 $all = $allText.ToString()
 Test-That 'no output line or result file holds the fake site address, host, site name, DODID or any address' ($all.Length -gt 1000 -and $all -notmatch 'fakehost|FakeWing|tester01|example\.test|second\.person|member\.person|nobody@|@fake' -and $all -notmatch 'FAKE NAME') ''
+# ---- Read r10 (PFM 19 Nov 26): T4 through list-level Contribute; the FAIL text no longer names way C ----
+New-Site; $null = Invoke-T21 'Make'
+$lst = Get-Probe '90161ZProbe'
+Add-Row $lst 'T4a' 12
+$r = Invoke-T21 'Read' @{ PollSeconds = 1 }; Note $r
+Test-That 'Read r10: a row by a second person: T4 PASSED through list-level Contribute' ($r.Text -match 'T4 PASSED: a list form by a second person \(Visitors member\)=PASS \(rows=1; T4a rows=1' -and $r.Text -match '(?m)^RESULT T4 PASS$') $r.Text
+New-Site; $null = Invoke-T21 'Make'
+$env:T21_TEST_ADDRESS = $fakeAddr; $null = Invoke-T21 'Person'; Remove-Item Env:T21_TEST_ADDRESS
+$r = Invoke-T21 'Read' @{ PollSeconds = 1; WaitMinutes = 0.03 }; Note $r
+Test-That 'Read r10 (R35): a second person but no add-a-row step: T4 NOT RUN, no T4 RESULT line' ($r.Text -match 'T4 NOT RUN: this round did not ask the second person to add a row' -and $r.Text -notmatch '(?m)^RESULT T4 ') $r.Text
+# Ask (R36): no sign-in, T4Asked=yes in the state file (the other lines kept, a second run adds no second line), the link step.
+$global:F.Connected = $false; $rests = $global:F.Rests
+$r = Invoke-T21 'Ask'; Note $r
+$stTxt = Get-Content -LiteralPath $state -Raw
+Test-That 'Ask: no sign-in, T4Asked=yes added, the 3 numbers kept, link note' ($r.Code -eq 0 -and -not $global:F.Connected -and $global:F.Rests -eq $rests -and $stTxt -match '(?m)^T4Asked=yes\r?$' -and $stTxt -match '(?m)^UserId=31\r?$' -and $stTxt -match '(?m)^WasMember=no\r?$' -and $r.Text -match 'k2-link INFO the link of the new row form is on the clipboard=no \(test run\)' -and $r.Out[-1] -eq 'PROBE Ask done: passed=1 failed=0' -and $r.File -match 'PROBE Ask done') $r.Text
+$null = Invoke-T21 'Ask'
+Test-That 'Ask twice: one T4Asked line' (([regex]::Matches((Get-Content -LiteralPath $state -Raw), 'T4Asked=')).Count -eq 1)
+$r = Invoke-T21 'Read' @{ PollSeconds = 1; WaitMinutes = 0.03 }; Note $r
+Test-That 'Read r10: no row by the second person: T4 FAILED with a plain reason about Contribute, no way C' ($r.Text -match 'T4 FAILED: .*=FAIL \(rows=0' -and $r.Text -match 'does not hold Contribute on this list' -and $r.Text -notmatch 'way C|flow writes the row') $r.Text
+
+Remove-Item -LiteralPath $state
+$r = Invoke-T21 'Ask'; Note $r
+Test-That 'Ask without a second person on file: FAIL, no state file written' ($r.Code -eq 0 -and $r.Text -match 'k1-asked FAIL no second person on file: run the part Person first' -and -not (Test-Path -LiteralPath $state) -and $r.Out[-1] -eq 'PROBE Ask done: passed=0 failed=1') $r.Text
+
 # ---- A missing module ----
 # The main file loads its modules by name from its own folder; one that is missing stops the part with a plain line.
 $copy = Join-Path $work 'copy'
 $null = New-Item -ItemType Directory -Path $copy -Force
-Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r9.ps1' | Where-Object { $_.Name -ne '90161Z-T21-read-r9.ps1' } | Copy-Item -Destination $copy
-$out = & (Join-Path $copy '90161Z-T21-probe-r9.ps1') -Id 'tester01' -Part Run -NoPause -NoLaunch -TestDir $t21 *>&1 | ForEach-Object { [string]$_ }
-Test-That 'a missing module: STOPPED with its file name, exit 1' ($LASTEXITCODE -eq 1 -and (@($out) -join "`n") -match 'STOPPED: MODULE missing: 90161Z-T21-read-r9\.ps1') (@($out) -join "`n")
+Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r10.ps1' | Where-Object { $_.Name -ne '90161Z-T21-read-r10.ps1' } | Copy-Item -Destination $copy
+$out = & (Join-Path $copy '90161Z-T21-probe-r10.ps1') -Id 'tester01' -Part Run -NoPause -NoLaunch -TestDir $t21 *>&1 | ForEach-Object { [string]$_ }
+Test-That 'a missing module: STOPPED with its file name, exit 1' ($LASTEXITCODE -eq 1 -and (@($out) -join "`n") -match 'STOPPED: MODULE missing: 90161Z-T21-read-r10\.ps1') (@($out) -join "`n")
 # ---- The button flow ID (R34: written by scripts/build_flow_solution.py, no export file) ----
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$zipPath = Join-Path $Root 'flow/solution/90161Z-T24-full-flows-r4.zip'
+$zipPath = Join-Path $Root 'flow/solution/90161Z-T24-full-flows-r5.zip'
 $za = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
 try { $rd = New-Object System.IO.StreamReader(@($za.Entries | Where-Object { $_.FullName -eq 'customizations.xml' })[0].Open()); $cust = $rd.ReadToEnd(); $rd.Dispose() } finally { $za.Dispose() }
 $wfName = $(if ($buttonId -and $cust -match ('WorkflowId="\{' + $buttonId + '\}" Name="([^"]+)"')) { $Matches[1] } else { '' })
@@ -565,17 +565,17 @@ Test-That 'button flow ID: the look module names the workflow "90161Z T21 Probe 
 # A look module whose block holds no ID: View fails with a plain line and makes no view (a copy, the block emptied).
 $copy2 = Join-Path $work 'copy2'
 $null = New-Item -ItemType Directory -Path $copy2 -Force
-Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r9.ps1' | Copy-Item -Destination $copy2
-$lk = Join-Path $copy2 '90161Z-T21-look-r9.ps1'
+Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r10.ps1' | Copy-Item -Destination $copy2
+$lk = Join-Path $copy2 '90161Z-T21-look-r10.ps1'
 Set-Content -LiteralPath $lk -Value ((Get-Content -LiteralPath $lk -Raw) -replace "(?m)^\`$ButtonFlowId = '[^']*'", "`$ButtonFlowId = ''") -Encoding UTF8
 New-Site; $null = Invoke-T21 'Make'
-$out = @(& (Join-Path $copy2 '90161Z-T21-probe-r9.ps1') -Id 'tester01' -Part View -NoPause -NoLaunch -TestDir $t21 *>&1 | ForEach-Object { [string]$_ })
+$out = @(& (Join-Path $copy2 '90161Z-T21-probe-r10.ps1') -Id 'tester01' -Part View -NoPause -NoLaunch -TestDir $t21 *>&1 | ForEach-Object { [string]$_ })
 $code = $LASTEXITCODE; $txt = $out -join "`n"
 $ok = $code -eq 0 -and $txt -match 'VIEW FAILED: .*flow ID known to the script=no' -and $global:F.ViewsMade -eq 0
 Test-That 'View with an empty button-flow-id block: VIEW FAILED, exit 0, no view made' ($ok -and $out[-1] -eq 'PROBE View done: passed=0 failed=2') $txt
 # ---- NOW lines (R34, N1): before each action that takes time; not result lines ----
 $parts = @($nowParts | Sort-Object -Unique) -join ','
-Test-That 'NOW: every part that signs in or writes prints NOW lines' ($parts -eq 'Clean,Form,Look,Make,Office,Open,Person,Read,Run,View') $parts
+Test-That 'NOW: every part that signs in or writes prints NOW lines' ($parts -eq 'Ask,Clean,Form,Look,Make,Office,Open,Person,Read,Run,View') $parts
 Test-That 'NOW: no result file holds a NOW line' ($nowInFile.Count -eq 0) ($nowInFile -join ',')
 $r = Invoke-T21 'Run'
 $nowLines = @($r.Out | Where-Object { $_ -match '^NOW ' })
@@ -585,8 +585,8 @@ $before = [array]::IndexOf($r.Out, $nowLines[-1]) -lt $first
 $uncounted = $r.Out[-1] -eq 'PROBE Run done: passed=0 failed=0' -and $r.File -notmatch 'NOW '
 Test-That 'NOW: plain present-tense text, printed before the result lines, not counted' ($plain -and $before -and $uncounted) ($nowLines -join "`n")
 # ---- The script text (the main file and its modules) ----
-$src = (@(Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r9.ps1' | Sort-Object Name | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw })) -join "`n"
-$nFiles = @(Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r9.ps1').Count
+$src = (@(Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r10.ps1' | Sort-Object Name | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw })) -join "`n"
+$nFiles = @(Get-ChildItem -LiteralPath (Split-Path -Parent $script) -Filter '90161Z-T21-*-r10.ps1').Count
 Test-That 'script: the main file and its 6 modules are there (no export module, R34; office module, R35)' ($nFiles -eq 7 -and $src -notmatch 'Invoke-ExportPart|button-flow-r5')
 Test-That 'script: no question in RADE (Read-Host only behind RADE_CONTRACT), no permanent delete, no result file for Open' ($src -match 'if \(-not \$NoPause -and -not \$env:RADE_CONTRACT\)' -and $src -notmatch 'Remove-PnPList[^\n]*(?<!-Recycle) -Force -ErrorAction Stop\s*$' -and $src -match "-ne 'Open'")
 $bad = @(($src -split "`n") | Where-Object { $_ -match '\$(personAddr|loginName)\b' -and $_ -match 'Set-Content|Add-Content|Out-File|Write-Host|Write-Output|Write-Error|Write-Warning|Write-Verbose|\$lines\.Add|Add-Item|Add-Test|Tee-Object|Export-|Start-Transcript|\| Out-|>>|\bthrow\b' })

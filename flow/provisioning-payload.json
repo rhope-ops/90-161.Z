@@ -1569,6 +1569,19 @@
      "__metadata": {
       "type": "SP.XmlSchemaFieldCreationInformation"
      },
+     "SchemaXml": "<Field Name=\"ClosedDate\" StaticName=\"ClosedDate\" DisplayName=\"Closed Date\" Required=\"FALSE\" Description=\"Date the action closed. A row with a Closed Date is a closed action: F04 and the stage counts leave it out.\" Type=\"DateTime\" Format=\"DateOnly\"></Field>",
+     "Options": 24
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "uri": "_api/web/lists/getbytitle('PFMPublications')/fields/createfieldasxml",
+   "body": {
+    "parameters": {
+     "__metadata": {
+      "type": "SP.XmlSchemaFieldCreationInformation"
+     },
      "SchemaXml": "<Field Name=\"StatusNotes\" StaticName=\"StatusNotes\" DisplayName=\"Status Notes\" Required=\"FALSE\" Type=\"Note\" NumLines=\"6\" AppendOnly=\"TRUE\"></Field>",
      "Options": 24
     }
@@ -2559,7 +2572,7 @@
      "__metadata": {
       "type": "SP.XmlSchemaFieldCreationInformation"
      },
-     "SchemaXml": "<Field Name=\"EventType\" StaticName=\"EventType\" DisplayName=\"Event Type\" Required=\"TRUE\" Type=\"Choice\"><CHOICES><CHOICE>Status Changed</CHOICE><CHOICE>Endorsement Requested</CHOICE><CHOICE>Reminder Sent</CHOICE><CHOICE>Endorsement Received</CHOICE><CHOICE>Status Report E-Mailed</CHOICE><CHOICE>Other</CHOICE><CHOICE>Number Assigned</CHOICE><CHOICE>Notice Sent</CHOICE><CHOICE>Waiver Renewal Due</CHOICE><CHOICE>Recommendation Received</CHOICE><CHOICE>Review Requested</CHOICE></CHOICES></Field>",
+     "SchemaXml": "<Field Name=\"EventType\" StaticName=\"EventType\" DisplayName=\"Event Type\" Required=\"TRUE\" Type=\"Choice\"><CHOICES><CHOICE>Status Changed</CHOICE><CHOICE>Endorsement Requested</CHOICE><CHOICE>Reminder Sent</CHOICE><CHOICE>Endorsement Received</CHOICE><CHOICE>Status Report E-Mailed</CHOICE><CHOICE>Other</CHOICE><CHOICE>Number Assigned</CHOICE><CHOICE>Notice Sent</CHOICE><CHOICE>Waiver Renewal Due</CHOICE><CHOICE>Recommendation Received</CHOICE><CHOICE>Review Requested</CHOICE><CHOICE>Waiver Warning</CHOICE></CHOICES></Field>",
      "Options": 24
     }
    }

@@ -26,9 +26,11 @@ for f in (ROOT / "schemas" / "lists").glob("*.json"):
 RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName", "environmentName", "run"}
 RUNTIME_ACTIONS = {"Failed_actions", "Failure_lines", "E-mail_the_failure"}   # only these may read them (review, 14 Nov 26)
 all_cols = set().union(*schemas.values()) | BUILTIN
-env_list = {B.ENV_KEY[s]: default for s, _, default in B.ENV if s.startswith("pfm_List")}
+# R36 (README choice 11): a list variable holds the list GUID; its zip default is a placeholder naming the list title (B.LIST_TITLES).
+env_list = {B.ENV_KEY[s]: B.LIST_TITLES[s] for s, _, _ in B.ENV if s.startswith("pfm_List")}
+if set(B.LIST_TITLES) != {s for s, _, _ in B.ENV if s.startswith("pfm_List")} or len(B.LIST_TITLES) != 9: bad(f"builder: LIST_TITLES must name the 9 list variables: {sorted(B.LIST_TITLES)}")
 for key, title in env_list.items():
-    if title not in schemas: bad(f"environment variable {key}: default '{title}' is not a list title in schemas/lists")
+    if title not in schemas: bad(f"environment variable {key}: list '{title}' is not a list title in schemas/lists")
 
 def walk_actions(actions):
     """Walk a flow's actions depth first, including the actions inside "actions" and "else" blocks. Takes the actions dict; yields (name, action)."""
@@ -59,11 +61,11 @@ def expr_ok(s, where):
 
 counts = dict(defs=0, actions=0, columns=0, strings=0)
 # R34 (fallback A, the PFM 18 Nov 26): the T21 probe flows Health and Button are flows of the solution, on the probe list that the
-# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r9.ps1 and its make module).
+# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r10.ps1 and its make module).
 PROBE_DEFS = {"90161Z-T21-probe-health-r6.json", "90161Z-T21-probe-button-r6.json"}
 PROBE_LIST, PROBE_COLS = "90161Z Probe", {"Title", "ProbeTest", "ProbeWay", "ProbeResult", "ProbeDetail"}
 connrefs_declared = set()
-cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r4.zip"
+cz = ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r5.zip"
 zf = zipfile.ZipFile(cz)
 for n in zf.namelist():
     if n.endswith(".xml"): minidom.parseString(zf.read(n))
@@ -150,9 +152,9 @@ for k, v in MOVED_KEYS.items():
     if "DAFMAN" not in r["SettingNotes"] and "PFM 2026-11-1" not in r["SettingNotes"]: bad(f"PFMSettings.json seed {k}: SettingNotes cite no source")
 steps = json.loads((ROOT / "schemas" / "lists" / "PFMProcessSteps.json").read_text(encoding="utf-8"))["seed"]
 if [s["TargetBusinessDays"] for s in steps if s["StepNumber"] == 6] != [20]: bad("PFMProcessSteps.json: stage 6 TargetBusinessDays must be 20 (PFM 19 Nov 26)")
-# R28 (PFM 17 Nov 26): F01, F02 and F04 read PFM Settings too, so all six flows start the same way.
-r27_defs = [s for s in sorted(B.DEFS.glob("*.json")) if re.match(r"90161Z-F0[1-6]-", s.name)]
-if len(r27_defs) != 6: bad(f"expected the six flow defs F01 to F06, found {[s.name for s in r27_defs]}")
+# R28 (PFM 17 Nov 26): F01, F02 and F04 read PFM Settings too, so all six flows start the same way; R36: F07 and F08 too.
+r27_defs = [s for s in sorted(B.DEFS.glob("*.json")) if re.match(r"90161Z-F0[1-8]-", s.name)]
+if len(r27_defs) != 8: bad(f"expected the eight flow defs F01 to F08, found {[s.name for s in r27_defs]}")
 for src in r27_defs:
     text = src.read_text(encoding="utf-8")
     if "[TEST]" in text: bad(f"{src.name}: still holds '[TEST]' (PFM 16 Nov 26: no subject or title prefix)")
@@ -268,25 +270,45 @@ def check_probe_flows(zz, cust_xml, zname):
         if refs != {("shared_sharepointonline", sp)}: bad(f"{zname} {n}: a probe flow must use only the SharePoint reference {sp}: {sorted(refs)}")
     names = set(re.findall(r'connectionreferencelogicalname="([^"]+)"', cust_xml))
     if names != {sp, B.conn_logical("shared_office365")}: bad(f"{zname}: connection references {sorted(names)}; an upgrade must add none")
-    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r9.ps1").read_text(encoding="utf-8")
+    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r10.ps1").read_text(encoding="utf-8")
     bid = B.guid("workflow", "90161Z-T21-probe-button").lower()
     if f"$ButtonFlowId = '{bid}'" not in look or f'WorkflowId="{{{bid}}}"' not in cust_xml: bad(f"{zname}: the T21 look script does not name the button flow's workflow ID {bid}")
 
+def check_list_placeholders(zz, zname):
+    """R36 (README choice 11): every list variable's default is the placeholder of its list, in the variable file and in each flow's
+    parameters, so the T24 task script (r6, module zip) can write the GUIDs; it finds them by the same mark and names the r5 zip.
+
+    Args:
+        zz: the open full solution zip.
+        zname: the zip name for the messages.
+    """
+    for s, title in B.LIST_TITLES.items():
+        x = zz.read(f"environmentvariabledefinitions/{s}/environmentvariabledefinition.xml").decode("utf-8")
+        if f"<defaultvalue>{B.list_placeholder(title)}</defaultvalue>" not in x: bad(f"{zname} {s}: default is not the placeholder {B.list_placeholder(title)}")
+    for n in zz.namelist():
+        if not n.startswith("Workflows/"): continue
+        for k, v in json.loads(zz.read(n).decode("utf-8"))["properties"]["definition"]["parameters"].items():
+            s = v.get("metadata", {}).get("schemaName", "")
+            if s in B.LIST_TITLES and v["defaultValue"] != B.list_placeholder(B.LIST_TITLES[s]): bad(f"{zname} {n}: {k} default is not the placeholder")
+    t24 = (ROOT / "scripts" / "gov" / "90161Z-T24-zip-r6.ps1").read_text(encoding="utf-8")   # T24 r6, module zip (part 0)
+    if f"$ListGuidMark = '{B.LIST_GUID_MARK}'" not in t24: bad(f"T24 r6 module zip: $ListGuidMark is not the builder's mark {B.LIST_GUID_MARK}")
+    if f"'{zname}'" not in t24: bad(f"T24 r6 module zip does not name the solution zip {zname}")
 
 # R28: the full solution (R28, PFM 17 Nov 26: "the full solution with every flow On") holds F01 to F06, every flow On (StateCode 1), the
-# same unique name as the slice (so it upgrades it), and every environment variable its flows read.
+# same unique name as the slice (so it upgrades it), and every environment variable its flows read. R36 (r5): F07 and F08 join, so 10 flows.
 with zipfile.ZipFile(cz) as zz:
     c, sol = zz.read("customizations.xml").decode("utf-8"), zz.read("solution.xml").decode("utf-8")
-    if len(re.findall(r'<RootComponent type="29"', sol)) != 8: bad(f"{cz.name}: must hold exactly 8 flows: F01 to F06 and the 2 T21 probe flows (R34)")
-    if c.count("<StateCode>1</StateCode>") != 8 or "<StateCode>0</StateCode>" in c: bad(f"{cz.name}: every flow must import On")
+    if len(re.findall(r'<RootComponent type="29"', sol)) != 10: bad(f"{cz.name}: must hold exactly 10 flows: F01 to F08 and the 2 T21 probe flows (R34, R36)")
+    if c.count("<StateCode>1</StateCode>") != 10 or "<StateCode>0</StateCode>" in c: bad(f"{cz.name}: every flow must import On")
     if "<UniqueName>PFM90161Z</UniqueName>" not in sol: bad(f"{cz.name}: unique name must be PFM90161Z (the slice's), so the import upgrades it")
     flows_in_zip = sorted(re.findall(r"Workflows/90161ZF(\d\d)[A-Za-z0-9]+-", "\n".join(zz.namelist())))
-    if flows_in_zip != ["01", "02", "03", "04", "05", "06"]: bad(f"{cz.name}: flows in the zip {flows_in_zip}")
+    if flows_in_zip != ["01", "02", "03", "04", "05", "06", "07", "08"]: bad(f"{cz.name}: flows in the zip {flows_in_zip}")
     envs_full = {n.split("/")[1] for n in zz.namelist() if n.startswith("environmentvariabledefinitions/")}
     if envs_full != {s for s, _, _ in B.ENV}: bad(f"{cz.name}: environment variables {sorted(envs_full)} differ from the list in the builder")
     probe_in_zip = sorted(re.findall(r"Workflows/(90161ZT21Probe(?:Health|Button)r\d+)-", "\n".join(zz.namelist())))
     if probe_in_zip != ["90161ZT21ProbeButtonr6", "90161ZT21ProbeHealthr6"]: bad(f"{cz.name}: probe flows in the zip {probe_in_zip}")
     check_probe_flows(zz, c, cz.name)
+    check_list_placeholders(zz, cz.name)
     slice_sol = zipfile.ZipFile(ROOT / "flow" / "solution" / "90161Z-T18-slice1-flows-r8.zip").read("solution.xml").decode("utf-8")
     for wid in re.findall(r'<RootComponent type="29" id="\{([^}]+)\}"', slice_sol):
         if f'id="{{{wid}}}"' not in sol: bad(f"{cz.name}: slice flow {wid} is not in the full solution (the import would not upgrade it)")
@@ -299,7 +321,6 @@ with zipfile.ZipFile(cz) as zz:
 T21_EXPECT = {"90161Z-T21-probe-r5.zip": (1, 2)}
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
 T21_HOSTS = ALLOWED_HOSTS   # Graph calls use relative URIs (/v1.0/...): the DoD tenant has its own Graph host, so no host is named
-
 def check_levels(actions, where, outer=()):
     """runAfter names must be siblings (same level); names are unique across the flow."""
     for name, a in actions.items():
@@ -313,7 +334,6 @@ def check_levels(actions, where, outer=()):
                     bad(f"{where}: {name} writes a row but runs only after {dep} {statuses}; capture every status")
         for sub in (a.get("actions", {}), a.get("else", {}).get("actions", {})):
             check_levels(sub, where)
-
 # R28 (full solution, task T24): the six flow defs share one shape (Try scope, settings read, Flows paused stop, failure e-mail), every
 # runAfter name is a sibling, every expression names an action that exists, and no variable is initialized inside the scope.
 for src in r27_defs:
@@ -382,7 +402,6 @@ if f05_open["actions"]["Get_endorsement_rows"]["inputs"]["parameters"].get("$fil
 # under 247 characters (from 247 on, that key was the same for every office, so one row hid all the others).
 PUB = "coalesce(triggerBody()?['Title'], '')"
 
-
 def f05_where(title_list):
     """The exists check (Query "where") that F05 r5 must use for one title list. Takes the Compose name; returns the text."""
     off = "coalesce(item()?['Title'], '')"
@@ -390,12 +409,10 @@ def f05_where(title_list):
     old = f"and(less(length({PUB}), 247), contains(outputs('{title_list}'), concat('|', take(concat({PUB}, ' - ', {off}), 250), '|')))"
     return f"@not(or({new}, {old}))"
 
-
 def f05_title(loop):
     """The row title F05 r5 must write in one Foreach loop. Takes the loop name; returns the text."""
     off = f"coalesce(items('{loop}')?['Title'], '')"
     return f"@take(concat(take({PUB}, max(0, sub(247, length({off})))), ' - ', {off}), 250)"
-
 
 s6_acts = f05_open["actions"]["If_step_6"]["actions"]
 ready = s6_acts["If_formal_rows_added"]["else"]["actions"]["If_ready_for_Legal"]["actions"]
@@ -410,6 +427,79 @@ for loop, cond, stage, rows in (("Create_formal_rows", "If_office_has_endorser_F
     for p in [a["inputs"]["parameters"] for a in list(br["actions"].values()) + list(br["else"]["actions"].values())]:
         if p.get("item/CoordinationStage/Value") != stage or p.get("item/Title") != f05_title(loop):
             bad(f"F05 {loop}: a {stage} row must have the title the exists check reads (office kept): {p.get('item/Title')}")
+# R36 (PFM 19 Nov 26, README F05 point a): F07 watches PFM Endorsements every minute, runs only for a row with an answer (trigger
+# condition), and at step 6 of an open action writes only the publication row's own Title back (F01 logs nothing, F06 does nothing).
+f07 = json.loads(next(s for s in r27_defs if "-F07-" in s.name).read_text(encoding="utf-8"))
+t7 = f07["triggers"]["When_an_item_is_created_or_modified"]
+if t7["recurrence"] != {"frequency": "Minute", "interval": 1} or t7["inputs"]["parameters"]["table"] != "@parameters('List PFM Endorsements (pfm_ListEndorsements)')":
+    bad(f"F07: the trigger must check PFM Endorsements every minute: {t7}")
+if t7.get("runtimeConfiguration") != {"concurrency": {"runs": 1}}: bad("F07: one run at a time, as F05")
+ANSWERED = "@not(equals(coalesce(triggerBody()?['EndorsementStatus']?['Value'], 'Not Started'), 'Not Started'))"
+if t7.get("conditions") != [{"expression": ANSWERED}]: bad(f"F07: the trigger condition must pass only a row with an answer: {t7.get('conditions')}")
+open7 = f07["actions"]["Try"]["actions"]["If_action_open"]
+if "'On Hold', 'Cancelled', 'Complete'" not in json.dumps(open7["expression"]): bad("F07: no touch for an action that is On Hold, Cancelled or Complete")
+STEP6_ADJ = {"and": [{"equals": ["@body('Get_process_step')?['StepNumber']", 6]}, {"equals": ["@coalesce(body('Get_publication')?['AllCommentsAdjudicated'], false)", True]}]}
+if open7["actions"]["If_step_6"]["expression"] != STEP6_ADJ: bad("F07: the touch must be at StepNumber 6 with All Comments Adjudicated = Yes only (PFM 19 Nov 26)")
+writes7 = [(n, a) for n, a in walk_actions(f07["actions"]) if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") in ("PatchItem", "PostItem")]
+want7 = {"dataset": "@parameters('Site URL (pfm_SiteUrl)')", "table": "@parameters('List PFM Publications (pfm_ListPublications)')",
+         "id": "@body('Get_publication')?['ID']", "item/Title": "@body('Get_publication')?['Title']"}
+if [n for n, _ in writes7] != ["Touch_the_publication_row"] or writes7[0][1]["inputs"]["parameters"] != want7: bad(f"F07: one write only, the publication's own Title: {writes7}")
+# R36 (W5; rule 4.4A, DEC 2026-11-12; design approved by the PFM 19 Nov 26): F08 watches PFM Waivers every 15 minutes, one run at a time;
+# it warns only for Tier T-0, T-1 or T-2 with a Waiver Approver who is the Leader of a PFM Offices row; once per waiver, tier and approver
+# (an Activity Log row titled "Waiver tier warning: W<ID>" is the memory, as in F03); one Activity Log row (Event Type Waiver Warning)
+# and one e-mail to the alert address; it never changes the waiver row (no Update item). The choice is in the schema and in T19 r6.
+f08 = json.loads(next(s for s in r27_defs if "-F08-" in s.name).read_text(encoding="utf-8"))
+t8 = f08["triggers"]["When_an_item_is_created_or_modified"]
+if t8["recurrence"] != {"frequency": "Minute", "interval": 15} or t8["inputs"]["parameters"]["table"] != "@parameters('List PFM Waivers (pfm_ListWaivers)')":
+    bad(f"F08: the trigger must check PFM Waivers every 15 minutes: {t8}")
+if t8.get("runtimeConfiguration") != {"concurrency": {"runs": 1}}: bad("F08: one run at a time")
+try8 = f08["actions"]["Try"]["actions"]
+if try8["Get_offices"]["inputs"]["parameters"]["table"] != "@parameters('List PFM Offices (pfm_ListOffices)')" or "$filter" in try8["Get_offices"]["inputs"]["parameters"]:
+    bad("F08: the wing leaders are the Leader of any PFM Offices row (no filter)")
+if try8["Wing_leader_rows"]["inputs"].get("where") != "@equals(toLower(trim(coalesce(item()?['Leader']?['Email'], ''))), outputs('Approver_email'))": bad("F08: a wing leader is matched by the Leader e-mail")
+if "['WaiverApprover']?['Email']" not in try8["Approver_email"]["inputs"] or "['Tier']?['Value']" not in try8["Tier"]["inputs"]: bad("F08: reads Tier and the Waiver Approver e-mail of the trigger row")
+lead8 = try8["If_wing_leader"]
+if lead8["expression"] != {"and": [{"equals": ["@contains(createArray('T-0', 'T-1', 'T-2'), outputs('Tier'))", True]}, {"not": {"equals": ["@outputs('Approver_email')", ""]}},
+                                   {"greater": ["@length(body('Wing_leader_rows'))", 0]}]}:
+    bad(f"F08: warn only for T-0, T-1 or T-2 with an approver who is a wing leader: {lead8['expression']}")
+WT8 = "concat('Waiver tier warning: W', string(triggerBody()?['ID']))"
+w8 = lead8["actions"]
+if w8["Get_prior_warnings"]["inputs"]["parameters"].get("$filter") != f"@concat('Title eq ''', {WT8}, '''')": bad("F08: the memory must read this waiver's warning rows by title")
+if (w8["Same_warning"]["inputs"].get("where") != "@startsWith(coalesce(item()?['EventDetails'], ''), outputs('Warning_key'))" or "outputs('Tier')" not in w8["Warning_key"]["inputs"]
+        or "outputs('Approver_email')" not in w8["Warning_key"]["inputs"]):
+    bad("F08: once only per waiver, tier and approver")
+if w8["If_not_yet_warned"]["expression"] != {"equals": ["@length(body('Same_warning'))", 0]}: bad("F08: the row and the e-mail only when no same warning exists")
+writes8 = [(n, a) for n, a in walk_actions(f08["actions"]) if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") in ("PatchItem", "PostItem")]
+if [n for n, _ in writes8] != ["Log_waiver_warning"]: bad(f"F08: one write only, the Activity Log row; the waiver row never changes: {[n for n, _ in writes8]}")
+else:
+    lp8 = writes8[0][1]["inputs"]["parameters"]
+    if lp8.get("table") != "@parameters('List PFM Activity Log (pfm_ListActivityLog)')" or lp8.get("item/EventType/Value") != "Waiver Warning" or lp8.get("item/Title") != "@" + WT8:
+        bad(f"F08: the warning row must be an Activity Log row, Event Type Waiver Warning, title Waiver tier warning: W<ID>: {lp8}")
+    if not lp8.get("item/EventDetails", "").startswith("@concat(outputs('Warning_key'), ") or "Table_A10_1_approver" not in lp8.get("item/EventDetails", ""):
+        bad("F08: the details start with the memory key and name the Table A10.1 approver")
+a10_8 = w8["If_not_yet_warned"]["actions"]["Table_A10_1_approver"]["inputs"]
+for tier, text in (("T-0", "not waivable by the DAF"), ("T-1", "NGB/CF, delegable no lower than ANGRC/CC"), ("T-2", "also to NGB Directors")):
+    if f"'{tier}: " not in a10_8 or text not in a10_8: bad(f"F08: the Table A10.1 approver for {tier} must be named ({text})")
+mails8 = [(n, a) for n, a in walk_actions(f08["actions"]) if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId", "").endswith("SendEmailV2")]
+if sorted(n for n, _ in mails8) != ["E-mail_the_failure", "E-mail_the_warning"] or any(a["inputs"]["parameters"]["emailMessage/To"] != "@parameters('Alert e-mail (pfm_AlertEmail)')" for _, a in mails8):
+    bad(f"F08: one warning e-mail and the failure e-mail, both to the alert address only: {[n for n, _ in mails8]}")
+mail8 = w8["If_not_yet_warned"]["actions"]["E-mail_the_warning"]
+if mail8["runAfter"] != {"Log_waiver_warning": ["Succeeded"]} or "{Link}" not in json.dumps(mail8): bad("F08: the e-mail follows the Activity Log row and links to the waiver row")
+log_choices = next(x for x in json.loads((ROOT / "schemas" / "lists" / "PFMActivityLog.json").read_text(encoding="utf-8"))["fields"] if x["internalName"] == "EventType")["choices"]
+t19_text = (ROOT / "scripts" / "gov" / "90161Z-T19-list-update-r6.ps1").read_text(encoding="utf-8")
+t19_log = re.search(r"@\{ List = 'PFM Activity Log'; Field = 'EventType'; Choices = @\(([^)]*)\) \}", t19_text)
+if "Waiver Warning" not in log_choices: bad("PFMActivityLog.json: EventType has no choice Waiver Warning (F08)")
+if not t19_log or re.findall(r"'([^']+)'", t19_log.group(1)) != log_choices: bad("T19 r6: the EventType choices of PFM Activity Log must be the schema's, in order (Waiver Warning for F08)")
+# R36 (PFM 19 Nov 26, README choice 4): F03 r8 sets the default suspense on Legal rows too, counted from the row's Created date.
+f03 = json.loads(next(s for s in r27_defs if "-F03-" in s.name).read_text(encoding="utf-8"))["actions"]["Try"]["actions"]
+if f03["Get_endorsements_without_suspense"]["inputs"]["parameters"]["$filter"] != "EndorsementStatus eq 'Not Started' and DueDate eq null":
+    bad("F03: every open row without a suspense, Legal rows included")
+loop3 = f03["For_each_endorsement_without_suspense"]["actions"]
+cd3 = loop3["Created_day"]["inputs"]
+if "['Created']" not in cd3 or "addDays(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), -7)" not in cd3 or "Today" in json.dumps(loop3):
+    bad("F03: the default suspense starts at the row's Created date; a row older than 7 days starts from the run day (PFM 19 Nov 26)")
+# R36 (PFM 19 Nov 26, README choice 9): F04 r4 leaves out the rows with a Closed Date.
+if json.loads(f04)["actions"]["Try"]["actions"]["Get_publications"]["inputs"]["parameters"].get("$filter") != "ClosedDate eq null": bad("F04: rows with a Closed Date must be left out")
 # R35 (R34 finding 1, ActionDescriptionTooLong): no action description in the flow solution is over 256 characters, and the
 # builder fails (exit 1, file, action path, length) on a longer one at any depth (If else, Scope, Foreach, Switch case).
 for src in sorted(B.DEFS.glob("*.json")) + sorted(B.TEST_DEFS.glob("*.json")):
@@ -426,7 +516,6 @@ with tempfile.TemporaryDirectory() as tmp:
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     if r.returncode != 1 or "bad.json: action /actions/Try/actions/Long has a description of 300 characters" not in r.stdout:
         bad(f"builder must exit 1 and name the file, action path and length: {r.returncode} {r.stdout} {r.stderr}")
-
 t21_zips = sorted((ROOT / "flow" / "solution").glob("90161Z-T21-*.zip"))
 if sorted(z.name for z in t21_zips) != sorted(T21_EXPECT): bad(f"T21 zips found {[z.name for z in t21_zips]}, expected {sorted(T21_EXPECT)}")
 t21_defs = sorted(B.TEST_DEFS.glob("90161Z-T21-*.json"))
@@ -507,4 +596,4 @@ for zname, (nwf, ncr) in T21_EXPECT.items():
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
-print(f"PASS flow solution: flows_in_r4=8 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")
+print(f"PASS flow solution: flows_in_r5=10 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")

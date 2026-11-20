@@ -6,7 +6,9 @@
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Pure ASCII.
 # Tests run: Test-Mask.ps1 ("MASK pass=N fail=0"), Test-T20.ps1 ("T20 pass=N fail=0", uses the fake PnP module in tests/fake-pnp),
-# Test-T21.ps1 ("T21 pass=N fail=0", fake cmdlets inside the test), Test-T22Layout.ps1 ("T22LAYOUT pass=N fail=0"; SKIP off Windows).
+# Test-T21.ps1 ("T21 pass=N fail=0", fake cmdlets inside the test), Test-T24.ps1 ("T24 pass=N fail=0", part 0 of T24 r6 on the fake PnP module),
+# Test-T22Layout.ps1 ("T22LAYOUT pass=N fail=0"; SKIP off Windows).
+# A passed test's lines "<NAME> REPORT ..." are printed too (numbers a round report needs, such as the window's rows per size).
 # Tests left out of the 5.1 list, with the reason:
 #   Invoke-Validations.ps1  needs an input list that tests/run.sh builds with bash and python; no pass line of its own.
 #   Test-SealTrim.ps1       needs raw pixel files that python (scripts/build_test_seals.py --raw) makes first.
@@ -29,6 +31,7 @@ $tests = @(
   @{ Name = 'Test-Mask'; File = 'tests/ps/Test-Mask.ps1'; Pattern = '^MASK pass=\d+ fail=0$' },
   @{ Name = 'Test-T20'; File = 'tests/ps/Test-T20.ps1'; Pattern = '^T20 pass=\d+ fail=0$' },
   @{ Name = 'Test-T21'; File = 'tests/ps/Test-T21.ps1'; Pattern = '^T21 pass=\d+ fail=0$' },
+  @{ Name = 'Test-T24'; File = 'tests/ps/Test-T24.ps1'; Pattern = '^T24 pass=\d+ fail=0$' },
   @{ Name = 'Test-T22Layout'; File = 'tests/ps/Test-T22Layout.ps1'; Pattern = '^T22LAYOUT (pass=\d+ fail=0|SKIP .+)$' }
 )
 
@@ -78,7 +81,8 @@ $pass = 0; $fail = 0
 $limit = 180   # seconds for one test: the slowest takes about 15 s; a test that waits for a person is stopped here
 foreach ($t in $tests) {
   $r = Invoke-OneTest $engine $t $limit
-  if ($r.Code -eq 0 -and $r.Last -match $t.Pattern) { $pass++; Write-Host ('PS51 PASS ' + $t.Name + ' ' + $r.Last) }
+  if ($r.Code -eq 0 -and $r.Last -match $t.Pattern) { $pass++; @($r.Lines | Where-Object { $_ -match '^\S+ REPORT ' }) | ForEach-Object { Write-Host ('  ' + $_) }
+    Write-Host ('PS51 PASS ' + $t.Name + ' ' + $r.Last) }
   else {
     $fail++
     @($r.Lines | Where-Object { $_ -match 'FAIL' } | Select-Object -First 20) | ForEach-Object { Write-Host ('  ' + $_) }

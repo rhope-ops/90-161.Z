@@ -1,18 +1,24 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 6 runner, r2: GenAI.mil extraction test (docs/gov-test-plan.md, Task 6). Windows PowerShell 5.1.
+  90-161.Z Task 7 seal test runner, r6 (L-007, L-007a). Windows PowerShell 5.1.
 .DESCRIPTION
-  Uses this computer's profile folder as the DODID (no question), goes to the Task 6 folder
-  C:\Users\<DODID>\OneDrive - United States Air Force\90-161.Z\T06, checks that 90161Z-T06-extracted-r1.json
-  is there and that the Task 1 folder (T01) holds the renderer scripts, runs the validator and the final
-  render with PDF on the extracted JSON, and saves the output to 90161Z-T06-result-r2.txt in the T06 folder.
-  The renderer writes the .docx and .pdf into the T06 folder. The DODID, profile folder name and user name
-  are replaced by <DODID> in all output. Start it with right-click > Run with PowerShell (no -File path typed).
-  The window always waits for Enter before it closes, also after an unexpected error.
+  Uses this computer's profile folder as the DODID (no question), goes to the Task 7 folder
+  C:\Users\<DODID>\OneDrive - United States Air Force\90-161.Z\T07, checks the 4 fake test seals in its
+  TestSeals subfolder and the renderer scripts in the T01 folder, runs 90161Z-T07-seal-prep-r5.ps1 on the test
+  seals, then renders the T01 sample twice (tall seal, round seal) as final .docx and PDF in the T07 folder.
+  Saves the output to 90161Z-T07-test-result-r3.txt. The DODID, profile folder name and user name are replaced
+  by <DODID> in all output.
+  Parameters (used by the paste bundle, scripts/gov/paste): -Id skips the DODID question, -NoPause skips the final Enter.
+  r6 (R36 W6, PFM 19 Nov 26): Publication.Word.ps1 joins the renderer files it needs in the T01 folder.
+  Network: none (Word on this computer only; seal prep reads no mailbox here, it gets -SealDir).
+  Writes: the T07 folder: the result files, TestSeals\Prepared, 2 sample JSON files, the 2 final .docx and PDFs.
+  Credentials: none.
 #>
-$task = 'T06'
-$need = @('90161Z-T06-extracted-r1.json')
-$needT01 = @('Publication.Common.ps1', 'Test-Publication.ps1', 'New-Publication.ps1')   # Task 1 r5 files
+param([string]$Id, [switch]$NoPause)
+$task = 'T07'
+$need = @('90161Z-T07-seal-prep-r5.ps1', 'TestSeals\90161Z-T07-testseal-round-r1.png', 'TestSeals\90161Z-T07-testseal-tall-r1.png',
+  'TestSeals\90161Z-T07-testseal-soft-r1.png', 'TestSeals\90161Z-T07-testseal-tiny-r1.png')
+$needT01 = @('Publication.Common.ps1', 'Publication.Word.ps1', 'Test-Publication.ps1', 'New-Publication.ps1', 'publication.sample.json')   # Task 1 r10 files
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -84,28 +90,47 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
 
 try {
   $ErrorActionPreference = 'Stop'
-  $who = Get-TaskId ""
+  $who = Get-TaskId $Id
   $id = $who.Id
   $secret = $who.Secret
 
-  $dir = Get-TaskDir $id $task 'Task 6'
+  $dir = Get-TaskDir $id $task 'Task 7'
   $t01 = Join-Path (Split-Path -Parent $dir) 'T01'
-  Assert-TaskFile $t01 $needT01 'MISSING in T01 folder (do Task 1 r5 first): '
+  Assert-TaskFile $t01 $needT01 'MISSING in T01 folder (save the Task 1 files there first): '
   Set-Location -LiteralPath $dir
   Assert-TaskFile $dir $need ('MISSING in ' + $task + ' folder: ')
   Unblock-TaskScript $dir
 
-  $log = Join-Path $dir ('90161Z-' + $task + '-result-r2.txt')
-  $sample = Join-Path $dir '90161Z-T06-extracted-r1.json'
-  $steps = @(
-    @{ Name = '1 validate'; File = 'Test-Publication.ps1'; Args = @('-Path', $sample) },
-    @{ Name = '2 final'; File = 'New-Publication.ps1'; Args = @('-Path', $sample, '-Mode', 'final', '-Pdf', '-OutDir', $dir) }
-  )
+  $log = Join-Path $dir '90161Z-T07-test-result-r3.txt'
+  $testDir = Join-Path $dir 'TestSeals'
   $lines = New-Object System.Collections.Generic.List[string]
-  $lines.Add('TASK ' + $task + ' extraction test r2, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+  $lines.Add('TASK ' + $task + ' seal test r6, ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+
+  # Step 1: seal prep on the fake test seals (no questions; it writes its own result file).
+  Write-Host 'STEP 1 seal prep running...'
+  $lines.Add('STEP 1 seal prep')
+  $prepResult = '90161Z-T07-testprep-result-r1.txt'
+  $ErrorActionPreference = 'Continue'
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $dir '90161Z-T07-seal-prep-r5.ps1') -Id $id -SealDir $testDir -ResultName $prepResult -NoPause *> $null
+  $ErrorActionPreference = 'Stop'
+  $prepPath = Join-Path $dir $prepResult
+  if (Test-Path -LiteralPath $prepPath) { foreach ($l in Get-Content -LiteralPath $prepPath) { $lines.Add($l) } } else { $lines.Add('STEP 1 seal prep wrote no result file') }
+
+  # Steps 2-3: render the T01 sample with a prepared seal (tall, then round).
+  $sampleJson = Get-Content -LiteralPath (Join-Path $t01 'publication.sample.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+  $steps = @()
+  foreach ($kind in @('tall', 'round')) {
+    $sealPng = Join-Path (Join-Path $testDir 'Prepared') ('90161Z-T07-testseal-' + $kind + '-r1.png')
+    $sampleJson.meta.shieldImage = $sealPng
+    $sampleJson.meta.designator = 'SAMPLEWINGI99-101-' + $kind.ToUpperInvariant()
+    $jsonPath = Join-Path $dir ('90161Z-T07-sample-' + $kind + '-r1.json')
+    $sampleJson | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
+    $steps += @{ Name = ($(if ($kind -eq 'tall') { '2' } else { '3' }) + ' render ' + $kind + ' seal'); File = 'New-Publication.ps1'
+      Args = @('-Path', $jsonPath, '-Mode', 'final', '-Pdf', '-OutDir', $dir) }
+  }
   foreach ($s in $steps) { Invoke-TaskStep $s $t01 $secret $lines $log }
   Write-Host ''
-  Write-Host ('Saved: ' + (Split-Path -Leaf $log) + ' in the ' + $task + ' folder. Report the RENDER, VALIDATE and exit lines.')
+  Write-Host ('Saved: ' + (Split-Path -Leaf $log) + ' in the ' + $task + ' folder. Send it with the two PDFs.')
 } catch {
   $msg = [string]$_
   if ($secret) { $msg = ConvertTo-Masked $msg $secret }
@@ -113,5 +138,5 @@ try {
   Write-Host ('STOPPED: ' + $msg)
   Write-Host 'Result file is NOT complete. Report this STOPPED line.'
 } finally {
-  [void](Read-Host 'Press Enter to close')
+  if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }
 }

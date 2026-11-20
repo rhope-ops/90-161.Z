@@ -45,9 +45,10 @@
         "Notice Sent",
         "Waiver Renewal Due",
         "Recommendation Received",
-        "Review Requested"
+        "Review Requested",
+        "Waiver Warning"
       ],
-      "ref": "PFM 2026-11-11 (events the flows record); \"E-Mailed\" per docs/style-standard.md (PFM 2026-11-11: DAFMAN 90-161 and The Tongue and Quill)"
+      "ref": "PFM 2026-11-11 (events the flows record); \"E-Mailed\" per docs/style-standard.md (PFM 2026-11-11: DAFMAN 90-161 and The Tongue and Quill); Waiver Warning added for F08 (rule 4.4A, DAFMAN 90-161 Table A10.1; design approved by the PFM 2026-11-19)"
     },
     {
       "internalName": "EventBy",

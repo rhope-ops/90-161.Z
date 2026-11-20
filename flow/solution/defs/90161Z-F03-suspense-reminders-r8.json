@@ -1,6 +1,6 @@
 {
-  "displayName": "90161Z F03 Suspense Reminders r7",
-  "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one (15 business days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26. Reads its settings once at the start from PFM Settings rows (Flows paused, Test mode, Reminder lead days, Escalation lag days, Coordination suspense business days, Shared mailbox); a missing or empty row gives 5, 3, 15 and no shared mailbox, Flows paused No and Test mode Yes. No subject or title prefix in test mode (PFM 16 Nov 26).",
+  "displayName": "90161Z F03 Suspense Reminders r8",
+  "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one, Legal rows included, counted from the row's Created date (15 business days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26. Reads its settings once at the start from PFM Settings rows (Flows paused, Test mode, Reminder lead days, Escalation lag days, Coordination suspense business days, Shared mailbox); a missing or empty row gives 5, 3, 15 and no shared mailbox, Flows paused No and Test mode Yes. No subject or title prefix in test mode (PFM 16 Nov 26). r8 (R36, PFM 19 Nov 26, README choice 4): the default suspense starts at the row's Created date (Central; a row made on a Saturday or Sunday counts from the Friday before), not at the run day, and Legal rows (F05 makes them at step 7) get one too.",
   "workflowKey": "90161Z-F03-suspense-reminders-r2",
   "connections": [
     "shared_sharepointonline",
@@ -216,19 +216,9 @@
           "type": "Compose",
           "inputs": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd')"
         },
-        "Today_weekday": {
-          "runAfter": {
-            "Today": [
-              "Succeeded"
-            ]
-          },
-          "type": "Compose",
-          "inputs": "@addDays(outputs('Today'), if(equals(dayOfWeek(outputs('Today')), 6), -1, if(equals(dayOfWeek(outputs('Today')), 0), -2, 0)), 'yyyy-MM-dd')",
-          "description": "R22 (R21 finding 2): a Saturday or Sunday run counts the business days from the Friday before, as F06 does; otherwise 15 business days from a Saturday ended on a Monday, 1 business day late"
-        },
         "Get_endorsements_without_suspense": {
           "runAfter": {
-            "Today_weekday": [
+            "Today": [
               "Succeeded"
             ]
           },
@@ -242,7 +232,7 @@
             "parameters": {
               "dataset": "@parameters('Site URL (pfm_SiteUrl)')",
               "table": "@parameters('List PFM Endorsements (pfm_ListEndorsements)')",
-              "$filter": "EndorsementStatus eq 'Not Started' and DueDate eq null and CoordinationStage ne 'Legal' and (CoordinationRole ne 'Legal' or CoordinationRole eq null)",
+              "$filter": "EndorsementStatus eq 'Not Started' and DueDate eq null",
               "$top": 5000
             },
             "authentication": "@parameters('$authentication')"
@@ -251,7 +241,8 @@
             "paginationPolicy": {
               "minimumItemCount": 5000
             }
-          }
+          },
+          "description": "r8 (R36, PFM 19 Nov 26): Legal rows included; r7 and earlier left out CoordinationStage Legal and CoordinationRole Legal, so the Legal rows F05 makes had no suspense."
         },
         "For_each_endorsement_without_suspense": {
           "runAfter": {
@@ -267,10 +258,30 @@
             }
           },
           "actions": {
-            "Working_day_suspense": {
+            "Created_day": {
               "runAfter": {},
               "type": "Compose",
-              "inputs": "@addDays(outputs('Today_weekday'), add(mul(7, div(int(outputs('Setting_suspense_workdays')), 5)), add(mod(int(outputs('Setting_suspense_workdays')), 5), if(greater(add(dayOfWeek(outputs('Today_weekday')), mod(int(outputs('Setting_suspense_workdays')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
+              "inputs": "@if(less(ticks(convertTimeZone(items('For_each_endorsement_without_suspense')?['Created'], 'UTC', 'Central Standard Time')), ticks(addDays(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), -7))), formatDateTime(convertTimeZone(utcNow(), 'UTC', 'Central Standard Time'), 'yyyy-MM-dd'), formatDateTime(convertTimeZone(items('For_each_endorsement_without_suspense')?['Created'], 'UTC', 'Central Standard Time'), 'yyyy-MM-dd'))",
+              "description": "r8 (R36, PFM 19 Nov 26): the suspense starts at the row's Created date (Central); a row made more than 7 days before this run (an old row) starts from the run day, so it is not overdue at once"
+            },
+            "Created_weekday": {
+              "runAfter": {
+                "Created_day": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@addDays(outputs('Created_day'), if(equals(dayOfWeek(outputs('Created_day')), 6), -1, if(equals(dayOfWeek(outputs('Created_day')), 0), -2, 0)), 'yyyy-MM-dd')",
+              "description": "A row made on a Saturday or Sunday counts the business days from the Friday before, as the run day did in r4 to r7 (R21 finding 2)"
+            },
+            "Working_day_suspense": {
+              "runAfter": {
+                "Created_weekday": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Compose",
+              "inputs": "@addDays(outputs('Created_weekday'), add(mul(7, div(int(outputs('Setting_suspense_workdays')), 5)), add(mod(int(outputs('Setting_suspense_workdays')), 5), if(greater(add(dayOfWeek(outputs('Created_weekday')), mod(int(outputs('Setting_suspense_workdays')), 5)), 5), 2, 0))), 'yyyy-MM-dd')"
             },
             "Calendar_30_suspense": {
               "runAfter": {
@@ -279,7 +290,7 @@
                 ]
               },
               "type": "Compose",
-              "inputs": "@addDays(outputs('Today'), add(30, if(equals(dayOfWeek(addDays(outputs('Today'), 30)), 6), 2, if(equals(dayOfWeek(addDays(outputs('Today'), 30)), 0), 1, 0))), 'yyyy-MM-dd')"
+              "inputs": "@addDays(outputs('Created_day'), add(30, if(equals(dayOfWeek(addDays(outputs('Created_day'), 30)), 6), 2, if(equals(dayOfWeek(addDays(outputs('Created_day'), 30)), 0), 1, 0))), 'yyyy-MM-dd')"
             },
             "Set_default_suspense": {
               "runAfter": {
