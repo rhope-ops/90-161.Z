@@ -298,7 +298,8 @@ function isRound(h){return /\/scripts\/gov\/paste\/[^\/]+\.ps1$/.test(h)}
 function fileCard(u){
   var h=u.indexOf('http')===0?u:'https://'+u, name=h.split('/').pop();
   return '<div class="file"><span class="fn"><a href="'+esc(h)+'">'+esc(name)+'</a><span class="fu">'+esc(h)+'</span></span>'+
-    (isRound(h)?'<button type="button" class="primary" data-script="'+esc(h)+'" aria-label="Copy the whole script '+esc(name)+'">Copy script</button>':'')+
+    (isRound(h)?'<button type="button" class="primary" data-script="'+esc(h)+'" aria-label="Copy the whole script '+esc(name)+'">Copy script</button>'+
+      '<button type="button" data-txt="'+esc(h)+'" aria-label="Save the script '+esc(name)+' as a .txt file to read before you paste">Open as .txt</button>':'')+
     '<button type="button" data-copy="'+esc(h)+'" aria-label="Copy link to '+esc(name)+'">Copy link</button></div>';
 }
 function blocked(b){b.textContent='Copy blocked: open the link, Ctrl+A, Ctrl+C';b.disabled=true}
@@ -308,6 +309,17 @@ function copyScript(b){
   var ok=function(){b.textContent='Copied ('+t.split('\n').length.toLocaleString()+' lines). Now paste in ISE.';setTimeout(function(){b.textContent='Copy script'},4000)};
   var viaArea=function(){var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();var r=false;try{r=document.execCommand('copy')}catch(e){}document.body.removeChild(a);return r};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){viaArea()?ok():blocked(b)})}else{viaArea()?ok():blocked(b)}
+}
+/** txtName(h): the .txt file name for script link h (name.ps1 -> name.txt). */
+function txtName(h){return h.split('/').pop().replace(/\.ps1$/i,'')+'.txt'}
+/** openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26). Not loaded yet: opens the raw link, which shows the same text. */
+function openTxt(b){
+  var h=b.getAttribute('data-txt'),t=SCRIPTS[h];
+  if(typeof t!=='string'){window.open(h,'_blank','noopener');return}
+  var u=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');
+  a.href=u;a.download=txtName(h);a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(u)},10000);
+  var x=b.textContent;b.textContent='Saved '+a.download+'. Open it from Downloads.';setTimeout(function(){b.textContent=x},4000);
 }
 function preload(m){
   Array.prototype.forEach.call(m.querySelectorAll('button[data-script]'),function(b){
@@ -425,9 +437,9 @@ function render(md){
   m.innerHTML=o;
   wire(m);
 }
-/** wire(m): copy buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print. */
+/** wire(m): copy and .txt buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print. */
 function wire(m){
-  m.addEventListener('click',function(e){var s=e.target.closest&&e.target.closest('button[data-script]');if(s){e.preventDefault();copyScript(s);return}var b=e.target.closest&&e.target.closest('button[data-copy]');if(b){e.preventDefault();copy(b.getAttribute('data-copy'),b)}});
+  m.addEventListener('click',function(e){var s=e.target.closest&&e.target.closest('button[data-script]');if(s){e.preventDefault();copyScript(s);return}var v=e.target.closest&&e.target.closest('button[data-txt]');if(v){e.preventDefault();openTxt(v);return}var b=e.target.closest&&e.target.closest('button[data-copy]');if(b){e.preventDefault();copy(b.getAttribute('data-copy'),b)}});
   preload(m);
   var all=function(){return Array.prototype.slice.call(m.querySelectorAll('details.sec'))};
   all().forEach(function(d){d.addEventListener('toggle',function(){var s=load();s[d.getAttribute('data-name')]=d.open;save(s)})});
@@ -438,7 +450,7 @@ function wire(m){
   if(location.hash){var d=document.getElementById(location.hash.slice(1));if(d){if(d.tagName==='DETAILS')d.open=true;d.scrollIntoView()}}
   window.addEventListener('beforeprint',function(){all().forEach(function(d){d.open=true})});
 }
-if(window.GO_TEST&&typeof window.GO_TEST==='object'){window.GO_TEST.parse=parse;window.GO_TEST.renderSecs=renderSecs;return} // tests/check_go_page.js
+if(window.GO_TEST&&typeof window.GO_TEST==='object'){window.GO_TEST.parse=parse;window.GO_TEST.renderSecs=renderSecs;window.GO_TEST.txtName=txtName;return} // tests/check_go_page.js
 if(typeof window.GO_MD==='string'){render(window.GO_MD);return}
 fetch(SRC,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(render).catch(function(e){
   document.getElementById('m').innerHTML='<p>Could not load go.md ('+esc(e.message)+'). Fallback: <a href="'+SRC+'">'+SRC+'</a></p>'});
