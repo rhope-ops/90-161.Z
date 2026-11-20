@@ -25,7 +25,7 @@ The app cannot check rights before it exists, so setup has 4 parts. Each part st
 RADE is the Redacted Application Deployment Engine: https://rhope-ops.github.io/RADE. It replaces the setup-check flow (PFM, 14 Nov 26 "One preflight"). Sources: go.md "How a paste task (round) works"; docs/dev-setup.md "RADE engine".
 
 What you do:
-1. Open https://rhope-ops.github.io/RADE and find the round. Nothing else is downloaded: every file a task needs comes inside the round.
+1. Open https://rhope-ops.github.io/RADE and find the round. Every file a task needs comes inside the round: there are no separate downloads. The optional .txt copy in step 2 is only for reading the script.
 2. Press Copy script next to the round's name. To read the script first, press Open as .txt: it saves the same text as a .txt file; open it from Downloads in Notepad. If Copy script says blocked: open that .txt file, press Ctrl+A, then Ctrl+C.
 3. Open the Start menu, type ISE and open Windows PowerShell ISE. Do not choose "Run as administrator".
 4. Select File > New. Click in the white script pane.
