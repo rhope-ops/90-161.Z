@@ -60,3 +60,21 @@ Reviewer: the `reviewer` subagent, fresh context, Opus tier. No MAJOR. Closes MA
 | 6 | MINOR | This record lacked a section for this change. | Fixed: this section. |
 
 rule-conflict-check: a59ae29dcdf1
+
+## Fourth change: the Data boundary exception (text approved by the PFM, 20 Nov 26)
+
+```text
+  + Data boundary (2026-11-14; cannot be changed): ... no app writes data across the boundary. Use fake data. Exception: the PFM's round results e-mail, until the pilot starts.
+```
+
+Reviewer: the `reviewer` subagent, fresh context, Opus tier.
+
+| # | Severity | Finding | Action |
+|---|---|---|---|
+| 1 | MAJOR | The earlier 2026-11-20 row still said "until the test rounds end". | Fixed: that row names the new end point. |
+| 2 | MAJOR | No approved event starts the pilot; rounds may run after it. | Decided by the PFM (20 Nov 26): the pilot starts when the PFM declares it; after that a round sends no results e-mail (DECISIONS). |
+| 3 | MINOR | "Covers the whole line" could read as lifting the fake-data and chat limits for the e-mail; the hard rule "Secrets and personal data" still holds. | Recorded; the e-mail carries counts and codes only (round skill section 1). |
+| 4 | MINOR | Overlap with "Round results" and the round skill. | Recorded (as before). |
+| 5 | MINOR | This record lacked the section. | Fixed: this section. |
+
+rule-conflict-check: ebaa504f8860
