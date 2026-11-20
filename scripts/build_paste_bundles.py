@@ -96,6 +96,35 @@ def render_logo(check):
                 dst.write_bytes(logo_png.png(int(m.group(1)), check))
 
 
+def copy_fonts(eng):
+    """Copy the font files that the bundles list (assets/fonts/build/90161Z-<name>) from the engine's fonts folder.
+
+    R39 (PFM 20 Nov 26, docs/phases.md R39): the 90-161.Z window (T22 r12) uses the Sofia Sans fonts of the RADE window.
+    They are the pinned engine's own files (engine/fonts, hash-checked by fetch), so they are never committed here:
+    assets/fonts/build/ is git-ignored, like the logo PNGs. The prefix 90161Z- marks them as files 90-161.Z made.
+
+    Args:
+        eng: the engine file path (its folder holds fonts/).
+    Returns: nothing. Exits when a listed font is not in the engine.
+    """
+    import re, shutil
+    man = ROOT / 'scripts/paste_bundles.json'
+    if not man.exists():
+        return
+    fonts = Path(eng).parent / 'fonts'
+    for b in json.loads(man.read_text(encoding='utf-8'))['bundles']:
+        for f in b['files']:
+            m = re.match(r'assets/fonts/build/90161Z-([A-Za-z0-9.-]+)$', f['src'])
+            if not m:
+                continue
+            src = fonts / m.group(1)
+            if not src.is_file():
+                sys.exit('FAIL %s is listed in scripts/paste_bundles.json but the engine has no %s' % (f['src'], src))
+            dst = ROOT / f['src']
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dst)
+
+
 def no_scripts_in_results():
     """Stop the build when a collect name can match a script (the PFM, 2026-11-20: no scripts in results; R37 finding 1).
     Takes nothing; exits with the FAIL lines of scripts/check_collect.py when one is bad."""
@@ -113,4 +142,5 @@ if __name__ == '__main__':
     no_scripts_in_results()
     e = engine()
     render_logo('--check' in sys.argv[1:])
+    copy_fonts(e)
     sys.exit(subprocess.call([sys.executable, '-B', str(e), '--app-root', str(ROOT)] + [a for a in sys.argv[1:] if a == '--check']))

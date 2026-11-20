@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r11, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r12, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
@@ -13,7 +13,7 @@
   "Needs You Today", the rows blocks, the chips row with its step line, the notice) is placed by one rule,
   $wn.ChipTops, and kept in $wn.ChipRows with its text.
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -298,12 +298,26 @@ $wn.Blocks.filter = {
   [void](& $wn.Txt $f 'Find a publication' $ui.F.SmallB $ui.C.Navy 8 (& $wn.Sc 140) 'Label' $null)
   $tb = New-Object System.Windows.Forms.TextBox; $tb.Width = & $wn.Sc 260; $tb.Font = $ui.F.Body; $tb.AccessibleName = 'Find a publication'
   $tb.Margin = & $ui.Pad (& $wn.Sc 4) (& $wn.Sc 4) (& $wn.Sc 16) (& $wn.Sc 4)
-  $tb.Text = [string]$wn.Field.find; $tb.Add_TextChanged({ $wn.Field.find = $this.Text; & $wn.Refilter }); & $ui.Cue $tb; $ui.Boxes = @($ui.Boxes) + @($tb); [void]$f.Controls.Add($tb)
+  $tb.Text = [string]$wn.Field.find; $tb.Add_TextChanged({ $wn.Field.find = $this.Text; & $wn.Refilter }); & $ui.Cue $tb
+  [void]$f.Controls.Add((& $wn.BoxFrame $tb (& $wn.Sc 260)))   # R12: in a frame of the compact height
   [void](& $wn.Txt $f 'Show' $ui.F.SmallB $ui.C.Navy 8 (& $wn.Sc 60) 'Label' $null)
   $cmb = New-Object System.Windows.Forms.ComboBox; $cmb.DropDownStyle = 'DropDownList'; $cmb.Font = $ui.F.Body; $cmb.Width = & $wn.Sc 230; $cmb.AccessibleName = 'Show'
   $cmb.Margin = & $ui.Pad (& $wn.Sc 4) (& $wn.Sc 4) (& $wn.Sc 4) (& $wn.Sc 4)
   foreach ($o in 'All open actions', 'Needs you', 'Late or no answer') { [void]$cmb.Items.Add($o) }
   $cmb.SelectedIndex = [int]$wn.Field.show; $cmb.Add_SelectedIndexChanged({ $wn.Field.show = $this.SelectedIndex; & $wn.Refilter }); & $ui.Cue $cmb; [void]$f.Controls.Add($cmb) }
+# R12 (R38 finding 2, UI standard B1): a one-line text box drawn by Windows is as high as its font (39 px at 150 %);
+# the rule is the compact height ($ui.Z.CompactH, 45 px at 150 %). The box goes without its own border into a white
+# frame of that height, in the middle; the frame is the box for the focus ring and the self-check ($ui.Boxes,
+# $ui.Ring: a box that contains the focus). Takes the text box and the frame width; returns the frame.
+$wn.BoxFrame = { param($Tb, [int]$W)
+  $h = [math]::Max((& $ui.Sc $ui.Z.CompactH), [int]$Tb.PreferredHeight + (& $wn.Sc 8)); $pad = & $wn.Sc 8
+  $fr = New-Object System.Windows.Forms.Panel; $fr.BackColor = $ui.C.White; $fr.BorderStyle = 'FixedSingle'; $fr.Size = [Drawing.Size]::new($W, $h)
+  $fr.Margin = $Tb.Margin; $Tb.Margin = & $ui.Pad 0 0 0 0; $Tb.BorderStyle = 'None'; $Tb.Width = $W - 2 * $pad - 2
+  $Tb.Location = [Drawing.Point]::new($pad, [int][math]::Max(0, ($h - 2 - $Tb.Height) / 2)); [void]$fr.Controls.Add($Tb)
+  $fr.Add_Click({ [void]$this.Controls[0].Focus() }); $ui.Boxes = @($ui.Boxes) + @($fr)
+  # The ring is drawn by the frame's parent ($ui.Ring); $ui.Cue repaints only the box's own parent (the frame), as RADE's frame does (engine 03-card.ps1)
+  $Tb.Add_GotFocus({ try { $this.Parent.Parent.Invalidate() } catch { $null = $_ } }); $Tb.Add_LostFocus({ try { $this.Parent.Parent.Invalidate() } catch { $null = $_ } })
+  return $fr }
 $wn.Blocks.input = {
   <#
   .SYNOPSIS
@@ -321,8 +335,10 @@ $wn.Blocks.input = {
   $tb.Margin = & $ui.Pad (& $wn.Sc 4) (& $wn.Sc 6) (& $wn.Sc 4) (& $wn.Sc 4)
   if ($b.Multi) { $tb.Multiline = $true; $tb.AcceptsReturn = $true; $tb.ScrollBars = 'Vertical'; $tb.Size = [Drawing.Size]::new(($W - (& $wn.Sc 8)), (& $wn.Sc 88)) }
   else { $tb.Width = [math]::Min($W - (& $wn.Sc 8), (& $wn.Sc 420)) }
-  $tb.Text = [string]$wn.Field[$b.Id]; $tb.Add_TextChanged({ $wn.Field[[string]$this.Tag] = $this.Text }); & $ui.Cue $tb; $ui.Boxes = @($ui.Boxes) + @($tb)
-  [void]$Parent.Controls.Add($tb); if ($b.Id -eq 'reason') { $wn.Reason = $tb } }
+  $tb.Text = [string]$wn.Field[$b.Id]; $tb.Add_TextChanged({ $wn.Field[[string]$this.Tag] = $this.Text }); & $ui.Cue $tb
+  if ($b.Multi) { $ui.Boxes = @($ui.Boxes) + @($tb); [void]$Parent.Controls.Add($tb) }   # 88 px: above the rule
+  else { [void]$Parent.Controls.Add((& $wn.BoxFrame $tb $tb.Width)) }   # R12: a one-line box in a frame of the compact height
+  if ($b.Id -eq 'reason') { $wn.Reason = $tb } }
 # Radio choices under a label; the choice is kept in $wn.Field.radio.
 $wn.Blocks.radio = { param($Parent, $b, [int]$W)
   [void](& $wn.Txt $Parent $b.Label $ui.F.SmallB $ui.C.Navy 14 $W 'Label' $null)

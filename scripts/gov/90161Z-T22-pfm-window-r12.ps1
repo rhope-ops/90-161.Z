@@ -1,8 +1,14 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r11 (round R37). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r12 (round R39). Windows PowerShell 5.1 and Windows Forms only (no module).
 .DESCRIPTION
-  R11 (R38; PFM 20 Nov 26): revision r11 for round R38: 3 checks, "XXX XXX " fake names, the status chips clear of the scroll bar, the Fulcrum logo in both modes.
+  WHAT R12 CHANGES (round R39; PFM 20 Nov 26: docs/phases.md R39 and the R38 findings): the Sofia Sans fonts of the RADE
+  window, from the 3 font files the round puts in the T22 folder (a FONT line; Segoe UI when they are missing); the
+  window opens on the card it was closed on (90161Z-T22-window-lastcard.txt; a LASTCARD line); the Your Work grid drops
+  Since when its whole chips do not fit (R38 finding 2); one-line text boxes have the compact height in a frame (B1);
+  a CARDTIME line per card the person opened (open time in ms, R38 finding 3). 4 checks; -Again (the round's second
+  run) has 1 check: the window opened on the card it was closed on.
+  R11 (R38; PFM 20 Nov 26): 3 checks, "XXX XXX " fake names, the status chips clear of the scroll bar, the Fulcrum logo in both modes.
   The PFM's window of the 13-step process with FAKE data (design "preview 2", PFM 17 Nov 26): Your Work, All Actions, Reviews Due,
   steps 8 to 13, a publication, Settings and the states. Nothing is read or sent. The look comes from the RADE shared UI
   file (rade-ui block, generated from the pinned RADE commit). The window keeps the size and place you give it; below 1280 x 720
@@ -15,8 +21,8 @@
   line; PFM 19 Nov 26). A grid whose columns are wider than it gives the excess back ($wn.FitGrids; R36 finding 3: the
   home grid was 9 px short). Feedback (UI standard B13, PFM 19 Nov 26): a link on the check bar, in the same place on
   every card, opens a small box "What does not look right?"; Save writes the comment and a picture of the window into
-  the T22 folder as 90161Z-T22-feedback-<card>-r11.txt and .png and adds a FEEDBACK line; at the close
-  90161Z-T22-feedback-r11.txt lists them (or none).
+  the T22 folder as 90161Z-T22-feedback-<card>-r12.txt and .png and adds a FEEDBACK line; at the close
+  90161Z-T22-feedback-r12.txt lists them (or none).
   WHAT R8 CHANGED (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
   in 2 system colors, and in its own colors again when it goes off ($wn.LogoImage, Pfm.Logo); every rail build checks
   the logo's colors (a LOGO line; a W7 LAYOUT line when they are wrong). No column head of a grid is shortened with
@@ -31,27 +37,28 @@
   the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
   R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its parts
-  from its own folder, 90161Z-T22-<part>-r11.ps1 (cards, types, ui, parts, grid, logo, window, feedback, measure; R10 adds
+  from its own folder, 90161Z-T22-<part>-r12.ps1 (cards, types, ui, parts, grid, logo, window, feedback, measure; R10 adds
   logo and feedback).
-  Inputs: the 9 part files next to this file. Parameters: -Id, -NoPause (RADE). -PlanOnly prints the cards and the 3 checks as
+  Inputs: the 10 part files and the font files (90161Z-SofiaSans*.ttf) next to this file.
+  Parameters: -Id, -NoPause (RADE), -Again (R12: the reopen check only). -PlanOnly prints the cards and the 4 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r11.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r12.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r11.txt (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r11.png (one per
-  card) and the feedback files (90161Z-T22-feedback-r11.txt, and a .txt and a .png per comment) in the T22 folder.
+  Outputs: 90161Z-T22-window-r12.txt (with -Again: 90161Z-T22-window-again-r12.txt) (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r12.png (one per
+  card) and the feedback files (90161Z-T22-feedback-r12.txt, and a .txt and a .png per comment) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r11.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r12.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: none.
-  Writes: 90161Z-T22-window-r11.txt, 90161Z-T22-window-bounds.json, the card PNG files and the feedback files in the T22
+  Writes: 90161Z-T22-window-r12.txt (or -again-r12.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
   folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
   with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
   Credentials: none.
 #>
-param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened)
+param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened, [switch]$Again)
 $task = 'T22'
-$Rev = 'r11'
+$Rev = 'r12'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -173,6 +180,14 @@ function Hide-Site([string]$Text, [string]$Site) {
   return $Text
 }
 # <<< site-common
+# R12 (R39): the Sofia Sans font files next to this script (the round puts them in the T22 folder with it), as the
+# RADE UI file wants them: file name -> base64. Takes the folder; returns an empty table when there are none.
+function Get-FontTtf([string]$Folder) {
+  $out = @{}
+  try { foreach ($f in @(Get-ChildItem -LiteralPath $Folder -Filter '*SofiaSans*.ttf' -File -ErrorAction Stop)) {
+      $out[$f.Name] = [Convert]::ToBase64String([IO.File]::ReadAllBytes($f.FullName)) } } catch { $null = $_ }
+  return $out
+}
 $OpenedHours = 3   # a result file older than this is from an earlier round (review R30): -Opened does not trust it
 # The -Opened line for the result file in $Dir: PASS when it was written in the last $OpenedHours hours, its last
 # "CARDS opened" line counts more than 0 cards and no line starts with STOPPED:, else FAIL (also when it is missing).
@@ -195,10 +210,10 @@ function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'ui2', 'parts', 'grid', 'logo', 'window', 'feedback', 'measure')
-# The full path of part $Name: 90161Z-T22-<name>-r11.ps1 in this file's folder.
+# The full path of part $Name: 90161Z-T22-<name>-r12.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
-$lines.Add('TASK T22 PFM window preview ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
+$lines.Add('TASK T22 PFM window preview ' + $Rev + $(if ($Again) { ' (again: the reopen check)' } else { '' }) + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
 $code = 0
 $cf = 0; $cardsOpened = @{}; $presses = 0; $defects = New-Object System.Collections.Generic.List[string]
 $dir = ''
@@ -240,7 +255,9 @@ try {
   $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true; $form.ShowInTaskbar = $true
   $form.Opacity = 0   # shown when the cards are built, at the size and place the PFM gave it
   $ui.Form = $form; $ui.Dpi = 96.0; $ui.FontK = 1.0; $ui.FontDpi = 96.0
+  $fontTtf = Get-FontTtf $PSScriptRoot   # R12: the RADE UI file loads these (its LoadFonts); none: Segoe UI
   . (Get-PartPath 'ui'); . (Get-PartPath 'ui2')   # R11: the RADE shared UI file in 2 parts (600-line cap)
+  $lines.Add('FONT ' + $ui.FontNote + ' (' + @($fontTtf.Keys).Count + ' font files found)')
   $form.BackColor = $pc.surface
   $ui.Trash = @(@($ui.Trash) | Where-Object { $_ }) + @($ui.Menu)
   $ui.Clock = [System.Diagnostics.Stopwatch]::StartNew(); $ui.CardAt = 0; $ui.GuardMs = 400; $ui.Busy = $false; $ui.Always = @{}; $ui.Boxes = @()
@@ -288,7 +305,8 @@ try {
   if ($PlanOnly) { exit 0 }
   $lines.Add('WINDOW done: cards=' + $cardsOpened.Count + ' buttons=' + $presses + ' defects=' + $defects.Count + ' checks failed=' + $cf)
   $masked = @($lines | ForEach-Object { $t = [string]$_; if ($who) { $t = ConvertTo-Masked $t $who.Secret }; $t })
-  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T22-window-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  $resName = $(if ($Again) { '90161Z-T22-window-again-' } else { '90161Z-T22-window-' }) + $Rev + '.txt'   # R12: the -Again run keeps the first result
+  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir $resName) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause -and -not $env:RADE_CONTRACT -and -not $PlanOnly -and -not $Measure) { [void](Read-Host 'Press Enter to close') }
 }

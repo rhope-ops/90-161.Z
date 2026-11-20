@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r11, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 3 in-window checks)
+  90-161.Z Task 22 r12, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the 3 in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r11.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r12.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems
   and the functions Get-SideStatus, Test-CheckLink, Get-CardPlan and Get-CheckPlan.
@@ -96,14 +96,20 @@ function Test-CheckLink($Block) {
 }
 $FullHistory = @(@{ Text = 'Full History'; Note = 'FAKE: the history of this action opens here. Nothing is read.' })
 $OneOf = "XXX XXX OI 33-101, Key Control"
-# The 3 checks of the check bar, in order. R11 (R38; PFM 20 Nov 26): only the hand checks that r11 changes stay (R37 passed
-# the other 18): the status chips against the scroll bar on All Actions and on Your Work, and the whole publication names
-# (XXX XXX letters are wide). The card to open is named in each text.
+# The checks of the check bar, in order. R12 (R39; PFM 20 Nov 26): the Your Work grid (R38 finding 2), the Sofia Sans
+# fonts (docs/phases.md R39), the text box height (R38 finding 2, B1) and the speed of the cards (R38 finding 3). The
+# card to open is named in each text. -Again (the second run of the round): one check, that the window reopened on the
+# card it was closed on. $ChecksDone is the bar text when all are answered.
 $Checks = @(
-  @{ Key = 'chip-all'; Text = 'Select All Actions in the list on the left. Pass if no status chip, such as "Due 20 Nov 26", touches the scroll bar.' },
-  @{ Key = 'name-all'; Text = 'On All Actions: pass if each publication name, such as "XXX XXX OI 33-101", shows whole, with no dots.' },
-  @{ Key = 'home-all'; Text = 'Select Your Work in the list on the left. Pass if no status chip touches the scroll bar and each name shows whole.' }
+  @{ Key = 'home-all'; Text = 'Select Your Work in the list on the left. Pass if no status chip touches the scroll bar and each name shows whole.' },
+  @{ Key = 'font'; Text = 'Look at the RADE window behind this one. Pass if the titles and text here use the same fonts as the RADE window.' },
+  @{ Key = 'box'; Text = 'Select All Actions in the list on the left. Pass if the text box "Find a publication" is not cut at the top or bottom.' },
+  @{ Key = 'speed'; Text = 'Select each item in the list on the left once. Pass if each screen opens with no delay that you notice.' }
 )
+$script:ChecksDone = 'All checks done. Last: select All Actions in the list on the left, then close this window with its X.'
+if ($Again) {
+  $Checks = @(@{ Key = 'reopen'; Text = 'Pass if this window opened on All Actions, the screen you closed it on.' })
+  $script:ChecksDone = 'All checks done. Close this window with its X.' }
 # The cards, in the order the window builds them. A card: Rail (the rail item it lights), Title and Sub or Crumb and
 # CrumbGo, Up (the card Esc opens), Side (the right column width at 100 %), Modal, and Cols: columns of sections, each
 # section a list of Blocks (T = the block type; the window module builds each type).

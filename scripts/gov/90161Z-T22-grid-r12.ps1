@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r11, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r12, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): column widths come from the widest value, a chip never ends under the scroll bar, the head "Weekdays in step" may wrap, and the layout self-check has the edge test.
@@ -23,7 +23,7 @@
   can say where its content ends ($wn.GridEdges), so the layout self-check ($wn.EdgeCheck) fails a chip or text that
   ends closer to the grid's right edge than the vertical scroll bar is wide.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r12.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -158,10 +158,15 @@ $wn.HeadSpare = { param($Cols, [int]$Avail, [int]$PubMin, [int]$PubOwn)
 # R11 (R38; the PFM, 20 Nov 26: "hide Since when narrow"): the columns of a grid of width $W with each column marked Drop
 # left out, last first, while the pub column's minimum ($wn.PubMin of the widths $Pw) and every other whole head do not fit
 # beside the scroll bar. Wide windows keep every column.
-$wn.DropCols = { param($Cols, [int]$W, $Pw)
+# R12 (R38 finding 2: the Your Work grid needed 957 px and had 935 at 150 %): a chip column counts its widest chip of
+# $Rows ($wn.ValueMin), not only its head, so Since leaves when the whole chips do not fit beside the other heads.
+$wn.DropCols = { param($Cols, [int]$W, $Pw, $Rows = @())
   $cols = @($Cols); $avail = $W - [Windows.Forms.SystemInformation]::VerticalScrollBarWidth - 2
   while ($true) {
-    $need = [int](& $wn.PubMin $cols $Pw); foreach ($c in $cols) { if ($c.K -ne 'pub') { $need += [int](& $wn.HeadMin $c) } }
+    $need = [int](& $wn.PubMin $cols $Pw)
+    foreach ($c in $cols) { if ($c.K -ne 'pub') { $hm = [int](& $wn.HeadMin $c)
+        $sb = [math]::Max((& $ui.Sc 10), [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth)   # ValueMin keeps a scroll bar right of a chip; $avail has taken it off already
+        $need += $(if ($c.K -eq 'chip' -and @($Rows).Count) { [math]::Max($hm, [int](& $wn.ValueMin $c $Rows) - $sb) } else { $hm }) } }
     $drop = @($cols | Where-Object { $_.Drop }) | Select-Object -Last 1
     if ($need -le $avail -or -not $drop) { return ,$cols }
     $cols = @($cols | Where-Object { $_ -ne $drop }) } }
@@ -181,7 +186,7 @@ $wn.Grid = {
   param($Parent, $b, [int]$W, $Ctx)
   $cols = @($b.Cols)
   if ($wn.Wide -and $b.ColsWide) { $wf = 0; foreach ($c in $b.ColsWide) { $wf += (& $wn.Sc $c.W) }; if ($wf + (& $wn.Sc 137) -le $W) { $cols = @($b.ColsWide) } }
-  $rows = @($b.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols $cols $W $pw; $hs = & $wn.GridHeight $b $Ctx
+  $rows = @($b.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols $cols $W $pw $rows; $hs = & $wn.GridHeight $b $Ctx
   $g = & $wn.GridNew ([string]$b.Name) $W $hs
   $scroll = $(if ($hs.Full -gt $hs.H) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
   $wn.ChipKept = $null; $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw) $rows

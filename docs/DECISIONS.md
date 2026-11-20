@@ -6,6 +6,11 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | R39 backs up 11 lists: RADE engine-v30 refuses the title "PFM Recommendations (DAF Form 847)" (parentheses); it joins after a RADE change. Narrows the 12-list row. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
+| 2026-11-20 | R39 tests Maintenance: it first deploys a test version 0.1.0 of 90-161.Z (RADE shows Maintenance only for an installed app), then Diagnose and Back up of 11 PFM lists. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
+| 2026-11-20 | R39 scope: docs/phases.md R39 plus the R38 findings; R40 Maintenance tests come into R39; no RADE session for the R38 answer cards now. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
+| 2026-11-20 | Round skill: build the next round in the results session after one question round (section 0 and section 1 step 7; texts approved). Scope: rounds. | PFM | .claude/skills/round/SKILL.md |
+| 2026-11-20 | RADE lock moves to release engine-v30 (RADE c965cd2, serial 23) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-20 | Bookmark page (index.html): a round script card has no .ps1 link (PFM) and no Copy link (inferred: it copied the .ps1 link); an Open as .txt button (saves the script as a .txt file to read before pasting) takes the link's place, next to Copy script. Scope: index.html round cards. | PFM | https://github.com/rhope-ops/90-161.Z/pull/197 |
 | 2026-11-20 | R39 moves the lock to engine-v30 (Diagnose, Back up) and lists all 12 app lists in the manifest field "backup". Scope: R39. | PFM | https://github.com/rhope-ops/RADE/pull/143 |
 | 2026-11-20 | No session archives itself: it says when it is ready, and the PFM reviews and archives (texts approved). Kit 6.1.0 synced from merge commit 012dc9f (no tag yet); kept: nothing to move. | PFM | https://github.com/rhope-ops/archimedes_lever/pull/87 |
