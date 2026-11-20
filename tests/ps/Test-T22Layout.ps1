@@ -383,7 +383,9 @@ try {
     if ($bad.Count) { $nums += ' (' + (@($bad | ForEach-Object { [string]$_.Key + ': ' + $_.Error }) -join '; ') + ')' }
     if ($m.ScaledError) { $nums += '; error: ' + $m.ScaledError }
     Test-That 'D1 to D4 measured at 1.25 x and 1.5 x' ($scaled.Count -eq 2 -and $bad.Count -eq 0) $nums
-    foreach ($s in $scaled) { $at = 'dpi ' + $s.Dpi + ' (' + $s.K + ' x)'; Test-Level @($s.Cards) ([double]$s.Sc8) $at; Test-Wheel $s $at }
+    foreach ($s in $scaled) { $at = 'dpi ' + $s.Dpi + ' (' + $s.K + ' x)'; Test-Level @($s.Cards) ([double]$s.Sc8) $at; Test-Wheel $s $at
+      $bb = @($s.Cards | ForEach-Object { @($_.Btn | Where-Object { $_ } | ForEach-Object { [string]$_ }) })   # R11: UI standard B1 at this scale
+      Test-That ($at + ' B1: every shown button has a size of the set and its whole label') ($bb.Count -eq 0) (($bb | Select-Object -First 5) -join '; ') }
     $empty = @($m.EmptyNames | Where-Object { $_ })
     Test-That 'every button, link and text box has an accessible name' ($empty.Count -eq 0) ('without a name: ' + $empty.Count + $(if ($empty.Count) { ' (' + ($empty -join ', ') + ')' } else { '' }))
     Test-Wheel $m ('dpi ' + $m.Dpi)

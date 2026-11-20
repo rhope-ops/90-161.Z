@@ -337,7 +337,7 @@ $wn.MeasureScaled = {
     $res['K'] = $K; $res['Dpi'] = $ui.Dpi; $res['Sc8'] = (& $wn.Sc 8)
     foreach ($key in $Cards.Keys) {
       $c = [ordered]@{}; $c['Key'] = $key
-      try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts) }
+      try { $wn.Notice = ''; $wn.Err = ''; & $wn.Show $key; [Windows.Forms.Application]::DoEvents(); $c['Level'] = (& $wn.LevelFacts); $c['Btn'] = @(& $wn.BtnLines) }
       catch { $c['Error'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
       $cards.Add($c) }
     # R7 (W2): the mouse wheel at this scale too; a wheel case that cannot run is kept as its error (the test names it).
@@ -349,6 +349,14 @@ $wn.MeasureScaled = {
     foreach ($x in $made) { try { $x.Dispose() } catch { $null = $_ } } }
   $res['Cards'] = $cards.ToArray()
   return $res }
+# R11 (R38; UI standard v1, B1): the B1 lines ($ui.BtnBad) of every shown RADE button of the page, at the scale in use
+# (the self-check runs at the window's own scale only; this one runs at 1.25 x and 1.5 x too). None when all are right.
+$wn.BtnLines = {
+  $out = New-Object System.Collections.Generic.List[string]; $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) { foreach ($c in $st.Pop().Controls) {
+      if ($c -is [Windows.Forms.Button] -and $c.Visible -and $ui.BtnKind.ContainsKey($c)) { foreach ($l in @(& $ui.BtnBad 'scaled' ([string]$c.AccessibleName) $c)) { $out.Add([string]$l) } }
+      elseif ($c.Controls.Count) { $st.Push($c) } } }
+  return $out.ToArray() }
 $wn.LogoFacts = {
   <#
   .SYNOPSIS
@@ -547,7 +555,7 @@ $wn.MeasureRun = {
   $wn.PngDir = Split-Path -Parent $Path
   $form.StartPosition = 'Manual'; $form.ShowInTaskbar = $false; $form.Location = [Drawing.Point]::new(-20000, -20000)
   $form.Show(); [Windows.Forms.Application]::DoEvents()
-  & $ui.FormDpi; $form.BackColor = $pc.surface
+  & $ui.FormDpi; $ui.Scaled = $true; $form.BackColor = $pc.surface   # R11: as the window part sets it
   $wn.Light = [bool](& $wn.AppsLight)   # R10: the rail logo of this computer's app mode, as $wn.Recolor 'start' sets it in a normal run
   $all = New-Object System.Collections.Generic.List[object]
   # A card that cannot be measured is kept with its error and place, and the run goes on (the test names it).

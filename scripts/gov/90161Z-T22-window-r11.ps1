@@ -482,7 +482,7 @@ $wn.Start = {
   R7 (R32 W2): the mouse-wheel filter starts here ($wn.WheelOn) and stops when the window closes.
   #>
   & $wn.LoadBounds
-  & $ui.FormDpi
+  & $ui.FormDpi; $ui.Scaled = $true   # R11 (UI standard v1): the form has its scale now, as RADE's window sets it; button sizes follow it
   $form.MinimumSize = [Drawing.Size]::new((& $wn.Sc 800), (& $wn.Sc 560))
   & $wn.Recolor 'start'
   $wn.PngDir = $dir
