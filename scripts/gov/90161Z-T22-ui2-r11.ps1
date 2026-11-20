@@ -325,6 +325,9 @@ $ui.HcRole = @{ ink = 'WindowText'; muted = 'GrayText'; surface = 'Window'; line
   accentFill = 'Window'; primary = 'Highlight'; track = 'GrayText'; redTint = 'Window'; amberTint = 'Window'; greenTint = 'Window'; white = 'Window'
   blue = 'Highlight'; yellow = 'Window'; green = 'WindowText'; greenInk = 'WindowText'; red = 'WindowText'; gray = 'GrayText'; edge = 'WindowText'
   hair = 'GrayText'; off = 'ButtonFace'; offInk = 'GrayText' }
+# R11 (engine-v29: new tokens Face, FaceInk, OnBlue, Link, Focus): each RADE token this table does not name takes the
+# system color RADE gives its role ($ui.Tok, 4th value), so no button loses its label with high contrast on.
+foreach ($k in @($ui.Tok.Keys)) { if (-not $ui.HcRole.ContainsKey($k)) { $ui.HcRole[$k] = [string]$ui.Tok[$k][3] } }
 function Select-T22Color([bool]$High, [hashtable]$Own, [hashtable]$Role) {
   # The colors to paint with: a new table with the keys of $Own. $High false: the colors of $Own. $High true: for each
   # key the system color its role names in $Role (a key with no role gets WindowText, so no text is lost). $Own is not
@@ -336,7 +339,10 @@ function Select-T22Color([bool]$High, [hashtable]$Own, [hashtable]$Role) {
   return $out
 }
 # The window's own colors, kept before any change, and whether the system colors are in use.
+# R11 (engine-v29 fills $ui.C with system colors when the window opens with high contrast on): the own colors of the
+# RADE tokens come from $ui.Tok, never from the live $ui.C.
 $ui.OwnPc = $pc.Clone(); $ui.OwnC = $ui.C.Clone(); $ui.High = $false
+foreach ($k in @($ui.Tok.Keys)) { $t = $ui.Tok[$k]; $ui.OwnC[$k] = [System.Drawing.Color]::FromArgb([int]$t[0], [int]$t[1], [int]$t[2]) }
 # Puts the colors for $High into $pc and $ui.C in place (every builder and every paint handler reads them there).
 $ui.UseColors = { param([bool]$High)
   $a = Select-T22Color $High $ui.OwnPc $ui.HcRole; foreach ($k in @($a.Keys)) { $pc[$k] = $a[$k] }
