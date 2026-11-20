@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 19 Nov 26 (Round R36 r1 ready).
+Updated: 19 Nov 26 (Round R36 r1 done; R37 next).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
@@ -26,40 +26,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R36 r1: my window r8 again, the sample publication in Word, list access, the flows by name and the full flow test
-
-**For:** the round after R35, in one paste of about 1.3 MB. It has 40 steps:
-- My 90-161.Z window r8 again (the new sizing comes in R37): 18 checks, then 3 questions.
-- The sample publication made in Word again, now with the Word helper file, once plain and once with 2 fake test seals.
-- List changes on the test site: the column Closed Date and the warning type for waivers; the site Visitors may now add rows on the 3 lists people write to. A second person adds one new row and changes one row that I made.
-- The flows: a script writes my list IDs into the import file, so the import no longer asks for list names. Then I read the state of each of the 10 flows by name, and the full flow test runs with the new waiver warning flow.
-**Time:** about 3 hours with waits; about 90 minutes of my own work (estimate). The second person needs about 15 minutes, about 40 minutes after I start.
-**Changes:** on the test site: one script checks the 12 app lists, the PFM Office level, and gives the site Visitors Contribute on 3 lists (the site stays Read); the column Closed Date and the choice Waiver Warning are added; the settings rows are set to Test mode for the flow test and put back at the end; a probe list and library, fake rows, 3 fake waivers, a fake office row, a form header and a list view are made and removed again at the end; the second person is added to Visitors, and to PFM Office only for this round; the full test rows go to the site Recycle Bin at the end. In Power Automate: the solution "90-161.Z flows" is upgraded and stays; its 2 test flows are deleted at the end. On my computer: my OneDrive folder RADE\90-161.Z (scripts, result files, 3 PDFs of the fake sample and 17 pictures of the window cards with fake data). For 3 window checks I turn high contrast on and off in Windows Settings (Windows+U, Contrast themes). Before Run, the window lists every file.
-**Steps:**
-1. Ask one person in my office to help for 15 minutes in this round.
-2. Press Copy script next to the link below.
-3. Open the Start menu.
-4. Type: ISE
-5. Open Windows PowerShell ISE (not "Run as administrator").
-6. Select File > New.
-7. Click in the white script pane.
-8. Press Ctrl+V.
-9. Press F5. The RADE window opens.
-10. Look at the title bar of the RADE window: the code after the word "script" must be the code the RADE page showed.
-11. If the window shows a button "90-161.Z", select it.
-12. Press Run.
-13. Do each check in the bar at the bottom of the 90-161.Z window.
-14. Close the 90-161.Z window with its X.
-15. Do each step the RADE window shows, until the log says DONE.
-16. At DONE, select Send in the Outlook draft that opens.
-
-https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R36-round-r1.ps1
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R36 PASSED" or "90161Z R36 NEEDS REVIEW", every file in the results folder attached, the 3 PDFs and the 17 pictures too). Then tell Claude the e-mail is sent.
-**If it fails:** do the line that starts with "What to do". If the title bar shows no code, a different code or the words "DOES NOT MATCH": select Exit and tell Claude "R36 code differs". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R36 did not paste". If Power Automate shows an error: wait 5 minutes, reload the Power Automate page and do that step 1 more time; if it fails again, select "It failed" in the RADE window and type only the line that starts with "Error". If the 90-161.Z window does not open, go on with the steps the RADE window shows.
+No open task now: Round R37 is being built.
 
 ## Done
 
+- Round R36 r1 (19 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK, 28 of 40 steps passed. Passed: the sample publication with the Word helper file (plain and with 2 test seals), the Visitors access and the 2 list changes by script, the list IDs in the import file, all 10 flows On by name, the health flow and the list button (after I chose the view by hand), my window r8 with 17 of 17 cards and the contrast checks. Needs work: the full flow test stopped at its start ("The specified user could not be found"), so its 6 next steps were skipped; 1 grid in my window is 9 px too narrow; the Enter check failed. Not tested: the second person steps (I skipped them):
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-19-r36-results.md
 - Round R35 r2 (19 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: F05 makes the Legal rows within 3 minutes on every path, a PFM Office member who is not the author edits a row, the health flow and the list button, the window r8 (20 of 20). Needs work: F01 log rows (one flow was Off), a Visitors member cannot write a row (way C, not built):
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-19-r35-results.md
 - Round R34 r1 (19 Nov 26): needs review. Checks 14 of 14, shared files 4 of 4, Window OK. Passed: the 2 test flows inside the app solution ran (the health flow, and the list button started the button flow); the 2 test flows were deleted again; PFM Office and its edit-all level, the tier T-0 and the form header were made; a second owner on each of the 6 app flows; my 90-161.Z window r7 passed 18 of 18 checks; the paste of 1 MB worked in ISE and in the PowerShell console. Not saved: F05, because one description in it is too long for Power Automate (365 characters, the limit is 256), so the 3 F05 checks failed and the next 5 steps were skipped. Not tested: the second person edit (I skipped that step):
