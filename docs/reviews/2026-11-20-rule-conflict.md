@@ -21,3 +21,22 @@ Reviewer: the `reviewer` subagent, fresh context, Opus tier (same as the author)
 Checked and OK (reviewer): matches the 2026-11-20 decision row; no conflict with Data boundary, Gov device, Next-step link, Delivery or Code standard; Feedback pictures are .png (allowed); the builder skips the check only when there is no round definition.
 
 rule-conflict-check: b2e844cf7d03
+
+## Rerun on the revised text (approved by the PFM, 20 Nov 26)
+
+```text
+  + No scripts in results (the PFM, 2026-11-20; cannot be changed): a round never collects or sends a .ps1 or other script file; the bundle build fails a collect pattern that can match one: scripts/check_collect.py.
+```
+
+Reviewer: the `reviewer` subagent, fresh context, Opus tier. Findings 2 and 4 of the first check are closed by this text.
+
+| # | Severity | Finding | Action |
+|---|---|---|---|
+| 1 | MAJOR (existing) | "No reconnaissance" still says "cannot change", not the marker "(cannot be changed)". | To the PFM: a text change of that line needs the PFM's approval. Not caused by this change. |
+| 2 | MAJOR (existing) | DECISIONS rows of 2026-11-14 call the DoD365 boundary rule "cannot be changed"; AGENTS.md "Data boundary" has no marker. | To the PFM (mark it, or mark those rows replaced). Not caused by this change. |
+| 3 | MINOR | The 2026-11-20 DECISIONS row named "2 hard rules, both marked cannot change". | Fixed: the row now names only this rule and its marker. |
+| 4 | MINOR (existing) | "Data boundary" has no written exception for the results e-mail (DECISIONS row of 2026-11-14 allows it during test rounds). | To the PFM with item 2. |
+| 5 | MINOR | Overlap with "Round results" and the round skill. | Recorded (as in the first check). |
+| 6 | MINOR | This record named only the old hash. | Fixed: this section. |
+
+rule-conflict-check: 354411cc6b38
