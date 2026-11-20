@@ -53,12 +53,11 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 15. If a card does not look right: select "Feedback" in the bottom bar.
 16. In the box "What does not look right? One line, no names.", type what is wrong.
 17. Select "Save".
-18. After the last check, write down the name of the screen the window shows.
-19. Close the 90-161.Z window with its X.
-20. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
-21. Close the 90-161.Z window with its X.
-22. Answer the 3 questions in the RADE window.
-23. At DONE, select Send in the Outlook draft that opens.
+18. Close the 90-161.Z window with its X.
+19. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
+20. Close the 90-161.Z window with its X.
+21. Answer the 3 questions in the RADE window.
+22. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R40-round-r1.ps1
 
