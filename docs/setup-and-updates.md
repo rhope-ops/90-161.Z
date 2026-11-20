@@ -26,7 +26,7 @@ RADE is the Redacted Application Deployment Engine: https://rhope-ops.github.io/
 
 What you do:
 1. Open https://rhope-ops.github.io/RADE and find the round. Nothing else is downloaded: every file a task needs comes inside the round.
-2. Press Copy script next to the round's link. If it says blocked: open the link, press Ctrl+A, then Ctrl+C. To read the script before you paste it, press Open as .txt: it saves the same text as a .txt file that you can open in Notepad.
+2. Press Copy script next to the round's name. To read the script first, press Open as .txt: it saves the same text as a .txt file; open it from Downloads in Notepad. If Copy script says blocked: open that .txt file, press Ctrl+A, then Ctrl+C.
 3. Open the Start menu, type ISE and open Windows PowerShell ISE. Do not choose "Run as administrator".
 4. Select File > New. Click in the white script pane.
 5. Press Ctrl+V, then F5. The RADE window opens.

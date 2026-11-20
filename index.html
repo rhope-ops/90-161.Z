@@ -297,12 +297,14 @@ var SCRIPTS={}; // round scripts, loaded ahead so one click copies the whole tex
 function isRound(h){return /\/scripts\/gov\/paste\/[^\/]+\.ps1$/.test(h)}
 function fileCard(u){
   var h=u.indexOf('http')===0?u:'https://'+u, name=h.split('/').pop();
+  // A round script has no .ps1 link and no Copy link (PFM 20 Nov 26): Open as .txt takes the link's place, to read the script before pasting it.
+  if(isRound(h))return '<div class="file"><span class="fn"><strong>'+esc(name)+'</strong></span>'+
+    '<button type="button" data-txt="'+esc(h)+'" data-label="Open as .txt" aria-label="Open as .txt: save '+esc(txtName(h))+' to read the script before you paste it">Open as .txt</button>'+
+    '<button type="button" class="primary" data-script="'+esc(h)+'" aria-label="Copy the whole script '+esc(name)+'">Copy script</button></div>';
   return '<div class="file"><span class="fn"><a href="'+esc(h)+'">'+esc(name)+'</a><span class="fu">'+esc(h)+'</span></span>'+
-    (isRound(h)?'<button type="button" class="primary" data-script="'+esc(h)+'" aria-label="Copy the whole script '+esc(name)+'">Copy script</button>'+
-      '<button type="button" data-txt="'+esc(h)+'" aria-label="Save the script '+esc(name)+' as a .txt file to read before you paste">Open as .txt</button>':'')+
     '<button type="button" data-copy="'+esc(h)+'" aria-label="Copy link to '+esc(name)+'">Copy link</button></div>';
 }
-function blocked(b){b.textContent='Copy blocked: open the link, Ctrl+A, Ctrl+C';b.disabled=true}
+function blocked(b){b.textContent='Copy blocked: use Open as .txt, then Ctrl+A, Ctrl+C in Notepad';b.disabled=true}
 function copyScript(b){
   var h=b.getAttribute('data-script'),t=SCRIPTS[h];
   if(typeof t!=='string'){if(b.getAttribute('data-state')==='loading'){b.textContent='Still loading; press again in a moment'}else{blocked(b)}return}
@@ -312,14 +314,14 @@ function copyScript(b){
 }
 /** txtName(h): the .txt file name for script link h (name.ps1 -> name.txt). */
 function txtName(h){return h.split('/').pop().replace(/\.ps1$/i,'')+'.txt'}
-/** openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26). Not loaded yet: opens the raw link, which shows the same text. */
+/** openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26). The label comes back from data-label, so a second click cannot keep the "Saved" text. */
 function openTxt(b){
-  var h=b.getAttribute('data-txt'),t=SCRIPTS[h];
-  if(typeof t!=='string'){window.open(h,'_blank','noopener');return}
+  var h=b.getAttribute('data-txt'),t=SCRIPTS[h],lbl=b.getAttribute('data-label');
+  if(typeof t!=='string'){b.textContent='Not loaded yet: wait, or press Reload';setTimeout(function(){b.textContent=lbl},4000);return}
   var u=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');
   a.href=u;a.download=txtName(h);a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(u)},10000);
-  var x=b.textContent;b.textContent='Saved '+a.download+'. Open it from Downloads.';setTimeout(function(){b.textContent=x},4000);
+  b.textContent='Saved '+a.download+'. Open it from Downloads.';setTimeout(function(){b.textContent=lbl},4000);
 }
 function preload(m){
   Array.prototype.forEach.call(m.querySelectorAll('button[data-script]'),function(b){
