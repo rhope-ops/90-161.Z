@@ -12,12 +12,24 @@ $script = Join-Path $Root 'scripts/gov/90161Z-T22-maint-r12.ps1'
 function Test-That([string]$Name, [bool]$Ok, [string]$Out) {
   if ($Ok) { $script:pass++; Write-Host ('T22MAINT PASS ' + $Name) } else { $script:fail++; Write-Host ('T22MAINT FAIL ' + $Name + ': ' + $Out) }
 }
-# Make a fake RADE folder. Takes what to put in it; returns its T22 folder.
+<#
+.SYNOPSIS
+Makes a fake RADE folder in a new temporary folder (FAKE data only).
+.PARAMETER Record
+With an install record of 90-161.Z 0.1.0.
+.PARAMETER Report
+With a Diagnose report (1 PASS, 1 FINDING with a fake URL, 1 NOTE).
+.PARAMETER Csv
+With the CSV copy beside the backup's JSON file.
+.OUTPUTS
+The T22 folder of the fake app folder.
+#>
 function New-Fake([bool]$Record, [bool]$Report, [bool]$Csv) {
   $t = Join-Path ([IO.Path]::GetTempPath()) ('t22m-' + [guid]::NewGuid().ToString('N')); $app = Join-Path (Join-Path $t 'RADE') '90-161.Z'
   $null = New-Item -ItemType Directory -Path (Join-Path $app 'T22') -Force
   if ($Record) { $c = Join-Path (Join-Path (Join-Path $t 'RADE') 'Config') 'installed'; $null = New-Item -ItemType Directory -Path $c -Force
-    Set-Content -LiteralPath (Join-Path $c 'abc.json') -Value '{"schema":"rade-installed/2","key":"90-161.Z/90-161.Z","installed":{"version":"0.1.0"},"lastRun":{"state":"PASSED"},"steps":{}}' }
+    $rec = '{"schema":"rade-installed/2","key":"90-161.Z/90-161.Z","installed":{"version":"0.1.0"},"lastRun":{"state":"PASSED"},"steps":{}}'
+    Set-Content -LiteralPath (Join-Path $c 'abc.json') -Value $rec }
   if ($Report) { $d = Join-Path $app 'Diagnose'; $null = New-Item -ItemType Directory -Path $d -Force
     Set-Content -LiteralPath (Join-Path $d 'diagnose-1.txt') -Value @('Diagnose of 90-161.Z 0.1.0', '1 finding(s).', 'PASS: a', 'FINDING: b at https://fake.example.com/sites/fake. What to do: c', 'NOTE: d') }
   $b = Join-Path (Join-Path $app 'Backups') 'b1'; $null = New-Item -ItemType Directory -Path $b -Force
@@ -37,7 +49,8 @@ Test-That 'counts only: the rows, never a value' ($r.Out -match 'BACKUP list "PF
 Test-That 'a Diagnose finding is masked' ($r.Out -match 'pass=1 findings=1 notes=1' -and $r.Out -match 'FINDING: b at <URL>' -and $r.Out -notmatch 'example\.com') $r.Out
 Test-That 'the result file is written' (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-maint-r12.txt')) $r.Out
 $d = New-Fake $false $false $false; $dirs += $d; $r = Invoke-Maint $d 'Read'
-Test-That 'nothing there: 3 FAIL (a backup without its csv fails), exit 1' ($r.Code -eq 1 -and $r.Out -match 'RESULT INSTALL FAIL' -and $r.Out -match 'RESULT DIAGNOSE FAIL' -and $r.Out -match 'csv=no' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
+$ok = ($r.Code -eq 1 -and $r.Out -match 'RESULT INSTALL FAIL' -and $r.Out -match 'RESULT DIAGNOSE FAIL' -and $r.Out -match 'csv=no' -and $r.Out -match 'RESULT BACKUP FAIL')
+Test-That 'nothing there: 3 FAIL (a backup without its csv fails), exit 1' $ok $r.Out
 $r = Invoke-Maint $d 'Install'
 Test-That 'install step passes and writes its file' ($r.Code -eq 0 -and $r.Out -match 'RESULT INSTALL PASS' -and (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-install-r12.txt'))) $r.Out
 foreach ($x in $dirs) { Remove-Item -LiteralPath (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $x))) -Recurse -Force -ErrorAction SilentlyContinue }
