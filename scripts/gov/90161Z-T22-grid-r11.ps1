@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r10, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r11, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
+  R11 (R38; PFM 20 Nov 26): column widths come from the widest value, a chip never ends under the scroll bar, the head "Weekdays in step" may wrap, and the layout self-check has the edge test.
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
   column kind: pub (the number as a link, the title beside or under it), with and bold (semibold), chip (a status
   chip) and plain. Double-click or Enter on a row opens its card.
@@ -15,8 +16,14 @@
   R8 (R35 W7, R34 open point 5): no column head is shortened with dots in a narrow grid: every column keeps at least
   the width of its head ($wn.HeadMin, $wn.GridCols), and every painted head keeps what it needed and had (Tag.Heads)
   for the measure part and the layout self-check.
+  R11 (R38; PFM 20 Nov 26: R37 All Actions, the status chips "Due 20 Nov 26" touched the scroll bar): a column's width comes from its
+  widest value ($wn.ValueMin: the measured text, a chip with its own padding, plus the cell padding); a chip column never
+  shrinks below its chip ($wn.GridCols, $wn.FitGrid), a short column ("Weekdays in step" holds 1 or 2 digits) is as wide
+  as its values or its head, and a head marked HW wraps to 2 lines ($wn.HeadWrap, $wn.HeadMin, $wn.GridHeight). Each grid
+  can say where its content ends ($wn.GridEdges), so the layout self-check ($wn.EdgeCheck) fails a chip or text that
+  ends closer to the grid's right edge than the vertical scroll bar is wide.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -25,8 +32,12 @@
 $wn.GridFill = { param($G, $Rows)
   $G.Rows.Clear(); $G.Tag.Shown = @($Rows)
   foreach ($r in @($Rows)) {
-    $vals = @(foreach ($c in $G.Tag.Cols) { if ($c.K -eq 'since') { $(if ($c.W -ge 100) { [string]$r.Since + ' ' + $mid + ' ' + [string]$r.Age } else { [string]$r.Age }) } else { [string]$r[$c.N] } })
+    $vals = @(foreach ($c in $G.Tag.Cols) { & $wn.CellText $c $r })
     [void]$G.Rows.Add([object[]]$vals) } }
+# The text of row $R in column $C (Since: the date and the age when the column is wide, else the age).
+$wn.CellText = { param($C, $R)
+  if ($C.K -eq 'since') { return $(if ($C.W -ge 100) { [string]$R.Since + ' ' + $mid + ' ' + [string]$R.Age } else { [string]$R.Age }) }
+  return [string]$R[$C.N] }
 $wn.GridHeight = {
   <#
   .SYNOPSIS
@@ -43,6 +54,8 @@ $wn.GridHeight = {
   #>
   param($b, $Ctx)
   $rows = @($b.Rows); $hdrH = & $wn.Sc 33; $rowH = & $wn.Sc 41
+  # R11: a head that wraps to 2 lines (HW) needs one more line of the head font
+  if (@(@($b.Cols) + @($b.ColsWide) | Where-Object { $_ -and $_.HW }).Count) { $hdrH += [int]$ui.F.SmallB.Height }
   if (@($b.Cols | Where-Object { $_.K -eq 'pub' }).Count) { $rowH = [math]::Max($rowH, 2 * (& $wn.PubLineH) + (& $wn.Sc 4) + 1) }
   $full = $hdrH + $rowH * $rows.Count + 2; $h = $full
   if ($b.Fill) {
@@ -98,33 +111,60 @@ $wn.GridCols = {
   The width of the vertical scroll bar when the grid scrolls, else 0.
   .PARAMETER PubMin
   The smallest width of a pub column ($wn.PubMin), or 0.
+  .PARAMETER Rows
+  R11: all the rows of the grid, to measure each column's widest value ($wn.ValueMin); none: the declared widths.
+  .DESCRIPTION
+  R11 (R38): a column that is not the pub column wants the narrower of its declared width and its widest value, so a
+  short column gives its room away; a chip column wants its widest chip (never less) and keeps it whole when the room is
+  short, like the pub column; the fill weight of a column is the width it wants.
   .OUTPUTS
   The column kinds by name (@{ name = kind }).
   #>
-  param($G, $Cols, [int]$W, [int]$Scroll, [int]$PubMin)
+  param($G, $Cols, [int]$W, [int]$Scroll, [int]$PubMin, $Rows = @())
   # With a pub column the room for the scroll bar is always kept: narrower columns wrap, rows grow, and a bar may come.
   $bar = $(if ($PubMin -gt 0) { [math]::Max($Scroll, [Windows.Forms.SystemInformation]::VerticalScrollBarWidth) } else { $Scroll })
   $fixed = 0; $keep = 0; $rest = 0; $n = @($Cols).Count; $avail = $W - $bar - 2
   $pubOwn = [math]::Max(2, [math]::Min([math]::Max((& $wn.Sc 60), $PubMin), $avail - 2 * ($n - 1)))   # a pub column never leaves less than 2 px a column
-  $own = @{}; foreach ($c in $Cols) {
-    $o = $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $pubOwn } elseif ($c.W -eq 0) { & $wn.Sc 60 } else { & $wn.Sc $c.W }); $own[[string]$c.N] = $o
-    if ($c.W -ne 0) { $fixed += $o }; if ($c.K -eq 'pub' -and $PubMin -gt 0) { $keep += $o } else { $rest += $o } }
+  $own = @{}; $hard = @{}; $spare = & $wn.HeadSpare $Cols $avail $PubMin $pubOwn; foreach ($c in $Cols) {   # R11: a chip is kept only while the heads fit
+    $isPub = ($c.K -eq 'pub' -and $PubMin -gt 0); $vm = $(if (@($Rows).Count) { [int](& $wn.ValueMin $c $Rows) } else { 0 })
+    $chipKeep = ($c.K -eq 'chip' -and $vm -gt 0 -and ($vm - [int](& $wn.HeadMin $c)) -le $spare)   # Tag.ChipKept: the edge check judges only a kept chip
+    if ($c.K -eq 'chip') { $wn.ChipKept = $chipKeep; if ($chipKeep) { $spare -= [math]::Max(0, $vm - [int](& $wn.HeadMin $c)) } }
+    $hard[[string]$c.N] = ($isPub -or $chipKeep)
+    $o = $(if ($isPub) { $pubOwn } elseif ($chipKeep) { [math]::Max($vm, [int](& $wn.HeadMin $c)) } elseif ($c.W -eq 0) { & $wn.Sc 60 }
+      elseif ($vm -gt 0) { [math]::Min((& $wn.Sc $c.W), $vm) } else { & $wn.Sc $c.W }); $own[[string]$c.N] = $o
+    if ($c.W -ne 0) { $fixed += $o }; if ($hard[[string]$c.N]) { $keep += $o } else { $rest += $o } }
   $k = $(if ($rest -gt 0 -and $keep + $rest -gt $avail) { [math]::Max(0.0, [double]($avail - $keep) / $rest) } else { 1.0 })
   # R8 (W7): the head floor of each other column, what it wants, and the room they share ($avail less the pub column)
   $hm = @{}; $want = 0; $floor = 0; $more = 0
-  foreach ($c in $Cols) { if (-not ($c.K -eq 'pub' -and $PubMin -gt 0)) { $f = & $wn.HeadMin $c; $hm[[string]$c.N] = $f
+  foreach ($c in $Cols) { if (-not $hard[[string]$c.N]) { $f = & $wn.HeadMin $c; $hm[[string]$c.N] = $f
       $floor += $f; $want += [math]::Max($own[[string]$c.N], $f); $more += [math]::Max(0, $own[[string]$c.N] - $f) } }
   $pool = $avail - $keep
   $kinds = @{}
   foreach ($c in $Cols) {
     $dc = New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name = [string]$c.N; $dc.HeaderText = $(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode = 'NotSortable'
     $o = $own[[string]$c.N]; $f = [int]$hm[[string]$c.N]
-    $min = $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $o } elseif ($want -le $pool) { [math]::Max($o, $f) }
+    $min = $(if ($hard[[string]$c.N]) { $o } elseif ($want -le $pool) { [math]::Max($o, $f) }
       elseif ($floor -le $pool) { $f + $(if ($more -gt 0) { [int][math]::Floor(($pool - $floor) * [math]::Max(0, $o - $f) / [double]$more) } else { 0 }) }
       else { [math]::Max(2, [int][math]::Floor($o * $k)) })
-    $dc.AutoSizeMode='Fill'; $dc.MinimumWidth = $min; $dc.FillWeight = [single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $Scroll) } else { $c.W })
+    $dc.AutoSizeMode='Fill'; $dc.MinimumWidth = $min; $dc.FillWeight = [single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $Scroll) } else { [math]::Max(1, $o) })
     [void]$G.Columns.Add($dc); $kinds[[string]$c.N] = [string]$c.K }
   return $kinds }
+# R11 (R38; ps51 W7 at 96 dpi): the room a grid of width $Avail has above all its column heads (the pub column counts
+# $PubOwn when $PubMin is above 0). $wn.GridCols keeps a status chip whole only while that room holds the chip's extra
+# width, else the chip column shares the room as in r10, so a narrow window never cuts the other heads.
+$wn.HeadSpare = { param($Cols, [int]$Avail, [int]$PubMin, [int]$PubOwn)
+  $spare = $Avail; foreach ($c in $Cols) { $spare -= $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { $PubOwn } else { [int](& $wn.HeadMin $c) }) }
+  return $spare }
+# R11 (R38; the PFM, 20 Nov 26: "hide Since when narrow"): the columns of a grid of width $W with each column marked Drop
+# left out, last first, while the pub column's minimum ($wn.PubMin of the widths $Pw) and every other whole head do not fit
+# beside the scroll bar. Wide windows keep every column.
+$wn.DropCols = { param($Cols, [int]$W, $Pw)
+  $cols = @($Cols); $avail = $W - [Windows.Forms.SystemInformation]::VerticalScrollBarWidth - 2
+  while ($true) {
+    $need = [int](& $wn.PubMin $cols $Pw); foreach ($c in $cols) { if ($c.K -ne 'pub') { $need += [int](& $wn.HeadMin $c) } }
+    $drop = @($cols | Where-Object { $_.Drop }) | Select-Object -Last 1
+    if ($need -le $avail -or -not $drop) { return ,$cols }
+    $cols = @($cols | Where-Object { $_ -ne $drop }) } }
 $wn.Grid = {
   <#
   .SYNOPSIS
@@ -141,13 +181,13 @@ $wn.Grid = {
   param($Parent, $b, [int]$W, $Ctx)
   $cols = @($b.Cols)
   if ($wn.Wide -and $b.ColsWide) { $wf = 0; foreach ($c in $b.ColsWide) { $wf += (& $wn.Sc $c.W) }; if ($wf + (& $wn.Sc 137) -le $W) { $cols = @($b.ColsWide) } }
-  $rows = @($b.Rows); $hs = & $wn.GridHeight $b $Ctx
+  $rows = @($b.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols $cols $W $pw; $hs = & $wn.GridHeight $b $Ctx
   $g = & $wn.GridNew ([string]$b.Name) $W $hs
   $scroll = $(if ($hs.Full -gt $hs.H) { [Windows.Forms.SystemInformation]::VerticalScrollBarWidth } else { 0 })
-  $pw = & $wn.PubWidths $rows
-  $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw)
+  $wn.ChipKept = $null; $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw) $rows
   $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
-  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null; Heads = [ordered]@{} }
+  $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null
+    Heads = [ordered]@{}; ChipKept = $wn.ChipKept }
   & $wn.GridFill $g $rows
   $g.Add_CellPainting({ param($s, $e) & $wn.PaintCell $s $e })
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
@@ -189,6 +229,7 @@ $wn.FitGrid = {
   $excess = $sum - $room; if ($excess -le 0) { return $false }
   $kinds = $G.Tag.Kind; $cols = @($G.Tag.Cols)
   $heads = @{}; foreach ($c in $cols) { $heads[[string]$c.N] = [int](& $wn.HeadMin $c) }
+  # As r10: every column but pub can give width (ps51 W7: a chip that could not give crushed the other heads)
   $free = @($G.Columns | Where-Object { $_.Visible -and [string]$kinds[$_.Name] -ne 'pub' }); $gave = 0
   foreach ($pass in 'above head', 'under head') {
     foreach ($k in @($free | Sort-Object { $_.Width - [int]$heads[$_.Name] } -Descending)) {
@@ -214,7 +255,65 @@ $wn.TextW = { param([string]$Text, $F)
 $wn.HeadText = { param($C) return ($(if ($C.H) { [string]$C.H } else { [string]$C.N })).ToUpperInvariant() }
 # R8 (R35 W7): the smallest width of grid column $C that shows its whole head: the head text in the head font, the cell
 # padding at both sides ($wn.PaintCell) and 1 px, as $wn.PubMin does for the pub column.
-$wn.HeadMin = { param($C) return ((& $wn.TextW (& $wn.HeadText $C) $ui.F.SmallB) + 2 * (& $ui.Sc 10) + 1) }
+# R11: a column marked HW has a head that may wrap to 2 lines: its head width is that of the wider of the 2 lines.
+$wn.HeadMin = { param($C) return ((& $(if ($C.HW) { $wn.HeadWrap } else { $wn.HeadW1 }) $C) + 2 * (& $ui.Sc 10) + 1) }
+# The width of the head of column $C on one line, in pixels.
+$wn.HeadW1 = { param($C) return (& $wn.TextW (& $wn.HeadText $C) $ui.F.SmallB) }
+# R11: the narrowest width the head of column $C shows in at most 2 lines, breaking between words: the best split into
+# 2 lines, the width of its wider line; the one-line width when the head is one word.
+$wn.HeadWrap = { param($C)
+  $words = @((& $wn.HeadText $C) -split ' ' | Where-Object { $_ }); $best = & $wn.HeadW1 $C
+  for ($i = 1; $i -lt $words.Count; $i++) {
+    $a = & $wn.TextW (($words[0..($i - 1)]) -join ' ') $ui.F.SmallB; $b = & $wn.TextW (($words[$i..($words.Count - 1)]) -join ' ') $ui.F.SmallB
+    $best = [math]::Min($best, [math]::Max($a, $b)) }
+  return $best }
+# R11 (R38): the width column $C needs for its widest value in $Rows: the text as the grid paints it (a chip: the text and
+# the chip's own padding, as $wn.PaintChip draws it) plus the cell padding at both sides and 1 px (right of a chip: at least
+# the width of a vertical scroll bar, so the chip never ends under it); 0 when no row has a value.
+$wn.ValueMin = { param($C, $Rows)
+  $f = $(if ($C.K -eq 'with' -or $C.K -eq 'bold' -or $C.K -eq 'chip') { $ui.F.SmallB } else { $ui.F.Small }); $w = 0
+  foreach ($r in @($Rows)) { $t = & $wn.CellText $C $r; if ($t) { $w = [math]::Max($w, (& $wn.TextW $t $f)) } }
+  if ($w -le 0) { return 0 }
+  # a chip: its text, its own padding, the cell padding left and, right of it, at least a scroll bar's width
+  if ($C.K -eq 'chip') { return ($w + (& $ui.Sc 20) + (& $ui.Sc 10) + [math]::Max((& $ui.Sc 10), [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth) + 1) }
+  return ($w + 2 * (& $ui.Sc 10) + 1) }
+$wn.GridEdges = {
+  <#
+  .SYNOPSIS
+  R11 (R38): where the content of a grid's cells ends, against the room before its vertical scroll bar.
+  .DESCRIPTION
+  For each visible column, from the left: a chip column ends at its cell's left, the cell padding and its widest chip; the
+  last visible column of another kind at its left, the padding and the widest value (never past the cell less its
+  padding); the other columns end inside the grid and are not measured. Edge is the largest of these. Bar is the width of a vertical scroll bar, always reserved (the bar shows or not).
+  .PARAMETER G
+  The grid ($wn.Grid).
+  .OUTPUTS
+  @{ Grid; Width (the client width); Bar; Edge; Col (the column that reaches it); Fits (R11: the grid has no chip column, or
+  $wn.GridCols kept its chip whole (Tag.ChipKept); when it did not, the heads come first and the edge is not judged) }.
+  #>
+  param($G)
+  $pd = & $ui.Sc 10; $left = 0; $edge = 0; $name = ''; $cols = @($G.Tag.Cols)
+  $shown = @($G.Columns | Sort-Object DisplayIndex | Where-Object { $_.Visible }); $lastName = $(if ($shown.Count) { [string]$shown[-1].Name } else { '' })
+  foreach ($k in $shown) {
+    $c = @($cols | Where-Object { [string]$_.N -eq $k.Name }) | Select-Object -First 1
+    if ($c.K -ne 'chip' -and [string]$k.Name -ne $lastName) { $left += $k.Width; continue }
+    $f = $(if ($c.K -eq 'with' -or $c.K -eq 'bold' -or $c.K -eq 'chip') { $ui.F.SmallB } else { $ui.F.Small }); $w = 0
+    foreach ($r in @($G.Tag.Shown)) { $w = [math]::Max($w, (& $wn.TextW (& $wn.CellText $c $r) $f)) }
+    if ($c.K -eq 'chip') { if ($w -gt 0) { $w += & $ui.Sc 20 } }
+    elseif ($c.K -eq 'pub') { $w = 0 }   # the pub column is checked by its own cut test (W1)
+    $e = $left + $pd + $(if ($c.K -eq 'chip') { $w } else { [math]::Min($w, [math]::Max(0, $k.Width - 2 * $pd)) })
+    if ($w -gt 0 -and $e -gt $edge) { $edge = $e; $name = [string]$k.Name }
+    $left += $k.Width }
+  $bar = [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth; $wd = [int]$G.ClientSize.Width
+  return @{ Grid = [string]$G.AccessibleName; Width = $wd; Bar = $bar; Edge = [int]$edge; Col = $name; Fits = ($null -eq $G.Tag.ChipKept -or [bool]$G.Tag.ChipKept) } }
+# R11 (R38): the LAYOUT line of grid $G when a chip or text ends closer than the scroll bar's width to the grid's right
+# edge (none when it does not).
+$wn.EdgeCheck = { param($G, [string]$Card)
+  $e = & $wn.GridEdges $G
+  if (-not $e.Fits) { return $null }   # too narrow for every head and the whole chip: the heads come first (Test-EdgeBar prints INFO)
+  if ($e.Edge -gt $e.Width - $e.Bar) {
+    return ('LAYOUT ' + $Card + ' R11 grid ' + $e.Grid + ': column ' + $e.Col + ' ends at ' + $e.Edge + ', the grid is ' + $e.Width + ' wide with a scroll bar of ' + $e.Bar) }
+  return $null }
 # R7 (W1): the height of one line of a pub cell, in pixels: the larger of the link font's height and its card line height.
 $wn.PubLineH = { return [math]::Max([int]$ui.F.Link.Height, (& $wn.LineH $ui.F.Link)) }
 # R7 (W1): the smallest width of the pub column of $Cols: its widest number, widest title ($Pw, $wn.PubWidths) or head,
@@ -295,9 +394,12 @@ $wn.PaintCell = {
     $br = New-Object System.Drawing.SolidBrush($bg); $gr.FillRectangle($br, $bd); $br.Dispose()
     $pn = New-Object System.Drawing.Pen($(if ($head) { $pc.muted } else { $pc.line }), 1); $gr.DrawLine($pn, $bd.X, ($bd.Bottom - 1), $bd.Right, ($bd.Bottom - 1)); $pn.Dispose()
     $text = [string]$E.Value
-    if ($head) { [Windows.Forms.TextRenderer]::DrawText($gr, $text.ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $fl)
+    if ($head) {
+      $cd = @(@($tag.Cols) | Where-Object { [string]$_.N -eq [string]$S.Columns[$E.ColumnIndex].Name }) | Select-Object -First 1
+      $wrapHead = [bool]($cd -and $cd.HW)   # R11: a head that wraps to 2 lines (WordBreak) and needs the width of its wider line
+      [Windows.Forms.TextRenderer]::DrawText($gr, $text.ToUpperInvariant(), $ui.F.SmallB, $tr, $pc.muted, $(if ($wrapHead) { $fw } else { $fl }))
       # R7 (W1): what the head of the pub column needs and has, for the measure part and the layout self-check
-      $hd = @{ Text = $text.ToUpperInvariant(); W = (& $wn.TextW $text.ToUpperInvariant() $ui.F.SmallB); Have = $tr.Width; Kind = $kind }
+      $hd = @{ Text = $text.ToUpperInvariant(); W = $(if ($wrapHead) { (& $wn.HeadWrap $cd) } else { (& $wn.TextW $text.ToUpperInvariant() $ui.F.SmallB) }); Have = $tr.Width; Kind = $kind }
       if ($kind -eq 'pub') { $tag.Head = $hd }
       if ($null -ne $tag.Heads) { $tag.Heads[[string]$S.Columns[$E.ColumnIndex].Name] = $hd } }   # R8 (W7): every head, for the same checks
     elseif ($kind -eq 'pub') { & $wn.PaintPub $gr $text $tr $fl $fw $tag $E.RowIndex }

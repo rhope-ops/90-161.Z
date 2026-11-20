@@ -1,5 +1,5 @@
 {
-    "_doc": "Steps that passed on the gov device and leave the rounds (PFM, 19 Nov 26: a step leaves after 1 pass with unchanged content; a change of its content or a failure brings it back; R37 is the first round without them). One entry per step: the step name without its revision, the revision that passed, each pass (round, results file, results row), what it tested, its files, and content_sha256: the SHA-256 of the step definition in scripts/paste_bundles.json (JSON with sorted keys) and of each file, with every revision token (r<digits>) written as r<N>, so a revision raise alone is no change. Hashes are of the R36 r1 definition on main (commit 7dc8a78). R38 (UI standard plan, Step 2) adds the build check that reads this file.",
+    "_doc": "Steps that passed on the gov device and leave the rounds (PFM, 19 Nov 26: a step leaves after 1 pass with unchanged content; a change of its content or a failure brings it back; R37 is the first round without them). One entry per step: the step name without its revision, the revision that passed, each pass (round, results file, results row), what it tested, its files, and content_sha256: the SHA-256 of the step definition in scripts/paste_bundles.json (JSON with sorted keys) and of each file, with every revision token (r<digits>) written as r<N>, so a revision raise alone is no change. Hashes are of the R36 r1 definition on main (commit 7dc8a78) for the first 5 entries and of the R37 r1 definition (commit c5503b6) for the entries added 20 Nov 26. R38 (UI standard plan, Step 2) adds the build check that reads this file.",
     "steps": [
         {
             "step": "T21 Second person edits your row",
@@ -112,6 +112,422 @@
             "content_sha256": {
                 "step": "93a9d43b84e1fdf2ff885e8417e4d9c2d81a78c4eff6c2271fc8c03d0e659bd6",
                 "scripts/gov/90161Z-T21-look-r10.ps1": "8bf4c9a1b5b287c15c7fc4b90e7ce1e9fe7caac5f955b9651b5bc4f7c0e02814"
+            }
+        },
+        {
+            "step": "T01 Render the sample publication",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T01 Render the sample publication r10: PASSED, 4 of 4"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T01 Render the sample publication r10: T01 Render the sample publication r10: PASSED, 4 of 4 (second pass)"
+                }
+            ],
+            "tested": "The sample publication renders in Word with Publication.Word.ps1.",
+            "files": [
+                "scripts/gov/90161Z-T01-renderer-test-r10.ps1"
+            ],
+            "content_sha256": {
+                "step": "459141747b785d75fd42e95b973781dda48fe9cd882c3552da3a5843d36100cc",
+                "scripts/gov/90161Z-T01-renderer-test-r10.ps1": "6c591d4100543a8dd31507308a6027948310536753de229047f7a7725e2b9bd5"
+            }
+        },
+        {
+            "step": "T07 Render the sample with 2 test seals",
+            "revision": "r6",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T07 with 2 test seals r6: PASSED, 6 of 6"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T07 Render the sample with 2 test seals r6: T07 Render the sample with 2 test seals r6: PASSED, 6 of 6 (second pass)"
+                }
+            ],
+            "tested": "The sample renders with 2 fake test seals.",
+            "files": [
+                "scripts/gov/90161Z-T07-seal-test-r6.ps1"
+            ],
+            "content_sha256": {
+                "step": "0b63abfdc7bb9836679562119d0395a357d0cabbf979ed2fa777f86828cc2800",
+                "scripts/gov/90161Z-T07-seal-test-r6.ps1": "bad22a682ea6806d122e1768f4393e3972269317d099aeb19a4310759cc8ceda"
+            }
+        },
+        {
+            "step": "T20 Give Visitors Contribute on the intake lists",
+            "revision": "r4",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T20 r4: PASSED, 20 of 20"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T20 Give Visitors Contribute on the intake lists r4: T20 Give Visitors Contribute on the intake lists r4: PASSED, 20 of 20 (second pass)"
+                }
+            ],
+            "tested": "Visitors get Contribute on the 3 intake lists by script; the site stays Read.",
+            "files": [
+                "scripts/gov/90161Z-T20-provision-lists-r4.ps1"
+            ],
+            "content_sha256": {
+                "step": "db161c9ac1b0e22ec5c20ed9c24bb330e757b6629b25f87727cf4624f46ca296",
+                "scripts/gov/90161Z-T20-provision-lists-r4.ps1": "3b130b1943858046da2d6b0439ce829190a982fcefdcbfb7139be93e2e1f6e58"
+            }
+        },
+        {
+            "step": "T19 Add Closed Date and Waiver Warning",
+            "revision": "r6",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "T19 r6: PASSED, 10 of 10"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T19 Add Closed Date and Waiver Warning r6: T19 Add Closed Date and Waiver Warning r6: PASSED, 10 of 10 (second pass)"
+                }
+            ],
+            "tested": "The column Closed Date and the choice Waiver Warning are set and read back.",
+            "files": [
+                "scripts/gov/90161Z-T19-list-update-r6.ps1"
+            ],
+            "content_sha256": {
+                "step": "98f5bfbf8c1e50fc1d7440494514901dc0edb611b7e4f393d5531edff7b20d55",
+                "scripts/gov/90161Z-T19-list-update-r6.ps1": "52bceac1ec59ea97928c5a5f65d7b2431d617bbefae9361fcd33ede762a3f70e"
+            }
+        },
+        {
+            "step": "T24 Write the list IDs into the import file",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Write the list IDs into the import file r7: PASSED, 2 of 2"
+                }
+            ],
+            "tested": "The list IDs go into the import file, so the import asks for no list name.",
+            "files": [
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1"
+            ],
+            "content_sha256": {
+                "step": "089882c0f4cb9095ea2365716866399d527d0031560f3f3fc41ad2eb86dd2c6a",
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1": "57d5dda8147b0a6e7eefab6727e1bf970b509d0cfc9ce04c35c40d33fcfffd90"
+            }
+        },
+        {
+            "step": "T24 Import the full solution: choose the file",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Import the full solution r7: choose the file: PASSED (confirmed)"
+                }
+            ],
+            "tested": "The full solution imports (hand step).",
+            "files": [],
+            "content_sha256": {
+                "step": "a27ea94638d9e722e83604aa71cdddff2089523815a6fbbf62ca95cb63bf0762"
+            }
+        },
+        {
+            "step": "T24 Import the full solution: finish",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Import the full solution r7: finish: PASSED; import-boxes = Both; import-replaced = Yes"
+                }
+            ],
+            "tested": "The import finishes and replaces the solution.",
+            "files": [],
+            "content_sha256": {
+                "step": "97b4e9af0e840a24ce9f4bf0f6aaa0b0faff05d2844b2492fbb7c348da9e9f03"
+            }
+        },
+        {
+            "step": "T24 Turn on all 10 flows",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Turn on all 10 flows r7: PASSED"
+                }
+            ],
+            "tested": "All 10 flows are turned On (hand step).",
+            "files": [],
+            "content_sha256": {
+                "step": "d92dfd23d896f41de0a241e86c455827661f3ba911097635d3ad99066dc7ca49"
+            }
+        },
+        {
+            "step": "T24 Check the flows by name, 1 of 3",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "10 of 10 On"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Check the flows by name, 1 of 3 r7: PASSED, f01-on to f04-on = On"
+                }
+            ],
+            "tested": "Flows read On by name.",
+            "files": [],
+            "content_sha256": {
+                "step": "9c528f08c134572f9c3dcb9c4f0dac84e8b778ca57cb93a1088d80ecf68aaebb"
+            }
+        },
+        {
+            "step": "T24 Check the flows by name, 2 of 3",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "10 of 10 On"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Check the flows by name, 2 of 3 r7: PASSED, f05-on to f08-on = On"
+                }
+            ],
+            "tested": "Flows read On by name.",
+            "files": [],
+            "content_sha256": {
+                "step": "a49a354c2bb0ab803f0431999b9377aecd204f5a0b1ae5d8502ebed5de9eecb0"
+            }
+        },
+        {
+            "step": "T24 Check the flows by name, 3 of 3",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "10 of 10 On"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Check the flows by name, 3 of 3 r7: PASSED, health-on, button-on = On; conn-warning = No warning"
+                }
+            ],
+            "tested": "Flows read On by name.",
+            "files": [],
+            "content_sha256": {
+                "step": "5cc5adbc12938b16396f3cf7a8ddaec849f1ee33d2cd50e64f87ccb9d6644f77"
+            }
+        },
+        {
+            "step": "T21 Start the health flow",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "RESULT HEALTH PASS"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T21 Start the health flow r10: PASSED; RESULT HEALTH PASS"
+                }
+            ],
+            "tested": "The health flow runs on the solution's SharePoint connection.",
+            "files": [
+                "scripts/gov/90161Z-T21-probe-r10.ps1"
+            ],
+            "content_sha256": {
+                "step": "9117b0b3dc4429527e7ecd0149c662faacc72adf96a48cedfa6efd22a4dd26c6",
+                "scripts/gov/90161Z-T21-probe-r10.ps1": "ef64a064be0be91935f0bf12d320e65661a7cf1ff8e7794fe751e38c28e7a298"
+            }
+        },
+        {
+            "step": "T21 Make the list view with the flow button",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "RESULT BUTTON PASS"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T21 Make the list view with the flow button r10: PASSED, 3 of 3"
+                }
+            ],
+            "tested": "A list view with a button that starts a flow is made by script.",
+            "files": [
+                "scripts/gov/90161Z-T21-probe-r10.ps1"
+            ],
+            "content_sha256": {
+                "step": "f53f7ba19a6aae2ae89d7259920ae3f25986859ad00362c9613bae81f5b11f90",
+                "scripts/gov/90161Z-T21-probe-r10.ps1": "ef64a064be0be91935f0bf12d320e65661a7cf1ff8e7794fe751e38c28e7a298"
+            }
+        },
+        {
+            "step": "T21 Use the list button",
+            "revision": "r10",
+            "passed": [
+                {
+                    "round": "R36",
+                    "results": "docs/reviews/2026-11-19-r36-results.md",
+                    "row": "btn-panel = The flow ran"
+                },
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T21 Use the list button r10: PASSED; btn-show = A button Run the test flow; RESULT BUTTON PASS"
+                }
+            ],
+            "tested": "The view button starts the flow (hand step).",
+            "files": [],
+            "content_sha256": {
+                "step": "7ebcaf903da21a7645cf9908adfd902649bd8d8a56ecba38f575dabd510faf8a"
+            }
+        },
+        {
+            "step": "T24 Full solution test, part 1",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Full solution test, part 1 r7: PASSED, 14 of 14"
+                }
+            ],
+            "tested": "Full flow test part 1 (F01, F05 and the fake rows).",
+            "files": [
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1"
+            ],
+            "content_sha256": {
+                "step": "d74c0662f0cc38fa4252d49ebdfaabe4da1b9a88ee482c96671d138688bec15f",
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1": "57d5dda8147b0a6e7eefab6727e1bf970b509d0cfc9ce04c35c40d33fcfffd90"
+            }
+        },
+        {
+            "step": "T24 Run F02 once and F04 once",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Run F02 once and F04 once r7: PASSED (confirmed)"
+                }
+            ],
+            "tested": "F02 and F04 run once (hand step).",
+            "files": [],
+            "content_sha256": {
+                "step": "590cb79595d9b1a552dc9cff4368c4a063918f3214f69129262bbe49b9331a40"
+            }
+        },
+        {
+            "step": "T24 Full solution test, part 2",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Full solution test, part 2 r7: PASSED, 10 of 10"
+                }
+            ],
+            "tested": "Full flow test part 2.",
+            "files": [
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1"
+            ],
+            "content_sha256": {
+                "step": "07387e90902024cb7a96605ae338c86656ec43b1f60e2e380bab1b6f3a9ec05d",
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1": "57d5dda8147b0a6e7eefab6727e1bf970b509d0cfc9ce04c35c40d33fcfffd90"
+            }
+        },
+        {
+            "step": "T24 Find the F04 e-mail",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Find the F04 e-mail r7: PASSED; f04-found = Inbox; f04-tables = Yes"
+                }
+            ],
+            "tested": "The F04 e-mail arrives with tables (organizational account mailbox).",
+            "files": [],
+            "content_sha256": {
+                "step": "93b7b131e113c06fe3d31cc7ba4fe43b7ab137420ef3cfb05ce564ba87239e43"
+            }
+        },
+        {
+            "step": "T24 Run F02 again",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Run F02 again r7: PASSED (confirmed)"
+                }
+            ],
+            "tested": "F02 runs again (hand step).",
+            "files": [],
+            "content_sha256": {
+                "step": "61cac921e71ad3cbd6136c5a3018241d6129a60672d7584fcfebb647a4f47bea"
+            }
+        },
+        {
+            "step": "T24 Full solution test, part 3",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Full solution test, part 3 r7: PASSED, 2 of 2"
+                }
+            ],
+            "tested": "Full flow test part 3 (F08).",
+            "files": [
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1"
+            ],
+            "content_sha256": {
+                "step": "daedc0ecfc4e21a5bca83a238597e4a75d34faeaac9ff9d834e4838eab96ccb3",
+                "scripts/gov/90161Z-T24-full-solution-test-r7.ps1": "57d5dda8147b0a6e7eefab6727e1bf970b509d0cfc9ce04c35c40d33fcfffd90"
+            }
+        },
+        {
+            "step": "T24 Find the F08 e-mail",
+            "revision": "r7",
+            "passed": [
+                {
+                    "round": "R37",
+                    "results": "docs/reviews/2026-11-20-r37-results.md",
+                    "row": "T24 Find the F08 e-mail r7: PASSED; f08-hand = Exactly 1 in the Inbox"
+                }
+            ],
+            "tested": "Exactly 1 F08 hand-off e-mail arrives.",
+            "files": [],
+            "content_sha256": {
+                "step": "9966a61dce27ac96286ce9163ab3502a42f08745fdad56456298d610d0b640c0"
             }
         }
     ]

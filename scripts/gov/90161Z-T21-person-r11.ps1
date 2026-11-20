@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r10, module "person": the parts Person (the second person for test T4), Ask (the round asks that
+  90-161.Z Task 21 probe r11, module "person": the parts Person (the second person for test T4), Ask (the round asks that
   person for a new row, R36) and Clean (removes the person, the list and the library again).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r10.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r11.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($site, $dir, $StateName, $ListTitle, $ListFolder, $LibTitle, $LibFolder,
   $TestDir, $NoLaunch) and the helpers of the module "common". Outputs: result lines through Add-Item.
   The second person's e-mail address is read in a small window and used in memory only: it is never written to a file,
@@ -14,7 +14,7 @@
           row form link); nothing on the site. Clean: removes that person from Visitors and PFM Office again, moves the probe list
           and library to the site Recycle Bin, deletes the state file.
   Credentials: none of its own (the main file signs in); no password is asked for.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r10.ps1 -Part Person (or Ask, or Clean) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r11.ps1 -Part Person (or Ask, or Clean) loads it.
 #>
 
 function Read-PersonAddress {

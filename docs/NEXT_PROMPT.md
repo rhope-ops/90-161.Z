@@ -1,11 +1,11 @@
 # Next prompt: 90-161.Z
 
-Updated 2026-11-20 05:00 Central (R37 r1 merged, PR 187; the PFM runs it). Full open items: [handoff detail](reviews/2026-11-18-handoff-detail.md).
+Updated 2026-11-20 08:30 Central (R37 results; R38 r1 built; RADE session for pause/resume). Full open items: [handoff detail](reviews/2026-11-18-handoff-detail.md).
 
 ## Open
 
-1. R37 r1 merged 20 Nov 26 (PR 187; 35 steps; engine-v27; [R36 results](reviews/2026-11-19-r36-results.md)): the PFM runs it (https://rhope-ops.github.io/RADE).
-2. Retired steps: [verified.json](reviews/verified.json). R38 candidates: T01, T07, T19, T20, form header, health (passed R36).
-3. R38: add "guide": [] to the step "Answer 3 questions about the window look" (the engine schema needs it on every guide step; PFM 20 Nov 26); Sofia Sans (T22 and index.html; font files in RADE), T21 view link by ID, Enter check 6, [UI standard plan](reviews/2026-11-19-ui-standard-plan.md) Step 2.
-4. Lock: engine-v27. Commit each bundle with its `.sha256.json`.
-5. UI standard v1 in RADE: RADE PR 136 (a RADE session builds the Maintenance screen next); then lock bump and R38. Still open from R35: F01 log rows; T06 has no step (GenAI.mil extraction by hand).
+1. R38 r1 (13 steps; T4 by a second person first; site logo Fulcrum; window r11): the PFM runs it this afternoon (https://rhope-ops.github.io/RADE). Ask the PFM for a second person in every round until T4 passes (PFM 20 Nov 26).
+2. [R37 results](reviews/2026-11-20-r37-results.md): full flow test passed; 20 steps retired ([verified.json](reviews/verified.json)). Trash the R37 e-mail once this merge is on main (PFM 20 Nov 26); R35, R36 e-mails trashed 20 Nov 26.
+3. RADE engine-v29 (e503386: engine-v28 pause/resume, Fulcrum logo, no script files at collect, plus UI standard v1) is in the R38 lock (bump_lock PASS 20 Nov 26). Not verified on a device: Resume and Paused cards, CAC removal wording.
+4. Lock: engine-v29. The RADE UI file is split into T22 parts ui and ui2 (scripts/build_task_scripts.py split_ui; 600-line cap). Commit each bundle with its `.sha256.json`.
+5. Next rounds: [phases.md](phases.md) "Rounds from R38". Open from earlier: Sofia Sans in T22 (UI standard buttons and contrast are in T22 r11), F01 log rows, T06 (GenAI.mil extraction by hand).

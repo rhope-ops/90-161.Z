@@ -1,9 +1,10 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r10, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r11, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
+  R11 (R38; PFM 20 Nov 26): only the revision changed.
   Each builder makes Windows Forms controls with the RADE look ($ui, from the ui part) and adds them to a parent.
   R4 (R30 V3): a format check with 0 findings shows no link (Test-CheckLink, in the cards part). The grid block is
   built by the grid part. R6 (R31b D3): the chip of a check block is level with the first line of its text; the
@@ -12,7 +13,7 @@
   "Needs You Today", the rows blocks, the chips row with its step line, the notice) is placed by one rule,
   $wn.ChipTops, and kept in $wn.ChipRows with its text.
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r10.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r11.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -263,7 +264,8 @@ $wn.ListRow = {
   param($Parent, $It, [int]$W, [int]$Tx)
   $p = & $wn.Panel $W 0
   $bw = 0; $btn = $null
-  if ($It.Btn) { $btn = & $wn.Button $It.Btn 'compact'; $btn.AutoSize = $true; $bw = [math]::Max($btn.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $btn.MinimumSize.Width) }
+  # R11 (UI standard v1, B1): the button keeps the fixed size RADE gives it (compact 96 x 30, or 160 x 30 for a longer label)
+  if ($It.Btn) { $btn = & $wn.Button $It.Btn 'compact'; $bw = [int]$btn.Width }
   $tw = $W - $Tx - $bw - (& $wn.Sc 16) - (& $wn.Sc 8)
   $y = & $wn.Sc 8
   $t1 = & $wn.Txt $p $It.Title $ui.F.SmallB $ui.C.Ink 0 $tw 'Item' $null
@@ -274,7 +276,6 @@ $wn.ListRow = {
   if ($It.Sub) { $t2 = & $wn.Txt $p $It.Sub $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t2.Location = [Drawing.Point]::new($Tx, $y); $y = $t2.Bottom + (& $wn.Sc 2) }
   if ($It.Detail) { $t3 = & $wn.Txt $p $It.Detail $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t3.Location = [Drawing.Point]::new($Tx, $y); $y = $t3.Bottom }
   if ($btn) {
-    $btn.Size = [Drawing.Size]::new($bw, $btn.MinimumSize.Height)
     $btn.Location = [Drawing.Point]::new(($W - $bw - (& $wn.Sc 4)), [math]::Max((& $wn.Sc 6), [int](($y + (& $wn.Sc 8) - $btn.Height) / 2))); [void]$p.Controls.Add($btn) }
   & $wn.Fit $p 8; [void]$Parent.Controls.Add($p) }
 # A list of rows with a line between them; the texts of all rows start after the widest chip.
