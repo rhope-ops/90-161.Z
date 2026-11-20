@@ -364,7 +364,8 @@ try {
   Test-That 'the window was built off-screen and measured' $built ('exit ' + $code + '; last line: ' + (@($log | Where-Object { $_.Trim() }) | Select-Object -Last 1))
   # R11 (engine-v29 brought the UI standard rules): name the first 15 self-check defects, so the CI log shows their kind
   # (a REPORT line; it changes no result; "not a test failure" lets Invoke-Ps51 show it on a failed run too).
-  if ($built) { try { @((Get-Content -LiteralPath $file -Raw | ConvertFrom-Json).LayoutDefects | Select-Object -First 15) | ForEach-Object { Write-Host ('T22LAYOUT REPORT defect (not a test failure): ' + ([string]$_).Trim()) } } catch { $null = $_ } }
+  if ($built) { try { $lay = @((Get-Content -LiteralPath $file -Raw | ConvertFrom-Json).LayoutDefects | Select-Object -First 15)
+      $lay | ForEach-Object { Write-Host ('T22LAYOUT REPORT defect (not a test failure): ' + ([string]$_).Trim()) } } catch { $null = $_ } }
   # Invoke-Ps51 shows only lines with FAIL in them: the child's STOPPED and NOTE lines are repeated as FAIL lines, so the CI log names the cause.
   if (-not $built) { @($log | Where-Object { $_ -match '^\s*(STOPPED|NOTE)' }) | ForEach-Object { Write-Host ('T22LAYOUT FAIL child: ' + $_.Trim()) }
     @($log | Select-Object -Last 15) | ForEach-Object { Write-Host ('  ' + $_) } }
