@@ -548,7 +548,6 @@ Test-That 'Read r10: no row by the second person: T4 FAILED with a plain reason 
 Remove-Item -LiteralPath $state
 $r = Invoke-T21 'Ask'; Note $r
 Test-That 'Ask without a second person on file: FAIL, no state file written' ($r.Code -eq 0 -and $r.Text -match 'k1-asked FAIL no second person on file: run the part Person first' -and -not (Test-Path -LiteralPath $state) -and $r.Out[-1] -eq 'PROBE Ask done: passed=0 failed=1') $r.Text
-
 # ---- A missing module ----
 # The main file loads its modules by name from its own folder; one that is missing stops the part with a plain line.
 $copy = Join-Path $work 'copy'

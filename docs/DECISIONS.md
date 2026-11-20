@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | Hard project rules are now 2: "No reconnaissance" and "No scripts in results" (both marked cannot change). Replaces "only No reconnaissance is hard" of the 2026-11-18 session-load row. Scope: AGENTS.md. | PFM | [rule check](reviews/2026-11-20-rule-conflict.md) |
 | 2026-11-20 | No scripts in results: a round never collects or sends a .ps1 or other script file (R37 e-mail blocked). Rule text approved; AGENTS.md Project rules. Scope: all rounds. | PFM | [R37 results](reviews/2026-11-20-r37-results.md) |
 | 2026-11-20 | Fulcrum logo everywhere for now (not an endorsed product): each app's Fulcrum logo in every place and mode; contrast themes keep system colors. Replaces the 19 Nov light/dark rows. Scope: all apps. | PFM | this session |
 | 2026-11-20 | Every app gets pause and resume: after a closed window, a removed CAC or another break, work resumes where it stopped. RADE engine first (RADE session); 90-161.Z app: a design requirement. Scope: all apps. | PFM | [phases.md](phases.md) |
@@ -398,7 +399,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 | 2026-11-13 | Gov-device usability bar for go.md and runner windows; results folder Rounds\\<round>, no zips. | PFM | archive |
 | 2026-11-13 | Backups: (22A) row history, recycle bin, chapters; PFM Office rolls back. (23A) 8 weekly + 12 monthly. (24A) e-mails: new task, due date; rest weekly. | PFM | docs/backup-and-restore.md |
 | 2026-11-13 | (19A) weekly digest per person, Wed 0700 Central. (20A+) weekly backup, chapters, in-app rollback. (21A) weekly disabled-account list. | PFM | docs/decisions-archive.md |
-| 2026-11-13 | RADE: (R1A) code embedded. (R2A) v1: file bridge, one agent flow. (R3A) repo rade. (R4A) PFM runs v1. (R5B) no other app first. (R6A) zip by e-mail. | PFM | https://claude.ai/artifact/GLdT7Nr4aVn3EenyYnAuJF |
+| 2026-11-13 | RADE: (R1A) code embedded. (R2A) v1: file bridge, one agent flow. (R3A) repo rade. (R4A) PFM runs v1. (R5B) no other app first. (R6A) zip by e-mail (replaced: no zips; zips do not cross the boundary). | PFM | https://claude.ai/artifact/GLdT7Nr4aVn3EenyYnAuJF |
 | 2026-11-13 | ISSM ruling: scripts without elevated credentials may be pasted and run in PowerShell ISE. No elevation, admin credentials or RunAs. | PFM | archive |
 | 2026-11-13 | Logo: woven square-in-a-square mark with a serif Greek rho, white and light blue for blue backgrounds (assets/logo, built by scripts/build_logo.py). | PFM | assets/logo/ |
 | 2026-11-13 | Site visuals (pages, header, list looks) by Power Automate flow, built after the T11 rights results; home page as a preview first. | PFM | docs/NEXT_PROMPT.md |
