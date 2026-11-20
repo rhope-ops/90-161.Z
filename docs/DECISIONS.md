@@ -6,6 +6,13 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | No scripts in results: a round never collects or sends a .ps1 or other script file (R37 e-mail blocked). Rule text approved; AGENTS.md Project rules. Scope: all rounds. | PFM | [R37 results](reviews/2026-11-20-r37-results.md) |
+| 2026-11-20 | Fulcrum logo everywhere for now (not an endorsed product): each app's Fulcrum logo in every place and mode; contrast themes keep system colors. Replaces the 19 Nov light/dark rows. Scope: all apps. | PFM | this session |
+| 2026-11-20 | Every app gets pause and resume: after a closed window, a removed CAC or another break, work resumes where it stopped. RADE engine first (RADE session); 90-161.Z app: a design requirement. Scope: all apps. | PFM | [phases.md](phases.md) |
+| 2026-11-20 | Fake data in the T22 window uses "XXX XXX" instead of "FAKE" (spacing test); status chips must not touch the scroll bar. Scope: T22 r11, R38. | PFM | [R37 results](reviews/2026-11-20-r37-results.md) finding 3 |
+| 2026-11-20 | Questions about an e-mail name the mailbox: "your organizational (work) account", never just "work e-mail". Scope: all rounds. | PFM | [R37 results](reviews/2026-11-20-r37-results.md) finding 4 |
+| 2026-11-20 | R38: stack as much as possible, drop redundant checks; ask for the second person in every round until T4 passes (a second person is available 20 Nov 26). Scope: R38 and later. | PFM | [phases.md](phases.md) |
+| 2026-11-20 | Parsed result e-mails go to Trash when their results are on main (R35, R36 done 20 Nov 26; R37 after this merge). Scope: rounds. | PFM | [round skill](../.claude/skills/round/SKILL.md) section 1 |
 | 2026-11-20 | RADE Maintenance card: keep Diagnose, Back up and Restore; one "Maintenance" button opens its own screen with them and Update/Repair, built far enough to be tested. Scope: RADE (UI standard v1). | PFM | https://github.com/rhope-ops/RADE/pull/136 |
 | 2026-11-20 | Answer-choice buttons hold 33 characters at most (write-in answers keep 10,000); a compact label that does not fit 96 px gets 160 x 30. Scope: RADE (UI standard v1). | PFM | https://github.com/rhope-ops/RADE/pull/136 |
 | 2026-11-20 | RADE content check skips engine/fonts/*.ttf so the Sofia Sans font files (OFL) can ship. Scope: RADE. | PFM | https://github.com/rhope-ops/RADE/pull/136 |
