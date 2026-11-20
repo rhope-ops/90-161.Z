@@ -269,6 +269,8 @@ def combine(matrix, text):
         The product. Stops with a message when an entry grows past LIMIT (nested scales would overflow the drawing).
     """
     m = multiply(matrix, parse_transform(text))
+    if abs(m[0] * m[3] - m[1] * m[2]) < 1e-12:
+        raise SystemExit('logo_draw: the transforms multiply to a shape too small to draw (%r)' % text)
     if not all(in_range(v) for v in m):
         raise SystemExit('logo_draw: the transforms multiply to a size past %g (%r)' % (LIMIT, text))
     return m

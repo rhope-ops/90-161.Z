@@ -31,6 +31,7 @@ from pathlib import Path
 from logo_svg import apply, invert, shapes
 
 VIEW = 512.0   # the SVG viewBox is 0 0 512 512 (logo_svg.shapes checks it)
+MAX_CELLS = 2000000   # the most grid cells one path may fill (the Delta logo needs about 20 000 at 512 px)
 
 
 # ---------------------------------------------------------------- distances ------------------------------------------
@@ -85,6 +86,13 @@ class Index:
         self.cell = max(reach, 1e-6)
         self.reach = reach
         self.grid, self.bands = {}, {}
+        cells = 0
+        for seg in segs:   # count first: a huge shape on a fine grid would take hours (review, 20 Nov 26)
+            x0, y0, x1, y1 = seg_box(seg)
+            cells += (math.floor(x1 / self.cell) - math.floor(x0 / self.cell) + 1) * \
+                (math.floor(y1 / self.cell) - math.floor(y0 / self.cell) + 1)
+            if cells > MAX_CELLS:
+                raise SystemExit('logo_draw: a path is too large for its stroke width (more than %d grid cells)' % MAX_CELLS)
         for n, seg in enumerate(segs):
             x0, y0, x1, y1 = seg_box(seg)
             for i in range(int(math.floor(x0 / self.cell)), int(math.floor(x1 / self.cell)) + 1):
@@ -235,8 +243,20 @@ def png_bytes(rows):
 
 
 def draw(svg_text, size):
-    """Return the logo as PNG bytes, `size` x `size` pixels."""
-    return png_bytes(pixels(svg_text, size))
+    """Return the logo as PNG bytes.
+
+    Args:
+        svg_text: the SVG file's text.
+        size: the width and height in pixels.
+
+    Returns:
+        The PNG bytes. Any number error the refusals did not foresee (an overflow, a nan, a division by 0 from extreme
+        but legal values) stops with a "logo_draw:" message too, never a Python traceback (review, 20 Nov 26).
+    """
+    try:
+        return png_bytes(pixels(svg_text, size))
+    except (ArithmeticError, ValueError) as e:
+        raise SystemExit('logo_draw: the drawing failed on extreme numbers (%s: %s)' % (type(e).__name__, e))
 
 
 if __name__ == '__main__':

@@ -131,6 +131,10 @@ def test_delta_refusals():
     refuses('nested scale(1e200)', svg('<g transform="scale(1e200)"><circle cx="256" cy="256" r="50"/></g>'), 'bad numbers')
     refuses('nested scales multiply too far', svg('<g transform="scale(1e5)"><circle cx="256" cy="256" r="50" transform="scale(1e5)"/></g>'), 'multiply')
     refuses('r 1e308', svg('<circle cx="256" cy="256" r="1e308"/>'), 'r=')
+    refuses('70 nested scale(1e-5) (third review)', svg('<g transform="scale(1e-5)">' * 70 + '<circle cx="1" cy="1" r="1"/>' + '</g>' * 70), 'too small')
+    refuses('arc with a tiny chord (third review)', svg(path('M 0 0 A 1e6 1e6 0 0 1 2e-150 0', 'fill="none" stroke="#000000" stroke-linecap="round"')), 'logo_draw:')
+    refuses('long thin path (third review)', svg(path('M -1e6 -1e6 L 1e6 1e6', 'fill="none" stroke="#000000" stroke-width="0" stroke-linecap="round"')), 'grid cells')
+    refuses('dash sum just below 0.01', svg('<circle cx="256" cy="256" r="50" fill="none" stroke="#000000" stroke-dasharray="0.004 0.005" stroke-linecap="round"/>'), 'sum of 0.01')
     refuses('path from -1e308 to 1e308', svg(path('M -1e308 0 L 1e308 0', 'fill="none" stroke="#000000" stroke-linecap="round"')), 'numbers')
 
 
