@@ -25,16 +25,17 @@ The app cannot check rights before it exists, so setup has 4 parts. Each part st
 RADE is the Redacted Application Deployment Engine: https://rhope-ops.github.io/RADE. It replaces the setup-check flow (PFM, 14 Nov 26 "One preflight"). Sources: go.md "How a paste task (round) works"; docs/dev-setup.md "RADE engine".
 
 What you do:
-1. Open https://rhope-ops.github.io/RADE and find the round. Nothing else is downloaded: every file a task needs comes inside the round.
-2. Press Copy script next to the round's link. If it says blocked: open the link, press Ctrl+A, then Ctrl+C.
-3. Open the Start menu, type ISE and open Windows PowerShell ISE. Do not choose "Run as administrator".
-4. Select File > New. Click in the white script pane.
-5. Press Ctrl+V, then F5. The RADE window opens.
-6. Look at the title bar of the RADE window. After the word "script" it shows a short code. The RADE page shows the same code (the "Script check", PFM 18 Nov 26, engine-v21). If the code is missing, differs or the title bar says "DOES NOT MATCH", select Exit and do not run. Whom to tell: not decided yet.
-7. Look at the bold "Writes to" line. It must show your OneDrive RADE\90-161.Z folder. The first time, type the e-mail address for the results in "Send results to".
-8. Before you run, the window lists every file it will write (New, Replace or Recycle). Read the list.
-9. Press Run (or Enter). Keep the window open until the log says DONE.
-10. At DONE an Outlook draft opens with the checks, the summary and the result files. Send it.
+1. Open https://rhope-ops.github.io/RADE and find the round. Every file a task needs comes inside the round.
+2. Optional, to read the script first: press Open as .txt next to the round. Open the .txt file from Downloads in Notepad.
+3. Press Copy script next to the round's name. If it says blocked: press Open as .txt, open the file from Downloads, then press Ctrl+A and Ctrl+C.
+4. Open the Start menu, type ISE and open Windows PowerShell ISE. Do not choose "Run as administrator".
+5. Select File > New. Click in the white script pane.
+6. Press Ctrl+V, then F5. The RADE window opens.
+7. Look at the title bar of the RADE window. After the word "script" it shows a short code. The RADE page shows the same code (the "Script check", PFM 18 Nov 26, engine-v21). If the code is missing, differs or the title bar says "DOES NOT MATCH", select Exit and do not run. Whom to tell: not decided yet.
+8. Look at the bold "Writes to" line. It must show your OneDrive RADE\90-161.Z folder. The first time, type the e-mail address for the results in "Send results to".
+9. Before you run, the window lists every file it will write (New, Replace or Recycle). Read the list.
+10. Press Run (or Enter). Keep the window open until the log says DONE.
+11. At DONE an Outlook draft opens with the checks, the summary and the result files. Send it.
 
 What RADE checks: the window runs its checks first and reports each as passed or not. Most checks that passed are not run again for 7 days. A check that fails shows a line "What to do". Do that line; do not work around it. Which checks RADE runs for another wing: not decided yet (the sources do not list them).
 
