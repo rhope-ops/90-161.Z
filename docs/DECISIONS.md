@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | UI previews for the PFM: an HTML artifact with invented data, not a PNG (the content check cannot read a PNG); screenshots stay for the agent's own checks. Text in .claude/skills/verify/PROJECT.md. Scope: every UI change. | PFM | option A of 3 (A: HTML artifact, B: OCR in the guard, C: skip scratchpad PNGs) |
 | 2026-11-20 | R39 backs up 11 lists: RADE engine-v30 refuses the title "PFM Recommendations (DAF Form 847)" (parentheses); it joins after a RADE change. Narrows the 12-list row. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
 | 2026-11-20 | R39 tests Maintenance: it first deploys a test version 0.1.0 of 90-161.Z (RADE shows Maintenance only for an installed app), then Diagnose and Back up of 11 PFM lists. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
 | 2026-11-20 | R39 scope: docs/phases.md R39 plus the R38 findings; R40 Maintenance tests come into R39; no RADE session for the R38 answer cards now. Scope: R39. | PFM | [r39 plan](reviews/2026-11-20-r39-plan.md) |
