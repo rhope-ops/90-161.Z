@@ -4,6 +4,6 @@ Updated 2026-11-20 Central (R39 results). Full open items: [handoff detail](revi
 
 ## Open
 
-1. [R39 results](reviews/2026-11-20-r39-results.md): 3 of 6 passed. Open: reopen check text, card speed, Diagnose answer, e-mail body (findings 1-3, 5). verified.json not updated for R39.
+1. [R39 results](reviews/2026-11-20-r39-results.md): 3 of 6 passed. Open: reopen check text, card speed, e-mail body (findings 1, 2, 5). R40 scope decided (DECISIONS 20 Nov 26). verified.json not updated for R39.
 2. Lock: engine-v30 (Maintenance: Diagnose and Back up; before: v29 pause/resume, Fulcrum logo, no scripts at collect, UI standard v1). Not verified on a device: Resume and Paused cards, CAC removal text. RADE UI file split into T22 parts ui and ui2 (build_task_scripts.py split_ui).
 3. R39 r1 ran on engine-v30; R40 question round open with the PFM. R39 r1 was built (plan: [r39 plan](reviews/2026-11-20-r39-plan.md)): merged 20 Nov 26 (PR 198); the PFM runs it (https://rhope-ops.github.io/RADE). Also open: the 12th backup list waits for a RADE change (parentheses); F01 log rows, T06 (GenAI.mil extraction by hand).
