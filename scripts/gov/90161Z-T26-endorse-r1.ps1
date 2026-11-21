@@ -428,7 +428,8 @@ function Initialize-PauseRow($State) {
   if ($rows.Count -gt 1) { Add-Result 'PAUSEROW' $false ('rows named ' + $Pause.Title + '=' + $rows.Count + ': keep one, delete the others, then run again'); return }
   if (-not $rows.Count) {
     Write-Host 'NOW Making the pause-switch row in PFM Settings'
-    $null = Add-PnPListItem -List $Pause.List -Values @{ Title = $Pause.Title; $Pause.Field = $Pause.Off } -ErrorAction Stop; $did = 'made'; if (-not $State['PauseBefore']) { $State['PauseBefore'] = 'missing' } }
+    $null = Add-PnPListItem -List $Pause.List -Values @{ Title = $Pause.Title; $Pause.Field = $Pause.Off } -ErrorAction Stop; $did = 'made'
+    if (-not $State['PauseBefore']) { $State['PauseBefore'] = 'missing' } }
   else {
     # Only the first Rows run of a round saves the value before it: a rerun would save the round's own off value (review MAJOR)
     if (-not $State['PauseBefore']) { $State['PauseBefore'] = Get-ValueWord $rows[0][$Pause.Field] }
