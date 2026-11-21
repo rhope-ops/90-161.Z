@@ -15,8 +15,8 @@ Never send real publication content, names, site addresses or group names. Reply
 
 **For:** a round is one block of text I paste into PowerShell ISE. It opens the RADE window (Redacted Application Deployment Engine, formerly the 90-161.Z Deployer), saves its own files, runs the tests and makes the results e-mail. The ISSM allows this for scripts that use no elevated credentials (13 Nov 26).
 **Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: most checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). The optional .txt copy of the script (Open as .txt) is not a task file. A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.
-Steps:
-1. On the RADE page, find the row of the round that you run, for example **R42**. You see the buttons of that round on its row. Go on.
+Steps to start a round (about 2 minutes, an estimate):
+1. On the RADE page, find the row of the round that you run. Its name is **R** and a number, for example **R42**. You see the buttons of that round on its row. Go on.
 2. On that row, click **Copy script**. You see a line under the row: a green line if the copy worked, or the card **The browser blocked the copy.** Go on.
 3. If you see the card **The browser blocked the copy.**, click **Open as .txt**. You see the script as plain text in a new tab. Go on.
 4. If you clicked **Open as .txt**, do these actions on the new tab:
@@ -31,31 +31,43 @@ Steps:
    2. Click **New**.
    You see a new white script pane. Go on.
 9. In the white script pane, press `Ctrl+V`. You see the script text in the pane. Go on.
-10. Press `F5`. You see the window **RADE**. Wait until the window **RADE** shows.
-11. If no window **RADE** opens, look at the blue pane of ISE. If it shows the round steps as text, the round runs there. Wait until the pane shows `DONE`. You see the results folder open by itself.
-12. If the blue pane of ISE shows red text and the steps stop, write down the first red line.
-13. In the window **RADE**, find the bold line **Writes to**. You see your OneDrive folder **RADE\90-161.Z**, or the words **NOT found**. Write down which one you see.
-14. If you wrote down a red line or **NOT found**, do not click **Run**. On your phone or your other computer, open the Claude chat of 90-161.Z. You see the chat. Go on.
-15. If the box **Send results to** is empty, type the e-mail address that gets your round results. You see the address in the box. RADE shows it in this box in the next rounds. Go on.
-16. In the window **RADE**, click **Run**. You see the steps run in the log. Wait until the log shows `DONE`. Do not close the window until then.
-17. When the log shows `DONE`, you see an Outlook draft. Its **To** line shows the address from the box **Send results to**. In the draft, click **Send**. The draft closes. The task is complete.
-18. If you opened the Claude chat, do these actions in it:
-   1. Type the line that you wrote down, exactly.
-   2. Press **Send**.
-   You see your message in the chat. Wait until Claude answers. Do not run the round again until then.
-19. If no Outlook draft opens, you see the File Explorer window of the results folder (**Rounds\R42**, for round R42). The e-mail text is on the clipboard. Put the File Explorer window and Outlook side by side. In Outlook, do these actions:
-   1. Click **New**, the button that starts a new e-mail.
-   2. In **To**, type the address from the box **Send results to** in the window **RADE**.
-   3. Click in the body.
-   4. Press `Ctrl+V`.
-   5. Select the first line of the body.
-   6. Press `Ctrl+X`.
-   7. Click in **Subject**.
-   8. Press `Ctrl+V`.
-   9. In File Explorer, press `Ctrl+A` to select all files.
-   10. Drag the files into the body of the e-mail.
-   11. Click **Send**.
-   The e-mail closes. The task is complete.
+10. Press `F5`. You see the window **RADE**, red text in ISE, or the round steps as text in ISE. Wait until one shows.
+
+Steps in the window **RADE**:
+1. In the window **RADE**, find the bold line **Writes to**. You see your OneDrive folder **RADE\90-161.Z** on that line. Go on.
+2. If the box **Send results to** is empty, type your own e-mail address (the address that got the last results). You see the address in the box. Go on.
+3. In the window **RADE**, click **Run**. You see the steps run in the log. Wait until the log shows `DONE` (up to 1 hour, an estimate). Do not close the window until then.
+4. When the log shows `DONE`, you see an Outlook draft. Its **To** line shows the address from the box **Send results to**. In the draft, click **Send**. The draft closes. The task is complete.
+
+Steps if the line **Writes to** shows **NOT found** (do not click **Run**):
+1. On your phone, open the Claude chat of 90-161.Z. You see the chat. Go on.
+2. In the chat, type `Writes to: NOT found`. You see the text in the message box. Go on.
+3. Press **Send**. You see your message in the chat. Wait until Claude answers. Do not click **Run** until then.
+
+Steps if the blue pane of ISE shows red text:
+1. On your phone, open the Claude chat of 90-161.Z. You see the chat. Go on.
+2. In the chat, type the first red line of the blue pane of ISE, exactly. You see the text in the message box. Go on.
+3. Press **Send**. You see your message in the chat. Wait until Claude answers. Do not run the round again until then.
+
+Steps if the round steps show as text in the blue pane of ISE:
+1. Look at the blue pane of ISE. You see the steps run. Wait until the pane shows `DONE` (up to 1 hour, an estimate). Do not close ISE until then.
+2. When the pane shows `DONE`, you see the results folder open in File Explorer. Send the results by hand, with the steps below. Go on.
+
+Steps if no Outlook draft opens (the e-mail by hand):
+1. Put the File Explorer window of the results folder and Outlook side by side. You see both windows. Go on.
+2. In Outlook, click **New**, the button that starts a new e-mail. You see a new e-mail window. Go on.
+3. In **To**, type your own e-mail address (the address that got the last results). You see the address in **To**. Go on.
+4. Click in the body. You see the cursor in the body. Go on.
+5. Press `Ctrl+V`. You see the e-mail text in the body. The first line is the subject. Go on.
+6. Click at the start of the first line of the body. You see the cursor before the first word. Go on.
+7. Press `Shift+End`. You see the first line in blue. Go on.
+8. Press `Ctrl+X`. You see the first line go away. Go on.
+9. Click in **Subject**. You see the cursor in **Subject**. Go on.
+10. Press `Ctrl+V`. You see the subject line, for example `90161Z R42 PASSED`. Go on.
+11. Click the File Explorer window. You see the files of the results folder. Go on.
+12. Press `Ctrl+A`. You see all files in blue. Go on.
+13. Drag the files into the body of the e-mail. You see the files as attachments. Do not add a zip file. Go on.
+14. Click **Send**. The e-mail closes. The task is complete.
 
 **If it fails:** the window shows a line that starts with "What to do" under the problem: do that. Otherwise send the line that starts with STOPPED. The report file in Rounds\<round> also holds it. Do not work around it. If no window opens, the same steps run as text in ISE and the results folder opens by itself.
 The script never sends the e-mail; the draft waits in Outlook. Finished task folders are cleaned up by the rounds; a later round makes any folder it needs again. Keep T07 if it holds 90161Z-T07-key-r1.txt (rounds never touch it).
