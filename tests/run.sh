@@ -613,13 +613,13 @@ assert [(a, b) for a, b, _ in got] == [('PFM Publications', 'ActionStatus'), ('P
 for title, name, ch in got:
     assert [c.strip().strip("'") for c in ch.split(',')] == [x for x in by_title[title]['fields'] if x['internalName'] == name][0]['choices'], ch
 PYEOF
-# T22 PFM window test r13 (R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and the 4 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
-# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r12 gone, r13 and its parts only, no '0 findings' link (V3), UI block current, palette tokens.
+# T22 PFM window test r14 (R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and the 4 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
+# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r13 gone, r14 and its parts only, no '0 findings' link (V3), UI block current, palette tokens.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && ok "T22 window preview cards (r13)" || bad "T22 window preview cards (r13)"
+python3 - <<'PYT22' && ok "T22 window preview cards (r14)" || bad "T22 window preview cards (r14)"
 import json, re, subprocess, pathlib
-f = 'scripts/gov/90161Z-T22-pfm-window-r13.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r13.ps1' % n)
-assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[012].ps1')], 'an older revision is still there'
+f = 'scripts/gov/90161Z-T22-pfm-window-r14.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r14.ps1' % n)
+assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[0123].ps1')], 'an older revision is still there'
 parts = [x.strip().strip("'") for x in re.search(r"\$Parts = @\(([^)]*)\)", pathlib.Path(f).read_text()).group(1).split(',')]
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
@@ -649,19 +649,19 @@ assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C =
 after = src.split('# <<< rade-ui', 1)[1]
 assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
 assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
-assert "$Rev = 'r13'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r13.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
+assert "$Rev = 'r14'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r14.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
 grids = len(re.findall(r'New-Object System.Windows.Forms.DataGridView\b(?!\w)', src))
 assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and src.count("$dc.AutoSizeMode='Fill'") >= 1, 'every grid fills its columns'
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
 hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
 # -Opened (the look questions' gate in the round): fake result files opened / not opened / STOPPED / 4 hours old; one line, no other file
-import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r13.txt'); got = {}
+import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r14.txt'); got = {}
 for k, body in {'open': 'CARDS opened: home, step8 (17 of 17)\nPASS layout', 'none': 'CARDS opened: none (0 of 17)', 'stop': 'CARDS opened: home (1 of 17)\nSTOPPED: no window (x)', 'old': 'CARDS opened: home, step8 (17 of 17)'}.items():
     w.write_text(body + '\n'); k == 'old' and os.utime(w, (time.time() - 4 * 3600,) * 2); r = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-Opened', '-TestDir', d], capture_output=True, text=True, timeout=60); got[k] = (r.stdout.strip(), r.returncode)
 assert got == {'open': ('PASS the window opened (17 of 17 cards)', 0), 'none': ('FAIL the window did not open', 1), 'stop': ('FAIL the window did not open', 1), 'old': ('FAIL the window did not open (no result from this round)', 1)} and len(list(pathlib.Path(d).iterdir())) == 1, got
 PYT22
-else sk "T22 window preview cards (r13)"; fi
+else sk "T22 window preview cards (r14)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
