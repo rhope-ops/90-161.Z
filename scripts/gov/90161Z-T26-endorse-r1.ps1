@@ -241,6 +241,7 @@ function Invoke-MakePart {
         ProcessStep = $step[0].Id; ActionStatus = 'On Track' } -ErrorAction Stop).Id
     $st['Made'] = 'yes'; Add-Item 'm1-publication' 'PASS' 'the fake publication was made (step 1, On Track)' }
   $st['PubId'] = [string]$pubId; if (-not $st['Made']) { $st['Made'] = 'no' }
+  Save-State $script:stateFile $st   # saved before the edit row: if that write fails, Clean still finds the publication it made
   $editId = Add-EditRow $pubId; $st['EditId'] = [string]$editId
   Save-State $script:stateFile $st
   $list = $script:site.TrimEnd('/') + '/Lists/' + $EndorseFolder

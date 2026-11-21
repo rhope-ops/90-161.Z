@@ -11,14 +11,14 @@
   Inputs: $form, $ui, $wn, $who, $dir, $Rev, $lines. Outputs: the $wn members below.
   Run: not alone; 90161Z-T22-pfm-window-r14.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: per saved comment 90161Z-T22-feedback-<card>-r14.txt and .png (a name already in the folder: <card>-2, and so
-  on), and at the close it adds this run's lines to 90161Z-T22-feedback-r14.txt, in the T22 folder (or -TestDir); with
+  Writes: per saved comment 90161Z-T22-feedback-<card>-r14.txt and .png, or the .txt only when a shown row has no fake-data
+  marker (a name already in the folder: <card>-2, and so on), and at the close it adds this run's lines to 90161Z-T22-feedback-r14.txt, in the T22 folder (or -TestDir); with
   -Measure in the folder of the measure file. Nothing that is already there is overwritten.
   Credentials: none.
 #>
 # R10 (R37; PFM 19 Nov 26, UI standard B13): Feedback on every card. The link opens a small comment box; Save writes the
 # comment and a picture of the window as it was when the link was selected, into the T22 folder (the round sends them):
-# 90161Z-T22-feedback-<card>-r14.txt and .png (a second comment on the same card, in this run or an earlier window run of
+# 90161Z-T22-feedback-<card>-r14.txt and .png (the .txt only when a shown row has no fake-data marker; a second comment on the same card, in this run or an earlier window run of
 # the same round: <card>-2, and so on). Each save adds a FEEDBACK line to the result file; at the close each run adds its
 # lines to 90161Z-T22-feedback-r14.txt (every comment file, or none), so the round always finds one feedback file and a
 # second run keeps the first run's lines. With -Measure the files go to the folder of the measure file.

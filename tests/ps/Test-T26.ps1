@@ -47,6 +47,7 @@ function Get-PnPListItem {
 # Fake Add-PnPListItem: adds a row to a list by title, authored by you (user 11), and returns it.
 function Add-PnPListItem {
   [CmdletBinding()] param([string]$List, [hashtable]$Values)
+  if ($global:FailList -and $List -eq $global:FailList) { throw ('FAKE: the write to ' + $List + ' failed') }   # set by the edit-row failure case
   $global:F.RowId++; $item = @{ Id = $global:F.RowId; Author = [pscustomobject]@{ LookupId = 11 }; Editor = [pscustomobject]@{ LookupId = 11 } }
   foreach ($k in $Values.Keys) { $item[$k] = $Values[$k] }
   if ($item['Publication'] -is [int]) { $item['Publication'] = [pscustomobject]@{ LookupId = $item['Publication'] } }   # a lookup reads back as its value object
@@ -117,6 +118,12 @@ try {
   New-Site; $global:F.Lists.Remove('PFM Process Steps')
   $r = Invoke-T26 'Make'
   Test-That 'Make with no process steps: STOPPED, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED: ') $r.File
+  New-Site; $global:FailList = 'PFM Endorsements'
+  $r = Invoke-T26 'Make'; $global:FailList = $null
+  $st = $(if (Test-Path -LiteralPath $stateFile) { Get-Content -LiteralPath $stateFile -Raw } else { '' })
+  Test-That 'Make whose edit-row write fails: exit 1, the state file still holds the publication it made (Made=yes)' ($r.Code -eq 1 -and $st -match 'PubId=\d+' -and $st -match 'Made=yes') $r.Text
+  $r = Invoke-T26 'Clean'
+  Test-That 'Clean after that failure removes the publication Make made' ($r.Code -eq 0 -and @($global:F.Lists['PFM Publications']).Count -eq 0 -and -not (Test-Path -LiteralPath $stateFile)) $r.File
   $all = Get-ChildItem -LiteralPath $t26 -Filter '*.txt' | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }
   Test-That 'no result line shows the site host' (-not (@($all) -join "`n").Contains('fakehost')) ''
   $bytes = [IO.File]::ReadAllBytes($script); Test-That 'the script file is ASCII' (-not @($bytes | Where-Object { $_ -gt 127 }).Count) ''
