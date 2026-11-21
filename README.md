@@ -1,5 +1,7 @@
 # 90-161.Z: Publications and Forms Management
 
+**Sync:** this README and the page https://rhope-ops.github.io/90-161.Z change together. Both show go.md: the page reads it, and scripts/build_readme.py copies it here (a push fails when this copy is old).
+
 **Tasks for the work computer.** This page shows the same tasks as https://rhope-ops.github.io/90-161.Z, for a computer where github.io is blocked. A README cannot have buttons, so each round script has two links: **Open as .txt** and **Copy script**.
 
 On this page, the first 3 steps of a round task are different: write down the **Code** shown under the steps (it is the code next to the round on the RADE page), then use **Copy script**, or **Open as .txt** and press Ctrl+A, then Ctrl+C. Then go on with the step "Open the Start menu".
@@ -186,7 +188,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 - Task 3, flow import test (11 Nov 26, 0840): raw zip link, Import Package (Legacy), run passed ("Echo compose" showed the expected text).
 <!-- <<< tasks -->
 
-## About this repo
+## Details
 Track and manage DAF publications through the DAFMAN 90-161 publishing process at wing/installation level: status tracking, document cleanup and formatting, and endorsement routing.
 
 Agents: read [AGENTS.md](AGENTS.md) first. Status: [docs/NEXT_PROMPT.md](docs/NEXT_PROMPT.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
