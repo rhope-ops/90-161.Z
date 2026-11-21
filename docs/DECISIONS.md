@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-21 | Kit 10.0.0 (from merge 50450b2, no tag yet): hard rule "Instructions people follow"; .check scans go.md, TASKS.md, paste_bundles.json; go.md round steps redrafted. | PFM | docs/reviews/2026-11-21-r42-plan.md |
 | 2026-11-21 | Kit 7.0.0 → 9.0.0 sync (kit a620a7f, no tag yet). Rules changed: Delegation, Caps and audit (cap 5,500). Project text kept. | PFM | https://github.com/rhope-ops/archimedes_lever/blob/main/docs/CHANGELOG.md |
 | 2026-11-21 | Product name: Kanon (KANON on the social preview, before "Publications and Forms Management", ember ·). README title Kanon; the repo stays 90-161.Z. Scope: README, card. | PFM | https://claude.ai/artifact/UZpzMPxQ692UZ1ZiEceqEe |
 | 2026-11-21 | README = product page (33-332.Z layout); tasks to TASKS.md; page in Fulcrum with the README's intro and Summary; kit 7.0.0. Now, R41 links unchanged. Scope: README, page. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/reviews/2026-11-21-plan-readme-rework.md |
