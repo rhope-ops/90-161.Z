@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-21 | RADE engine-v33 (Remove test-site mark button, Diagnose NOTE) joins with the R42 build; R41 r1 stays on engine-v32. Scope: R41, R42. | PFM | https://github.com/rhope-ops/RADE/releases/tag/engine-v33 |
 | 2026-11-21 | R41 clean step sets the pause row (PFM Settings FlowsPaused) back to its value from before the round when it differs (one approved write). Scope: R41. | PFM | R41 Restore review, MINOR 2 |
 | 2026-11-21 | R41 Restore runs in a second RADE window (desktop shortcut) while the round waits on a card; first a Repair of 90-161.Z 0.1.0 from the R41 paste so the shortcut runs engine-v32. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
 | 2026-11-21 | RADE lock moves to release engine-v32 (RADE 02c3f5a, serial 24) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
