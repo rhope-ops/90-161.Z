@@ -4,7 +4,7 @@
 <p><b>Publications and Forms Management</b></p>
 
 <!-- site:intro -->
-Track and manage DAF publications through the DAFMAN 90-161 publishing process at wing/installation level: status tracking, document cleanup and formatting, and endorsement routing. See who has each publication or form, which endorsements are in, and what is due next. The PFM works in one window on the work computer; AOs and endorsers answer in SharePoint forms from an e-mail link. It runs in your wing's own SharePoint site and Power Automate, and RADE installs it.
+Track and manage DAF publications through the DAFMAN 90-161 publishing process at wing/installation level: status tracking, document cleanup and formatting, and endorsement routing. See who has each publication or form, which endorsements are in, and what is due next. The PFM works in one window on the work computer; AOs and endorsers will answer in SharePoint forms from an e-mail link (planned). It runs in your wing's own SharePoint site and Power Automate, and RADE installs it.
 <!-- /site:intro -->
 
 > [!NOTE]
@@ -16,14 +16,14 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 <!-- site:key-facts -->
 <table>
-<tr><td><b>By the book:</b></td><td>every stage, time limit and format rule cites its DAFMAN 90-161 paragraph.</td></tr> <!-- source: AGENTS.md "Source authority" -->
-<tr><td><b>Endorsements:</b></td><td>endorsers answer in waves, legal last, in their list form; flows send the reminders and escalations.</td></tr> <!-- source: docs/process-model.md target process step 10; flow F03 (reminders, escalation) -->
+<tr><td><b>By the book:</b></td><td>every stage and format rule cites its DAFMAN 90-161 paragraph; each time limit comes from DAFMAN 90-161 or a recorded PFM decision.</td></tr> <!-- source: AGENTS.md "Source authority"; docs/DECISIONS.md -->
+<tr><td><b>Endorsements:</b></td><td>flows make the endorsement rows and send the reminders and escalations; the answer path for endorsers and the optional wave (planned).</td></tr> <!-- source: flow F05 (rows), F03 (reminders, escalation); flow/solution/README.md open point d (answer path not built) -->
 <tr><td><b>System of record:</b></td><td>endorsements are kept here, not in TMT.</td></tr> <!-- source: AGENTS.md "Scope" -->
 <tr><td><b>Clean drafts:</b></td><td>any draft becomes a correctly formatted final; the format comes from code, never from an AI model. (planned)</td></tr> <!-- source: AGENTS.md "Source authority"; docs/ARCHITECTURE.md section 5 -->
 <tr><td><b>Reviews:</b></td><td>periodic and special reviews start on their own; no answer by the due date opens a rescind action. (planned)</td></tr> <!-- source: docs/DECISIONS.md 2026-11-12 (5A) -->
 <tr><td><b>Boundary:</b></td><td>nothing leaves DoD365 and GenAI.mil, except the PFM's round results e-mail until the pilot starts.</td></tr> <!-- source: AGENTS.md "Data boundary" -->
 <tr><td><b>Access:</b></td><td>your own account; standard connectors; no tenant admin, no service account.</td></tr> <!-- source: AGENTS.md "Platform" -->
-<tr><td><b>Install:</b></td><td>one paste through RADE; a step that needs extra rights gets a tested fallback (in progress).</td></tr> <!-- source: AGENTS.md "Deployable package" -->
+<tr><td><b>Install:</b></td><td>the scripts and lists through one paste in RADE; the flows are imported by hand; a tested fallback for each step that needs extra rights (in progress).</td></tr> <!-- source: AGENTS.md "Deployable package"; docs/setup-and-updates.md section 2 -->
 <tr><td><b>Verifiable:</b></td><td>read the commented code as plain text before you paste it.</td></tr> <!-- source: AGENTS.md "Code standard"; TASKS.md "Open as .txt" links -->
 </table>
 
@@ -38,7 +38,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 ### 🔺 How it works
 
-<kbd>Review due</kbd> → <kbd>AO named</kbd> → <kbd>Draft</kbd> → <kbd>PFM formats (planned)</kbd> → <kbd>Privacy review</kbd> → <kbd>Endorse</kbd> → <kbd>Legal</kbd> → <kbd>Certify</kbd> → <kbd>Approve</kbd> → <kbd><b>Publish</b></kbd>
+<kbd>Review due</kbd> → <kbd>AO named (planned)</kbd> → <kbd>Draft</kbd> → <kbd>PFM formats (planned)</kbd> → <kbd>Privacy review</kbd> → <kbd>Endorse</kbd> → <kbd>Legal</kbd> → <kbd>Certify (planned)</kbd> → <kbd>Approve (planned)</kbd> → <kbd><b>Publish</b></kbd>
 
 #### Who uses what
 
@@ -46,10 +46,10 @@ The design; parts marked (planned) are not built yet.
 
 | Person | Uses | To |
 |---|---|---|
-| PFM | The 90-161.Z window on the work computer | See every action (read-only today); start endorsement, format drafts and change who gets a step (planned) |
+| PFM | The 90-161.Z window on the work computer | See every action (read-only; first test in R41); start endorsement, format drafts and change who gets a step (planned) |
 | OPR mailbox | A SharePoint form from an e-mail link (planned) | Name 1 or 2 AOs (planned) |
 | AO | A SharePoint form from an e-mail link (planned) | Answer "needs further review?", add endorsers, fill in the DAF Form 673 (planned) |
-| Endorser | The SharePoint list form; an e-mail link to it (planned) | Answer the endorsement; read the final draft and comment (planned) |
+| Endorser | The SharePoint list form; an e-mail link to it (planned) | Answer the endorsement, read the final draft and comment (planned) |
 | Certifier, approver | The PFM or their CSS records the signature (planned) | Certify and approve (planned) |
 
 #### What it keeps
@@ -95,5 +95,5 @@ The design; parts marked (planned) are not built yet.
 | `templates/`, `prompts/` | The document templates; the GenAI.mil prompts |
 | `scripts/` | Build, round bundles and the gov-device scripts |
 | `docs/ARCHITECTURE.md`, `docs/process-model.md` | The design; the stages and their paragraphs |
-| `ref/` | The rule source: DAFMAN 90-161 |
+| `ref/` | The rule sources: DAFMAN 90-161, ANGMAN 90-161 and the forms |
 | [TASKS.md](TASKS.md) | Test tasks for the work computer (copied from go.md) |
