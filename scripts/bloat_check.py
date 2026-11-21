@@ -28,8 +28,8 @@ Usage:
 It measures:
     session load  bytes and ~tokens (bytes / 4) of what every session loads: AGENTS.md, CLAUDE.md,
                   docs/NEXT_PROMPT.md, the `audit-start-read:` files, and the skill and agent names and descriptions.
-                  Caps for every repo (KIT_CAPS; a project can lower one, never raise it): 5,000 tokens (warning at
-                  4,500) and 200 lines of AGENTS.md; over a cap fails --rules
+                  Caps for every repo (KIT_CAPS; a project can lower one, never raise it): 5,500 tokens (warning at
+                  5,000) and 200 lines of AGENTS.md; over a cap fails --rules
     third-party   the names and descriptions of the skills and agents that `.check` names in `audit-third-party:`
                   lines: counted apart from the session load, against their own kit cap of 1,500 tokens (the PFM,
                   2026-11-20); over it fails --rules
