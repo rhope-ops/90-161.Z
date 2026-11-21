@@ -204,7 +204,10 @@ function Get-RowsFor([string]$List, [string]$Field, [int]$Id) {
   return @(Get-PnPListItem -List $List -PageSize 500 -ErrorAction Stop | Where-Object { $v = $_[$Field]; $v -and [int]$v.LookupId -eq $Id })
 }
 # The fake publication rows (exact title), oldest first.
-function Find-FakePub { return @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -PageSize 500 -ErrorAction Stop | Where-Object { ([string]$_['Title']) -eq $PubTitle } | Sort-Object { $_.Id }) }
+function Find-FakePub {
+  $all = @(Get-PnPListItem -List 'PFM Publications' -Fields 'Title' -PageSize 500 -ErrorAction Stop)
+  return @($all | Where-Object { ([string]$_['Title']) -eq $PubTitle } | Sort-Object { $_.Id })
+}
 # Loads PnP.PowerShell and signs in to the one site with the web login (CAC).
 function Connect-EndorseSite {
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
@@ -264,7 +267,8 @@ function Invoke-ReadPart {
   $lines.Add('RESULT ENDORSE ' + $(if ($pass) { 'PASS' } else { 'FAIL' }) + ' answer=' + $answer + ' rows=' + $answered.Count)
   if ($pass) { $script:passed++ } else {
     $script:failed++
-    $lines.Add('next: the second person opens the new row form link, types the title, picks the fake publication and an answer, and selects Save; a form that says no permission means the Visitors group does not hold Contribute on PFM Endorsements (run T20 r4)') }
+    $lines.Add('next: the second person opens the new row form link, types the title, picks the fake publication and an answer, and selects Save;' +
+      ' a form that says no permission means the Visitors group does not hold Contribute on PFM Endorsements (run T20 r4)') }
 }
 <#
 .SYNOPSIS
@@ -281,7 +285,8 @@ function Invoke-CleanPart {
     catch { $bad++; $lines.Add('NOTE rows of ' + $l + ' not all removed: ' + ([string]$_.Exception.Message).Substring(0, [Math]::Min(120, ([string]$_.Exception.Message).Length))) } }
   Add-Item 'c1-rows' $(if ($bad) { 'FAIL' } else { 'PASS' }) ('rows moved to the site Recycle Bin=' + $n + $(if ($bad) { ' (run Clean again)' } else { '' }))
   if ($st['Made'] -eq 'yes') {
-    try { $null = Remove-PnPListItem -List 'PFM Publications' -Identity $pubId -Recycle -Force -ErrorAction Stop; Add-Item 'c2-publication' 'PASS' 'the fake publication moved to the site Recycle Bin' }
+    try { $null = Remove-PnPListItem -List 'PFM Publications' -Identity $pubId -Recycle -Force -ErrorAction Stop
+      Add-Item 'c2-publication' 'PASS' 'the fake publication moved to the site Recycle Bin' }
     catch { $bad++; Add-Item 'c2-publication' 'FAIL' 'the fake publication could not be removed (run Clean again)' } }
   else { Add-Item 'c2-publication' 'PASS' 'the fake publication was not made by this task, so it stays' }
   if (-not $bad) { Remove-Item -LiteralPath $script:stateFile -ErrorAction SilentlyContinue }

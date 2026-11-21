@@ -77,24 +77,29 @@ try {
   New-Site
   $r = Invoke-T26 'Make'
   $pubs = @($global:F.Lists['PFM Publications'])
-  Test-That 'Make makes 1 fake publication at step 1, On Track' ($r.Code -eq 0 -and $pubs.Count -eq 1 -and $pubs[0].Title -eq '90161Z TEST R41 endorse (delete me)' -and $pubs[0].ProcessStep -eq 11 -and $pubs[0].ActionStatus -eq 'On Track') $r.Text
-  Test-That 'Make keeps the publication number in the state file (Made=yes)' ((Get-Content -LiteralPath $stateFile -Raw) -match ('PubId=' + $pubs[0].Id) -and (Get-Content -LiteralPath $stateFile -Raw) -match 'Made=yes') $r.Text
+  $ok = ($r.Code -eq 0 -and $pubs.Count -eq 1 -and $pubs[0].Title -eq '90161Z TEST R41 endorse (delete me)' -and $pubs[0].ProcessStep -eq 11 -and $pubs[0].ActionStatus -eq 'On Track')
+  Test-That 'Make makes 1 fake publication at step 1, On Track' $ok $r.Text
+  $st = Get-Content -LiteralPath $stateFile -Raw
+  Test-That 'Make keeps the publication number in the state file (Made=yes)' ($st -match ('PubId=' + $pubs[0].Id) -and $st -match 'Made=yes') $r.Text
   Test-That 'Make writes its result file and the clipboard line' ($r.File -match 'ITEM m2-link INFO .+clipboard=no \(test run\)' -and $r.File -match 'ENDORSE Make done: passed=1 failed=0') $r.File
   $r = Invoke-T26 'Make'
-  Test-That 'a second Make reuses the fake publication (still 1; Made stays yes)' ($r.Code -eq 0 -and @($global:F.Lists['PFM Publications']).Count -eq 1 -and (Get-Content -LiteralPath $stateFile -Raw) -match 'Made=yes') $r.Text
+  $ok = ($r.Code -eq 0 -and @($global:F.Lists['PFM Publications']).Count -eq 1 -and (Get-Content -LiteralPath $stateFile -Raw) -match 'Made=yes')
+  Test-That 'a second Make reuses the fake publication (still 1; Made stays yes)' $ok $r.Text
   $pub = [int]$pubs[0].Id
   Add-Answer $pub 11 'Concur'   # your own row does not count
   $r = Invoke-T26 'Read'
   Test-That 'Read with no answer by another person: RESULT ENDORSE FAIL' ($r.Code -eq 0 -and $r.File -match '(?m)^RESULT ENDORSE FAIL answer=none rows=0') $r.File
   Add-Answer $pub 31 'Not Started'; Add-Answer $pub 31 ('Concur' + [char]0x2014 + 'No Response')
   $r = Invoke-T26 'Read'
-  Test-That 'Read finds the newest answer of another person, in ASCII, and counts it' ($r.File -match '(?m)^RESULT ENDORSE PASS answer=Concur-No Response rows=1' -and $r.File -match 'by another person=2; with an answer=1; with the fake-data title=2') $r.File
+  $ok = ($r.File -match '(?m)^RESULT ENDORSE PASS answer=Concur-No Response rows=1' -and $r.File -match 'by another person=2; with an answer=1; with the fake-data title=2')
+  Test-That 'Read finds the newest answer of another person, in ASCII, and counts it' $ok $r.File
   Add-Answer $pub 31 'Something typed'
   $r = Invoke-T26 'Read'
   Test-That 'an answer that is not a choice reads "other" (no site text in a line)' ($r.File -match '(?m)^RESULT ENDORSE PASS answer=other rows=2' -and $r.File -notmatch 'Something typed') $r.File
   $global:F.RowId++; $null = $global:F.Lists['PFM Activity Log'].Add(@{ Id = $global:F.RowId; Title = 'FAKE log'; Publication = [pscustomobject]@{ LookupId = $pub } })
   $r = Invoke-T26 'Clean'
-  Test-That 'Clean recycles the 4 endorsement rows, the log row and the publication, then the state file' ($r.Code -eq 0 -and $global:F.Recycled -eq 6 -and @($global:F.Lists['PFM Publications']).Count -eq 0 -and
+  Test-That 'Clean recycles the 4 endorsement rows, the log row and the publication, then the state file' ($r.Code -eq 0 -and $global:F.Recycled -eq 6 -and
+      @($global:F.Lists['PFM Publications']).Count -eq 0 -and
       -not (Test-Path -LiteralPath $stateFile) -and $r.File -match 'rows moved to the site Recycle Bin=5') $r.File
   $r = Invoke-T26 'Clean'
   Test-That 'Clean again: nothing on file, nothing removed' ($r.Code -eq 0 -and $r.File -match 'no fake publication on file' -and $global:F.Recycled -eq 6) $r.File
