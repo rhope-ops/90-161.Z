@@ -44,9 +44,9 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 #### Round R41 r1: my window r14 with my test site lists, every screen, an endorser answer
 
-**For:** the round after R40. My 90-161.Z window r14 reads the fake rows of my test site (read only) and walks me through all 17 screens, one Pass or Fail each. A second person answers one fake endorsement in the SharePoint list form, and the window shows that answer. The Your Work grid fit and the look question with 3 choices are fixed.\
+**For:** the round after R40. My 90-161.Z window r14 reads the fake rows of my test site (read only) and walks me through all 17 screens, one Pass or Fail each. A second person answers one fake endorsement in the SharePoint list form, and the window shows that answer. Then the second person tries to change a fake endorsement I made, in its edit form; a refusal there is expected (my lists let each person edit only their own rows) and is recorded. The Your Work grid fit and the look question with 3 choices are fixed.\
 **Time:** about 40 minutes, with about 5 minutes of a second person from my office (estimate).\
-**Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T21, T22 and T26, 17 pictures of the window screens, the file that keeps the last screen of my window, one text file and one picture for each Feedback comment I save). Old window files of r13 go to the Recycle Bin. On the test site: a test list and library, the second person in the Visitors group, one fake publication and the second person's answer row; the last steps of the round take them all out again (rows and lists to the site Recycle Bin). The window itself only reads the site. Before Run, the window lists every file.\
+**Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T21, T22 and T26, 17 pictures of the window screens, the file that keeps the last screen of my window, one text file and one picture for each Feedback comment I save). Old window files of r13 go to the Recycle Bin. On the test site: a test list and library, the second person in the Visitors group, one fake publication, one fake endorsement I make, the second person's answer row and maybe their change to my fake endorsement; the last steps of the round take them all out again (rows and lists to the site Recycle Bin). The window itself only reads the site. Before Run, the window lists every file.\
 **Steps:**
 1. Open https://rhope-ops.github.io/RADE.
 2. Press Copy script next to R41.
@@ -62,20 +62,21 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 12. If a sign-in window opens, sign in with your CAC.
 13. When a small window asks for the e-mail address of the second person, type that address.
 14. Select OK.
-15. When the RADE card "Ask the second person to answer the endorsement" opens, follow its numbered lines.
-16. When the 90-161.Z window opens: do each check and each screen in its bottom bar.
-17. If a screen does not look right: select "Feedback" in the bottom bar.
-18. In the box "What does not look right? One line, no names.", type what is wrong.
-19. Select "Save".
-20. Close the 90-161.Z window with its X.
-21. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
-22. Close the 90-161.Z window with its X.
-23. Answer the 4 questions in the RADE window.
-24. At DONE, select Send in the Outlook draft that opens.
+15. When the RADE card "Ask the second person to answer the endorsement" opens, do each numbered line on that card.
+16. When the second person has sent both replies, answer the 2 questions on that card.
+17. When the 90-161.Z window opens: do each check and each screen in its bottom bar.
+18. If a screen does not look right: select "Feedback" in the bottom bar.
+19. In the box "What does not look right? One line, no names.", type what is wrong.
+20. Select "Save".
+21. Close the 90-161.Z window with its X.
+22. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
+23. Close the 90-161.Z window with its X.
+24. Answer the 4 questions in the RADE window.
+25. At DONE, select Send in the Outlook draft that opens.
 
 **Round script:** `90161Z-R41-round-r1.ps1`
 
-**Code:** `dfab54e3bffc...9b3d`
+**Code:** `517be7ce1417...52b5`
 
 - **Open as .txt:** [90161Z-R41-round-r1.ps1](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R41-round-r1.ps1): the browser shows the script as plain text. Press Ctrl+A, then Ctrl+C, to copy all of it.
 - **Copy script:** [90161Z-R41-round-r1.ps1 on GitHub](https://github.com/rhope-ops/90-161.Z/blob/main/scripts/gov/paste/90161Z-R41-round-r1.ps1): press the "Copy raw file" button at the top right of the file.

@@ -2,7 +2,8 @@
 # against a small fake site: the PnP cmdlets the script uses are fakes in this file (an empty PnP.PowerShell 1.12.0
 # module in a temporary folder lets the script's module check pass). Proves the logic, not the real service: the gov
 # device round is that proof.
-# Cases: Make makes the fake publication once (step 1, On Track) and keeps its number; a second Make reuses it; Read with
+# Cases: Make makes the fake publication and the endorsement row to edit once and keeps their numbers; a second Make
+# reuses them; Read records ENDORSE-EDIT REFUSED (no PASS or FAIL word) until another person changed that row, then PASS; Read with
 # no answer fails; Read finds the answer of another person (not your own row), in ASCII, and counts it; an unknown
 # answer reads "other"; Clean recycles the endorsement and log rows and the publication, then the state file; no line
 # shows the site host; the script file is ASCII.
@@ -46,8 +47,9 @@ function Get-PnPListItem {
 # Fake Add-PnPListItem: adds a row to a list by title, authored by you (user 11), and returns it.
 function Add-PnPListItem {
   [CmdletBinding()] param([string]$List, [hashtable]$Values)
-  $global:F.RowId++; $item = @{ Id = $global:F.RowId; Author = [pscustomobject]@{ LookupId = 11 } }
+  $global:F.RowId++; $item = @{ Id = $global:F.RowId; Author = [pscustomobject]@{ LookupId = 11 }; Editor = [pscustomobject]@{ LookupId = 11 } }
   foreach ($k in $Values.Keys) { $item[$k] = $Values[$k] }
+  if ($item['Publication'] -is [int]) { $item['Publication'] = [pscustomobject]@{ LookupId = $item['Publication'] } }   # a lookup reads back as its value object
   $null = $global:F.Lists[$List].Add($item); return $item }
 # Fake Remove-PnPListItem: only to the Recycle Bin (-Recycle), as the script must; counts it.
 function Remove-PnPListItem {
@@ -81,14 +83,23 @@ try {
   Test-That 'Make makes 1 fake publication at step 1, On Track' $ok $r.Text
   $st = Get-Content -LiteralPath $stateFile -Raw
   Test-That 'Make keeps the publication number in the state file (Made=yes)' ($st -match ('PubId=' + $pubs[0].Id) -and $st -match 'Made=yes') $r.Text
-  Test-That 'Make writes its result file and the clipboard line' ($r.File -match 'ITEM m2-link INFO .+clipboard=no \(test run\)' -and $r.File -match 'ENDORSE Make done: passed=1 failed=0') $r.File
+  Test-That 'Make writes its result file and the clipboard line' ($r.File -match 'ITEM m3-link INFO .+clipboard=no \(test run\)' -and $r.File -match 'ENDORSE Make done: passed=2 failed=0') $r.File
+  $er = @($global:F.Lists['PFM Endorsements'])
+  $ok = ($er.Count -eq 1 -and $er[0].Title -eq '90161Z TEST R41 edit me' -and $er[0].EndorsementStatus -eq 'Not Started' -and $er[0].Publication.LookupId -eq $pubs[0].Id)
+  $ok = ($ok -and (Get-Content -LiteralPath $stateFile -Raw) -match ('EditId=' + $er[0].Id))
+  Test-That 'Make makes the fake endorsement row to edit (Not Started, on the fake publication) and keeps its number' $ok $r.File
   $r = Invoke-T26 'Make'
   $ok = ($r.Code -eq 0 -and @($global:F.Lists['PFM Publications']).Count -eq 1 -and (Get-Content -LiteralPath $stateFile -Raw) -match 'Made=yes')
-  Test-That 'a second Make reuses the fake publication (still 1; Made stays yes)' $ok $r.Text
+  Test-That 'a second Make reuses the fake publication (still 1; Made stays yes)' ($ok -and @($global:F.Lists['PFM Endorsements']).Count -eq 1) $r.Text
   $pub = [int]$pubs[0].Id
   Add-Answer $pub 11 'Concur'   # your own row does not count
   $r = Invoke-T26 'Read'
   Test-That 'Read with no answer by another person: RESULT ENDORSE FAIL' ($r.Code -eq 0 -and $r.File -match '(?m)^RESULT ENDORSE FAIL answer=none rows=0') $r.File
+  $ok = ($r.File -match '(?m)^RESULT ENDORSE-EDIT REFUSED \(expected' -and $r.File -notmatch '(?m)^RESULT ENDORSE-EDIT .*\b(PASS|FAIL)\b')
+  Test-That 'Read with the row to edit unchanged: RESULT ENDORSE-EDIT REFUSED, with no PASS or FAIL word' $ok $r.File
+  $edit = @($global:F.Lists['PFM Endorsements'])[0]; $edit.Editor = [pscustomobject]@{ LookupId = 31 }; $edit.EndorsementStatus = 'Nonconcur'
+  $r = Invoke-T26 'Read'
+  Test-That 'Read after the second person changed your row: RESULT ENDORSE-EDIT PASS answer=Nonconcur' ($r.File -match '(?m)^RESULT ENDORSE-EDIT PASS answer=Nonconcur$') $r.File
   Add-Answer $pub 31 'Not Started'; Add-Answer $pub 31 ('Concur' + [char]0x2014 + 'No Response')
   $r = Invoke-T26 'Read'
   $ok = ($r.File -match '(?m)^RESULT ENDORSE PASS answer=Concur-No Response rows=1' -and $r.File -match 'by another person=2; with an answer=1; with the fake-data title=2')
@@ -98,11 +109,11 @@ try {
   Test-That 'an answer that is not a choice reads "other" (no site text in a line)' ($r.File -match '(?m)^RESULT ENDORSE PASS answer=other rows=2' -and $r.File -notmatch 'Something typed') $r.File
   $global:F.RowId++; $null = $global:F.Lists['PFM Activity Log'].Add(@{ Id = $global:F.RowId; Title = 'FAKE log'; Publication = [pscustomobject]@{ LookupId = $pub } })
   $r = Invoke-T26 'Clean'
-  Test-That 'Clean recycles the 4 endorsement rows, the log row and the publication, then the state file' ($r.Code -eq 0 -and $global:F.Recycled -eq 6 -and
+  Test-That 'Clean recycles the 5 endorsement rows, the log row and the publication, then the state file' ($r.Code -eq 0 -and $global:F.Recycled -eq 7 -and
       @($global:F.Lists['PFM Publications']).Count -eq 0 -and
-      -not (Test-Path -LiteralPath $stateFile) -and $r.File -match 'rows moved to the site Recycle Bin=5') $r.File
+      -not (Test-Path -LiteralPath $stateFile) -and $r.File -match 'rows moved to the site Recycle Bin=6') $r.File
   $r = Invoke-T26 'Clean'
-  Test-That 'Clean again: nothing on file, nothing removed' ($r.Code -eq 0 -and $r.File -match 'no fake publication on file' -and $global:F.Recycled -eq 6) $r.File
+  Test-That 'Clean again: nothing on file, nothing removed' ($r.Code -eq 0 -and $r.File -match 'no fake publication on file' -and $global:F.Recycled -eq 7) $r.File
   New-Site; $global:F.Lists.Remove('PFM Process Steps')
   $r = Invoke-T26 'Make'
   Test-That 'Make with no process steps: STOPPED, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED: ') $r.File

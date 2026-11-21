@@ -269,7 +269,7 @@ try {
   foreach ($k in $PalHex.Keys) { $pc[$k] = [Drawing.ColorTranslator]::FromHtml('#' + $PalHex[$k]) }
   $ui = @{}
   $form = New-Object System.Windows.Forms.Form
-  $form.Text = '90-161.Z - Publications and Forms Management - preview ' + $Rev + ' (FAKE data)'
+  $form.Text = '90-161.Z - Publications and Forms Management - preview ' + $Rev + $(if ($script:SiteSource -eq 'site') { ' (test site data)' } else { ' (FAKE data)' })
   $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96); $form.AutoScaleMode = 'Dpi'
   $form.ClientSize = [Drawing.Size]::new(1280, 720)
   $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true; $form.ShowInTaskbar = $true

@@ -13,17 +13,22 @@
     Make   (about 1 minute, an estimate)  Signs in. Finds the fake publication "90161Z TEST R41 endorse (delete me)" on
            PFM Publications, or makes it (Action Type New, Publication, the process step with step number 1, On Track:
            no flow routes a row at step 1). Saves its row number in the state file 90161Z-T26-endorse-state-r1.txt.
-           Puts on the clipboard the link of the new row form of PFM Endorsements and the 5 steps for the second person.
+           Makes one fake endorsement row on it ("90161Z TEST R41 edit me", Not Started; you are its author), or finds it.
+           Puts on the clipboard the 2 form links of PFM Endorsements (the new row form, the edit form of that row) and
+           the 8 steps for the second person.
     Read   (about 1 minute)  Signs in and READS only. Finds the rows of PFM Endorsements on the fake publication that
-           another person saved, and prints one RESULT line: the answer on the newest one and the row count.
+           another person saved, and prints one RESULT line: the answer on the newest one and the row count. Then the
+           edit (PFM 20 Nov 26): RESULT ENDORSE-EDIT PASS answer=<choice> when the second person changed the row you made,
+           else RESULT ENDORSE-EDIT REFUSED, the expected outcome under "edit own rows" (recorded, not a failure).
     Clean  (about 1 minute)  Moves the rows of PFM Endorsements and PFM Activity Log on the fake publication, then the
            fake publication itself (only when Make made it), to the site Recycle Bin (restorable for 93 days), and
            deletes the state file. It can run again.
   Fake data only: every row this task makes or asks for has a title that starts with "90161Z TEST" (the repo's
   fake-data marker, which the window checks before it saves a picture). Counts, answer values (the choices of
   schemas/lists/PFMEndorsements.json) and status words only: no names, no addresses, no row text from the site.
-  WHAT IT CHANGES ON THE SITE: Make adds 1 row to PFM Publications (once; a second run reuses it); the flow F01 may log
-  it in PFM Activity Log. The second person adds 1 row to PFM Endorsements. Read changes nothing. Clean recycles them.
+  WHAT IT CHANGES ON THE SITE: Make adds 1 row to PFM Publications and 1 row to PFM Endorsements (once; a second run
+  reuses them); the flow F01 may log the publication in PFM Activity Log. The second person adds 1 row to PFM
+  Endorsements and may change the row you made (approved by the PFM, 20 Nov 26). Read changes nothing. Clean recycles them.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell.
   Writes: on the site, the rows above; on this computer the T26 folder (the result file, the state file), the clipboard
           (Make) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
@@ -47,6 +52,7 @@ $task = 'T26'
 $Rev = 'r1'
 $PubTitle = '90161Z TEST R41 endorse (delete me)'   # the fake publication the answer is about
 $AnswerTitle = '90161Z TEST R41 answer'             # the Title the second person types
+$EditTitle = '90161Z TEST R41 edit me'              # the row you make that the second person tries to edit (PFM 20 Nov 26)
 $StateName = '90161Z-T26-endorse-state-r1.txt'
 $script:noLaunch = [bool]$NoLaunch   # the tests: no clipboard
 $EndorseFolder = 'PFMEndorsements'                  # the folder name of PFM Endorsements (T20 makes each list under its internal name)
@@ -235,13 +241,34 @@ function Invoke-MakePart {
         ProcessStep = $step[0].Id; ActionStatus = 'On Track' } -ErrorAction Stop).Id
     $st['Made'] = 'yes'; Add-Item 'm1-publication' 'PASS' 'the fake publication was made (step 1, On Track)' }
   $st['PubId'] = [string]$pubId; if (-not $st['Made']) { $st['Made'] = 'no' }
+  $editId = Add-EditRow $pubId; $st['EditId'] = [string]$editId
   Save-State $script:stateFile $st
-  $steps = @('Open the link above.', ('In Title, type: ' + $AnswerTitle), ('In Publication, pick: ' + $PubTitle),
-    'In Endorsement Status, pick your answer, for example Concur.', 'Select Save, then tell me if it saved.')
+  $list = $script:site.TrimEnd('/') + '/Lists/' + $EndorseFolder
+  $steps = @(($list + '/NewForm.aspx'), '1. Open the link above.', ('2. In Title, type: ' + $AnswerTitle), ('3. In Publication, pick: ' + $PubTitle),
+    '4. In Endorsement Status, pick your answer, for example Concur.', '5. Select Save, then tell me if it saved.',
+    ($list + '/EditForm.aspx?ID=' + $editId), '6. Open this second link.', '7. In Endorsement Status, pick your answer, for example Concur.',
+    '8. Select Save, then tell me if it saved or said that you have no permission.')
   $clip = 'no'
-  if ($script:noLaunch) { $clip = 'no (test run)' } else {
-    try { Set-Clipboard -Value (@($script:site.TrimEnd('/') + '/Lists/' + $EndorseFolder + '/NewForm.aspx') + $steps); $clip = 'yes' } catch { $clip = 'no' } }
-  $lines.Add('ITEM m2-link INFO the link of the new row form of PFM Endorsements and the 5 steps for the second person are on the clipboard=' + $clip)
+  if ($script:noLaunch) { $clip = 'no (test run)' } else { try { Set-Clipboard -Value $steps; $clip = 'yes' } catch { $clip = 'no' } }
+  $lines.Add('ITEM m3-link INFO the 2 form links of PFM Endorsements (new row, edit your row) and the 8 steps for the second person are on the clipboard=' + $clip)
+}
+<#
+.SYNOPSIS
+  Make, step m2 (PFM 20 Nov 26): the fake endorsement row that you make on the fake publication ("Not Started"), which the
+  second person then tries to edit in its edit form. A row with that title on the publication is used again.
+.PARAMETER PubId
+  The row number of the fake publication.
+.OUTPUTS
+  System.Int32. The row number of the endorsement row.
+#>
+function Add-EditRow([int]$PubId) {
+  $have = @(Get-RowsFor 'PFM Endorsements' 'Publication' $PubId | Where-Object { ([string]$_['Title']) -eq $EditTitle } | Sort-Object { $_.Id })
+  if ($have.Count) { Add-Item 'm2-edit-row' 'PASS' 'the fake endorsement row to edit is there (made by an earlier run)'; return [int]$have[0].Id }
+  Write-Host 'NOW Making the fake endorsement row that the second person tries to edit'
+  $id = [int](Add-PnPListItem -List 'PFM Endorsements' -Values @{ Title = $EditTitle; Publication = $PubId; CoordinationStage = 'Formal Coordination'
+      EndorsementStatus = 'Not Started' } -ErrorAction Stop).Id
+  Add-Item 'm2-edit-row' 'PASS' 'the fake endorsement row to edit was made (Not Started, you are its author)'
+  return $id
 }
 <#
 .SYNOPSIS
@@ -257,7 +284,8 @@ function Invoke-ReadPart {
   try { $meId = [int]((Invoke-PnPSPRestMethod -Method Get -Url ($script:site.TrimEnd('/') + '/_api/web/currentuser?$select=Id') -Raw -ErrorAction Stop) | ConvertFrom-Json).Id } catch { $meId = 0 }
   Write-Host 'NOW Reading the answers on PFM Endorsements'
   $rows = @(Get-RowsFor 'PFM Endorsements' 'Publication' $pubId)
-  $other = @($rows | Where-Object { $meId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $meId } | Sort-Object { $_.Id } -Descending)
+  $other = @($rows | Where-Object { $meId -gt 0 -and (Get-AuthorId $_) -gt 0 -and (Get-AuthorId $_) -ne $meId -and ([string]$_['Title']) -ne $EditTitle } |
+      Sort-Object { $_.Id } -Descending)
   $answered = @($other | Where-Object { (Get-AnswerText $_['EndorsementStatus']) -ne 'Not Started' })
   $marked = @($other | Where-Object { ([string]$_['Title']).StartsWith('90161Z TEST') }).Count
   $answer = $(if ($answered.Count) { Get-AnswerText $answered[0]['EndorsementStatus'] } else { 'none' })
@@ -269,6 +297,30 @@ function Invoke-ReadPart {
     $script:failed++
     $lines.Add('next: the second person opens the new row form link, types the title, picks the fake publication and an answer, and selects Save;' +
       ' a form that says no permission means the Visitors group does not hold Contribute on PFM Endorsements (run T20 r4)') }
+  Add-EditResult $rows $meId ([string]$st['EditId'])
+}
+<#
+.SYNOPSIS
+  Read, the edit (PFM 20 Nov 26): did the second person change the endorsement row that you made? PFM Endorsements is
+  "edit own rows" (PFM 10A), so a refusal is the expected outcome: RESULT ENDORSE-EDIT REFUSED is recorded and is not
+  counted as a failure (it holds neither PASS nor FAIL). A saved change by another person: RESULT ENDORSE-EDIT PASS
+  answer=<choice>.
+.PARAMETER Rows
+  The endorsement rows of the fake publication.
+.PARAMETER MeId
+  Your own site user number (0 when it cannot be read).
+.PARAMETER EditId
+  The row number Make saved in the state file ('' when none).
+#>
+function Add-EditResult($Rows, [int]$MeId, [string]$EditId) {
+  $row = @($Rows | Where-Object { ($EditId -match '^\d+$' -and [int]$_.Id -eq [int]$EditId) -or ([string]$_['Title']) -eq $EditTitle } | Sort-Object { $_.Id }) | Select-Object -First 1
+  if (-not $row) { $lines.Add('ENDORSE-EDIT the row to edit is not on the site (run the part Make first)'); $lines.Add('RESULT ENDORSE-EDIT REFUSED (no row to edit)'); return }
+  $ed = 0; $e = $row['Editor']; if ($e -and $e.LookupId) { $ed = [int]$e.LookupId }
+  $ans = Get-AnswerText $row['EndorsementStatus']
+  $changed = ($MeId -gt 0 -and $ed -gt 0 -and $ed -ne $MeId -and $ans -ne 'Not Started')
+  $lines.Add('ENDORSE-EDIT the row you made: last saved by another person=' + $(if ($ed -gt 0 -and $MeId -gt 0 -and $ed -ne $MeId) { 'yes' } else { 'no' }) + '; answer=' + $ans)
+  if ($changed) { $script:passed++; $lines.Add('RESULT ENDORSE-EDIT PASS answer=' + $ans) }
+  else { $lines.Add('RESULT ENDORSE-EDIT REFUSED (expected under edit own rows: recorded; it does not count against the round)') }
 }
 <#
 .SYNOPSIS

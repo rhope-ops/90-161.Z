@@ -210,14 +210,14 @@
                 },
                 {
                     "name": "T26 Make the fake publication r1",
-                    "title": "Make the fake publication for the endorser",
+                    "title": "Make the fake publication and endorsement",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r1.ps1",
                     "args": "-Part Make",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Makes one fake publication on the test site, or finds the one an earlier run made. Puts the new row form link of PFM Endorsements and 5 steps for the second person on the clipboard.",
+                    "note": "Signs in (CAC). Makes one fake publication and one fake endorsement on the test site, or finds them. Puts 2 form links and 8 steps for the second person on the clipboard.",
                     "estimate": 1,
-                    "help": "Send the results as they are. A second run makes no second publication.",
+                    "help": "Send the results as they are. A second run makes no second row.",
                     "needs": [
                         "pnp",
                         "net-site"
@@ -233,7 +233,7 @@
                     "kind": "guide",
                     "dir": "T26",
                     "file": "",
-                    "note": "You need one person of your office for about 5 minutes, now. They open the new row form, type the title, pick the fake publication and an answer, and select Save.",
+                    "note": "You need one person of your office for about 5 minutes, now. They add one answer in the new row form, then try to change your fake endorsement in its edit form. A refusal there is expected.",
                     "guide": [
                         "1. Ask the second person to stay at a computer for about 5 minutes.",
                         "2. Open Teams.",
@@ -241,9 +241,9 @@
                         "4. Select \"New chat\".",
                         "5. In the box \"To\", type the e-mail address you gave RADE for the second person.",
                         "6. Select the chat box.",
-                        "7. Press Ctrl+V (the form link and the 5 steps for the second person are on the clipboard).",
+                        "7. Press Ctrl+V (2 form links and 8 steps for the second person are on the clipboard).",
                         "8. Press Enter.",
-                        "9. Wait for the reply: the row saved, or no permission.",
+                        "9. Wait for 2 replies: the new row saved or not, and the change saved or refused.",
                         "If the person is not there yet: keep this card open. Skip only if nobody can help today."
                     ],
                     "marker": "90161Z-T26-answer-asked.txt",
@@ -254,10 +254,20 @@
                     "answers": [
                         {
                             "key": "e-answer",
-                            "prompt": "What did the second person see?",
+                            "prompt": "After the new row form, what did the second person see?",
                             "kind": "pick",
                             "choices": [
                                 "The row was saved",
+                                "No permission",
+                                "Something else"
+                            ]
+                        },
+                        {
+                            "key": "e-edit",
+                            "prompt": "After the edit form of your endorsement, what did the second person see?",
+                            "kind": "pick",
+                            "choices": [
+                                "The change was saved",
                                 "No permission",
                                 "Something else"
                             ]
@@ -270,12 +280,12 @@
                 },
                 {
                     "name": "T26 Read the endorser answer r1",
-                    "title": "Read the answer of the second person",
+                    "title": "Read the 2 answers of the second person",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r1.ps1",
                     "args": "-Part Read",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Reads PFM Endorsements: did the second person save an answer on the fake publication? Changes nothing.",
+                    "note": "Signs in (CAC). Reads the new answer row, and whether your fake endorsement was changed. A refused change is expected and recorded; it does not count against the round.",
                     "estimate": 1,
                     "help": "Send the results as they are.",
                     "needs": [
@@ -381,7 +391,7 @@
                     "file": "90161Z-T26-endorse-r1.ps1",
                     "args": "-Part Clean",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Moves the fake publication, its answers and its log rows to the site Recycle Bin. Runs after any failure.",
+                    "note": "Signs in (CAC). Moves the fake publication, its endorsement rows (yours and the answers) and its log rows to the site Recycle Bin. Runs after any failure.",
                     "estimate": 1,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [

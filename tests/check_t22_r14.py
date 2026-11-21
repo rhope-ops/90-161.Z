@@ -8,11 +8,13 @@ the Windows job) and on the part files:
 - the site read (row 1): the site part calls no command that adds, changes or removes anything on the site, reads each
   list with Get-PnPListItem, writes the WRITES=0 line and knows the repo's fake-data markers; the card pictures and the
   Feedback pictures ask for the marker check first;
+- the Feedback save (review MINOR 1): a comment on a card whose site row has no marker saves the .txt only, logs
+  "picture not saved" and the list names no .png; a card with marked rows saves both (a stand-in picture, no window);
 - the grid fit (row 4, R40 finding 3): the self-check line names the open, the fit runs again after the layout settles,
   and the window notes each open for the click-through.
 
 Network: none.
-Writes: nothing (it runs pwsh on the cards part and reads the part files).
+Writes: one temporary folder for the Feedback case, removed at the end (it runs pwsh on the cards and feedback parts).
 Credentials: none.
 Usage: python3 tests/check_t22_r14.py   exit 0 = pass (last line T22R14 pass), 1 = a failed assertion."""
 import pathlib
@@ -57,7 +59,45 @@ def check_parts():
     assert "foreach ($l in @(& $wn.WalkLines)) { $lines.Add($l) }" in main and 'Invoke-SiteRead $siteAt' in main, 'main script'
 
 
+FEEDBACK_PS = r"""
+$ErrorActionPreference = 'Stop'; $Rev = 'r14'; $dir = $args[0]; $who = $null; $lines = New-Object System.Collections.Generic.List[string]
+$wn = @{ PngDir = '' }; $form = $null; $ui = @{}
+function Hide-Site([string]$Text, [string]$Site) { return $Text }
+function ConvertTo-Masked([string]$Text, $Secret) { return $Text }
+function Get-SiteUnmarked([string]$Key) { if ($Key -eq 'home') { return 2 } else { return 0 } }
+. $args[1]
+$wn.PngSave = { param($Shot, [string]$Path) Set-Content -LiteralPath $Path -Value 'PNG' }; $shot = $null   # no System.Drawing off Windows
+$a = & $wn.FeedbackSave 'home' 'FAKE comment one' $shot; $b = & $wn.FeedbackSave 'queue' 'FAKE comment two' $shot; & $wn.FeedbackList
+$lines | ForEach-Object { 'LINE ' + $_ }
+Get-ChildItem -LiteralPath $dir -Name | Sort-Object | ForEach-Object { 'FILE ' + $_ }
+Get-Content -LiteralPath (Join-Path $dir '90161Z-T22-feedback-r14.txt') | ForEach-Object { 'LIST ' + $_ }
+"""
+
+
+def check_feedback():
+    """MINOR 1: a blocked picture is not logged or listed as saved. Takes nothing; raises AssertionError."""
+    import tempfile
+    import shutil
+    d = tempfile.mkdtemp()
+    try:
+        ps = pathlib.Path(d, 'case.ps1')
+        ps.write_text(FEEDBACK_PS, encoding='utf-8')
+        out = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), d, str(GOV / '90161Z-T22-feedback-r14.ps1')],
+                             capture_output=True, text=True, timeout=60).stdout.splitlines()
+        files = [l[5:] for l in out if l.startswith('FILE ')]
+        lines = [l[5:] for l in out if l.startswith('LINE ')]
+        lst = [l[5:] for l in out if l.startswith('LIST ')]
+        assert 'FEEDBACK home: 90161Z-T22-feedback-home-r14.txt' in lines and 'FEEDBACK home: picture not saved (2 site rows without a fake-data marker)' in lines, out
+        assert 'FEEDBACK queue: 90161Z-T22-feedback-queue-r14.txt and 90161Z-T22-feedback-queue-r14.png' in lines, out
+        assert '90161Z-T22-feedback-home-r14.png' not in files and '90161Z-T22-feedback-queue-r14.png' in files and '90161Z-T22-feedback-home-r14.txt' in files, files
+        assert '  90161Z-T22-feedback-home-r14.txt (picture not saved)' in lst and not any('home-r14.png' in l for l in lst + lines), lst
+        assert '  90161Z-T22-feedback-queue-r14.txt and 90161Z-T22-feedback-queue-r14.png' in lst, lst
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 if __name__ == '__main__':
+    check_feedback()
     check_walk()
     check_parts()
     print('T22R14 pass')
