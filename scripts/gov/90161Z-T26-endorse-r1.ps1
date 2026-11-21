@@ -23,12 +23,31 @@
     Clean  (about 1 minute)  Moves the rows of PFM Endorsements and PFM Activity Log on the fake publication, then the
            fake publication itself (only when Make made it), to the site Recycle Bin (restorable for 93 days), and
            deletes the state file. It can run again.
+  The RADE Restore test (the PFM, 21 Nov 26; docs/reviews/2026-11-21-r41-plan.md row 5; RADE engine-v31 release notes,
+  the R41 click table): RADE's Maintenance > Restore puts back rows that are missing from the app's lists, from the
+  Recycle Bin first (same row number), else as new rows. The rows hang on the fake publication, so Clean removes them,
+  and any row Restore makes again, at the end. Writes approved by the PFM (21 Nov 26: 3 rows deleted, 1 row deleted
+  and purged, 1 new row, then Restore; fake rows only).
+    Rows   (about 1 minute)  The pause-switch row: PFM Settings "FlowsPaused" must be there with "No" (the manifest's
+           restore.pause: list PFM Settings, row FlowsPaused, field SettingValue, on value Yes); a missing row is made,
+           another value is set to No (RESULT PAUSEROW). RADE turns it to Yes while Restore writes and puts it back
+           after. The row-writing flows read it from R42 on (the PFM, 21 Nov 26), so in R41 it pauses nothing. Then
+           3 fake rows on PFM Endorsements and 1 fake row on PFM Activity Log on the fake publication (RESULT ROWS).
+    Change (about 1 minute)  After the Back up: moves the 3 endorsement rows to the site Recycle Bin, deletes the log
+           row for good (not to the Recycle Bin: the same as deleting it and emptying it from the Recycle Bin), and
+           adds 1 new fake endorsement row (RESULT CHANGE). A second run changes nothing that is done already.
+    Check  (about 1 minute)  After Restore; reads only. RESULT RESTORE-BIN: the 3 endorsement rows are back with their
+           old row numbers, once each. RESULT RESTORE-NEW: the log row is back with a new row number. RESULT
+           RESTORE-KEEP: the new row is still there. RESULT PAUSEROW: the pause-switch row has its value from Rows (No).
+           RESULT FRESH-BACKUP: a Backups folder newer than the part Change (Restore saves a fresh backup first).
   Fake data only: every row this task makes or asks for has a title that starts with "90161Z TEST" (the repo's
   fake-data marker, which the window checks before it saves a picture). Counts, answer values (the choices of
   schemas/lists/PFMEndorsements.json) and status words only: no names, no addresses, no row text from the site.
   WHAT IT CHANGES ON THE SITE: Make adds 1 row to PFM Publications and 1 row to PFM Endorsements (once; a second run
   reuses them); the flow F01 may log the publication in PFM Activity Log. The second person adds 1 row to PFM
   Endorsements and may change the row you made (approved by the PFM, 20 Nov 26). Read changes nothing. Clean recycles them.
+  Rows: at most 1 PFM Settings row (made or set to No), 3 rows on PFM Endorsements and 1 on PFM Activity Log (once).
+  Change: 3 rows to the Recycle Bin, 1 row deleted for good, 1 new row. Check changes nothing.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell.
   Writes: on the site, the rows above; on this computer the T26 folder (the result file, the state file), the clipboard
           (Make) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
@@ -39,7 +58,7 @@
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
-  Make, Read or Clean.
+  Make, Read or Clean; Rows, Change or Check (the Restore test).
 .PARAMETER NoPause
   No "Press Enter to close" at the end.
 .PARAMETER TestDir
@@ -47,7 +66,7 @@
 .PARAMETER NoLaunch
   Test runs only: do not use the clipboard.
 #>
-param([string]$Id, [ValidateSet('Make', 'Read', 'Clean')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch)
+param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch)
 $task = 'T26'
 $Rev = 'r1'
 $PubTitle = '90161Z TEST R41 endorse (delete me)'   # the fake publication the answer is about
@@ -59,6 +78,13 @@ $EndorseFolder = 'PFMEndorsements'                  # the folder name of PFM End
 # The answers a row can hold (schemas/lists/PFMEndorsements.json, Endorsement Status), in ASCII: the dash of
 # "Concur-No Response" is written as a hyphen here and in the result line.
 $Answers = @('Not Started', 'Concur', 'Concur With Comment', 'Concur-No Response', 'Nonconcur', 'No Comment', 'Not Applicable')
+# The Restore test (R41): the fake rows on the fake publication.
+$BinTitle = '90161Z TEST R41 restore {0} (delete me)'   # the 3 endorsement rows that go to the Recycle Bin ({0} = 1 to 3)
+$LogTitle = '90161Z TEST R41 restore log (delete me)'   # the log row that is deleted for good
+$NewTitle = '90161Z TEST R41 restore new (delete me)'   # the row made after the backup: Restore must leave it
+# The pause switch: the same 4 values as "restore.pause" of the deploy app in scripts/paste_bundles.json
+# (tests/ps/Test-T26Restore.ps1 checks that they match). Off is the seed value (schemas/lists/PFMSettings.json).
+$Pause = @{ List = 'PFM Settings'; Title = 'FlowsPaused'; Field = 'SettingValue'; On = 'Yes'; Off = 'No' }
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -345,10 +371,123 @@ function Invoke-CleanPart {
   if (-not $bad) { Remove-Item -LiteralPath $script:stateFile -ErrorAction SilentlyContinue }
 }
 
+# ---- The RADE Restore test (R41): the parts Rows, Change and Check ----
+# Adds one "RESULT <name> PASS|FAIL <text>" line and counts it.
+function Add-Result([string]$Name, [bool]$Ok, [string]$Text) {
+  $lines.Add('RESULT ' + $Name + ' ' + $(if ($Ok) { 'PASS' } else { 'FAIL' }) + $(if ($Text) { ' ' + $Text } else { '' }))
+  if ($Ok) { $script:passed++ } else { $script:failed++ }
+}
+# A value of the pause-switch row as a word for a result line: Yes, No, empty or other (no free text from the site).
+function Get-ValueWord($V) { $t = ([string]$V).Trim(); if ($t -in 'Yes', 'No') { return $t }; if (-not $t) { return 'empty' }; return 'other' }
+# The rows of PFM Settings whose title is the pause-switch row.
+function Get-PauseRow {
+  return @(Get-PnPListItem -List $Pause.List -Fields 'Title', $Pause.Field -PageSize 500 -ErrorAction Stop | Where-Object { ([string]$_['Title']).Trim() -eq $Pause.Title })
+}
+# The rows of list $List with title $Title on the fake publication $PubId, oldest first.
+function Get-TitledRow([string]$List, [string]$Title, [int]$PubId) { return @(Get-RowsFor $List 'Publication' $PubId | Where-Object { ([string]$_['Title']) -eq $Title } | Sort-Object { $_.Id }) }
+<#
+.SYNOPSIS
+  Rows, the pause-switch row: there once, with the off value; then read back (RESULT PAUSEROW).
+.DESCRIPTION
+  A missing row is made with the off value; a row with another value is set to it; two or more rows with that title
+  are a FAIL (RADE reads one row) and are not changed. The value before goes into the state file as a word.
+.PARAMETER State
+  The state hashtable (gets PauseBefore and PauseAfter).
+#>
+function Initialize-PauseRow($State) {
+  $rows = @(Get-PauseRow)
+  if ($rows.Count -gt 1) { Add-Result 'PAUSEROW' $false ('rows named ' + $Pause.Title + '=' + $rows.Count + ': keep one, delete the others, then run again'); return }
+  if (-not $rows.Count) {
+    Write-Host 'NOW Making the pause-switch row in PFM Settings'
+    $null = Add-PnPListItem -List $Pause.List -Values @{ Title = $Pause.Title; $Pause.Field = $Pause.Off } -ErrorAction Stop; $did = 'made'; $State['PauseBefore'] = 'missing' }
+  else {
+    $State['PauseBefore'] = Get-ValueWord $rows[0][$Pause.Field]
+    if (([string]$rows[0][$Pause.Field]).Trim() -ceq $Pause.Off) { $did = 'kept' }
+    else { $null = Set-PnPListItem -List $Pause.List -Identity $rows[0].Id -Values @{ $Pause.Field = $Pause.Off } -ErrorAction Stop; $did = 'set' } }
+  $now = @(Get-PauseRow); $val = $(if ($now.Count -eq 1) { ([string]$now[0][$Pause.Field]).Trim() } else { '' })
+  $State['PauseAfter'] = Get-ValueWord $val
+  $text = 'row=' + $did + ' before=' + $State['PauseBefore'] + ' now=' + $State['PauseAfter'] + ' (RADE turns it to ' + $Pause.On + ' while Restore writes)'
+  Add-Result 'PAUSEROW' ($now.Count -eq 1 -and $val -ceq $Pause.Off) $text
+}
+<#
+.SYNOPSIS
+  The part Rows: the pause-switch row, then the 3 endorsement rows and the log row on the fake publication.
+.DESCRIPTION
+  A row with the same title on the fake publication is used again, so a second run makes no second row. The row
+  numbers go into the state file for the parts Change and Check.
+#>
+function Invoke-RowsPart {
+  $st = Read-State $script:stateFile
+  Initialize-PauseRow $st; Save-State $script:stateFile $st
+  Write-Host 'NOW Looking for the fake publication'
+  $pubId = $(if ($st['PubId'] -match '^\d+$') { [int]$st['PubId'] } else { $p = @(Find-FakePub); if ($p.Count) { [int]$p[0].Id } else { 0 } })
+  if (-not $pubId) { Add-Result 'ROWS' $false 'no fake publication: run the part Make first'; return }
+  $st['PubId'] = [string]$pubId; $made = 0; $found = 0
+  for ($i = 1; $i -le 3; $i++) {
+    $title = $BinTitle -f $i; $have = @(Get-TitledRow 'PFM Endorsements' $title $pubId)
+    if ($have.Count) { $st['Bin' + $i] = [string]$have[0].Id; $found++; continue }
+    $st['Bin' + $i] = [string](Add-PnPListItem -List 'PFM Endorsements' -Values @{ Title = $title; Publication = $pubId; CoordinationStage = 'Formal Coordination'
+        EndorsementStatus = 'Not Started' } -ErrorAction Stop).Id; $made++
+    Save-State $script:stateFile $st }
+  $have = @(Get-TitledRow 'PFM Activity Log' $LogTitle $pubId)
+  if ($have.Count) { $st['LogId'] = [string]$have[0].Id; $found++ }
+  else { $st['LogId'] = [string](Add-PnPListItem -List 'PFM Activity Log' -Values @{ Title = $LogTitle; Publication = $pubId; EventType = 'Other' } -ErrorAction Stop).Id; $made++ }
+  Save-State $script:stateFile $st
+  $lines.Add('ROWS endorsement rows=' + ((@(1, 2, 3) | ForEach-Object { $st['Bin' + $_] }) -join ',') + '; log row=' + $st['LogId'])
+  Add-Result 'ROWS' $true ('made=' + $made + ' found=' + $found + ' (3 on PFM Endorsements, 1 on PFM Activity Log, all on the fake publication)')
+}
+<#
+.SYNOPSIS
+  The part Change (after the Back up): 3 rows to the Recycle Bin, 1 row deleted for good, 1 new row.
+.DESCRIPTION
+  Each write is marked in the state file when it is done, so a second run does only what is left. Remove-PnPListItem
+  without -Recycle deletes the row for good: it never reaches the Recycle Bin, so Restore must make it again as a new row.
+#>
+function Invoke-ChangePart {
+  $st = Read-State $script:stateFile
+  if (-not ($st['LogId'] -match '^\d+$' -and $st['PubId'] -match '^\d+$')) { Add-Result 'CHANGE' $false 'no rows on file: run the part Rows first'; return }
+  for ($i = 1; $i -le 3; $i++) {
+    if ($st['Gone' + $i] -eq 'yes') { continue }
+    $null = Remove-PnPListItem -List 'PFM Endorsements' -Identity ([int]$st['Bin' + $i]) -Recycle -Force -ErrorAction Stop
+    $st['Gone' + $i] = 'yes'; Save-State $script:stateFile $st }
+  if ($st['Purged'] -ne 'yes') { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity ([int]$st['LogId']) -Force -ErrorAction Stop
+    $st['Purged'] = 'yes'; Save-State $script:stateFile $st }
+  if ($st['NewId'] -notmatch '^\d+$') {
+    $st['NewId'] = [string](Add-PnPListItem -List 'PFM Endorsements' -Values @{ Title = $NewTitle; Publication = [int]$st['PubId']; CoordinationStage = 'Formal Coordination'
+        EndorsementStatus = 'Not Started' } -ErrorAction Stop).Id }
+  if (-not $st['ChangedAt']) { $st['ChangedAt'] = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ss') }
+  Save-State $script:stateFile $st
+  Add-Result 'CHANGE' $true ('to the Recycle Bin=3 deleted for good=1 new row=1 (new row number ' + $st['NewId'] + ')')
+}
+<#
+.SYNOPSIS
+  The part Check (after Restore; reads only): the rows Restore put back, the new row, the pause switch, the fresh backup.
+.PARAMETER App
+  The app folder (RADE\90-161.Z), which holds the Backups folder.
+#>
+function Invoke-CheckPart([string]$App) {
+  $st = Read-State $script:stateFile
+  if ($st['NewId'] -notmatch '^\d+$' -or $st['PubId'] -notmatch '^\d+$') { Add-Result 'RESTORE-BIN' $false 'no change on file: run the parts Rows and Change first'; return }
+  $pubId = [int]$st['PubId']; $back = 0; $twice = 0
+  for ($i = 1; $i -le 3; $i++) { $rows = @(Get-TitledRow 'PFM Endorsements' ($BinTitle -f $i) $pubId)
+    if (@($rows | Where-Object { [int]$_.Id -eq [int]$st['Bin' + $i] }).Count) { $back++ }; if ($rows.Count -gt 1) { $twice++ } }
+  Add-Result 'RESTORE-BIN' ($back -eq 3 -and -not $twice) ('back with the old row number=' + $back + ' of 3; made twice=' + $twice)
+  $logs = @(Get-TitledRow 'PFM Activity Log' $LogTitle $pubId); $old = @($logs | Where-Object { [int]$_.Id -eq [int]$st['LogId'] }).Count
+  $newNo = $(if ($logs.Count) { [string]$logs[0].Id } else { 'none' })
+  Add-Result 'RESTORE-NEW' ($logs.Count -eq 1 -and -not $old) ('log rows=' + $logs.Count + '; with the old row number=' + $old + '; new row number=' + $newNo)
+  $keep = @(Get-TitledRow 'PFM Endorsements' $NewTitle $pubId | Where-Object { [int]$_.Id -eq [int]$st['NewId'] }).Count
+  Add-Result 'RESTORE-KEEP' ($keep -eq 1) ('the row made after the backup is there=' + $(if ($keep -eq 1) { 'yes' } else { 'no' }))
+  $p = @(Get-PauseRow); $word = $(if ($p.Count -eq 1) { Get-ValueWord $p[0][$Pause.Field] } else { 'rows=' + $p.Count })
+  Add-Result 'PAUSEROW' ($p.Count -eq 1 -and $word -eq $st['PauseAfter']) ('now=' + $word + ' before Restore=' + $st['PauseAfter'])
+  $since = [datetime]::ParseExact($st['ChangedAt'], 'yyyy-MM-ddTHH:mm:ss', [Globalization.CultureInfo]::InvariantCulture)
+  $fresh = @(Get-ChildItem -LiteralPath (Join-Path $App 'Backups') -Directory -ErrorAction SilentlyContinue | Where-Object { $_.CreationTime -gt $since -and -not $_.Name.StartsWith('~') })
+  Add-Result 'FRESH-BACKUP' ($fresh.Count -ge 1) ('Backups folders made after the change=' + $fresh.Count)
+}
+
 $fatal = $false; $site = ''; $secret = @(); $dir = ''
 try {
   $ErrorActionPreference = 'Stop'
-  if (-not $Part) { throw 'PART not given: use -Part Make, Read or Clean.' }
+  if (-not $Part) { throw 'PART not given: use -Part Make, Read, Clean, Rows, Change or Check.' }
   $who = Get-TaskId $Id; $secret = $who.Secret
   if ($TestDir) { $dir = $TestDir } else { $dir = Get-TaskDir $who.Id $task 'Task 26' -Create }
   Set-Location -LiteralPath $dir
@@ -356,7 +495,8 @@ try {
   $script:site = Get-SiteAddress (Join-Path (Split-Path -Parent $dir) 'Config')
   $lines.Add('TASK T26 endorse ' + $Rev + ', part ' + $Part + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
   Connect-EndorseSite
-  switch ($Part) { 'Make' { Invoke-MakePart } 'Read' { Invoke-ReadPart } default { Invoke-CleanPart } }
+  switch ($Part) { 'Make' { Invoke-MakePart } 'Read' { Invoke-ReadPart } 'Clean' { Invoke-CleanPart } 'Rows' { Invoke-RowsPart } 'Change' { Invoke-ChangePart }
+    default { Invoke-CheckPart (Split-Path -Parent $dir) } }
   try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
 } catch {
   $fatal = $true

@@ -139,10 +139,6 @@
                 {
                     "dir": "T26",
                     "src": "scripts/gov/90161Z-T26-endorse-r1.ps1"
-                },
-                {
-                    "dir": "T27",
-                    "src": "scripts/gov/90161Z-T27-restore-r1.ps1"
                 }
             ],
             "steps": [
@@ -389,11 +385,11 @@
                     "answersOnly": true
                 },
                 {
-                    "name": "T27 Make the Restore test rows r1",
+                    "name": "T26 Make the Restore test rows r1",
                     "title": "Make the fake rows for the Restore test",
-                    "dir": "T27",
-                    "file": "90161Z-T27-restore-r1.ps1",
-                    "args": "-Part Make",
+                    "dir": "T26",
+                    "file": "90161Z-T26-endorse-r1.ps1",
+                    "args": "-Part Rows",
                     "minutes": 10,
                     "note": "Signs in (CAC). Sets the pause-switch row of PFM Settings to No (Restore turns it on while it writes; flows read it from the next round). Makes 3 fake endorsement rows and 1 fake log row.",
                     "estimate": 1,
@@ -408,10 +404,10 @@
                     "doing": "Making the fake rows for the Restore test."
                 },
                 {
-                    "name": "T27 Back up in a second window r1",
+                    "name": "T26 Back up in a second window r1",
                     "title": "Back up the 12 lists in a second RADE window",
                     "kind": "guide",
-                    "dir": "T27",
+                    "dir": "T26",
                     "file": "",
                     "note": "This window waits while a second RADE window saves the 12 lists of your test site to this computer. Nothing on the site changes.",
                     "guide": [
@@ -426,7 +422,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T27 Make the Restore test rows r1"
+                        "T26 Make the Restore test rows r1"
                     ]
                 },
                 {
@@ -440,15 +436,15 @@
                     "estimate": 1,
                     "help": "Send the results as they are. If a list is missing, the Restore test stops here.",
                     "after": [
-                        "T27 Back up in a second window r1"
+                        "T26 Back up in a second window r1"
                     ],
                     "doing": "Reading the newest backup."
                 },
                 {
-                    "name": "T27 Delete and add the test rows r1",
+                    "name": "T26 Delete and add the test rows r1",
                     "title": "Delete 4 fake rows and add 1 on the test site",
-                    "dir": "T27",
-                    "file": "90161Z-T27-restore-r1.ps1",
+                    "dir": "T26",
+                    "file": "90161Z-T26-endorse-r1.ps1",
                     "args": "-Part Change",
                     "minutes": 10,
                     "note": "Signs in (CAC). Moves the 3 fake endorsement rows to the site Recycle Bin, deletes the fake log row for good, and adds 1 new fake endorsement row. Restore puts the 4 deleted rows back next.",
@@ -464,10 +460,10 @@
                     "doing": "Deleting 4 fake rows and adding 1."
                 },
                 {
-                    "name": "T27 Start Restore in a second window r1",
+                    "name": "T26 Start Restore in a second window r1",
                     "title": "Start Restore in a second RADE window",
                     "kind": "guide",
-                    "dir": "T27",
+                    "dir": "T26",
                     "file": "",
                     "note": "This window waits. Restore first runs a dry run: it shows what it would put back and writes nothing. Leave the second window open after it.",
                     "guide": [
@@ -483,20 +479,20 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T27 Delete and add the test rows r1"
+                        "T26 Delete and add the test rows r1"
                     ]
                 },
                 {
-                    "name": "T27 Answer: the Restore dry run r1",
+                    "name": "T26 Answer: the Restore dry run r1",
                     "title": "Answer 2 questions about the dry run",
                     "kind": "guide",
                     "guide": [],
-                    "dir": "T27",
+                    "dir": "T26",
                     "file": "",
                     "note": "2 questions about the dry run in the second window. If it says the Recycle Bin could not be read, close the second window with its X first: the Restore test stops here.",
                     "estimate": 1,
                     "after": [
-                        "T27 Start Restore in a second window r1"
+                        "T26 Start Restore in a second window r1"
                     ],
                     "answers": [
                         {
@@ -522,10 +518,10 @@
                     "answersOnly": true
                 },
                 {
-                    "name": "T27 Restore with the app name r1",
+                    "name": "T26 Restore with the app name r1",
                     "title": "Confirm Restore with the app name",
                     "kind": "guide",
-                    "dir": "T27",
+                    "dir": "T26",
                     "file": "",
                     "note": "First a name in the wrong capitals, which Restore must refuse, then the right name. Restore then saves a fresh backup and puts the 4 rows back.",
                     "guide": [
@@ -539,7 +535,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T27 Answer: the Restore dry run r1"
+                        "T26 Answer: the Restore dry run r1"
                     ],
                     "answers": [
                         {
@@ -566,10 +562,10 @@
                     "doneLog": "Confirmed by you: Restore ran in the second window."
                 },
                 {
-                    "name": "T27 Check the restored rows r1",
+                    "name": "T26 Check the restored rows r1",
                     "title": "Check the rows that Restore put back",
-                    "dir": "T27",
-                    "file": "90161Z-T27-restore-r1.ps1",
+                    "dir": "T26",
+                    "file": "90161Z-T26-endorse-r1.ps1",
                     "args": "-Part Check",
                     "minutes": 10,
                     "note": "Signs in (CAC) and reads only: the 3 rows back with their old numbers, the log row with a new number, the new row still there, the pause-switch row at No, and the fresh backup.",
@@ -580,15 +576,15 @@
                         "net-site"
                     ],
                     "after": [
-                        "T27 Restore with the app name r1"
+                        "T26 Restore with the app name r1"
                     ],
                     "doing": "Checking the rows that Restore put back."
                 },
                 {
-                    "name": "T27 Restore again r1",
+                    "name": "T26 Restore again r1",
                     "title": "Restore the same backup again",
                     "kind": "guide",
-                    "dir": "T27",
+                    "dir": "T26",
                     "file": "",
                     "note": "The same backup again must find nothing to restore: no row is made twice.",
                     "guide": [
@@ -603,7 +599,7 @@
                     ],
                     "estimate": 2,
                     "after": [
-                        "T27 Restore with the app name r1"
+                        "T26 Restore with the app name r1"
                     ],
                     "answers": [
                         {
@@ -619,10 +615,10 @@
                     ]
                 },
                 {
-                    "name": "T27 Restore the fresh backup r1",
+                    "name": "T26 Restore the fresh backup r1",
                     "title": "Restore the fresh backup",
                     "kind": "guide",
-                    "dir": "T27",
+                    "dir": "T26",
                     "file": "",
                     "note": "The fresh backup that Restore saved must also find nothing to restore.",
                     "guide": [
@@ -638,7 +634,7 @@
                     ],
                     "estimate": 2,
                     "after": [
-                        "T27 Restore again r1"
+                        "T26 Restore again r1"
                     ],
                     "answers": [
                         {
@@ -814,9 +810,9 @@
                     "step": "T26 Read the endorser answer r1"
                 },
                 {
-                    "dir": "T27",
-                    "name": "90161Z-T27-restore-make-r1.txt",
-                    "step": "T27 Make the Restore test rows r1"
+                    "dir": "T26",
+                    "name": "90161Z-T26-endorse-rows-r1.txt",
+                    "step": "T26 Make the Restore test rows r1"
                 },
                 {
                     "dir": "T22",
@@ -824,14 +820,14 @@
                     "step": "T22 Check the Back up r14"
                 },
                 {
-                    "dir": "T27",
-                    "name": "90161Z-T27-restore-change-r1.txt",
-                    "step": "T27 Delete and add the test rows r1"
+                    "dir": "T26",
+                    "name": "90161Z-T26-endorse-change-r1.txt",
+                    "step": "T26 Delete and add the test rows r1"
                 },
                 {
-                    "dir": "T27",
-                    "name": "90161Z-T27-restore-check-r1.txt",
-                    "step": "T27 Check the restored rows r1"
+                    "dir": "T26",
+                    "name": "90161Z-T26-endorse-check-r1.txt",
+                    "step": "T26 Check the restored rows r1"
                 },
                 {
                     "dir": "T26",
@@ -860,16 +856,16 @@
                         "T22 Did the window open r14",
                         "T22 Open the window again r14",
                         "T22 Answer: look and cards r14",
-                        "T27 Make the Restore test rows r1",
-                        "T27 Back up in a second window r1",
+                        "T26 Make the Restore test rows r1",
+                        "T26 Back up in a second window r1",
                         "T22 Check the Back up r14",
-                        "T27 Delete and add the test rows r1",
-                        "T27 Start Restore in a second window r1",
-                        "T27 Answer: the Restore dry run r1",
-                        "T27 Restore with the app name r1",
-                        "T27 Check the restored rows r1",
-                        "T27 Restore again r1",
-                        "T27 Restore the fresh backup r1",
+                        "T26 Delete and add the test rows r1",
+                        "T26 Start Restore in a second window r1",
+                        "T26 Answer: the Restore dry run r1",
+                        "T26 Restore with the app name r1",
+                        "T26 Check the restored rows r1",
+                        "T26 Restore again r1",
+                        "T26 Restore the fresh backup r1",
                         "T26 Remove the fake rows r1",
                         "T21 Remove the test list and library r11"
                     ]
