@@ -59,7 +59,7 @@ Steps if the window **RADE** opens:
 
 Steps if ISE shows red text:
 1. In the blue pane of ISE, find the first line in red. You see red text. Write down the first 10 words of that line.
-2. Send the 10 words to Claude with the steps "Send a line to Claude" on this page. You see the answer of Claude in the chat. Wait until Claude answers.
+2. Send the 10 words to Claude with the steps "Send a line to Claude" on this page. Wait until Claude answers. You see the answer of Claude in the chat.
 
 Steps if the round steps show as text in ISE:
 1. Look at the blue pane of ISE. You see the steps run. Wait until the pane shows `DONE` (up to 1 hour, an estimate). Do not close ISE until then.
