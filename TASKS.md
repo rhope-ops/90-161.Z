@@ -23,34 +23,45 @@ Never send real publication content, names, site addresses or group names. Reply
 **For:** a round is one block of text I paste into PowerShell ISE. It opens the RADE window (Redacted Application Deployment Engine, formerly the 90-161.Z Deployer), saves its own files, runs the tests and makes the results e-mail. The ISSM allows this for scripts that use no elevated credentials (13 Nov 26).\
 **Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: most checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). The optional .txt copy of the script (Open as .txt) is not a task file. A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.\
 Steps:
-1. On the RADE page, click **Copy script** next to the round name. You see a green line that says the script is copied. Go on.
-2. If the page shows **The browser blocked the copy.**, click **Open as .txt**. You see the script as plain text in a new tab. Go on.
-3. If you see the script as plain text, do these actions on that tab:
+1. On the RADE page, find the row of the round that you run, for example **R42**. You see the buttons of that round on its row. Go on.
+2. On that row, click **Copy script**. You see a line under the row: a green line if the copy worked, or the card **The browser blocked the copy.** Go on.
+3. If you see the card **The browser blocked the copy.**, click **Open as .txt**. You see the script as plain text in a new tab. Go on.
+4. If you clicked **Open as .txt**, do these actions on the new tab:
    1. Press `Ctrl+A`.
    2. Press `Ctrl+C`.
-   The whole text is selected. Go on.
-4. Click the Windows **Start** button. You see the search box. Go on.
-5. Type `ISE`. You see **Windows PowerShell ISE** in the list. Go on.
-6. Click **Windows PowerShell ISE**. Do not click **Run as administrator**. You see the window **Windows PowerShell ISE**. Go on.
-7. In the window **Windows PowerShell ISE**, do these actions:
+   You see all the text in blue. The text is now on the clipboard. Go on.
+5. Click the Windows **Start** button. You see the search box. Go on.
+6. Type `ISE`. You see **Windows PowerShell ISE** in the list. Go on.
+7. Click **Windows PowerShell ISE**. Do not click **Run as administrator**. You see the window **Windows PowerShell ISE**. Go on.
+8. In the window **Windows PowerShell ISE**, do these actions:
    1. Click **File**.
    2. Click **New**.
    You see a new white script pane. Go on.
-8. In the white script pane, press `Ctrl+V`. You see the script text in the pane. Go on.
-9. Press `F5`. You see the window **RADE**. Wait until the window **RADE** shows.
-10. In the window **RADE**, find the bold line **Writes to**. You see your OneDrive folder **RADE\90-161.Z** on that line. Go on.
-11. If the line **Writes to** shows **NOT found**, tell Claude `Writes to: NOT found` in the chat. You see the answer of Claude in the chat. Wait until Claude answers. Do not click **Run** until then.
-12. If the box **Send results to** is empty, type your results e-mail address in it. You see the address in the box. RADE keeps it for the next rounds. Go on.
-13. In the window **RADE**, click **Run**. You see the steps run in the log. Wait until the log shows `DONE`. Do not close the window until then.
-14. When the log shows `DONE`, you see an Outlook draft with the results. In the draft, click **Send**. The draft closes. The task is complete.
-15. If no Outlook draft opens, you see the results folder. The e-mail text is on the clipboard. Do not send a zip file: zip files do not cross the boundary. In Outlook, do these actions:
+9. In the white script pane, press `Ctrl+V`. You see the script text in the pane. Go on.
+10. Press `F5`. You see the window **RADE**. Wait until the window **RADE** shows.
+11. If no window **RADE** opens, look at the blue pane of ISE. If it shows the round steps as text, the round runs there. Wait until the pane shows `DONE`. You see the results folder open by itself.
+12. If the blue pane of ISE shows red text and the steps stop, write down the first red line.
+13. In the window **RADE**, find the bold line **Writes to**. You see your OneDrive folder **RADE\90-161.Z**, or the words **NOT found**. Write down which one you see.
+14. If you wrote down a red line or **NOT found**, do not click **Run**. On your phone or your other computer, open the Claude chat of 90-161.Z. You see the chat. Go on.
+15. If the box **Send results to** is empty, type the e-mail address that gets your round results. You see the address in the box. RADE shows it in this box in the next rounds. Go on.
+16. In the window **RADE**, click **Run**. You see the steps run in the log. Wait until the log shows `DONE`. Do not close the window until then.
+17. When the log shows `DONE`, you see an Outlook draft. Its **To** line shows the address from the box **Send results to**. In the draft, click **Send**. The draft closes. The task is complete.
+18. If you opened the Claude chat, do these actions in it:
+   1. Type the line that you wrote down, exactly.
+   2. Press **Send**.
+   You see your message in the chat. Wait until Claude answers. Do not run the round again until then.
+19. If no Outlook draft opens, you see the File Explorer window of the results folder (**Rounds\R42**, for round R42). The e-mail text is on the clipboard. Put the File Explorer window and Outlook side by side. In Outlook, do these actions:
    1. Click **New**, the button that starts a new e-mail.
-   2. Click in the body.
-   3. Press `Ctrl+V`.
-   4. Cut the first line of the body.
-   5. Paste the line into **Subject**.
-   6. Drag all files from the results folder into the e-mail.
-   7. Click **Send**.
+   2. In **To**, type the address from the box **Send results to** in the window **RADE**.
+   3. Click in the body.
+   4. Press `Ctrl+V`.
+   5. Select the first line of the body.
+   6. Press `Ctrl+X`.
+   7. Click in **Subject**.
+   8. Press `Ctrl+V`.
+   9. In File Explorer, press `Ctrl+A` to select all files.
+   10. Drag the files into the body of the e-mail.
+   11. Click **Send**.
    The e-mail closes. The task is complete.
 
 **If it fails:** the window shows a line that starts with "What to do" under the problem: do that. Otherwise send the line that starts with STOPPED. The report file in Rounds\\<round> also holds it. Do not work around it. If no window opens, the same steps run as text in ISE and the results folder opens by itself.\
