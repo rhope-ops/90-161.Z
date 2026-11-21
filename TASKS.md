@@ -52,10 +52,10 @@ Steps if the window **RADE** opens:
 1. In the window **RADE**, find the bold line **Writes to**. You see your OneDrive folder **RADE\90-161.Z**, or the words **NOT found**. Go on.
 2. If you see **NOT found**, do not click **Run**. Write down `Writes to: NOT found`. Send it to Claude with the steps "Send a line to Claude" on this page. The steps in this window stop here.
 3. If the box **Send results to** is empty, type your own e-mail address. You see the address in the box. Go on.
-4. In the window **RADE**, click **Run**. You see the steps run in the log. Wait until the log shows `DONE` (up to 1 hour, an estimate). Do not close the window until then.
-5. If the log shows a line that starts with **What to do**, do the action on that line. You see the log go on. Wait until the log shows `DONE`.
-6. If the log shows a line that starts with `STOPPED`, write down the first 10 words of that line. Send them to Claude with the steps "Send a line to Claude" on this page.
-7. When the log shows `DONE`, you see an Outlook draft, or the results folder in File Explorer. Wait until one shows (up to 2 minutes, an estimate). If the log says **Nothing was sent**, the task is complete.
+4. In the window **RADE**, click **Run**. You see the steps run in the log. Wait until the log shows `DONE` or the card **Stopped** shows (up to 1 hour, an estimate). Do not close the window until then.
+5. If the card **Stopped** shows, look under **The round stopped.** Write down the first 10 words there. Do not write down names or site addresses. Send them to Claude with the steps "Send a line to Claude" on this page. Wait until Claude answers. The steps in this window stop here.
+6. If the log shows a line that starts with **What to do**, do the action on that line. You see the log go on. Wait until the log shows `DONE`.
+7. When the log shows `DONE`, you see an Outlook draft, or the results folder in File Explorer. Wait until one shows (up to 2 minutes, an estimate).
 8. If you see the Outlook draft, its **To** line shows the address from the box **Send results to**. In the draft, click **Send**. The draft closes. The task is complete.
 9. If you see the results folder and no draft, send the results with the steps "Send the results by hand" on this page. Go on.
 
