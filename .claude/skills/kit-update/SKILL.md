@@ -16,6 +16,7 @@ AGENTS.md "Kit files" points here. The kit (rhope-ops/archimedes_lever) owns the
 | Its own tests, lint or check lanes | `scripts/check.local.sh` (gets `--fast` in the fast lane) |
 | Its own blocked terms, files and skips | `.check` |
 | Its own finders of the content check (a pattern of its own, one more check) | `scripts/check_content_local.py`; the interface is in the header of `scripts/check_content_scan.py` |
+| Its own words, limits, parser or checks for the steps a person follows | `scripts/check_instructions_local.py`; the interface is in the header of `scripts/check_instructions.py` |
 | Stricter code-standard rules | `scripts/code_standard_gate.py`, with `code-` lines in `.check`; the interface is in the header of `scripts/code_standard.py` |
 | Steps added to a kit skill, or a limit on it | `.claude/skills/<name>/PROJECT.md` |
 | A procedure or an agent of its own | A skill with its own name in `.claude/skills/`; an agent with its own name in `.claude/agents/` (`scout`, `worker` and `reviewer` are kit files) |

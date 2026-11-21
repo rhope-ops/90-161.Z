@@ -23,6 +23,8 @@ The setting lines (a missing key means the default; a key marked * may appear on
                                     still read it); --migrate moves the old .bloat-audit.json "duplicate_ignore"
     audit-third-party: <glob> *     a third-party skill folder or agent file (`.claude/skills/<name>`, `.claude/agents/<name>.md`):
                                     its name and description count against `third_party_tokens`, not the session load
+    audit-instructions: <glob> *    a file whose steps a person follows (AGENTS.md "Instructions people follow"):
+                                    scripts/check_instructions.py checks its steps, and its hook asks for the skill first
     audit-budget-<name>: <number>   names: the keys of AUDIT_DEFAULTS["budgets"]; the KIT_CAPS may only be lowered
 An unknown `code-` or `audit-` key, a key in capitals, a single key on two lines, or a value that is not valid raises
 ValueError: the check that reads it fails with that message (a typo must not relax a limit in silence).
@@ -65,7 +67,7 @@ CODE_DEFAULTS = {"caps": {"max_file_lines": 600, "max_function_lines": 60}, "inc
 OPT_IN_CAPS = ("max_line_chars",)   # caps that are off (no key in "caps") until `.check` has their line; a gate enforces them
 STRICT = "strict"                   # the value of "c1_safety" for `code-c1-safety: strict` (False = off, True = on)
 AUDIT_DEFAULTS = {"every_days": 14, "every_commits": 300, "start_read": [], "ignore": [], "duplicate_ignore": [],
-                  "third_party": [],
+                  "third_party": [], "instructions": [],
                   "budgets": {"session_load_tokens": 5500, "session_load_warn_tokens": 5000, "rules_file_lines": 200,
                               "third_party_tokens": 1500,
                               "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20, "rules": 28,
@@ -73,7 +75,7 @@ AUDIT_DEFAULTS = {"every_days": 14, "every_commits": 300, "start_read": [], "ign
 # The PFM's caps for every repo (2026-11-18; third_party_tokens 2026-11-20; session load 5,500, warning 5,000: 2026-11-21): a project can lower one, never raise it.
 KIT_CAPS = ("session_load_tokens", "session_load_warn_tokens", "rules_file_lines", "third_party_tokens")
 CODE_LISTS = ("include", "exclude", "generated")
-AUDIT_LISTS = ("ignore", "start_read", "duplicate_ignore", "third_party")
+AUDIT_LISTS = ("ignore", "start_read", "duplicate_ignore", "third_party", "instructions")
 SETTING_LINE = re.compile(r"(?i)^((?:code|audit)-[A-Za-z0-9_-]+)\s*:\s*(.*)$")
 # A line that was meant as a setting: a known key written with `_`, with `=` in place of `:`, or with no colon.
 # An allowed string that only starts with those letters ("code-name Bluebird", "code-included in price") is not one.
