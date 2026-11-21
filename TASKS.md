@@ -24,12 +24,12 @@ Never send real publication content, names, site addresses or group names. Reply
 **Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: most checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). The optional .txt copy of the script (Open as .txt) is not a task file. A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.\
 Steps to start a round (about 2 minutes, an estimate):
 1. On the RADE page, find the row of the round that you run. Its name is **R** and a number, for example **R42**. You see the buttons of that round on its row. Go on.
-2. On that row, click **Copy script**. You see a line under the row: a green line if the copy worked, or the card **The browser blocked the copy.** Go on.
-3. If you see the card **The browser blocked the copy.**, click **Open as .txt**. You see the script as plain text in a new tab. Go on.
-4. If you clicked **Open as .txt**, do these actions on the new tab:
+2. On that row, click **Copy script**. You see the heading **Copied. Now paste it in PowerShell ISE.**, or the card **The browser blocked the copy.** Go on.
+3. If you see the card **The browser blocked the copy.**, click **View as .txt**. You see the script as plain text on a new page. Go on.
+4. If you clicked **View as .txt**, do these actions on the new page:
    1. Press `Ctrl+A`.
    2. Press `Ctrl+C`.
-   You see all the text in blue. The text is now on the clipboard. Go on.
+   You see all the text in blue. `Ctrl+C` puts the text on the clipboard. Go on.
 5. Click the Windows **Start** button. You see the search box. Go on.
 6. Type `ISE`. You see **Windows PowerShell ISE** in the list. Go on.
 7. Click **Windows PowerShell ISE**. Do not click **Run as administrator**. You see the window **Windows PowerShell ISE**. Go on.
