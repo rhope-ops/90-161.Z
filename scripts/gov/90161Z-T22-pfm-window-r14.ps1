@@ -258,7 +258,7 @@ try {
   # R14 (R41 plan row 1): the cards from the PFM lists of the site, read-only; -Measure keeps the FAKE cards.
   . (Get-PartPath 'site')
   if ($Measure) { $lines.Add('SOURCE fake (-Measure builds the window from the FAKE cards; the site is not read)'); $lines.Add('WRITES=0') }
-  else { Invoke-SiteRead (Join-Path (Split-Path -Parent $dir) 'Config') }
+  else { $siteAt = ''; try { $siteAt = Get-SiteAddress (Join-Path (Split-Path -Parent $dir) 'Config') } catch { $siteAt = '' }; Invoke-SiteRead $siteAt }
   . (Get-PartPath 'types')
   $script:native = [bool]('Rade.Native' -as [type])   # the shared UI file hides the caret of a card text box through it
   $started = Get-Date

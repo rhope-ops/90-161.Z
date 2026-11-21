@@ -37,7 +37,7 @@ grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py' 'scripts/rade_newest.py'
 grp t22 'scripts/gov/90161Z-T22-*'
-grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1' 'tests/ps/Test-T22Maint.ps1' 'scripts/paste_bundles.json'
+grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1' 'tests/ps/Test-T22Maint.ps1' 'tests/ps/Test-T26.ps1' 'scripts/paste_bundles.json'
 # Lint: the full lane, or a changed scripts/lint.sh, lints every file; else only the changed PowerShell files under scripts/gov.
 lintfiles=()
 if [ "$changed" != '*all*' ] && ! need scripts/lint.sh; then
@@ -54,7 +54,7 @@ bg=$(mktemp -d)
 [ "${on[lint]}" = 1 ] && { scripts/lint.sh "${lintfiles[@]}" >"$bg/lint.out" 2>&1 & lint_pid=$!; }
 [ "${on[t20]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!; }
 [ "${on[t21]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T21.ps1 >"$bg/t21.out" 2>&1 & t21_pid=$!; }
-[ "${on[mask]}" = 1 ] && { { pwsh -NoProfile -File tests/ps/Test-T22Maint.ps1 && pwsh -NoProfile -File tests/ps/Test-Mask.ps1; } >"$bg/mask.out" 2>&1 & mask_pid=$!; }   # R39: T22 maint first
+[ "${on[mask]}" = 1 ] && { { pwsh -NoProfile -File tests/ps/Test-T22Maint.ps1 && pwsh -NoProfile -File tests/ps/Test-T26.ps1 && pwsh -NoProfile -File tests/ps/Test-Mask.ps1; } >"$bg/mask.out" 2>&1 & mask_pid=$!; }   # R39: T22 maint first; R41: T26
 # The small pwsh checks (Hide-Site masking, Get-SiteAddress, two-space sentences, opening paragraph, Font binding, T20 -PlanOnly)
 # run in ONE more pwsh process (tests/ps/Invoke-Batch.ps1; bloat audit 3, P1, 2026-11-15), each in its own runspace, each
 # writing <name>.out and <name>.rc to a fresh folder. A missing .rc (the member did not run) or an rc other than 0 = FAIL.
@@ -315,7 +315,7 @@ else sk "T21 probe script on the fake site"; fi
 # Hide-Site (one masking function, scripts/gov/src/site-common.ps1): every pattern, the known limits, and one copy per task script.
 if [ "${on[mask]}" = 1 ]; then
 wait "$mask_pid"; maskrc=$?; out=$(tail -1 "$bg/mask.out")
-case "$maskrc $out" in "0 MASK pass="*" fail=0") ok "Hide-Site masking test and T22 maint read-back ($(grep '^T22MAINT pass' "$bg/mask.out"); $out)";; *) grep -E "MASKTEST FAIL|T22MAINT FAIL" "$bg/mask.out" | cut -c1-300; bad "Hide-Site masking or T22 maint test (exit $maskrc): $out";; esac
+case "$maskrc $out" in "0 MASK pass="*" fail=0") ok "Hide-Site masking test, T22 maint read-back and T26 endorser answer ($(grep '^T22MAINT pass' "$bg/mask.out"); $(grep '^T26 pass' "$bg/mask.out"); $out)";; *) grep -E "MASKTEST FAIL|T22MAINT FAIL|T26TEST FAIL" "$bg/mask.out" | cut -c1-300; bad "Hide-Site masking, T22 maint or T26 test (exit $maskrc): $out";; esac
 else sk "Hide-Site masking test"; fi
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
@@ -616,7 +616,7 @@ PYEOF
 # T22 PFM window test r14 (R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and the 4 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
 # Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r13 gone, r14 and its parts only, no '0 findings' link (V3), UI block current, palette tokens.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && ok "T22 window preview cards (r14)" || bad "T22 window preview cards (r14)"
+python3 - <<'PYT22' && python3 tests/check_t22_r14.py && ok "T22 window preview cards (r14; R41: click-through, site read, grid fit)" || bad "T22 window preview cards (r14)"
 import json, re, subprocess, pathlib
 f = 'scripts/gov/90161Z-T22-pfm-window-r14.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r14.ps1' % n)
 assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[0123].ps1')], 'an older revision is still there'
@@ -642,16 +642,6 @@ assert 'FAKE' in text and 'FAKE OI' not in text and 'XXX XXX OI 33-101' in text 
 # the 4 in-window checks (R12, R39; PFM 20 Nov 26): numbered lines in order, with their keys, each text one action and at most 200 characters
 keys = ['home-all', 'font', 'box', 'speed']; chk = [re.match(r'CHECK (\d+) ([a-z-]+): (.+)$', l) for l in out if re.match(r'CHECK \d+ ', l)]
 assert len(chk) == 4 and all(chk) and all(len(m.group(3)) <= 200 for m in chk) and [m.group(2) for m in chk] == keys and [int(m.group(1)) for m in chk] == list(range(1, 5)), [m.group(0) for m in chk]
-# R14 (R41 plan row 3): the click-through, one WALK line per card, every card once, in the order Get-WalkPlan gives; each text one action and at most 200 characters
-wk = [re.match(r'WALK (\d+) (\S+) (rail|button|link|open): (Screen (\d+) of (\d+): select .+\. Pass if .+ opens and looks right\.)$', l) for l in out if l.startswith('WALK ')]
-assert len(wk) == len(cards) == 17 and all(wk) and sorted(m.group(2) for m in wk) == sorted(cards) and [int(m.group(1)) for m in wk] == list(range(1, 18)), [l for l in out if l.startswith('WALK ')]
-assert all(len(m.group(4)) <= 200 and m.group(5) == m.group(1) and m.group(6) == '17' for m in wk) and [m.group(2) for m in wk][0] == 'home', wk
-# R14 (R41 plan rows 1 and 4): the site part reads only (no command that adds, changes or removes; WRITES=0), each shown row's marker is checked before a card or Feedback picture; the grid fit settles and the self-check names the open
-site = pp('site').read_text()
-assert not re.search(r'\b(Add|Set|Remove|New|Update|Clear|Move|Copy|Restore)-PnP|Invoke-PnPSPRestMethod|-Method\s+(Post|Merge|Put|Patch|Delete)', site), 'the site part must not write'
-assert "Get-PnPListItem -List $l" in site and "$lines.Add('WRITES=0')" in site and "$script:FakeMarks = @('90161Z TEST', 'XXX XXX ')" in site
-assert "$bad = Get-SiteUnmarked $Key" in pp('measure').read_text() and "$bad = Get-SiteUnmarked $Key" in pp('feedback').read_text(), 'marker check before a picture'
-w14 = pp('window').read_text(); assert "' (open: ' + $wn.OpenKind + ')'" in w14 and "& $wn.FitSettled" in w14 and '$wn.FitTries -lt 3' in w14 and '& $wn.WalkSeen $Key' in w14, 'R40 finding 3 fix or the walk hook'
 ag = subprocess.run(['pwsh', '-NoProfile', '-Command', "$Again = $true; . ./" + str(pp('cards')) + "; Get-CheckPlan; foreach ($k in 'settings', 'step8', 'sendback') { $Checks[0].Text = Get-AgainText $k; Get-CheckPlan }"], capture_output=True, text=True, timeout=60).stdout.split('\n')   # R12: -Again = 1 reopen check; fonts
 assert [l for l in ag if l.startswith('CHECK ')] == ['CHECK 1 reopen: No screen was saved when this window last closed. Select Fail.', 'CHECK 1 reopen: Pass if this window opened on Settings, the screen you closed it on.', 'CHECK 1 reopen: Pass if this window opened on XXX XXX OI 33-101, the screen you closed it on.', 'CHECK 1 reopen: No screen was saved when this window last closed. Select Fail.'] and "Get-FontTtf $PSScriptRoot" in src and "-Filter '*SofiaSans*.ttf'" in src, ag; assert "if ($Again) { $Checks[0].Text = Get-AgainText (& $wn.LastKey) }" in src and "$script:ChecksDone = 'All checks done. Close this window with its X.'" in src and 'select All Actions' not in src, 'the again check or the closing line'; assert all(x in src for x in ("' paint-first='", "' paint-later-max='", "' kept='", '$wn.KeepFind $Key $sig', '& $wn.KeepClear')), 'keep part or CARDTIME'   # R13: reopen names the saved card; kept cards; paint times
 # the rade-ui block is not empty, and the colors painted here are the palette tokens

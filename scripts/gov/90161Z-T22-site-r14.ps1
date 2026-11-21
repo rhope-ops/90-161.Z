@@ -8,7 +8,7 @@
   answer shows here read-only, plan row 2). Only the columns a card shows: the title, the publication number, the
   action, the step, the status and the dates. No person column is read, so no name can show (Data boundary rule).
   How: PnP.PowerShell 1.12.0, your own CAC sign-in in the PnP web login window (Connect-PnPOnline -UseWebLogin), the
-  one site RADE holds (Get-SiteAddress, site-common block), then Get-PnPListItem on each list. Nothing on the site is
+  one site RADE holds (the main script reads it with its site-common block and gives it here), then Get-PnPListItem on each list. Nothing on the site is
   written: this part calls no command that adds, changes or removes anything (tests/run.sh checks the text).
   Empty: a grid whose list has no rows shows its empty state, one line that the list has no rows.
   Fake-data markers (the test site holds fake rows only; PFM 20 Nov 26): a fake row's title starts with "90161Z TEST"
@@ -123,24 +123,24 @@ function Merge-SiteGrid([string]$Card, [string]$Name, $Rows, [string]$List, $Tit
   Steps: load PnP.PowerShell, sign in (web login, CAC), read each list of $script:SiteLists, then put the rows into the
   grids of Your Work, the "nothing needs you" card (rows On Track), All Actions and the endorsement answers. Adds the
   SOURCE, READ, WRITES=0 and MARKER lines. Writes nothing on the site.
-.PARAMETER ConfigDir
-  The RADE Config folder (for Get-SiteAddress).
+.PARAMETER Site
+  The site address (https://<host>/sites/<name>), or '' when none is set (then the cards keep their FAKE data).
 #>
-function Invoke-SiteRead([string]$ConfigDir) {
-  $site = ''; $read = [ordered]@{}
+function Invoke-SiteRead([string]$Site) {
+  $read = [ordered]@{}
   try {
-    $site = Get-SiteAddress $ConfigDir
+    if (-not $Site) { throw 'no site address is set in RADE' }
     $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
     if (-not $mod.Count) { throw 'PnP.PowerShell is not on this computer' }
     Write-Host 'NOW Signing in to the site to read the PFM lists (if a sign-in window opens, sign in with your CAC)'
     $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
-    $null = & { Connect-PnPOnline -Url $site -UseWebLogin -ErrorAction Stop } *>&1
+    $null = & { Connect-PnPOnline -Url $Site -UseWebLogin -ErrorAction Stop } *>&1
     foreach ($l in $script:SiteLists.Keys) {
       Write-Host ('NOW Reading the list ' + $l)
       $read[$l] = @(Get-PnPListItem -List $l -Fields $script:SiteLists[$l] -PageSize 500 -ErrorAction Stop) }
     try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ }
   } catch {
-    $why = Hide-Site ([string]$_.Exception.Message) $site; if ($who) { $why = ConvertTo-Masked $why $who.Secret }
+    $why = Hide-Site ([string]$_.Exception.Message) $Site; if ($who) { $why = ConvertTo-Masked $why $who.Secret }
     $lines.Add('SOURCE fake (the site was not read: ' + $why.Substring(0, [Math]::Min(160, $why.Length)) + ')')
     foreach ($l in $read.Keys) { $lines.Add('READ ' + $l + ' rows=' + @($read[$l]).Count) }
     $lines.Add('WRITES=0'); return }
