@@ -4,7 +4,7 @@
 <p><b>Publications and Forms Management</b></p>
 
 <!-- site:intro -->
-Track and manage DAF publications through the DAFMAN 90-161 publishing process at wing/installation level: status tracking, document cleanup and formatting, and endorsement routing. See who has each publication or form, which endorsements are in, and what is due next. The PFM works in one window on the work computer; AOs and endorsers will answer in SharePoint forms from an e-mail link (planned). It runs in your wing's own SharePoint site and Power Automate, and RADE will install it (in progress).
+Track and manage DAF publications through the DAFMAN 90-161 publishing process at wing/installation level: status tracking, document cleanup and formatting, and endorsement routing. See who has each publication or form, which endorsements are in, and what is due next. The PFM works in one window on the work computer (first test in R41); AOs and endorsers will answer in SharePoint forms from an e-mail link (planned). It runs in your wing's own SharePoint site and Power Automate, and RADE will install it (in progress).
 <!-- /site:intro -->
 
 > [!NOTE]
@@ -17,7 +17,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 <!-- site:key-facts -->
 <table>
 <tr><td><b>By the book:</b></td><td>every stage and format rule cites its DAFMAN 90-161 paragraph; each time limit comes from DAFMAN 90-161 or a recorded PFM decision.</td></tr> <!-- source: AGENTS.md "Source authority"; docs/DECISIONS.md -->
-<tr><td><b>Endorsements:</b></td><td>flows make the endorsement rows and send the reminders and escalations; the answer path for endorsers and the optional wave (planned).</td></tr> <!-- source: flow F05 (rows), F03 (reminders, escalation); flow/solution/README.md open point d (answer path not built) -->
+<tr><td><b>Endorsements:</b></td><td>flows make the endorsement rows and send the reminders and escalations; the answer path for endorsers (first test in R41) and the optional wave (planned).</td></tr> <!-- source: flow F05 (rows), F03 (reminders, escalation); flow/solution/README.md open point d (answer path not built) -->
 <tr><td><b>System of record:</b></td><td>endorsements are kept here, not in TMT.</td></tr> <!-- source: AGENTS.md "Scope" -->
 <tr><td><b>Clean drafts:</b></td><td>any draft becomes a correctly formatted final; the format comes from code, never from an AI model. (planned)</td></tr> <!-- source: AGENTS.md "Source authority"; docs/ARCHITECTURE.md section 5 -->
 <tr><td><b>Reviews:</b></td><td>periodic reviews open on their own; special reviews, and a rescind action when no answer comes by the due date (planned).</td></tr> <!-- source: flow F02 (R37 test passed); docs/DECISIONS.md 2026-11-12 (5A) -->
@@ -32,7 +32,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 ---
 
-[**Install with RADE**](https://rhope-ops.github.io/RADE)
+[**Install with RADE**](https://rhope-ops.github.io/RADE) (in progress)
 
 ---
 
@@ -62,6 +62,7 @@ The design; parts marked (planned) are not built yet.
 | PFM Endorsements | Endorser of an action: order, role, status, due date, answer |
 | PFM Process Steps | Stage, with its paragraph and the action types it applies to |
 | PFM Offices, PFM Series | Coordinator office; subject series (Table A2.1) |
+| PFM Guidance, PFM Settings | Screen text and its screen path; a setting |
 | PFM Reviews | Periodic or special review |
 | PFM Product Index | Product (6.4.2) |
 | PFM Waivers, PFM Recommendations | Waiver; DAF Form 847 |
