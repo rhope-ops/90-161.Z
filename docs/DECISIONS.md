@@ -6,6 +6,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | R41 endorser: both ways: a new answer row by list form (proof), then an edit of a PFM-made row (the real case; under 10A it may be refused; record the result). Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
+| 2026-11-20 | R41 test-site writes approved: the answer rows, one fake publication, the T21 probe list, library and fake workbook; the clean steps remove them. The 4th look question w-answer stays. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
 | 2026-11-20 | R41 plan approved: test-site lists read-only in T22 r14, endorser answer by list form (one test-site write approved), click-through of every screen with Feedback, grid and 3-choice fixes, RADE Restore. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
 | 2026-11-20 | The test site holds fake rows only: card and Feedback pictures with its list data may go in the results e-mail. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
 | 2026-11-20 | A pick question has 3 choices at most (RADE B5); w-look drops a choice. Scope: 90-161.Z rounds. | PFM | [r40 results](reviews/2026-11-21-r40-results.md) finding 5 |
