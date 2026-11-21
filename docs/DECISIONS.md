@@ -6,6 +6,11 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-21 | Restore test site: RADE reads the test-site mark locally on the gov device (engine-v32, RADE session); the public manifest never names the site (Public repo rule). Scope: R41. | PFM | RADE engine-v31 release notes |
+| 2026-11-21 | Pause switch: R41 adds the settings row and the manifest entry; the row-writing flows read it from R42 (with a flow re-import). Scope: R41, R42. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
+| 2026-11-21 | R41 Restore test writes on the test site approved: 3 rows deleted, 1 row deleted and purged, 1 new row, then Restore. Fake rows only. Scope: R41. | PFM | RADE engine-v31 release notes |
+| 2026-11-21 | tests/run.sh: engine/rade_fields.py joins the build-time engine files left out of the bundle header check (engine-v31). Scope: tests/run.sh. | PFM | this decision round |
+| 2026-11-21 | RADE lock moves to release engine-v31 (RADE 3827706, serial 24) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-20 | R41 endorser: both ways: a new answer row by list form (proof), then an edit of a PFM-made row (the real case; under 10A it may be refused; record the result). Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
 | 2026-11-20 | R41 test-site writes approved: the answer rows, one fake publication, the T21 probe list, library and fake workbook; the clean steps remove them. The 4th look question w-answer stays. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
 | 2026-11-20 | R41 plan approved: test-site lists read-only in T22 r14, endorser answer by list form (one test-site write approved), click-through of every screen with Feedback, grid and 3-choice fixes, RADE Restore. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
