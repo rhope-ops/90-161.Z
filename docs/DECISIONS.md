@@ -6,6 +6,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-20 | R41 plan approved: test-site lists read-only in T22 r14, endorser answer by list form (one test-site write approved), click-through of every screen with Feedback, grid and 3-choice fixes, RADE Restore. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
+| 2026-11-20 | The test site holds fake rows only: card and Feedback pictures with its list data may go in the results e-mail. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
+| 2026-11-20 | A pick question has 3 choices at most (RADE B5); w-look drops a choice. Scope: 90-161.Z rounds. | PFM | [r40 results](reviews/2026-11-21-r40-results.md) finding 5 |
+| 2026-11-20 | R41 is one round with R40b (RADE Restore, engine-v31); a RADE session builds Restore now; the audit runs after R41 ships. Scope: R41. | PFM | [r41 plan](reviews/2026-11-21-r41-plan.md) |
 | 2026-11-21 | README.md shows the go.md tasks with Open as .txt and Copy script links (github.io may be blocked); scripts/check.local.sh fails a push when README.md is not the current copy. Scope: 90-161.Z. | PFM | PR 204 |
 | 2026-11-20 | R40 scope: T22 r13 only (reopen check names the saved card, card speed, look questions). Settings rows in F03, F05, F06 passed in R27; RADE Restore later. Scope: R40. | PFM | [r40 plan](reviews/2026-11-20-r40-plan.md) |
 | 2026-11-20 | T22 r13 card speed: log paint time too, build each card once and show or hide it after; target under 100 ms on a later open. Scope: R40. | PFM | [r39 results](reviews/2026-11-20-r39-results.md) finding 2 |
