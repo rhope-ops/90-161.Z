@@ -9,7 +9,7 @@ On this page, the first 3 steps of a round task are different: write down the **
 <!-- >>> tasks: generated from go.md by scripts/build_readme.py (do not edit) -->
 ## 90-161.Z: tasks for my work computer
 
-Updated: 21 Nov 26 (R41 r1 with RADE Restore).\
+Updated: 21 Nov 26 (R41 results; R42 is being built).\
 <https://rhope-ops.github.io/90-161.Z>\
 Fallback (plain text):\
 <https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md>\
@@ -42,64 +42,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ### Open tasks
 
-#### Round R41 r1: my window r14 with my test site lists, every screen, an endorser answer, RADE Restore
-
-**For:** the round after R40. My 90-161.Z window r14 reads the fake rows of my test site (read only) and walks me through all 17 screens, one Pass or Fail each. A second person answers one fake endorsement in the SharePoint list form, and the window shows that answer. Then the second person tries to change a fake endorsement I made, in its edit form; a refusal there is expected (my lists let each person edit only their own rows) and is recorded. The Your Work grid fit and the look question with 3 choices are fixed. RADE Restore is tested on my test site with fake rows: a Back up of all 12 lists, then the round deletes 4 fake rows and adds 1, then Restore in a second RADE window puts the 4 back (3 from the Recycle Bin with their old numbers, 1 as a new row) and leaves the new one. Restore turns the pause switch (the PFM Settings row FlowsPaused) on while it writes and back off after; my flows read that row from R42 on, so in R41 it pauses nothing. First I repair the test install, so the RADE shortcut opens this RADE with Restore.\
-**Time:** about 60 minutes, with about 5 minutes of a second person from my office (estimate).\
-**Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T21, T22 and T26, 17 pictures of the window screens, the file that keeps the last screen of my window, one text file and one picture for each Feedback comment I save), the Backups folder (copies of the 12 lists: my Back up and the fresh backup Restore saves first; they stay on my computer and never go in the e-mail), the test-site mark in Config (the site name, typed once on a RADE card), the Restore record in Backups, and RADE\rade-runner.ps1 and the install record (the repair). Old window files of r13 go to the Recycle Bin. On the test site: a test list and library, the second person in the Visitors group, one fake publication, one fake endorsement I make, the second person's answer row and maybe their change to my fake endorsement, the PFM Settings row FlowsPaused set to No (made if missing; it stays), 3 fake endorsement rows and 1 fake log row for the Restore test (3 go to the site Recycle Bin, 1 is deleted for good, 1 new fake row is added, then Restore puts the 4 back); the last steps of the round take them all out again (rows and lists to the site Recycle Bin). The window itself only reads the site. Before Run, the window lists every file.\
-**Steps:**
-1. Open https://rhope-ops.github.io/RADE.
-2. Press Copy script next to R41.
-3. Open the Start menu.
-4. Type: ISE
-5. Open Windows PowerShell ISE (not "Run as administrator").
-6. Select File > New.
-7. Click in the white script pane.
-8. Press Ctrl+V.
-9. Press F5. The RADE window opens.
-10. Select "90-161.Z".
-11. Select "Maintenance".
-12. Select "Repair".
-13. When RADE says "Ready to install 90-161.Z 0.1.0.", press Install.
-14. At "90-161.Z 0.1.0 is installed.", select Close.
-15. In ISE, press F5 again. The RADE window opens.
-16. Select "90-161.Z R41".
-17. Press Run.
-18. If a sign-in window opens, sign in with your CAC.
-19. When a small window asks for the e-mail address of the second person, type that address.
-20. Select OK.
-21. When the RADE card "Ask the second person to answer the endorsement" opens, do each numbered line on that card.
-22. When the second person says the 2 tasks on that card are done (the new answer, then the edit), answer the 2 questions on that card.
-23. When the 90-161.Z window opens: do each check and each screen in its bottom bar.
-24. If a screen does not look right: select "Feedback" in the bottom bar.
-25. In the box "What does not look right? One line, no names.", type what is wrong.
-26. Select "Save".
-27. Close the 90-161.Z window with its X.
-28. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
-29. Close the 90-161.Z window with its X.
-30. Answer the 4 questions in the RADE window.
-31. When a RADE card names a second RADE window: double-click the RADE shortcut on your Desktop. A second RADE window opens.
-32. In the second RADE window, do each numbered line of that card.
-33. When the questions about Restore come back in the first RADE window, answer them there.
-34. At DONE, select Send in the Outlook draft that opens.
-
-**Round script:** `90161Z-R41-round-r1.ps1`
-
-**Code:** `1115c1f1a894...78b1`
-
-- **Open as .txt:** [90161Z-R41-round-r1.ps1](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R41-round-r1.ps1): the browser shows the script as plain text. Press Ctrl+A, then Ctrl+C, to copy all of it.
-- **Copy script:** [90161Z-R41-round-r1.ps1 on GitHub](https://github.com/rhope-ops/90-161.Z/blob/main/scripts/gov/paste/90161Z-R41-round-r1.ps1): press the "Copy raw file" button at the top right of the file.
-
-**Report:** send the Outlook draft the round makes (subject "90161Z R41 PASSED" or "90161Z R41 NEEDS REVIEW", every file in the results folder attached). If I run the round a second time, send only the newest draft. The round never puts a script file in the results. Then tell Claude the e-mail is sent.\
-**If I am stopped** (the window closes, I remove my CAC, or the computer restarts): double-click the RADE shortcut, select "90-161.Z R41", then select "Resume at step N of M".\
-**If it fails:** do the line that starts with "What to do". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R41 did not paste". If the second person cannot help today: skip that card; the round goes on and removes the test rows at the end. If the 90-161.Z window does not open, go on with the steps the RADE window shows. If Maintenance has no "Repair" or the repair fails: tell Claude "R41 repair failed", then go on with the round and skip each card that names a second RADE window. If Restore says the pause switch is on already: do not run Restore again; tell Claude "R41 pause switch on".\
-If the dry run says the Recycle Bin could not be read (the round then skips the rest of the Restore test and still removes the fake rows at the end):
-- Close the second RADE window with its X.
-- In the first RADE window, answer "The Recycle Bin was not read".
-- Paste the dry run line where RADE asks for the error.
-- Tell Claude "R41 Recycle Bin not read".
+R42 is being built. This page shows it when it is ready.
 
 ### Done
+
+- Round R41 r1 (21 Nov 26): needs review. Checks 12 of 12, Window OK, 19 of 24 steps passed. Passed: the probe list, the second person, Back up and Restore of 4 fake rows in a second RADE window, the pause row back at No, and the clean-up. Needs work: the Recycle Bin rows got new row numbers, the window grids and 2 screens, and the answer buttons. The endorser answer was skipped.
+<https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-21-r41-results.md>
 
 - Round R40 r1 (20 Nov 26): needs review. Checks 9 of 9, Window OK, 3 of 4 steps passed. Passed: my window r13 opens on the screen I closed it on, kept screens open with no delay (7 to 37 ms), and all 4 window checks. Needs work: one Your Work grid was 10 px too wide once, the look question has one button too many, and I still have to name the small changes:
 <https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-21-r40-results.md>
