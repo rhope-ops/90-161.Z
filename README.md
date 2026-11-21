@@ -46,7 +46,7 @@ No open task. The next round comes after my answers in the Claude chat.
 
 ### Done
 
-- Round R40 r1 (20 Nov 26): needs review. Checks 9 of 9, Window OK, 3 of 4 steps passed. Passed: my window r13 opens on the screen I closed it on, kept screens open with no delay (7 to 37 ms), all 4 window checks, and every card fits. Needs work: one Your Work grid was 10 px too wide once, the look question has one button too many, and I still have to name the small changes:
+- Round R40 r1 (20 Nov 26): needs review. Checks 9 of 9, Window OK, 3 of 4 steps passed. Passed: my window r13 opens on the screen I closed it on, kept screens open with no delay (7 to 37 ms), and all 4 window checks. Needs work: one Your Work grid was 10 px too wide once, the look question has one button too many, and I still have to name the small changes:
 <https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-21-r40-results.md>
 
 - Round R39 r1 (20 Nov 26): needs review. Checks 9 of 9, Window OK, 3 of 6 steps passed. Passed: the test install 0.1 of 90-161.Z, Back up of 11 lists, and in my window r12 the RADE fonts, the Your Work status column and the taller text boxes. The window did open on the screen I closed it on (Settings, not All Actions: the check text was wrong). Needs work: screens still open with a delay, my Diagnose answer differs from its report, and the e-mail text was from my first run:
