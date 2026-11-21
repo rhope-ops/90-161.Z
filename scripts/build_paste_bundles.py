@@ -145,7 +145,7 @@ if __name__ == '__main__':
     copy_fonts(e)
     code = subprocess.call([sys.executable, '-B', str(e), '--app-root', str(ROOT)] + [a for a in sys.argv[1:] if a == '--check'])
     readme = ROOT / 'scripts/build_readme.py'
-    if code == 0 and '--check' not in sys.argv[1:] and readme.is_file() and (ROOT / 'README.md').is_file():   # a test copy may hold no README
-        # README.md copies go.md with the round links, for a computer where github.io is blocked (the PFM, 21 Nov 26).
+    if code == 0 and '--check' not in sys.argv[1:] and readme.is_file() and (ROOT / 'TASKS.md').is_file():   # a test copy may hold no TASKS.md
+        # TASKS.md copies go.md with the round links, for a computer where github.io is blocked (the PFM, 21 Nov 26).
         code = subprocess.call([sys.executable, '-B', str(readme)])
     sys.exit(code)

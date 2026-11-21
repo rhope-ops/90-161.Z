@@ -8,6 +8,7 @@ What it gives:
   start_read        what every session loads, in lines, bytes and ~tokens
   rule_lines        the rule lines of an AGENTS.md text: the kit sections, "## Project rules", and every line
   lint              WARN lines: near-duplicate pairs, vague words, untested rules
+  readme_report     README.md exists and opens with the "- Purpose:" line of AGENTS.md (AGENTS.md "README")
   rules_report      the lines of `--rules` and the problems that fail scripts/check.sh
   main_lint         the `--lint` mode
 Inputs:  the repo root, the audit settings (scripts/check_settings.py), AGENTS.md here and on origin/main,
@@ -291,6 +292,67 @@ def changed_rules(root, text, parts, gate):
     return out, problems
 
 
+def readme_opening(text):
+    """The first paragraph of a README text, for the AGENTS.md "README" check.
+
+    Skipped before it: YAML front matter, headings (ATX and setext), images, badges, HTML lines and blank lines. A
+    blockquote marker is taken off. The lines of the paragraph are joined by spaces.
+
+    Args:
+        text: the README text (a leading BOM is ignored).
+
+    Returns:
+        The first paragraph, or "" when there is none.
+    """
+    lines = text.lstrip("\ufeff").splitlines()
+    if lines and lines[0].strip() == "---":  # YAML front matter: skip to its closing line
+        close = next((i for i, x in enumerate(lines[1:], 1) if x.strip() in ("---", "...")), None)
+        lines = lines[close + 1:] if close else lines
+    para = []
+    for line in lines:
+        s = re.sub(r"^(>\s?)+", "", line.strip()).strip()
+        if para and re.fullmatch(r"=+|-+", s):  # setext underline: the paragraph so far was a heading
+            para = []
+            continue
+        if not s or s.startswith(("#", "![", "[![", "<")):
+            if para:
+                break
+            continue
+        para.append(s)
+    return " ".join(para)
+
+
+def plain_words(s):
+    """Lower-case s with Markdown emphasis and code marks removed, spaces collapsed and a trailing period dropped."""
+    return " ".join(re.sub(r"[*_`]", "", s).lower().split()).rstrip(".")
+
+
+def readme_report(root, text):
+    """The AGENTS.md "README" default: README.md exists and opens with the "- Purpose:" value of AGENTS.md.
+
+    Checked only when that value is filled in (empty, or the kit template's {{PURPOSE}}, is not). A missing README.md
+    (any letter case) is a problem; an opening that does not start with the purpose, as whole words, is a WARN line
+    (the rule is enforced in part).
+
+    Args:
+        root: the repo root (a Path).
+        text: the text of AGENTS.md.
+
+    Returns:
+        (lines to print, problems).
+    """
+    m = re.search(r"^- Purpose:[ \t]*(\S.*?)[ \t]*$", text, re.M)
+    if not m or "{{" in m.group(1):
+        return [], []
+    readme = next((f for f in sorted(root.iterdir()) if f.is_file() and f.name.lower() == "readme.md"), None)
+    if readme is None:
+        return [], ["no README.md: it opens with the AGENTS.md \"Purpose\" line (AGENTS.md \"README\")"]
+    want, got = plain_words(m.group(1)), plain_words(readme_opening(readme.read_text(encoding="utf-8", errors="replace")))
+    if not (got.startswith(want) and (len(got) == len(want) or not got[len(want)].isalnum())):
+        return [f"WARN  {readme.name} does not open with the AGENTS.md \"Purpose\" line; update it (AGENTS.md \"README\")"], []
+    return [], []
+
+
 def rules_report(root, cfg, gate=False):
     """The lines of `--rules`, and the problems that fail scripts/check.sh: a cap passed, a missing path, and with
     gate (the full lane) rule lines changed against origin/main with no conflict-check record in docs/reviews/.
@@ -340,6 +402,9 @@ def rules_report(root, cfg, gate=False):
     gone = missing_pointers(root, text)
     if gone:
         problems.append("missing paths named in AGENTS.md: " + ", ".join(gone))
+    rows, found = readme_report(root, text)
+    out += rows
+    problems += found
     for pr in problems:
         out.append(f"RULES FAIL:  {pr}")
     return out, problems

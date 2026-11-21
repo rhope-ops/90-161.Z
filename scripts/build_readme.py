@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Write the task part of README.md from go.md, for a computer where rhope-ops.github.io is blocked (the PFM, 21 Nov 26).
+"""Write the task part of TASKS.md from go.md, for a computer where rhope-ops.github.io is blocked (the PFM, 21 Nov 26).
 
-The github.io page (index.html) shows go.md with buttons. github.com shows README.md on the repo's front page, but a README
-cannot run a script, so this file gives each button as a link:
+The github.io page (index.html) shows go.md with buttons. On github.com, TASKS.md shows the same tasks (README.md is the
+product page and links to it; the PFM, 2026-11-21), but a Markdown file cannot run a script, so this file gives each
+button as a link:
   - a round script line (a raw .../scripts/gov/paste/<name>.ps1 URL) becomes the round's code (the "short" value of its
-    .sha256.json, the code the RADE title bar shows), an "Open as .txt" link (the raw file: the browser shows it as plain
-    text) and a "Copy script" link (the file on github.com, where the "Copy raw file" button copies it);
+    .sha256.json, the code the RADE title bar shows) and one "Open the script" link to the bundle's .txt copy (RADE
+    engine-v34 or later); an older round keeps its "Open as .txt" and "Copy script" links (round_lines). The build
+    fails when a linked file is not in the repo (a link that would not open);
   - any other bare raw URL becomes a link;
   - a text line followed by another text line ends in a backslash, so GitHub keeps go.md's line breaks, and a text line
     after a list item gets a blank line before it, so it does not join the item.
-go.md stays the one home of the tasks: README.md holds a copy between two marker lines; edit go.md, then run this script.
+go.md stays the one home of the tasks: TASKS.md holds a copy between two marker lines; edit go.md, then run this script.
 scripts/build_paste_bundles.py runs it at the end of each round build.
 Usage: python3 scripts/build_readme.py [--check]
-  --check: write nothing; exit 1 when README.md is not the copy of go.md this script would write.
+  --check: write nothing; exit 1 when TASKS.md is not the copy of go.md this script would write.
 Network: none.
-Writes: README.md (the part between the task markers); nothing with --check.
+Writes: TASKS.md (the part between the task markers); nothing with --check.
 Credentials: none.
 """
 import json, re, sys
@@ -22,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 GO = ROOT / 'go.md'
-README = ROOT / 'README.md'
+TASKS = ROOT / 'TASKS.md'
 BEGIN = '<!-- >>> tasks: generated from go.md by scripts/build_readme.py (do not edit) -->'
 END = '<!-- <<< tasks -->'
 RAW = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/'
@@ -32,14 +34,23 @@ BARE = re.compile(r'^(?:https://)?((?:raw\.githubusercontent\.com|rhope-ops\.git
 
 
 def round_lines(path):
-    """The README lines for one round script: its code, then the two links.
+    """The TASKS.md lines for one round script: its code, then its link or links.
+
+    A round built with RADE engine-v34 or later has a .txt copy beside its .ps1: one "Open the script" link to it (a link
+    to a .ps1 causes problems on a gov computer; the PFM, 2026-11-21). An older round keeps its two links as they were
+    (the PFM, 2026-11-21: a running round must not change).
 
     Args:
         path: the repo path of the .ps1 file (scripts/gov/paste/<name>.ps1).
     Returns:
-        A list of README lines.
+        A list of TASKS.md lines.
+    Raises:
+        SystemExit: when the file a link names is not in the repo (the link would not open).
     """
     name = path.rsplit('/', 1)[-1]
+    txt = path[:-len('.ps1')] + '.txt'
+    if not (ROOT / path).is_file():
+        sys.exit('FAIL %s is not in the repo: go.md links a round script that does not exist' % path)
     code = ''
     meta = ROOT / (path + '.sha256.json')
     if meta.is_file():   # the code the RADE title bar shows (step "Write down the code")
@@ -47,21 +58,23 @@ def round_lines(path):
     out = ['**Round script:** `%s`' % name]
     if code:
         out += ['', '**Code:** `%s`' % code]
-    out += ['',
-            '- **Open as .txt:** [%s](%s%s): the browser shows the script as plain text. Press Ctrl+A, then Ctrl+C, to copy all of it.'
-            % (name, RAW, path),
-            '- **Copy script:** [%s on GitHub](%s%s): press the "Copy raw file" button at the top right of the file.'
-            % (name, BLOB, path)]
-    return out
+    if (ROOT / txt).is_file():
+        return out + ['', '[**Open the script**](%s%s): the browser shows it as plain text. Press Ctrl+A, then Ctrl+C, to copy all of it.'
+                      % (RAW, txt)]
+    return out + ['',
+                  '- **Open as .txt:** [%s](%s%s): the browser shows the script as plain text. Press Ctrl+A, then Ctrl+C, to copy all of it.'
+                  % (name, RAW, path),
+                  '- **Copy script:** [%s on GitHub](%s%s): press the "Copy raw file" button at the top right of the file.'
+                  % (name, BLOB, path)]
 
 
 def tasks(text):
-    """The README copy of go.md text: headings one level lower (the README has its own title), links for bare URLs.
+    """The TASKS.md copy of go.md text: headings one level lower (TASKS.md has its own title), links for bare URLs.
 
     Args:
         text: the whole text of go.md.
     Returns:
-        The README task part as one string, without a final line break.
+        The TASKS.md task part as one string, without a final line break.
     """
     out = []
     for line in text.splitlines():
@@ -85,7 +98,7 @@ def hard_breaks(lines):
     a closing backslash (a CommonMark hard break). List items, headings and table rows keep their own lines already.
 
     Args:
-        lines: the README task lines, in order.
+        lines: the TASKS.md task lines, in order.
     Returns:
         The same lines with the backslashes and blank lines added.
     """
@@ -104,10 +117,10 @@ def hard_breaks(lines):
 
 
 def build():
-    """README.md with its task part made again from go.md. Exits when a marker line is missing."""
-    readme = README.read_text(encoding='utf-8')
+    """TASKS.md with its task part made again from go.md. Exits when a marker line is missing."""
+    readme = TASKS.read_text(encoding='utf-8')
     if BEGIN not in readme or END not in readme:
-        sys.exit('FAIL README.md has no task markers (%s ... %s)' % (BEGIN, END))
+        sys.exit('FAIL TASKS.md has no task markers (%s ... %s)' % (BEGIN, END))
     head, rest = readme.split(BEGIN, 1)
     tail = rest.split(END, 1)[1]
     return head + BEGIN + '\n' + tasks(GO.read_text(encoding='utf-8')) + '\n' + END + tail
@@ -116,9 +129,9 @@ def build():
 if __name__ == '__main__':
     new = build()
     if '--check' in sys.argv[1:]:
-        if new != README.read_text(encoding='utf-8'):
-            sys.exit('FAIL README.md is not the copy of go.md: run python3 scripts/build_readme.py')
-        print('README OK')
+        if new != TASKS.read_text(encoding='utf-8'):
+            sys.exit('FAIL TASKS.md is not the copy of go.md: run python3 scripts/build_readme.py')
+        print('TASKS OK')
     else:
-        README.write_text(new, encoding='utf-8')
-        print('README written from go.md')
+        TASKS.write_text(new, encoding='utf-8')
+        print('TASKS written from go.md')

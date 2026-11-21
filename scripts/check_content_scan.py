@@ -29,6 +29,7 @@ import os
 import pathlib
 import re
 import subprocess
+import sys
 import unicodedata
 
 import check_content_finders as finders_mod   # scripts/check_content_finders.py: the patterns, the kit's finders, the loader
@@ -339,10 +340,15 @@ def scan_text(text, where, deny, allow, dod=False, terms=()):
     words = list(deny) + list(terms)
     names_low = {w.lower() for w in deny}
     name_re = re.compile(r"(?i)(?<![A-Za-z0-9])(" + "|".join(re.escape(w) for w in words) + r")(?![A-Za-z0-9])") if words else None
+    rows = finders_mod.candidate_lines(text, kinds, words, FINDERS)
+    if rows == []:   # no line of this text can give a finding
+        return found
     # Compiled once per call, used only on a line with a name hit (one finditer per allow line per line was slow).
     allow_res = [re.compile(re.escape(v), re.IGNORECASE) for v in allow if not v.startswith(("skip:", "block:"))] if name_re else []
     hosts_ok = {v.lower() for v in allow} if dod else set()  # a host name has no case
-    for n, line in enumerate(text.splitlines(), 1):
+    lines = text.splitlines()
+    for i in range(len(lines)) if rows is None else rows:   # only the lines that can give a finding (candidate_lines)
+        n, line = i + 1, lines[i]
         hits = []
         in_mail = _inside(m.span() for m in emails(line)) if dod else None  # the host of a mail address is part of that finding
         for kind in kinds:
@@ -384,30 +390,81 @@ def scan_files(paths, root, deny, allow, dod=False, named=False, terms=()):
     Returns:
         The findings, each (where, line number, kind, masked value).
     """
-    found, limit = [], max_bytes_of(allow)   # once per call, not once per file
-    for p in paths:
-        f = pathlib.Path(root) / p
-        rel = os.path.relpath(f, root).replace(os.sep, "/") if os.path.isabs(str(p)) else str(p)
-        if f.is_file() and blocked(rel, allow):
-            found.append((str(p), 0, "blocked", BLOCKED))
-            continue
-        if skipped(str(p), allow) or not f.is_file():
-            continue
-        why = None
-        if f.suffix.lower() in SKIP_SUFFIX:
-            why = f"file type {f.suffix.lower()} is not scanned"
-        elif f.stat().st_size > limit:
-            why = f"larger than {limit} bytes"
-        else:
-            data = f.read_bytes()
-            if b"\0" in data[:8192]:
-                why = "binary file"
-        if why:
-            if dod or named:
-                found.append((str(p), 0, "unscanned", why))
-            continue
-        found += scan_text(data.decode("utf-8", "replace"), str(p), deny, allow, dod, terms)
-    return found
+    limit = max_bytes_of(allow)   # once per call, not once per file
+    job = (root, deny, allow, dod, named, terms, limit)
+    parts = _in_parallel(paths, root, job) if not named else None   # named files (FILE mode, the hook): this process
+    if parts is None:
+        parts = [_scan_path(p, job) for p in paths]
+    return [f for part in parts for f in part]
+
+
+PARALLEL_BYTES = 4_000_000   # a scan of fewer bytes runs in this process: starting a pool costs more than it saves
+
+
+def usable_cores():
+    """The number of cores this process may use (its CPU affinity where the system has one), at least 1."""
+    return len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+
+
+def _in_parallel(paths, root, job):
+    """The findings of each path, in the order of paths, from a pool of processes (speed only; the same findings as
+    the scan in this process). None when the scan is small, the machine has one core, or a pool cannot start.
+
+    Args:
+        paths: the repo-relative paths.
+        root: the repo root (a folder path).
+        job: the arguments of _scan_path after the path.
+
+    Returns:
+        A list with the findings of each path, or None.
+    """
+    try:
+        cores = usable_cores()
+        size = sum(os.path.getsize(f) for f in (os.path.join(root, p) for p in paths) if os.path.isfile(f))
+    except OSError:
+        return None
+    if cores < 2 or len(paths) < 2 or size < PARALLEL_BYTES:
+        return None
+    import concurrent.futures
+    import functools
+    import multiprocessing
+    try:
+        ctx = multiprocessing.get_context("fork" if sys.platform.startswith("linux") else None)   # fork: no new imports
+        with concurrent.futures.ProcessPoolExecutor(min(cores, 8), mp_context=ctx) as pool:
+            return list(pool.map(functools.partial(_scan_path, job=job), paths, chunksize=8))
+    except (OSError, concurrent.futures.process.BrokenProcessPool):   # no pool here: scan in this process
+        return None
+
+
+def _scan_path(p, job):
+    """The findings of one path (scan_files).
+
+    Args:
+        p: the repo-relative path.
+        job: (root, deny, allow, dod, named, terms, limit), as in scan_files; limit: max_bytes_of(allow).
+
+    Returns:
+        The findings, each (where, line number, kind, masked value).
+    """
+    root, deny, allow, dod, named, terms, limit = job
+    f = pathlib.Path(root) / p
+    rel = os.path.relpath(f, root).replace(os.sep, "/") if os.path.isabs(str(p)) else str(p)
+    if f.is_file() and blocked(rel, allow):
+        return [(str(p), 0, "blocked", BLOCKED)]
+    if skipped(str(p), allow) or not f.is_file():
+        return []
+    why = None
+    if f.suffix.lower() in SKIP_SUFFIX:
+        why = f"file type {f.suffix.lower()} is not scanned"
+    elif f.stat().st_size > limit:
+        why = f"larger than {limit} bytes"
+    else:
+        data = f.read_bytes()
+        if b"\0" in data[:8192]:
+            why = "binary file"
+    if why:
+        return [(str(p), 0, "unscanned", why)] if dod or named else []
+    return scan_text(data.decode("utf-8", "replace"), str(p), deny, allow, dod, terms)
 
 
 def commit_meta(sha, root, deny, allow, dod, terms):
