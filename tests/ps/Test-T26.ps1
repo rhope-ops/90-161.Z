@@ -171,7 +171,7 @@ try {
   Test-That 'Change: 3 rows to the Recycle Bin, 1 deleted for good, 1 new row (RESULT CHANGE PASS)' $ok $r.File
   $r = Invoke-T26 'Change'
   $ok = ($r.Code -eq 0 -and $global:F.Bin.Count -eq 3 -and $global:F.Purged -eq 1 -and @($global:F.Lists['PFM Endorsements']).Count -eq 1)
-  Test-That 'a second Change writes nothing' $ok $r.File
+  Test-That 'a second Change writes nothing and says so (counts 0)' ($ok -and $r.File -match '(?m)^RESULT CHANGE PASS to the Recycle Bin=0 deleted for good=0 new row=0 ') $r.File
   $r = Invoke-T26 'Check'
   $ok = ($r.File -match '(?m)^RESULT RESTORE-BIN FAIL back with the old row number=0 of 3' -and $r.File -match '(?m)^RESULT RESTORE-NEW FAIL' -and $r.File -match '(?m)^RESULT FRESH-BACKUP FAIL')
   Test-That 'Check before Restore: RESTORE-BIN, RESTORE-NEW and FRESH-BACKUP fail' $ok $r.File
@@ -185,6 +185,30 @@ try {
   $global:F.Recycled = 0; $r = Invoke-T26 'Clean'
   $left = @($global:F.Lists['PFM Endorsements']).Count + @($global:F.Lists['PFM Activity Log']).Count
   Test-That 'Clean afterwards removes every fake row of the Restore test (5 rows, the re-made one too)' ($r.Code -eq 0 -and $left -eq 0 -and $global:F.Recycled -eq 5) $r.File
+  Test-That 'Clean: the pause row had no value before (made by Rows), so it stays No: RESULT PAUSEROW PASS value=No' ($r.File -match '(?m)^RESULT PAUSEROW PASS value=No\r?$') $r.File
+  # Rows, Change, Rows again (new rows: the old Change marks go), Change again: real counts each time.
+  Reset-RestoreCase @('No')
+  $null = Invoke-T26 'Rows'; $null = Invoke-T26 'Change'; $r = Invoke-T26 'Rows'
+  $ok = ($r.File -match 'RESULT ROWS PASS made=4 found=0' -and $r.File -match 'row=kept before=No now=No')
+  $r = Invoke-T26 'Change'
+  $ok = ($ok -and $r.File -match '(?m)^RESULT CHANGE PASS to the Recycle Bin=3 deleted for good=1 new row=1 ' -and $global:F.Bin.Count -eq 6 -and $global:F.Purged -eq 2)
+  Test-That 'Rows, Change, Rows again, Change again: the second Change works on the new rows (3, 1, 1)' $ok $r.File
+  # Change never deletes a row on file whose title is not the fake-data title.
+  Reset-RestoreCase @('No')
+  $null = Invoke-T26 'Rows'; $log = @($global:F.Lists['PFM Activity Log'])[0]; $log.Title = 'FAKE other title'
+  $r = Invoke-T26 'Change'
+  $ok = ($global:F.Purged -eq 0 -and @($global:F.Lists['PFM Activity Log']).Count -eq 1)
+  $ok = ($ok -and $r.File -match '(?m)^RESULT CHANGE FAIL to the Recycle Bin=3 deleted for good=0 new row=1 .+fake-data title=1')
+  Test-That 'Change with a log row that lost its fake-data title: not deleted, RESULT CHANGE FAIL' $ok $r.File
+  # Clean puts the pause row back to its value from before the round, only when it differs (the PFM, 21 Nov 26).
+  Reset-RestoreCase @('Yes')
+  $null = Invoke-T26 'Rows'; $r = Invoke-T26 'Clean'
+  $ok = (@($global:F.Lists['PFM Settings'])[0].SettingValue -eq 'Yes' -and $r.File -match '(?m)^RESULT PAUSEROW PASS value=Yes\r?$')
+  Test-That 'Clean after Rows set the pause row from Yes to No: sets it back to Yes (RESULT PAUSEROW PASS value=Yes)' $ok $r.File
+  Reset-RestoreCase @('No')
+  $null = Invoke-T26 'Rows'; $global:F.Lists['PFM Settings'].Clear(); $r = Invoke-T26 'Clean'
+  $ok = ($r.File -match '(?m)^RESULT PAUSEROW FAIL rows named FlowsPaused=0' -and (Test-Path -LiteralPath $stateFile))
+  Test-That 'Clean with no pause row on the site: RESULT PAUSEROW FAIL, the state file stays' $ok $r.File
   Reset-RestoreCase @('Yes')
   $r = Invoke-T26 'Rows'
   $ok = (@($global:F.Lists['PFM Settings'])[0].SettingValue -eq 'No' -and $r.File -match 'RESULT PAUSEROW PASS row=set before=Yes now=No')
