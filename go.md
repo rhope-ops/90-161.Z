@@ -68,15 +68,21 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 28. When the 90-161.Z window opens again: do its 1 check in the bottom bar.
 29. Close the 90-161.Z window with its X.
 30. Answer the 4 questions in the RADE window.
-31. On each RADE card that names a second RADE window, do each numbered line on that card.
-32. Answer the questions about Restore in the RADE window.
-33. At DONE, select Send in the Outlook draft that opens.
+31. When a RADE card names a second RADE window: double-click the RADE shortcut on your Desktop. A second RADE window opens.
+32. In the second RADE window, do each numbered line of that card.
+33. When the questions about Restore come back in the first RADE window, answer them there.
+34. At DONE, select Send in the Outlook draft that opens.
 
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R41-round-r1.ps1
 
 **Report:** send the Outlook draft the round makes (subject "90161Z R41 PASSED" or "90161Z R41 NEEDS REVIEW", every file in the results folder attached). If I run the round a second time, send only the newest draft. The round never puts a script file in the results. Then tell Claude the e-mail is sent.
 **If I am stopped** (the window closes, I remove my CAC, or the computer restarts): double-click the RADE shortcut, select "90-161.Z R41", then select "Resume at step N of M".
-**If it fails:** do the line that starts with "What to do". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R41 did not paste". If the second person cannot help today: skip that card; the round goes on and removes the test rows at the end. If the 90-161.Z window does not open, go on with the steps the RADE window shows. If Maintenance has no "Repair" or the repair fails: tell Claude "R41 repair failed", then go on with the round and skip each card that names a second RADE window. If the dry run says the Recycle Bin could not be read: close the second window with its X, answer "The Recycle Bin was not read", and paste that line where RADE asks for the error; the round skips the rest of the Restore test, removes the fake rows at the end, and I tell Claude "R41 Recycle Bin not read". If Restore says the pause switch is on already: do not run Restore again; tell Claude "R41 pause switch on".
+**If it fails:** do the line that starts with "What to do". If ISE shows nothing 5 minutes after Ctrl+V, or no RADE window opens after F5: close ISE and tell Claude "R41 did not paste". If the second person cannot help today: skip that card; the round goes on and removes the test rows at the end. If the 90-161.Z window does not open, go on with the steps the RADE window shows. If Maintenance has no "Repair" or the repair fails: tell Claude "R41 repair failed", then go on with the round and skip each card that names a second RADE window. If Restore says the pause switch is on already: do not run Restore again; tell Claude "R41 pause switch on".
+If the dry run says the Recycle Bin could not be read (the round then skips the rest of the Restore test and still removes the fake rows at the end):
+- Close the second RADE window with its X.
+- In the first RADE window, answer "The Recycle Bin was not read".
+- Paste the dry run line where RADE asks for the error.
+- Tell Claude "R41 Recycle Bin not read".
 
 ## Done
 

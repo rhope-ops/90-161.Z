@@ -22,8 +22,9 @@
            else RESULT ENDORSE-EDIT REFUSED, the expected outcome under "edit own rows" (recorded, not a failure).
     Clean  (about 1 minute)  Moves the rows of PFM Endorsements and PFM Activity Log on the fake publication, then the
            fake publication itself (only when Make made it), to the site Recycle Bin (restorable for 93 days), and
-           deletes the state file. It can run again.
-  The RADE Restore test (the PFM, 21 Nov 26; docs/reviews/2026-11-21-r41-plan.md row 5; RADE engine-v31 release notes,
+           deletes the state file. It can run again. After the Restore test (the PFM, 21 Nov 26) it also sets the
+           pause-switch row back to its value from before the round (RESULT PAUSEROW), only when it differs.
+  The RADE Restore test (the PFM, 21 Nov 26; docs/reviews/2026-11-21-r41-plan.md row 5; RADE engine-v31 and engine-v32 release notes,
   the R41 click table): RADE's Maintenance > Restore puts back rows that are missing from the app's lists, from the
   Recycle Bin first (same row number), else as new rows. The rows hang on the fake publication, so Clean removes them,
   and any row Restore makes again, at the end. Writes approved by the PFM (21 Nov 26: 3 rows deleted, 1 row deleted
@@ -33,9 +34,12 @@
            another value is set to No (RESULT PAUSEROW). RADE turns it to Yes while Restore writes and puts it back
            after. The row-writing flows read it from R42 on (the PFM, 21 Nov 26), so in R41 it pauses nothing. Then
            3 fake rows on PFM Endorsements and 1 fake row on PFM Activity Log on the fake publication (RESULT ROWS).
+           Saves the time of the run (RowsAt): T22 maint -Part Backup accepts only a backup made after it. A row made
+           new clears the marks of an earlier Change, so the next Change works on the new rows.
     Change (about 1 minute)  After the Back up: moves the 3 endorsement rows to the site Recycle Bin, deletes the log
            row for good (not to the Recycle Bin: the same as deleting it and emptying it from the Recycle Bin), and
-           adds 1 new fake endorsement row (RESULT CHANGE). A second run changes nothing that is done already.
+           adds 1 new fake endorsement row (RESULT CHANGE, with the counts this run did). A row whose title is not
+           the fake-data title is never deleted. A second run changes nothing that is done already.
     Check  (about 1 minute)  After Restore; reads only. RESULT RESTORE-BIN: the 3 endorsement rows are back with their
            old row numbers, once each. RESULT RESTORE-NEW: the log row is back with a new row number. RESULT
            RESTORE-KEEP: the new row is still there. RESULT PAUSEROW: the pause-switch row has its value from Rows (No).
@@ -83,7 +87,7 @@ $BinTitle = '90161Z TEST R41 restore {0} (delete me)'   # the 3 endorsement rows
 $LogTitle = '90161Z TEST R41 restore log (delete me)'   # the log row that is deleted for good
 $NewTitle = '90161Z TEST R41 restore new (delete me)'   # the row made after the backup: Restore must leave it
 # The pause switch: the same 4 values as "restore.pause" of the deploy app in scripts/paste_bundles.json
-# (tests/ps/Test-T26Restore.ps1 checks that they match). Off is the seed value (schemas/lists/PFMSettings.json).
+# (tests/ps/Test-T26.ps1 checks that they match). Off is the seed value (schemas/lists/PFMSettings.json).
 $Pause = @{ List = 'PFM Settings'; Title = 'FlowsPaused'; Field = 'SettingValue'; On = 'Yes'; Off = 'No' }
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -356,6 +360,7 @@ function Add-EditResult($Rows, [int]$MeId, [string]$EditId) {
 #>
 function Invoke-CleanPart {
   $st = Read-State $script:stateFile
+  $script:pauseBad = $false; Restore-PauseRow $st
   $pubId = $(if ($st['PubId'] -match '^\d+$') { [int]$st['PubId'] } else { 0 })
   if (-not $pubId) { Add-Item 'c1-rows' 'PASS' 'no fake publication on file (nothing to remove)'; return }
   $n = 0; $bad = 0
@@ -368,7 +373,31 @@ function Invoke-CleanPart {
       Add-Item 'c2-publication' 'PASS' 'the fake publication moved to the site Recycle Bin' }
     catch { $bad++; Add-Item 'c2-publication' 'FAIL' 'the fake publication could not be removed (run Clean again)' } }
   else { Add-Item 'c2-publication' 'PASS' 'the fake publication was not made by this task, so it stays' }
-  if (-not $bad) { Remove-Item -LiteralPath $script:stateFile -ErrorAction SilentlyContinue }
+  if (-not $bad -and -not $script:pauseBad) { Remove-Item -LiteralPath $script:stateFile -ErrorAction SilentlyContinue }
+}
+<#
+.SYNOPSIS
+  Clean, the pause-switch row (the PFM, 21 Nov 26): back to its value from before the round, only when it differs.
+.DESCRIPTION
+  The value before the round is the word Rows saved (PauseBefore). Yes, No and empty are written back as they were; a
+  row that was missing or held other text keeps the value Rows set (PauseAfter, No). With no Rows on file nothing is
+  done. Logs RESULT PAUSEROW PASS value=<word>, or FAIL (then the state file stays, so Clean can run again).
+.PARAMETER State
+  The state hashtable of this task.
+#>
+function Restore-PauseRow($State) {
+  $want = [string]$State['PauseBefore']
+  if ($want -notin 'Yes', 'No', 'empty') { $want = [string]$State['PauseAfter'] }
+  if ($want -notin 'Yes', 'No', 'empty') { return }   # Rows did not run: the round did not touch the row
+  $value = $(if ($want -eq 'empty') { '' } else { $want })
+  try {
+    $rows = @(Get-PauseRow)
+    if ($rows.Count -ne 1) { $script:pauseBad = $true; Add-Result 'PAUSEROW' $false ('rows named ' + $Pause.Title + '=' + $rows.Count + ': set it by hand'); return }
+    if (([string]$rows[0][$Pause.Field]).Trim() -cne $value) { $null = Set-PnPListItem -List $Pause.List -Identity $rows[0].Id -Values @{ $Pause.Field = $value } -ErrorAction Stop }
+    $now = Get-ValueWord (@(Get-PauseRow))[0][$Pause.Field]
+    if ($now -ne $want) { $script:pauseBad = $true }
+    Add-Result 'PAUSEROW' ($now -eq $want) ('value=' + $now)
+  } catch { $script:pauseBad = $true; Add-Result 'PAUSEROW' $false 'the pause-switch row could not be set back (run Clean again)' }
 }
 
 # ---- The RADE Restore test (R41): the parts Rows, Change and Check ----
@@ -423,6 +452,7 @@ function Invoke-RowsPart {
   $pubId = $(if ($st['PubId'] -match '^\d+$') { [int]$st['PubId'] } else { $p = @(Find-FakePub); if ($p.Count) { [int]$p[0].Id } else { 0 } })
   if (-not $pubId) { Add-Result 'ROWS' $false 'no fake publication: run the part Make first'; return }
   $st['PubId'] = [string]$pubId; $made = 0; $found = 0
+  $old = @((@(1, 2, 3) | ForEach-Object { $st['Bin' + $_] }) + $st['LogId']) -join ','
   for ($i = 1; $i -le 3; $i++) {
     $title = $BinTitle -f $i; $have = @(Get-TitledRow 'PFM Endorsements' $title $pubId)
     if ($have.Count) { $st['Bin' + $i] = [string]$have[0].Id; $found++; continue }
@@ -432,6 +462,9 @@ function Invoke-RowsPart {
   $have = @(Get-TitledRow 'PFM Activity Log' $LogTitle $pubId)
   if ($have.Count) { $st['LogId'] = [string]$have[0].Id; $found++ }
   else { $st['LogId'] = [string](Add-PnPListItem -List 'PFM Activity Log' -Values @{ Title = $LogTitle; Publication = $pubId; EventType = 'Other' } -ErrorAction Stop).Id; $made++ }
+  # Other row numbers than on file (rows made new): the marks of an earlier Change are for the old rows, so they go.
+  if ((@((@(1, 2, 3) | ForEach-Object { $st['Bin' + $_] }) + $st['LogId']) -join ',') -ne $old) { foreach ($k in 'Gone1', 'Gone2', 'Gone3', 'Purged', 'NewId', 'ChangedAt') { $st.Remove($k) } }
+  $st['RowsAt'] = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ss')
   Save-State $script:stateFile $st
   $lines.Add('ROWS endorsement rows=' + ((@(1, 2, 3) | ForEach-Object { $st['Bin' + $_] }) -join ',') + '; log row=' + $st['LogId'])
   Add-Result 'ROWS' $true ('made=' + $made + ' found=' + $found + ' (3 on PFM Endorsements, 1 on PFM Activity Log, all on the fake publication)')
@@ -446,18 +479,27 @@ function Invoke-RowsPart {
 function Invoke-ChangePart {
   $st = Read-State $script:stateFile
   if (-not ($st['LogId'] -match '^\d+$' -and $st['PubId'] -match '^\d+$')) { Add-Result 'CHANGE' $false 'no rows on file: run the part Rows first'; return }
+  $pubId = [int]$st['PubId']; $gone = 0; $purged = 0; $added = 0; $skip = 0
   for ($i = 1; $i -le 3; $i++) {
     if ($st['Gone' + $i] -eq 'yes') { continue }
+    # Only a row with its fake-data title on the fake publication is deleted.
+    if (-not @(Get-TitledRow 'PFM Endorsements' ($BinTitle -f $i) $pubId | Where-Object { [int]$_.Id -eq [int]$st['Bin' + $i] }).Count) { $skip++; continue }
     $null = Remove-PnPListItem -List 'PFM Endorsements' -Identity ([int]$st['Bin' + $i]) -Recycle -Force -ErrorAction Stop
-    $st['Gone' + $i] = 'yes'; Save-State $script:stateFile $st }
-  if ($st['Purged'] -ne 'yes') { $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity ([int]$st['LogId']) -Force -ErrorAction Stop
-    $st['Purged'] = 'yes'; Save-State $script:stateFile $st }
+    $st['Gone' + $i] = 'yes'; $gone++; Save-State $script:stateFile $st }
+  if ($st['Purged'] -ne 'yes') {
+    # Deleted for good only when the row on file still has the fake-data title ("90161Z TEST ...") on the fake publication.
+    if (@(Get-TitledRow 'PFM Activity Log' $LogTitle $pubId | Where-Object { [int]$_.Id -eq [int]$st['LogId'] -and ([string]$_['Title']).StartsWith('90161Z TEST') }).Count) {
+      $null = Remove-PnPListItem -List 'PFM Activity Log' -Identity ([int]$st['LogId']) -Force -ErrorAction Stop
+      $st['Purged'] = 'yes'; $purged++; Save-State $script:stateFile $st }
+    else { $skip++ } }
   if ($st['NewId'] -notmatch '^\d+$') {
-    $st['NewId'] = [string](Add-PnPListItem -List 'PFM Endorsements' -Values @{ Title = $NewTitle; Publication = [int]$st['PubId']; CoordinationStage = 'Formal Coordination'
-        EndorsementStatus = 'Not Started' } -ErrorAction Stop).Id }
+    $st['NewId'] = [string](Add-PnPListItem -List 'PFM Endorsements' -Values @{ Title = $NewTitle; Publication = $pubId; CoordinationStage = 'Formal Coordination'
+        EndorsementStatus = 'Not Started' } -ErrorAction Stop).Id; $added++ }
   if (-not $st['ChangedAt']) { $st['ChangedAt'] = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ss') }
   Save-State $script:stateFile $st
-  Add-Result 'CHANGE' $true ('to the Recycle Bin=3 deleted for good=1 new row=1 (new row number ' + $st['NewId'] + ')')
+  $text = 'to the Recycle Bin=' + $gone + ' deleted for good=' + $purged + ' new row=' + $added + ' (new row number ' + $st['NewId'] + ')'
+  if ($skip) { $text += '; rows on file not found with the fake-data title=' + $skip + ' (not deleted: run the part Rows again)' }
+  Add-Result 'CHANGE' (-not $skip) $text
 }
 <#
 .SYNOPSIS

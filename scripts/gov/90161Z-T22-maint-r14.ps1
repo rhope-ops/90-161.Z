@@ -14,7 +14,8 @@
   boundary"); only counts and list titles go into the result.
   -Part Backup (round R41, the Restore test; the PFM, 21 Nov 26): reads only (3), the newest Back up folder, so the round
   knows that the Back up before the Restore test saved every list (12 from R41: the 12th is "PFM Recommendations (DAF Form
-  847)", a title with parentheses that RADE engine-v31 can back up).
+  847)", a title with parentheses that RADE engine-v31 can back up). It also needs a backup made after the T26 part
+  Rows made the fake rows (RowsAt in T26\90161Z-T26-endorse-state-r1.txt): an older backup, or no Rows time, is a FAIL.
   Result lines: RESULT INSTALL, RESULT DIAGNOSE and RESULT BACKUP, each PASS or FAIL. Exit 1 when one is FAIL.
   A report or backup older than $FreshHours hours is from an earlier day and counts as missing.
   Run: by RADE (powershell.exe -File 90161Z-T22-maint-r14.ps1 -Part Install, Read or Backup -NoPause), or by hand in T22.
@@ -193,15 +194,18 @@ function Get-DiagnoseResult([string]$App) {
   The result lines of the newest Back up folder: for each list, its files and row count, and RESULT BACKUP.
 .PARAMETER App
   The app folder (RADE\90-161.Z).
+.PARAMETER Since
+  Only for -Part Backup: the newest folder must be made after this time (the T26 Rows time); $null = no such rule.
 .OUTPUTS
-  The lines (strings). PASS when the newest folder is from this round, has at least one list, and every JSON file has its
+  The lines (strings). PASS when the newest folder is from this round (and made after Since), has at least one list, and every JSON file has its
   CSV copy and can be read. The row values are never read into the result.
 #>
-function Get-BackupResult([string]$App) {
+function Get-BackupResult([string]$App, $Since = $null) {
   $root = Join-Path $App 'Backups'
   $all = @(Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
   $new = $all | Select-Object -First 1
   if (-not $new -or $new.LastWriteTime -lt (Get-Date).AddHours(-$FreshHours)) { return @('BACKUP no backup folder from this round (folders: ' + $all.Count + ')', 'RESULT BACKUP FAIL') }
+  if ($null -ne $Since -and $new.CreationTime -le $Since) { return @('BACKUP the newest backup folder is older than the fake rows of the Restore test (run Back up again)', 'RESULT BACKUP FAIL') }
   $all2 = @(Get-ChildItem -LiteralPath $new.FullName -Filter '*.json' -File | Sort-Object Name)
   $json = @($all2 | Where-Object { -not $_.Name.StartsWith('~') })   # '~<n>.json': a file RADE could not give its list name
   $tilde = $all2.Count - $json.Count
@@ -215,6 +219,14 @@ function Get-BackupResult([string]$App) {
     $out += ('BACKUP list "' + $name + '": rows=' + $rows + ' csv=' + $(if ($csv) { 'yes' } else { 'no' })) }
   if ($json.Count -lt $BackupLists) { $out += ('BACKUP ' + $json.Count + ' of ' + $BackupLists + ' lists saved') }
   return $out + @('RESULT BACKUP ' + $(if ($json.Count -ge $BackupLists -and -not $bad) { 'PASS' } else { 'FAIL' }))
+}
+
+# The time the T26 part Rows made the fake rows of the Restore test (RowsAt in the T26 state file), or $null. Takes the app folder.
+function Get-RowsTime([string]$App) {
+  $f = Join-Path (Join-Path $App 'T26') '90161Z-T26-endorse-state-r1.txt'
+  $l = @(Get-Content -LiteralPath $f -ErrorAction SilentlyContinue | Where-Object { ([string]$_).StartsWith('RowsAt=') }) | Select-Object -First 1
+  if (-not $l) { return $null }
+  try { return [datetime]::ParseExact(([string]$l).Substring(7), 'yyyy-MM-ddTHH:mm:ss', [Globalization.CultureInfo]::InvariantCulture) } catch { return $null }
 }
 
 <#
@@ -246,7 +258,10 @@ try {
   if ($Part -eq 'Install') {
     $lines.Add('INSTALL the deploy of 90-161.Z 0.1.0 reached its step; RADE keeps the install record. Nothing else was installed; nothing on the site changed.')
     $lines.Add('RESULT INSTALL PASS') }
-  elseif ($Part -eq 'Backup') { foreach ($l in @(Get-BackupResult $app)) { $lines.Add($l) } }
+  elseif ($Part -eq 'Backup') {
+    $since = Get-RowsTime $app
+    if ($null -eq $since) { $lines.Add('BACKUP no time of the fake rows on file (run the step that makes the Restore test rows first)'); $lines.Add('RESULT BACKUP FAIL') }
+    else { foreach ($l in @(Get-BackupResult $app $since)) { $lines.Add($l) } } }
   else {
     $rec = Get-InstallRecord $rade
     if ($rec -and $rec.installed) { $lines.Add('INSTALL record: version=' + [string]$rec.installed.version + ' last run=' + [string]$rec.lastRun.state); $lines.Add('RESULT INSTALL PASS') }

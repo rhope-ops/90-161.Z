@@ -512,7 +512,10 @@
                         {
                             "key": "r-lists",
                             "prompt": "Do the other 10 lists each say \"Would put back 0\"?",
-                            "kind": "yesno"
+                            "kind": "yesno",
+                            "failOn": [
+                                "No"
+                            ]
                         }
                     ],
                     "answersOnly": true
@@ -600,6 +603,19 @@
                     "estimate": 2,
                     "after": [
                         "T26 Restore with the app name r1"
+                    ]
+                },
+                {
+                    "name": "T26 Answer: Restore again r1",
+                    "title": "Answer 1 question about Restore again",
+                    "kind": "guide",
+                    "guide": [],
+                    "dir": "T26",
+                    "file": "",
+                    "note": "1 question about the dry run of the same backup in the second window.",
+                    "estimate": 1,
+                    "after": [
+                        "T26 Restore again r1"
                     ],
                     "answers": [
                         {
@@ -610,9 +626,14 @@
                                 "Nothing to restore",
                                 "Rows would come back",
                                 "Something else"
+                            ],
+                            "failOn": [
+                                "Rows would come back",
+                                "Something else"
                             ]
                         }
-                    ]
+                    ],
+                    "answersOnly": true
                 },
                 {
                     "name": "T26 Restore the fresh backup r1",
@@ -635,6 +656,19 @@
                     "estimate": 2,
                     "after": [
                         "T26 Restore again r1"
+                    ]
+                },
+                {
+                    "name": "T26 Answer: the fresh backup r1",
+                    "title": "Answer 1 question about the fresh backup",
+                    "kind": "guide",
+                    "guide": [],
+                    "dir": "T26",
+                    "file": "",
+                    "note": "1 question about the dry run of the fresh backup in the second window.",
+                    "estimate": 1,
+                    "after": [
+                        "T26 Restore the fresh backup r1"
                     ],
                     "answers": [
                         {
@@ -645,9 +679,14 @@
                                 "Nothing to restore",
                                 "Rows would come back",
                                 "Something else"
+                            ],
+                            "failOn": [
+                                "Rows would come back",
+                                "Something else"
                             ]
                         }
-                    ]
+                    ],
+                    "answersOnly": true
                 },
                 {
                     "name": "T26 Remove the fake rows r1",
@@ -865,14 +904,16 @@
                         "T26 Restore with the app name r1",
                         "T26 Check the restored rows r1",
                         "T26 Restore again r1",
+                        "T26 Answer: Restore again r1",
                         "T26 Restore the fresh backup r1",
+                        "T26 Answer: the fresh backup r1",
                         "T26 Remove the fake rows r1",
                         "T21 Remove the test list and library r11"
                     ]
                 },
                 {
                     "name": "90-161.Z",
-                    "summary": "Test install of 90-161.Z 0.1: RADE records it, so Maintenance (Diagnose, Back up) can be tested. Nothing on the site changes.",
+                    "summary": "Test install of 90-161.Z 0.1: RADE records it, so Maintenance (Diagnose, Back up, Restore) can be tested. Nothing on the site changes.",
                     "mode": "deploy",
                     "version": "0.1.0",
                     "steps": [

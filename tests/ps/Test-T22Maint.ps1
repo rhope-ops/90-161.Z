@@ -78,11 +78,22 @@ $d = Get-FakeRade $true $true $true 12 $true; $dirs += $d; $r = Invoke-Maint $d 
 Test-That 'a list file RADE did not name: FAIL' ($r.Code -eq 1 -and $r.Out -match 'BACKUP 1 list files without their list name' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
 $d = Get-FakeRade $true $true $true 12 $false 40000; $dirs += $d; $r = Invoke-Maint $d 'Read'
 Test-That 'a large list file (about 3 MB) is counted' ($r.Out -match 'BACKUP list "PFM Waivers": rows=40000 csv=yes' -and $r.Out -match 'RESULT BACKUP PASS') $r.Out
-# R41: -Part Backup reads only the newest backup folder (no install record, no Diagnose report needed).
+# R41: -Part Backup reads only the newest backup folder (no install record, no Diagnose report needed), made after the
+# T26 Rows time in the T26 state file. Set-RowsTime writes that file. Takes the T22 folder and the time; returns nothing.
+function Set-RowsTime([string]$Dir, [datetime]$At) {
+  $t = Join-Path (Split-Path -Parent $Dir) 'T26'; $null = New-Item -ItemType Directory -Path $t -Force
+  Set-Content -LiteralPath (Join-Path $t '90161Z-T26-endorse-state-r1.txt') -Value @('PubId=50', ('RowsAt=' + $At.ToString('yyyy-MM-ddTHH:mm:ss')))
+}
 $d = Get-FakeRade $false $false $true; $dirs += $d; $r = Invoke-Maint $d 'Backup'
+$ok = ($r.Code -eq 1 -and $r.Out -match 'BACKUP no time of the fake rows on file' -and $r.Out -match 'RESULT BACKUP FAIL')
+Test-That 'Backup part with no Rows time on file: FAIL, exit 1' $ok $r.Out
+Set-RowsTime $d (Get-Date).AddHours(1); $r = Invoke-Maint $d 'Backup'
+$ok = ($r.Code -eq 1 -and $r.Out -match 'older than the fake rows' -and $r.Out -match 'RESULT BACKUP FAIL')
+Test-That 'Backup part with a backup older than the Rows time: FAIL, exit 1' $ok $r.Out
+Set-RowsTime $d (Get-Date).AddHours(-1); $r = Invoke-Maint $d 'Backup'
 $ok = ($r.Code -eq 0 -and $r.Out -match 'RESULT BACKUP PASS' -and $r.Out -notmatch 'RESULT (INSTALL|DIAGNOSE)' -and $r.Out -match 'BACKUP list "PFM Recommendations \(DAF Form 847\)": rows=0 csv=yes')
 Test-That 'Backup part: only RESULT BACKUP, the list with parentheses is named' ($ok -and (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-backup-r14.txt'))) $r.Out
-$d = Get-FakeRade $false $false $true 11; $dirs += $d; $r = Invoke-Maint $d 'Backup'
+$d = Get-FakeRade $false $false $true 11; $dirs += $d; Set-RowsTime $d (Get-Date).AddHours(-1); $r = Invoke-Maint $d 'Backup'
 Test-That 'Backup part with 11 of 12 lists: FAIL, exit 1' ($r.Code -eq 1 -and $r.Out -match 'BACKUP 11 of 12 lists saved' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
 # One home: the script's count equals the "backup" titles of the deploy app in the round definition.
 $m = [regex]::Match((Get-Content -LiteralPath $script -Raw), '(?m)^\$BackupLists = (\d+)')
