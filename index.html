@@ -82,7 +82,7 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
    docs/brand/fulcrum.css. The task states (open, done, note) keep their own colours. */
 /* Off in forced colours (the system colours win); in more contrast, muted text and lines move toward the text colour. */
 @media not (forced-colors:active){:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--bg:var(--fm-page);--fg:var(--fm-page-fg);--mut:var(--fm-page-muted);--card:var(--fm-page);--line:var(--fm-page-line);--acc:var(--fm-page-link);--acc-fg:var(--fm-on-accent);--navy:var(--fm-band);--blue:var(--fm-accent);--gold:var(--fm-rule);--mist:var(--fm-band-muted);--focus:var(--fm-focus)}
-@media (prefers-contrast:more){:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--mut:var(--fm-page-fg);--line:var(--fm-slate)}}}
+@media (prefers-contrast:more){:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--mut:var(--fm-page-fg);--line:var(--fm-slate);--mist:var(--fm-band-fg)}}}
 .band{background:var(--fm-band)}
 button.primary{color:var(--fm-on-accent)}
 button.primary:hover{background:#F2916F;border-color:#F2916F;color:var(--fm-on-accent)}

@@ -44,7 +44,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 | Person | Uses | To |
 |---|---|---|
-| PFM | The 90-161.Z window on the work computer | See every action and start endorsement; format drafts and change who gets a step (planned) |
+| PFM | The 90-161.Z window on the work computer | See every action (read-only today); start endorsement, format drafts and change who gets a step (planned) |
 | OPR mailbox | A SharePoint form from an e-mail link | Name 1 or 2 AOs |
 | AO | A SharePoint form from an e-mail link | Answer "needs further review?", add endorsers, fill in the DAF Form 673 |
 | Endorser | A SharePoint form from an e-mail link | Read the final draft, comment, answer |
