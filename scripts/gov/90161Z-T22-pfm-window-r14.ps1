@@ -1,8 +1,17 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r14 (round R40). Windows PowerShell 5.1 and Windows Forms only (no module).
+  90-161.Z Task 22: the PFM window, test window r14 (round R41). Windows PowerShell 5.1, Windows Forms and, to read the
+  test site, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  WHAT R13 CHANGES (round R40; PFM 20 Nov 26: docs/reviews/2026-11-20-r40-plan.md, the R39 findings 1 and 2): each card
+  WHAT R14 CHANGES (round R41; PFM 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md rows 1, 3 and 4): the window reads the
+  PFM lists of the test site, read-only, and fills Your Work, All Actions and the endorsement answers from them (the
+  site part: your CAC sign-in, a SOURCE line, a READ line per list, WRITES=0; a card picture only when every site row it
+  shows has a fake-data marker); a grid whose list has no rows shows its empty state. When the site cannot be read the
+  cards keep their FAKE data (SOURCE fake), as -Measure and -PlanOnly always do. After the 4 checks the check bar walks
+  you through every screen in order, one Pass or Fail each (the bar part: 17 screens, a WALK line each; Feedback on
+  every screen as before). The grid fit runs again after the layout settles, and the layout self-check line names the
+  open (first, kept, rebuild, resize; R40 finding 3). The parts: 13 (R14 adds bar and site).
+  WHAT R13 CHANGED (round R40; PFM 20 Nov 26: docs/reviews/2026-11-20-r40-plan.md, the R39 findings 1 and 2): each card
   is built once and kept; a later open shows the kept card again and a card is built again only when it must change
   (a new size, a field, an error line or a note, a color change: the keep part). CARDTIME lines add the paint time
   (paint-first=, paint-later-max=) and kept=. The -Again check names the card saved at the last close, by its title;
@@ -43,8 +52,8 @@
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
   R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its parts
   from its own folder, 90161Z-T22-<part>-r14.ps1 (cards, types, ui, ui2, parts, grid, logo, window, keep, feedback,
-  measure; R10 adds logo and feedback, R11 ui2, R13 keep).
-  Inputs: the 11 part files and the font files (90161Z-SofiaSans*.ttf) next to this file; with -Again, the saved card
+  measure; R10 adds logo and feedback, R11 ui2, R13 keep, R14 bar and site).
+  Inputs: the 13 part files and the font files (90161Z-SofiaSans*.ttf) next to this file; with -Again, the saved card
   (90161Z-T22-window-lastcard.txt).
   Parameters: -Id, -NoPause (RADE), -Again (R12: the reopen check only). -PlanOnly prints the cards and the 4 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
@@ -56,11 +65,12 @@
   card) and the feedback files (90161Z-T22-feedback-r14.txt, and a .txt and a .png per comment) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
   Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r14.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
-  Network: none.
-  Writes: 90161Z-T22-window-r14.txt (or -again-r14.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
+  Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell, read
+  only (the site part; none with -PlanOnly, -Measure or -Opened).
+  Writes: nothing on the site. 90161Z-T22-window-r14.txt (or -again-r14.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
   folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
   with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
-  Credentials: none.
+  Credentials: your own CAC sign-in through the PnP web login window (the site part); nothing is stored.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened, [switch]$Again)
 $task = 'T22'
@@ -215,7 +225,7 @@ if ($Opened) {   # no window, no file: one line about the last run, exit 1 on FA
 function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.InvocationInfo.ScriptName)) + ':' + $Err.InvocationInfo.ScriptLineNumber) }
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
-$Parts = @('cards', 'types', 'ui', 'ui2', 'parts', 'grid', 'logo', 'window', 'keep', 'feedback', 'measure')
+$Parts = @('cards', 'types', 'ui', 'ui2', 'parts', 'grid', 'logo', 'window', 'bar', 'keep', 'feedback', 'measure', 'site')
 # The full path of part $Name: 90161Z-T22-<name>-r14.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
@@ -230,7 +240,7 @@ try {
   if ($missing.Count) { throw ('a part of this task is not in its folder: ' + (@($missing | ForEach-Object { Split-Path -Leaf (Get-PartPath $_) }) -join ', ')) }
   . (Get-PartPath 'cards')
   if ($PlanOnly) {
-    @(Get-CardPlan) + @(Get-CheckPlan) | ForEach-Object { Write-Host $_ }
+    @(Get-CardPlan) + @(Get-CheckPlan) + @(Get-WalkPlanText) | ForEach-Object { Write-Host $_ }
     Write-Host ('PLAN cards=' + $Cards.Count); return }
   if (-not $Measure) { $who = Get-TaskId $Id }
   if ($Measure) { $dir = '' } elseif ($TestDir) { $dir = $TestDir } else { $dir = Get-TaskDir $who.Id $task 'Task 22' -Create }
@@ -245,6 +255,10 @@ try {
   Add-Type -AssemblyName System.Windows.Forms
   Add-Type -AssemblyName System.Drawing
   [Windows.Forms.Application]::EnableVisualStyles()
+  # R14 (R41 plan row 1): the cards from the PFM lists of the site, read-only; -Measure keeps the FAKE cards.
+  . (Get-PartPath 'site')
+  if ($Measure) { $lines.Add('SOURCE fake (-Measure builds the window from the FAKE cards; the site is not read)'); $lines.Add('WRITES=0') }
+  else { Invoke-SiteRead (Join-Path (Split-Path -Parent $dir) 'Config') }
   . (Get-PartPath 'types')
   $script:native = [bool]('Rade.Native' -as [type])   # the shared UI file hides the caret of a card text box through it
   $started = Get-Date
@@ -279,7 +293,7 @@ try {
   # The crumb's link font (R30 V2): the crumb's own font, underlined; the same family and size as the rest of the crumb.
   try { $wn.CrumbFont = New-Object System.Drawing.Font($ui.F.Small, [Enum]::Parse(('System.Drawing.FontStyle' -as [type]), 'Underline'))
     $ui.Trash = @($ui.Trash) + @($wn.CrumbFont) } catch { $wn.CrumbFont = $ui.F.Small }
-  foreach ($part in 'parts', 'grid', 'logo', 'window', 'keep', 'feedback', 'measure') { . (Get-PartPath $part) }
+  foreach ($part in 'parts', 'grid', 'logo', 'window', 'bar', 'keep', 'feedback', 'measure') { . (Get-PartPath $part) }
   if ($Again) { $Checks[0].Text = Get-AgainText (& $wn.LastKey) }   # R13 (R39 finding 1): the reopen check names the card saved at the last close
   if ($Measure) { & $wn.MeasureRun $Measure } else { & $wn.Hook; [void]$form.ShowDialog() }
   $wn.Ready = $false
@@ -302,7 +316,7 @@ try {
     if ($a -eq 'PASS') { $cp++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' PASS') }
     elseif ($a -eq 'FAIL') { $cf++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL') }
     else { $cs++; $lines.Add('CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ' FAIL (not answered)') } }
-  if (-not $Measure) { $lines.Add('CHECKS passed=' + $cp + ' failed=' + $cf + ' not answered=' + $cs) }
+  if (-not $Measure) { $lines.Add('CHECKS passed=' + $cp + ' failed=' + $cf + ' not answered=' + $cs); foreach ($l in @(& $wn.WalkLines)) { $lines.Add($l) } }
   foreach ($t in @($ui.Trash)) { try { $t.Dispose() } catch { $null = $_ } }
   $form.Dispose()
 } catch {

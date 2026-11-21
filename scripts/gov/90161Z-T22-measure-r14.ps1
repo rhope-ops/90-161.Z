@@ -26,7 +26,8 @@
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
   Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r14.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
-  CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
+  CARDPNG lines to the result. The cards hold FAKE data or (R14) fake rows of the test site; a card with a site row that
+  has no fake-data marker gets no picture. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
@@ -45,12 +46,17 @@ $wn.SavePng = {
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
+  R14 (R41): no picture of a card that shows a site row without a fake-data marker (Get-SiteUnmarked, site part); a
+  CARDPNG line says so.
   .PARAMETER Key
   The card key (the card on the page).
   #>
   param([string]$Key)
   if (-not $wn.PngDir) { return }
   $name = '90161Z-T22-card-' + $Key + '-' + $Rev + '.png'
+  # R14 (R41; PFM 20 Nov 26): a card that shows a site row with no fake-data marker gets no picture (the site part)
+  $bad = Get-SiteUnmarked $Key
+  if ($bad -gt 0) { $lines.Add('CARDPNG ' + $Key + ' not saved: ' + $bad + ' site rows without a fake-data marker'); return }
   try {
     $bm = New-Object System.Drawing.Bitmap([math]::Max(1, $form.Width), [math]::Max(1, $form.Height))
     try {

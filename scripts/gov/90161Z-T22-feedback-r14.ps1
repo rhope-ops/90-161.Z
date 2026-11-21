@@ -2,6 +2,8 @@
 .SYNOPSIS
   90-161.Z Task 22 r14, part "feedback": Feedback on every card of the PFM window (UI standard B13, PFM 19 Nov 26).
 .DESCRIPTION
+  R14 (R41; PFM 20 Nov 26): Feedback stays on every screen of the click-through; the picture of a comment is not saved
+  when the card shows a site row without a fake-data marker (Get-SiteUnmarked in the site part).
   R11 (R38; PFM 20 Nov 26): only the revision in the file names changed (90161Z-T22-feedback-<card>-r14.*).
   The window part puts the Feedback link on the check bar (the same place on every card) and calls $wn.FeedbackAsk on
   a click and $wn.FeedbackList at the close; the -Measure run calls $wn.MeasureFeedback (below), which saves one FAKE
@@ -59,7 +61,9 @@ $wn.FeedbackSave = {
     while ((Test-Path -LiteralPath (Join-Path $into ($base + '.txt'))) -or (Test-Path -LiteralPath (Join-Path $into ($base + '.png')))) {
       $n++; $base = & $wn.FeedbackName $Key $n }   # an earlier window run of the round saved this name: never overwrite it
     $wn.FeedbackN[$Key] = $n
-    $Shot.Save((Join-Path $into ($base + '.png')), [System.Drawing.Imaging.ImageFormat]::Png)
+    $bad = Get-SiteUnmarked $Key   # R14 (R41): no picture of a card with a site row that has no fake-data marker
+    if ($bad -gt 0) { $lines.Add('FEEDBACK ' + $Key + ': picture not saved (' + $bad + ' site rows without a fake-data marker)') }
+    else { $Shot.Save((Join-Path $into ($base + '.png')), [System.Drawing.Imaging.ImageFormat]::Png) }
     $t = Hide-Site (([string]$Text).Trim()) ([string]$env:RADE_SITE); if ($who) { $t = ConvertTo-Masked $t $who.Secret }
     $body = @(('FEEDBACK card ' + $Key + ', window ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')), 'What does not look right:', $t)
     Set-Content -LiteralPath (Join-Path $into ($base + '.txt')) -Value $body -Encoding UTF8
