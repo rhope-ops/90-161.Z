@@ -4,6 +4,8 @@ Updated: 20 Nov 26 (Round R40 r1 ready).
 rhope-ops.github.io/90-161.Z
 Fallback (plain text):
 raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
+If github.io is blocked:
+github.com/rhope-ops/90-161.Z
 
 Every task below has the same parts: **For** (why), **Time** (an estimate), **Changes** (what it writes or changes, before I start), **Steps**, **Report** (what to send back) and **If it fails**.
 Reload this page to see new tasks (GitHub can serve a copy up to 5 minutes old).
