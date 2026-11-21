@@ -13,6 +13,9 @@ go.md stays the one home of the tasks: README.md holds a copy between two marker
 scripts/build_paste_bundles.py runs it at the end of each round build.
 Usage: python3 scripts/build_readme.py [--check]
   --check: write nothing; exit 1 when README.md is not the copy of go.md this script would write.
+Network: none.
+Writes: README.md (the part between the task markers); nothing with --check.
+Credentials: none.
 """
 import json, re, sys
 from pathlib import Path
@@ -29,7 +32,13 @@ BARE = re.compile(r'^(?:https://)?((?:raw\.githubusercontent\.com|rhope-ops\.git
 
 
 def round_lines(path):
-    """The README lines for one round script: its code, then the two links. path: repo path of the .ps1 file."""
+    """The README lines for one round script: its code, then the two links.
+
+    Args:
+        path: the repo path of the .ps1 file (scripts/gov/paste/<name>.ps1).
+    Returns:
+        A list of README lines.
+    """
     name = path.rsplit('/', 1)[-1]
     code = ''
     meta = ROOT / (path + '.sha256.json')
@@ -47,7 +56,13 @@ def round_lines(path):
 
 
 def tasks(text):
-    """The README copy of go.md text: headings one level lower (the README has its own title), links for bare URLs."""
+    """The README copy of go.md text: headings one level lower (the README has its own title), links for bare URLs.
+
+    Args:
+        text: the whole text of go.md.
+    Returns:
+        The README task part as one string, without a final line break.
+    """
     out = []
     for line in text.splitlines():
         s = line.strip()
@@ -65,7 +80,13 @@ def tasks(text):
 
 def hard_breaks(lines):
     """Keeps go.md's line breaks: GitHub joins lines of one paragraph, so a text line followed by another text line gets
-    a closing backslash (a CommonMark hard break). List items, headings and table rows keep their own lines already."""
+    a closing backslash (a CommonMark hard break). List items, headings and table rows keep their own lines already.
+
+    Args:
+        lines: the README task lines, in order.
+    Returns:
+        The same lines with the backslashes and blank lines added.
+    """
     own = re.compile(r'^\s*(?:[-*] |\d+\. |#|\||<!--)')
     out = []
     for i, line in enumerate(lines):

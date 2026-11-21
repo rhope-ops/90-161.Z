@@ -144,7 +144,8 @@ if __name__ == '__main__':
     render_logo('--check' in sys.argv[1:])
     copy_fonts(e)
     code = subprocess.call([sys.executable, '-B', str(e), '--app-root', str(ROOT)] + [a for a in sys.argv[1:] if a == '--check'])
-    if code == 0 and '--check' not in sys.argv[1:]:
+    readme = ROOT / 'scripts/build_readme.py'
+    if code == 0 and '--check' not in sys.argv[1:] and readme.is_file():   # a test copy of the app may hold no README builder
         # README.md copies go.md with the round links, for a computer where github.io is blocked (the PFM, 21 Nov 26).
-        code = subprocess.call([sys.executable, '-B', str(ROOT / 'scripts/build_readme.py')])
+        code = subprocess.call([sys.executable, '-B', str(readme)])
     sys.exit(code)
