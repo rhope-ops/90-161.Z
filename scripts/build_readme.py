@@ -74,6 +74,8 @@ def tasks(text):
         if m:
             out.append('<https://%s>' % m.group(1))
             continue
+        # GitHub reads a backslash before punctuation as an escape (Rounds\\<round> showed as Rounds<round>): double it.
+        line = re.sub(r'\\(?=[!-/:-@\[-`{-~])', r'\\\\', line)
         out.append('#' + line if line.startswith('#') else line)
     return '\n'.join(hard_breaks(out)).rstrip('\n')
 
