@@ -12,20 +12,24 @@
   line, masked, and (3) the newest Back up folder (RADE\90-161.Z\Backups\<time>): for each list, its JSON and CSV file
   and its row count. Never a row value: the backup files hold site data and stay in OneDrive (Project rule "Data
   boundary"); only counts and list titles go into the result.
+  -Part Backup (round R41, the Restore test; the PFM, 21 Nov 26): reads only (3), the newest Back up folder, so the round
+  knows that the Back up before the Restore test saved every list (12 from R41: the 12th is "PFM Recommendations (DAF Form
+  847)", a title with parentheses that RADE engine-v31 can back up).
   Result lines: RESULT INSTALL, RESULT DIAGNOSE and RESULT BACKUP, each PASS or FAIL. Exit 1 when one is FAIL.
   A report or backup older than $FreshHours hours is from an earlier day and counts as missing.
-  Run: by RADE (powershell.exe -File 90161Z-T22-maint-r14.ps1 -Part Install or -Part Read -NoPause), or by hand in T22.
+  Run: by RADE (powershell.exe -File 90161Z-T22-maint-r14.ps1 -Part Install, Read or Backup -NoPause), or by hand in T22.
   Parameters: -Id (the DODID; the profile folder name when not given), -Part, -NoPause, -TestDir (the T22 folder of a
   test; its parent is the app folder and the parent of that the RADE folder).
   Network: none.
-  Writes: Install: 90161Z-T22-install-r14.txt; Read: 90161Z-T22-maint-r14.txt, both in the T22 folder (or -TestDir).
+  Writes: Install: 90161Z-T22-install-r14.txt; Read: 90161Z-T22-maint-r14.txt; Backup: 90161Z-T22-backup-r14.txt, all in
+          the T22 folder (or -TestDir).
   Credentials: none.
 #>
-param([string]$Id, [ValidateSet('Install', 'Read')][string]$Part = 'Read', [switch]$NoPause, [string]$TestDir)
+param([string]$Id, [ValidateSet('Install', 'Read', 'Backup')][string]$Part = 'Read', [switch]$NoPause, [string]$TestDir)
 $task = 'T22'
 $Rev = 'r14'
 $FreshHours = 6   # a Diagnose report or a backup older than this is not from this round
-$BackupLists = 11   # the lists the R39 manifest names in "backup" (scripts/paste_bundles.json; tests/ps/Test-T22Maint.ps1 checks they match): fewer is a FAIL
+$BackupLists = 12   # the lists the R41 manifest names in "backup" (scripts/paste_bundles.json; tests/ps/Test-T22Maint.ps1 checks they match): fewer is a FAIL
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -242,6 +246,7 @@ try {
   if ($Part -eq 'Install') {
     $lines.Add('INSTALL the deploy of 90-161.Z 0.1.0 reached its step; RADE keeps the install record. Nothing else was installed; nothing on the site changed.')
     $lines.Add('RESULT INSTALL PASS') }
+  elseif ($Part -eq 'Backup') { foreach ($l in @(Get-BackupResult $app)) { $lines.Add($l) } }
   else {
     $rec = Get-InstallRecord $rade
     if ($rec -and $rec.installed) { $lines.Add('INSTALL record: version=' + [string]$rec.installed.version + ' last run=' + [string]$rec.lastRun.state); $lines.Add('RESULT INSTALL PASS') }
@@ -252,7 +257,7 @@ try {
   $code = 1; $lines.Add('STOPPED: ' + ([string]$_.Exception.Message))
 } finally {
   $masked = @($lines | ForEach-Object { $t = [string]$_; if ($who) { $t = ConvertTo-Masked $t $who.Secret }; $t })
-  $out = $(if ($Part -eq 'Install') { '90161Z-T22-install-' } else { '90161Z-T22-maint-' }) + $Rev + '.txt'
+  $out = $(switch ($Part) { 'Install' { '90161Z-T22-install-' } 'Backup' { '90161Z-T22-backup-' } default { '90161Z-T22-maint-' } }) + $Rev + '.txt'
   if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir $out) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause -and -not $env:RADE_CONTRACT) { [void](Read-Host 'Press Enter to close') }
