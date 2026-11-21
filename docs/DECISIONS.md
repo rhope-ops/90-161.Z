@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-21 | README.md shows the go.md tasks with Open as .txt and Copy script links (github.io may be blocked); scripts/check.local.sh fails a push when README.md is not the current copy. Scope: 90-161.Z. | PFM | PR 204 |
 | 2026-11-20 | R40 scope: T22 r13 only (reopen check names the saved card, card speed, look questions). Settings rows in F03, F05, F06 passed in R27; RADE Restore later. Scope: R40. | PFM | [r40 plan](reviews/2026-11-20-r40-plan.md) |
 | 2026-11-20 | T22 r13 card speed: log paint time too, build each card once and show or hide it after; target under 100 ms on a later open. Scope: R40. | PFM | [r39 results](reviews/2026-11-20-r39-results.md) finding 2 |
 | 2026-11-20 | R39 Diagnose: the screen showed passed checks only; the "Findings" answer was a mis-pick, so Diagnose is verified. Scope: R39. | PFM | [r39 results](reviews/2026-11-20-r39-results.md) finding 3 |
