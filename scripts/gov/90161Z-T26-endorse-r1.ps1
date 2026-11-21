@@ -379,16 +379,16 @@ function Invoke-CleanPart {
 .SYNOPSIS
   Clean, the pause-switch row (the PFM, 21 Nov 26): back to its value from before the round, only when it differs.
 .DESCRIPTION
-  The value before the round is the word Rows saved (PauseBefore). Yes, No and empty are written back as they were; a
-  row that was missing or held other text keeps the value Rows set (PauseAfter, No). With no Rows on file nothing is
+  The value before the round is the word the first Rows run saved (PauseBefore). Yes, No and empty are written back as
+  they were; a row that was missing or held other text gets the off value (No). With no Rows on file nothing is
   done. Logs RESULT PAUSEROW PASS value=<word>, or FAIL (then the state file stays, so Clean can run again).
 .PARAMETER State
   The state hashtable of this task.
 #>
 function Restore-PauseRow($State) {
   $want = [string]$State['PauseBefore']
-  if ($want -notin 'Yes', 'No', 'empty') { $want = [string]$State['PauseAfter'] }
-  if ($want -notin 'Yes', 'No', 'empty') { return }   # Rows did not run: the round did not touch the row
+  if (-not $want) { return }   # Rows did not run: the round did not touch the row
+  if ($want -notin 'Yes', 'No', 'empty') { $want = Get-ValueWord $Pause.Off }   # missing or other text: the off value, never a read-back
   $value = $(if ($want -eq 'empty') { '' } else { $want })
   try {
     $rows = @(Get-PauseRow)
@@ -428,9 +428,10 @@ function Initialize-PauseRow($State) {
   if ($rows.Count -gt 1) { Add-Result 'PAUSEROW' $false ('rows named ' + $Pause.Title + '=' + $rows.Count + ': keep one, delete the others, then run again'); return }
   if (-not $rows.Count) {
     Write-Host 'NOW Making the pause-switch row in PFM Settings'
-    $null = Add-PnPListItem -List $Pause.List -Values @{ Title = $Pause.Title; $Pause.Field = $Pause.Off } -ErrorAction Stop; $did = 'made'; $State['PauseBefore'] = 'missing' }
+    $null = Add-PnPListItem -List $Pause.List -Values @{ Title = $Pause.Title; $Pause.Field = $Pause.Off } -ErrorAction Stop; $did = 'made'; if (-not $State['PauseBefore']) { $State['PauseBefore'] = 'missing' } }
   else {
-    $State['PauseBefore'] = Get-ValueWord $rows[0][$Pause.Field]
+    # Only the first Rows run of a round saves the value before it: a rerun would save the round's own off value (review MAJOR)
+    if (-not $State['PauseBefore']) { $State['PauseBefore'] = Get-ValueWord $rows[0][$Pause.Field] }
     if (([string]$rows[0][$Pause.Field]).Trim() -ceq $Pause.Off) { $did = 'kept' }
     else { $null = Set-PnPListItem -List $Pause.List -Identity $rows[0].Id -Values @{ $Pause.Field = $Pause.Off } -ErrorAction Stop; $did = 'set' } }
   $now = @(Get-PauseRow); $val = $(if ($now.Count -eq 1) { ([string]$now[0][$Pause.Field]).Trim() } else { '' })

@@ -163,8 +163,8 @@ try {
   $ok = ($e.Count -eq 3 -and $l.Count -eq 1 -and -not $bad -and $r.File -match '(?m)^RESULT ROWS PASS made=4 found=0')
   Test-That 'Rows makes 3 endorsement rows and 1 log row on the fake publication, each with the fake-data title' $ok $r.File
   $r = Invoke-T26 'Rows'
-  $ok = ($r.Code -eq 0 -and @($global:F.Lists['PFM Endorsements']).Count -eq 3 -and $r.File -match 'RESULT ROWS PASS made=0 found=4' -and $r.File -match 'row=kept before=No now=No')
-  Test-That 'a second Rows makes no second row and keeps the pause value' $ok $r.File
+  $ok = ($r.Code -eq 0 -and @($global:F.Lists['PFM Endorsements']).Count -eq 3 -and $r.File -match 'RESULT ROWS PASS made=0 found=4' -and $r.File -match 'row=kept before=missing now=No')
+  Test-That 'a second Rows makes no second row and keeps the pause value and the value before the round (missing)' $ok $r.File
   $r = Invoke-T26 'Change'
   $ok = ($r.Code -eq 0 -and $global:F.Bin.Count -eq 3 -and $global:F.Purged -eq 1 -and @($global:F.Lists['PFM Endorsements']).Count -eq 1)
   $ok = ($ok -and @($global:F.Lists['PFM Activity Log']).Count -eq 0 -and $r.File -match '(?m)^RESULT CHANGE PASS to the Recycle Bin=3 deleted for good=1 new row=1')
@@ -205,6 +205,14 @@ try {
   $null = Invoke-T26 'Rows'; $r = Invoke-T26 'Clean'
   $ok = (@($global:F.Lists['PFM Settings'])[0].SettingValue -eq 'Yes' -and $r.File -match '(?m)^RESULT PAUSEROW PASS value=Yes\r?$')
   Test-That 'Clean after Rows set the pause row from Yes to No: sets it back to Yes (RESULT PAUSEROW PASS value=Yes)' $ok $r.File
+  Reset-RestoreCase @('Yes')
+  $null = Invoke-T26 'Rows'; $null = Invoke-T26 'Rows'; $r = Invoke-T26 'Clean'
+  $ok = (@($global:F.Lists['PFM Settings'])[0].SettingValue -eq 'Yes' -and $r.File -match '(?m)^RESULT PAUSEROW PASS value=Yes\r?$')
+  Test-That 'Rows twice, then Clean: the value before the round (Yes) is kept and set back' $ok $r.File
+  Reset-RestoreCase @('Maybe')
+  $null = Invoke-T26 'Rows'; $r = Invoke-T26 'Clean'
+  $ok = (@($global:F.Lists['PFM Settings'])[0].SettingValue -eq 'No' -and $r.File -match '(?m)^RESULT PAUSEROW PASS value=No\r?$')
+  Test-That 'Clean after a pause row with other text: the off value No, never the old text' $ok $r.File
   Reset-RestoreCase @('No')
   $null = Invoke-T26 'Rows'; $global:F.Lists['PFM Settings'].Clear(); $r = Invoke-T26 'Clean'
   $ok = ($r.File -match '(?m)^RESULT PAUSEROW FAIL rows named FlowsPaused=0' -and (Test-Path -LiteralPath $stateFile))
