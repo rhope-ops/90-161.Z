@@ -63,6 +63,6 @@ The script does not check these. Measure them with `getBoundingClientRect()` in 
 
 - Each command you ran, with its result line.
 - What you saw (value, status, text) next to what you expected.
-- A UI change: one line per width and scheme from the script, the hand checks with their numbers, and links to the screenshots.
+- A UI change: one line per width and scheme from the script, the hand checks with their numbers, and, to show the PFM the change, the link to an HTML artifact of the page with invented data (the content check reads HTML, not a PNG; the screenshots are for your own checks).
 - "verified" only when the checks (section 2) passed and the change was proven (section 4, and section 5 for a UI change with every check passed or each fail listed with its cause). A change with nothing to run: verified by the checks alone, and say so. Otherwise "done, not verified", with what did not run and why.
 - The proposed "Commands" lines, when a line was "not set yet" or missing.

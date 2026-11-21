@@ -1,0 +1,32 @@
+/* GENERATED from docs/brand/fulcrum.json by: python3 scripts/fulcrum_tokens.py --write. Do not edit by hand.
+   Fulcrum Minimal 1.0.0 (2026-11-20). Source of the primitives: Logo Studies canvas, rho-family-standard.json v2.9, palettes.fulcrum (the five primitives); UI roles: the PFM's decisions of 2026-11-20 (docs/DECISIONS.md).
+   Use: link this file, put class fm-band on the header band, fm-disc on the main card, fm-dots on dividers
+   (an <hr>), fm-fulcrum on section headings, fm-btn on the primary button, fm-error on error text. */
+:root{--fm-ink:#15171D;--fm-cream:#F3EEE4;--fm-ember:#E4572E;--fm-slate:#5A5E6A;--fm-gold:#D4AF37;--fm-page:#F3EEE4;--fm-page-fg:#15171D;--fm-page-muted:#5A5E6A;--fm-page-line:#DED6C8;--fm-page-link:#A63A16;--fm-page-error:#A3241A;--fm-disc:#15171D;--fm-disc-fg:#F3EEE4;--fm-disc-muted:#A9ACB5;--fm-disc-line:#30343D;--fm-disc-ring:#F3EEE4;--fm-disc-link:#F2916F;--fm-disc-error:#F49B91;--fm-accent:#E4572E;--fm-on-accent:#15171D;--fm-dots:#5A5E6A;--fm-rule:#D4AF37;--fm-band:#15171D;--fm-band-fg:#F3EEE4;--fm-band-muted:#A9ACB5;--fm-band-link:#F2916F;--fm-band-error:#F49B91;--fm-focus:#E4572E;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fm-page:#15171D;--fm-page-fg:#F3EEE4;--fm-page-muted:#A9ACB5;--fm-page-line:#30343D;--fm-page-link:#F2916F;--fm-page-error:#F49B91;--fm-disc:#1C1F27;--fm-disc-fg:#F3EEE4;--fm-disc-muted:#A9ACB5;--fm-disc-line:#30343D;--fm-disc-ring:#5A5E6A;--fm-disc-link:#F2916F;--fm-disc-error:#F49B91;--fm-accent:#E4572E;--fm-on-accent:#15171D;--fm-dots:#5A5E6A;--fm-rule:#D4AF37;--fm-band:#15171D;--fm-band-fg:#F3EEE4;--fm-band-muted:#A9ACB5;--fm-band-link:#F2916F;--fm-band-error:#F49B91;--fm-focus:#F2916F;color-scheme:dark}}
+:root[data-theme="dark"]{--fm-page:#15171D;--fm-page-fg:#F3EEE4;--fm-page-muted:#A9ACB5;--fm-page-line:#30343D;--fm-page-link:#F2916F;--fm-page-error:#F49B91;--fm-disc:#1C1F27;--fm-disc-fg:#F3EEE4;--fm-disc-muted:#A9ACB5;--fm-disc-line:#30343D;--fm-disc-ring:#5A5E6A;--fm-disc-link:#F2916F;--fm-disc-error:#F49B91;--fm-accent:#E4572E;--fm-on-accent:#15171D;--fm-dots:#5A5E6A;--fm-rule:#D4AF37;--fm-band:#15171D;--fm-band-fg:#F3EEE4;--fm-band-muted:#A9ACB5;--fm-band-link:#F2916F;--fm-band-error:#F49B91;--fm-focus:#F2916F;color-scheme:dark}
+/* Components: each one is a shape from the marks (the PFM, 2026-11-20). */
+body{background:var(--fm-page);color:var(--fm-page-fg)}
+a{color:var(--fm-page-link)}
+:focus-visible{outline:3px solid var(--fm-focus);outline-offset:2px}
+/* The header band: ink with the gold rule, as the disc and the phrase. */
+.fm-band{background:var(--fm-band);color:var(--fm-band-fg);border-bottom:3px solid var(--fm-rule)}
+.fm-band .fm-muted{color:var(--fm-band-muted)}
+.fm-band a{color:var(--fm-band-link)}
+.fm-band .fm-error{color:var(--fm-band-error)}
+/* The disc: a card drawn as the logo, an ink disc with a ring inset 5px. */
+.fm-disc{background:var(--fm-disc);color:var(--fm-disc-fg);border-radius:14px;padding:22px;
+  box-shadow:inset 0 0 0 5px var(--fm-disc),inset 0 0 0 6px var(--fm-disc-ring)}
+.fm-disc a{color:var(--fm-disc-link)}
+.fm-disc .fm-muted{color:var(--fm-disc-muted)}
+.fm-disc .fm-error{color:var(--fm-disc-error)}
+.fm-muted{color:var(--fm-page-muted)}
+.fm-error{color:var(--fm-page-error)}
+/* The dotted line: round dots, as the marks' level line (never a dash pattern). */
+.fm-dots{border:0;height:4px;margin:0;background:radial-gradient(circle,var(--fm-dots) 1.5px,transparent 1.7px) 0 0/10px 4px repeat-x}
+/* The fulcrum: an ember triangle before a heading. */
+.fm-fulcrum{display:flex;align-items:center;gap:8px}
+.fm-fulcrum::before{content:"";flex:none;width:12px;height:10px;background:var(--fm-accent);clip-path:polygon(50% 0,100% 100%,0 100%)}
+/* The primary button: ember with ink text in both themes. */
+.fm-btn{background:var(--fm-accent);color:var(--fm-on-accent);border:1px solid var(--fm-accent);border-radius:6px;min-height:44px;padding:0 16px;font-weight:600}
+@media (forced-colors:active){.fm-disc{box-shadow:none;border:1px solid CanvasText}.fm-fulcrum::before,.fm-dots{forced-color-adjust:none}}
