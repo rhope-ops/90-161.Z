@@ -1,6 +1,6 @@
-# Tests scripts/gov/90161Z-T22-maint-r13.ps1 (round R39; the PFM, 20 Nov 26): the test install step and the read-back of
+# Tests scripts/gov/90161Z-T22-maint-r14.ps1 (round R39; the PFM, 20 Nov 26): the test install step and the read-back of
 # RADE's Diagnose report and Back up folder, on fake folders (FAKE data, no site). Also checks that the script's list
-# count ($BackupLists) equals the "backup" titles of the R39 deploy app in scripts/paste_bundles.json (one home).
+# count ($BackupLists) equals the "backup" titles of the deploy app in scripts/paste_bundles.json (one home).
 # Network: none.
 # Writes: one temporary folder per case; removed at the end.
 # Credentials: none.
@@ -9,7 +9,7 @@
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
-$script = Join-Path $Root 'scripts/gov/90161Z-T22-maint-r13.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T22-maint-r14.ps1'
 # Record one result. Takes the name, the condition and the output; returns nothing.
 function Test-That([string]$Name, [bool]$Ok, [string]$Out) {
   if ($Ok) { $script:pass++; Write-Host ('T22MAINT PASS ' + $Name) } else { $script:fail++; Write-Host ('T22MAINT FAIL ' + $Name + ': ' + $Out) }
@@ -32,7 +32,7 @@ When above 0, PFM Waivers holds this many rows (a large file, for the JSON reade
 .OUTPUTS
 The T22 folder of the fake app folder.
 #>
-function Get-FakeRade([bool]$Record, [bool]$Report, [bool]$Csv, [int]$Lists = 11, [bool]$Tilde = $false, [int]$BigRows = 0) {
+function Get-FakeRade([bool]$Record, [bool]$Report, [bool]$Csv, [int]$Lists = 12, [bool]$Tilde = $false, [int]$BigRows = 0) {
   $t = Join-Path ([IO.Path]::GetTempPath()) ('t22m-' + [guid]::NewGuid().ToString('N')); $app = Join-Path (Join-Path $t 'RADE') '90-161.Z'
   $null = New-Item -ItemType Directory -Path (Join-Path $app 'T22') -Force
   if ($Record) { $c = Join-Path (Join-Path (Join-Path $t 'RADE') 'Config') 'installed'; $null = New-Item -ItemType Directory -Path $c -Force
@@ -45,7 +45,10 @@ function Get-FakeRade([bool]$Record, [bool]$Report, [bool]$Csv, [int]$Lists = 11
   $w = '[{"Title":"FAKE 1"},{"Title":"FAKE 2"}]'
   if ($BigRows -gt 0) { $w = '[' + ((1..$BigRows | ForEach-Object { '{"Title":"FAKE row ' + $_ + ' with some longer text to make the file large"}' }) -join ',') + ']' }
   [IO.File]::WriteAllText((Join-Path $b 'PFM Waivers.json'), $w)
-  for ($i = 2; $i -le $Lists; $i++) {
+  # R41: the 12th list has parentheses in its title (RADE engine-v31 backs it up by that name).
+  $rec = Join-Path $b 'PFM Recommendations (DAF Form 847)'
+  if ($Lists -ge 2) { Set-Content -LiteralPath ($rec + '.json') -Value '[]'; Set-Content -LiteralPath ($rec + '.csv') -Value '' }
+  for ($i = 3; $i -le $Lists; $i++) {
     Set-Content -LiteralPath (Join-Path $b ('FAKE List ' + $i + '.json')) -Value '[]'; Set-Content -LiteralPath (Join-Path $b ('FAKE List ' + $i + '.csv')) -Value '' }
   if ($Tilde) { Set-Content -LiteralPath (Join-Path $b '~1.json') -Value '[]'; Set-Content -LiteralPath (Join-Path $b '~1.csv') -Value '' }
   if ($Csv) { Set-Content -LiteralPath (Join-Path $b 'PFM Waivers.csv') -Value '"Title"' }
@@ -63,18 +66,35 @@ Test-That 'all there: 3 PASS, exit 0' ($r.Code -eq 0 -and $r.Out -match 'RESULT 
 Test-That 'counts only: the rows, never a value' ($r.Out -match 'BACKUP list "PFM Waivers": rows=2 csv=yes' -and $r.Out -notmatch 'FAKE 1') $r.Out
 $ok = ($r.Out -match 'pass=1 findings=2 notes=1' -and $r.Out -match 'FINDING: b at <URL>' -and $r.Out -notmatch 'example\.')
 Test-That 'a Diagnose finding is masked (a URL, and the site host RADE holds)' $ok $r.Out
-Test-That 'the result file is written' (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-maint-r13.txt')) $r.Out
+Test-That 'the result file is written' (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-maint-r14.txt')) $r.Out
 $d = Get-FakeRade $false $false $false; $dirs += $d; $r = Invoke-Maint $d 'Read'
 $ok = ($r.Code -eq 1 -and $r.Out -match 'RESULT INSTALL FAIL' -and $r.Out -match 'RESULT DIAGNOSE FAIL' -and $r.Out -match 'csv=no' -and $r.Out -match 'RESULT BACKUP FAIL')
 Test-That 'nothing there: 3 FAIL (a backup without its csv fails), exit 1' $ok $r.Out
 $r = Invoke-Maint $d 'Install'
-Test-That 'install step passes and writes its file' ($r.Code -eq 0 -and $r.Out -match 'RESULT INSTALL PASS' -and (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-install-r13.txt'))) $r.Out
+Test-That 'install step passes and writes its file' ($r.Code -eq 0 -and $r.Out -match 'RESULT INSTALL PASS' -and (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-install-r14.txt'))) $r.Out
 $d = Get-FakeRade $true $true $true 3; $dirs += $d; $r = Invoke-Maint $d 'Read'
-Test-That 'fewer lists than the manifest names: FAIL' ($r.Code -eq 1 -and $r.Out -match 'BACKUP 3 of 11 lists saved' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
-$d = Get-FakeRade $true $true $true 11 $true; $dirs += $d; $r = Invoke-Maint $d 'Read'
+Test-That 'fewer lists than the manifest names: FAIL' ($r.Code -eq 1 -and $r.Out -match 'BACKUP 3 of 12 lists saved' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
+$d = Get-FakeRade $true $true $true 12 $true; $dirs += $d; $r = Invoke-Maint $d 'Read'
 Test-That 'a list file RADE did not name: FAIL' ($r.Code -eq 1 -and $r.Out -match 'BACKUP 1 list files without their list name' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
-$d = Get-FakeRade $true $true $true 11 $false 40000; $dirs += $d; $r = Invoke-Maint $d 'Read'
+$d = Get-FakeRade $true $true $true 12 $false 40000; $dirs += $d; $r = Invoke-Maint $d 'Read'
 Test-That 'a large list file (about 3 MB) is counted' ($r.Out -match 'BACKUP list "PFM Waivers": rows=40000 csv=yes' -and $r.Out -match 'RESULT BACKUP PASS') $r.Out
+# R41: -Part Backup reads only the newest backup folder (no install record, no Diagnose report needed), made after the
+# T26 Rows time in the T26 state file. Set-RowsTime writes that file. Takes the T22 folder and the time; returns nothing.
+function Set-RowsTime([string]$Dir, [datetime]$At) {
+  $t = Join-Path (Split-Path -Parent $Dir) 'T26'; $null = New-Item -ItemType Directory -Path $t -Force
+  Set-Content -LiteralPath (Join-Path $t '90161Z-T26-endorse-state-r1.txt') -Value @('PubId=50', ('RowsAt=' + $At.ToString('yyyy-MM-ddTHH:mm:ss')))
+}
+$d = Get-FakeRade $false $false $true; $dirs += $d; $r = Invoke-Maint $d 'Backup'
+$ok = ($r.Code -eq 1 -and $r.Out -match 'BACKUP no time of the fake rows on file' -and $r.Out -match 'RESULT BACKUP FAIL')
+Test-That 'Backup part with no Rows time on file: FAIL, exit 1' $ok $r.Out
+Set-RowsTime $d (Get-Date).AddHours(1); $r = Invoke-Maint $d 'Backup'
+$ok = ($r.Code -eq 1 -and $r.Out -match 'older than the fake rows' -and $r.Out -match 'RESULT BACKUP FAIL')
+Test-That 'Backup part with a backup older than the Rows time: FAIL, exit 1' $ok $r.Out
+Set-RowsTime $d (Get-Date).AddHours(-1); $r = Invoke-Maint $d 'Backup'
+$ok = ($r.Code -eq 0 -and $r.Out -match 'RESULT BACKUP PASS' -and $r.Out -notmatch 'RESULT (INSTALL|DIAGNOSE)' -and $r.Out -match 'BACKUP list "PFM Recommendations \(DAF Form 847\)": rows=0 csv=yes')
+Test-That 'Backup part: only RESULT BACKUP, the list with parentheses is named' ($ok -and (Test-Path -LiteralPath (Join-Path $d '90161Z-T22-backup-r14.txt'))) $r.Out
+$d = Get-FakeRade $false $false $true 11; $dirs += $d; Set-RowsTime $d (Get-Date).AddHours(-1); $r = Invoke-Maint $d 'Backup'
+Test-That 'Backup part with 11 of 12 lists: FAIL, exit 1' ($r.Code -eq 1 -and $r.Out -match 'BACKUP 11 of 12 lists saved' -and $r.Out -match 'RESULT BACKUP FAIL') $r.Out
 # One home: the script's count equals the "backup" titles of the deploy app in the round definition.
 $m = [regex]::Match((Get-Content -LiteralPath $script -Raw), '(?m)^\$BackupLists = (\d+)')
 $man = Get-Content -LiteralPath (Join-Path $Root 'scripts/paste_bundles.json') -Raw | ConvertFrom-Json

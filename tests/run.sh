@@ -37,7 +37,7 @@ grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py' 'scripts/rade_newest.py'
 grp t22 'scripts/gov/90161Z-T22-*'
-grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1' 'tests/ps/Test-T22Maint.ps1' 'scripts/paste_bundles.json'
+grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1' 'tests/ps/Test-T22Maint.ps1' 'tests/ps/Test-T26.ps1' 'scripts/paste_bundles.json'
 # Lint: the full lane, or a changed scripts/lint.sh, lints every file; else only the changed PowerShell files under scripts/gov.
 lintfiles=()
 if [ "$changed" != '*all*' ] && ! need scripts/lint.sh; then
@@ -54,7 +54,7 @@ bg=$(mktemp -d)
 [ "${on[lint]}" = 1 ] && { scripts/lint.sh "${lintfiles[@]}" >"$bg/lint.out" 2>&1 & lint_pid=$!; }
 [ "${on[t20]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T20.ps1 >"$bg/t20.out" 2>&1 & t20_pid=$!; }
 [ "${on[t21]}" = 1 ] && { pwsh -NoProfile -File tests/ps/Test-T21.ps1 >"$bg/t21.out" 2>&1 & t21_pid=$!; }
-[ "${on[mask]}" = 1 ] && { { pwsh -NoProfile -File tests/ps/Test-T22Maint.ps1 && pwsh -NoProfile -File tests/ps/Test-Mask.ps1; } >"$bg/mask.out" 2>&1 & mask_pid=$!; }   # R39: T22 maint first
+[ "${on[mask]}" = 1 ] && { { pwsh -NoProfile -File tests/ps/Test-T22Maint.ps1 && pwsh -NoProfile -File tests/ps/Test-T26.ps1 && pwsh -NoProfile -File tests/ps/Test-Mask.ps1; } >"$bg/mask.out" 2>&1 & mask_pid=$!; }   # R39: T22 maint first; R41: T26
 # The small pwsh checks (Hide-Site masking, Get-SiteAddress, two-space sentences, opening paragraph, Font binding, T20 -PlanOnly)
 # run in ONE more pwsh process (tests/ps/Invoke-Batch.ps1; bloat audit 3, P1, 2026-11-15), each in its own runspace, each
 # writing <name>.out and <name>.rc to a fresh folder. A missing .rc (the member did not run) or an rc other than 0 = FAIL.
@@ -315,7 +315,7 @@ else sk "T21 probe script on the fake site"; fi
 # Hide-Site (one masking function, scripts/gov/src/site-common.ps1): every pattern, the known limits, and one copy per task script.
 if [ "${on[mask]}" = 1 ]; then
 wait "$mask_pid"; maskrc=$?; out=$(tail -1 "$bg/mask.out")
-case "$maskrc $out" in "0 MASK pass="*" fail=0") ok "Hide-Site masking test and T22 maint read-back ($(grep '^T22MAINT pass' "$bg/mask.out"); $out)";; *) grep -E "MASKTEST FAIL|T22MAINT FAIL" "$bg/mask.out" | cut -c1-300; bad "Hide-Site masking or T22 maint test (exit $maskrc): $out";; esac
+case "$maskrc $out" in "0 MASK pass="*" fail=0") ok "Hide-Site masking test, T22 maint read-back and T26 endorser answer ($(grep '^T22MAINT pass' "$bg/mask.out"); $(grep '^T26 pass' "$bg/mask.out"); $out)";; *) grep -E "MASKTEST FAIL|T22MAINT FAIL|T26TEST FAIL" "$bg/mask.out" | cut -c1-300; bad "Hide-Site masking, T22 maint or T26 test (exit $maskrc): $out";; esac
 else sk "Hide-Site masking test"; fi
 
 node templates/build_crm_template.js >/tmp/crm.out 2>&1 && grep -q "tableWidthDXA=9331 columns=9" /tmp/crm.out && ok "CRM template builds ($(cat /tmp/crm.out | sed s,.*CRM_A12-1.docx,,))" || bad "CRM template build"
@@ -355,8 +355,8 @@ out=$(python3 scripts/bump_lock.py --test 2>&1); [ $? -eq 0 ] && ok "bump_lock r
 out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 # engine-v8 on: the header names every engine code file of the lock ("<file>, sha256 <12 hex>"); each must match (the engine file itself must be in the list, or nh counts 1).
-# engine-v21 on: engine/rade_hash.py, engine-v29 on: engine/rade_tokens.py (build time only) are in the lock but not in the header; the stale check above covers them.
-ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1')) and k not in ('engine/rade_hash.py','engine/rade_tokens.py')];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
+# engine-v21 on: engine/rade_hash.py, engine-v29 on: engine/rade_tokens.py, engine-v31 on: engine/rade_fields.py (build time only; PFM 21 Nov 26) are in the lock but not in the header; the stale check above covers them.
+ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1')) and k not in ('engine/rade_hash.py','engine/rade_tokens.py','engine/rade_fields.py')];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
 nh=0; [ -n "$ef" ] || nh=1; for f in $ef; do
   nh=$((nh + $(grep -L "${f%%=*}, sha256 ${f#*=}[;)]" scripts/gov/paste/*.ps1 | wc -l))); done
 nb=$(python3 -c "import json;print(len(json.load(open('scripts/paste_bundles.json'))['bundles']))"); [ "$out" = "PASTE bundles=$nb stale=0" ] && [ "$nh" -eq 0 ] && ok "paste bundles current and built by the pinned engine ($out; bundles naming another engine: $nh)" || bad "paste bundles: $out; bundles naming another engine: $nh (run python3 scripts/build_paste_bundles.py with RADE_DIR not set)"
@@ -613,13 +613,13 @@ assert [(a, b) for a, b, _ in got] == [('PFM Publications', 'ActionStatus'), ('P
 for title, name, ch in got:
     assert [c.strip().strip("'") for c in ch.split(',')] == [x for x in by_title[title]['fields'] if x['internalName'] == name][0]['choices'], ch
 PYEOF
-# T22 PFM window test r13 (R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and the 4 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
-# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r12 gone, r13 and its parts only, no '0 findings' link (V3), UI block current, palette tokens.
+# T22 PFM window test r14 (R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and the 4 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
+# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r13 gone, r14 and its parts only, no '0 findings' link (V3), UI block current, palette tokens.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && ok "T22 window preview cards (r13)" || bad "T22 window preview cards (r13)"
+python3 - <<'PYT22' && python3 tests/check_t22_r14.py && ok "T22 window preview cards (r14; R41: click-through, site read, grid fit)" || bad "T22 window preview cards (r14)"
 import json, re, subprocess, pathlib
-f = 'scripts/gov/90161Z-T22-pfm-window-r13.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r13.ps1' % n)
-assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[012].ps1')], 'an older revision is still there'
+f = 'scripts/gov/90161Z-T22-pfm-window-r14.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r14.ps1' % n)
+assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[0123].ps1')], 'an older revision is still there'
 parts = [x.strip().strip("'") for x in re.search(r"\$Parts = @\(([^)]*)\)", pathlib.Path(f).read_text()).group(1).split(',')]
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
@@ -649,19 +649,19 @@ assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C =
 after = src.split('# <<< rade-ui', 1)[1]
 assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
 assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
-assert "$Rev = 'r13'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r13.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
+assert "$Rev = 'r14'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r14.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
 grids = len(re.findall(r'New-Object System.Windows.Forms.DataGridView\b(?!\w)', src))
 assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and src.count("$dc.AutoSizeMode='Fill'") >= 1, 'every grid fills its columns'
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
 hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
 # -Opened (the look questions' gate in the round): fake result files opened / not opened / STOPPED / 4 hours old; one line, no other file
-import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r13.txt'); got = {}
+import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r14.txt'); got = {}
 for k, body in {'open': 'CARDS opened: home, step8 (17 of 17)\nPASS layout', 'none': 'CARDS opened: none (0 of 17)', 'stop': 'CARDS opened: home (1 of 17)\nSTOPPED: no window (x)', 'old': 'CARDS opened: home, step8 (17 of 17)'}.items():
     w.write_text(body + '\n'); k == 'old' and os.utime(w, (time.time() - 4 * 3600,) * 2); r = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-Opened', '-TestDir', d], capture_output=True, text=True, timeout=60); got[k] = (r.stdout.strip(), r.returncode)
 assert got == {'open': ('PASS the window opened (17 of 17 cards)', 0), 'none': ('FAIL the window did not open', 1), 'stop': ('FAIL the window did not open', 1), 'old': ('FAIL the window did not open (no result from this round)', 1)} and len(list(pathlib.Path(d).iterdir())) == 1, got
 PYT22
-else sk "T22 window preview cards (r13)"; fi
+else sk "T22 window preview cards (r14)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }

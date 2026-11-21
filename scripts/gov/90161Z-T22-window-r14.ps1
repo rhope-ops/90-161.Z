@@ -1,8 +1,11 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r13, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r14, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
+  R14 (R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md rows 3 and 4): the check bar moved to the bar part (it
+  holds the click-through too); the layout self-check line names the open (first, kept, rebuild, resize: $wn.OpenKind),
+  and the check waits for the layout to settle and fits the grids again when a fit changed one (R40 finding 3).
   R13 (R40; PFM 20 Nov 26, R39 finding 2): $wn.Show shows the kept page of a card when it can, and builds the card
   ($wn.ShowBuild) only when it must change; the keep part holds the kept pages, their rules and the CARDTIME lines.
   $wn.LastKey reads the card saved at the last close (for $wn.OpenLast and the -Again check).
@@ -23,9 +26,9 @@
   colors when it goes off ($wn.LogoImage); each rail build checks the logo it shows ($wn.LogoFacts and $wn.LogoBad in
   the measure part: a LOGO line, and a LAYOUT line when the logo has the wrong colors).
   The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
-  Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $Checks, $RailItems, $Rev, $dir, $lines.
+  Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r14.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
@@ -119,7 +122,8 @@ $wn.BuildRail = {
     $x.Add_Click({ if (& $ui.Settled) { $script:presses++; $wn.Notice = ''; $wn.Err = ''; $key = [string]$this.Tag; $go = 'home'
         foreach ($q in $RailItems) { if ($q.Key -eq $key) { $go = $q.Go } }; & $wn.Show $go } })
     [void]$rail.Controls.Add($x); $wn.RailBtn += $x }
-  $ft = & $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $ft.BackColor = $pc.navy; $ft.Text = 'FAKE data' + [Environment]::NewLine + 'Preview ' + $Rev; $ft.Visible = $true; $ft.Anchor = 'Left, Bottom'
+  $src = $(if ($script:SiteSource -eq 'site') { 'Test site data' } else { 'FAKE data' })   # R14: the source of the cards (site part)
+  $ft = & $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $ft.BackColor = $pc.navy; $ft.Text = $src + [Environment]::NewLine + 'Preview ' + $Rev; $ft.Visible = $true; $ft.Anchor = 'Left, Bottom'
   $ft.Location = [Drawing.Point]::new((& $wn.Sc 16), ($rail.ClientSize.Height - (& $wn.Sc 56))); [void]$rail.Controls.Add($ft)
   $rail.ResumeLayout($true); & $wn.RailLayout }
 $wn.Crumb = {
@@ -286,6 +290,7 @@ $wn.Show = {
   built ($wn.ShowBuild). The rules: the keep part's header. The page column width comes from the main column's full
   width, with or without its scroll bar, so it does not depend on the card shown before (r12 measured the width that
   was left beside the last card's scroll bar).
+  R14 (R41; R40 finding 3): $wn.OpenKind names the open (first, kept, rebuild, resize) for the layout self-check line.
   .PARAMETER Key
   The card key in $Cards; an unknown key does nothing.
   #>
@@ -308,6 +313,8 @@ $wn.Show = {
     $r.BackColor = $(if ($r.On) { $r.OnBack } else { $r.Back }); $r.ForeColor = $(if ($r.On) { $r.OnFore } else { $r.Fore }); $r.Invalidate() }
   $sig = & $wn.KeepSig $cw
   $kept = $(if ($again) { $null } else { & $wn.KeepFind $Key $sig }); $wn.KeepUsed = [bool]$kept
+  # R14 (R41; R40 finding 3): which open this is, for the layout self-check line (first, kept, rebuild, resize)
+  $wn.OpenKind = $(if ($wn.Resizing) { 'resize' } elseif ($kept) { 'kept' } elseif ($again -or $wn.Kept[$Key]) { 'rebuild' } else { 'first' }); $wn.FitTries = 0
   if ($kept) {   # R13: the kept page: its state back, the page shown in place of the last one, at the top, grids reset
     & $wn.KeepLoad $kept; & $wn.PageSwap $kept.Page
     $page.Location = [Drawing.Point]::new($padX, (& $wn.Sc 22)); & $wn.KeepReset $kept
@@ -317,7 +324,7 @@ $wn.Show = {
   $form.AcceptButton = $wn.Primary
   $ui.CardAt = $ui.Clock.Elapsed.TotalMilliseconds
   if ($wn.Focus -eq 'reason' -and $wn.Reason) { [void]$wn.Reason.Focus(); $wn.Focus = '' } elseif ($wn.Primary) { [void]$wn.Primary.Focus() }
-  if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start(); & $wn.KeepTime $Key $t0 } }
+  if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start(); & $wn.KeepTime $Key $t0; & $wn.WalkSeen $Key } }   # R14: the click-through notes the open
 # Where the window place is kept between runs (none with -Measure: no task folder).
 $wn.BoundsFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-bounds.json' } else { '' })
 # R12 (R39; docs/phases.md): the card the window was closed on, opened again at the next start (none with -Measure).
@@ -378,73 +385,22 @@ $wn.SaveBounds = {
     $o = '{ "Left": ' + $r.X + ', "Top": ' + $r.Y + ', "Width": ' + $r.Width + ', "Height": ' + $r.Height + ', "State": "' + $st + '" }'
     Set-Content -LiteralPath $wn.BoundsFile -Value $o -Encoding UTF8
   } catch { $lines.Add('NOTE the window place was not saved: ' + ([string]$_.Exception.Message)) } }
-# The check bar (PFM 17 Nov 26): the checks show inside the window, one at a time, with Pass and Fail; no list to remember.
-# It sits at the bottom of the window and is always visible. Pass or Fail moves to the next check; the answers go to the result file.
-$wn.CheckAt = 0; $wn.Answers = New-Object 'string[]' $Checks.Count
-# Shows the current check (its number and text) with Pass and Fail, or the closing line when all are answered.
-$wn.BarShow = {
-  $i = [int]$wn.CheckAt
-  if ($i -lt $Checks.Count) {
-    $wn.BarNo.Text = 'Check ' + ($i + 1) + ' of ' + $Checks.Count; $wn.BarText.Text = [string]$Checks[$i].Text
-    $wn.BarPass.Visible = $true; $wn.BarFail.Visible = $true }
-  else {
-    $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = $script:ChecksDone   # R13: names no card (the -Again check names the card closed on)
-    $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false } }
-# Keeps the answer (PASS or FAIL) to the current check and shows the next one.
-$wn.Answer = { param([string]$Result)
-  if ($wn.CheckAt -ge $Checks.Count) { return }
-  $wn.Answers[$wn.CheckAt] = $Result; $wn.CheckAt++
-  & $wn.BarShow }
-$wn.BarLayout = {
-  <#
-  .SYNOPSIS
-  Lays out the check bar for the window width: the check text at the left, as tall as the longest check needs, and Pass
-  and Fail at the right, centered in the bar.
-  #>
-  if (-not $wn.Bar) { return }
-  $w = $form.ClientSize.Width; $pad = & $wn.Sc 16; $gap = & $wn.Sc 8
-  $pw = [int]$wn.BarPass.Width; $fw = [int]$wn.BarFail.Width   # R11 (B1): the fixed RADE sizes
-  $bh = [math]::Max($wn.BarPass.Height, $wn.BarFail.Height)
-  # R10 (R37, B13): the Feedback link sits left of Pass, in the same place on every card; the check text gets the rest.
-  $kw = $(if ($wn.FbLink) { [math]::Max($wn.FbLink.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.FbLink.MinimumSize.Width) + 2 * $gap } else { 0 })
-  $tw = [math]::Max((& $wn.Sc 200), $w - 2 * $pad - $pw - $fw - 2 * $gap - $kw)
-  $th = 0; foreach ($c in $Checks) { $m = & $ui.Meas ([string]$c.Text) $ui.F.Body $tw; $th = [math]::Max($th, [int]$m.Height) }
-  $th += (& $wn.Sc 6)
-  $nh = [int]$wn.BarNo.PreferredSize.Height
-  $wn.Bar.Height = [math]::Max($bh + 2 * $pad, $pad + $nh + (& $wn.Sc 2) + $th + $pad)
-  $wn.BarNo.Location = [Drawing.Point]::new($pad, $pad)
-  $wn.BarText.Location = [Drawing.Point]::new($pad, ($pad + $nh + (& $wn.Sc 2))); & $ui.SetWrap $wn.BarText $tw; $wn.BarText.Size = [Drawing.Size]::new($tw, $th)
-  $by = [int](($wn.Bar.Height - $bh) / 2)
-  $wn.BarPass.Location = [Drawing.Point]::new(($w - $pad - $fw - $gap - $pw), $by); $wn.BarFail.Location = [Drawing.Point]::new(($w - $pad - $fw), $by)
-  if ($wn.FbLink) { $wn.FbLink.Location = [Drawing.Point]::new(($wn.BarPass.Left - $kw + $gap), [int](($wn.Bar.Height - $wn.FbLink.Height) / 2)) } }
-$wn.BuildBar = {
-  <#
-  .SYNOPSIS
-  Builds the check bar at the bottom of the window: a line on top, the check number, the check text, Pass and Fail.
-  #>
-  $bar = New-Object System.Windows.Forms.Panel; $bar.Dock = 'Bottom'; $bar.BackColor = $ui.C.White; $bar.AccessibleName = 'Check bar'
-  $bar.Add_Paint({ try { $pn = New-Object System.Drawing.Pen($pc.line, 1); $_.Graphics.DrawLine($pn, 0, 0, $this.ClientSize.Width, 0); $pn.Dispose() } catch { $null = $_ } })
-  $no = & $ui.Label $ui.F.SmallB $ui.C.Gray 0; $no.Visible = $true; $no.AccessibleName = 'Check number'; [void]$bar.Controls.Add($no)
-  $tx = & $ui.Text $ui.F.Body $ui.C.Ink 0 'Check'; $tx.Visible = $true; [void]$bar.Controls.Add($tx)
-  foreach ($n in 'Pass', 'Fail') {
-    $x = & $ui.Btn 'action'; $x.Text = $n; & $ui.Style $x ''; $x.AccessibleName = $n; $x.Tag = $n
-    $x.Add_SizeChanged({ & $wn.Round $this 4 })
-    $x.Add_Click({ $r = ([string]$this.Tag).ToUpperInvariant(); & $wn.Answer $r })
-    [void]$bar.Controls.Add($x); if ($n -eq 'Pass') { $wn.BarPass = $x } else { $wn.BarFail = $x } }
-  # R10 (R37, B13): Feedback, a link on the bar (the same place on every card); it asks for a comment on the card shown.
-  $fb = & $ui.LinkBtn (& $wn.FeedbackText); $fb.AccessibleName = 'Feedback on this card'; $fb.Visible = $true
-  $fb.Add_Click({ if (& $ui.Settled) { & $wn.FeedbackAsk $wn.Cur } }); [void]$bar.Controls.Add($fb); $wn.FbLink = $fb
-  $wn.Bar = $bar; $wn.BarNo = $no; $wn.BarText = $tx
-  $form.Controls.Add($bar); $main.BringToFront()
-  & $wn.BarShow; & $wn.BarLayout }
+# The check bar (the checks and, R14, the click-through) is in the bar part.
 # The layout self-check runs 350 ms after a card changed; a new size rebuilds the card 250 ms after the last size change.
-$wn.Ready = $false; $wn.LastW = 0; $wn.LastH = 0
+# R14 (R41; R40 finding 3, "columns need 811, the grid has 801" after a resize or a rebuild): when the grid fit of the
+# tick changed a grid, the check waits one more tick for the layout to settle and fits again (at most 3 more ticks).
+$wn.Ready = $false; $wn.LastW = 0; $wn.LastH = 0; $wn.OpenKind = 'first'; $wn.FitTries = 0; $wn.Resizing = $false
 $wn.CheckTimer = New-Object System.Windows.Forms.Timer; $wn.CheckTimer.Interval = 350
-$wn.CheckTimer.Add_Tick({ $wn.CheckTimer.Stop(); try { $null = & $wn.FitGrids; & $ui.Check; & $wn.ScrollCheck } catch { $null = $_ } })
+$wn.CheckTimer.Add_Tick({ $wn.CheckTimer.Stop(); try {
+      if ((& $wn.FitGrids) -gt 0 -and $wn.FitTries -lt 3) { $wn.FitTries++; $wn.CheckTimer.Start(); return }
+      $wn.FitTries = 0; & $ui.Check; & $wn.ScrollCheck } catch { $null = $_ } })
+# R14: fits the grids of the card on the page until a fit changes nothing (at most 3 fits, the layout settles between).
+$wn.FitSettled = { for ($i = 0; $i -lt 3; $i++) { if (-not (& $wn.FitGrids)) { break }; [Windows.Forms.Application]::DoEvents() } }
 $wn.SizeTimer = New-Object System.Windows.Forms.Timer; $wn.SizeTimer.Interval = 250
 $wn.SizeTimer.Add_Tick({ $wn.SizeTimer.Stop()
     if ($form.ClientSize.Width -ne $wn.LastW -or $form.ClientSize.Height -ne $wn.LastH) {
-      $wn.LastW = $form.ClientSize.Width; $wn.LastH = $form.ClientSize.Height; & $wn.RailLayout; & $wn.Show $wn.Cur } })
+      $wn.LastW = $form.ClientSize.Width; $wn.LastH = $form.ClientSize.Height; & $wn.RailLayout
+      $wn.Resizing = $true; try { & $wn.Show $wn.Cur } finally { $wn.Resizing = $false } } })
 $ui.Trash = @($ui.Trash) + @($wn.CheckTimer, $wn.SizeTimer)
 # Grid columns wider than their grid, and a main column that scrolls sideways at 1280 or wider, are layout defects; a
 # card whose main column scrolls down is noted in $wn.Scrolled.
@@ -461,7 +417,8 @@ $wn.ScrollCheck = {
   $st = New-Object System.Collections.Stack; $st.Push($page)
   while ($st.Count) { foreach ($c in $st.Pop().Controls) {
       if ($c -is [Windows.Forms.DataGridView]) { $sum = 0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width } }
-        if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' + $c.ClientSize.Width) }
+        if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' +
+            $c.ClientSize.Width + ' (open: ' + $wn.OpenKind + ')') }   # R14 (R41): which open it was
         $edge = & $wn.EdgeCheck $c $wn.Cur   # R11 (R38): no chip or text ends closer than a scroll bar's width to the grid's right edge
         if ($edge) { $ui.LayBad.Add($edge) } }
       elseif ($c.Controls.Count) { $st.Push($c) } } }
@@ -487,7 +444,7 @@ $wn.Build = {
   & $wn.State 'shown'
   $wn.LastW = $form.ClientSize.Width; $wn.LastH = $form.ClientSize.Height
   foreach ($k in $Cards.Keys) {
-    $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k; [Windows.Forms.Application]::DoEvents(); $null = & $wn.FitGrids; & $ui.Check; & $wn.ScrollCheck; & $wn.NameScan $k $page
+    $wn.Notice = ''; $wn.Err = ''; & $wn.Show $k; [Windows.Forms.Application]::DoEvents(); & $wn.FitSettled; & $ui.Check; & $wn.ScrollCheck; & $wn.NameScan $k $page
     & $wn.SavePng $k
     if ($Each) { & $Each $k } }
   & $wn.NameScan 'rail' $rail; & $wn.NameScan 'bar' $wn.Bar

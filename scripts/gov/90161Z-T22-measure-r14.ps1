@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r13, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r14, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   R13 (R40): the measure file has Keep (each card opened again from its kept page, $wn.MeasureKeep in the keep part).
@@ -24,13 +24,14 @@
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r13.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r14.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
-  CARDPNG lines to the result. The cards hold only FAKE data. A picture that cannot be saved is a NOTE line.
+  CARDPNG lines to the result. The cards hold FAKE data or (R14) fake rows of the test site; a card with a site row that
+  has no fake-data marker gets no picture. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r14.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -41,16 +42,21 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r13.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r14.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
+  R14 (R41): no picture of a card that shows a site row without a fake-data marker (Get-SiteUnmarked, site part); a
+  CARDPNG line says so.
   .PARAMETER Key
   The card key (the card on the page).
   #>
   param([string]$Key)
   if (-not $wn.PngDir) { return }
   $name = '90161Z-T22-card-' + $Key + '-' + $Rev + '.png'
+  # R14 (R41; PFM 20 Nov 26): a card that shows a site row with no fake-data marker gets no picture (the site part)
+  $bad = Get-SiteUnmarked $Key
+  if ($bad -gt 0) { $lines.Add('CARDPNG ' + $Key + ' not saved: ' + $bad + ' site rows without a fake-data marker'); return }
   try {
     $bm = New-Object System.Drawing.Bitmap([math]::Max(1, $form.Width), [math]::Max(1, $form.Height))
     try {

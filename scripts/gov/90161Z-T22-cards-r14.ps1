@@ -1,16 +1,19 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r13, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
+  90-161.Z Task 22 r14, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
+  R14 (R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3): the click-through of every screen in order
+  (Get-WalkPlan: the steps after the 4 checks; -PlanOnly prints them as WALK lines).
   R13 (R40; PFM 20 Nov 26, R39 finding 1): the -Again check names the card saved at the last close, by its title
   (Get-AgainText; the main script gives it the saved card); the closing line of the check bar names no card.
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r13.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r14.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
-  Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems
-  and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan and Get-CheckPlan.
+  Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems, $Walk
+  and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan, Get-CheckPlan,
+  Get-WalkOpener, Get-WalkPlan and Get-WalkPlanText.
   Run: not alone; the main script loads it (round skill section 2: scripts that load each other stay in one folder).
   Network: none.
   Writes: none.
@@ -432,3 +435,59 @@ function Get-CardPlan {
 function Get-CheckPlan {
   for ($i = 0; $i -lt $Checks.Count; $i++) { 'CHECK ' + ($i + 1) + ' ' + $Checks[$i].Key + ': ' + $Checks[$i].Text }
 }
+<#
+.SYNOPSIS
+R14 (R41 plan row 3): how a person opens card $To from card $From with one selection that only opens a screen.
+.DESCRIPTION
+In this order: a rail item that opens $To (the rail shows on every card); a button of $From that goes to $To with no
+note and no need (a button with a FAKE note does something before it opens a screen, and a button that needs a reason
+or a box needs a second action); the crumb link of $From. Sections shown only in a wide window are left out, so the
+opener is there at every window size. No opener: $null (the click-through then shows its own link "Open this screen").
+.PARAMETER From
+The card key the person is on ('' at the start: only the rail counts).
+.PARAMETER To
+The card key to open.
+.OUTPUTS
+@{ Via = 'rail', 'button' or 'link'; Text = what to select; Beside = the list row the button sits in, or '' }, or $null.
+#>
+function Get-WalkOpener([string]$From, [string]$To) {
+  foreach ($r in $RailItems) { if ($r.Go -eq $To) { return @{ Via = 'rail'; Text = [string]$r.Text; Beside = '' } } }
+  $c = $Cards[$From]; if (-not $c) { return $null }
+  foreach ($col in @($c.Cols)) { foreach ($sec in @($col)) {
+      if ($sec.WideOnly) { continue }
+      foreach ($b in @($sec.Blocks)) {
+        $btns = @(); if ($b.T -eq 'buttons') { $btns = @($b.Items | ForEach-Object { @{ B = $_; Beside = '' } }) }
+        if ($b.T -eq 'list') { $btns = @($b.Rows | Where-Object { $_.Btn } | ForEach-Object { @{ B = $_.Btn; Beside = [string]$_.Title } }) }
+        foreach ($x in $btns) { if ($x.B.Go -eq $To -and -not $x.B.Note -and -not $x.B.Need) { return @{ Via = 'button'; Text = [string]$x.B.Text; Beside = $x.Beside } } } } } }
+  if ($c.CrumbGo -eq $To) { return @{ Via = 'link'; Text = [string]@(([string]$c.Crumb) -split [regex]::Escape(' ' + $gt + ' '))[0]; Beside = '' } }
+  return $null
+}
+<#
+.SYNOPSIS
+R14 (R41 plan row 3; PFM 20 Nov 26): the click-through, one step per card, every card once.
+.DESCRIPTION
+The order (the cards in the order the window builds them, $Cards): from the card the person is on, the next step is the
+first card not yet walked that one rail item, button or crumb link opens (Get-WalkOpener); when no card has one, the
+first card not yet walked, opened with the link "Open this screen" of the check bar. Each step is one action and one
+Pass or Fail, in the words of the 4 checks. Pure data: no window.
+.OUTPUTS
+An array of @{ Key; Via ('rail', 'button', 'link' or 'open'); Opener (what to select); Text (the check bar text) }.
+#>
+function Get-WalkPlan {
+  $left = New-Object System.Collections.Generic.List[string]; foreach ($k in $Cards.Keys) { $left.Add([string]$k) }
+  $out = @(); $cur = ''; $n = $left.Count
+  while ($left.Count) {
+    $key = ''; $op = $null
+    foreach ($k in $left) { $o = Get-WalkOpener $cur $k; if ($o) { $key = $k; $op = $o; break } }
+    if (-not $key) { $key = $left[0]; $op = @{ Via = 'open'; Text = 'Open this screen'; Beside = '' } }
+    [void]$left.Remove($key)
+    $what = $(if ($op.Via -eq 'rail') { $op.Text + ' in the list on the left' } elseif ($op.Via -eq 'link') { 'the link "' + $op.Text + '" at the top' }
+      elseif ($op.Beside) { '"' + $op.Text + '" beside "' + $op.Beside + '"' } elseif ($op.Via -eq 'open') { '"Open this screen" in this bar' } else { '"' + $op.Text + '"' })
+    $text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': select ' + $what + '. Pass if ' + (Get-CardName $key) + ' opens and looks right.'
+    $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text }; $cur = $key }
+  return $out
+}
+# The click-through as -PlanOnly lines: WALK <n> <card> <via>: <text> (tests/run.sh reads them).
+function Get-WalkPlanText { for ($i = 0; $i -lt $Walk.Count; $i++) { ConvertTo-PlanText ('WALK ' + ($i + 1) + ' ' + $Walk[$i].Key + ' ' + $Walk[$i].Via + ': ' + $Walk[$i].Text) } }
+# R14: the click-through of this run; none with -Again (the second run of the round has its one reopen check only).
+$Walk = $(if ($Again) { @() } else { @(Get-WalkPlan) })

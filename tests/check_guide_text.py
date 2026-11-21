@@ -38,7 +38,7 @@ Runner text rules (docs/reviews/2026-11-17-runner-polish.md, the PFM, 17 Nov 26)
 (check_step_rules): a step FAILS with no `title`, a title over 56 characters or with a code (T<NN>, r<N>, F<NN>, R<NN>)
 or build word (slice, probe solution, estimate), a note with a code or build word, a guide over 10 numbered lines or a
 line over 100 characters, an unnumbered line between numbered lines, a `doneText` on a step with no questions (B6, the
-PFM 18 Nov 26: only a look step, one with `answers`, names what was done; at most 30 characters), the word "grey", a line "Return
+PFM 18 Nov 26: only a look step, one with `answers`, names what was done; at most 30 characters), the word "grey", a pick question with 4 or more choices (R41: the PFM, 20 Nov 26), a line "Return
 to the RADE window" or "Select Done ...", and a card with an address whose line 1 is not `Select "Open in browser" above.`
 
 No baseline and no exemption: every step must pass (the R26 r1 baseline was removed with R26 r2, 16 Nov 26).
@@ -129,6 +129,7 @@ def check_step(text):
 CODE = re.compile(r'\b(?:T\d{1,2}|F\d{2}|R\d{1,2}|r\d{1,2})[a-z]?\b', re.I)   # F5 (a key) is no flow code: F + 2 digits
 BUILD = re.compile(r'\b(?:slice|probe solution|estimate)\b', re.I)
 TITLE_MAX, LINE_MAX, LINES_MAX = 56, 100, 10
+PICK_MAX = 3   # choices of a pick question (R41, the PFM 20 Nov 26: B5 of the RADE runner)
 NUMBERED = re.compile(r'\s*\d+\.\s')
 
 
@@ -150,6 +151,11 @@ def check_step_rules(s):
     shown = [title or '', s.get('note', ''), s.get('help', '')] + list(s.get('guide', []))
     for a in s.get('answers', []):
         shown += [a.get('prompt', '')] + list(a.get('choices', []))
+    # R41 (the PFM, 20 Nov 26; R40 finding 5): the RADE runner shows each choice of a pick question as a button beside the
+    # primary, and its rule is 3 at most (UI standard B5), so a pick question has 3 choices at most.
+    for a in s.get('answers', []):
+        if a.get('kind') == 'pick' and len(a.get('choices', [])) > PICK_MAX:
+            out.append('pick question "%s" has %d choices (limit %d)' % (a.get('key', ''), len(a.get('choices', [])), PICK_MAX))
     if any(re.search(r'\bgrey', x, re.I) for x in shown):
         out.append('"grey": use gray')
     # B6 (the PFM, 18 Nov 26): a look step (one with questions) may name what was done; every other card keeps "Done".
@@ -286,6 +292,7 @@ BAD_RULES = [
     ({'title': 'a', 'guide': ['1. Select "Done: x".']}, 'line to drop'),
     ({'title': 'a', 'guide': ['If it is gone: select "Done".']}, 'line to drop'),
     ({'title': 'a', 'url': 'https://x', 'guide': ['1. On this RADE card, select "Open in browser".']}, 'line 1 of a card'),
+    ({'title': 'a', 'answers': [{'key': 'w-look', 'prompt': 'Is it?', 'kind': 'pick', 'choices': ['A', 'B', 'C', 'D']}]}, 'has 4 choices (limit 3)'),
 ]
 
 
@@ -329,6 +336,9 @@ def self_test_rules():
     look = dict(ok_step, doneText='I looked at the form', answers=[{'key': 'k', 'prompt': 'Is it there?', 'kind': 'yesno'}])
     if check_step_rules(look):
         errs.append('good look step (B6 doneText) failed: %s' % check_step_rules(look))
+    pick3 = dict(ok_step, answers=[{'key': 'p', 'prompt': 'Which?', 'kind': 'pick', 'choices': ['A', 'B', 'C']}])
+    if check_step_rules(pick3):
+        errs.append('good pick step (3 choices) failed: %s' % check_step_rules(pick3))
     for s, want in BAD_RULES:
         if not any(want in f for f in check_step_rules(s)):
             errs.append('bad rules step not found (%s): %s -> %s' % (want, s, check_step_rules(s)))

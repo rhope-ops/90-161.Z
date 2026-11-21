@@ -1,31 +1,36 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r13, part "feedback": Feedback on every card of the PFM window (UI standard B13, PFM 19 Nov 26).
+  90-161.Z Task 22 r14, part "feedback": Feedback on every card of the PFM window (UI standard B13, PFM 19 Nov 26).
 .DESCRIPTION
-  R11 (R38; PFM 20 Nov 26): only the revision in the file names changed (90161Z-T22-feedback-<card>-r13.*).
+  R14 (R41; PFM 20 Nov 26): Feedback stays on every screen of the click-through; the picture of a comment is not saved
+  when the card shows a site row without a fake-data marker (Get-SiteUnmarked in the site part).
+  R11 (R38; PFM 20 Nov 26): only the revision in the file names changed (90161Z-T22-feedback-<card>-r14.*).
   The window part puts the Feedback link on the check bar (the same place on every card) and calls $wn.FeedbackAsk on
   a click and $wn.FeedbackList at the close; the -Measure run calls $wn.MeasureFeedback (below), which saves one FAKE
   comment through $wn.FeedbackSave.
   Inputs: $form, $ui, $wn, $who, $dir, $Rev, $lines. Outputs: the $wn members below.
-  Run: not alone; 90161Z-T22-pfm-window-r13.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r14.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: per saved comment 90161Z-T22-feedback-<card>-r13.txt and .png (a name already in the folder: <card>-2, and so
-  on), and at the close it adds this run's lines to 90161Z-T22-feedback-r13.txt, in the T22 folder (or -TestDir); with
+  Writes: per saved comment 90161Z-T22-feedback-<card>-r14.txt and .png, or the .txt only when a shown row has no fake-data
+  marker (a name already in the folder: <card>-2, and so on), and at the close it adds this run's lines to 90161Z-T22-feedback-r14.txt, in the T22 folder (or -TestDir); with
   -Measure in the folder of the measure file. Nothing that is already there is overwritten.
   Credentials: none.
 #>
 # R10 (R37; PFM 19 Nov 26, UI standard B13): Feedback on every card. The link opens a small comment box; Save writes the
 # comment and a picture of the window as it was when the link was selected, into the T22 folder (the round sends them):
-# 90161Z-T22-feedback-<card>-r13.txt and .png (a second comment on the same card, in this run or an earlier window run of
+# 90161Z-T22-feedback-<card>-r14.txt and .png (the .txt only when a shown row has no fake-data marker; a second comment on the same card, in this run or an earlier window run of
 # the same round: <card>-2, and so on). Each save adds a FEEDBACK line to the result file; at the close each run adds its
-# lines to 90161Z-T22-feedback-r13.txt (every comment file, or none), so the round always finds one feedback file and a
+# lines to 90161Z-T22-feedback-r14.txt (every comment file, or none), so the round always finds one feedback file and a
 # second run keeps the first run's lines. With -Measure the files go to the folder of the measure file.
 $wn.FeedbackN = @{}; $wn.FeedbackAll = New-Object System.Collections.Generic.List[string]
+$wn.FeedbackPng = @{}   # R14: base name -> $true when its picture was saved (the marker check can block it)
+# Saves window picture $Shot as a PNG file at $Path (one place, so tests/check_t22_r14.py can stand in for it off Windows).
+$wn.PngSave = { param($Shot, [string]$Path) $Shot.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png) }
 # The link text: "Feedback", and how many comments were saved.
 $wn.FeedbackText = { if ($wn.FeedbackAll.Count) { return ('Feedback (' + $wn.FeedbackAll.Count + ' saved)') }; return 'Feedback' }
 # The folder the feedback files go to: the T22 folder, or the measure folder.
 $wn.FeedbackDir = { if ($dir) { return $dir }; return [string]$wn.PngDir }
-# The base name of comment $N on card $Key: 90161Z-T22-feedback-<card>-r13, or <card>-<N> from the second one on.
+# The base name of comment $N on card $Key: 90161Z-T22-feedback-<card>-r14, or <card>-<N> from the second one on.
 # $wn.FeedbackSave raises $N past every name whose .txt or .png is already in the folder (an earlier window run).
 $wn.FeedbackName = { param([string]$Key, [int]$N)
   return ('90161Z-T22-feedback-' + $Key + $(if ($N -gt 1) { '-' + $N } else { '' }) + '-' + $Rev) }
@@ -59,11 +64,15 @@ $wn.FeedbackSave = {
     while ((Test-Path -LiteralPath (Join-Path $into ($base + '.txt'))) -or (Test-Path -LiteralPath (Join-Path $into ($base + '.png')))) {
       $n++; $base = & $wn.FeedbackName $Key $n }   # an earlier window run of the round saved this name: never overwrite it
     $wn.FeedbackN[$Key] = $n
-    $Shot.Save((Join-Path $into ($base + '.png')), [System.Drawing.Imaging.ImageFormat]::Png)
+    $bad = Get-SiteUnmarked $Key   # R14 (R41): no picture of a card with a site row that has no fake-data marker
+    if ($bad -gt 0) { $wn.FeedbackPng[$base] = $false }
+    else { & $wn.PngSave $Shot (Join-Path $into ($base + '.png')); $wn.FeedbackPng[$base] = $true }
     $t = Hide-Site (([string]$Text).Trim()) ([string]$env:RADE_SITE); if ($who) { $t = ConvertTo-Masked $t $who.Secret }
     $body = @(('FEEDBACK card ' + $Key + ', window ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')), 'What does not look right:', $t)
     Set-Content -LiteralPath (Join-Path $into ($base + '.txt')) -Value $body -Encoding UTF8
-    $wn.FeedbackAll.Add($base); $lines.Add('FEEDBACK ' + $Key + ': ' + $base + '.txt and ' + $base + '.png')
+    $wn.FeedbackAll.Add($base)
+    if ($wn.FeedbackPng[$base]) { $lines.Add('FEEDBACK ' + $Key + ': ' + $base + '.txt and ' + $base + '.png') }
+    else { $lines.Add('FEEDBACK ' + $Key + ': ' + $base + '.txt'); $lines.Add('FEEDBACK ' + $Key + ': picture not saved (' + $bad + ' site rows without a fake-data marker)') }
     # The link shows the count here, in the one save code that the Save button and -Measure both run (R37 r1 ps51: the
     # count was set only by the Save button, so the measured save left the link at "Feedback").
     if ($wn.FbLink) { $wn.FbLink.Text = & $wn.FeedbackText; if ($wn.BarLayout) { & $wn.BarLayout } }
@@ -99,12 +108,12 @@ $wn.FeedbackAsk = {
       $null = & $wn.FeedbackSave $Key $tb.Text $shot }   # the save also shows the new count on the link
   } catch { $lines.Add('NOTE the feedback box did not open: ' + ([string]$_.Exception.Message)) }
   finally { if ($dlg) { $dlg.Dispose() }; if ($shot) { $shot.Dispose() } } }
-# At the close: adds this run's lines to 90161Z-T22-feedback-r13.txt (every comment of this run, or none); the lines of
+# At the close: adds this run's lines to 90161Z-T22-feedback-r14.txt (every comment of this run, or none); the lines of
 # an earlier window run of the round stay.
 $wn.FeedbackList = {
   $into = & $wn.FeedbackDir; if (-not $into) { return }
   $body = @('FEEDBACK window ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + ': comments saved=' + $wn.FeedbackAll.Count)
-  foreach ($b in $wn.FeedbackAll) { $body += ('  ' + $b + '.txt and ' + $b + '.png') }
+  foreach ($b in $wn.FeedbackAll) { $body += ('  ' + $b + '.txt' + $(if ($wn.FeedbackPng[$b]) { ' and ' + $b + '.png' } else { ' (picture not saved)' })) }
   try { Add-Content -LiteralPath (Join-Path $into ('90161Z-T22-feedback-' + $Rev + '.txt')) -Value $body -Encoding UTF8 }
   catch { $lines.Add('NOTE the feedback list was not saved: ' + ([string]$_.Exception.Message)) } }
 $wn.MeasureFeedback = {
