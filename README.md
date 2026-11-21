@@ -1,6 +1,6 @@
-![90-161.Z: Publications and Forms Management](https://repository-images.githubusercontent.com/1453511683/43db9448-2d1b-4421-85c2-eb674e43c7ee)
+![90-161.Z: Kanon · Publications and Forms Management](https://repository-images.githubusercontent.com/1453511683/43db9448-2d1b-4421-85c2-eb674e43c7ee)
 
-# 90-161.Z
+# Kanon
 <p><b>Publications and Forms Management</b></p>
 
 <!-- site:intro -->
@@ -8,7 +8,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 <!-- /site:intro -->
 
 > [!NOTE]
-> 90-161.Z is in test rounds with fake data. Parts marked (planned) are designed but not built yet.
+> Kanon is in test rounds with fake data. Parts marked (planned) are designed but not built yet.
 
 ---
 

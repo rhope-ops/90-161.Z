@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-21 | Product name: Kanon (KANON on the social preview, before "Publications and Forms Management", ember ·). README title Kanon; the repo stays 90-161.Z. Scope: README, card. | PFM | https://claude.ai/artifact/UZpzMPxQ692UZ1ZiEceqEe |
 | 2026-11-21 | README = product page (33-332.Z layout); tasks to TASKS.md; page in Fulcrum with the README's intro and Summary; kit 7.0.0. Now, R41 links unchanged. Scope: README, page. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/reviews/2026-11-21-plan-readme-rework.md |
 | 2026-11-21 | R42 scope: Restore Recycle Bin row numbers, T22 grids and 2 screens, answer button text, all steps redrafted (window titles and versions). Scope: R42. | PFM | [r42 plan](reviews/2026-11-21-r42-plan.md) |
 | 2026-11-21 | R42: ISE RADE window uses the shortcut window's smaller scale, with a SCALE line per window; CAC sign-in window about 480 x 360, centered. Scope: R42. | PFM | [r42 plan](reviews/2026-11-21-r42-plan.md) |
