@@ -66,11 +66,11 @@ OPT_IN_CAPS = ("max_line_chars",)   # caps that are off (no key in "caps") until
 STRICT = "strict"                   # the value of "c1_safety" for `code-c1-safety: strict` (False = off, True = on)
 AUDIT_DEFAULTS = {"every_days": 14, "every_commits": 300, "start_read": [], "ignore": [], "duplicate_ignore": [],
                   "third_party": [],
-                  "budgets": {"session_load_tokens": 5000, "session_load_warn_tokens": 4500, "rules_file_lines": 200,
+                  "budgets": {"session_load_tokens": 5500, "session_load_warn_tokens": 5000, "rules_file_lines": 200,
                               "third_party_tokens": 1500,
                               "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20, "rules": 28,
                               "project_rules": 15}}
-# The PFM's caps for every repo (2026-11-18; third_party_tokens 2026-11-20): a project can lower one, never raise it.
+# The PFM's caps for every repo (2026-11-18; third_party_tokens 2026-11-20; session load 5,500, warning 5,000: 2026-11-21): a project can lower one, never raise it.
 KIT_CAPS = ("session_load_tokens", "session_load_warn_tokens", "rules_file_lines", "third_party_tokens")
 CODE_LISTS = ("include", "exclude", "generated")
 AUDIT_LISTS = ("ignore", "start_read", "duplicate_ignore", "third_party")

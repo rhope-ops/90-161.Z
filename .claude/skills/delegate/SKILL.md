@@ -53,7 +53,7 @@ Branch per worker: the branch the host requires (Claude cloud sessions: `claude/
 
 ## When to delegate
 
-- Size rule: AGENTS.md "Delegation". A subagent spends tokens loading its context before it starts, so do smaller tasks yourself.
+- Size rule: AGENTS.md "Delegation". Where the host has no subagents, do it yourself. Do other small tasks yourself.
 - Keep for the orchestrator: merges, conflict choices, design and open decisions, artifacts, deploys, release versions.
 - One worker at a time by default. Two only when their allowed files do not overlap. Start each worker in its own worktree (`isolation: "worktree"`; elsewhere `git worktree add ../<repo>-<topic> -b <branch>`).
 

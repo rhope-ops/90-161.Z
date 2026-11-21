@@ -204,7 +204,7 @@ def caps_and_paths_cases(bloat, ro, caps):
     assert any("over the warning" in r for r in bloat.rules_report(ro, warned)[0]) and not bloat.rules_report(ro, warned)[1], "the load warning only warns"
     settings(ro, "audit-budget-rules_file_lines: 50\naudit-ignore: ref/**\n")
     cfg = bloat.load_config(ro)
-    assert cfg["budgets"]["session_load_tokens"] == 5000 and cfg["budgets"]["rules_file_lines"] == 50, "a project can lower a kit cap"
+    assert cfg["budgets"]["session_load_tokens"] == 5500 and cfg["budgets"]["rules_file_lines"] == 50, "a project can lower a kit cap"
     assert bloat.ignored("ref/a/b.md", cfg) and not bloat.ignored("docs/a.md", cfg), "audit-ignore globs are read"
     for bad in ("audit-budget-session_load_tokens: 999999\n", "audit-budget-third_party_tokens: 1501\n", "audit-budget-rule_file_lines: 50\n", "audit-every-days: soon\n"):
         settings(ro, bad)
