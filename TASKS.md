@@ -2,7 +2,7 @@
 
 The same tasks as https://rhope-ops.github.io/90-161.Z, for a computer where github.io is blocked. A Markdown page cannot have buttons, so each round script has links: **Open as .txt** and **Copy script** (a round built with RADE engine-v34 or later has one link, **Open the script**).
 
-On this page, the first steps of a round task are different: write down the **Code** shown under the round (it is the code next to the round on the RADE page), then use **Copy script** (GitHub's "Copy raw file" button), or open **Open as .txt** (or **Open the script**) and press Ctrl+A, then Ctrl+C. Then go on with the step "Open the Start menu".
+On this page, the first steps of a round task are different: write down the **Code** shown under the round (it is the code next to the round on the RADE page), then use **Copy script** (GitHub's "Copy raw file" button), or select **Open as .txt** (or **Open the script**) and press Ctrl+A, then Ctrl+C. Then go on with the step "Open the Start menu".
 
 <!-- >>> tasks: generated from go.md by scripts/build_readme.py (do not edit) -->
 ## 90-161.Z: tasks for my work computer

@@ -23,7 +23,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 <tr><td><b>Reviews:</b></td><td>periodic and special reviews start on their own; no answer by the due date opens a rescind action. (planned)</td></tr> <!-- source: docs/DECISIONS.md 2026-11-12 (5A) -->
 <tr><td><b>Boundary:</b></td><td>nothing leaves DoD365 and GenAI.mil, except the PFM's round results e-mail until the pilot starts.</td></tr> <!-- source: AGENTS.md "Data boundary" -->
 <tr><td><b>Access:</b></td><td>your own account; standard connectors; no tenant admin, no service account.</td></tr> <!-- source: AGENTS.md "Platform" -->
-<tr><td><b>Install:</b></td><td>one paste through RADE; a step that needs extra rights has a tested fallback.</td></tr> <!-- source: AGENTS.md "Deployable package" -->
+<tr><td><b>Install:</b></td><td>one paste through RADE; a step that needs extra rights gets a tested fallback (in progress).</td></tr> <!-- source: AGENTS.md "Deployable package" -->
 <tr><td><b>Verifiable:</b></td><td>read the commented code as plain text before you paste it.</td></tr> <!-- source: AGENTS.md "Code standard"; TASKS.md "Open as .txt" links -->
 </table>
 
@@ -38,17 +38,19 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 ### 🔺 How it works
 
-<kbd>Review due</kbd> → <kbd>AO named</kbd> → <kbd>Draft</kbd> → <kbd>PFM formats</kbd> → <kbd>Privacy review</kbd> → <kbd>Endorse</kbd> → <kbd>Legal</kbd> → <kbd>Certify</kbd> → <kbd>Approve</kbd> → <kbd><b>Publish</b></kbd>
+<kbd>Review due</kbd> → <kbd>AO named</kbd> → <kbd>Draft</kbd> → <kbd>PFM formats (planned)</kbd> → <kbd>Privacy review</kbd> → <kbd>Endorse</kbd> → <kbd>Legal</kbd> → <kbd>Certify</kbd> → <kbd>Approve</kbd> → <kbd><b>Publish</b></kbd>
 
 #### Who uses what
+
+The design; parts marked (planned) are not built yet.
 
 | Person | Uses | To |
 |---|---|---|
 | PFM | The 90-161.Z window on the work computer | See every action (read-only today); start endorsement, format drafts and change who gets a step (planned) |
-| OPR mailbox | A SharePoint form from an e-mail link | Name 1 or 2 AOs |
-| AO | A SharePoint form from an e-mail link | Answer "needs further review?", add endorsers, fill in the DAF Form 673 |
-| Endorser | A SharePoint form from an e-mail link | Read the final draft, comment, answer |
-| Certifier, approver | The PFM or their CSS records the signature | Certify and approve |
+| OPR mailbox | A SharePoint form from an e-mail link (planned) | Name 1 or 2 AOs (planned) |
+| AO | A SharePoint form from an e-mail link (planned) | Answer "needs further review?", add endorsers, fill in the DAF Form 673 (planned) |
+| Endorser | The SharePoint list form; an e-mail link to it (planned) | Answer the endorsement; read the final draft and comment (planned) |
+| Certifier, approver | The PFM or their CSS records the signature (planned) | Certify and approve (planned) |
 
 #### What it keeps
 
