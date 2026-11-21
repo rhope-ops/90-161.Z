@@ -17,14 +17,14 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 <!-- site:key-facts -->
 <table>
 <tr><td><b>By the book:</b></td><td>every stage, time limit and format rule cites its DAFMAN 90-161 paragraph.</td></tr> <!-- source: AGENTS.md "Source authority" -->
-<tr><td><b>Endorsements:</b></td><td>endorsers answer in waves, legal last; flows send the requests, reminders and escalations.</td></tr> <!-- source: docs/process-model.md stage 10; docs/ARCHITECTURE.md section 4 -->
+<tr><td><b>Endorsements:</b></td><td>endorsers answer in waves, legal last, in their list form; flows send the reminders and escalations.</td></tr> <!-- source: docs/process-model.md target process step 10; flow F03 (reminders, escalation) -->
 <tr><td><b>System of record:</b></td><td>endorsements are kept here, not in TMT.</td></tr> <!-- source: AGENTS.md "Scope" -->
 <tr><td><b>Clean drafts:</b></td><td>any draft becomes a correctly formatted final; the format comes from code, never from an AI model. (planned)</td></tr> <!-- source: AGENTS.md "Source authority"; docs/ARCHITECTURE.md section 5 -->
 <tr><td><b>Reviews:</b></td><td>periodic and special reviews start on their own; no answer by the due date opens a rescind action. (planned)</td></tr> <!-- source: docs/DECISIONS.md 2026-11-12 (5A) -->
-<tr><td><b>Boundary:</b></td><td>nothing leaves DoD365.</td></tr> <!-- source: AGENTS.md "Data boundary" -->
+<tr><td><b>Boundary:</b></td><td>nothing leaves DoD365 and GenAI.mil, except the PFM's round results e-mail until the pilot starts.</td></tr> <!-- source: AGENTS.md "Data boundary" -->
 <tr><td><b>Access:</b></td><td>your own account; standard connectors; no tenant admin, no service account.</td></tr> <!-- source: AGENTS.md "Platform" -->
 <tr><td><b>Install:</b></td><td>one paste through RADE; a step that needs extra rights has a tested fallback.</td></tr> <!-- source: AGENTS.md "Deployable package" -->
-<tr><td><b>Verifiable:</b></td><td>inspect the commented code yourself within a .txt before execution.</td></tr> <!-- source: AGENTS.md "Code standard"; the RADE .txt copy from engine-v34 -->
+<tr><td><b>Verifiable:</b></td><td>read the commented code as plain text before you paste it.</td></tr> <!-- source: AGENTS.md "Code standard"; TASKS.md "Open as .txt" links -->
 </table>
 
 > Have concerns? Ask in the Teams channel **RHOPE-OPS**.
@@ -44,7 +44,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 | Person | Uses | To |
 |---|---|---|
-| PFM | The 90-161.Z window on the work computer | See every action, format drafts, start endorsement, change who gets a step (with a logged reason) |
+| PFM | The 90-161.Z window on the work computer | See every action and start endorsement; format drafts and change who gets a step (planned) |
 | OPR mailbox | A SharePoint form from an e-mail link | Name 1 or 2 AOs |
 | AO | A SharePoint form from an e-mail link | Answer "needs further review?", add endorsers, fill in the DAF Form 673 |
 | Endorser | A SharePoint form from an e-mail link | Read the final draft, comment, answer |
@@ -70,8 +70,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 | Not done | What to do |
 |---|---|
 | Publications above wing level | Out of scope (DAFMAN 90-161 1.1.3.2): use the higher level's process |
-| Draft cleanup and formatting | Planned: the PFM formats drafts by hand for now |
-| Automatic periodic and special reviews | Planned: the PFM starts each review by hand for now |
+| Draft cleanup and formatting | Planned |
 | Uninstall | Not built in RADE yet: ask in the Teams channel |
 
 ---
@@ -82,7 +81,6 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 - **No stored credentials:** you sign in each run; scripts take a credential only through Get-Credential.
 - **Fake data only outside DoD365:** no real draft, name or office symbol is in this repository.
 - **No scripts in results:** a test round never collects or sends a script file.
-- **Every change logged:** a skip or a new assignee needs a reason, and the Activity Log keeps it.
 
 ---
 

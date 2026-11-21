@@ -80,7 +80,9 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
    colours are removed; the logo keeps its own colours, as an image would (forced-color-adjust:none). */
 /* Page palette: Fulcrum Minimal (the PFM, 2026-11-21: "the color palettes need to match Fulcrum"), the kit roles in
    docs/brand/fulcrum.css. The task states (open, done, note) keep their own colours. */
-:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--bg:var(--fm-page);--fg:var(--fm-page-fg);--mut:var(--fm-page-muted);--card:var(--fm-page);--line:var(--fm-page-line);--acc:var(--fm-page-link);--acc-fg:var(--fm-on-accent);--navy:var(--fm-band);--blue:var(--fm-accent);--gold:var(--fm-rule);--mist:var(--fm-band-muted);--focus:var(--fm-focus)}
+/* Off in forced colours (the system colours win); in more contrast, muted text and lines move toward the text colour. */
+@media not (forced-colors:active){:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--bg:var(--fm-page);--fg:var(--fm-page-fg);--mut:var(--fm-page-muted);--card:var(--fm-page);--line:var(--fm-page-line);--acc:var(--fm-page-link);--acc-fg:var(--fm-on-accent);--navy:var(--fm-band);--blue:var(--fm-accent);--gold:var(--fm-rule);--mist:var(--fm-band-muted);--focus:var(--fm-focus)}
+@media (prefers-contrast:more){:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--mut:var(--fm-page-fg);--line:var(--fm-slate)}}}
 .band{background:var(--fm-band)}
 button.primary{color:var(--fm-on-accent)}
 button.primary:hover{background:#F2916F;border-color:#F2916F;color:var(--fm-on-accent)}
@@ -300,14 +302,14 @@ button.primary:hover{background:#F2916F;border-color:#F2916F;color:var(--fm-on-a
     <!-- >>> site:key-facts: generated from README.md by scripts/build_site.py --write (do not edit) -->
     <dl class="facts">
       <dt>By the book:</dt><dd>every stage, time limit and format rule cites its DAFMAN 90-161 paragraph.</dd>
-      <dt>Endorsements:</dt><dd>endorsers answer in waves, legal last; flows send the requests, reminders and escalations.</dd>
+      <dt>Endorsements:</dt><dd>endorsers answer in waves, legal last, in their list form; flows send the reminders and escalations.</dd>
       <dt>System of record:</dt><dd>endorsements are kept here, not in TMT.</dd>
       <dt>Clean drafts:</dt><dd>any draft becomes a correctly formatted final; the format comes from code, never from an AI model. (planned)</dd>
       <dt>Reviews:</dt><dd>periodic and special reviews start on their own; no answer by the due date opens a rescind action. (planned)</dd>
-      <dt>Boundary:</dt><dd>nothing leaves DoD365.</dd>
+      <dt>Boundary:</dt><dd>nothing leaves DoD365 and GenAI.mil, except the PFM's round results e-mail until the pilot starts.</dd>
       <dt>Access:</dt><dd>your own account; standard connectors; no tenant admin, no service account.</dd>
       <dt>Install:</dt><dd>one paste through RADE; a step that needs extra rights has a tested fallback.</dd>
-      <dt>Verifiable:</dt><dd>inspect the commented code yourself within a .txt before execution.</dd>
+      <dt>Verifiable:</dt><dd>read the commented code as plain text before you paste it.</dd>
     </dl>
     <p class="small mut">Have concerns? Ask in the Teams channel <strong>RHOPE-OPS</strong>.</p>
     <!-- <<< site:key-facts -->
