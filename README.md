@@ -63,7 +63,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 13. When a small window asks for the e-mail address of the second person, type that address.
 14. Select OK.
 15. When the RADE card "Ask the second person to answer the endorsement" opens, do each numbered line on that card.
-16. When the second person has sent both replies, answer the 2 questions on that card.
+16. When the second person says the 2 tasks on that card are done (the new answer, then the edit), answer the 2 questions on that card.
 17. When the 90-161.Z window opens: do each check and each screen in its bottom bar.
 18. If a screen does not look right: select "Feedback" in the bottom bar.
 19. In the box "What does not look right? One line, no names.", type what is wrong.

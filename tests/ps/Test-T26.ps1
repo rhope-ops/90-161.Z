@@ -99,7 +99,7 @@ try {
   Test-That 'Read with the row to edit unchanged: RESULT ENDORSE-EDIT REFUSED, with no PASS or FAIL word' $ok $r.File
   $edit = @($global:F.Lists['PFM Endorsements'])[0]; $edit.Editor = [pscustomobject]@{ LookupId = 31 }; $edit.EndorsementStatus = 'Nonconcur'
   $r = Invoke-T26 'Read'
-  Test-That 'Read after the second person changed your row: RESULT ENDORSE-EDIT PASS answer=Nonconcur' ($r.File -match '(?m)^RESULT ENDORSE-EDIT PASS answer=Nonconcur$') $r.File
+  Test-That 'Read after the second person changed your row: RESULT ENDORSE-EDIT PASS answer=Nonconcur' ($r.File -match '(?m)^RESULT ENDORSE-EDIT PASS answer=Nonconcur\r?$') $r.File
   Add-Answer $pub 31 'Not Started'; Add-Answer $pub 31 ('Concur' + [char]0x2014 + 'No Response')
   $r = Invoke-T26 'Read'
   $ok = ($r.File -match '(?m)^RESULT ENDORSE PASS answer=Concur-No Response rows=1' -and $r.File -match 'by another person=2; with an answer=1; with the fake-data title=2')
