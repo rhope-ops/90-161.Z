@@ -6,6 +6,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-21 | README = product page (33-332.Z layout); tasks to TASKS.md; page in Fulcrum with the README's intro and Summary; kit 7.0.0. Now, R41 links unchanged. Scope: README, page. | PFM | https://github.com/rhope-ops/RADE/blob/main/docs/reviews/2026-11-21-plan-readme-rework.md |
 | 2026-11-21 | Hash check ignores end line ends (ISE paste drops the last LF, R41); card shows the full value before Run. In R42's engine. Scope: R42. | PFM | docs/NEXT_PROMPT.md |
 | 2026-11-21 | RADE engine-v33 (Remove test-site mark button, Diagnose NOTE) joins with the R42 build; R41 r1 stays on engine-v32. Scope: R41, R42. | PFM | https://github.com/rhope-ops/RADE/releases/tag/engine-v33 |
 | 2026-11-21 | R41 clean step sets the pause row (PFM Settings FlowsPaused) back to its value from before the round when it differs (one approved write). Scope: R41. | PFM | R41 Restore review, MINOR 2 |

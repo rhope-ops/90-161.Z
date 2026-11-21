@@ -104,7 +104,7 @@ def case_in_process(check, d):
         check_content_scan.use_local(os.path.join(d, "none", check_content_finders.LOCAL_NAME))
 
 
-def cli(scripts, d, args, text):
+def cli(scripts, d, args, text, extra_env=None):
     """Run the copied check_content.py with these arguments and this stdin; return (exit code, output).
 
     Args:
@@ -112,12 +112,14 @@ def cli(scripts, d, args, text):
         d: the folder to run in.
         args: the command-line arguments.
         text: the text for stdin.
+        extra_env: more environment variables for this run only, or None.
 
     Returns:
         (exit code, stdout and stderr).
     """
     env = {k: v for k, v in os.environ.items() if not k.startswith(("PII_GUARD_DENYLIST", "CLAUDE_PROJECT_DIR"))}
     env["PII_GUARD_DENYLIST_FILE"] = os.path.join(d, "none.txt")
+    env.update(extra_env or {})
     r = subprocess.run([sys.executable, os.path.join(scripts, "check_content.py"), *args], cwd=d, env=env, input=text,
                        capture_output=True, text=True)
     return r.returncode, r.stdout + r.stderr
@@ -142,16 +144,26 @@ def case_load_ends(check, scripts, d, path, write):
         check(f"local module that exits at load ({label}): the hook blocks (exit 2)", cli(scripts, d, ["--hook"], write)[0] == 2)
     with open(path, "w") as f:   # a load that hangs: the hook's own time budget ends it with a block
         f.write("import time\ntime.sleep(20)\n")
+    import concurrent.futures
     import time
-    for value, label in (("1", "the timer ends it"), ("abc", "a bad timer value still blocks"),
-                         ("\u00b2", "a superscript digit still blocks"), ("9" * 5000, "a very long number still blocks")):
-        os.environ["CHECK_HOOK_LOAD_S"] = value
-        try:
-            t0 = time.monotonic()
-            code = cli(scripts, d, ["--hook"], write)[0]
-            took = time.monotonic() - t0
-        finally:
-            del os.environ["CHECK_HOOK_LOAD_S"]
+
+    def timed(value):
+        """Run the hook once with this timer value.
+
+        Args:
+            value: the text of CHECK_HOOK_LOAD_S.
+
+        Returns:
+            (exit code, seconds the run took).
+        """
+        t0 = time.monotonic()
+        code = cli(scripts, d, ["--hook"], write, {"CHECK_HOOK_LOAD_S": value})[0]
+        return code, time.monotonic() - t0
+    cases = (("1", "the timer ends it"), ("abc", "a bad timer value still blocks"),
+             ("\u00b2", "a superscript digit still blocks"), ("9" * 5000, "a very long number still blocks"))
+    with concurrent.futures.ThreadPoolExecutor(len(cases)) as pool:   # the runs wait at the same time, not in turn
+        results = list(pool.map(timed, [value for value, _ in cases]))
+    for (value, label), (code, took) in zip(cases, results):
         # with "1" the load timer must end the process long before the 20 s sleep does; with a bad value it is 8 s
         check(f"local module that hangs at load: the hook blocks, {label} (exit {code}, under {5 if value == '1' else 15} s)",
               code == 2 and took < (5 if value == "1" else 15))

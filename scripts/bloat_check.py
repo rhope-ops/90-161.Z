@@ -45,6 +45,8 @@ It measures:
                   "rule-conflict-check: <hash>" that --rules prints. With --gate (the full lane) a missing record fails.
     pointers      each `.claude/...`, `scripts/...` and `docs/...` path in backticks and each relative link in
                   AGENTS.md exists (text moved to a skill is not lost)
+    readme        (--rules) when the AGENTS.md "- Purpose:" line is filled in: no README.md fails; a README.md whose
+                  first paragraph does not open with that purpose is a WARN line (AGENTS.md "README")
     handoff       docs/NEXT_PROMPT.md lines
     duplicates    normalized text lines of 80+ characters found in 2 or more tracked files (not counted: the lines
                   of a generated block, between the marker lines "# >>> ... generated from ..." and "# <<< ...")

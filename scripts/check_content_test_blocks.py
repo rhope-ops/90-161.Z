@@ -1,6 +1,8 @@
 """More cases of the self-test of scripts/check_content.py (check_content_test.py runs them; kept apart for the
 600-line cap of docs/code-standard.md C4): the terms list, the `block:` lines, the settings file under its name
-`.check`, its `code-` and `audit-` setting lines, and the hook for the Write, Edit, NotebookEdit and Bash tools.
+`.check`, its `code-` and `audit-` setting lines, the hook for the Write, Edit, NotebookEdit and Bash tools, and
+the speed parts (the gates of check_content_finders.py and the process pool of scan_files): the same findings with
+and without them.
 
 Input: none (temporary folders; samples are built at run time, so this file does not flag itself).
 Output: one "ok" or "FAIL" line per case through the check() function that run() gets. Needs git.
@@ -13,11 +15,15 @@ import io
 import json
 import os
 import pathlib
+import random
+import re
 import subprocess
 import sys
 import tempfile
 
+import check_content_finders
 import check_content_hook
+import check_content_scan
 from check_content_scan import (blocked, config_name, is_option_line, is_tier_line, load_allow, load_terms, profile_of,
                                 scan_files, scan_text)
 
@@ -227,7 +233,105 @@ def case_setting_lines(check):
         check("an allowed string next to setting lines still passes", r.returncode == 0)
 
 
+def gate_samples():
+    """Sample lines of every finding kind, built at run time (no real value is in this file), with the letters that
+    (?i) matches outside a-z (Kelvin sign, long s, dotted I), digits outside 0-9, and words that are not ASCII.
+
+    Returns:
+        The list of sample lines (case_gates, case_pool).
+    """
+    x36, mil = "A1b2C3d4E5" * 3 + "F6g7H8", "portal" + dot + "unit" + dot + "mi" + "l"
+    arabic = "".join(chr(0x660 + int(c)) if c.isdigit() else c for c in "555-123-" + "4567")
+    return [
+        "mail ann" + at + "corp" + dot + "io", "x" + at + "users.noreply.github" + dot + "com",
+        "gh" + "p_" + x36, "github" + "_pat_" + x36 * 2, "gl" + "pat-" + x36[:20], "AK" + "IA" + "ABCDEFGHIJ234567",
+        "sk" + "-proj-" + x36, "AI" + "za" + x36[:35], "xo" + "xb-1234567890-" + x36[:12], "rk" + "_live_" + x36[:24],
+        "-----BEGIN RSA " + "PRIVATE KEY-----",
+        "call 555-123-" + "4567", "(555) 123-" + "4567", "+44 20 7946 " + "0958", "TEL: 555123" + "4567", "tel 555 123 " + "4567",
+        "+1555123" + "4567", "phone " + arabic, "\uff15\uff15\uff15-123-" + "4567".replace("4", "\uff14"),
+        "123-45-" + "6789", "SSN 123456" + "789", "Social Security: 123 45 " + "6789", "\u017f\u017fn 123456" + "789",
+        "EDIPI 12345" + "67890", "12345" + "67890 (DoD ID)", "see " + mil, mil.upper(), "unit" + dot + "m\u0130" + "l",
+        "x" + dot + "sharepoint-mi" + "l" + dot + "us", "dod" + dot + "teams" + dot + "microsoft" + dot + "us",
+        "CU" + "I//SP", "  CU" + "I  ", "Controlled Unclassified " + "Information", "UNCLASSIFIED/" + "/FO" + "UO",
+        "for official use " + "only", "NOF" + "ORN", "Top\u00a0Sec" + "ret", "TOP\tSEC" + "RET", "sec" + "ret/" + "/rel",
+        "by JANE DOE", "\u212aim said", "o\u2019brien", "ZO\u00cb", "yu", "the BlueBird plan",
+    ] + [w + " 555 123 " + "4567" for w in ("Phone", "tel", "CELL", "mobile", "fax", "call")] \
+      + ["gh" + c + "_" + x36 for c in "pousr"] + ["xo" + "x" + c + "-" + x36[:12] for c in "abposr"]
+
+
+def case_gates(check):
+    """The gates skip only lines that cannot give a finding: FOLD_EXTRAS matches the regex engine, and random texts
+    built from samples of every kind give the same findings with and without the gates, in both tiers.
+
+    Args:
+        check: prints one result line and remembers a failure (label, good).
+    """
+    any_letter = re.compile("(?i)[a-z]")
+    cased = [chr(c) for c in range(0x110000) if chr(c).lower() != chr(c) or chr(c).upper() != chr(c)]
+    extra = {c for c in cased if not c.isascii() and (any_letter.fullmatch(c) or any(
+        re.fullmatch("(?i)" + letter, c) for letter in "abcdefghijklmnopqrstuvwxyz"))}
+    check(f"gates: FOLD_EXTRAS are the letters outside a-z that (?i) matches with a-z ({len(extra)})",
+          extra == set(check_content_finders.FOLD_EXTRAS))
+    samples = gate_samples()
+    breaks = ["\n", "\r\n", "\r", "\x0b", "\x0c", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029", " ", ""]
+    filler = ["plain words 12 34", "", '{"id": 123, "x": "2026-11-20"}', "caf\u00e9 top call", "a" * 300]
+    rnd, deny, terms = random.Random(7), ["Jane Doe", "Kim", "O\u2019Brien", "Zo\u00eb", "Yu"], ["bluebird"]
+    texts = []
+    for _ in range(400):
+        parts = []
+        for _ in range(rnd.randint(1, 12)):
+            piece = rnd.choice(samples + filler)
+            if piece and rnd.random() < 0.2:   # a sample split by a line break
+                cut = rnd.randrange(len(piece))
+                piece = piece[:cut] + rnd.choice(breaks) + piece[cut:]
+            parts.append(piece)
+        texts.append("".join(p + rnd.choice(breaks) for p in parts))
+    allow = {"Jane Doe Example", "call 555-123-" + "4567"}
+    gated = [scan_text(t, "t", deny, allow, dod, terms) for t in texts for dod in (False, True)]
+    keep = check_content_finders.candidate_lines
+    check_content_finders.candidate_lines = lambda *a: None   # every line: the scan without gates
+    try:
+        plain = [scan_text(t, "t", deny, allow, dod, terms) for t in texts for dod in (False, True)]
+    finally:
+        check_content_finders.candidate_lines = keep
+    check(f"gates: 400 random texts, both tiers: the same findings with and without gates ({sum(map(len, plain))})",
+          gated == plain and sum(map(len, plain)) > 400)
+    kinds = list(check_content_finders.KINDS)
+    check("gates: a line with no gate match is skipped",
+          keep("plain words\nmail ann" + at + "corp" + dot + "io\nmore", kinds, [], check_content_scan.FINDERS) == [1])
+    own = dict(check_content_scan.FINDERS, phone=[lambda line: iter(())])
+    check("gates: off when a kind has a project's own finders", keep("x", kinds, [], own) is None)
+
+
+def case_pool(check):
+    """The scan of many files in a pool of processes gives the same findings, in the same order, as in this process.
+
+    Args:
+        check: prints one result line and remembers a failure (label, good).
+    """
+    samples = gate_samples()
+    with tempfile.TemporaryDirectory() as d:
+        paths = []
+        for i in range(40):
+            paths.append(f"f{i:02}.txt")
+            pathlib.Path(d, paths[-1]).write_text("\n".join(samples[i:] + samples[:i]) + "\nfiller\n" * i, encoding="utf-8")
+        pathlib.Path(d, "bin.dat").write_bytes(b"\0" * 10)
+        paths.append("bin.dat")
+        keep = check_content_scan.PARALLEL_BYTES
+        check_content_scan.PARALLEL_BYTES = 1
+        try:
+            pooled = scan_files(paths, d, ["Jane Doe"], set(), True)
+            job = (d, ["Jane Doe"], set(), True, False, (), check_content_scan.max_bytes_of(set()))
+            ran = check_content_scan._in_parallel(paths, d, job) is not None
+        finally:
+            check_content_scan.PARALLEL_BYTES = keep
+        serial = scan_files(paths, d, ["Jane Doe"], set(), True)
+    check(f"pool: the same findings in the same order as one process ({len(serial)}; pool ran: {ran})",
+          pooled == serial and len(serial) > 40 and (ran or check_content_scan.usable_cores() < 2))   # 2 or more usable cores: the pool must run
+
+
 def run(check):
     """Run the cases of this file; check(label, good) prints and records each result."""
-    for case in (case_terms, case_block_lines, case_check_file, case_setting_lines, case_hook_tools):
+    for case in (case_terms, case_block_lines, case_check_file, case_setting_lines, case_hook_tools, case_gates,
+                 case_pool):
         case(check)

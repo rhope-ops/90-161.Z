@@ -7,6 +7,9 @@ What it gives:
                      (start, end, value) for each match: the span in the line and the text that is the finding.
   load_local(path)   the finders in use when a project's own module exists: the kit's, with the kinds the module
                      replaces and the finders it adds; LocalError when the module is broken or has a wrong shape
+  GATES, candidate_lines(text, kinds, words, finders)
+                     speed only: the lines of a text that can give a finding (every other line cannot); scan_text
+                     runs the finders on those lines alone
 Inputs:  one line of text; for load_local the path of scripts/check_content_local.py.
 Outputs: matches as (start, end, value) tuples; nothing is printed here.
 Run:     not run alone; check_content_scan.py imports it. Proved by `python3 scripts/check_content.py --test`.
@@ -14,7 +17,9 @@ Network: none.
 Writes: none.
 Credentials: none.
 """
+import bisect
 import importlib.util
+import itertools
 import pathlib
 import re
 
@@ -145,6 +150,103 @@ def find_marking(line):
 
 KIT_FINDERS = {"email": [find_email], "secret": [find_secret], "phone": [find_phone], "id": [find_id],
                "milhost": [find_milhost], "dodid": [find_dodid], "marking": [find_marking]}
+
+# Gates (speed only, never a finding): for each kind, patterns of which one matches wherever a kit finder of that kind
+# can match. Each is a part of one of that kind's patterns with its look-arounds, anchors and \b removed (removing them
+# only lets more text match), with the same letters. So a line in which no gate of a kind matches cannot give a
+# finding of that kind: scan_text skips a line that no gate matches, and runs all finders, as before, on every other
+# line. Each kind has (case-sensitive gates, case-free gates). A case-free gate is in lower case and is searched in
+# the lower-case copy of the text (a plain search there is fast); when the text holds a letter in FOLD_EXTRAS, or its
+# lower-case copy has another length, it is searched with (?i) in the text itself. A gate holds only while the kind
+# uses the kit's finders alone (scan_text checks that). Proved by the self-test case "gates".
+_DIGITS = r"\d{3}(?:\)?[-. ]\d{3}[-.]\d{4}|\) ?\d{3}[-. ]\d{4}|-\d{2}-\d{4}|\d{7})"   # PHONE 0 and 1, SSN, DODID
+GATES = {
+    "email": (["@"], []),
+    "secret": (["gh[pousr]_", "github_pat_", "glpat-", "AKIA", "ASIA", "sk-", "AIza", "xox[abposr]-", "k_live_",
+                "-----BEGIN "], []),
+    "phone": ([_DIGITS, r"\+\d"], ["phone", "tel", "cell", "mobile", "fax", "call"]),
+    "id": ([_DIGITS], ["ssn", "social security"]),
+    "dodid": ([_DIGITS], []),
+    "milhost": ([], [r"\.mil", r"sharepoint-mil\.us", r"dod\.teams\.microsoft\.us"]),
+    "marking": (["CU" "I", "SEC" "RET", "CONFID" "ENTIAL", "UNCLASS" "IFIED", "FO" "UO", "NOF" "ORN"],
+                ["controlled", r"top\s+sec" "ret", "official", "secret/" "/", "confidential/" "/", "unclassified/" "/"]),
+}
+# The letters outside a-z and A-Z that (?i) matches with a letter a-z (dotted and dotless i, long s, Kelvin sign):
+# str.lower() does not turn them into that letter, so a text that holds one is searched with (?i). The self-test
+# checks this list against the regex engine over every code point.
+FOLD_EXTRAS = ("\u0130", "\u0131", "\u017f", "\u212a")
+
+
+_GATE_CACHE = {}   # (kinds, words, folded) -> the compiled gates of candidate_lines
+
+
+def _gates(kinds, words, folded):
+    """The compiled gates for these kinds and words: a list of (pattern, True when it searches the lower-case copy).
+
+    Args:
+        kinds: the finding kinds in use (each uses the kit's finders alone).
+        words: the names and terms.
+        folded: True when the lower-case copy can be used (candidate_lines); False: case-free gates get (?i).
+
+    Returns:
+        The list of (compiled pattern, searches the lower-case copy).
+    """
+    key = (tuple(kinds), tuple(words), folded)
+    if key not in _GATE_CACHE:
+        cased = [g for k in kinds for g in GATES[k][0]]
+        free = [g for k in kinds for g in GATES[k][1]]
+        for w in words:   # each word is one more case-free gate: the word, or its longest ASCII part when it is not ASCII
+            part = w if w.isascii() else max(re.findall(r"[ -~]+", w) or [""], key=len)
+            if w.isascii() or len(part) >= 3:
+                free.append(re.escape(part.lower()))
+            else:   # too short a part: the name pattern's own search
+                cased.append(r"(?i)(?<![A-Za-z0-9])" + re.escape(w) + r"(?![A-Za-z0-9])")
+        gates = [(re.compile(g), False) for g in dict.fromkeys(cased)]
+        gates += [(re.compile(g), True) if folded else (re.compile("(?i)" + g), False) for g in dict.fromkeys(free)]
+        if len(_GATE_CACHE) > 64:   # many word lists in one process (the self-test): keep the cache small
+            _GATE_CACHE.clear()
+        _GATE_CACHE[key] = gates
+    return _GATE_CACHE[key]
+
+
+def candidate_lines(text, kinds, words, finders):
+    """The lines of scan_text that can give a finding (speed only); every other line cannot.
+
+    Each kind that uses the kit's finders alone has gates (GATES), and each name or term is one
+    more gate. Each gate is searched in the whole text (or its lower-case copy, which has the same length, so the same
+    places), not line by line: a match in one line is also a match at the same place in the whole text, because the
+    gates have no anchors and the look-arounds of a word that is not ASCII see a line break there, which is never a
+    letter or digit. After a match, the search goes on at the start of the next line, so every line with a match is
+    found. A match that runs over a line break only adds a line: that line is scanned in full, as before.
+
+    Args:
+        text: the whole text that scan_text scans.
+        kinds: the finding kinds in use.
+        words: the names and terms.
+        finders: the finders in use ({kind: [finder]}).
+
+    Returns:
+        None when a kind has no gate (a project's own finders: every line is scanned); else the sorted indexes
+        (from 0, in text.splitlines()) of the lines to scan.
+    """
+    if any(finders[k] != KIT_FINDERS[k] for k in kinds):
+        return None
+    low = text.lower()
+    folded = len(low) == len(text) and not any(c in text for c in FOLD_EXTRAS)
+    hits = [(rx, low if on_low else text) for rx, on_low in _gates(kinds, words, folded)]
+    hits = [(rx, hay, m) for rx, hay in hits for m in [rx.search(hay)] if m]
+    if not hits:
+        return []
+    starts = list(itertools.accumulate(map(len, text.splitlines(True)), initial=0))   # start of each line, then the end
+    last, rows = len(starts) - 2, set()
+    for rx, hay, m in hits:
+        while m:
+            i = min(bisect.bisect_right(starts, m.start()) - 1, last)
+            rows.add(i)
+            if i >= last:
+                break
+            m = rx.search(hay, starts[i + 1])
+    return sorted(rows)
 
 
 # ---------------------------------------------------------------- a project's own finders ---------------------------
