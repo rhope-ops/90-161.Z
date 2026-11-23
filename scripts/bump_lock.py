@@ -147,8 +147,9 @@ def tag_commit(tag, repo):
     if local:   # offline: the tag in the local RADE clone (release_lock), which must be an https clone of the lock's repo
         origin = subprocess.run(["git", "-C", local, "remote", "get-url", "origin"], capture_output=True, text=True,
                                 timeout=GIT_TIMEOUT).stdout.strip().lower()
-        if origin.removesuffix(".git").removesuffix("/") != "https://github.com/" + repo.lower():
-            sys.exit("FAIL RADE_LOCAL_DIR origin is %r, not an https clone of %s" % (origin[:120], repo))
+        if origin.rstrip("/").removesuffix(".git").rstrip("/") != "https://github.com/" + repo.lower():
+            # The origin text is not printed: an origin URL can hold a token.
+            sys.exit("FAIL RADE_LOCAL_DIR origin is not https://github.com/%s (git -C <folder> remote get-url origin)" % repo)
         out = subprocess.run(["git", "-C", local, "rev-parse", "--verify", "-q", "refs/tags/" + tag + "^{commit}"],
                              capture_output=True, text=True, timeout=GIT_TIMEOUT).stdout.strip()
         return out if re.fullmatch(r"[0-9a-f]{40}", out) else ""
