@@ -139,6 +139,10 @@
                 {
                     "dir": "T26",
                     "src": "scripts/gov/90161Z-T26-endorse-r1.ps1"
+                },
+                {
+                    "dir": "T26",
+                    "src": "scripts/gov/90161Z-T26-restore-r1.ps1"
                 }
             ],
             "steps": [
