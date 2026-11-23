@@ -1,0 +1,45 @@
+name: security
+# Static security scans: bandit on scripts/ and gitleaks on the working tree. Pull requests and manual runs only, never on push (Actions minutes).
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bandit:
+    name: bandit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install bandit
+        run: pip install bandit==1.9.4
+      - name: Scan scripts (medium severity and higher)
+        run: bandit -r scripts/ -ll
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Download gitleaks and verify its checksum
+        run: |
+          set -euo pipefail
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          mkdir "$RUNNER_TEMP/gitleaks"
+          curl -sSfL -o "$RUNNER_TEMP/gitleaks/$tarball" "$base/$tarball"
+          curl -sSfL -o "$RUNNER_TEMP/gitleaks/checksums.txt" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          (cd "$RUNNER_TEMP/gitleaks" && grep " $tarball\$" checksums.txt | sha256sum --check --strict -)
+          tar -xzf "$RUNNER_TEMP/gitleaks/$tarball" -C "$RUNNER_TEMP/gitleaks" gitleaks
+      - name: Scan the working tree
+        run: '"$RUNNER_TEMP/gitleaks/gitleaks" detect --no-git --source . --redact'
