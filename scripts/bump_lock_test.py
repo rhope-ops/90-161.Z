@@ -284,6 +284,8 @@ def guard_cases():
         try:
             fails += bl.tag_commit("engine-v9", "example/RADE") != head
             fails += bl.tag_commit("engine-v8", "example/RADE") != ""
+            subprocess.run(git + ["remote", "set-url", "origin", "https://github.com/Example/RADE.git/"], check=True)
+            fails += bl.tag_commit("engine-v9", "example/RADE") != head   # case, .git and a last / are the same clone
             try:   # a clone of another repository is refused (its tags prove nothing about the lock's repo)
                 bl.tag_commit("engine-v9", "other/RADE")
                 fails += 1
@@ -302,7 +304,7 @@ def guard_cases():
             else:
                 os.environ["RADE_LOCAL_DIR"] = old
     print("BUMPLOCK guard: %s" % ("ok" if not fails else "FAIL"))
-    return 11, fails
+    return 12, fails
 
 
 def run(module):
