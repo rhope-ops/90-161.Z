@@ -276,6 +276,7 @@ def guard_cases():
         subprocess.run(["git", "init", "-q", t], check=True)
         subprocess.run(git + ["commit", "-q", "--allow-empty", "-m", "x"], check=True)
         subprocess.run(git + ["tag", "engine-v9"], check=True)
+        subprocess.run(git + ["remote", "add", "origin", "https://github.com/example/RADE.git"], check=True)
         head = subprocess.run(git + ["rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
         with open(os.path.join(t, bl.RELEASE_FILE), "w", encoding="utf-8") as f:
             json.dump({"repo": "example/RADE", "commit": head}, f)
@@ -283,6 +284,11 @@ def guard_cases():
         try:
             fails += bl.tag_commit("engine-v9", "example/RADE") != head
             fails += bl.tag_commit("engine-v8", "example/RADE") != ""
+            try:   # a clone of another repository is refused (its tags prove nothing about the lock's repo)
+                bl.tag_commit("engine-v9", "other/RADE")
+                fails += 1
+            except SystemExit:
+                pass
             fails += bl.release_lock("engine-v9", "example/RADE").get("commit") != head
             os.remove(os.path.join(t, bl.RELEASE_FILE))
             try:
@@ -296,7 +302,7 @@ def guard_cases():
             else:
                 os.environ["RADE_LOCAL_DIR"] = old
     print("BUMPLOCK guard: %s" % ("ok" if not fails else "FAIL"))
-    return 10, fails
+    return 11, fails
 
 
 def run(module):

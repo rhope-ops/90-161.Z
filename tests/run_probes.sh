@@ -158,13 +158,15 @@ touch "$ob/T02/90161Z-T02-provision-lists-r9.zip" "$ob/T02/Test-Environment.ps1"
   "$ob/Rounds/R09/90161Z-R09-report-r1.txt" "$ob/T07/90161Z-T07-seal-test-r4.ps1" "$ob/T07/90161Z-T07-key-r1.txt" "$ob/T09/90161Z-T09-page-r1.htm"
 echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (open, 1 Jan 26)\n' > "$tp/go.md"
 }
+# The raw file folder of this repository, from site.config.json (fleet v2 DEC 7), as the bundle names it.
+raw_base=$(python3 -c "import sys;sys.path.insert(0,'scripts');import site_config;print(site_config.urls()['raw'])")
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
 # domain label. The cloud has no such name, so the bundle tests give it a stand-in name, as RADE's own tests do
 # (rhope-ops/RADE tests/engine_test.sh "swap"); the test after the loop proves the real guard stops this computer.
 swap() { sed -e "s#Read-Host ('Type the number of the application to deploy (1 to ' + \\\$apps\\.Count + ') and press Enter')#'1'#" \
     -e 's#^function Get-OwnFqdn .*#function Get-OwnFqdn { return '"'pc01.area52.example.invalid'"' }#' \
     -e "s#^\$goUrl = '.*'#\$goUrl = 'file://$tp/go.md'#" \
-    -e "s#Url = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/#Url = 'file://$PWD/#" \
+    -e "s#Url = '$raw_base#Url = 'file://$PWD/#" \
     -e "s#Url = 'https://www\.[^']*'#Url = 'file://$tp/fx.bin'#" \
     -e "s#url = 'https://make\.powerautomate[^']*'#url = 'file://$tp/fx.bin'#I" \
     -e "s#Read-Host 'Press Enter to start the round, or type N and press Enter to stop with no changes'#''#" \

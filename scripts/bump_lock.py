@@ -138,13 +138,17 @@ def tag_commit(tag, repo):
 
     Args:
         tag: the release tag.
-        repo: the engine repository, owner/name (the lock's "repo"); not used offline (RADE_LOCAL_DIR).
+        repo: the engine repository, owner/name (the lock's "repo"); offline, the clone's https origin must be this repo.
 
     Returns:
         The 40-hex commit, or an empty text when the tag is not found.
     """
     local = os.environ.get("RADE_LOCAL_DIR")
-    if local:   # offline: the tag in the local RADE clone (release_lock)
+    if local:   # offline: the tag in the local RADE clone (release_lock), which must be an https clone of the lock's repo
+        origin = subprocess.run(["git", "-C", local, "remote", "get-url", "origin"], capture_output=True, text=True,
+                                timeout=GIT_TIMEOUT).stdout.strip().lower()
+        if origin.removesuffix(".git").removesuffix("/") != "https://github.com/" + repo.lower():
+            sys.exit("FAIL RADE_LOCAL_DIR origin is %r, not an https clone of %s" % (origin[:120], repo))
         out = subprocess.run(["git", "-C", local, "rev-parse", "--verify", "-q", "refs/tags/" + tag + "^{commit}"],
                              capture_output=True, text=True, timeout=GIT_TIMEOUT).stdout.strip()
         return out if re.fullmatch(r"[0-9a-f]{40}", out) else ""

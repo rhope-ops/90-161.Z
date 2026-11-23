@@ -11,10 +11,10 @@ Each control below names the rule it meets and the check or record that proves i
 | The page has a skip link, a visible focus ring and a live region for button results | WCAG 2.1 SC 2.4.1, 2.4.7, 4.1.3 | index.html; `.claude/skills/verify/measure.mjs` (contrast, target size, overflow) |
 | The page runs no inline script and loads data only from named hosts | Defense in depth (OWASP ASVS V14.4) | index.html CSP; `docs/threat-model.md` |
 | Code is modular, commented and readable as plain text | AGENTS.md "Project rules", code standard | `scripts/code_standard.py` and `docs/code-standard-90-161.md` |
-| Hand-written source files stay at 450 lines or fewer; generated files and user-paste scripts at 600 | Fleet v2 DEC 6 | `wc -l`; `scripts/code_standard.py` C4 |
+| Hand-written source files stay at 450 lines or fewer; generated files and user-paste scripts at 600 | Fleet v2 DEC 6 | `wc -l` by hand: `scripts/code_standard.py` C4 enforces 600 until the kit 11.0.0 sync. Open: `scripts/build_flow_solution.py` (482) and `scripts/logo_svg.py` (458). |
 | PowerShell execution policy is not turned off by a script | Fleet v2 DEC 3; Group Policy governs | `grep -rn "ExecutionPolicy Bypass"` = only `.github/workflows/ps51.yml` (after the engine-v36 rebuild) |
 | The RADE engine is pinned and attested | AGENTS.md "Project rules", deployable package | `scripts/rade.lock.json`; `python3 scripts/bump_lock.py --test` |
 | Generated files are never stale | AGENTS.md "Defaults", one home | `python3 scripts/rebuild_all.py --check` |
 | No app looks like network reconnaissance | AGENTS.md "Project rules", no reconnaissance | Fixed hosts only (`site.config.json`, the one site the person types) |
 
-Open items: a static-analysis gate (bandit) and a secret scan in CI (`.github/workflows/security.yml`) wait for the PFM's merge approval, because workflow files are guard files.
+Open items: a static-analysis gate (bandit 1.9.4) and a secret scan (gitleaks 8.30.1) in CI (`.github/workflows/security.yml`). It starts after two bandit findings close: `scripts/bloat_check.py:241` (a kit file; fixed by the kit 11.0.0 sync) and `scripts/logo_svg.py:45` (the PFM's choice: a reasoned `# nosec`, or the defusedxml package).
