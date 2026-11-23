@@ -1,5 +1,5 @@
 {
- "commit": "dedc3b3f5433b1fadf993a8c067b7712d6a85283",
+ "commit": "9e3f6fae4089b61bfca04ce9a59e58acd763369c",
  "files": {
   ".claude/agents/reviewer.md": "1edc979909b6f2fbb168a26aaf1213df9676c34a7018edbfe0be878896311196",
   ".claude/agents/scout.md": "977d957d96b90c3b8c9d9793456d57401952810b9aa17cb25c34955381771e2d",
@@ -30,7 +30,7 @@
   "scripts/bloat_check_timing.py": "371a1b8fbdc62c86b01bdb45faf33a8c493adaddef1609c7f8be93169a304716",
   "scripts/build_site.py": "9e317ccf693849f23e92ccd34dafbacd2feb4517a23344c49b0f39d66fbbb42b",
   "scripts/build_site_html.py": "c371cd359a47f5e887d79e9a319397fb3a8a1236e5765a360ac8ce1ac6cc70e5",
-  "scripts/check.sh": "c974a259aa3499fd2cd8860b820dbc66b02a3ead9babc0cd6a6344e7fb4db2ba",
+  "scripts/check.sh": "e0f057a23531daf859d48ffa7bdf6638eeb124503d257bd080457a041b9d5529",
   "scripts/check_blocks.py": "4b7d395839eedd198cb8f7c21d291e501fe1c28d1be107efef13dbb09b7e6ff6",
   "scripts/check_content.py": "d61e1e0ad22d54ccc75733a32ee199ac18c042c22e3a7e7e793ee47cea06a8f3",
   "scripts/check_content_finders.py": "5daf153a0535b4eed36f6986fd3c2a137431297b85ae0401c16798e4d268425f",
@@ -73,5 +73,5 @@
  },
  "kit": "archimedes_lever",
  "overrides": [],
- "version": "11.0.0"
+ "version": "11.0.1"
 }
