@@ -85,9 +85,10 @@ foreach ($f in Get-ChildItem -LiteralPath (Join-Path $Root 'scripts/gov') -Filte
 $common = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/src/task-common.ps1') -Raw
 $oldOd = $env:OneDriveCommercial
 & {
-# Join-Path as plain text for this part: a Linux host has no C: drive (the function wins over the cmdlet in this scope).
-function Join-Path([string]$Path, [string]$ChildPath) { return ($Path.TrimEnd('\') + '\' + $ChildPath) }
-. ([scriptblock]::Create([regex]::Match($common, '(?s)function Get-TaskDir.*?\r?\n\}\r?\n').Value))
+# Join paths as plain text: a Linux host has no C: drive, so the copy of Get-TaskDir calls this helper, not Join-Path.
+function Join-TextPath([string]$Path, [string]$ChildPath) { return ($Path.TrimEnd('\') + '\' + $ChildPath) }
+$getTaskDir = [regex]::Match($common, '(?s)function Get-TaskDir.*?\r?\n\}\r?\n').Value -replace 'Join-Path', 'Join-TextPath'
+. ([scriptblock]::Create($getTaskDir))
 foreach ($case in @(@('', 'OneDrive - United States Air Force'), @('C:\Users\fake9876\OneDrive - Example Org', 'OneDrive - Example Org'))) {
   $env:OneDriveCommercial = $case[0]
   $msg = ''
