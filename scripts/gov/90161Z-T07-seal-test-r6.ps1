@@ -111,7 +111,7 @@ try {
   $lines.Add('STEP 1 seal prep')
   $prepResult = '90161Z-T07-testprep-result-r1.txt'
   $ErrorActionPreference = 'Continue'
-  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $dir '90161Z-T07-seal-prep-r5.ps1') -Id $id -SealDir $testDir -ResultName $prepResult -NoPause *> $null
+  & powershell.exe -NoProfile -File (Join-Path $dir '90161Z-T07-seal-prep-r5.ps1') -Id $id -SealDir $testDir -ResultName $prepResult -NoPause *> $null
   $ErrorActionPreference = 'Stop'
   $prepPath = Join-Path $dir $prepResult
   if (Test-Path -LiteralPath $prepPath) { foreach ($l in Get-Content -LiteralPath $prepPath) { $lines.Add($l) } } else { $lines.Add('STEP 1 seal prep wrote no result file') }

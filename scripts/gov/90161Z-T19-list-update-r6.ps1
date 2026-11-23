@@ -38,7 +38,7 @@
           the T19 folder and, once, Config\90161Z-site.txt when the site address is typed outside RADE. -Check and
           -PlanOnly change nothing on the site.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T19-list-update-r6.ps1 (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T19-list-update-r6.ps1 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -NoPause, -Check, -PlanOnly. -TestDir is
   for the tests (tests/ps/Test-T20.ps1).
 .PARAMETER Id

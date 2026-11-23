@@ -160,7 +160,9 @@ echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (o
 }
 # The raw file folder of this repository, from site.config.json (fleet v2 DEC 7), as the bundle names it.
 raw_base=$(python3 -c "import sys;sys.path.insert(0,'scripts');import site_config;print(site_config.urls()['raw'])")
-case "$raw_base" in https://raw.githubusercontent.com/*/) ;; *) bad "site.config.json gives no raw file folder"; raw_base='no-raw-base/';; esac
+# A bad folder fails here and skips the bundle runs (they would run with the real addresses left in).
+bundles=(scripts/gov/paste/*.ps1)
+case "$raw_base" in https://raw.githubusercontent.com/*/) ;; *) bad "site.config.json gives no raw file folder"; bundles=();; esac
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
 # domain label. The cloud has no such name, so the bundle tests give it a stand-in name, as RADE's own tests do
 # (rhope-ops/RADE tests/engine_test.sh "swap"); the test after the loop proves the real guard stops this computer.
@@ -176,7 +178,7 @@ swap() { sed -e "s#Read-Host ('Type the number of the application to deploy (1 t
     -e "s#Read-Host 'Type the site address[^']*'#''#" \
     -e "s#Read-Host 'Did you see both[^']*'#'Y'#" \
     -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$tp/u'#" "$1"; }
-for b in scripts/gov/paste/*.ps1; do
+for b in "${bundles[@]}"; do
   fixture; swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
   # Text mode runs the default steps that need no folder (the optional steps are skipped).
   n=$(grep -c "^\$steps += @{.*Default = \$true; AskParam = '';" "$b")

@@ -43,7 +43,7 @@
   Writes: the site rows listed under WHAT IT CHANGES ON THE SITE; on this computer the T24 folder (result files, the state file, the ready zip of
           part 0) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T24-full-solution-test-r7.ps1 -Part 0 (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T24-full-solution-test-r7.ps1 -Part 0 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part 0 to 4, -WaitMinutes (default 6: a flow you start with Run),
   -PollMinutes (default 17: F01 checks every 15 minutes, plus 2; the count starts after 16 of them), -F05Minutes (default 3: every minute, plus 2),
   -NoPause; -TestDir: tests only.
