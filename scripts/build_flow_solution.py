@@ -59,6 +59,8 @@ Credentials: none.
 import argparse, io, json, pathlib, re, sys, uuid, zipfile
 from xml.sax.saxutils import escape, quoteattr
 
+from build_flow_solution_xml import PREFIX, customizations_xml, solution_xml
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r5.zip"
 # R34: the probe button flow (its workflow ID goes into the T21 look script, which names it in the list view button).
@@ -70,9 +72,7 @@ TEST_DEFS = ROOT / "flow" / "solution" / "test-defs"
 NS = uuid.UUID("6f1c2b4e-9d0a-4c5e-8b7a-90161a000001")
 SCHEMA = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
 STAMP = (2026, 1, 1, 0, 0, 0)
-UNIQUE, PUBLISHER, PREFIX, VERSION = "PFM90161Z", "PFM", "pfm", "1.0.0.1"   # publisher PFM as in the T05 export
-PLATFORM, SERVICEABILITY = "9.2.26101.188", "9.2.26101.00188"   # the R18 export (r5); T05 had 9.2.26094.172
-OPTION_PREFIX = 89127   # the publisher PFM in this environment (R18 export, r5); a new environment creates PFM with it
+UNIQUE = "PFM90161Z"   # the solution unique name (publisher PFM, prefix pfm, version: build_flow_solution_xml.py)
 CONNECTORS = {"shared_sharepointonline": "SharePoint", "shared_office365": "Office 365 Outlook",
               "shared_onedriveforbusiness": "OneDrive for Business", "shared_office365users": "Office 365 Users",
               "shared_office365groups": "Office 365 Groups", "shared_wordonlinebusiness": "Word Online (Business)",
@@ -127,13 +127,6 @@ OFF_STATE = "      <StateCode>0</StateCode>\n      <StatusCode>1</StatusCode>\n"
 # placeholders that only T24 replaces); build(only, on) keeps the slice form for a later test round.
 
 
-XSI = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
-ORG = f'OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}"'
-# The publisher's two empty addresses list these elements, as in the R18 export (r5): ADDR_FIELDS, the shipping method code, then ADDR_TAIL.
-ADDR_FIELDS = ["City", "County", "Country", "Fax", "FreightTermsCode", "ImportSequenceNumber", "Latitude", "Line1", "Line2",
-               "Line3", "Longitude", "Name", "PostalCode", "PostOfficeBox", "PrimaryContactName"]
-ADDR_TAIL = ["StateOrProvince", "Telephone1", "Telephone2", "Telephone3", "TimeZoneRuleVersionNumber", "UPSZone", "UTCOffset",
-             "UTCConversionTimeZoneCode"]
 
 
 def dumps(o):
@@ -301,9 +294,9 @@ def workflow_entries(flows, test, only, on, files, root_components):
     and the root_components list (gets one line per flow). Returns the list of <Workflow> XML blocks for customizations.xml."""
     wf_xml = []
     for src, d, used in flows:
-        # R21: "workflowKey" names the stem whose ID the flow kept when it was first imported (R20 imported F03 r2 and F05 r1,
+        # R21: "workflowIdStem" names the stem whose ID the flow kept when it was first imported (R20 imported F03 r2 and F05 r1,
         # with the revision in the ID), so this import replaces those flows in place; F05 r1 is on and would double the rows.
-        wid = guid("workflow", d["workflowKey"]) if d.get("workflowKey") and test is None else flow_guid(src.stem, test is not None)
+        wid = guid("workflow", d["workflowIdStem"]) if d.get("workflowIdStem") and test is None else flow_guid(src.stem, test is not None)
         fname = json_name(d["displayName"], wid)
         # Flow solutions carry the flow JSON without indents (slice r2, 14 Nov 26: keeps the R20 round under the 300 KB paste limit;
         # JSON whitespace has no meaning). The test solutions keep the indented form that R19 imported.
@@ -354,46 +347,6 @@ def env_definition_files(env, full, files, root_components):
             f"  <isrequired>{0 if s in OPTIONAL or (full and default) else 1}</isrequired>\n"
             "  <secretstore>0</secretstore>\n  <type>100000000</type>\n</environmentvariabledefinition>\n")
         root_components.append(f'      <RootComponent type="380" schemaName="{s}" behavior="0" />')
-
-
-def customizations_xml(wf_xml, cr_xml):
-    """Build customizations.xml. Takes the <Workflow> blocks and the <connectionreference> blocks; returns the text."""
-    return (   # no XML declaration (r5, as exported)
-        f"<ImportExportXml {XSI} {ORG}>\n  <Entities></Entities>\n  <Roles></Roles>\n  <Workflows>\n" + "\n".join(wf_xml) + "\n  </Workflows>\n"
-        "  <FieldSecurityProfiles></FieldSecurityProfiles>\n  <Templates />\n  <EntityMaps />\n  <EntityRelationships />\n"
-        "  <OrganizationSettings />\n  <optionsets />\n  <CustomControls />\n  <EntityDataProviders />\n"
-        "  <connectionreferences>\n" + "\n".join(cr_xml) + "\n  </connectionreferences>\n  <Languages>\n    <Language>1033</Language>\n  </Languages>\n"
-        "</ImportExportXml>\n")
-
-
-def nil(tag):
-    """Write an empty XML element marked nil. Takes the opening tag without its closing bracket, such as '<City'; returns text that
-    the caller finishes with '>'."""
-    return f'{tag} xsi:nil="true"></{tag[1:]}'
-
-
-def address(n):
-    """Build one empty <Address> block of the publisher. Takes the address number (1 or 2); returns text."""
-    return ("        <Address>\n" f"          <AddressNumber>{n}</AddressNumber>\n          <AddressTypeCode>1</AddressTypeCode>\n"
-            + "".join(f"          {nil('<' + t)}>\n" for t in ADDR_FIELDS) + "          <ShippingMethodCode>1</ShippingMethodCode>\n"
-            + "".join(f"          {nil('<' + t)}>\n" for t in ADDR_TAIL) + "        </Address>\n")
-
-
-def solution_xml(unique, title, root_components):
-    """Build solution.xml. Takes the solution's unique name, its title and the RootComponent lines; returns the text."""
-    return (   # no XML declaration; attributes in the exported order (r5)
-        f'<ImportExportXml version="{PLATFORM}" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" {XSI} OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}">\n'
-        f"  <SolutionManifest>\n    <UniqueName>{unique}</UniqueName>\n"
-        f'    <LocalizedNames>\n      <LocalizedName description="{title}" languagecode="1033" />\n    </LocalizedNames>\n'
-        "    <Descriptions />\n"
-        f"    <Version>{VERSION}</Version>\n    <Managed>0</Managed>\n    <Publisher>\n      <UniqueName>{PUBLISHER}</UniqueName>\n"
-        '      <LocalizedNames>\n        <LocalizedName description="90-161.Z" languagecode="1033" />\n      </LocalizedNames>\n'
-        "      <Descriptions />\n"
-        f"      {nil('<EMailAddress')}>\n      {nil('<SupportingWebsiteUrl')}>\n"
-        f"      <CustomizationPrefix>{PREFIX}</CustomizationPrefix>\n      <CustomizationOptionValuePrefix>{OPTION_PREFIX}</CustomizationOptionValuePrefix>\n"
-        "      <Addresses>\n" + address(1) + address(2) + "      </Addresses>\n"
-        "    </Publisher>\n    <RootComponents>\n" + "\n".join(root_components) + "\n    </RootComponents>\n    <MissingDependencies />\n"
-        "  </SolutionManifest>\n</ImportExportXml>\n")
 
 
 def zip_solution(files, test):
