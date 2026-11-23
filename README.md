@@ -86,6 +86,7 @@ The design; parts marked (planned) are not built yet.
 - **No stored credentials:** you sign in each run; scripts take a credential only through Get-Credential.
 - **Fake data only outside DoD365:** no real draft, name or office symbol is in this repository.
 - **No scripts in results:** a test round never collects or sends a script file.
+- **Execution policy stays on:** no script turns off the PowerShell execution policy; your organization's Group Policy decides what runs.
 
 ---
 
@@ -99,4 +100,7 @@ The design; parts marked (planned) are not built yet.
 | `scripts/` | Build, round bundles and the gov-device scripts |
 | `docs/ARCHITECTURE.md`, `docs/process-model.md` | The design; the stages and their paragraphs |
 | `ref/` | Reference copies: DAFMAN 90-161 (the rule source), ANGMAN 90-161 and the forms |
+| `site.config.json` | The account values (GitHub owner, repository, branch, Teams channel) that the scripts and the page read |
+| `docs/MAINTAINER_HANDOVER.md` | Where each part lives, and the steps for the common maintainer tasks |
+| `SECURITY.md`, `COMPLIANCE.md`, `docs/threat-model.md` | How to report a problem; each control and its proof; the threats and their controls |
 | [TASKS.md](TASKS.md) | Test tasks for the work computer (copied from go.md) |
