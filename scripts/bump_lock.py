@@ -2,7 +2,8 @@
 """Move scripts/rade.lock.json to a RADE engine release, locally (the PFM, 2026-11-15: no outside checks).
 
     python3 scripts/bump_lock.py engine-v3    # copy the release lock, rebuild, trace, check (docs/dev-setup.md "RADE engine")
-    python3 scripts/bump_lock.py --test       # self-test of the release-lock checks (no network)
+    python3 scripts/bump_lock.py --test       # self-test of the release-lock checks (no network; scripts/bump_lock_test.py)
+    RADE_LOCAL_DIR=<folder> python3 scripts/bump_lock.py engine-v3   # offline: see release_lock() below
 
 Steps: (1) download rade-engine.lock.json from the RADE release and check it (repo, commit = the tag's commit,
 file paths, SHA-256 form); (2) write the lock with serial = main's + 1 (the build reads it from disk);
@@ -21,13 +22,17 @@ import re
 import runpy
 import subprocess
 import sys
+import urllib.parse
 import urllib.request
 import zoneinfo
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 LOCK = os.path.join(ROOT, "scripts", "rade.lock.json")
 DECISIONS = os.path.join(ROOT, "docs", "DECISIONS.md")
-RELEASE = "https://github.com/rhope-ops/RADE/releases/download/{tag}/rade-engine.lock.json"
+# The engine repository comes from scripts/rade.lock.json "repo" (the attested release subject; fleet v2 DEC 7).
+RELEASE = "https://github.com/{repo}/releases/download/{tag}/rade-engine.lock.json"
+REPO_RE = r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+"   # owner/name: nothing else may enter a URL
+RELEASE_FILE = "rade-engine.lock.json"   # the release lock file name, also in a RADE_LOCAL_DIR folder
 TAG_RE = r"engine-v[0-9]{1,4}"
 PASTE = os.path.join(ROOT, "scripts", "gov", "paste")
 BUNDLES = os.path.join(ROOT, "scripts", "paste_bundles.json")   # round definitions: the raise changes bundle names here
@@ -79,16 +84,71 @@ def run_git(args, what, cwd=None):
         sys.exit("FAIL git stopped (%s): %s" % (what, (e.stderr or "").strip()[:200]))
 
 
-def tag_commit(tag):
+def https_only(url):
+    """Stop unless a URL uses https (fleet v2: no plain-http download of the release lock, CWE-319).
+
+    Args:
+        url: the URL to open, or a redirect target.
+
+    Returns:
+        The URL unchanged; exits with a FAIL message for any other scheme or an empty host.
+    """
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "https" or not parts.netloc:
+        sys.exit("FAIL only https URLs may be opened, got: " + url[:120])
+    return url
+
+
+class HttpsRedirects(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect only to an https URL (a GitHub release download redirects once to its file host)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        """Check the redirect target with https_only, then follow it as urllib does. Returns the new request."""
+        return super().redirect_request(req, fp, code, msg, headers, https_only(newurl))
+
+
+def release_lock(tag, repo):
+    """Read the release lock of a tag: from RADE_LOCAL_DIR when it is set (offline), else download it over https.
+
+    RADE_LOCAL_DIR names a local clone of rhope-ops/RADE that has the tag, with the release file rade-engine.lock.json
+    (downloaded by hand from the release page) in the clone's top folder. The checks of check_release still run.
+
+    Args:
+        tag: the release tag, engine-v<N>.
+        repo: the engine repository, owner/name (the lock's "repo").
+
+    Returns:
+        The release lock (a dict).
+    """
+    local = os.environ.get("RADE_LOCAL_DIR")
+    if local:
+        path = os.path.join(local, RELEASE_FILE)
+        if not os.path.isfile(path):
+            sys.exit("FAIL RADE_LOCAL_DIR is set but %s does not exist" % path)
+        print("OFFLINE the release lock comes from %s (RADE_LOCAL_DIR)" % path)
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    opener = urllib.request.build_opener(HttpsRedirects)
+    with opener.open(https_only(RELEASE.format(repo=repo, tag=tag)), timeout=60) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def tag_commit(tag, repo):
     """The commit a RADE tag names: the peeled line of an annotated tag, else the plain line.
 
     Args:
         tag: the release tag.
+        repo: the engine repository, owner/name (the lock's "repo"); not used offline (RADE_LOCAL_DIR).
 
     Returns:
         The 40-hex commit, or an empty text when the tag is not found.
     """
-    out = run_git(["ls-remote", "https://github.com/rhope-ops/RADE", "refs/tags/" + tag, "refs/tags/" + tag + "^{}"],
+    local = os.environ.get("RADE_LOCAL_DIR")
+    if local:   # offline: the tag in the local RADE clone (release_lock)
+        out = subprocess.run(["git", "-C", local, "rev-parse", "--verify", "-q", "refs/tags/" + tag + "^{commit}"],
+                             capture_output=True, text=True, timeout=GIT_TIMEOUT).stdout.strip()
+        return out if re.fullmatch(r"[0-9a-f]{40}", out) else ""
+    out = run_git(["ls-remote", "https://github.com/" + repo, "refs/tags/" + tag, "refs/tags/" + tag + "^{}"],
                   "looking up the tag " + tag).stdout
     refs = dict((r, s) for s, r in (line.split("\t") for line in out.splitlines() if "\t" in line))
     return refs.get("refs/tags/" + tag + "^{}") or refs.get("refs/tags/" + tag, "")
@@ -317,9 +377,10 @@ def bump(tag):
     if not re.fullmatch(TAG_RE, tag):
         sys.exit("FAIL tag must look like engine-v3, got: " + tag)
     lock = json.load(open(LOCK))
-    with urllib.request.urlopen(RELEASE.format(tag=tag), timeout=60) as r:
-        rel = json.loads(r.read().decode("utf-8"))
-    bad = check_release(rel, lock, tag_commit(tag))
+    if not re.fullmatch(REPO_RE, lock.get("repo", "")):
+        sys.exit("FAIL scripts/rade.lock.json \"repo\" must look like owner/name")
+    rel = release_lock(tag, lock["repo"])
+    bad = check_release(rel, lock, tag_commit(tag, lock["repo"]))
     if bad:
         sys.exit("FAIL release lock: " + "; ".join(bad))
     if rel["commit"] == lock["commit"]:
@@ -330,254 +391,6 @@ def bump(tag):
           "the next revision (RAISED lines above)." % tag)
 
 
-def release_cases():
-    """Check check_release and the tag pattern against fixed good and bad cases.
-
-    Returns:
-        A tuple (cases, fails).
-    """
-    lock = {"repo": "rhope-ops/RADE"}
-    c, h = "a" * 40, "b" * 64
-    good = {"repo": "rhope-ops/RADE", "commit": c, "engine": "engine/x.py", "files": {"engine/x.py": h}}
-    cases = [
-        (good, c, 0),
-        (dict(good, repo="other/RADE"), c, 1),
-        (good, "c" * 40, 1),
-        (good, "", 1),
-        (dict(good, commit="abc"), "abc", 1),
-        (dict(good, engine="engine/y.py"), c, 1),
-        (dict(good, files={"engine/x.py": h, "../etc/passwd": h}), c, 1),
-        (dict(good, files={"engine/x.py": "zz"}), c, 1),
-        (dict(good, files={}), c, 1),
-    ]
-    fails = sum(1 for rel, tagged, want in cases if bool(check_release(rel, lock, tagged)) != bool(want))
-    fails += sum(1 for t in ("engine-v3", "engine-v1234") if not re.fullmatch(TAG_RE, t))
-    fails += sum(1 for t in ("engine-v", "x;id", "engine-v3 ", "v3", "engine-v12345") if re.fullmatch(TAG_RE, t))
-    return len(cases) + 7, fails
-
-
-def fake_build(rel, seen, gov, build_ok, crash):
-    """Fake traced build for order_case: records the lock and row state, fakes bundle and task script writes, then fails.
-
-    Args:
-        rel: the fake release lock.
-        seen: the dict that receives the "lock" and "row" observations.
-        gov: the task script folder.
-        build_ok: False makes the build stop with a FAIL message.
-        crash: None, "error" or "interrupt".
-
-    Returns:
-        The lock's file set. Raises RuntimeError ("error"), KeyboardInterrupt ("interrupt") or SystemExit (build_ok False).
-    """
-    seen["lock"] = json.load(open(LOCK)).get("commit") == rel["commit"]
-    seen["row"] = "bump_lock" in open(DECISIONS).read()
-    open(os.path.join(PASTE, "c.ps1"), "w").write("new bundle")
-    open(os.path.join(PASTE, "c.ps1.sha256.json"), "w").write("{}")   # engine-v21 on: the stored hash beside it
-    open(os.path.join(gov, "t.ps1"), "w").write("new task script")   # a task script the build made
-    if crash == "error":
-        raise RuntimeError("fake build error")
-    if crash == "interrupt":
-        raise KeyboardInterrupt()
-    if not build_ok:
-        sys.exit("FAIL fake build")
-    return set(rel["files"])
-
-
-def order_case(name, build_ok, check_ok, rel, crash=None):
-    """Run one apply_bump case in the temp folder that order_cases set up (fake build, checks and revision raise).
-
-    Args:
-        name: the case name; "pass" expects success, any other a stop.
-        build_ok: whether the fake build passes.
-        check_ok: whether the fake checks pass.
-        rel: the fake release lock.
-        crash: None, or "error" / "interrupt": the fake build raises a plain error or KeyboardInterrupt.
-
-    Returns:
-        True when the case behaved as expected.
-    """
-    gov = os.path.dirname(PASTE)
-    for n in os.listdir(PASTE):   # each case starts from one old bundle only
-        os.remove(os.path.join(PASTE, n))
-    for n in os.listdir(gov):   # and from no task script
-        if n.endswith(".ps1"):
-            os.remove(os.path.join(gov, n))
-    open(LOCK, "w").write('{"commit": "old"}')
-    open(os.path.join(PASTE, "b.ps1"), "w").write("old bundle")
-    for p in (BUNDLES, GO):   # the raise edits these two; a failed run must put them back
-        open(p, "w").write("old")
-    open(DECISIONS, "w").write("| Date | What | By | Where |\n|---|---|---|---|\n")
-    seen = {}
-
-    def build(root, engine):
-        """Fake traced build: see fake_build."""
-        return fake_build(rel, seen, gov, build_ok, crash)
-
-    def revise():
-        """Fake revision raise: the old bundle b.ps1 leaves and the next revision c.ps1 comes."""
-        os.remove(os.path.join(PASTE, "b.ps1"))
-        open(os.path.join(PASTE, "c.ps1"), "w").write("raised bundle")
-        for p in (BUNDLES, GO):
-            open(p, "w").write("raised")
-
-    def checks():
-        """Fake checks: the row must not exist yet; fails when the case says so."""
-        seen["row_at_checks"] = "bump_lock" in open(DECISIONS).read()
-        if not check_ok:
-            sys.exit("FAIL fake checks")
-
-    try:
-        apply_bump(rel, "engine-v9", {"commit": "old"}, 5, "2026-01-01", build, checks, revise)
-        stopped = False
-    except (SystemExit, RuntimeError, KeyboardInterrupt):
-        stopped = True
-    row = open(DECISIONS).read().count(BY)
-    kept = [open(p).read() for p in (BUNDLES, GO)]
-    good = (seen.get("lock") is True and seen.get("row") is False and seen.get("row_at_checks", False) is False
-            and stopped == (name != "pass"))
-    return order_verdict(name, good, row, kept, gov)
-
-
-def order_verdict(name, good, row, kept, gov):
-    """Compare the folder after one apply_bump case with what the case name expects.
-
-    Args:
-        name: the case name ("pass" expects the new state, any other the old one).
-        good: whether the order checks held.
-        row: the number of DECISIONS rows written.
-        kept: the contents of the bundle definitions and go.md.
-        gov: the task script folder (the fake build writes t.ps1 there).
-
-    Returns:
-        True when the folder is as expected.
-    """
-    task = os.path.exists(os.path.join(gov, "t.ps1"))
-    if name == "pass":
-        return (good and row == 1 and json.load(open(LOCK))["serial"] == 5 and task and kept == ["raised"] * 2
-                and sorted(os.listdir(PASTE)) == ["c.ps1", "c.ps1.sha256.json"])
-    return (good and row == 0 and open(LOCK).read() == '{"commit": "old"}' and not task and kept == ["old"] * 2
-            and open(os.path.join(PASTE, "b.ps1")).read() == "old bundle" and os.listdir(PASTE) == ["b.ps1"])
-
-
-def cache_case():
-    """Test without_module_caches: the cache copy of a listed module leaves the trace (also its temporary name); the
-    cache of a module the lock does not list, and any other file under __pycache__, stay.
-
-    Returns:
-        True when the case passes.
-    """
-    files = {"engine/a.py": "", "engine/b.py": "", "top.py": ""}
-    seen = {"engine/a.py", "engine/__pycache__/b.cpython-313.pyc", "engine/__pycache__/b.cpython-313.pyc.139770291932016",
-            "__pycache__/top.cpython-311.pyc", "engine/__pycache__/other.cpython-313.pyc", "engine/__pycache__/x.txt",
-            "assets/__pycache__/b.cpython-313.pyc"}
-    return without_module_caches(seen, files) == {"engine/a.py", "engine/__pycache__/other.cpython-313.pyc",
-                                                  "engine/__pycache__/x.txt", "assets/__pycache__/b.cpython-313.pyc"}
-
-
-def raise_case():
-    """Test raise_bundle_revisions itself (not a fake) in a temp folder with a fake main: the bundle that main has gets
-    the next revision in the round definitions and in its go.md link, and its old file and stored hash file leave; the
-    bare file name in other go.md text stays.
-
-    Returns:
-        True when the case passes.
-    """
-    import tempfile
-    old, new = "scripts/gov/paste/90161Z-R01-round-r6.ps1", "scripts/gov/paste/90161Z-R01-round-r7.ps1"
-    with tempfile.TemporaryDirectory() as t:
-        os.makedirs(os.path.join(t, "scripts", "gov", "paste"))
-        with open(os.path.join(t, "scripts", "paste_bundles.json"), "w") as f:
-            json.dump({"bundles": [{"out": old, "round": "R01", "title": "Round R01 r6: on main"}]}, f, indent=2)
-        for rel_path, text in ((old, "built on main"), (old + ".sha256.json", "{}"), ("go.md", "link .../%s\nDone: 90161Z-R01-round-r6.ps1 ran\n" % old)):
-            with open(os.path.join(t, rel_path), "w") as f:
-                f.write(text)
-        moved = raise_bundle_revisions(t, {old: b"built on main"}.get)
-        left = sorted(os.listdir(os.path.join(t, "scripts", "gov", "paste")))
-        go = open(os.path.join(t, "go.md")).read()
-        out = json.load(open(os.path.join(t, "scripts", "paste_bundles.json")))["bundles"][0]
-    return (moved == [(old, new)] and left == [] and out == {"out": new, "round": "R01", "title": "Round R01 r7: on main"}
-            and go == "link .../%s\nDone: 90161Z-R01-round-r6.ps1 ran\n" % new)
-
-
-def order_cases():
-    """Test the order of apply_bump with fake build, check and raise functions in a temp folder (no network, no git).
-    Cases: the lock is on disk during the build; no DECISIONS row before the checks pass; a failing build or check
-    restores the old lock and bundle, deletes the raised bundle and writes no row; a pass keeps the raised bundle and
-    writes one row whose By column names this script.
-
-    Returns:
-        A tuple (cases, fails).
-    """
-    import tempfile
-    global LOCK, DECISIONS, PASTE, BUNDLES, GO
-    saved = (LOCK, DECISIONS, PASTE, BUNDLES, GO)
-    fails, cases = 0, 0
-    rel = {"commit": "d" * 40, "engine": "engine/x.py", "files": {"engine/x.py": "e" * 64}}
-    with tempfile.TemporaryDirectory() as t:
-        LOCK, DECISIONS, PASTE = (os.path.join(t, "lock.json"), os.path.join(t, "DECISIONS.md"), os.path.join(t, "paste"))
-        BUNDLES, GO = os.path.join(t, "bundles.json"), os.path.join(t, "go.md")
-        os.mkdir(PASTE)
-        try:
-            for name, build_ok, check_ok, *crash in (("pass", True, True), ("build fails", False, True), ("checks fail", True, False),
-                                          ("build error", True, True, "error"), ("interrupt", True, True, "interrupt")):
-                good = order_case(name, build_ok, check_ok, rel, *crash)
-                print("BUMPLOCK order %s: %s" % (name, "ok" if good else "FAIL"))
-                cases, fails = cases + 1, fails + (not good)
-        finally:
-            LOCK, DECISIONS, PASTE, BUNDLES, GO = saved
-    for label, case in (("raise itself", raise_case), ("trace without module caches", cache_case)):
-        good = case()
-        print("BUMPLOCK %s: %s" % (label, "ok" if good else "FAIL"))
-        cases, fails = cases + 1, fails + (not good)
-    return cases, fails
-
-
-def text_cases():
-    """Test the row text and the git time limit (a fake subprocess.run that times out).
-
-    Returns:
-        A tuple (cases, fails).
-    """
-    fails = 0
-    row = decision_row("2026-01-01", "engine-v9", "abcdef0", 5)
-    fails += not (row.count("\n") == 1 and row.count("|") == 5 and "| " + BY + " |" in row and "PFM |" not in row)
-    real = subprocess.run
-
-    def slow(*a, **k):
-        """Fake subprocess.run: reports the timeout it was given as expired."""
-        raise subprocess.TimeoutExpired(a[0], k.get("timeout"))
-    subprocess.run = slow
-    try:
-        run_git(["ls-remote", "x"], "test")
-        fails += 1
-    except SystemExit as e:
-        fails += not ("did not answer in %d seconds" % GIT_TIMEOUT in str(e.code))
-    finally:
-        subprocess.run = real
-    seen = {}
-    subprocess.run = lambda *a, **k: seen.update(k) or subprocess.CompletedProcess(a[0], 0, "", "")
-    try:
-        run_git(["fetch"], "test")
-    finally:
-        subprocess.run = real
-    fails += seen.get("timeout") != GIT_TIMEOUT
-    return 3, fails
-
-
-def self_test():
-    """Run every no-network self-test: release checks, the order of the bump steps, the row text and the git timeout.
-
-    Returns:
-        1 when any case fails, else 0 (the BUMPLOCK line is printed).
-    """
-    total = fails = 0
-    for fn in (release_cases, order_cases, text_cases):
-        n, f = fn()
-        total, fails = total + n, fails + f
-    print("BUMPLOCK cases=%d fails=%d" % (total, fails))
-    return 1 if fails else 0
-
-
 def changed_files():
     """List the changed files from git status. Takes nothing; returns the text, or "(none)"."""
     out = subprocess.run(["git", "status", "--short"], cwd=ROOT, capture_output=True, text=True).stdout
@@ -586,7 +399,8 @@ def changed_files():
 
 if __name__ == "__main__":
     if sys.argv[1:] == ["--test"]:
-        sys.exit(self_test())
+        import bump_lock_test   # scripts/bump_lock_test.py: the self-test cases, kept apart (450-line cap)
+        sys.exit(bump_lock_test.run(sys.modules[__name__]))
     if len(sys.argv) != 2:
         sys.exit(__doc__)
     try:

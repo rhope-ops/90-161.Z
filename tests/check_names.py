@@ -124,9 +124,12 @@ for f in sorted((ROOT / "flow" / "defs").glob("*.json")):
     product_text(f"{f.name} description", d.get("description", ""))
     for msg in re.findall(r'"message": "([^"]*)"', f.read_text(encoding="utf-8")):
         product_text(f"{f.name} message", msg)
+sys.path.insert(0, str(ROOT / "scripts"))
+import site_config  # noqa: E402  scripts/site_config.py: the github.io host comes from site.config.json (fleet v2 DEC 7)
+PAGES_HOST = site_config.urls()["pages_host"]
 go = (ROOT / "go.md").read_text(encoding="utf-8")
 for i, l in enumerate(go.split("\n"), 1):
-    plain = re.sub(r"\S*://\S+|raw\.githubusercontent\.com\S*|rhope-ops\.github\.io\S*", "", l)
+    plain = re.sub(r"\S*://\S+|raw\.githubusercontent\.com\S*|" + re.escape(PAGES_HOST) + r"\S*", "", l)
     if re.search(r"\b\d{4}-\d{2}-\d{2}\b", plain): bad.append(f"go.md:{i}: date as YYYY-MM-DD -> 11 Nov 26 (T&Q ch 28)")
     product_text(f"go.md:{i}", plain)
 print("\n".join(bad) or "OK names")

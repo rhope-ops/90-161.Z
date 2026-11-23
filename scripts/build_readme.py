@@ -27,10 +27,13 @@ GO = ROOT / 'go.md'
 TASKS = ROOT / 'TASKS.md'
 BEGIN = '<!-- >>> tasks: generated from go.md by scripts/build_readme.py (do not edit) -->'
 END = '<!-- <<< tasks -->'
-RAW = 'https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/'
-BLOB = 'https://github.com/rhope-ops/90-161.Z/blob/main/'
-ROUND = re.compile(r'^(?:https://)?raw\.githubusercontent\.com/rhope-ops/90-161\.Z/main/(scripts/gov/paste/[^/\s]+\.ps1)$')
-BARE = re.compile(r'^(?:https://)?((?:raw\.githubusercontent\.com|rhope-ops\.github\.io)/\S*)$')
+sys.path.insert(0, str(ROOT / 'scripts'))
+import site_config   # noqa: E402  scripts/site_config.py: the account values live in site.config.json (fleet v2 DEC 7)
+U = site_config.urls()
+RAW = U['raw']
+BLOB = U['blob']
+ROUND = re.compile(r'^(?:https://)?' + re.escape(RAW[len('https://'):]) + r'(scripts/gov/paste/[^/\s]+\.ps1)$')
+BARE = re.compile(r'^(?:https://)?((?:raw\.githubusercontent\.com|' + re.escape(U['pages_host']) + r')/\S*)$')
 
 
 def round_lines(path):

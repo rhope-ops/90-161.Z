@@ -1,5 +1,5 @@
 // check_go_page.js: tests the go.md renderer of the bookmark page (index.html) in node, with no browser.
-// Loads the page script with window.GO_TEST set, so the script exposes parse() and renderSecs() and draws nothing.
+// Loads the page script (go.js; fleet v2 moved it out of index.html) with window.GO_TEST set, so the script exposes parse() and renderSecs() and draws nothing.
 // Pass = last line "GO PAGE PASS"; exit 1 on any failure. Run: node tests/check_go_page.js
 // Network: none.
 // Writes: none (the page script runs in memory with fake go.md text).
@@ -9,10 +9,9 @@ const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
 
-/** load(): runs the inline script of index.html and returns its exposed parse and renderSecs. */
+/** load(): runs go.js, the page script of index.html, and returns its exposed functions (parse, renderSecs, guards). */
 function load() {
-  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-  const code = html.slice(html.lastIndexOf('<script>') + 8, html.lastIndexOf('</script>'));
+  const code = fs.readFileSync(path.join(__dirname, '..', 'go.js'), 'utf8');
   const win = { GO_TEST: {} };
   vm.runInNewContext(code, { window: win, document: {}, localStorage: null, location: { hash: '' } });
   return win.GO_TEST;
@@ -47,5 +46,19 @@ const round = '# T\n## Open tasks\n### Round A\n1. Copy the script.\nhttps://raw
 check('a round script card has an Open as .txt button', (count(round, t).body.match(/data-txt=/g) || []).length === 1 && /Open as \.txt/.test(count(round, t).body));
 check('a round script card has no .ps1 link and no Copy link', !/<a href="[^"]*\.ps1"/.test(count(round, t).body) && (count(round, t).body.match(/data-copy=/g) || []).length === 1);
 check('the .txt name replaces .ps1', t.txtName('https://x/y/90161Z-R01-test.ps1') === '90161Z-R01-test.txt');
+// Fleet v2 guards: page wiring, stored state, config names and the attributes the safe DOM copy keeps.
+const page = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+check('index.html loads go.js and has no inline script', /<script src="go\.js"><\/script>/.test(page) && !/<script>/.test(page));
+check('go.js sets no innerHTML', !/innerHTML/.test(fs.readFileSync(path.join(__dirname, '..', 'go.js'), 'utf8')));
+const vs = t.validState({ 'Round A': true, x: 'yes', y: 1, __proto__: { polluted: true }, ['z'.repeat(201)]: true });
+check('stored state keeps only short names with true/false values', Object.keys(vs).join() === 'Round A' && vs.polluted === undefined);
+check('stored state that is not an object becomes empty', ['[]', 'null', '"x"', '3'].every(j => Object.keys(t.validState(JSON.parse(j))).length === 0));
+check('a stored "__proto__" key cannot change the prototype', t.validState(JSON.parse('{"__proto__":{"a":true}}')).a === undefined);
+const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'site.config.json'), 'utf8'));
+check('site.config.json is valid and builds the go.md folder', t.validCfg(cfg) && t.rawBase(cfg) === 'https://raw.githubusercontent.com/' + cfg.owner + '/' + cfg.repo + '/' + cfg.branch + '/');
+check('a config name with a slash, dot path or quote is refused', !t.validCfg({ owner: 'a/b', repo: 'r', branch: 'main' }) && !t.validCfg({ owner: 'o', repo: '"x', branch: 'main' }) && !t.validCfg(null));
+check('safe DOM keeps http(s) and # links only', t.keepAttr('href', 'https://x') && t.keepAttr('href', '#s1') && !t.keepAttr('href', 'javascript:alert(1)') && !t.keepAttr('href', 'data:text/html,x'));
+check('safe DOM drops event and style attributes', !t.keepAttr('onclick', 'x') && !t.keepAttr('style', 'x') && !t.keepAttr('src', 'x'));
+check('a script button keeps an https source only', t.keepAttr('data-script', 'https://x/a.ps1') && !t.keepAttr('data-script', 'http://x/a.ps1'));
 console.log(fail ? 'GO PAGE FAIL: ' + fail : 'GO PAGE PASS');
 process.exit(fail ? 1 : 0);

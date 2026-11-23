@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Fleet v2 (2026-11-23): page policy. Scripts only from this site (go.js); data only from this site and raw.githubusercontent.com
+     (go.md and the round scripts); no frames, forms, plugins or base change. Inline <style> stays (no user data reaches CSS). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0b2545" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e141c" media="(prefers-color-scheme: dark)">
 <title>90-161.Z tasks</title>
 <link rel="stylesheet" href="docs/brand/fulcrum.css">
 <style>
 /* Layout: a navy-to-blue RADE band (the 90-161.Z logo Delta, inline: Fulcrum colours in every mode from assets/logo/90161Z-logo-fulcrum.svg (PFM 20 Nov 26); the name, the subtitle "Publications and Forms Management" under it, and the open count: the PFM, 18 Nov 26) over one column of task cards; open tasks first, Done last.
    Colors: Wing Master Version II (navy 0B2545, Air Force blue 00539F, AF yellow FFD520 as trim only), as the RADE window. */
 :root{--bg:#f4f6f9;--fg:#16202e;--mut:#526173;--card:#ffffff;--line:#d3dae3;--acc:#00539f;--acc-fg:#ffffff;--navy:#0b2545;--blue:#00539f;--gold:#ffd520;--mist:#dde8f3;
---open-bg:#dde8f3;--open-fg:#0b2545;--done-bg:#d6ebdd;--done-fg:#1d5534;--note-bg:#fff6d6;--note-fg:#5a4300;--focus:#00539f;--ctl:#8a97a8;--code:#eef1f5;
+--open-bg:#dde8f3;--open-fg:#0b2545;--done-bg:#d6ebdd;--done-fg:#1d5534;--note-bg:#fff6d6;--note-fg:#5a4300;--focus:#00539f;--ctl:#6c7b8e;--code:#eef1f5;
 --ui:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;--mono:Consolas,"Cascadia Mono",ui-monospace,monospace}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e141c;--fg:#e6ebf1;--mut:#a5b1c0;--card:#172130;--line:#2b394b;--acc:#8db4ec;--acc-fg:#0b2545;--open-bg:#1c3a5e;--open-fg:#dde8f3;--done-bg:#173a26;--done-fg:#bfe6cc;--note-bg:#3a300c;--note-fg:#ffe48a;--focus:#8db4ec;--ctl:#5d6b7d;--code:#1f2b3b;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0e141c;--fg:#e6ebf1;--mut:#a5b1c0;--card:#172130;--line:#2b394b;--acc:#8db4ec;--acc-fg:#0b2545;--open-bg:#1c3a5e;--open-fg:#dde8f3;--done-bg:#173a26;--done-fg:#bfe6cc;--note-bg:#3a300c;--note-fg:#ffe48a;--focus:#8db4ec;--ctl:#5d6b7d;--code:#1f2b3b;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e141c;--fg:#e6ebf1;--mut:#a5b1c0;--card:#172130;--line:#2b394b;--acc:#8db4ec;--acc-fg:#0b2545;--open-bg:#1c3a5e;--open-fg:#dde8f3;--done-bg:#173a26;--done-fg:#bfe6cc;--note-bg:#3a300c;--note-fg:#ffe48a;--focus:#8db4ec;--ctl:#6c7b8e;--code:#1f2b3b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e141c;--fg:#e6ebf1;--mut:#a5b1c0;--card:#172130;--line:#2b394b;--acc:#8db4ec;--acc-fg:#0b2545;--open-bg:#1c3a5e;--open-fg:#dde8f3;--done-bg:#173a26;--done-fg:#bfe6cc;--note-bg:#3a300c;--note-fg:#ffe48a;--focus:#8db4ec;--ctl:#6c7b8e;--code:#1f2b3b;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 var(--ui)}
 .band{background:linear-gradient(100deg,var(--navy),var(--blue));color:#fff;border-bottom:3px solid var(--gold)}
@@ -69,6 +75,9 @@ code{font:.875em/1.4 var(--mono);background:var(--code);padding:1px 4px;border-r
 .file .fu{display:block;font-size:.75rem;color:var(--mut);word-break:break-all}
 .file button{min-height:36px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} /* screen-reader-only live region for button results */
+/* Skip link (fleet v2, WCAG 2.4.1): the first Tab stop; hidden until it has focus, then shown over the band. */
+.skip-link{position:absolute;left:8px;top:-48px;z-index:10;padding:8px 14px;background:var(--card);color:var(--fg);border:2px solid var(--focus);border-radius:4px}
+.skip-link:focus{top:8px}
 .done-list li{color:var(--fg)}
 .grp{margin:22px 0 8px}
 .grp>h2{font-size:1rem;font-weight:650;letter-spacing:.02em;color:var(--mut);margin:0 0 10px;padding-left:2px}
@@ -106,7 +115,7 @@ button.primary:hover{background:#F2916F;border-color:#F2916F;color:var(--fm-on-a
 .chip,.note,.toc a.is-open{border:1px solid CanvasText}details.sec.open-task{border-left-color:Highlight}
 :focus-visible{outline-color:Highlight}button.primary{border:2px solid ButtonText}}
 @media print{details.sec>.body{display:block}.bar,.toc,button{display:none}.band{background:none;color:#000;border-bottom:1px solid #000}}
-</style></head><body><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64" height="64" class="logo logo-light" aria-hidden="true" focusable="false">
+</style></head><body><a class="skip-link" href="#m">Skip to the tasks</a><header class="band"><div class="band-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="64" height="64" class="logo logo-light" aria-hidden="true" focusable="false">
 <title>90-161.Z logo</title>
 <circle cx="256" cy="256" r="248" fill="#15171D"/>
 <circle cx="256" cy="256" r="230" fill="none" stroke="#F3EEE4" stroke-width="8.0"/>
@@ -314,208 +323,6 @@ button.primary:hover{background:#F2916F;border-color:#F2916F;color:var(--fm-on-a
     <p class="small mut">Have concerns? Ask in the Teams channel <strong>RHOPE-OPS</strong>.</p>
     <!-- <<< site:key-facts -->
 </div></section>
-<main id="m"><p class="mut">Loading…</p></main>
+<main id="m" tabindex="-1"><p class="mut">Loading…</p></main>
 <p id="say" class="sr" aria-live="polite"></p>
-<script>
-(function(){
-var SRC='https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md';
-var KEY='go-open-v1';
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function inl(s){
-  // escape, then links, **bold**, `code`
-  var o=esc(s).replace(/(https?:\/\/[^\s<]+|(?:raw\.githubusercontent\.com|rhope-ops\.github\.io)\/[^\s<]*)/g,function(u){var h=u.indexOf('http')===0?u:'https://'+u;return '<a href="'+h+'">'+u+'</a>'});
-  o=o.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
-  return o;
-}
-function slug(s,i){return 's'+i+'-'+s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)}
-function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}}
-function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
-function copy(t,b){
-  var ok=function(){var x=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=x},1200)};
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fallback(t);ok()})}else{fallback(t);ok()}
-}
-function fallback(t){var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}document.body.removeChild(a)}
-var SCRIPTS={}; // round scripts, loaded ahead so one click copies the whole text (PFM 13 Nov)
-function isRound(h){return /\/scripts\/gov\/paste\/[^\/]+\.ps1$/.test(h)}
-function fileCard(u){
-  var h=u.indexOf('http')===0?u:'https://'+u, name=h.split('/').pop();
-  // A round script has no .ps1 link and no Copy link (PFM 20 Nov 26): Open as .txt takes the link's place, to read the script before pasting it.
-  if(isRound(h))return '<div class="file"><span class="fn"><strong>'+esc(name)+'</strong></span>'+
-    '<button type="button" data-txt="'+esc(h)+'" data-label="Open as .txt"'+
-    ' aria-label="Open as .txt: save '+esc(txtName(h))+' to read the script before you paste it">Open as .txt</button>'+
-    '<button type="button" class="primary" data-script="'+esc(h)+'" aria-label="Copy the whole script '+esc(name)+'">Copy script</button></div>';
-  return '<div class="file"><span class="fn"><a href="'+esc(h)+'">'+esc(name)+'</a><span class="fu">'+esc(h)+'</span></span>'+
-    '<button type="button" data-copy="'+esc(h)+'" aria-label="Copy link to '+esc(name)+'">Copy link</button></div>';
-}
-var FAILED={}; // round scripts whose preload failed: no button can get them until Reload
-/** say(t): tells screen readers a button result through the hidden live region #say. */
-function say(t){var e=document.getElementById('say');if(e)e.textContent=t}
-/** loadFailed(b): the script never loaded, so neither button can work; Reload is the only way on. */
-function loadFailed(b){b.textContent='Could not load the script: press Reload';b.disabled=true;say(b.textContent)}
-/** blocked(b): the script loaded but the browser blocked the clipboard; the .txt file still has it. */
-function blocked(b){b.textContent='Copy blocked: use Open as .txt, then Ctrl+A, Ctrl+C in Notepad';b.disabled=true;say(b.textContent)}
-function copyScript(b){
-  var h=b.getAttribute('data-script'),t=SCRIPTS[h];
-  if(typeof t!=='string'){
-    if(b.getAttribute('data-state')==='loading'){b.textContent='Still loading; press again in a moment'}else{loadFailed(b)}
-    return}
-  var ok=function(){b.textContent='Copied ('+t.split('\n').length.toLocaleString()+' lines). Now paste in ISE.';say(b.textContent);setTimeout(function(){b.textContent='Copy script'},4000)};
-  var viaArea=function(){var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();var r=false;try{r=document.execCommand('copy')}catch(e){}document.body.removeChild(a);return r};
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){viaArea()?ok():blocked(b)})}else{viaArea()?ok():blocked(b)}
-}
-/** txtName(h): the .txt file name for script link h (name.ps1 -> name.txt). */
-function txtName(h){return h.split('/').pop().replace(/\.ps1$/i,'')+'.txt'}
-/** openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26).
-    The label comes back from data-label, so a second click cannot keep the "Saved" text. */
-function openTxt(b){
-  var h=b.getAttribute('data-txt'),t=SCRIPTS[h],lbl=b.getAttribute('data-label');
-  if(typeof t!=='string'){
-    b.textContent=FAILED[h]?'Could not load the script: press Reload':'Still loading; press again in a moment';say(b.textContent);
-    setTimeout(function(){b.textContent=lbl},4000);return}
-  var u=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');
-  a.href=u;a.download=txtName(h);a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(u)},10000);
-  b.textContent='Saved '+a.download+'. Open it from Downloads.';say(b.textContent);
-  setTimeout(function(){b.textContent=lbl},4000);
-}
-function preload(m){
-  Array.prototype.forEach.call(m.querySelectorAll('button[data-script]'),function(b){
-    var h=b.getAttribute('data-script');b.textContent='Copy script (loading)';b.setAttribute('data-state','loading');
-    fetch(h,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()})
-      .then(function(t){SCRIPTS[h]=t;b.removeAttribute('data-state');b.disabled=false;b.textContent='Copy script'})
-      .catch(function(){FAILED[h]=true;b.removeAttribute('data-state');loadFailed(b)});
-  });
-}
-function folderBox(lbl,path){
-  return '<div class="folder"><span class="lbl">'+esc(lbl)+'</span><code>'+esc(path)+'</code>'+
-    '<button type="button" data-copy="'+esc(path)+'" aria-label="Copy folder path">Copy</button></div>';
-}
-function renderBody(lines){
-  var o='',list=null,item=false;
-  function closeItem(){if(item){o+='</li>';item=false}}
-  function closeList(){closeItem();if(list){o+='</'+list+'>';list=null}}
-  lines.forEach(function(l){
-    var t=l.trim(),m;
-    if(!t){return}
-    if(/^(https?:\/\/|raw\.githubusercontent\.com\/)\S+$/.test(t)){ // bare URL line: file card, kept inside the open step
-      o+=fileCard(t);return;
-    }
-    if((m=t.match(/^(\d+)\.\s+(.*)$/))){
-      if(list!=='ol'){closeList();o+='<ol>';list='ol'}
-      closeItem();o+='<li value="'+m[1]+'">'+inl(m[2]);item=true;return;
-    }
-    if((m=t.match(/^[-*]\s+(.*)$/))){
-      if(list!=='ul'){closeList();o+='<ul class="done-list">';list='ul'}
-      closeItem();o+='<li>'+inl(m[1]);item=true;return;
-    }
-    closeList();
-    if((m=t.match(/^(Folder|Bookmark[^:]*|Fallback[^:]*):\s*(.*)$/))&&/[\\\/]/.test(m[2])){
-      var path=m[2].replace(/\.\s.*$/,''),rest=m[2].slice(path.length).replace(/^\.\s*/,'');
-      o+=folderBox(m[1]+':',path)+(rest?'<p>'+inl(rest)+'</p>':'');return;
-    }
-    if((m=t.match(/^(Report|Status[^:]*|Decided|FAIL|WARN):\s*(.*)$/))){o+='<p class="note"><span class="lbl">'+esc(m[1])+':</span> '+inl(m[2])+'</p>';return}
-    if(/^[A-Z][^.]{2,80}:$/.test(t)||/^Part [A-Z]\b.*:$/.test(t)){o+='<h3>'+inl(t.slice(0,-1))+'</h3>';return}
-    o+='<p>'+inl(t)+'</p>';
-  });
-  closeList();
-  return o;
-}
-/* go.md layout the page reads (PFM 1B, 18 Nov 26: one renderer for many apps and layouts later):
-   "# Title", intro lines, then "## " sections. A section with "### " sub-headings is a GROUP: its
-   lines before the first "###" are the group's intro, and each "###" is one card. A section with no
-   "###" is one card, as before. A card's state comes from "(open, <when>)" or "(done, <when>)" at the
-   end of its heading, else from its group ("Open tasks" = open, "Done" = done). */
-
-/** parse(md): splits go.md text into {title, intro[], secs[{h, lines[], items[{h, lines[]}]}]}. */
-function parse(md){
-  var lines=md.replace(/\r/g,'').split('\n'),doc={title:'',intro:[],secs:[]},sec=null,item=null;
-  lines.forEach(function(l){
-    if(/^# /.test(l)&&!doc.title){doc.title=l.slice(2);return}
-    if(/^## /.test(l)){sec={h:l.slice(3),lines:[],items:[]};item=null;doc.secs.push(sec);return}
-    if(/^### /.test(l)&&sec){item={h:l.slice(4),lines:[]};sec.items.push(item);return}
-    (item?item.lines:sec?sec.lines:doc.intro).push(l);
-  });
-  return doc;
-}
-/** stateOf(h, fallback): reads "(open|done, when)" from a heading; returns {name, state, when}. */
-function stateOf(h,fallback){
-  var m=h.match(/^(.*?)\s*\((open|done)[,\s]*([^)]*)\)\s*$/i);
-  if(m)return {name:m[1],state:m[2].toLowerCase(),when:m[3]};
-  return {name:h,state:fallback||'',when:''};
-}
-/** groupState(h): the state a group gives its "###" cards: "Open tasks" = open, "Done" = done, else none. */
-function groupState(h){return /^open tasks$/i.test(h)?'open':/^done$/i.test(h)?'done':''}
-/** card(info, lines, id, st, extra): one collapsible card; open by default when its state is open,
-    unless this browser remembered another choice for the same name (st). */
-function card(info,lines,id,st,extra){
-  var isOpen=Object.prototype.hasOwnProperty.call(st,info.name)?st[info.name]:(info.state==='open');
-  var cls='sec'+(info.state==='open'?' open-task':info.state==='done'?' done-task':'');
-  var chip=info.state?'<span class="chip '+info.state+'">'+(info.state==='open'?'Open':'Done')+'</span>':'';
-  return '<details class="'+cls+'" id="'+id+'" data-name="'+esc(info.name)+'"'+(isOpen?' open':'')+
-    '><summary><span class="st">'+inl(info.name)+'</span><span class="meta">'+chip+
-    (info.when?'<span class="when">'+esc(info.when)+'</span>':'')+(extra||'')+
-    '</span></summary><div class="body">'+renderBody(lines)+'</div></details>';
-}
-/** doneCount(lines): the "N items" label of a Done list (one item per "- " line). */
-function doneCount(lines){return '<span class="when">'+lines.filter(function(x){return /^\s*-\s/.test(x)}).length+' items</span>'}
-/** renderSecs(secs, st): builds the section links, the cards and the open count for all sections. */
-function renderSecs(secs,st){
-  var r={nav:'',body:'',open:0},n=0;
-  secs.forEach(function(s){
-    var gs=groupState(s.h);
-    if(!s.items.length){ // a plain section: one card, as before (only "Done" gets a state without "(open|done)")
-      var info=stateOf(s.h,gs==='done'?'done':''),id=slug(info.name,n++);
-      if(info.state==='open')r.open++;
-      r.nav+='<li><a href="#'+id+'"'+(info.state==='open'?' class="is-open"':'')+'>'+inl(info.name)+'</a></li>';
-      r.body+=card(info,s.lines,id,st,/^done$/i.test(s.h)?doneCount(s.lines):'');
-      return;
-    }
-    var gid=slug(s.h,n++),cards='',links=''; // a group: a heading, its intro, then one card per "###"
-    s.items.forEach(function(it){
-      var info=stateOf(it.h,gs),id=slug(info.name,n++);
-      if(info.state==='open'){r.open++;links+='<li><a href="#'+id+'" class="is-open">'+inl(info.name)+'</a></li>'}
-      cards+=card(info,it.lines,id,st,'');
-    });
-    r.nav+='<li><a href="#'+gid+'">'+inl(s.h)+' ('+s.items.length+')</a></li>'+links; // each open card keeps its own link
-    var intro=s.lines.some(function(x){return x.trim()})?'<div class="gintro">'+renderBody(s.lines)+'</div>':'';
-    r.body+='<section class="grp" id="'+gid+'"><h2>'+inl(s.h)+'</h2>'+intro+cards+'</section>';
-  });
-  return r;
-}
-/** render(md): draws the whole page from go.md text and wires its buttons. */
-function render(md){
-  var doc=parse(md),st=load(),o='',m=document.getElementById('m');
-  var r=renderSecs(doc.secs,st);
-  var how=(Object.prototype.hasOwnProperty.call(st,'__how')?st.__how:false);
-  document.getElementById('hc').innerHTML='<b>'+r.open+'</b>open task'+(r.open===1?'':'s');
-  o+='<p class="mut">Loaded '+new Date().toLocaleString()+'. GitHub can serve a copy up to 5 minutes old: press Reload for the newest.</p>';
-  o+='<div class="bar"><button type="button" id="ex">Expand all</button><button type="button" id="co">Collapse all</button><button type="button" id="rl">Reload</button></div>';
-  o+='<nav aria-label="Sections"><ul class="toc">'+r.nav+'</ul></nav>';
-  o+='<details class="sec" data-name="__how"'+(how?' open':'')+'><summary><span class="st">How to use this page</span></summary><div class="body">'+renderBody(doc.intro)+'</div></details>';
-  o+=r.body+'<p class="mut foot">Source: <a href="'+SRC+'">go.md</a> in rhope-ops/90-161.Z. Open and closed sections are remembered in this browser.</p>';
-  m.innerHTML=o;
-  wire(m);
-}
-/** wire(m): copy and .txt buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print. */
-function wire(m){
-  m.addEventListener('click',function(e){
-    var f=function(sel){return e.target.closest&&e.target.closest(sel)};
-    var s=f('button[data-script]');if(s){e.preventDefault();copyScript(s);return}
-    var v=f('button[data-txt]');if(v){e.preventDefault();openTxt(v);return}
-    var b=f('button[data-copy]');if(b){e.preventDefault();copy(b.getAttribute('data-copy'),b)}});
-  preload(m);
-  var all=function(){return Array.prototype.slice.call(m.querySelectorAll('details.sec'))};
-  all().forEach(function(d){d.addEventListener('toggle',function(){var s=load();s[d.getAttribute('data-name')]=d.open;save(s)})});
-  document.getElementById('ex').onclick=function(){all().forEach(function(d){d.open=true})};
-  document.getElementById('co').onclick=function(){all().forEach(function(d){d.open=false})};
-  document.getElementById('rl').onclick=function(){location.reload()};
-  m.querySelectorAll('.toc a').forEach(function(a){a.addEventListener('click',function(){var d=document.getElementById(a.getAttribute('href').slice(1));if(d&&d.tagName==='DETAILS')d.open=true})});
-  if(location.hash){var d=document.getElementById(location.hash.slice(1));if(d){if(d.tagName==='DETAILS')d.open=true;d.scrollIntoView()}}
-  window.addEventListener('beforeprint',function(){all().forEach(function(d){d.open=true})});
-}
-if(window.GO_TEST&&typeof window.GO_TEST==='object'){window.GO_TEST.parse=parse;window.GO_TEST.renderSecs=renderSecs;window.GO_TEST.txtName=txtName;return} // tests/check_go_page.js
-if(typeof window.GO_MD==='string'){render(window.GO_MD);return}
-fetch(SRC,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(render).catch(function(e){
-  document.getElementById('m').innerHTML='<p>Could not load go.md ('+esc(e.message)+'). Fallback: <a href="'+SRC+'">'+SRC+'</a></p>'});
-})();
-</script></body></html>
+<script src="go.js"></script></body></html>
