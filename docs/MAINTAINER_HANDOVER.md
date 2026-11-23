@@ -83,4 +83,4 @@ Offline form: a computer with no access to github.com uses a RADE clone that has
 
    Wait until the line `CHECK PASS` shows. The task is complete.
 
-The page reads the values when it opens. The Python scripts read them through `scripts/site_config.py`. The Teams channel name on the page comes from `README.md`: change it there too, then rebuild.
+The page reads the values when it opens. The Python scripts read them through `scripts/site_config.py`. The Teams channel name on the page comes from `README.md`: change it there too, then rebuild. The round definitions `scripts/paste_bundles.json` keep their own "repo" and "home" values: change them too, then rebuild.

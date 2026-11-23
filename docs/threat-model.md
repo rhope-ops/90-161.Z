@@ -29,7 +29,7 @@ Scope: this repository's page (index.html, go.js), its build scripts, the round 
 | A link leaks the page address, or a new tab controls the page | `rel="noopener noreferrer"` on every made link; `<meta name="referrer" content="no-referrer">` | go.js, index.html |
 | A changed RADE engine builds a bad bundle | The lock pins a commit and a SHA-256 for each engine file; `bump_lock.py` checks the release lock against the tag's commit, traces the files the build opens and runs every check before it keeps the lock | `python3 scripts/bump_lock.py --test` (36 cases) |
 | The release lock is read over plain http or a redirect to http | `https_only()` and an opener that refuses a non-https redirect | `scripts/bump_lock_test.py` guard cases |
-| A wrong account value enters a URL | Account values live in `site.config.json` only; go.js and `bump_lock.py` accept only `owner/name` style names | `tests/check_go_page.js`; `bump_lock.py` `REPO_RE` |
+| A wrong account value enters a URL | Code and the page read the account values from `site.config.json`; go.js and `bump_lock.py` accept only `owner/name` style names. The RADE manifest `scripts/paste_bundles.json` ("repo", "home") keeps its own copy until the engine-v36 rebuild. | `tests/check_go_page.js`; `bump_lock.py` `REPO_RE` |
 | A script turns off the PowerShell execution policy | No task script, test or generator adds `-ExecutionPolicy Bypass` (fleet v2 DEC 3); Group Policy on the computer governs. CI keeps one line (`.github/workflows/ps51.yml`) on a GitHub runner. | `grep -rn "ExecutionPolicy Bypass"` (open: the shared task block and the R41 bundle change with engine-v36) |
 | Personal or government data in a commit | The content check on every push and every write tool call | `scripts/check.sh --content` |
 | A round collects or sends a script file | The bundle build fails a collect pattern that can match one | `scripts/check_collect.py` |
@@ -38,4 +38,5 @@ Scope: this repository's page (index.html, go.js), its build scripts, the round 
 
 - `style-src` keeps `'unsafe-inline'`: the page has one inline `<style>` block, and no go.md text reaches CSS.
 - GitHub Pages does not let this repository set HTTP headers, so the CSP is a `<meta>` tag: `frame-ancestors` and reporting are not available.
+- The page reads `site.config.json` from its own site, so it does not draw from a `file://` copy; use the github.io page or TASKS.md.
 - A person can still paste a bundle from another source. The page and go.md name the one source; the bundle shows its round and revision.
