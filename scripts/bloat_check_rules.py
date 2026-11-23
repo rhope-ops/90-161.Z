@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The rule census of scripts/bloat_check.py (`--rules`, `--lint`): the session load, the rule lines of AGENTS.md
 against their caps, the lint of rule lines, the conflict-check gate for changed rule lines, and the paths AGENTS.md
-names. Kept apart so bloat_check.py stays under the 600-line cap of docs/code-standard.md C4 (what each measure
+names. Kept apart so bloat_check.py stays under the line cap of docs/code-standard.md C4 (what each measure
 means: the header of bloat_check.py).
 
 What it gives:
@@ -277,7 +277,7 @@ def changed_rules(root, text, parts, gate):
     for mark, lines in (("+", added), ("-", removed)):
         out += [f"  {mark} {l}" for l in lines]  # the whole line: a change near its end must show
     if was != now:
-        out.append("  (rule lines changed against the default branch: each one needs the PFM's approval of its exact text)")
+        out.append("  (rule lines changed against the default branch: each one needs the Maintainer's approval of its exact text)")
         h = conflict_hash(added, removed)
         if conflict_recorded(root, h):
             out.append(f"  conflict check: recorded (rule-conflict-check: {h})")
@@ -389,7 +389,7 @@ def rules_report(root, cfg, gate=False):
                         "plus the skill and agent descriptions)")
     elif load > b["session_load_warn_tokens"]:
         out.append(f"WARN  session load ~{load:,} tokens is over the warning ({b['session_load_warn_tokens']:,}); trim before the cap")
-    # The bullet counts only warn (the PFM, 2026-11-18): the line and load caps are the limits.
+    # The bullet counts only warn (the Maintainer, 2026-11-18): the line and load caps are the limits.
     if len(kit) > b["rules"]:
         out.append(f"WARN  {len(kit)} rule bullets (guide {b['rules']})")
     if len(project) > b["project_rules"]:

@@ -1,5 +1,5 @@
 """More cases of the self-test of scripts/check_content.py (check_content_test.py runs them; kept apart so that file
-stays under the 600-line cap of docs/code-standard.md C4): a project's own finders, scripts/check_content_local.py,
+stays under the line cap of docs/code-standard.md C4): a project's own finders, scripts/check_content_local.py,
 and a copy of the check that lacks one of its parts.
 
 It proves, with a sample module in a temporary folder: a module replaces the finders of a kind and adds finders; the

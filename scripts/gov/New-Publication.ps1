@@ -10,7 +10,7 @@
   Needs: Windows PowerShell 5.1 and Microsoft Word 16 (COM). Nothing else.
   Files in the same folder (dot-sourced): Publication.Common.ps1 (shared with the validator: Get-Prop, the fixed
   statements, two spaces after a sentence) and Publication.Word.ps1 (the Word helpers: paragraph format, inline markup,
-  TOC fields, rules, paragraphs and tables; split out of this file for the code standard, R30). Test-Publication.ps1
+  TOC fields, rules, paragraphs, tables, the self-measure and the label; split out of this file for the code standard, R30). Test-Publication.ps1
   runs as a child process.
   Inputs: the content file (-Path), an optional seal PNG named in it, and Config\90161Z-label.json when the label
   capture step has run. Outputs: <designator>[_DRAFT].docx (and .pdf with -Pdf) in -OutDir, and RENDER, MEASURE,
@@ -89,7 +89,7 @@ $wdLineSpaceExactly = 4; $wdStyleTOC1 = -20; $wdStyleTOC2 = -21
 
 # ---------------- validate first (L3) ----------------
 $validator = Join-Path $PSScriptRoot 'Test-Publication.ps1'
-$report = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $validator -Path $Path
+$report = & powershell.exe -NoProfile -File $validator -Path $Path
 $validExit = $LASTEXITCODE
 $report | ForEach-Object { Write-Output $_ }
 if ($validExit -ne 0) { throw 'Validator reported FAIL findings. Fix the content file, then run again. No document was built.' }
@@ -413,65 +413,9 @@ try {
   $doc.Bookmarks.Item('PagesCount').Range.Text = [string]$pages
   $doc.Fields.Update() | Out-Null
 
-  # ---------------- self-measure (Stage 1, PFM 1A): Word read-back against the DAFMAN values, PASS/FAIL per line ----------------
-  # Vertical positions from Range.Information(6) (points from the page top). Values: L-007 seal top 1.47 in;
-  # L-012 TOC line pitch 0.272 in (docs/format-rules.md). Tolerance 0.03 in (0.01 in for pitch).
-  try {
-    try { $doc.ActiveWindow.View.Type = 3 } catch { Write-Output ('MEASURE-ERROR print layout view: ' + $_.Exception.Message) }   # wdPrintView: Information() needs layout
-    # Formats one MEASURE line: the value in inches against the wanted value and tolerance, PASS or FAIL.
-    $measure = {
-      param([string]$What, [double]$GotPt, [double]$WantIn, [double]$TolIn)
-      if ($GotPt -lt 0) { return ('MEASURE-ERROR ' + $What + ' not laid out (Information returned ' + $GotPt + ')') }
-      $gotIn = [math]::Round($GotPt / 72, 3)
-      $verdict = 'FAIL'
-      if ([math]::Abs($gotIn - $WantIn) -le $TolIn) { $verdict = 'PASS' }
-      'MEASURE ' + $What + ' got=' + $gotIn + 'in want=' + $WantIn + 'in tol=' + $TolIn + ' ' + $verdict
-    }
-    if ($shield) {
-      if ($pic) { $sealAt = $pic.Range.Duplicate; $sealAt.Collapse(1); Write-Output (& $measure 'L-007 seal top' ([double]$sealAt.Information(6)) 1.47 0.03) }
-      else { Write-Output 'MEASURE-ERROR L-007 seal top not measured: no picture' }
-    }
-    if ($null -ne $tocRange -and $doc.TablesOfContents.Count -ge 1) {
-      $tocAll = @(); foreach ($tp in $doc.TablesOfContents.Item(1).Range.Paragraphs) { $tocAll += $tp }
-      # L-012 horizontal positions (number 1.50 in, text 2.00 in) are measured on the returned PDF (scripts/measure_pdf.py):
-      # R01 and R02 showed Range.Information(5) reads TOC 2 lines 0.50 in short while the PDF is right (docs/reviews/2026-11-13-r02-results.md).
-      $pitchDone = $false
-      # Pitch between entries: the first one-line entry and the entry after it (a wrapped entry adds 0.202 in per line).
-      for ($k = 0; $k -lt $tocAll.Count - 1; $k++) {
-        $s1 = $tocAll[$k].Range.Duplicate; $s1.Collapse(1)
-        $e1 = $tocAll[$k].Range.Duplicate; $e1.MoveEnd(1, -1) | Out-Null; $e1.Collapse(0)
-        if ([math]::Abs([double]$e1.Information(6) - [double]$s1.Information(6)) -lt 1) {
-          $s2 = $tocAll[$k + 1].Range.Duplicate; $s2.Collapse(1)
-          Write-Output (& $measure 'L-012 TOC pitch' ([double]$s2.Information(6) - [double]$s1.Information(6)) 0.272 0.01)
-          $pitchDone = $true; break
-        }
-      }
-      if (-not $pitchDone) { Write-Output 'MEASURE-ERROR L-012 TOC pitch not measured: no one-line entry followed by another' }
-    }
-  } catch { Write-Output ('MEASURE-ERROR ' + $_.Exception.Message) }
+  Write-SelfMeasure   # Publication.Word.ps1: MEASURE lines (Stage 1, PFM 1A)
 
-  # ---------------- sensitivity label (PFM 13 Nov): apply the label captured once from a hand-labeled file ----------------
-  # Config\90161Z-label.json (written by 90161Z-T13-label-capture-r2.ps1, kept only on this computer) holds the label and
-  # tenant ids; they are never printed. Lowering a label needs a justification (Office VBA LabelInfo.Justification).
-  $labelCfg = Join-Path (Split-Path -Parent $PSScriptRoot) 'Config\90161Z-label.json'
-  if (Test-Path -LiteralPath $labelCfg -PathType Leaf) {
-    try {
-      try { $cfg = Get-Content -LiteralPath $labelCfg -Raw | ConvertFrom-Json }
-      catch { throw 'Config\90161Z-label.json cannot be read; run the label capture step again' }   # fixed text: never echo the file
-      $sl = $doc.SensitivityLabel
-      $li = $sl.CreateLabelInfo()
-      $li.LabelId = [string]$cfg.labelId; $li.SiteId = [string]$cfg.siteId; $li.LabelName = [string]$cfg.labelName
-      $li.AssignmentMethod = 1   # PRIVILEGED: chosen, as when a person picks it
-      $li.SetDate = Get-Date
-      $li.Justification = 'Generated by the 90-161.Z renderer from fake or approved content; label set to the captured default.'
-      $ctx = New-Object -ComObject Scripting.Dictionary
-      $sl.SetLabel($li, $ctx)
-      $got = $sl.GetLabel()
-      # Word often reads LabelName back empty (R02); the id match is the check.
-      if ([string]$got.LabelId -eq [string]$cfg.labelId) { Write-Output 'LABEL applied (label id matches the captured label) PASS' }
-      else { Write-Output ('LABEL FAIL read back name=' + $got.LabelName + ' (want ' + $cfg.labelName + ')') }
-    } catch { Write-Output ('LABEL FAIL ' + $_.Exception.Message) }
-  } else { Write-Output 'LABEL not set: no Config\90161Z-label.json yet (run the label capture step once)' }
+  Write-LabelResult   # Publication.Word.ps1: LABEL line (PFM 13 Nov)
 
   # Join-Path returns a PSObject-wrapped string; Word COM rejects it by ref (gov run 2026-11-11). Pass plain typed values.
   [string]$saveName = [string]$outDocx

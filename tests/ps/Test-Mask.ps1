@@ -81,5 +81,22 @@ foreach ($f in Get-ChildItem -LiteralPath (Join-Path $Root 'scripts/gov') -Filte
   $n = ([regex]::Matches($t, 'function Hide-Site')).Count
   if ($n -gt 0) { Test-That ('one shared Hide-Site in ' + $f.Name) ($n -eq 1 -and $t.Contains($want)) }
 }
+# ---- part 4: the task folder message masks the DODID, with and without a work OneDrive folder name (fleet v2) ----
+$common = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/src/task-common.ps1') -Raw
+$oldOd = $env:OneDriveCommercial
+& {
+# Join paths as plain text: a Linux host has no C: drive, so the copy of Get-TaskDir calls this helper, not Join-Path.
+function Join-TextPath([string]$Path, [string]$ChildPath) { return ($Path.TrimEnd('\') + '\' + $ChildPath) }
+$getTaskDir = [regex]::Match($common, '(?s)function Get-TaskDir.*?\r?\n\}\r?\n').Value -replace 'Join-Path', 'Join-TextPath'
+. ([scriptblock]::Create($getTaskDir))
+foreach ($case in @(@('', 'OneDrive - United States Air Force'), @('C:\Users\fake9876\OneDrive - Example Org', 'OneDrive - Example Org'))) {
+  $env:OneDriveCommercial = $case[0]
+  $msg = ''
+  try { [void](Get-TaskDir 'fake9876' 'T99' 'test') } catch { $msg = $_.Exception.Message }
+  Test-That ('task folder message masks the DODID, OneDrive folder ' + $case[1]) ($msg.Contains('C:\Users\<DODID>\' + $case[1] + '\') -and -not $msg.Contains('fake9876')) $msg
+}
+}
+$env:OneDriveCommercial = $oldOd
+
 Write-Host ('MASK pass=' + $script:pass + ' fail=' + $script:fail)
 if ($script:fail -gt 0) { exit 1 }

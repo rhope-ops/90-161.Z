@@ -76,10 +76,11 @@ out=$(python3 scripts/bump_lock.py --test 2>&1); [ $? -eq 0 ] && ok "bump_lock r
 out=$(python3 tests/test_rade_fetch.py 2>&1); [ $? -eq 0 ] && ok "RADE engine download failure cases ($(echo "$out" | tail -1))" || { echo "$out"; bad "RADE engine download failure cases"; }
 out=$(python3 scripts/build_paste_bundles.py --check 2>&1 | tail -1)
 # engine-v8 on: the header names every engine code file of the lock ("<file>, sha256 <12 hex>"); each must match (the engine file itself must be in the list, or nh counts 1).
-# engine-v21 on: engine/rade_hash.py, engine-v29 on: engine/rade_tokens.py, engine-v31 on: engine/rade_fields.py (build time only; PFM 21 Nov 26) are in the lock but not in the header; the
+# engine-v21 on: engine/rade_hash.py, engine-v29 on: engine/rade_tokens.py, engine-v31 on: engine/rade_fields.py (build time only; PFM 21 Nov 26),
+# engine-v36 on: engine/rade_parts.py (split from rade_build.py; build time only; the PFM, 2026-11-23) are in the lock but not in the header; the
 # stale check above covers them.
 ef=$(python3 -c "import json;l=json.load(open('scripts/rade.lock.json'));c=[k for k in l['files'] if k.endswith(('.py','.ps1')) and k not in \
- ('engine/rade_hash.py','engine/rade_tokens.py','engine/rade_fields.py')];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
+ ('engine/rade_hash.py','engine/rade_tokens.py','engine/rade_fields.py','engine/rade_parts.py')];print(' '.join(k+'='+l['files'][k][:12] for k in c) if l['engine'] in c else '')")
 nh=0; [ -n "$ef" ] || nh=1; for f in $ef; do
   nh=$((nh + $(grep -L "${f%%=*}, sha256 ${f#*=}[;)]" scripts/gov/paste/*.ps1 | wc -l))); done
 nb=$(python3 -c "import json;print(len(json.load(open('scripts/paste_bundles.json'))['bundles']))"); [ "$out" = "PASTE bundles=$nb stale=0" ] && [ "$nh" -eq 0 ] &&
@@ -160,7 +161,9 @@ echo "public sample" > "$tp/fx.bin"; printf '## Fix first: Round R99 r1, test (o
 }
 # The raw file folder of this repository, from site.config.json (fleet v2 DEC 7), as the bundle names it.
 raw_base=$(python3 -c "import sys;sys.path.insert(0,'scripts');import site_config;print(site_config.urls()['raw'])")
-case "$raw_base" in https://raw.githubusercontent.com/*/) ;; *) bad "site.config.json gives no raw file folder"; raw_base='no-raw-base/';; esac
+# A bad folder fails here and skips the bundle runs (they would run with the real addresses left in).
+bundles=(scripts/gov/paste/*.ps1)
+case "$raw_base" in https://raw.githubusercontent.com/*/) ;; *) bad "site.config.json gives no raw file folder"; bundles=();; esac
 # Engine-v3 on (the PFM, 15 Nov 26: the newest RADE): RADE runs only on a computer whose own full name holds the NIPR
 # domain label. The cloud has no such name, so the bundle tests give it a stand-in name, as RADE's own tests do
 # (rhope-ops/RADE tests/engine_test.sh "swap"); the test after the loop proves the real guard stops this computer.
@@ -176,7 +179,7 @@ swap() { sed -e "s#Read-Host ('Type the number of the application to deploy (1 t
     -e "s#Read-Host 'Type the site address[^']*'#''#" \
     -e "s#Read-Host 'Did you see both[^']*'#'Y'#" \
     -e "s#^\$usersRoot = 'C:\\\\Users'#\$usersRoot = '$tp/u'#" "$1"; }
-for b in scripts/gov/paste/*.ps1; do
+for b in "${bundles[@]}"; do
   fixture; swap "$b" > "$tp/b.ps1"; USERPROFILE="$tp/u/test1234" pwsh -NoProfile -File "$tp/b.ps1" > "$tp/out.txt" 2>&1
   # Text mode runs the default steps that need no folder (the optional steps are skipped).
   n=$(grep -c "^\$steps += @{.*Default = \$true; AskParam = '';" "$b")

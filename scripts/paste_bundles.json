@@ -24,9 +24,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R41-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R41-round-r2.ps1",
             "round": "R41",
-            "title": "Round R41 r1: my window r14 with my test site lists, every screen in order, an endorser answer by list form, and RADE Restore",
+            "title": "Round R41 r2: my window r14 with my test site lists, every screen in order, an endorser answer by list form, and RADE Restore",
             "files": [
                 {
                     "dir": "T22",
@@ -139,6 +139,10 @@
                 {
                     "dir": "T26",
                     "src": "scripts/gov/90161Z-T26-endorse-r1.ps1"
+                },
+                {
+                    "dir": "T26",
+                    "src": "scripts/gov/90161Z-T26-restore-r1.ps1"
                 }
             ],
             "steps": [

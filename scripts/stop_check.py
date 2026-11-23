@@ -8,7 +8,7 @@ and HEAD is on the default branch (origin/main, else origin/master) or behind it
 an unpushed session branch with no work of its own does not block (kit default, 2026-11-11). When the local copy
 of the default branch is old (a new session clone often is), the hook fetches that one branch and compares again.
 Allows the stop on the second try in a row (stop_hook_active), so a turn that must
-end anyway (for example, near the usage limit, or when the PFM said hold) can end.
+end anyway (for example, near the usage limit, or when the Maintainer said hold) can end.
 Outside a git repo, or when git fails, it allows the stop.
 
 Configured in .claude/settings.json ("hooks" > "Stop"). Manual run:

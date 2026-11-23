@@ -210,7 +210,7 @@ def scan_write(name, tool_input, full, root, deny, allow, dod, terms):
         deny: the names of the denylist.
         allow: the lines of the settings file (load_allow).
         dod: True in the DoD tier: also run the DoD checks.
-        terms: the PFM's own blocked words.
+        terms: the Maintainer's own blocked words.
 
     Returns:
         The findings, each (where, line number, kind, masked value).
@@ -223,7 +223,7 @@ def scan_write(name, tool_input, full, root, deny, allow, dod, terms):
         if blocked(rel, allow):
             return [(path, 0, "blocked", BLOCKED)]
     # New text is scanned also under a `skip:` line: the line could be new in this working tree, and the push scan of
-    # the pull request reads the skip lines of the base. A skipped reference file is changed by the PFM's request.
+    # the pull request reads the skip lines of the base. A skipped reference file is changed by the Maintainer's request.
     return scan_text("\n".join(new), "new text", deny, allow, dod, terms)
 
 
@@ -234,7 +234,7 @@ def verdict(found, tool):
     for where, n, kind, val in found:
         print(f"check hook: {where}:{n}: {kind}: {val}", file=sys.stderr)
     print(f"check hook: blocked the {tool} call: {len(found)} finding(s) of personal data, secrets or blocked content. "
-          "Remove or mask them (never copy them elsewhere), then call again. A finding that is wrong: tell the PFM; "
-          "an allow line in .check needs the PFM's request (.claude/skills/personal-data/SKILL.md).", file=sys.stderr)
+          "Remove or mask them (never copy them elsewhere), then call again. A finding that is wrong: tell the Maintainer; "
+          "an allow line in .check needs the Maintainer's request (.claude/skills/personal-data/SKILL.md).", file=sys.stderr)
     return 2
 

@@ -14,7 +14,8 @@ is not an endorsed product"; R11 of T22 uses it in Windows light and dark mode) 
 assets/logo/90161Z-logo-fulcrum.svg by scripts/logo_draw.py (pure Python, the same bytes on every machine; scripts/logo_png.py keeps one
 hash record per master; the PNGs stay uncommitted, PFM 2A). The USAF master assets/logo/90161Z-logo.svg is not used any more. The RADE runner
 keeps RADE's own logo (Rho Bold) from the pinned engine.
-A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1 of the same pinned commit, SHA-256 checked the
+A script with the rade-ui markers gets the RADE shared UI file (engine/rade_ui.ps1, then engine/rade_ui_text.ps1 from engine-v36,
+of the same pinned commit, SHA-256 checked the
 same way) as it is: the window reuses RADE's colors, fonts, buttons, card text boxes and layout self-check (T22 r2, 17 Nov 26).
 Usage: python3 scripts/build_task_scripts.py [--check]
   --check: write nothing; exit 1 when a block is stale, or a task script asks for the DODID outside the block.
@@ -76,7 +77,11 @@ def ui_text(part=1):
         sys.path.insert(0, str(ROOT / 'scripts'))
         import build_paste_bundles as B
         lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
-        text = (B.fetch(lock) / 'engine/rade_ui.ps1').read_text(encoding='utf-8').replace('\r\n', '\n').rstrip('\n') + '\n'
+        # engine-v36 on: the shared UI file has a part 2, engine/rade_ui_text.ps1 ($ui.Ink to $ui.Meas); an app window copies
+        # it right after engine/rade_ui.ps1, as it is (its header; the engine's own build does the same).
+        root = B.fetch(lock)
+        names = ['engine/rade_ui.ps1'] + (['engine/rade_ui_text.ps1'] if 'engine/rade_ui_text.ps1' in lock['files'] else [])
+        text = ''.join((root / n).read_text(encoding='utf-8').replace('\r\n', '\n').rstrip('\n') + '\n' for n in names)
         _ui.extend(split_ui(text))
     return _ui[part - 1]
 

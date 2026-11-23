@@ -1,0 +1,15 @@
+# gitleaks settings for this repository (the scan: .github/workflows/security.yml, gitleaks detect --source .).
+# The default rules stay on. One narrow allow entry (the PFM, 2026-11-23; docs/DECISIONS.md):
+# scripts/rade.lock.json lists the RADE engine files by name with a SHA-256 hash each; three names hold "keys" or
+# "tokens" (engine/ps/window/10-keys.ps1, engine/rade_tokens.py, engine/ui-tokens.json), so the generic-api-key rule
+# reads each hash as a key. The names come from the RADE release and cannot change here. Only a 64-hex value in that
+# one file is allowed; every other file and value is still scanned.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "SHA-256 file hashes in the RADE engine lock"
+condition = "AND"
+paths = ['''^scripts/rade\.lock\.json$''']
+regexes = ['''^[0-9a-f]{64}$''']

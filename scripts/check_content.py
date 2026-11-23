@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The content check of scripts/check.sh: blocks personal data, secrets and the PFM's own blocked content before
+"""The content check of scripts/check.sh: blocks personal data, secrets and the Maintainer's own blocked content before
 they reach the remote or leave in a tool call. One scanner for emails, phone numbers, ID-number shapes, API tokens and
 private keys, names and terms from word lists kept outside the repo, and files the settings file blocks.
 
@@ -24,10 +24,10 @@ One entry per line, `#` comments:
     block: <path or glob>   must not be committed or sent (a glob with no "/" matches the file name in any folder)
     denylist: warn          with no name denylist, --require-denylist warns instead of failing (starter projects)
     profile: dod            the DoD tier (below)
-Only the PFM adds an allowed string or a skip line; agents never add one to get past a block (AGENTS.md
+Only the Maintainer adds an allowed string or a skip line; agents never add one to get past a block (AGENTS.md
 "Secrets and personal data").
 
-Two tiers (the PFM, 2026-11-15):
+Two tiers (the Maintainer, 2026-11-15):
     minimum    no profile line: the checks under "Checks".
     DoD        `profile: dod`: the minimum checks plus the checks under "DoD checks"; a missing denylist always
                blocks (`denylist: warn` is ignored). In the Action the settings are read from the pull-request base
@@ -36,7 +36,7 @@ Two tiers (the PFM, 2026-11-15):
 Word lists (never committed): one name or word per line, `#` comments, matched whole-word, any case.
     names (personal data)   env PII_GUARD_DENYLIST (newline or comma separated; the Action reads the Actions secret
                             of the same name), else env PII_GUARD_DENYLIST_FILE, else ~/.config/pii-guard/denylist.txt
-    terms (the PFM's own blocked words: a client, a code name; optional)
+    terms (the Maintainer's own blocked words: a client, a code name; optional)
                             env CHECK_TERMS (Actions secret CHECK_TERMS), else env CHECK_TERMS_FILE, else
                             ~/.config/check/terms.txt
 With no name denylist, names are not checked and the result line says so (exit code unchanged).
@@ -72,7 +72,7 @@ A project's own finders: a file scripts/check_content_local.py replaces or adds 
 interface: the header of check_content_scan.py). The result line and --status say when it is active; when it cannot
 be loaded, every scan fails and the hook blocks. Limit: that file is the project's own trusted code, like any script
 a hook runs; a file that ends the process itself while it loads (os._exit) ends the scan with its own exit code (0 lets a hooked call run).
-The code is split by concern into modules next to this file: check_content_scan.py (the settings and the scans),
+The code is split by concern into modules next to this file: check_content_scan.py (the scans) with check_content_scan_settings.py (the word lists and the settings file),
 check_content_finders.py (the patterns and finders), check_content_hook.py (--hook) and check_content_test.py (--test).
 Network: none (it runs local git read commands).
 Writes: none (findings go to stdout or stderr; the self-test uses temporary folders).
@@ -97,7 +97,7 @@ if "--hook" in sys.argv[1:]:   # before the scanner (and a project's own module)
 def missing_part(err):
     """Stop with exit 2 when a part of the guard is missing: a copy without its parts must block, not pass (exit 2
     also blocks the PreToolUse hook)."""
-    print('CONTENT CHECK FAIL: %s; copy check_content_scan.py, check_content_finders.py, check_content_hook.py and '
+    print('CONTENT CHECK FAIL: %s; copy check_content_scan.py, check_content_scan_settings.py, check_content_finders.py, check_content_hook.py and '
           'the check_content_test*.py files next to check_content.py (scripts/sync_baseline.py does this)' % err, file=sys.stderr)
     sys.exit(2)
 
@@ -121,7 +121,7 @@ def report(found, what, deny, dod=False, terms=()):
         what: what was scanned, for the result line.
         deny: the names of the denylist.
         dod: True in the DoD tier.
-        terms: the PFM's own blocked words.
+        terms: the Maintainer's own blocked words.
 
     Returns:
         The exit code: 0 pass, 1 fail.
@@ -201,7 +201,7 @@ def scan_targets(a, root, deny, allow, dod, revsets, terms=()):
         allow: the lines of the settings file (load_allow).
         dod: True in the DoD tier: also run the DoD checks.
         revsets: the git rev-list argument lists of the commits to scan.
-        terms: the PFM's own blocked words.
+        terms: the Maintainer's own blocked words.
 
     Returns:
         (findings, the list of what was scanned).

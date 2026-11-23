@@ -12,7 +12,7 @@
 - one meaning per label: a display name used in two lists maps to the same internal name;
 - view names: "<audience> - <what>"; flow names: "90161Z T<NN> <title case words> r<N>";
 - go.md: no YYYY-MM-DD dates outside URLs (T&Q ch 28)."""
-import json, pathlib, re, sys
+import json, pathlib, re, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SMALL = {"a", "an", "the", "and", "as", "but", "if", "or", "nor", "at", "by", "for", "in", "of", "off", "on", "out", "to", "up"}
@@ -132,5 +132,44 @@ for i, l in enumerate(go.split("\n"), 1):
     plain = re.sub(r"\S*://\S+|raw\.githubusercontent\.com\S*|" + re.escape(PAGES_HOST) + r"\S*", "", l)
     if re.search(r"\b\d{4}-\d{2}-\d{2}\b", plain): bad.append(f"go.md:{i}: date as YYYY-MM-DD -> 11 Nov 26 (T&Q ch 28)")
     product_text(f"go.md:{i}", plain)
+
+
+def orphan_scripts():
+    """Find scripts that no other tracked file names (fleet v2, 2026-11-23: a retired script leaves the repository).
+
+    A script counts as used when a tracked file other than itself names it (its file name, or for a Python module its
+    name without .py). The generated round bundles (their clean-up list holds every scripts/gov/*.ps1 by a pattern)
+    and the history files (reviews, decisions, the handoff) do not count.
+
+    Returns:
+        A list of messages, one for each orphan script.
+    """
+    git = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True)
+    if git.returncode != 0 or not git.stdout.strip():   # no file list: fail, never pass with nothing checked
+        return ["orphan check: git ls-files gave no file list (" + (git.stderr or "").strip()[:120] + ")"]
+    files = git.stdout.split("\n")
+    script = re.compile(r"^(scripts/[^/]+\.(py|sh|js)|scripts/gov/(src/)?[^/]+\.ps1|tests/[^/]+\.(py|sh|js)|tests/ps/[^/]+\.ps1)$")
+    history = re.compile(r"^docs/(reviews/|DECISIONS\.md|decisions-archive\.md|NEXT_PROMPT\.md)|^scripts/gov/paste/")
+    texts = {}
+    for f in files:
+        if f and not history.match(f):
+            try:
+                texts[f] = (ROOT / f).read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                pass
+    out = []
+    for s in (f for f in files if script.match(f)):
+        name = s.rsplit("/", 1)[1]
+        names = [name] + ([name[:-3]] if name.endswith(".py") else [])
+        if not any(o != s and any(n in t for n in names) for o, t in texts.items()):
+            out.append(f"{s}: orphan script (no other file names it): delete it, or name it where it is used")
+    return out
+
+
+bad += orphan_scripts()
+# The RADE manifest keeps its own "repo" and "home" (the engine reads them); they must equal site.config.json (fleet v2 DEC 7).
+_cfg, _app = site_config.load(), json.loads((ROOT / "scripts" / "paste_bundles.json").read_text(encoding="utf-8"))["application"]
+if _app.get("repo") != _cfg["owner"] + "/" + _cfg["repo"] or _app.get("home") != site_config.urls()["pages"]:
+    bad.append("scripts/paste_bundles.json application repo/home differ from site.config.json")
 print("\n".join(bad) or "OK names")
 sys.exit(1 if bad else 0)

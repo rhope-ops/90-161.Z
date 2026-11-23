@@ -56,7 +56,7 @@ title_lines() {
   day=$(TZ="${tz:-UTC}" date +%F)
   tag="project:$(printf '%s' "$short" | tr '[:upper:]' '[:lower:]')"
   echo "TITLE:       $short · <task, 2-6 words> · $day (tag $tag); keep a title that already has this form; steps: .claude/skills/handoff/SKILL.md \"Session names\""
-  echo "SESSIONS:    where the session tools exist, list the sessions tagged $tag that wait on the PFM"
+  echo "SESSIONS:    where the session tools exist, list the sessions tagged $tag that wait on the Maintainer"
 }
 
 if [ "${1:-}" = "--test" ]; then
