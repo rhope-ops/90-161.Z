@@ -240,9 +240,9 @@ def check_flow_defs(zf, declared, declared_ids, all_cols, env_list, schemas, cou
         hosts = {x["inputs"]["host"]["connectionName"] for _, x in walk_actions(d["actions"]) if isinstance(x.get("inputs"), dict) and "host" in x["inputs"]}
         hosts |= {t["inputs"]["host"]["connectionName"] for t in d["triggers"].values() if "host" in t.get("inputs", {})}
         if hosts != set(d["connections"]): bad(f"{src.name}: hosts used {sorted(hosts)} differ from connections {d['connections']}")
-        key = d.get("workflowKey")   # R21: the stem of the revision first imported (same flow, earlier revision)
+        key = d.get("workflowIdStem")   # R21: the stem of the revision first imported (same flow, earlier revision)
         if key and not (re.sub(r"-r\d+$", "", key) == re.sub(r"-r\d+$", "", src.stem) and int(key.rsplit("-r", 1)[1]) < int(src.stem.rsplit("-r", 1)[1])):
-            bad(f"{src.name}: workflowKey {key} is not an earlier revision of the same flow")
+            bad(f"{src.name}: workflowIdStem {key} is not an earlier revision of the same flow")
         wid = B.guid("workflow", key) if key else B.flow_guid(src.stem)
         wfs = [n for n in zf.namelist() if n == B.json_name(d["displayName"], wid)[1:]]
         if len(wfs) != 1: bad(f"{src.name}: expected one workflow file in the zip, found {len(wfs)}"); continue

@@ -1,7 +1,7 @@
 {
   "displayName": "90161Z F03 Suspense Reminders r8",
   "description": "Weekdays 07:00 Central. Sets the default suspense on open PFM Endorsements rows without one, Legal rows included, counted from the row's Created date (15 business days; Guard or Reserve Applicability at least 30 calendar days), then sends one reminder (5 weekdays before), warning (suspense day) or escalation (3 working days after) e-mail per row and tier, from the shared mailbox when one is set. Uses the later of DueDate and ExtensionDate; skips actions that are On Hold, Cancelled or Complete. Test mode sends every e-mail to the alert address. Stops when Flows paused is Yes; e-mails the alert address when a step fails. DAFMAN 90-161 5.2, 5.2.1, 5.2.2, 5.4.3; PFM 14 Nov 26. Reads its settings once at the start from PFM Settings rows (Flows paused, Test mode, Reminder lead days, Escalation lag days, Coordination suspense business days, Shared mailbox); a missing or empty row gives 5, 3, 15 and no shared mailbox, Flows paused No and Test mode Yes. No subject or title prefix in test mode (PFM 16 Nov 26). r8 (R36, PFM 19 Nov 26, README choice 4): the default suspense starts at the row's Created date (Central; a row made on a Saturday or Sunday counts from the Friday before), not at the run day, and Legal rows (F05 makes them at step 7) get one too.",
-  "workflowKey": "90161Z-F03-suspense-reminders-r2",
+  "workflowIdStem": "90161Z-F03-suspense-reminders-r2",
   "connections": [
     "shared_sharepointonline",
     "shared_office365"
