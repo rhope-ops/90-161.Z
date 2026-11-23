@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The skills check of scripts/bloat_check.py (`python3 scripts/bloat_check.py --skills`; kept in its own file so the
-check stays under the 600-line cap of docs/code-standard.md C4).
+check stays under the line cap of docs/code-standard.md C4).
 
 Input: the repo root; it reads each .claude/skills/*/SKILL.md and AGENTS.md. Output: FAIL lines (no frontmatter, no
 name or description, a name that differs from its folder), indented WARN lines (description start or length, file
@@ -142,11 +142,11 @@ def listing_bytes(root, third_party=()):
     return own, third
 
 
-# One home per rule (the PFM, 2026-11-18): a rule that AGENTS.md states must not be stated again, or the other
+# One home per rule (the Maintainer, 2026-11-18): a rule that AGENTS.md states must not be stated again, or the other
 # way round, in a skill or an agent file; those files link to it. Each row: (the rule, a pattern that shows a
 # second statement, the files that may hold it). A match in any other skill or agent file fails scripts/check.sh.
 SINGLE_HOME = [
-    ("who merges a pull request", r"only the PFM merges|the PFM merges\b|never merges this pull request|the PFM's merge is the approval", ["AGENTS.md"]),
+    ("who merges a pull request", r"only the Maintainer merges|the Maintainer merges\b|never merges this pull request|the Maintainer's merge is the approval", ["AGENTS.md"]),
     ("no direct push to main", r"merge to main by merge|\bPush main:|git checkout main && git merge|push to main and republish", ["AGENTS.md"]),
     ("the end-of-turn summary format", r"end-of-turn summary line:", ["AGENTS.md"]),
     # The hard rules (AGENTS.md "Hard rules", 2026-11-18). A pointer such as (AGENTS.md "Hard rules") or a description

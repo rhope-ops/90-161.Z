@@ -10,7 +10,7 @@ AGENTS.md "Verification" points here. The commands live in AGENTS.md "Commands",
 ## 1. Find the commands
 
 - Read AGENTS.md "Commands" (Build, Test, Lint, and Start when the project has that line) and use the lines as written.
-- A line says "not set yet", or there is no Start line: look in README.md, then the manifest (package.json scripts, Makefile, pyproject.toml), then .github/workflows. Take only a build, test, lint or local start command, not a deploy, release, publish or data-write step. Read what the candidate runs before you run it, then run it one time. If it works, use it, and put the exact line for "Commands" in your report (the PFM approves a change of AGENTS.md).
+- A line says "not set yet", or there is no Start line: look in README.md, then the manifest (package.json scripts, Makefile, pyproject.toml), then .github/workflows. Take only a build, test, lint or local start command, not a deploy, release, publish or data-write step. Read what the candidate runs before you run it, then run it one time. If it works, use it, and put the exact line for "Commands" in your report (the Maintainer approves a change of AGENTS.md).
 - The change has nothing to run (rules or docs only, or the repo has no app): say so, run Test, and go to "Report".
 
 ## 2. Run the checks
@@ -63,6 +63,6 @@ The script does not check these. Measure them with `getBoundingClientRect()` in 
 
 - Each command you ran, with its result line.
 - What you saw (value, status, text) next to what you expected.
-- A UI change: one line per width and scheme from the script, the hand checks with their numbers, and, to show the PFM the change, the link to an HTML artifact of the page with invented data (the content check reads HTML, not a PNG; the screenshots are for your own checks).
+- A UI change: one line per width and scheme from the script, the hand checks with their numbers, and, to show the Maintainer the change, the link to an HTML artifact of the page with invented data (the content check reads HTML, not a PNG; the screenshots are for your own checks).
 - "verified" only when the checks (section 2) passed and the change was proven (section 4, and section 5 for a UI change with every check passed or each fail listed with its cause). A change with nothing to run: verified by the checks alone, and say so. Otherwise "done, not verified", with what did not run and why.
 - The proposed "Commands" lines, when a line was "not set yet" or missing.

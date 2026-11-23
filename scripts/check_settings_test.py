@@ -1,5 +1,5 @@
 """The self-test of scripts/check_settings.py (`python3 scripts/check_settings.py --test`), kept apart so that file
-stays under the 600-line cap of docs/code-standard.md C4.
+stays under the line cap of docs/code-standard.md C4.
 
 What it proves: the readers of `.check` (defaults, each key, the lines that must fail, a git ref) and of
 `.check.state.json`; and --migrate: the old files become lines and state, existing lines stay, a key with no place in
@@ -17,6 +17,7 @@ import io
 import json
 import subprocess
 import tempfile
+import unittest
 from pathlib import Path
 
 from check_settings import (AUDIT_DEFAULTS, CHECK, CODE_DEFAULTS, HEADER_BLOCK, KIT_CAPS, MIGRATE, NAMES_CHECK, OLD_AUDIT,
@@ -34,7 +35,7 @@ def fails(call, *args):
     return ""
 
 
-def test_settings(root, git):
+def case_settings(root, git):
     """Self-test of the readers: defaults, each key, the lines that must fail, a git ref, and the state file.
     Args:
         root: a temporary git repo.
@@ -47,7 +48,7 @@ def test_settings(root, git):
                               "audit-every-days: 7\naudit-ignore: ref/**\naudit-start-read: docs/A.md\n"
                               "audit-budget-file_kb: 100\naudit-budget-rules_file_lines: 150\n")
     cfg = code_config(root)
-    assert cfg["caps"] == {"max_file_lines": 300, "max_function_lines": 60} and cfg["exclude"] == ["a.py", "vendor/*"] \
+    assert cfg["caps"] == dict(CODE_DEFAULTS["caps"], max_file_lines=300) and cfg["exclude"] == ["a.py", "vendor/*"] \
         and cfg["include"] == ["*"] and cfg["c1_safety"] and cfg["c2"] == "full", "the code- lines are read: %s" % cfg
     aud = audit_config(root)
     assert aud["every_days"] == 7 and aud["every_commits"] == 300 and aud["ignore"] == ["ref/**"] \
@@ -70,9 +71,9 @@ def test_settings(root, git):
         (root / CHECK).write_text(line + "\n")
         assert why in fails(audit_config, root), "an audit- line that is not valid fails: " + line
     assert code_config(root) == CODE_DEFAULTS, "a bad audit- line does not fail the code standard"
-    test_gate_keys(root)
-    test_third_party(root)
-    test_instructions(root)
+    case_gate_keys(root)
+    case_third_party(root)
+    case_instructions(root)
     (root / CHECK).write_bytes(b"\xff\xfec\x00o\x00")
     assert "UTF-8" in fails(code_config, root), "a .check that is not UTF-8 fails"
     (root / CHECK).write_text("code-max-function-lines: 40\n")
@@ -96,8 +97,25 @@ def test_settings(root, git):
         and not NAMES_CHECK.search(".check.lock and .check.state.json and x.check"), "a row names .check itself"
 
 
-def test_instructions(root):
-    """Self-test of `audit-instructions:` (the PFM, 2026-11-21): a list key of globs, written back as the same lines.
+def case_paste(root, git):
+    """The `code-paste:` list and the `code-max-file-lines-paste` cap are read; their misspelled forms fail.
+    Args:
+        root: a temporary git repo.
+        git: runs one git command in it (not used: every case takes it).
+    """
+    (root / CHECK).write_text("code-paste: tools/*.ps1\ncode-paste: a.js\ncode-max-file-lines-paste: 500\n")
+    cfg = code_config(root)
+    assert cfg["paste"] == ["a.js", "tools/*.ps1"] and cfg["caps"]["max_file_lines_paste"] == 500 \
+        and code_lines(cfg) == ["code-max-file-lines-paste: 500", "code-paste: a.js", "code-paste: tools/*.ps1"], cfg
+    for line in ("code_max_file_lines_paste: 5", "code-paste tools/x", "code_paste: x"):
+        (root / CHECK).write_text(line + "\n")
+        assert "looks like a setting" in fails(code_config, root), "a misspelled paste line fails: " + line
+    (root / CHECK).write_text("code-pasted in\n")
+    assert code_config(root) == CODE_DEFAULTS, "an allowed string is not a paste line"
+
+
+def case_instructions(root):
+    """Self-test of `audit-instructions:` (the Maintainer, 2026-11-21): a list key of globs, written back as the same lines.
     Args:
         root: a temporary git repo; its `.check` is left empty at the end.
     """
@@ -110,8 +128,32 @@ def test_instructions(root):
     (root / CHECK).write_text("")
 
 
-def test_third_party(root):
-    """Self-test of `audit-third-party:` (the PFM, 2026-11-20): a list key, written back as the same lines; a typo
+def case_validate(root, git):
+    """Self-test of --validate-config (fleet v2 1.4): each key group is read; any error fails with its group name.
+    Args:
+        root: a temporary git repo; its `.check` is left empty at the end.
+        git: runs a git command in root (unused).
+    """
+    import check_settings as cs
+    import contextlib
+    import io
+    cases = (("code-max-file-lines: 450\ndod-security: on\nprofile: dod\n", 0, ""),
+             ("code-max-file-lines: many\n", 1, "code:"),
+             ("audit-every-days: -3\n", 1, "audit:"),
+             ("dod-security: maybe\n", 1, "dod-security:"),
+             ("profile: dodd\n", 1, "profile:"),
+             ("code-strict-gate = on\n", 1, "looks like a setting"), ("code_strict_gate: on\n", 1, "looks like a setting"))
+    for text, code, mark in cases:
+        (root / CHECK).write_text(text)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            got = cs.validate_config(root)
+        assert got == code and mark in out.getvalue(), "validate %r: exit %s, output %r" % (text, got, out.getvalue())
+    (root / CHECK).write_text("")
+
+
+def case_third_party(root):
+    """Self-test of `audit-third-party:` (the Maintainer, 2026-11-20): a list key, written back as the same lines; a typo
     and a raised cap fail.
     Args:
         root: a temporary git repo; its `.check` is left empty at the end.
@@ -130,7 +172,7 @@ def test_third_party(root):
     (root / CHECK).write_text("")
 
 
-def test_gate_keys(root):
+def case_gate_keys(root):
     """Self-test of the keys a project's own gate enforces: the opt-in line cap and the strict safety level.
     Args:
         root: a temporary git repo; its `.check` is left empty at the end.
@@ -173,7 +215,7 @@ def files_of(root):
     return {p.name: p.read_bytes() for p in root.iterdir() if p.is_file()}
 
 
-def test_migrate_dropped(root, git):
+def case_migrate_dropped(root, git):
     """Self-test of --migrate on old keys with no place in the layout (the three cases the first ports hit): the key
     is not moved, one NOTE line names it, the last line lists it, and the rest is moved.
     Args:
@@ -215,7 +257,7 @@ def test_migrate_dropped(root, git):
     assert code == 1 and "SETTINGS MIGRATE FAIL" in said and files_of(root) == before, "a clash changes nothing: " + said
 
 
-def test_migrate_header(root, git):
+def case_migrate_header(root, git):
     """Self-test of --migrate on the comment block at the top of `.check`: every kit header line of an old block
     becomes the current block; a project comment in it and every later line stay; any other first line stays.
     Args:
@@ -225,7 +267,7 @@ def test_migrate_header(root, git):
     block = "\n".join(HEADER_BLOCK) + "\n"
     old4 = [OLD_HEADERS[0], "# Below: exact strings that are allowed although they look like personal data, one per line.",
             "# `skip: <path or glob>` excludes a path.",
-            '# Only the PFM adds entries. Agents never add one to get past a block (AGENTS.md "Personal data").']
+            '# Only the Maintainer adds entries. Agents never add one to get past a block (AGENTS.md "Personal data").']
     body = "profile: dod\n# A project comment after a setting.\n" + OLD_HEADERS[0] + "\nskip: a/*\n"
     for old in OLD_HEADERS:
         (root / OLD_CHECK).write_text("\n".join([old] + old4[1:3] + ["# Below: our own note."] + old4[3:]) + "\n" + body)
@@ -238,6 +280,13 @@ def test_migrate_header(root, git):
         before = files_of(root)
         assert migrated(root)[0] == 0 and files_of(root) == before, "a second run changes nothing"
         (root / CHECK).unlink()
+        (root / STATE).unlink()
+    pfm = [l.replace("the Maintainer", "the PFM").replace("The Maintainer", "The PFM") for l in HEADER_BLOCK]  # kit fix 0(a)
+    (root / CHECK).write_text("\n".join(pfm) + "\nprofile: dod\n")
+    assert migrated(root)[0] == 0 and (root / CHECK).read_text() == block + "profile: dod\n", \
+        "a header synced with another role word is renewed, not kept as a project comment: " + (root / CHECK).read_text()
+    (root / CHECK).unlink()
+    if (root / STATE).exists():
         (root / STATE).unlink()
     (root / CHECK).write_bytes("\r\n".join(old4).encode() + b"\r\nprofile: dod\r\n")   # a 4-line header migrated before this fix
     code, said = migrated(root)
@@ -261,7 +310,7 @@ def test_migrate_header(root, git):
             "HEADER_BLOCK is the kit's .check block"
 
 
-def test_migrate(root, git):
+def case_migrate(root, git):
     """Self-test of --migrate: the old files become lines and state, existing lines stay, a second run changes
     nothing, the old base is still read, and a clash changes nothing.
     Args:
@@ -282,7 +331,9 @@ def test_migrate(root, git):
         assert migrate(root) == 0, "the migration runs"
     text = (root / CHECK).read_text()
     assert text.startswith("# old\nprofile: dod\nskip: data/*\n# Code standard"), "the old lines stay first: " + text
-    assert text.splitlines()[4:] == ["code-max-function-lines: 80", "code-exclude: gen/*", "code-c2: full",
+    # The old file holds the cap of its time (600); the default is 450 now, so the cap is kept as a line.
+    assert text.splitlines()[4:] == ["code-max-file-lines: 600", "code-max-function-lines: 80", "code-exclude: gen/*",
+                                     "code-c2: full",
                                      "audit-every-days: 7", "audit-budget-file_kb: 100", "audit-ignore: ref/**",
                                      "audit-duplicate-ignore: data/*.json"], text
     assert load_state(root) == {"code_standard": {"debt": old_code["debt"]}, "audit": {"last_audit": old_audit["last_audit"]},
@@ -317,13 +368,49 @@ def run():
     Returns:
         The exit code 0.
     """
-    for case in (test_settings, test_migrate, test_migrate_dropped, test_migrate_header):
-        with tempfile.TemporaryDirectory() as d:
-            def git(*args):
-                """Run one git command in the test repo as a throwaway user; fail the test on an error."""
-                subprocess.run(["git", "-C", d, "-c", "user.email=t@example.invalid", "-c", "user.name=t",
-                                "-c", "commit.gpgsign=false", *args], check=True, capture_output=True)
-            git("init", "-q")
-            case(Path(d), git)
+    for case in (case_settings, case_paste, case_migrate, case_migrate_dropped, case_migrate_header, case_validate):
+        in_repo(case)
     print("SETTINGS TEST PASS")
     return 0
+
+
+def in_repo(case):
+    """Run one case in a new temporary git repo (an assert stops on a failure).
+    Args:
+        case: a case function that takes (root, git).
+    """
+    with tempfile.TemporaryDirectory() as d:
+        def git(*args):
+            """Run one git command in the test repo as a throwaway user; fail the test on an error."""
+            subprocess.run(["git", "-C", d, "-c", "user.email=t@example.invalid", "-c", "user.name=t",
+                            "-c", "commit.gpgsign=false", *args], check=True, capture_output=True)
+        git("init", "-q")
+        case(Path(d), git)
+
+
+class CheckSettingsTest(unittest.TestCase):
+    """The cases of `python3 scripts/check_settings.py --test`, one test each, for `python3 -m unittest` and pytest."""
+
+    def test_settings(self):
+        """The `code-` and `audit-` lines, the state file, the gate keys, third-party and instructions globs."""
+        in_repo(case_settings)
+
+    def test_paste(self):
+        """The `code-paste:` lines and their cap."""
+        in_repo(case_paste)
+
+    def test_migrate(self):
+        """--migrate moves the old files into `.check` and `.check.state.json`."""
+        in_repo(case_migrate)
+
+    def test_migrate_dropped(self):
+        """--migrate names each old key that has no place in the new layout."""
+        in_repo(case_migrate_dropped)
+
+    def test_validate(self):
+        """--validate-config reads every key group and names the group of each error."""
+        in_repo(case_validate)
+
+    def test_migrate_header(self):
+        """--migrate renews the kit header block of `.check`."""
+        in_repo(case_migrate_header)

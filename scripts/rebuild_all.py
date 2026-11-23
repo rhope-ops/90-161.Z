@@ -54,6 +54,7 @@ GRAPH = {
 NOT_GENERATED = {
     'build_list_mockup.py': 'writes the list mockup page to a temp path; it is published as an artifact, not committed',
     'build_decision_brief.js': 'writes a decision brief page outside the repo (an artifact)',
+    'build_site_html.py': 'HTML helpers that scripts/build_site.py imports (a kit file); not a generator of its own',
 }
 
 

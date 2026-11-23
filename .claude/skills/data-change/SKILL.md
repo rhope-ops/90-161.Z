@@ -23,7 +23,7 @@ AGENTS.md "Verification" points here. A data write can be irreversible, and a wr
 
 1. Show the full change, with no placeholders: the statement, the request body, the script with its arguments, or the diff of the data file.
 2. Show its effect without changing data: a count with the same filter (`SELECT COUNT(*)` with the same `WHERE`, the list filter, a script's `--dry-run`), grouped where that helps (by date or status). For a data file: the count of rows added, changed and removed, and proof that stable IDs did not change.
-3. Get the fresh review that AGENTS.md "Fresh review" requires for a data write (lane C): give the reviewer the change and the counts of step 2. On production: wait for the PFM's approval of this change. An approval covers one change as shown. A changed statement, filter or file needs a new approval.
+3. Get the fresh review that AGENTS.md "Fresh review" requires for a data write (lane C): give the reviewer the change and the counts of step 2. On production: wait for the Maintainer's approval of this change. An approval covers one change as shown. A changed statement, filter or file needs a new approval.
 4. Have a way back before you run, and say which one: a snapshot or backup table (BigQuery: `CREATE TABLE ... CLONE`, or time travel), an export of the rows or list items the change touches, the version history of the list or file, the earlier commit of a data file, or a written reverse change.
 5. Run it. Report the counts before and after, and the count the engine or the script says it changed. If the numbers do not agree with step 2, stop and report.
 6. A page that reads the data: load it after the write and confirm one changed row and one row that must stay the same.

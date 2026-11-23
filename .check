@@ -46,6 +46,13 @@ code-max-line-chars: 200
 code-generated: scripts/gov/paste/*.ps1
 code-c1-safety: on
 code-c2: full
+# Fleet v2 (kit 11.0.0, 2026-11-23): the strict gate is the kit's (scripts/code_standard_strict.py; it replaces this
+# repo's scripts/code_standard_gate.py, plan B.4); the round task scripts a person pastes keep the 600-line cap (DEC 6).
+code-strict-gate: on
+code-paste: scripts/gov/90161Z-T22-*.ps1
+code-paste: scripts/gov/90161Z-T24-*.ps1
+# DoD repository (kit 11.0.0): kit pages get a CSP and no-referrer; the DoD files sync only when missing.
+dod-security: on
 audit-ignore: ref/**
 audit-ignore: scripts/gov/paste/**
 audit-ignore: flow/provisioning-payload.json

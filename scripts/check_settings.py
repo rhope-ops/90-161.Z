@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The one reader of the code standard and audit settings in `.check`, and the one reader and writer of
-`.check.state.json` (the PFM, 2026-11-18: one config layout in every repo).
+`.check.state.json` (the Maintainer, 2026-11-18: one config layout in every repo).
 
 The three files at the top of a repo:
     .check             every setting a person edits: one entry per line, `#` comments. The content check reads its
@@ -11,12 +11,15 @@ The three files at the top of a repo:
                        "timings": {...}}, with sorted keys and indent 1, so the same state gives the same bytes.
 
 The setting lines (a missing key means the default; a key marked * may appear on several lines):
-    code-max-file-lines: 600        code-max-function-lines: 60
+    code-max-file-lines: 450        code-max-function-lines: 60
     code-include: <glob> *          code-exclude: <glob> *          code-generated: <glob> *
+    code-paste: <glob> *            a script a person pastes into another tool (one file is one paste): its C4 cap is
+    code-max-file-lines-paste: 600  this one, not code-max-file-lines (docs/code-standard.md C4)
     code-c1-safety: on|off|strict   code-c2: full|lean
-    code-max-line-chars: <number>   no line = off. This line and `code-c1-safety: strict` are for a project's own
-                                    gate (scripts/code_standard_gate.py; docs/code-standard.md "A project's own gate"):
-                                    the kit reads them, the gate enforces them, and the check fails without a gate.
+    code-max-line-chars: <number>   no line = off. This line and `code-c1-safety: strict` need a gate: the kit's
+                                    (`code-strict-gate: on`, scripts/code_standard_strict.py) or a project's own
+                                    (scripts/code_standard_gate.py, which wins); the check fails without one.
+    code-strict-gate: on|off        default off; docs/code-standard.md "The strict gate"
     audit-every-days: 14            audit-every-commits: 300
     audit-ignore: <glob> *          audit-start-read: <path> *
     audit-duplicate-ignore: <glob> *  a file it matches is not read by the duplicate count (the other audit measures
@@ -26,6 +29,9 @@ The setting lines (a missing key means the default; a key marked * may appear on
     audit-instructions: <glob> *    a file whose steps a person follows (AGENTS.md "Instructions people follow"):
                                     scripts/check_instructions.py checks its steps, and its hook asks for the skill first
     audit-budget-<name>: <number>   names: the keys of AUDIT_DEFAULTS["budgets"]; the KIT_CAPS may only be lowered
+    dod-security: on|off            a page the kit builds (scripts/build_site_html.py) gets a Content-Security-Policy and a
+                                    no-referrer meta tag only when `on` (default off); read there; the sync adds
+                                    the DoD group (sync_baseline.DOD_FILES) only when `on`
 An unknown `code-` or `audit-` key, a key in capitals, a single key on two lines, or a value that is not valid raises
 ValueError: the check that reads it fails with that message (a typo must not relax a limit in silence).
 
@@ -43,6 +49,7 @@ Usage:   python3 scripts/check_settings.py            print the settings and the
                                                       of `.check` become the current block (HEADER_BLOCK).
          python3 scripts/check_settings.py --test     self-test in temporary repos; prints SETTINGS TEST PASS
                                                       (the cases: scripts/check_settings_test.py)
+Parts:   scripts/check_settings_read.py (the keys, the readers and the state file; every name is re-exported here).
 Needs:   Python 3.8+ and git. Standard library only.
 Network: none (it runs local git read commands).
 Writes:  .check.state.json; with --migrate also .check, and it deletes the old settings files.
@@ -53,38 +60,18 @@ import json
 import re
 import subprocess
 import sys
-import unicodedata
 from pathlib import Path
 
-CHECK = ".check"
-STATE = ".check.state.json"
-OLD_CODE = ".code-standard.json"   # before 2026-11-18: the code standard's caps, scope and debt list
-OLD_AUDIT = ".bloat-audit.json"    # before 2026-11-18: the audit's settings, last audit and time baselines
-OLD_CHECK = ".pii-guard"           # before 2026-11-18: the name of .check
-MIGRATE = "python3 scripts/check_settings.py --migrate"
-CODE_DEFAULTS = {"caps": {"max_file_lines": 600, "max_function_lines": 60}, "include": ["*"], "exclude": [],
-                 "generated": [], "c1_safety": False, "c2": "lean"}
-OPT_IN_CAPS = ("max_line_chars",)   # caps that are off (no key in "caps") until `.check` has their line; a gate enforces them
-STRICT = "strict"                   # the value of "c1_safety" for `code-c1-safety: strict` (False = off, True = on)
-AUDIT_DEFAULTS = {"every_days": 14, "every_commits": 300, "start_read": [], "ignore": [], "duplicate_ignore": [],
-                  "third_party": [], "instructions": [],
-                  "budgets": {"session_load_tokens": 5500, "session_load_warn_tokens": 5000, "rules_file_lines": 200,
-                              "third_party_tokens": 1500,
-                              "handoff_lines": 40, "file_kb": 500, "duplicate_lines": 20, "rules": 28,
-                              "project_rules": 15}}
-# The PFM's caps for every repo (2026-11-18; third_party_tokens 2026-11-20; session load 5,500, warning 5,000: 2026-11-21): a project can lower one, never raise it.
-KIT_CAPS = ("session_load_tokens", "session_load_warn_tokens", "rules_file_lines", "third_party_tokens")
-CODE_LISTS = ("include", "exclude", "generated")
-AUDIT_LISTS = ("ignore", "start_read", "duplicate_ignore", "third_party", "instructions")
-SETTING_LINE = re.compile(r"(?i)^((?:code|audit)-[A-Za-z0-9_-]+)\s*:\s*(.*)$")
-# A line that was meant as a setting: a known key written with `_`, with `=` in place of `:`, or with no colon.
-# An allowed string that only starts with those letters ("code-name Bluebird", "code-included in price") is not one.
-_KEY = (r"(?:code[-_](?:max[-_]file[-_]lines|max[-_]function[-_]lines|max[-_]line[-_]chars|include|exclude|generated|c1[-_]safety|c2)"
-        r"|audit[-_](?:every[-_]days|every[-_]commits|ignore|duplicate[-_]ignore|start[-_]read|budget[-_][a-z_]+))")
-LOOKS_LIKE_SETTING = re.compile(r"(?i)^" + _KEY + r"(?:\s*[:=]|\s+\S)")
-# A docs/DECISIONS.md row "names .check" with the file name itself, not .check.lock or .check.state.json.
-NAMES_CHECK = re.compile(r"(?<![\w.])\.check(?!\.(?:lock|state)|\w)")
-STATE_PARTS = ("code_standard", "audit", "timings")
+from build_site_html import dod_security  # noqa: E402 - scripts/build_site_html.py: the reader of `dod-security:`
+from check_content_scan_settings import UNKNOWN_PROFILE, load_allow, profile_of  # noqa: E402 - the content-check tier
+
+# scripts/check_settings_read.py: the keys, the readers and the state file (kept apart, docs/code-standard.md C4).
+from check_settings_read import (  # noqa: F401 - every name is re-exported: other scripts import them from here
+    _KEY, AUDIT_DEFAULTS, AUDIT_LISTS, CHECK, CODE_DEFAULTS, CODE_LISTS, KIT_CAPS, LOOKS_LIKE_SETTING, MIGRATE,
+    NAMES_CHECK, OLD_AUDIT, OLD_CHECK, OLD_CODE, OPT_IN_CAPS, SETTING_LINE, STATE, STATE_PARTS, STRICT, audit_config,
+    audit_from_old, audit_settings, choice, code_base, code_config, code_from_old, code_settings, collect, dash,
+    load_state, not_migrated, number, pairs, read, save_part, state_text)
+
 # The comment block at the top of the kit's `.check` (HEADER is its first line), and the first lines of older kit
 # versions that named the old scanner. When the first line of a `.check` is one of these, --migrate replaces every
 # kit header line of any version (OLD_HEADER_LINES) in the leading comment block with HEADER_BLOCK.
@@ -101,7 +88,7 @@ HEADER_BLOCK = (
     "#   audit-<key>: <value>    a setting of the audit, for example `audit-ignore: ref/**`",
     "#                           (the keys and their defaults: the header of scripts/check_settings.py; a `code-` change",
     "#                           needs a docs/DECISIONS.md row that names this file)",
-    "# An allowed string or a skip line is added only on the PFM's request, never by an agent to get past a block"
+    "# An allowed string or a skip line is added only on the Maintainer's request, never by an agent to get past a block"
     ' (AGENTS.md "Guards and checks").',
 )
 HEADER = HEADER_BLOCK[0]
@@ -112,283 +99,12 @@ OLD_HEADERS = (
 OLD_HEADER_LINES = frozenset(HEADER_BLOCK + OLD_HEADERS + (   # the other lines of older kit header blocks
     "# Below: exact strings that are allowed although they look like personal data, one per line.",
     "# `skip: <path or glob>` excludes a path.",
-    '# Only the PFM adds entries. Agents never add one to get past a block (AGENTS.md "Personal data").',
-    '# Only the PFM adds an allowed string or a skip line. Agents never add one to get past a block (AGENTS.md'
+    '# Only the Maintainer adds entries. Agents never add one to get past a block (AGENTS.md "Personal data").',
+    '# Only the Maintainer adds an allowed string or a skip line. Agents never add one to get past a block (AGENTS.md'
     ' "Personal data").',
-    "# An allowed string or a skip line is added only on the PFM's request, never by an agent to get past a block"
+    "# An allowed string or a skip line is added only on the Maintainer's request, never by an agent to get past a block"
     ' (AGENTS.md "Personal data").',
 ))
-
-
-def read(root, name, ref=None):
-    """The bytes of a top-level file in the working tree, or at a git ref; None when it does not exist there."""
-    if ref:
-        r = subprocess.run(["git", "-C", str(root), "show", f"{ref}:{name}"], capture_output=True)
-        return r.stdout if r.returncode == 0 else None
-    p = Path(root) / name
-    return p.read_bytes() if p.is_file() else None
-
-
-def pairs(data):
-    """[(key, value)] of the `code-` and `audit-` lines in the bytes of a .check file (None: no file), in file
-    order. Comments and invisible characters are dropped the way the content check drops them.
-    Args:
-        data: the bytes of a .check file, or None.
-    Returns:
-        A list of (key, value).
-    """
-    if data is None:
-        return []
-    try:
-        text = data.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        raise ValueError(f"{CHECK} is not UTF-8 text: save it as UTF-8") from None
-    out = []
-    for raw in text.splitlines():
-        line = "".join(c for c in raw if unicodedata.category(c) != "Cf")
-        body = re.split(r"(?:^|\s)#", line, maxsplit=1)[0].strip()
-        m = SETTING_LINE.match(body)
-        if m:
-            out.append((m.group(1), m.group(2).strip()))
-        elif LOOKS_LIKE_SETTING.match(body):  # code_exclude: x, code-exclude x, code-max-file-lines = 5
-            raise ValueError(f"{CHECK}: `{body[:60]}` looks like a setting but is not `code-<key>: <value>` or "
-                             "`audit-<key>: <value>` (the keys: the header of scripts/check_settings.py)")
-    return out
-
-
-def collect(found, prefix, single, multi):
-    """{key: value, or [values] for a key in multi} of the pairs whose key starts with prefix. ValueError for an
-    unknown key (also a known key in capitals), a key with no value, and a single key on two lines.
-    Args:
-        found: the (key, value) pairs.
-        prefix: "code-" or "audit-".
-        single: the keys that may be on one line only.
-        multi: the keys that may be on several lines.
-    Returns:
-        A dict {key: value or list of values}.
-    """
-    out = {}
-    for key, value in found:
-        if not key.lower().startswith(prefix):
-            continue
-        if key not in single and key not in multi:
-            raise ValueError(f"{CHECK}: unknown setting `{key}:` (the keys: the header of scripts/check_settings.py)")
-        if not value:
-            raise ValueError(f"{CHECK}: `{key}:` has no value")
-        if key in multi:
-            out.setdefault(key, []).append(value)
-        elif key in out:
-            raise ValueError(f"{CHECK}: `{key}:` is on two lines; keep one")
-        else:
-            out[key] = value
-    return out
-
-
-def number(key, value, least):
-    """The whole number of a setting line; ValueError when it is not one, or is under `least`."""
-    if not re.fullmatch(r"[0-9]{1,9}", value) or int(value) < least:
-        raise ValueError(f"{CHECK}: `{key}: {value}` is not valid: use a whole number of {least} or more")
-    return int(value)
-
-
-def choice(key, value, options):
-    """The value of a setting line that takes one of a few words; ValueError for any other word."""
-    if value not in options:
-        raise ValueError(f"{CHECK}: `{key}: {value}` is not valid: use {' or '.join(options)}")
-    return value
-
-
-def dash(name):
-    """The key form of a settings name: max_file_lines -> max-file-lines."""
-    return name.replace("_", "-")
-
-
-def not_migrated(root, name):
-    """ValueError when the working tree still has an old settings file: its limits must not be dropped in silence."""
-    if (Path(root) / name).is_file():
-        raise ValueError(f"{name} is the old layout: run `{MIGRATE}` (it moves the settings into {CHECK} and the "
-                         f"state into {STATE})")
-
-
-def code_settings(found):
-    """The code standard settings from setting pairs: {"caps": {...}, "include": [...], "exclude": [...],
-    "generated": [...], "c1_safety": False|True|"strict", "c2": "lean"|"full"}. An opt-in cap (OPT_IN_CAPS) is in
-    "caps" only when its line is there. Lists are sorted, so two equal settings compare equal. ValueError for a line
-    that is not valid.
-    Args:
-        found: the (key, value) pairs.
-    Returns:
-        The settings dict.
-    """
-    caps = tuple(CODE_DEFAULTS["caps"]) + OPT_IN_CAPS
-    got = collect(found, "code-", ["code-" + dash(c) for c in caps] + ["code-c1-safety", "code-c2"],
-                  ["code-" + n for n in CODE_LISTS])
-    cfg = json.loads(json.dumps(CODE_DEFAULTS))
-    for cap in caps:
-        if "code-" + dash(cap) in got:
-            cfg["caps"][cap] = number("code-" + dash(cap), got["code-" + dash(cap)], 1)
-    for name in CODE_LISTS:
-        if "code-" + name in got:
-            cfg[name] = sorted(set(got["code-" + name]))
-    safety = choice("code-c1-safety", got.get("code-c1-safety", "off"), ("on", "off", STRICT))
-    cfg["c1_safety"] = STRICT if safety == STRICT else safety == "on"
-    cfg["c2"] = choice("code-c2", got.get("code-c2", "lean"), ("full", "lean"))
-    return cfg
-
-
-def code_config(root, ref=None):
-    """The code standard settings of `.check` in the working tree, or at a git ref (shape: code_settings)."""
-    if ref is None:
-        not_migrated(root, OLD_CODE)
-    return code_settings(pairs(read(root, CHECK, ref)))
-
-
-def code_from_old(old, dropped=None):
-    """The settings dict (the shape of code_config) of the "config" of an old .code-standard.json. A key or a cap
-    that this layout does not have is left out. A "c1_safety" level of 2 or more (the old strict form) is "strict".
-    Args:
-        old: the "config" object of the old file.
-        dropped: a list that gets (key, value, reason) for each key that is left out; None = not wanted.
-    Returns:
-        The settings dict.
-    """
-    dropped = [] if dropped is None else dropped
-    cfg = json.loads(json.dumps(CODE_DEFAULTS))
-    for cap, value in old.get("caps", {}).items():
-        if cap in cfg["caps"] or cap in OPT_IN_CAPS:
-            cfg["caps"][cap] = value
-        else:
-            dropped.append(("caps." + cap, value, "the code standard has no such cap"))
-    for name in CODE_LISTS:
-        if name in old:
-            cfg[name] = sorted(set(old[name]))
-    level = old.get("c1_safety")
-    cfg["c1_safety"] = STRICT if level == STRICT or (type(level) is int and level >= 2) else bool(level)
-    cfg["c2"] = "full" if old.get("c2") == "full" else "lean"
-    known = ("caps", "c1_safety", "c2") + CODE_LISTS
-    dropped += [(k, old[k], "the code standard has no such setting") for k in sorted(old) if k not in known]
-    return cfg
-
-
-def code_base(root, ref):
-    """(settings, debt) of the code standard at a git ref, or None when that commit has no baseline. Transition: a
-    commit with no code standard part in `.check.state.json` but with the old .code-standard.json is read from that
-    file, so the first change after a migration is still compared with what main had.
-    Args:
-        root: the repo root (a folder path).
-        ref: the git ref (a commit).
-    Returns:
-        (settings, debt), or None.
-    """
-    part = load_state(root, ref).get("code_standard")
-    if part is not None:
-        return code_config(root, ref), part.get("debt", {})
-    old = read(root, OLD_CODE, ref)
-    if old is None:
-        return None
-    data = json.loads(old)
-    return code_from_old(data.get("config", {})), data.get("debt", {})
-
-
-def audit_settings(found):
-    """The audit settings from setting pairs: AUDIT_DEFAULTS with each `audit-` line applied. ValueError for a line
-    that is not valid, and for a KIT_CAPS budget set above the kit's value.
-    Args:
-        found: the (key, value) pairs.
-    Returns:
-        The settings dict.
-    """
-    budgets = AUDIT_DEFAULTS["budgets"]
-    single = ["audit-every-days", "audit-every-commits"] + ["audit-budget-" + b for b in budgets]
-    got = collect(found, "audit-", single, ["audit-" + dash(n) for n in AUDIT_LISTS])
-    cfg = json.loads(json.dumps(AUDIT_DEFAULTS))
-    for name in ("every_days", "every_commits"):
-        if "audit-" + dash(name) in got:
-            cfg[name] = number("audit-" + dash(name), got["audit-" + dash(name)], 1)
-    for name in budgets:
-        key = "audit-budget-" + name
-        if key in got:
-            cfg["budgets"][name] = number(key, got[key], 0)
-            if name in KIT_CAPS and cfg["budgets"][name] > budgets[name]:
-                raise ValueError(f"{CHECK}: `{key}: {got[key]}` is not valid: this is a kit cap, a project can lower "
-                                 f"it, never raise it (at most {budgets[name]})")
-    for name in AUDIT_LISTS:
-        cfg[name] = got.get("audit-" + dash(name), [])
-    return cfg
-
-
-def audit_config(root):
-    """What scripts/bloat_check.py works with: the audit settings of `.check`, plus "last_audit" and "timings" from
-    `.check.state.json`. ValueError when a file cannot be read or a line is not valid."""
-    not_migrated(root, OLD_AUDIT)
-    cfg = audit_settings(pairs(read(root, CHECK)))
-    state = load_state(root)
-    cfg["last_audit"] = state.get("audit", {}).get("last_audit")
-    cfg["timings"] = state.get("timings", {})
-    return cfg
-
-
-def audit_from_old(old, dropped=None):
-    """The audit settings dict of an old .bloat-audit.json. Left out: a budget or a top-level key that this layout
-    does not have, and a KIT_CAPS budget above the kit's value (the kit's value applies; a lower one is kept).
-    Args:
-        old: the object in the old file.
-        dropped: a list that gets (key, value, reason) for each key that is left out; None = not wanted.
-    Returns:
-        The settings dict.
-    """
-    dropped = [] if dropped is None else dropped
-    cfg = json.loads(json.dumps(AUDIT_DEFAULTS))
-    for name in ("every_days", "every_commits") + AUDIT_LISTS:
-        if name in old:
-            cfg[name] = old[name]
-    for name, value in old.get("budgets", {}).items():
-        kit = AUDIT_DEFAULTS["budgets"].get(name)
-        if kit is None:
-            dropped.append(("budgets." + name, value, "the audit has no such budget (the kit's caps are "
-                            + ", ".join(KIT_CAPS) + ")"))
-        elif name in KIT_CAPS and isinstance(value, (int, float)) and value > kit:
-            dropped.append(("budgets." + name, value, f"a kit cap cannot be raised: the kit's value {kit} applies"))
-        else:
-            cfg["budgets"][name] = value
-    known = tuple(AUDIT_DEFAULTS) + ("last_audit", "timings")
-    dropped += [(k, old[k], "the audit has no such setting") for k in sorted(old) if k not in known]
-    return cfg
-
-
-def load_state(root, ref=None):
-    """The dict in `.check.state.json` (working tree, or at a git ref); {} when the file does not exist.
-    ValueError when it is not JSON, not an object, or one of its parts is not an object.
-    Args:
-        root: the repo root (a folder path).
-        ref: a git ref to read the file from; None = the working tree.
-    Returns:
-        The state dict.
-    """
-    data = read(root, STATE, ref)
-    if data is None:
-        return {}
-    try:
-        state = json.loads(data.decode("utf-8"))
-    except ValueError as e:
-        raise ValueError(f"{STATE} is not JSON ({e})") from None
-    if not isinstance(state, dict) or any(not isinstance(state.get(p, {}), dict) for p in STATE_PARTS):
-        raise ValueError(f"{STATE}: the top level and each of its parts must be an object")
-    return state
-
-
-def state_text(state):
-    """The file text of a state dict: sorted keys and indent 1, so the same state gives the same bytes."""
-    return json.dumps(state, indent=1, sort_keys=True) + "\n"
-
-
-def save_part(root, part, value):
-    """Write one part ("code_standard", "audit" or "timings") into `.check.state.json`; the file is read again
-    first, so the parts of the other tools stay as they are."""
-    state = load_state(root)
-    state[part] = value
-    (Path(root) / STATE).write_text(state_text(state), encoding="utf-8")
-
 
 # ---------------------------------------------------------------- migration ------------------------------------------
 
@@ -423,6 +139,21 @@ def old_json(root, name):
     return obj
 
 
+ROLE_IN_LINE = re.compile(r"\b([Tt])he [A-Za-z][A-Za-z ._-]*?(?='s request\b| adds )")  # "the Maintainer's request", "the PFM adds"
+
+
+def role_free(line):
+    """A header line with its role word made neutral, so an old kit line matches in any repo (kit fix 0(a): a sync
+    puts each repo's role word, for example "the PFM", into the lines a project's `.check` holds).
+
+    Args:
+        line: one line of a `.check` header block.
+    Returns:
+        The line with "the <role>" before "'s request" or " adds " written as "the Maintainer".
+    """
+    return ROLE_IN_LINE.sub(lambda m: m.group(1) + "he owner", line)
+
+
 def new_header(data):
     """The bytes of a `.check` file with its kit header block renewed: when the first line is a kit header line
     (HEADER or OLD_HEADERS), each kit header line of any version (OLD_HEADER_LINES) in the leading comment block
@@ -439,7 +170,8 @@ def new_header(data):
         return data, False
     end = next((i for i, l in enumerate(lines) if not l.startswith(b"#")), len(lines))
     cr = b"\r" if lines[0].endswith(b"\r") else b""
-    own = [l for l in lines[:end] if l.rstrip(b"\r").decode("utf-8", "replace") not in OLD_HEADER_LINES]
+    old = {role_free(h) for h in OLD_HEADER_LINES}
+    own = [l for l in lines[:end] if role_free(l.rstrip(b"\r").decode("utf-8", "replace")) not in old]
     text = b"\n".join([h.encode() + cr for h in HEADER_BLOCK] + own + lines[end:])
     return (text, True) if text != data else (data, False)
 
@@ -556,6 +288,29 @@ def migrate(root):
     return 0
 
 
+def validate_config(root):
+    """Read every key group of `.check` and `.check.state.json` in root; print one line per error (fleet v2 1.4).
+
+    Args:
+        root: the repository folder that holds `.check`.
+    Returns:
+        The exit code: 0 when every group reads, 1 when any group raises ValueError or the tier line is unknown.
+    """
+    errors = []
+    for name, read in (("code", code_config), ("audit", audit_config), ("state", load_state),
+                       ("dod-security", dod_security)):
+        try:
+            read(root)
+        except ValueError as e:
+            errors.append(f"{name}: {e}")
+    if profile_of(load_allow(root)) == "unknown":
+        errors.append("profile: " + UNKNOWN_PROFILE)
+    for line in errors:
+        print(f"CONFIG FAIL  {line}")
+    print(f"CONFIG {'FAIL' if errors else 'PASS'}: {root / CHECK} ({len(errors)} error(s))")
+    return 1 if errors else 0
+
+
 def main():
     """Parse the options and run the chosen mode; return its exit code.
     Returns:
@@ -564,12 +319,16 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0], allow_abbrev=False)
     ap.add_argument("--migrate", action="store_true", help="move the old settings files into .check and .check.state.json")
     ap.add_argument("--test", action="store_true", help="self-test in temporary repos")
+    ap.add_argument("--validate-config", nargs="?", const="", metavar="FOLDER",
+                    help="read every key of .check in FOLDER (default: this repo); exit 1 on any error")
     args = ap.parse_args()
     if args.test:
         import check_settings_test   # scripts/check_settings_test.py: kept apart (docs/code-standard.md C4)
         return check_settings_test.run()
     top = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     root = Path(top.stdout.strip() if top.returncode == 0 else ".")
+    if args.validate_config is not None:
+        return validate_config(Path(args.validate_config) if args.validate_config else root)
     if args.migrate:
         return migrate(root)
     try:

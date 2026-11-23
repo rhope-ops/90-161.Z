@@ -13,6 +13,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import unittest
 from pathlib import Path
 
 import check_instructions as ci
@@ -56,7 +57,7 @@ def step(body):
     return f"1. {body}\n2. Click **Close**. The window closes. The task is complete.\n"
 
 
-def test_steps():
+def case_steps():
     """Each finding kind, a clean procedure, a list of facts and a lead-in with numbered actions."""
     assert findings(GOOD) == [], findings(GOOD)
     assert findings(FACTS) == [], "a numbered list of facts is not a procedure"
@@ -103,7 +104,7 @@ def test_steps():
     assert findings(tabbed) == [], findings(tabbed)
 
 
-def test_html_and_globs():
+def case_html_and_globs():
     """The HTML parser (code and bold are one word, a local link is a pointer) and the glob form."""
     page = ("<ol><li>Click <b>Restore</b>. You see the card <code>Restore code</code>. Go on.</li>"
             "<li>Read <a href='other.html'>the notes</a>. You see the notes. Go on.</li></ol>")
@@ -116,7 +117,7 @@ def test_html_and_globs():
     assert not rx("*.md").match("docs/go.md") and rx("**/README.md").match("README.md")
 
 
-def test_local(root):
+def case_local(root):
     """A project module: more vague words, a lower limit, a limit above the kit's (ignored), an unknown key, a
     module that cannot be loaded.
 
@@ -156,7 +157,7 @@ def git_repo(root):
     subprocess.run(["git", "-C", str(root), "add", "-A"], check=True)
 
 
-def test_run(root):
+def case_run(root):
     """The command: the `.check` globs pick the files; a named file is checked; no glob is a pass that says so.
 
     Args:
@@ -191,7 +192,7 @@ def hook(root, rel, transcript="", session="s1"):
         sys.stderr = real
 
 
-def test_hook(root):
+def case_hook(root):
     """The hook: blocks a matched file until the transcript shows the skill load; a compaction resets it; an
     unmatched file and `.check` pass; with no transcript it blocks the first write of the session only.
 
@@ -234,16 +235,37 @@ def run():
         0 when every case passed, 1 otherwise.
     """
     try:
-        test_steps()
-        test_html_and_globs()
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            git_repo(root)
-            test_local(root)
-            test_run(root)
-            test_hook(root)
+        case_steps()
+        case_html_and_globs()
+        repo_cases()
     except AssertionError as err:
         print(f"INSTRUCTIONS TEST FAIL: {err}")
         raise
     print("INSTRUCTIONS TEST PASS")
     return 0
+
+
+def repo_cases():
+    """The cases that share one sample git repo, in order: the project's module, a run, and the hook."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        git_repo(root)
+        case_local(root)
+        case_run(root)
+        case_hook(root)
+
+
+class CheckInstructionsTest(unittest.TestCase):
+    """The cases of `python3 scripts/check_instructions.py --test`, for `python3 -m unittest` and pytest."""
+
+    def test_steps(self):
+        """The step reader and each finding on Markdown steps."""
+        case_steps()
+
+    def test_html_and_globs(self):
+        """HTML lists and the path globs."""
+        case_html_and_globs()
+
+    def test_repo(self):
+        """The project's own module, a run on a sample repo, and the hook."""
+        repo_cases()

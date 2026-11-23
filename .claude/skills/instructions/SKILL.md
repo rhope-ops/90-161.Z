@@ -70,7 +70,7 @@ Before you write, and again before a release, answer for each step:
 
 ## A project's own layer
 
-- The instruction files: `audit-instructions: <glob>` lines in `.check` (a guard file: add a line on the PFM's request).
+- The instruction files: `audit-instructions: <glob>` lines in `.check` (a guard file: add a line on the Maintainer's request).
 - More verbs, vague words, pointers, lower limits, a parser for another file type, or more checks: `scripts/check_instructions_local.py` (its entry points: the header of `scripts/check_instructions.py`).
 - Project text for this skill: `PROJECT.md` in this folder.
 

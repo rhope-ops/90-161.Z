@@ -23,7 +23,7 @@ Run:     imported by scripts/code_standard.py; proved by `python3 scripts/code_s
 import ast
 import re
 
-SHORT_FUNCTION = 10   # lines; a function this short needs only the lean C2 comment (the PFM's 3B, 2026-11-17)
+SHORT_FUNCTION = 10   # lines; a function this short needs only the lean C2 comment (the Maintainer's 3B, 2026-11-17)
 RETURNS_VALUE = re.compile(r'\breturn\s+[^\s;}]')   # `return x`, not a bare `return` or `return;`
 
 

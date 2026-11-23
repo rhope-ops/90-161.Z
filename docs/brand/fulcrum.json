@@ -1,8 +1,8 @@
 {
   "name": "Fulcrum Minimal",
-  "version": "1.0.0",
-  "date": "2026-11-20",
-  "source": "Logo Studies canvas, rho-family-standard.json v2.9, palettes.fulcrum (the five primitives); UI roles: the PFM's decisions of 2026-11-20 (docs/DECISIONS.md)",
+  "version": "2.0.0",
+  "date": "2026-11-23",
+  "source": "Logo Studies canvas, rho-family-standard.json v2.9, palettes.fulcrum (the five primitives); UI roles: the Maintainer's decisions of 2026-11-20 (docs/DECISIONS.md)",
   "primitives": {"ink": "#15171D", "cream": "#F3EEE4", "ember": "#E4572E", "slate": "#5A5E6A", "gold": "#D4AF37"},
   "derived": {
     "disc-dark": "#1C1F27",
@@ -12,24 +12,34 @@
     "ember-deep": "#A63A16",
     "ember-soft": "#F2916F",
     "red-deep": "#A3241A",
-    "red-soft": "#F49B91"
+    "red-soft": "#F49B91",
+    "control-line-light": "#7A766E",
+    "control-line-dark": "#6E7382",
+    "success-light": "#176B3A",
+    "success-dark": "#5FD08E",
+    "warning-light": "#855700",
+    "warning-dark": "#F0C24B",
+    "focus-light": "#B83B14",
+    "focus-dark": "#FF8C66"
   },
   "roles": {
     "light": {
       "page": "cream", "page-fg": "ink", "page-muted": "slate", "page-line": "hair-light", "page-link": "ember-deep", "page-error": "red-deep",
       "disc": "ink", "disc-fg": "cream", "disc-muted": "mist", "disc-line": "hair-dark", "disc-ring": "cream", "disc-link": "ember-soft", "disc-error": "red-soft",
-      "accent": "ember", "on-accent": "ink", "dots": "slate", "rule": "gold", "band": "ink", "band-fg": "cream", "band-muted": "mist", "band-link": "ember-soft", "band-error": "red-soft", "focus": "ember"
+      "accent": "ember", "on-accent": "ink", "dots": "slate", "rule": "gold", "band": "ink", "band-fg": "cream", "band-muted": "mist", "band-link": "ember-soft", "band-error": "red-soft",
+      "control-line": "control-line-light", "success": "success-light", "warning": "warning-light", "focus": "focus-light"
     },
     "dark": {
       "page": "ink", "page-fg": "cream", "page-muted": "mist", "page-line": "hair-dark", "page-link": "ember-soft", "page-error": "red-soft",
       "disc": "disc-dark", "disc-fg": "cream", "disc-muted": "mist", "disc-line": "hair-dark", "disc-ring": "slate", "disc-link": "ember-soft", "disc-error": "red-soft",
-      "accent": "ember", "on-accent": "ink", "dots": "slate", "rule": "gold", "band": "ink", "band-fg": "cream", "band-muted": "mist", "band-link": "ember-soft", "band-error": "red-soft", "focus": "ember-soft"
+      "accent": "ember", "on-accent": "ink", "dots": "slate", "rule": "gold", "band": "ink", "band-fg": "cream", "band-muted": "mist", "band-link": "ember-soft", "band-error": "red-soft",
+      "control-line": "control-line-dark", "success": "success-dark", "warning": "warning-dark", "focus": "focus-dark"
     }
   },
   "contrast": [
-    ["page-fg", "page", 4.5], ["page-muted", "page", 4.5], ["page-link", "page", 4.5], ["page-error", "page", 4.5],
+    ["page-fg", "page", 4.5], ["page-muted", "page", 4.5], ["page-link", "page", 4.5], ["page-error", "page", 4.5], ["success", "page", 4.5], ["warning", "page", 4.5],
     ["disc-fg", "disc", 4.5], ["disc-muted", "disc", 4.5], ["disc-link", "disc", 4.5], ["disc-error", "disc", 4.5],
     ["on-accent", "accent", 4.5], ["band-fg", "band", 4.5], ["band-muted", "band", 4.5], ["band-link", "band", 4.5], ["band-error", "band", 4.5],
-    ["rule", "band", 3], ["focus", "page", 3], ["accent", "disc", 3]
+    ["rule", "band", 3], ["control-line", "page", 3], ["focus", "page", 3], ["accent", "disc", 3]
   ]
 }

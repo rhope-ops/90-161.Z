@@ -1,5 +1,5 @@
 """More cases of the self-test of scripts/check_content.py (check_content_test.py runs them; kept apart for the
-600-line cap of docs/code-standard.md C4): the terms list, the `block:` lines, the settings file under its name
+line cap of docs/code-standard.md C4): the terms list, the `block:` lines, the settings file under its name
 `.check`, its `code-` and `audit-` setting lines, the hook for the Write, Edit, NotebookEdit and Bash tools, and
 the speed parts (the gates of check_content_finders.py and the process pool of scan_files): the same findings with
 and without them.
@@ -37,7 +37,7 @@ def kinds(text, deny=(), allow=(), terms=()):
 
 
 def case_terms(check):
-    """The PFM's terms: whole word, any case, masked, kind term; a name stays a name; an allowed string wins.
+    """The Maintainer's terms: whole word, any case, masked, kind term; a name stays a name; an allowed string wins.
 
     Args:
         check: prints one result line and remembers a failure (label, good).
@@ -159,7 +159,7 @@ def case_hook_tools(check):
                 ("Write: an address in the content blocks", "Write", {"file_path": "new.md", "content": "mail " + mail}, 2),
                 ("Write: a blocked path blocks", "Write", {"file_path": os.path.join(d, "out", "a.xlsx"), "content": "x"}, 2),
                 ("Edit: an address in the new text blocks", "Edit", {"file_path": "a.md", "old_string": "x", "new_string": mail}, 2),
-                ("Edit: an address only in the old text passes (the edit removes it)", "Edit", {"file_path": "a.md", "old_string": mail, "new_string": "the PFM"}, 0),
+                ("Edit: an address only in the old text passes (the edit removes it)", "Edit", {"file_path": "a.md", "old_string": mail, "new_string": "the Maintainer"}, 0),
                 ("NotebookEdit: an address in the new source blocks", "NotebookEdit", {"notebook_path": "n.ipynb", "new_source": mail}, 2),
                 ("Bash: a local command with an address passes unread", "Bash", {"command": "grep -rn '" + mail + "' ."}, 0),
                 ("Bash: curl with an address blocks", "Bash", {"command": "curl -d 'to=" + mail + "' https://example.com"}, 2),

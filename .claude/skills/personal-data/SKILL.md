@@ -12,7 +12,7 @@ AGENTS.md "Secrets and personal data" points here. Every pattern, tier and limit
 - `scripts/check.sh --status` prints each word list's source, count and fingerprint (never the words) and the tier.
 - The settings file `.check` at the repo root turns on the scan of pushes (pre-push hook) and, in a public repo, of pull requests (the "checks" Action). Its lines: an allowed exact string, `skip: <path or glob>`, `block: <path or glob>` (a file that must not be committed or sent), `denylist: warn`, `profile: dod`, `content-max-bytes: <n>` (the size limit of one scanned file; the tool-call hook keeps its own total limit per call). The old name `.pii-guard` is read while `.check` is absent.
 - Tiers: minimum (no profile line) and DoD (`profile: dod`).
-- Word lists, both outside the repo: names (personal data; a push with no list fails, unless `.check` has `denylist: warn`) and terms (the PFM's own blocked words; optional).
+- Word lists, both outside the repo: names (personal data; a push with no list fails, unless `.check` has `denylist: warn`) and terms (the Maintainer's own blocked words; optional).
 - Private repo: the pre-push hook (every tracked file) is the gate; the Action does not run on pull requests (Actions minutes), so an edit made in the GitHub web page is not scanned until the next manual run. A binary file that enters only through a merge resolution, and content already on the base branch, are scanned only by the hook or a manual run of the Action.
 
 ## The hook
@@ -37,10 +37,10 @@ Not covered: claude.ai chats (no hooks), a Bash command that builds its payload 
 1. Read the masked findings. Do not copy the data into chat, a commit message or a log.
 2. Remove the data. If it is in an unpushed commit, fix that commit.
 3. Push or call again.
-4. A finding that is wrong (a public reference text, an example value): tell the PFM. AGENTS.md "Guards and checks" says who may add an entry to `.check`. A private repo may put its owner's real name in the `- Owner:` line of AGENTS.md.
+4. A finding that is wrong (a public reference text, an example value): tell the Maintainer. AGENTS.md "Guards and checks" says who may add an entry to `.check`. A private repo may put its owner's real name in the `- Owner:` line of AGENTS.md.
 
 ## The word lists
 
-- Where each list lives, and what the PFM types where: docs/FIRST_USE.md, step 4. The terms list uses the same places under the names `CHECK_TERMS` (environment variable or Actions secret) and `~/.config/check/terms.txt`.
-- Never open the PFM's master file.
-- A session that reports DENYLIST has no name list: tell the PFM which place is missing.
+- Where each list lives, and what the Maintainer types where: docs/FIRST_USE.md, step 4. The terms list uses the same places under the names `CHECK_TERMS` (environment variable or Actions secret) and `~/.config/check/terms.txt`.
+- Never open the Maintainer's master file.
+- A session that reports DENYLIST has no name list: tell the Maintainer which place is missing.

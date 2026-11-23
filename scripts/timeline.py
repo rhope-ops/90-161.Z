@@ -31,6 +31,9 @@ import tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import log_check  # noqa: E402
+from build_site_html import dod_security, page_head, sha256  # noqa: E402
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 TYPE_ORDER = ["milestone", "breakthrough", "miss", "decision"]
 COMMIT_RE = re.compile(r"\b([0-9a-f]{7,40})\b")
@@ -176,7 +179,7 @@ def zone_note(zones):
     return " Times are each project's local time."
 
 
-def render(title, arcs, events, zones=()):
+def render(title, arcs, events, zones=(), security=None):
     """The self-contained HTML timeline page: arcs, filters and event cards, newest first.
 
     Args:
@@ -184,18 +187,20 @@ def render(title, arcs, events, zones=()):
         arcs: the arcs of every log.
         events: the events of every log.
         zones: the time zone names of the logs.
+        security: True or False to force the DoD meta tags (CSP, referrer) on or off; None reads `dod-security:` in
+            this repo's .check (default off).
 
     Returns:
         The page as HTML text.
     """
     e = html.escape
+    security = dod_security(ROOT) if security is None else security
     events = sorted(events, key=lambda x: (x["sort"], x["project"], int(x["num"]) if x["num"].isdigit() else 0), reverse=True)
     projects = sorted({x["project"] for x in events} | {a["project"] for a in arcs})
     counts = {t: sum(1 for x in events if x["type"] == t) for t in TYPE_ORDER}
     first = min((x["day"] for x in events if x["day"]), default="")
     last = max((x["day"] for x in events if x["day"]), default="")
-    out = [f"<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>",
-           f"<title>{e(title)}</title><style>{CSS}</style></head><body><main>",
+    out = [page_head(e(title), CSS, JS, security, theme=('#f7f8fa', '#111317')),
            f"<h1>{e(title)}</h1><p class='sub'>{len(events)} events in {len(projects)} project(s), {e(first)} to {e(last)}.{e(zone_note(zones))}</p>",
            "<div class='stats'>"]
     for t in TYPE_ORDER:
@@ -229,7 +234,7 @@ def render(title, arcs, events, zones=()):
                    f"<header><span class='type'><span class='mark' aria-hidden='true'></span>{e(x['type'])}</span><h3>{e(x['topic'])}</h3>"
                    f"<span class='meta'>{e(time)}</span><span class='chip'>{e(x['project'])}</span><span class='chip'>{e(x['arc'])}</span></header>"
                    f"<dl>{dl}</dl></article>")
-    out.append(f"</main><script>{JS}</script></body></html>")
+    out.append(f"</main><script>{JS}</script></body></html>")  # the CSP hash covers this exact JS text
     return "".join(out)
 
 
@@ -301,6 +306,40 @@ def build(specs, title, force=False, as_outline=False):
     return (outline(arcs, events) if as_outline else render(title, arcs, events, zones)), problems
 
 
+def shell_checks(page, d):
+    """Return the self-test checks of the page shell (skip link, landmarks, theme-color, reduced motion, DoD meta tags).
+
+    Args:
+        page: a page built with this repo's settings (dod-security off unless the repo turned it on).
+        d: a temporary folder for sample `.check` files.
+    Returns:
+        A list of (name, passed).
+    """
+    css = re.search(r"<style>(.*?)</style>", page, re.S).group(1)
+    on = page_head("T", CSS, JS, True)
+    root = pathlib.Path(d, "repo")
+    root.mkdir()
+    modes = {None: False, "dod-security: on\n": True, "dod-security: off\n": False}
+    got = {}
+    for text in modes:
+        (root / ".check").write_text(text or "code-c2: full\n", encoding="utf-8")
+        got[text] = dod_security(root)
+    (root / ".check").write_text("dod-security: yes\n", encoding="utf-8")
+    try:
+        dod_security(root)
+        refused = False
+    except ValueError:
+        refused = True
+    return [("page shell: skip link first in body, main#main, 2 theme-color, reduced motion",
+             "<body><a class=\"skip-link\" href=\"#main\">" in page and page.count("<main id=\"main\">") == 1
+             and page.count("name=\"theme-color\"") == 2 and "prefers-reduced-motion:reduce" in page),
+            ("dod-security on: CSP with the style and script hashes, referrer",
+             "Content-Security-Policy" in on and "name=\"referrer\" content=\"no-referrer\"" in on
+             and sha256(css) in on and sha256(JS) in on and "default-src 'none'" in on and "base-uri 'none'" in on
+             and "form-action 'none'" in on),
+            ("dod-security reads on, off, default off; any other value is refused", got == modes and refused)]
+
+
 def self_test():
     """Render a sample log and check escaping, links, order, zones, outline and refusal; print the results.
 
@@ -311,12 +350,12 @@ def self_test():
     with tempfile.TemporaryDirectory() as d:
         f = pathlib.Path(d, "LOG.md")
         f.write_text(log_check.GOOD.replace("| T | Owner | - | Commit abc |", "| <script>x</script> | Owner | - | other_repo 59cd968; Commits 1234567, 89abcde |"), encoding="utf-8")
-        page, problems = build([f"Demo={f}@rhope-ops/demo"], "Test")
+        page, problems = build([f"Demo={f}@sample-org/demo"], "Test")
         checks = [
             ("renders", page is not None and not problems),
             ("all 4 rows", page and page.count("<article") == 4),
             ("html escaped", page and "<script>x</script>" not in page and "&lt;script&gt;" in page),
-            ("commit linked", page and "https://github.com/rhope-ops/demo/commit/63ae6e2" in page),
+            ("commit linked", page and "https://github.com/sample-org/demo/commit/63ae6e2" in page),
             ("newest first", page and page.index("23:50") < page.index("22:11")),
             ("other repo hash not linked", page and "/commit/59cd968" not in page),
             ("list of commits linked", page and "/commit/1234567" in page and "/commit/89abcde" in page),
@@ -330,6 +369,7 @@ def self_test():
                        and "#2 (2026-11-11 07:57–08:20, breakthrough)" in story and "**Misses:** #1" in story
                        and "setup" in story and story.index("setup") < story.index("flow-import")))
         checks.append(("arc card shows lesson", page and "Lesson:</b> Test the import first" in page))
+        checks += shell_checks(page, d)
         bad = pathlib.Path(d, "BAD.md")
         bad.write_text(log_check.GOOD.replace("| miss |", "| oops |"), encoding="utf-8")
         _, probs = build([str(bad)], "Test")

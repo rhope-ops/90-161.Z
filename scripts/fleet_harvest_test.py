@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Self-test cases of scripts/fleet_harvest.py (run by `python3 scripts/fleet_harvest.py --test`; kept in its own file
-so that file stays under the 600-line cap of docs/code-standard.md).
+so that file stays under the line cap of docs/code-standard.md).
 
 Fixture projects in a temporary folder: the format check, --add-ids, --harvest with a state file shared by two repos,
 --save-state, the cross-check matching and the edge cases that earlier reviews found.
@@ -12,6 +12,7 @@ import contextlib
 import io
 import pathlib
 import tempfile
+import unittest
 
 M = None  # the fleet_harvest module under test (set by run)
 
@@ -32,7 +33,7 @@ Next update: 2026-11-25, the pilot result
 
 1. Build the page. Then test it.
 
-## Needs the PFM
+## Needs the Maintainer
 
 - D3 · Drop the old export? · Options: yes / no · REC: yes
 - D4 · Tag v4.0.0 (see #12) · Options: done / not done · REC: done
@@ -41,7 +42,7 @@ DECISIONS_OLD = """# Decisions
 
 | Date | Decision | By | Replaces |
 |---|---|---|---|
-| 2026-11-19 | Keep CSV. It works. | the PFM | - |
+| 2026-11-19 | Keep CSV. It works. | the Maintainer | - |
 | 2026-11-18 | Use semantic versions. | Agent | - |
 """
 
@@ -64,7 +65,7 @@ def quiet(fn, *args):
     return res, buf.getvalue()
 
 
-def test_cases(base):
+def format_cases(base):
     """The self-test cases; returns a list of (name, passed).
 
     Args:
@@ -89,7 +90,7 @@ def test_cases(base):
     ok("summary is cut at 140", len(M.summary("x" * 300)) == M.SUMMARY_MAX)
     bad = make_project(base, HANDOFF_OK.replace("- D3 · Drop", "- Drop"), DECISIONS_OLD)
     code, printed = quiet(M.check, bad)
-    ok("a need without an ID fails", code == 1 and "NEXT_PROMPT.md Needs the PFM:" in printed)
+    ok("a need without an ID fails", code == 1 and "NEXT_PROMPT.md Needs the Maintainer:" in printed)
     ok("rows without IDs fail", printed.count("DECISIONS.md:") == 2)
     off = make_project(base, "x", "y", opt_in=False)
     code, printed = quiet(M.check, off)
@@ -167,15 +168,15 @@ def edge_cases(base):
     """
     out = []
     ok = lambda name, cond: out.append((name, bool(cond)))  # noqa: E731 (one-line recorder)
-    rows = "| ID | Date | Decision | By | Replaces |\n|---|---|---|---|---|\n| D1 | 2026-11-18 | A. | the PFM | - |\n"
+    rows = "| ID | Date | Decision | By | Replaces |\n|---|---|---|---|---|\n| D1 | 2026-11-18 | A. | the Maintainer | - |\n"
     dup_need = HANDOFF_OK.replace("- D4 · Tag", "- D3 · Tag")
     ok("two needs with one ID fail", quiet(M.check, make_project(base, dup_need, rows))[0] == 1)
     ok("a need with a row's ID fails", quiet(M.check, make_project(base, HANDOFF_OK.replace("- D4 ·", "- D1 ·"), rows))[0] == 1)
-    bad_date = rows + "| D9 | 19.11.2026 | y | the PFM | - |\n| D8 | | z | the PFM | - |\n"
+    bad_date = rows + "| D9 | 19.11.2026 | y | the Maintainer | - |\n| D8 | | z | the Maintainer | - |\n"
     code, printed = quiet(M.check, make_project(base, HANDOFF_OK, bad_date))
     ok("rows with a bad or empty date fail", code == 1 and printed.count("DECISIONS.md:") == 2)
     ok("an escaped pipe is shown plain", M.read_project(make_project(base, HANDOFF_OK, rows.replace("| A. |", "| A \\| B. |")))[1][0]["text"] == "A | B.")
-    gap = rows + "\n| D2 | 2026-11-19 | B. | the PFM | - |\n"
+    gap = rows + "\n| D2 | 2026-11-19 | B. | the Maintainer | - |\n"
     ok("a row after a blank line in the table fails", quiet(M.check, make_project(base, HANDOFF_OK, gap))[0] == 1)
     nohead = make_project(base, HANDOFF_OK, DECISIONS_OLD.replace("| Decision |", "| Choice |"))
     ok("a file with no decisions table header fails", quiet(M.check, nohead)[0] == 1
@@ -183,13 +184,15 @@ def edge_cases(base):
     ok("a title before a slash is not named", M.not_filed({"sessions": [{"title": "Fleet harvest", "url": "u"}]}, "Fleet harvest/check") != [])
     idfirst = make_project(base, HANDOFF_OK, "| ID | Name |\n|---|---|\n| a | b |\n\n" + DECISIONS_OLD)
     ok("an earlier ID table does not stop add-ids", M.add_ids(idfirst) == 2 and quiet(M.check, idfirst)[0] == 0)
-    above = "| D5 | 2026-11-19 | x | the PFM | - |\n\n" + rows
+    above = "| D5 | 2026-11-19 | x | the Maintainer | - |\n\n" + rows
     ok("a row above the decisions table fails", quiet(M.check, make_project(base, HANDOFF_OK, above))[0] == 1)
     ok("a link to the files tab names the PR", M.not_filed({"pull_requests": [{"url": "https://x/pull/1"}]}, "https://x/pull/1/files") == [])
-    ok("a lowercase ID row fails", quiet(M.check, make_project(base, HANDOFF_OK, rows + "| d4 | 2026-11-19 | x | the PFM | - |\n"))[0] == 1)
+    ok("a lowercase ID row fails", quiet(M.check, make_project(base, HANDOFF_OK, rows + "| d4 | 2026-11-19 | x | the Maintainer | - |\n"))[0] == 1)
     ok("an escaped pipe stays in its cell", quiet(M.check, make_project(base, HANDOFF_OK, rows.replace("| A. |", "| A \\| B. |")))[0] == 0)
     ok("a missing section fails", quiet(M.check, make_project(base, HANDOFF_OK.replace("## Timeline", "## Plan"), rows))[0] == 1)
-    ok("a counted heading is read", quiet(M.check, make_project(base, HANDOFF_OK.replace("## Needs the PFM", "## Needs the PFM (2)"), rows))[0] == 0)
+    ok("a counted heading is read", quiet(M.check, make_project(base, HANDOFF_OK.replace("## Needs the Maintainer", "## Needs the Maintainer (2)"), rows))[0] == 0)
+    ok("a heading with another role word is read (a project's own handoff)",
+       quiet(M.check, make_project(base, HANDOFF_OK.replace("## Needs the Maintainer", "## Needs the PFM"), rows))[0] == 0)
     crlf = ("| Date | Event |\r\n|---|---|\r\n| 2025-01-01 | y |\r\n\r\n" + DECISIONS_OLD.replace("\n", "\r\n")
             + "\r\n| Date | Other |\r\n|---|---|\r\n| 2026-01-01 | x |\r\n")
     p = make_project(base, HANDOFF_OK, crlf)
@@ -211,9 +214,18 @@ def run(module):
     global M
     M = module
     with tempfile.TemporaryDirectory() as base:
-        results = test_cases(base)
+        results = format_cases(base)
     failed = [n for n, passed in results if not passed]
     for n in failed:
         print("FAIL  " + n)
     print(("FLEET TEST PASS: %d cases" % len(results)) if not failed else "FLEET TEST FAIL: %d of %d" % (len(failed), len(results)))
     return 1 if failed else 0
+
+
+class FleetHarvestTest(unittest.TestCase):
+    """The cases of `python3 scripts/fleet_harvest.py --test`, for `python3 -m unittest` and pytest."""
+
+    def test_self_test(self):
+        """Every case passes on the fleet_harvest module."""
+        import fleet_harvest  # scripts/fleet_harvest.py: imported here, so a plain import of this file loads nothing
+        self.assertEqual(run(fleet_harvest), 0)
