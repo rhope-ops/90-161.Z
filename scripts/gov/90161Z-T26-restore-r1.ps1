@@ -4,7 +4,7 @@
   90161Z-T26-endorse-r1.ps1 (code standard file size cap, C4); the code is unchanged.
 .DESCRIPTION
   Loaded by 90161Z-T26-endorse-r1.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
-  Inputs: the values and helpers of the main file ($lines, $Pause, $BinTitle, $LogTitle, $NewTitle, $script:stateFile, Add-Item,
+  Inputs: the values and helpers of the main file ($lines, $Pause, $script:stateFile, Add-Item,
   Read-State, Save-State, Get-RowsFor, Find-FakePub). Outputs: RESULT lines in $lines; the part functions Invoke-RowsPart,
   Invoke-ChangePart and Invoke-CheckPart.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection of the main file.

@@ -144,7 +144,10 @@ def orphan_scripts():
     Returns:
         A list of messages, one for each orphan script.
     """
-    files = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True).stdout.split("\n")
+    git = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True)
+    if git.returncode != 0 or not git.stdout.strip():   # no file list: fail, never pass with nothing checked
+        return ["orphan check: git ls-files gave no file list (" + (git.stderr or "").strip()[:120] + ")"]
+    files = git.stdout.split("\n")
     script = re.compile(r"^(scripts/[^/]+\.(py|sh|js)|scripts/gov/(src/)?[^/]+\.ps1|tests/[^/]+\.(py|sh|js)|tests/ps/[^/]+\.ps1)$")
     history = re.compile(r"^docs/(reviews/|DECISIONS\.md|decisions-archive\.md|NEXT_PROMPT\.md)|^scripts/gov/paste/")
     texts = {}
