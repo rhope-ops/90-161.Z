@@ -6,6 +6,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-23 | Fleet v2 security scans: dod-security on (.check; security.yml from the kit). bandit B314 at logo_svg.py:45: nosec with reason. gitleaks: allow 64-hex values in scripts/rade.lock.json only. | PFM | .gitleaks.toml |
+| 2026-11-23 | Retire task scripts T17 import-log r3, T18 slice1-test r6, T25 paste-size r1 (no go.md task; only the R41 clean-up list named them). In the engine-v36 pull request. | PFM | docs/reviews/2026-11-23-fleet-v2-3a.md |
 | 2026-11-23 | Kit 11.0.1 (merge 9e3f6fa; 11.0.0 at dedc3b3; no tags yet). .check: code-strict-gate on (replaces code_standard_gate.py), code-paste T22/T24 (600); C4 cap 450. dod-security waits for security.yml. | PFM | docs/reviews/2026-11-23-fleet-v2-3a.md |
 | 2026-11-23 | Fleet v2 (plan DEC 3, 5, 6, 7): no Bypass flag outside CI; Option A colors (#6C7B8E controls); 450-line cap for hand-written code; site.config.json holds account values. | PFM | docs/reviews/2026-11-23-fleet-v2-3a.md |
 | 2026-11-21 | Kit 10.0.0 (from merge 50450b2, no tag yet): hard rule "Instructions people follow"; .check scans go.md, TASKS.md, paste_bundles.json; go.md round steps redrafted. | PFM | docs/reviews/2026-11-21-r42-plan.md |

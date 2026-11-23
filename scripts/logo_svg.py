@@ -42,7 +42,9 @@ def shapes(svg_text):
         from the shape's coordinates to the viewBox. Stops with a "logo_draw:" message for anything it does not handle.
     """
     try:
-        root = ET.fromstring(svg_text)
+        # bandit B314 (the PFM, 2026-11-23): the text is the committed logo master (assets/logo/*.svg), a trusted file with no
+        # DTD or entity; the standard library parser is kept so this file needs no package.
+        root = ET.fromstring(svg_text)  # nosec B314
     except ET.ParseError as e:
         raise SystemExit('logo_draw: the SVG is not well-formed XML (%s)' % e)
     if root.get('viewBox') != '0 0 512 512':

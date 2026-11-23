@@ -51,6 +51,9 @@ code-c2: full
 code-strict-gate: on
 code-paste: scripts/gov/90161Z-T22-*.ps1
 code-paste: scripts/gov/90161Z-T24-*.ps1
+# DoD repository (kit 11.0.0; the PFM, 2026-11-23): kit pages get a CSP and no-referrer; the DoD files
+# (SECURITY.md, dependabot.yml, security.yml) sync only when missing.
+dod-security: on
 audit-ignore: ref/**
 audit-ignore: scripts/gov/paste/**
 audit-ignore: flow/provisioning-payload.json
