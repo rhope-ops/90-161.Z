@@ -4,7 +4,9 @@
 Run: python3 scripts/bump_lock.py --test (it imports this file and calls run with itself; tests/run.sh runs it).
 What it checks, with no network and no git: the release-lock checks, the order of the bump steps in a temp folder,
 the decision row text and the git timeout.
-Network: none. Writes: a temp folder only. Credentials: none.
+Network: none.
+Writes: a temp folder only (removed at the end).
+Credentials: none.
 """
 import json
 import os

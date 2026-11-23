@@ -79,7 +79,14 @@ def run(cmd):
 
 
 def main(mode):
-    """Run every generator in order. Takes 'check' or 'write'; returns the exit code (1 when any step fails)."""
+    """Run every generator in order, then print the REBUILD line.
+
+    Args:
+        mode: 'check' (each generator's check) or 'write' (each generator's write, then a full check).
+
+    Returns:
+        The exit code: 1 when any step fails, else 0.
+    """
     bad = []
     for name in order():
         cmd = GRAPH[name][1] if mode == 'check' else write_cmd(name)

@@ -1,0 +1,20 @@
+# Compliance
+
+Each control below names the rule it meets and the check or record that proves it. A check runs in `scripts/check.sh` unless the line says another place. Updated 2026-11-23 (fleet v2 Stage 3A).
+
+| Control | Source | Evidence |
+|---|---|---|
+| Government data stays in DoD365 and GenAI.mil; fake data only in this repository | AGENTS.md "Project rules", data boundary | Content check on every push (`scripts/check.sh --content`) |
+| No secrets, credentials or personal data in commits | AGENTS.md "Hard rules", secrets and personal data | Content check; scripts take credentials only through `Get-Credential` |
+| Every stage, time limit and format rule cites DAFMAN 90-161 | AGENTS.md "Project rules", source authority | `ref/` copies with `ref/SHA256SUMS` (`cd ref && sha256sum -c SHA256SUMS`) |
+| Color contrast meets WCAG 2.1 AA (4.5:1 text, 3:1 controls) | WCAG 2.1 SC 1.4.3, 1.4.11 | `tests/check_palette.py`: docs/palette.json pairs and the real CSS tokens of index.html and templates/list-mockup.css |
+| The page has a skip link, a visible focus ring and a live region for button results | WCAG 2.1 SC 2.4.1, 2.4.7, 4.1.3 | index.html; `.claude/skills/verify/measure.mjs` (contrast, target size, overflow) |
+| The page runs no inline script and loads data only from named hosts | Defense in depth (OWASP ASVS V14.4) | index.html CSP; `docs/threat-model.md` |
+| Code is modular, commented and readable as plain text | AGENTS.md "Project rules", code standard | `scripts/code_standard.py` and `docs/code-standard-90-161.md` |
+| Hand-written source files stay at 450 lines or fewer; generated files and user-paste scripts at 600 | Fleet v2 DEC 6 | `wc -l`; `scripts/code_standard.py` C4 |
+| PowerShell execution policy is not turned off by a script | Fleet v2 DEC 3; Group Policy governs | `grep -rn "ExecutionPolicy Bypass"` = only `.github/workflows/ps51.yml` (after the engine-v36 rebuild) |
+| The RADE engine is pinned and attested | AGENTS.md "Project rules", deployable package | `scripts/rade.lock.json`; `python3 scripts/bump_lock.py --test` |
+| Generated files are never stale | AGENTS.md "Defaults", one home | `python3 scripts/rebuild_all.py --check` |
+| No app looks like network reconnaissance | AGENTS.md "Project rules", no reconnaissance | Fixed hosts only (`site.config.json`, the one site the person types) |
+
+Open items: a static-analysis gate (bandit) and a secret scan in CI (`.github/workflows/security.yml`) wait for the PFM's merge approval, because workflow files are guard files.

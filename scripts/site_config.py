@@ -3,7 +3,9 @@
 
 Who runs it: other scripts import it (scripts/build_readme.py, tests/check_names.py); `python3 scripts/site_config.py`
 prints the values and the URLs, for a check by hand.
-Network: none. Writes: none. Credentials: none.
+Network: none.
+Writes: none.
+Credentials: none.
 """
 import json
 import re

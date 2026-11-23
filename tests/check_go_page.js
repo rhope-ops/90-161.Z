@@ -56,7 +56,8 @@ check('stored state that is not an object becomes empty', ['[]', 'null', '"x"', 
 check('a stored "__proto__" key cannot change the prototype', t.validState(JSON.parse('{"__proto__":{"a":true}}')).a === undefined);
 const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'site.config.json'), 'utf8'));
 check('site.config.json is valid and builds the go.md folder', t.validCfg(cfg) && t.rawBase(cfg) === 'https://raw.githubusercontent.com/' + cfg.owner + '/' + cfg.repo + '/' + cfg.branch + '/');
-check('a config name with a slash, dot path or quote is refused', !t.validCfg({ owner: 'a/b', repo: 'r', branch: 'main' }) && !t.validCfg({ owner: 'o', repo: '"x', branch: 'main' }) && !t.validCfg(null));
+check('a config name with a slash, dot path or quote is refused',
+  !t.validCfg({ owner: 'a/b', repo: 'r', branch: 'main' }) && !t.validCfg({ owner: 'o', repo: '"x', branch: 'main' }) && !t.validCfg(null));
 check('safe DOM keeps http(s) and # links only', t.keepAttr('href', 'https://x') && t.keepAttr('href', '#s1') && !t.keepAttr('href', 'javascript:alert(1)') && !t.keepAttr('href', 'data:text/html,x'));
 check('safe DOM drops event and style attributes', !t.keepAttr('onclick', 'x') && !t.keepAttr('style', 'x') && !t.keepAttr('src', 'x'));
 check('a script button keeps an https source only', t.keepAttr('data-script', 'https://x/a.ps1') && !t.keepAttr('data-script', 'http://x/a.ps1'));

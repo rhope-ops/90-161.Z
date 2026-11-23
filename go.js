@@ -2,41 +2,114 @@
 // Moved out of index.html (fleet v2, 2026-11-23) so the page's Content-Security-Policy can say script-src 'self' with no
 // 'unsafe-inline'. Runs in the browser; tests/check_go_page.js loads it in node with window.GO_TEST set.
 // Network: site.config.json (same site), then go.md and the round scripts from raw.githubusercontent.com.
-// Writes: this browser's localStorage key go-open-v1 (which cards are open). Credentials: none.
-(function(){
+// Writes: this browser's localStorage key go-open-v1 (which cards are open).
+// Credentials: none.
+'use strict';
 var SRC='';   // the go.md URL, built from site.config.json (fleet v2 DEC 7: the account values have one home)
 var CFG=null; // site.config.json: owner, repo, branch
 var NAME=/^[A-Za-z0-9_.-]+$/; // an owner, repo or branch name: nothing else may enter a URL
-/** validCfg(c): true when site.config.json holds safe owner, repo and branch names. */
+/**
+ * validCfg(c): true when site.config.json holds safe owner, repo and branch names.
+ * @param {object} c the parsed site.config.json.
+ * @returns {boolean} true when all three names are safe.
+ */
 function validCfg(c){return !!c&&typeof c==='object'&&['owner','repo','branch'].every(function(k){return typeof c[k]==='string'&&NAME.test(c[k])})}
-/** rawBase(c): the raw.githubusercontent.com folder of the repository branch, ending in /. */
+/**
+ * rawBase(c): the raw.githubusercontent.com folder of the repository branch, ending in /.
+ * @param {object} c a config that passed validCfg.
+ * @returns {string} the folder URL.
+ */
 function rawBase(c){return 'https://raw.githubusercontent.com/'+c.owner+'/'+c.repo+'/'+c.branch+'/'}
 var KEY='go-open-v1';
+/**
+ * esc(s): escapes text for HTML (&, <, >, ").
+ * @param {*} s the text.
+ * @returns {string} the escaped text.
+ */
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+/**
+ * inl(s): the HTML of one go.md text line: escaped, then links, **bold** and `code`.
+ * @param {string} s the line.
+ * @returns {string} the HTML.
+ */
 function inl(s){
-  // escape, then links, **bold**, `code`
-  var o=esc(s).replace(/(https?:\/\/[^\s<]+|(?:raw\.githubusercontent\.com|[a-z0-9-]+\.github\.io)\/[^\s<]*)/g,function(u){var h=u.indexOf('http')===0?u:'https://'+u;return '<a href="'+h+'" rel="noopener noreferrer">'+u+'</a>'});
+  var LINK=/(https?:\/\/[^\s<]+|(?:raw\.githubusercontent\.com|[a-z0-9-]+\.github\.io)\/[^\s<]*)/g;
+  var o=esc(s).replace(LINK,function(u){var h=u.indexOf('http')===0?u:'https://'+u;return '<a href="'+h+'" rel="noopener noreferrer">'+u+'</a>'});
   o=o.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
   return o;
 }
+/**
+ * slug(s, i): a page id for a card.
+ * @param {string} s the card name.
+ * @param {number} i the card number.
+ * @returns {string} the id.
+ */
 function slug(s,i){return 's'+i+'-'+s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)}
-/** validState(o): keeps only the safe part of a stored open-state object: string keys (not __proto__, at most 200
-    characters) with true/false values, in an object with no prototype. Anything else gives an empty state. */
+/**
+ * validState(o): keeps only the safe part of a stored open-state object: string keys (not __proto__, at most 200
+ * characters) with true/false values, in an object with no prototype. Anything else gives an empty state.
+ * @param {*} o the parsed stored value.
+ * @returns {object} the clean state.
+ */
 function validState(o){
   var r=Object.create(null);
   if(!o||typeof o!=='object'||Array.isArray(o))return r;
   Object.keys(o).forEach(function(k){if(k!=='__proto__'&&k.length<=200&&typeof o[k]==='boolean')r[k]=o[k]});
   return r;
 }
+/**
+ * load(): reads the remembered open state of this browser.
+ * @returns {object} the clean state (validState).
+ */
 function load(){try{return validState(JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return validState(null)}}
+/**
+ * save(o): stores the open state in this browser; a blocked storage is ignored.
+ * @param {object} o the state.
+ */
 function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+/**
+ * later(b, t, ms): puts the text t back on button b after ms milliseconds.
+ * @param {Element} b the button.
+ * @param {string} t the text.
+ * @param {number} ms the wait.
+ */
+function later(b,t,ms){
+  // the timer callback: set the text back
+  setTimeout(function(){b.textContent=t},ms);
+}
+/**
+ * copy(t, b): copies text t to the clipboard and shows "Copied" on button b for a moment.
+ * @param {string} t the text.
+ * @param {Element} b the button.
+ */
 function copy(t,b){
-  var ok=function(){var x=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=x},1200)};
+  // ok: show the result, then the old label
+  var ok=function(){var x=b.textContent;b.textContent='Copied';later(b,x,1200)};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fallback(t);ok()})}else{fallback(t);ok()}
 }
-function fallback(t){var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}document.body.removeChild(a)}
+/**
+ * fallback(t): copies text t through a hidden text area (for a browser without the clipboard API).
+ * @param {string} t the text.
+ * @returns {boolean} true when the browser copied.
+ */
+function fallback(t){
+  var a=document.createElement('textarea'),r=false;
+  a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();
+  try{r=document.execCommand('copy')}catch(e){r=false}
+  document.body.removeChild(a);return r;
+}
 var SCRIPTS={}; // round scripts, loaded ahead so one click copies the whole text (PFM 13 Nov)
+/**
+ * isRound(h): true for a link to a round script (scripts/gov/paste/*.ps1).
+ * @param {string} h the link.
+ * @returns {boolean} true for a round script.
+ */
 function isRound(h){return /\/scripts\/gov\/paste\/[^\/]+\.ps1$/.test(h)}
+/**
+ * fileCard(u): the HTML of a file card for a bare URL line.
+ * @param {string} u the URL (with or without https://).
+ * @returns {string} the HTML.
+ */
 function fileCard(u){
   var h=u.indexOf('http')===0?u:'https://'+u, name=h.split('/').pop();
   // A round script has no .ps1 link and no Copy link (PFM 20 Nov 26): Open as .txt takes the link's place, to read the script before pasting it.
@@ -54,30 +127,44 @@ function say(t){var e=document.getElementById('say');if(e)e.textContent=t}
 function loadFailed(b){b.textContent='Could not load the script: press Reload';b.disabled=true;say(b.textContent)}
 /** blocked(b): the script loaded but the browser blocked the clipboard; the .txt file still has it. */
 function blocked(b){b.textContent='Copy blocked: use Open as .txt, then Ctrl+A, Ctrl+C in Notepad';b.disabled=true;say(b.textContent)}
+/**
+ * copyScript(b): copies the preloaded round script of button b, or says why it cannot.
+ * @param {Element} b the Copy script button.
+ */
 function copyScript(b){
   var h=b.getAttribute('data-script'),t=SCRIPTS[h];
   if(typeof t!=='string'){
     if(b.getAttribute('data-state')==='loading'){b.textContent='Still loading; press again in a moment'}else{loadFailed(b)}
     return}
-  var ok=function(){b.textContent='Copied ('+t.split('\n').length.toLocaleString()+' lines). Now paste in ISE.';say(b.textContent);setTimeout(function(){b.textContent='Copy script'},4000)};
-  var viaArea=function(){var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();var r=false;try{r=document.execCommand('copy')}catch(e){}document.body.removeChild(a);return r};
+  // ok: show the line count and the next step, then the label again
+  var ok=function(){b.textContent='Copied ('+t.split('\n').length.toLocaleString()+' lines). Now paste in ISE.';say(b.textContent);later(b,'Copy script',4000)};
+  // viaArea: the hidden text area copy; returns true when the browser copied
+  var viaArea=function(){return fallback(t)};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){viaArea()?ok():blocked(b)})}else{viaArea()?ok():blocked(b)}
 }
 /** txtName(h): the .txt file name for script link h (name.ps1 -> name.txt). */
 function txtName(h){return h.split('/').pop().replace(/\.ps1$/i,'')+'.txt'}
-/** openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26).
-    The label comes back from data-label, so a second click cannot keep the "Saved" text. */
+/**
+ * openTxt(b): saves the loaded script as a plain .txt file, so the user can read it in Notepad before pasting (PFM 20 Nov 26).
+ * The label comes back from data-label, so a second click cannot keep the "Saved" text.
+ * @param {Element} b the Open as .txt button.
+ */
 function openTxt(b){
   var h=b.getAttribute('data-txt'),t=SCRIPTS[h],lbl=b.getAttribute('data-label');
   if(typeof t!=='string'){
     b.textContent=FAILED[h]?'Could not load the script: press Reload':'Still loading; press again in a moment';say(b.textContent);
-    setTimeout(function(){b.textContent=lbl},4000);return}
+    later(b,lbl,4000);return}
   var u=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');
   a.href=u;a.download=txtName(h);a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  // free the file link after the download started
   setTimeout(function(){URL.revokeObjectURL(u)},10000);
   b.textContent='Saved '+a.download+'. Open it from Downloads.';say(b.textContent);
-  setTimeout(function(){b.textContent=lbl},4000);
+  later(b,lbl,4000);
 }
+/**
+ * preload(m): starts the download of each round script on the page, so one click copies it.
+ * @param {Element} m the page main element.
+ */
 function preload(m){
   Array.prototype.forEach.call(m.querySelectorAll('button[data-script]'),function(b){
     var h=b.getAttribute('data-script');b.textContent='Copy script (loading)';b.setAttribute('data-state','loading');
@@ -116,13 +203,26 @@ function put(el,html){
 }
 /** text(tag, t): a new element with plain text content. */
 function text(tag,t){var e=document.createElement(tag);e.textContent=t;return e}
+/**
+ * folderBox(lbl, path): the HTML of a folder line with a Copy button.
+ * @param {string} lbl the label.
+ * @param {string} path the folder path.
+ * @returns {string} the HTML.
+ */
 function folderBox(lbl,path){
   return '<div class="folder"><span class="lbl">'+esc(lbl)+'</span><code>'+esc(path)+'</code>'+
     '<button type="button" data-copy="'+esc(path)+'" aria-label="Copy folder path">Copy</button></div>';
 }
+/**
+ * renderBody(lines): the HTML of a card body: lists, file cards, folder lines, notes, sub-headings, paragraphs.
+ * @param {string[]} lines the go.md lines of the card.
+ * @returns {string} the HTML.
+ */
 function renderBody(lines){
   var o='',list=null,item=false;
+  // closeItem: end the open list item
   function closeItem(){if(item){o+='</li>';item=false}}
+  // closeList: end the open list
   function closeList(){closeItem();if(list){o+='</'+list+'>';list=null}}
   lines.forEach(function(l){
     var t=l.trim(),m;
@@ -156,7 +256,11 @@ function renderBody(lines){
    "###" is one card, as before. A card's state comes from "(open, <when>)" or "(done, <when>)" at the
    end of its heading, else from its group ("Open tasks" = open, "Done" = done). */
 
-/** parse(md): splits go.md text into {title, intro[], secs[{h, lines[], items[{h, lines[]}]}]}. */
+/**
+ * parse(md): splits go.md text into {title, intro[], secs[{h, lines[], items[{h, lines[]}]}]}.
+ * @param {string} md the go.md text.
+ * @returns {object} the parsed document.
+ */
 function parse(md){
   var lines=md.replace(/\r/g,'').split('\n'),doc={title:'',intro:[],secs:[]},sec=null,item=null;
   lines.forEach(function(l){
@@ -188,7 +292,12 @@ function card(info,lines,id,st,extra){
 }
 /** doneCount(lines): the "N items" label of a Done list (one item per "- " line). */
 function doneCount(lines){return '<span class="when">'+lines.filter(function(x){return /^\s*-\s/.test(x)}).length+' items</span>'}
-/** renderSecs(secs, st): builds the section links, the cards and the open count for all sections. */
+/**
+ * renderSecs(secs, st): builds the section links, the cards and the open count for all sections.
+ * @param {object[]} secs the sections from parse.
+ * @param {object} st the remembered open state.
+ * @returns {object} {nav, body, open}.
+ */
 function renderSecs(secs,st){
   var r={nav:'',body:'',open:0},n=0;
   secs.forEach(function(s){
@@ -212,7 +321,10 @@ function renderSecs(secs,st){
   });
   return r;
 }
-/** render(md): draws the whole page from go.md text and wires its buttons. */
+/**
+ * render(md): draws the whole page from go.md text and wires its buttons.
+ * @param {string} md the go.md text.
+ */
 function render(md){
   var doc=parse(md),st=load(),o='',m=document.getElementById('m');
   var r=renderSecs(doc.secs,st);
@@ -223,18 +335,25 @@ function render(md){
   o+='<div class="bar"><button type="button" id="ex">Expand all</button><button type="button" id="co">Collapse all</button><button type="button" id="rl">Reload</button></div>';
   o+='<nav aria-label="Sections"><ul class="toc">'+r.nav+'</ul></nav>';
   o+='<details class="sec" data-name="__how"'+(how?' open':'')+'><summary><span class="st">How to use this page</span></summary><div class="body">'+renderBody(doc.intro)+'</div></details>';
-  o+=r.body+'<p class="mut foot">Source: <a href="'+esc(SRC)+'" rel="noopener noreferrer">go.md</a> in '+esc(CFG?CFG.owner+'/'+CFG.repo:'this repository')+'. Open and closed sections are remembered in this browser.</p>';
+  var where=CFG?CFG.owner+'/'+CFG.repo:'this repository';
+  o+=r.body+'<p class="mut foot">Source: <a href="'+esc(SRC)+'" rel="noopener noreferrer">go.md</a> in '+esc(where)+
+    '. Open and closed sections are remembered in this browser.</p>';
   put(m,o);
   wire(m);
 }
-/** wire(m): copy and .txt buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print. */
+/**
+ * wire(m): copy and .txt buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print.
+ * @param {Element} m the page main element.
+ */
 function wire(m){
   m.addEventListener('click',function(e){
+    // f: the clicked element or its nearest parent that matches sel
     var f=function(sel){return e.target.closest&&e.target.closest(sel)};
     var s=f('button[data-script]');if(s){e.preventDefault();copyScript(s);return}
     var v=f('button[data-txt]');if(v){e.preventDefault();openTxt(v);return}
     var b=f('button[data-copy]');if(b){e.preventDefault();copy(b.getAttribute('data-copy'),b)}});
   preload(m);
+  // all: every card on the page
   var all=function(){return Array.prototype.slice.call(m.querySelectorAll('details.sec'))};
   all().forEach(function(d){d.addEventListener('toggle',function(){var s=load();s[d.getAttribute('data-name')]=d.open;save(s)})});
   document.getElementById('ex').onclick=function(){all().forEach(function(d){d.open=true})};
@@ -244,17 +363,27 @@ function wire(m){
   if(location.hash){var d=document.getElementById(location.hash.slice(1));if(d){if(d.tagName==='DETAILS')d.open=true;d.scrollIntoView()}}
   window.addEventListener('beforeprint',function(){all().forEach(function(d){d.open=true})});
 }
-if(window.GO_TEST&&typeof window.GO_TEST==='object'){ // tests/check_go_page.js
-  var T=window.GO_TEST;T.parse=parse;T.renderSecs=renderSecs;T.txtName=txtName;T.validState=validState;T.validCfg=validCfg;T.keepAttr=keepAttr;T.rawBase=rawBase;return}
-if(typeof window.GO_MD==='string'){render(window.GO_MD);return}
-/** failed(e): shows why go.md did not load, with a link to it (or to TASKS.md, the copy on github.com) as text and href. */
+/**
+ * failed(e): shows why go.md did not load, with a link to it (or to TASKS.md, the copy on github.com) as text and href.
+ * @param {Error} e the error.
+ */
 function failed(e){
   var m=document.getElementById('m'),p=text('p','Could not load go.md ('+e.message+'). Fallback: '),a=text('a',SRC||'TASKS.md');
   a.href=SRC||'TASKS.md';a.rel='noopener noreferrer';p.appendChild(a);
   while(m.firstChild)m.removeChild(m.firstChild);m.appendChild(p);
 }
-fetch('site.config.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('site.config.json HTTP '+r.status);return r.json()})
-  .then(function(c){if(!validCfg(c))throw new Error('site.config.json has no valid owner, repo and branch');CFG=c;SRC=rawBase(c)+'go.md';
-    return fetch(SRC,{cache:'no-store'})})
-  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(render).catch(failed);
-})();
+/**
+ * start(): exposes the functions to tests/check_go_page.js, or draws a given go.md text, or loads site.config.json,
+ * then go.md, and draws the page.
+ */
+function start(){
+  if(window.GO_TEST&&typeof window.GO_TEST==='object'){
+    var T=window.GO_TEST;T.parse=parse;T.renderSecs=renderSecs;T.txtName=txtName;T.validState=validState;
+    T.validCfg=validCfg;T.keepAttr=keepAttr;T.rawBase=rawBase;return}
+  if(typeof window.GO_MD==='string'){render(window.GO_MD);return}
+  fetch('site.config.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('site.config.json HTTP '+r.status);return r.json()})
+    .then(function(c){if(!validCfg(c))throw new Error('site.config.json has no valid owner, repo and branch');CFG=c;SRC=rawBase(c)+'go.md';
+      return fetch(SRC,{cache:'no-store'})})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(render).catch(failed);
+}
+start();

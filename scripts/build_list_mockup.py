@@ -3,9 +3,9 @@
 samples/lists/*.csv (fake data) and templates/list-mockup.css. Style: docs/style-standard.md (dates 15 Jan 30,
 numbers one to nine in words). Usage: python3 scripts/build_list_mockup.py <output.html>
 The page is published as an artifact, not committed; never put real data in the samples."""
-import json, csv, os, html, re, sys, datetime
+import json, csv, os, html, re, sys, datetime, tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join('/tmp', 'pfm-lists-mockup.html')
+OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(tempfile.gettempdir(), 'pfm-lists-mockup.html')   # the system temp folder
 CSS = open(os.path.join(ROOT, 'templates', 'list-mockup.css'), encoding='utf-8').read()
 WORDS = 'zero one two three four five six seven eight nine'.split()
 def num(n):

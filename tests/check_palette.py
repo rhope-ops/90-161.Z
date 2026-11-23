@@ -6,7 +6,9 @@ Part 2 (fleet v2, 2026-11-23): the real CSS tokens of the pages, read from the f
   index.html (light, dark) and templates/list-mockup.css (light, dark). Text pairs need 4.5:1; control borders
   (--ctl: buttons, chips, pills) need 3:1 against the surfaces they sit on (WCAG 1.4.11).
 Run: python3 tests/check_palette.py (tests/run.sh runs it). Last line "OK palette N pairs, M page pairs"; exit 1 on a fail.
-Network: none. Writes: none. Credentials: none.
+Network: none.
+Writes: none.
+Credentials: none.
 """
 import json
 import pathlib
@@ -68,7 +70,11 @@ def tokens(path):
 
 
 def main():
-    """Run both parts. Takes nothing; returns the exit code (1 when any pair is below its minimum)."""
+    """Run both parts and print one line per pair, then the OK or FAIL line.
+
+    Returns:
+        The exit code: 1 when any pair is below its minimum or a token is missing, else 0.
+    """
     bad = []
     for fg, bg, need in P["pairs"]:
         r = ratio(P["tokens"][fg], P["tokens"][bg])
