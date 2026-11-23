@@ -19,11 +19,22 @@ Credentials: none.
 Usage: python3 tests/check_t22_r14.py   exit 0 = pass (last line T22R14 pass), 1 = a failed assertion."""
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GOV = ROOT / 'scripts/gov'
+
+
+def need_pwsh():
+    """Stop with a clear FAIL when pwsh is not installed (fleet v2: a missing tool fails the check, it never skips it).
+
+    Takes nothing; returns nothing; exits 1 with the install pointer when pwsh is not on the PATH.
+    """
+    if not shutil.which('pwsh'):
+        sys.exit('FAIL tests/check_t22_r14.py needs pwsh (PowerShell 7) for the walk and feedback cases; '
+                 'install it (docs/dev-setup.md), then run again.')
 
 
 def part(name):
@@ -77,7 +88,6 @@ Get-Content -LiteralPath (Join-Path $dir '90161Z-T22-feedback-r14.txt') | ForEac
 def check_feedback():
     """MINOR 1: a blocked picture is not logged or listed as saved. Takes nothing; raises AssertionError."""
     import tempfile
-    import shutil
     d = tempfile.mkdtemp()
     try:
         ps = pathlib.Path(d, 'case.ps1')
@@ -97,6 +107,7 @@ def check_feedback():
 
 
 if __name__ == '__main__':
+    need_pwsh()
     check_feedback()
     check_walk()
     check_parts()

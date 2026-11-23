@@ -378,7 +378,7 @@ try {
   $engine = (Get-Process -Id $PID).Path
   $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r14.ps1'
   $ErrorActionPreference = 'Continue'   # the child's error output is shown below, not thrown here
-  $log = @(& $engine -NoProfile -ExecutionPolicy Bypass -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
+  $log = @(& $engine -NoProfile -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'
   $built = ($code -eq 0 -and (Test-Path -LiteralPath $file))
   Test-That 'the window was built off-screen and measured' $built ('exit ' + $code + '; last line: ' + (@($log | Where-Object { $_.Trim() }) | Select-Object -Last 1))

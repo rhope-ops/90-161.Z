@@ -1,0 +1,7 @@
+{
+  "_doc": "The one home of this repository's live account values (fleet v2 DEC 7, 2026-11-23). Code and the page read them here: scripts/site_config.py (Python), go.js (the github.io page). History and docs keep their text as written. The RADE engine repository is not here: scripts/rade.lock.json \"repo\" names it (the attested release subject).",
+  "owner": "rhope-ops",
+  "repo": "90-161.Z",
+  "branch": "main",
+  "teamsChannel": "RHOPE-OPS"
+}

@@ -61,7 +61,7 @@ function Invoke-OneTest([string]$Engine, [hashtable]$Test, [int]$LimitSeconds) {
   [void](New-Item -ItemType Directory -Path $tmp)
   $in = Join-Path $tmp 'in.txt'; $out = Join-Path $tmp 'out.txt'; $err = Join-Path $tmp 'err.txt'
   Set-Content -LiteralPath $in -Value '' -Encoding ASCII
-  $list = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"' + $file + '"'), '-Root', ('"' + $Root + '"'))
+  $list = @('-NoProfile', '-File', ('"' + $file + '"'), '-Root', ('"' + $Root + '"'))
   $code = -1
   try {
     $p = Start-Process -FilePath $Engine -ArgumentList $list -RedirectStandardInput $in -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
