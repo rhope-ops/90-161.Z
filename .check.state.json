@@ -102,8 +102,6 @@
     "scripts/logo_png.py::png": 1,
     "scripts/measure_pdf.py::main": 1,
     "templates/build_crm_template.js::build": 1,
-    "tests/check_flow_solution.py::check_levels": 1,
-    "tests/check_flow_solution.py::layout": 1,
     "tests/check_guide_text.py::check_step": 1,
     "tests/check_guide_text.py::check_step_rules": 1,
     "tests/check_guide_text.py::count_actions": 1,
@@ -115,17 +113,10 @@
     "tests/fake-pnp/PnP.PowerShell/1.12.0/PnP.PowerShell.psm1::Get-FakeRestAnswer": 1,
     "tests/fake-pnp/PnP.PowerShell/1.12.0/PnP.PowerShell.psm1::Invoke-PnPSPRestMethod": 1,
     "tests/fake-pnp/PnP.PowerShell/1.12.0/PnP.PowerShell.psm1::Send-FakeListRest": 1,
-    "tests/fake-pnp/PnP.PowerShell/1.12.0/PnP.PowerShell.psm1::Send-FakeRestPost": 1,
-    "tests/ps/Test-T21.ps1::Get-FakeRestAnswer": 1,
-    "tests/ps/Test-T21.ps1::Get-PnPContext": 1,
-    "tests/ps/Test-T21.ps1::Invoke-PnPSPRestMethod": 1,
-    "tests/ps/Test-T21.ps1::Send-FakeListRest": 1,
-    "tests/ps/Test-T21.ps1::Send-FakeRest": 1
+    "tests/fake-pnp/PnP.PowerShell/1.12.0/PnP.PowerShell.psm1::Send-FakeRestPost": 1
    },
    "duplicate": {},
-   "file_size": {
-    "tests/run.sh": 672
-   },
+   "file_size": {},
    "generated": {},
    "header": {},
    "length": {},
@@ -153,7 +144,7 @@
     "tests/ps/Test-Mask.ps1": 341,
     "tests/ps/Test-T20.ps1": 495,
     "tests/ps/Test-T21.ps1": 522,
-    "tests/run.sh": 963
+    "tests/run.sh": 344
    },
    "parse": {},
    "safety": {
@@ -195,7 +186,6 @@
     "tests/check_flow_solution.py": 1,
     "tests/check_guide_text.py": 1,
     "tests/check_names.py": 1,
-    "tests/check_palette.py": 1,
     "tests/fake-pnp/PnP.PowerShell/1.12.0/PnP.PowerShell.psm1": 1,
     "tests/ps/Invoke-Batch.ps1": 1,
     "tests/ps/Invoke-Validations.ps1": 1,

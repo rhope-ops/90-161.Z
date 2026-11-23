@@ -1,6 +1,10 @@
 """Helpers of tests/check_flow_solution.py (the draft flow solution check): the failure list, action and string walkers, the XML layout
 flattener, the zip checks and the F05 row text. Run only by that script, which imports it; it prints nothing and exits with nothing.
-Every helper reads the repo through the names below (ROOT, B = scripts/build_flow_solution.py) and records a failure with bad()."""
+Every helper reads the repo through the names below (ROOT, B = scripts/build_flow_solution.py) and records a failure with bad().
+Network: none.
+Writes: none in the repo (one check makes and removes a temporary folder).
+Credentials: none.
+"""
 import json, pathlib, re, subprocess, sys, tempfile
 import xml.etree.ElementTree as ET
 
@@ -44,7 +48,14 @@ FREE_TEXT = {"UniqueName", "JsonFileName", "connectionreferencedisplayname"}   #
 FREE_ATTR = {"description", "id", "WorkflowId", "Name", "connectionreferencelogicalname"}
 
 def layout(xml_bytes):
-    """Flatten an XML document into (path, attributes, text) rows, with the free values masked, so two files can be compared. Takes the XML bytes; returns a list."""
+    """Flatten an XML document into (path, attributes, text) rows, with the free values masked, so two files can be compared.
+
+    Args:
+        xml_bytes: the XML document as bytes.
+
+    Returns:
+        A list of (element path, attribute tuple, text) rows in document order.
+    """
     out = []
     def walk(e, path):
         """Add one element and its children to the list (path of the parent, then the element)."""
@@ -101,7 +112,13 @@ def check_list_placeholders(zz, zname):
 ALL_STATUS = {"Succeeded", "Failed", "Skipped", "TimedOut"}
 
 def check_levels(actions, where, outer=()):
-    """runAfter names must be siblings (same level); names are unique across the flow."""
+    """runAfter names must be siblings (same level); names are unique across the flow.
+
+    Args:
+        actions: the actions dict of one level of a flow def.
+        where: the def name for the messages.
+        outer: not used; kept for the callers' signature.
+    """
     for name, a in actions.items():
         for dep, statuses in a.get("runAfter", {}).items():
             if dep not in actions: bad(f"{where}: {name} runs after '{dep}', which is not on the same level")
@@ -153,6 +170,48 @@ RUNTIME_ACTIONS = {"Failed_actions", "Failure_lines", "E-mail_the_failure"}   # 
 PROBE_DEFS = {"90161Z-T21-probe-health-r6.json", "90161Z-T21-probe-button-r6.json"}
 PROBE_LIST, PROBE_COLS = "90161Z Probe", {"Title", "ProbeTest", "ProbeWay", "ProbeResult", "ProbeDetail"}
 
+def check_action(src, name, a, all_cols, env_list, schemas, counts):
+    """Check one trigger or action of one flow def: expressions, columns, PatchItem title, and the list and columns of its table.
+
+    Args:
+        src: the def file path (its name is in the messages).
+        name: the action name, or "trigger".
+        a: the action (or trigger) dict.
+        all_cols: every column name of schemas/lists plus the built-in ones.
+        env_list: list variable name -> list title.
+        schemas: list title -> set of column names.
+        counts: the dict of totals; this function adds to actions and columns.
+    """
+    if name != "trigger": counts["actions"] += 1
+    if name != "trigger" and re.search(r"""\[\s*'body/""", json.dumps(a)): bad(f"{src.name} {name}: body/ path expression; use body('Action')?['key']")
+    for m in re.findall(r"\?\['(\w+)'\]", json.dumps(a)):
+        if m not in all_cols and not (name in RUNTIME_ACTIONS and m in RUNTIME): bad(f"{src.name} {name}: unknown column or property '{m}'")
+    p = a.get("inputs", {}).get("parameters", {}) if isinstance(a.get("inputs"), dict) else {}
+    # R20 finding 1: "Update item" (PatchItem) fails flow activation without item/Title (a required column).
+    if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in p:
+        bad(f"{src.name} {name}: PatchItem without item/Title (activation fails: R20 finding 1)")
+    if "table" in p and src.name in PROBE_DEFS:   # R34: a probe flow names its list (made by T21 Make), as the r5 health flow did
+        if p["table"] != PROBE_LIST: bad(f"{src.name} {name}: table must be the probe list '{PROBE_LIST}'")
+        for k in p:
+            if k.startswith("item/") and k.split("/")[1] not in PROBE_COLS: bad(f"{src.name} {name}: column '{k}' not in the probe list")
+        return
+    if "table" in p:
+        m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
+        title = env_list.get(m.group(1)) if m else None
+        if not title: bad(f"{src.name} {name}: table is not a list environment variable"); return
+        cols = schemas[title]
+        used = set()
+        for k, v in p.items():
+            if k.startswith("item/"): used.add(k.split("/")[1])
+            if k == "$filter":
+                used |= set(re.findall(r"([A-Za-z]\w*)(?:/Id)?\s+(?:eq|ne|ge|le|gt|lt)\s", v))
+            if k == "$orderby":
+                used.add(v.split()[0])
+        for u in used:
+            counts["columns"] += 1
+            if u not in cols and u not in {"ID", "Id"}: bad(f"{src.name} {name}: column '{u}' not in {title}")
+
+
 def check_flow_defs(zf, declared, declared_ids, all_cols, env_list, schemas, counts):
     """Check every flow def in flow/defs against the full solution zip: name, trigger and actions, expressions, connections, workflow file,
     list and column names. Fails are recorded with bad().
@@ -194,31 +253,4 @@ def check_flow_defs(zf, declared, declared_ids, all_cols, env_list, schemas, cou
         if not wf["definition"].get("triggers") or not wf["definition"].get("actions"): bad(f"{src.name}: zip workflow lacks trigger or actions")
         trig_and_acts = [("trigger", t) for t in d["triggers"].values()] + [(n, a) for n, a in walk_actions(d["actions"])]
         for name, a in trig_and_acts:
-            if name != "trigger": counts["actions"] += 1
-            if name != "trigger" and re.search(r"""\[\s*'body/""", json.dumps(a)): bad(f"{src.name} {name}: body/ path expression; use body('Action')?['key']")
-            for m in re.findall(r"\?\['(\w+)'\]", json.dumps(a)):
-                if m not in all_cols and not (name in RUNTIME_ACTIONS and m in RUNTIME): bad(f"{src.name} {name}: unknown column or property '{m}'")
-            p = a.get("inputs", {}).get("parameters", {}) if isinstance(a.get("inputs"), dict) else {}
-            # R20 finding 1: "Update item" (PatchItem) fails flow activation without item/Title (a required column).
-            if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId") == "PatchItem" and "item/Title" not in p:
-                bad(f"{src.name} {name}: PatchItem without item/Title (activation fails: R20 finding 1)")
-            if "table" in p and src.name in PROBE_DEFS:   # R34: a probe flow names its list (made by T21 Make), as the r5 health flow did
-                if p["table"] != PROBE_LIST: bad(f"{src.name} {name}: table must be the probe list '{PROBE_LIST}'")
-                for k in p:
-                    if k.startswith("item/") and k.split("/")[1] not in PROBE_COLS: bad(f"{src.name} {name}: column '{k}' not in the probe list")
-                continue
-            if "table" in p:
-                m = re.fullmatch(r"@parameters\('([^']+)'\)", p["table"])
-                title = env_list.get(m.group(1)) if m else None
-                if not title: bad(f"{src.name} {name}: table is not a list environment variable"); continue
-                cols = schemas[title]
-                used = set()
-                for k, v in p.items():
-                    if k.startswith("item/"): used.add(k.split("/")[1])
-                    if k == "$filter":
-                        used |= set(re.findall(r"([A-Za-z]\w*)(?:/Id)?\s+(?:eq|ne|ge|le|gt|lt)\s", v))
-                    if k == "$orderby":
-                        used.add(v.split()[0])
-                for u in used:
-                    counts["columns"] += 1
-                    if u not in cols and u not in {"ID", "Id"}: bad(f"{src.name} {name}: column '{u}' not in {title}")
+            check_action(src, name, a, all_cols, env_list, schemas, counts)
