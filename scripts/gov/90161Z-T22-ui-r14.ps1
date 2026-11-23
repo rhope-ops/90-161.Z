@@ -21,7 +21,7 @@ Set-Variable -Name dot -Value ''; Set-Variable -Name round -Value ''
 function Test-Deploy { return $false }
 # >>> rade-ui: generated from the pinned RADE shared UI file by scripts/build_task_scripts.py (do not edit)
 # RADE shared UI file (engine/rade_ui.ps1): the theme tokens (colors, fonts, sizes), the builders for buttons, links and
-# card text, the drawing and measuring helpers, and the layout self-check. rade_build.py puts this text into every bundle
+# card text, the drawing and measuring helpers (part 2: engine/rade_ui_text.ps1, right after this file), and the layout self-check. rade_build.py puts this text into every bundle
 # at its marker line (docs/engine.md "How an app gets the engine"); it runs inside the window's try block, after
 # $ui.Form exists, and fills $ui. An app window can reuse it: same $ui, same names. ASCII only (a bundle is ASCII).
 # Needs from the window: $ui (a hashtable), $ui.Form, the globals $apps, $dot, $round and the engine function
@@ -245,82 +245,4 @@ $ui.Face = { param($B, $G) try { if (-not $B.Text) { return }
     if ([int]$fa.BorderSize -gt 0) { $pn = New-Object System.Drawing.Pen($(if ($busy) { $ui.C.Track } else { $fa.BorderColor })); $G.DrawRectangle($pn, 0, 0, ($w - 1), ($h - 1)); $pn.Dispose() }
     # A link (no edge) draws its text at the left, a button in the middle (R28: a link in a wide box started 38 px right of the card edge).
     & $ui.Word $G ([string]$B.Text) $B.Font $(if ($busy) { $ui.C.OffInk } else { $B.ForeColor }) 0 0 $w $h $(if ([int]$fa.BorderSize -gt 0) { 'HorizontalCenter, VerticalCenter, NoPrefix, SingleLine' } else { 'Left, VerticalCenter, NoPrefix, SingleLine' }) } catch { $null = $_ } }
-$ui.Own = { param($B) $B.UseVisualStyleBackColor = $false; $B.Add_Paint({ & $ui.Face $this $_.Graphics })
-  $B.Add_MouseEnter({ $ui.Hot = $this; $this.Invalidate() }); $B.Add_MouseLeave({ if ([object]::ReferenceEquals($ui.Hot, $this)) { $ui.Hot = $null }; $this.Invalidate() })
-  $B.Add_MouseDown({ if ([string]$_.Button -eq 'Left') { $ui.Down = $this; $this.Invalidate() } }); $B.Add_MouseUp({ $ui.Down = $null; $this.Invalidate() })
-  $B.Add_VisibleChanged({ if ([object]::ReferenceEquals($ui.Hot, $this)) { $ui.Hot = $null }; if ([object]::ReferenceEquals($ui.Down, $this)) { $ui.Down = $null } }) }
-# Buttons have fixed sizes (UI standard v1, B1; the Administrator, 2026-11-20): no AutoSize, so a button never grows or
-# shrinks with its text. $Kind: 'action' (a card's buttons: 160 x 40, or 240 x 40 when its label needs more room) or
-# 'compact' (96 x 30: beside a box, "Back (Esc)", the Record's buttons; 160 x 30 when its label needs more room). A label
-# that needs more than the widest size is cut, and the self-check reports it (rule B1). Sizes: $ui.Z.
-$ui.BtnKind = @{}
-# The size of a button of a kind for its text: at 100 % before the window has its scale (Windows Forms scales it), else scaled.
-$ui.BtnSize = { param($B)
-  $k = [string]$ui.BtnKind[$B]; $s = $(if ($ui.Scaled) { $ui.Sc } else { { param([double]$Px) [int]$Px } })
-  $h = $(if ($k -eq 'compact') { $ui.Z.CompactH } else { $ui.Z.ActionH }); $ws = $(if ($k -eq 'compact') { @($ui.Z.CompactW, $ui.Z.ActionW) } else { @($ui.Z.ActionW, $ui.Z.WideW) })
-  $need = 0; try { if ($B.Text) { $need = [int][System.Windows.Forms.TextRenderer]::MeasureText([string]$B.Text, $B.Font).Width + (& $ui.Sc (2 * $ui.Z.G2)) } } catch { $null = $_ }   # no measure: the first width
-  $w = $(if ($need -le (& $ui.Sc $ws[0])) { $ws[0] } else { $ws[1] })
-  return (New-Object System.Drawing.Size((& $s $w), (& $s $h))) }
-# Gives a button the size of its kind for its text ($ui.BtnSize). Takes the button.
-$ui.FitBtn = { param($B) try { $ns = & $ui.BtnSize $B; if ($B.Width -ne $ns.Width -or $B.Height -ne $ns.Height) { $B.Size = $ns } } catch { $null = $_ } }   # no size now: the next text sets it
-# Makes a button of a kind ('action' or 'compact'), styled, with its focus ring and own face. Takes the kind; gives back the button.
-$ui.Btn = { param([string]$Kind) $b = New-Object System.Windows.Forms.Button; $b.AutoSize = $false; $ui.BtnKind[$b] = $(if ($Kind -eq 'compact') { 'compact' } else { 'action' })
-  $b.Padding = (& $ui.Pad $ui.Z.G2 0 $ui.Z.G2 0); $b.Margin = (& $ui.Pad $ui.Z.M $ui.Z.M $ui.Z.M $ui.Z.M); $b.UseMnemonic = $false; & $ui.Style $b ''; & $ui.Cue $b; & $ui.Own $b
-  & $ui.FitBtn $b; $b.Add_TextChanged({ & $ui.FitBtn $this }); $b }   # gives back the button
-$ui.LinkBtn = { param([string]$Text) $b = New-Object System.Windows.Forms.Button; $b.Text = $Text; $b.AutoSize = $true; $b.AutoSizeMode = 'GrowAndShrink'; $b.MinimumSize = New-Object System.Drawing.Size(0, $ui.Z.LinkH); $b.Margin = (& $ui.Pad $ui.Z.M $ui.Z.M $ui.Z.M $ui.Z.M); $b.UseMnemonic = $false
-  $b.FlatStyle = 'Flat'; $b.FlatAppearance.BorderSize = 0; $b.BackColor = $ui.C.White; $b.ForeColor = $ui.C.Link; $b.Font = $ui.F.Link; $ui.Links += $b; try { $b.FlatAppearance.MouseOverBackColor = $ui.C.White; $b.FlatAppearance.MouseDownBackColor = $ui.C.Hair } catch { $null = $_ }; & $ui.Cue $b; & $ui.Own $b; $b }   # a link: Air Force blue, semibold and underlined (not color alone), 28 high
-$ui.Kinds = @{}; $ui.Links = @()   # the kind each button was last styled with; every link ($ui.Recolor styles them again)
-# ---- A contrast theme that changes while the window is open (UI standard v1, B11; backlog item 24)
-# The form's SystemColorsChanged event (Windows sends WM_SYSCOLORCHANGE when a contrast theme comes on or goes off) calls
-# $ui.Recolor on the window's own thread: PowerShell code cannot run on the thread of SystemEvents, and the event goes with
-# the form when it closes, so nothing is left to detach. $ui.Roles keeps, for each control and color property, the token
-# it was painted with (found from the colors it had), so a switch back gives each part its own color again.
-$ui.Roles = @{}; $ui.Recolor = {
-  <#
-  .SYNOPSIS
-  Paints the window again in the colors of the current Windows theme (its own colors, or a contrast theme's system colors).
-  .DESCRIPTION
-  Does nothing when the theme did not change, unless Force is set. Each property gets the color of its token (see above).
-  .PARAMETER Force
-  $true to paint again also when the theme did not change.
-  .OUTPUTS
-  Nothing.
-  #>
-  param([bool]$Force)
-  $hi = [bool](& $ui.HighOn); if ($hi -eq [bool]$ui.High -and -not $Force) { return }
-  try { $rev = @{}; foreach ($k in @($ui.Tok.Keys)) { $a = $ui.C[$k].ToArgb(); if (-not $rev.ContainsKey($a)) { $rev[$a] = $k } }   # the colors before the change: color -> token
-    $todo = New-Object System.Collections.Stack; $todo.Push($ui.Form); $all = @()
-    while ($todo.Count) { $c = $todo.Pop(); $all += $c; foreach ($k in @($c.Controls)) { $todo.Push($k) } }
-    foreach ($c in $all) { if (-not $ui.Roles.ContainsKey($c)) { $ui.Roles[$c] = @{} }; $r = $ui.Roles[$c]
-      foreach ($pp in 'ForeColor', 'BackColor') { try { $a = $c.$pp.ToArgb(); $t0 = [string]$r[$pp]   # the token it had keeps its place while its color is still on the control
-          if (-not ($t0 -and $ui.C[$t0].ToArgb() -eq $a)) { $t = $rev[$a]; if ($t) { $r[$pp] = $t } } } catch { $null = $_ } } }   # a color that is no token stays as it is
-    & $ui.UseColors $hi
-    foreach ($c in $all) { $r = $ui.Roles[$c]; foreach ($pp in @($r.Keys)) { try { $c.$pp = $ui.C[[string]$r[$pp]] } catch { $null = $_ } } }   # a property that cannot be set keeps its color
-    foreach ($b in @($ui.Kinds.Keys)) { try { $en = $b.Enabled; & $ui.Style $b ([string]$ui.Kinds[$b]); if ([string]$ui.Kinds[$b] -notin 'off', 'dangeroff') { $b.Enabled = $en } } catch { $null = $_ } }   # a button that is gone: nothing to paint
-    foreach ($b in @($ui.Links)) { try { $b.BackColor = $ui.C.White; $b.ForeColor = $ui.C.Link; $b.FlatAppearance.MouseOverBackColor = $ui.C.White; $b.FlatAppearance.MouseDownBackColor = $ui.C.Hair } catch { $null = $_ } }   # same: a link that is gone
-    if ($ui.CardNow -and -not $ui.RecOn -and -not $ui.Busy -and -not $ui.Running) { $k = @([string]$ui.Field.Text, [string]$ui.ErrBox.Text, [string]$ui.Note.Text); $on = $ui.LayOn; $ui.LayOn = $false
-      try { & $ui.SetCard $ui.CardNow } finally { $ui.LayOn = $on }; $ui.Field.Text = $k[0]; $ui.ErrBox.Text = $k[1]; & $ui.Say1 $k[2] }; $ui.Form.Invalidate($true) } catch { $null = $_ } }   # the card's own colors, typed text kept; never stops the window
-# ---- Where ink starts
-$ui.Inks = @{}
-$ui.Ink = { param($C)
-  if ($C -is [System.Windows.Forms.ButtonBase] -and [int]$C.FlatAppearance.BorderSize -gt 0) { return 0 }
-  # R28 (the Kick fix): the control is brought to the size the layout will give it BEFORE the cache key is made. The key held
-  # the width the control had before it was resized, so a text measured at one width was used for another.
-  try { if ($C.AutoSize -and $C.Text) { $pz = $C.PreferredSize; if ($C.Width -ne $pz.Width -or $C.Height -ne $pz.Height) { $C.Size = $pz } } } catch { $null = $_ }
-  $f = $C.Font; $k = $C.GetType().Name + '|' + $f.Name + '|' + $f.SizeInPoints + '|' + $f.Style + '|' + ([string]$C.Text).PadRight(2).Substring(0, 2) + '|' + $(if ($C -is [System.Windows.Forms.ButtonBase] -or $C -is [System.Windows.Forms.Panel]) { [string]$C.Width + 'x' + $C.Height } else { '' })
-  if ($ui.Inks.ContainsKey($k)) { return [int]$ui.Inks[$k] }
-  $v = [int][math]::Ceiling([double]$f.SizeInPoints * $ui.FontDpi / 72.0 / 6.0); $got = $false
-  if (-not $C.Text -and -not ($C -is [System.Windows.Forms.Panel])) { return $v }   # nothing drawn: nothing to measure
-  try { $w = [math]::Max(1, $C.Width); $h = [math]::Max(1, $C.Height); $bm = New-Object System.Drawing.Bitmap($w, $h)
-    try { $C.DrawToBitmap($bm, (New-Object System.Drawing.Rectangle(0, 0, $w, $h))); $bg = $C.BackColor; $hit = -1
-      for ($x = 0; $x -lt [math]::Min($w, (& $ui.Sc 40)) -and $hit -lt 0; $x++) { for ($y = 0; $y -lt $h; $y++) { $px = $bm.GetPixel($x, $y); if ([math]::Abs($px.R - $bg.R) + [math]::Abs($px.G - $bg.G) + [math]::Abs($px.B - $bg.B) -gt 90) { $hit = $x; break } } }
-      if ($hit -ge 0) { $v = $hit; $got = $true } } finally { $bm.Dispose() } } catch { $null = $_ }
-  if ($got) { $ui.Inks[$k] = $v }; return $v }   # only a measure is kept; the estimate is tried again next time
-$ui.SetLeft = { param($C, [int]$L) $L = [math]::Max(0, $L); $m = $C.Margin; if ($m.Left -ne $L) { $C.Margin = New-Object System.Windows.Forms.Padding($L, $m.Top, $m.Right, $m.Bottom) } }
-# ---- Text that RADE draws ink-tight (L2, the Administrator, 2026-11-19: the header)
-# A label keeps empty room above its capitals and under its baseline (about 5 and 7 px for the word RADE), so two labels
-# can never be 9 px apart ink to ink. The word RADE and the application name are panels that draw their own text and are
-# exactly as tall as the ink: from the top of the capitals to the baseline (the word) or to the bottom of a "g" (a name).
-# $ui.FontInk measures those rows for a font one time: "H" and "g" drawn into a bitmap by Windows. Without a bitmap (the
-# test stand-ins) it gives an estimate from the text height.
 # <<< rade-ui
