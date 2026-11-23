@@ -1,9 +1,9 @@
 /* Layout: one column of list "views", each a mock grid over a collapsible column reference.
-   Colors: Option A (fleet v2 DEC 5): blue #00539F, navy #0B2545 text, control border #6C7B8E (4.32:1 on white; tests/check_palette.py). */
+   Colors: Option A (fleet v2 DEC 5): blue #00539F, navy #0B2545 text, control border #6C7B8E light, #5C6F8A dark (tests/check_palette.py). */
 :root{--bg:#f6f7f9;--surface:#ffffff;--fg:#0b2545;--muted:#5a6675;--line:#dfe3e8;--ctl:#6c7b8e;--accent:#00539f;--accent-soft:#e6eef8;--ok:#1f7a45;--ok-bg:#e3f3ea;--warn:#8a5a00;--warn-bg:#fbefd5;--bad:#a3262a;--bad-bg:#fbe3e3;
 --display:"Archivo",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141a;--surface:#161d25;--fg:#e6ebf1;--muted:#9aa6b4;--line:#2a3440;--ctl:#6c7b8e;--accent:#7fb2ec;--accent-soft:#1c2a3b;--ok:#7fd3a0;--ok-bg:#16301f;--warn:#f0c46a;--warn-bg:#33270e;--bad:#f29a9d;--bad-bg:#3a1a1c;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0f141a;--surface:#161d25;--fg:#e6ebf1;--muted:#9aa6b4;--line:#2a3440;--ctl:#6c7b8e;--accent:#7fb2ec;--accent-soft:#1c2a3b;--ok:#7fd3a0;--ok-bg:#16301f;--warn:#f0c46a;--warn-bg:#33270e;--bad:#f29a9d;--bad-bg:#3a1a1c;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141a;--surface:#161d25;--fg:#e6ebf1;--muted:#9aa6b4;--line:#2a3440;--ctl:#5c6f8a;--accent:#7fb2ec;--accent-soft:#1c2a3b;--ok:#7fd3a0;--ok-bg:#16301f;--warn:#f0c46a;--warn-bg:#33270e;--bad:#f29a9d;--bad-bg:#3a1a1c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f141a;--surface:#161d25;--fg:#e6ebf1;--muted:#9aa6b4;--line:#2a3440;--ctl:#5c6f8a;--accent:#7fb2ec;--accent-soft:#1c2a3b;--ok:#7fd3a0;--ok-bg:#16301f;--warn:#f0c46a;--warn-bg:#33270e;--bad:#f29a9d;--bad-bg:#3a1a1c;color-scheme:dark}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body)}
 .wrap{max-width:1240px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
 h1{font:700 clamp(26px,4vw,36px)/1.15 var(--display);margin:0;text-wrap:balance}
