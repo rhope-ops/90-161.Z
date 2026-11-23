@@ -51,7 +51,7 @@
           Config\90161Z-site.txt when the site address is typed outside RADE. -Check, -DryRun and -PlanOnly change nothing
           on the site.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File 90161Z-T20-provision-lists-r4.ps1 (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T20-provision-lists-r4.ps1 (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -NoPause. -PayloadPath and -TestDir are for
   the tests in tests/run.sh.
 #>
@@ -78,12 +78,12 @@ function Get-TaskId([string]$Id) {
 }
 
 function Get-TaskDir([string]$Id, [string]$Task, [string]$Label, [switch]$Create) {
-  # The task folder C:\Users\<DODID>\OneDrive - United States Air Force\RADE\90-161.Z\<Task> (PFM 14 Nov 26: RADE holds
-  # the app folder). Until RADE has moved the old folder ...\90-161.Z, that one is used. -Create makes it when missing.
-  $od = Join-Path (Join-Path 'C:\Users' $Id) 'OneDrive - United States Air Force'
+  # The task folder C:\Users\<DODID>\<OneDrive>\RADE\90-161.Z\<Task>: <OneDrive> is the folder name of $env:OneDriveCommercial,
+  # else 'OneDrive - United States Air Force' (fleet v2). Until RADE moves the old ...\90-161.Z, that one is used. -Create makes it.
+  $odName = if ($env:OneDriveCommercial) { Split-Path -Leaf $env:OneDriveCommercial } else { 'OneDrive - United States Air Force' }; $od = Join-Path (Join-Path 'C:\Users' $Id) $odName
   $app = 'RADE\90-161.Z'
   if (-not (Test-Path -LiteralPath (Join-Path $od $app) -PathType Container) -and (Test-Path -LiteralPath (Join-Path $od '90-161.Z') -PathType Container)) { $app = '90-161.Z' }
-  $tail = 'OneDrive - United States Air Force\' + $app + '\' + $Task
+  $tail = $odName + '\' + $app + '\' + $Task
   $dir = Join-Path (Join-Path 'C:\Users' $Id) $tail
   if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
     if ($Create) { New-Item -ItemType Directory -Path $dir | Out-Null }
@@ -112,7 +112,7 @@ function Invoke-TaskStep([hashtable]$Step, [string]$ScriptDir, [string[]]$Secret
   $global:LASTEXITCODE = $null
   # PS 5.1: with Stop, a stderr line from the step (2>&1) would end the runner. Record it instead.
   $ErrorActionPreference = 'Continue'
-  $out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $ScriptDir $Step.File) @stepArgs 2>&1
+  $out = & powershell.exe -NoProfile -File (Join-Path $ScriptDir $Step.File) @stepArgs 2>&1
   $code = $LASTEXITCODE
   $ErrorActionPreference = 'Stop'
   foreach ($o in @($out | Where-Object { $null -ne $_ })) {

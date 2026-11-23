@@ -47,9 +47,19 @@ def address(n):
 
 
 def solution_xml(unique, title, root_components):
-    """Build solution.xml. Takes the solution's unique name, its title and the RootComponent lines; returns the text."""
+    """Build solution.xml, the manifest of the solution zip.
+
+    Args:
+        unique: the solution's unique name.
+        title: the solution's display title.
+        root_components: the RootComponent lines, as one text.
+
+    Returns:
+        The text of solution.xml (no XML declaration; attributes in the exported order).
+    """
     return (   # no XML declaration; attributes in the exported order (r5)
-        f'<ImportExportXml version="{PLATFORM}" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" {XSI} OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}">\n'
+        f'<ImportExportXml version="{PLATFORM}" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" {XSI} '
+        f'OrganizationVersion="{PLATFORM}" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="{SERVICEABILITY}">\n'
         f"  <SolutionManifest>\n    <UniqueName>{unique}</UniqueName>\n"
         f'    <LocalizedNames>\n      <LocalizedName description="{title}" languagecode="1033" />\n    </LocalizedNames>\n'
         "    <Descriptions />\n"

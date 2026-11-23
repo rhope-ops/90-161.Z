@@ -61,7 +61,6 @@
     "scripts/build_flow_solution.py::env_definition_files": 1,
     "scripts/build_flow_solution.py::load": 1,
     "scripts/build_flow_solution.py::select_flows": 1,
-    "scripts/build_flow_solution.py::solution_xml": 1,
     "scripts/build_flow_solution.py::test_jobs": 1,
     "scripts/build_flow_solution.py::workflow_entries": 1,
     "scripts/build_flow_solution.py::workflow_json": 1,
@@ -123,7 +122,6 @@
    "line": {
     "scripts/build_decision_brief.js": 277,
     "scripts/build_flow_payload.py": 234,
-    "scripts/build_flow_solution.py": 245,
     "scripts/build_list_mockup.py": 465,
     "scripts/build_rights_probe.py": 606,
     "scripts/gov/90161Z-T07-seal-prep-r5.ps1": 279,
