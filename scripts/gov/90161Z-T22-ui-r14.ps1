@@ -7,8 +7,8 @@
   contrast lines moved to "ui2", after the second half they use.
   The block between the rade-ui markers is written by scripts/build_task_scripts.py from the pinned RADE commit
   (scripts/rade.lock.json); never edit it here. It runs inside the main script's try block, after $ui.Form exists,
-  and fills $ui. The lines above the block give it what it reads from a RADE window: $dot, $round and Test-Deploy
-  (part "ui2" sets $apps). Part "ui2" chooses the colors for Windows
+  and fills $ui. The lines above the block give it what it reads from a RADE window: $dot, $round, $apps and Test-Deploy
+  ($apps moved here from part "ui2" with engine-v36: the layout self-check line is in this half now). Part "ui2" chooses the colors for Windows
   high contrast (R31 W2).
   Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the first half of the shared UI file.
   Run: not alone; 90161Z-T22-pfm-window-r14.ps1 dot-sources it from its own folder.
@@ -19,6 +19,7 @@
 Set-Variable -Name dot -Value ''; Set-Variable -Name round -Value ''
 # This window is never a deploy: the layout self-check of the shared UI file always runs.
 function Test-Deploy { return $false }
+$apps = @(@{ Mode = 'test' })   # one test application, so the layout self-check of the shared UI file runs
 # >>> rade-ui: generated from the pinned RADE shared UI file by scripts/build_task_scripts.py (do not edit)
 # RADE shared UI file (engine/rade_ui.ps1): the theme tokens (colors, fonts, sizes), the builders for buttons, links and
 # card text, the drawing and measuring helpers (part 2: engine/rade_ui_text.ps1, right after this file), and the layout self-check. rade_build.py puts this text into every bundle
@@ -245,4 +246,113 @@ $ui.Face = { param($B, $G) try { if (-not $B.Text) { return }
     if ([int]$fa.BorderSize -gt 0) { $pn = New-Object System.Drawing.Pen($(if ($busy) { $ui.C.Track } else { $fa.BorderColor })); $G.DrawRectangle($pn, 0, 0, ($w - 1), ($h - 1)); $pn.Dispose() }
     # A link (no edge) draws its text at the left, a button in the middle (R28: a link in a wide box started 38 px right of the card edge).
     & $ui.Word $G ([string]$B.Text) $B.Font $(if ($busy) { $ui.C.OffInk } else { $B.ForeColor }) 0 0 $w $h $(if ([int]$fa.BorderSize -gt 0) { 'HorizontalCenter, VerticalCenter, NoPrefix, SingleLine' } else { 'Left, VerticalCenter, NoPrefix, SingleLine' }) } catch { $null = $_ } }
+$ui.Own = { param($B) $B.UseVisualStyleBackColor = $false; $B.Add_Paint({ & $ui.Face $this $_.Graphics })
+  $B.Add_MouseEnter({ $ui.Hot = $this; $this.Invalidate() }); $B.Add_MouseLeave({ if ([object]::ReferenceEquals($ui.Hot, $this)) { $ui.Hot = $null }; $this.Invalidate() })
+  $B.Add_MouseDown({ if ([string]$_.Button -eq 'Left') { $ui.Down = $this; $this.Invalidate() } }); $B.Add_MouseUp({ $ui.Down = $null; $this.Invalidate() })
+  $B.Add_VisibleChanged({ if ([object]::ReferenceEquals($ui.Hot, $this)) { $ui.Hot = $null }; if ([object]::ReferenceEquals($ui.Down, $this)) { $ui.Down = $null } }) }
+# Buttons have fixed sizes (UI standard v1, B1; the Administrator, 2026-11-20): no AutoSize, so a button never grows or
+# shrinks with its text. $Kind: 'action' (a card's buttons: 160 x 40, or 240 x 40 when its label needs more room) or
+# 'compact' (96 x 30: beside a box, "Back (Esc)", the Record's buttons; 160 x 30 when its label needs more room). A label
+# that needs more than the widest size is cut, and the self-check reports it (rule B1). Sizes: $ui.Z.
+$ui.BtnKind = @{}
+# The size of a button of a kind for its text: at 100 % before the window has its scale (Windows Forms scales it), else scaled.
+$ui.BtnSize = { param($B)
+  $k = [string]$ui.BtnKind[$B]; $s = $(if ($ui.Scaled) { $ui.Sc } else { { param([double]$Px) [int]$Px } })
+  $h = $(if ($k -eq 'compact') { $ui.Z.CompactH } else { $ui.Z.ActionH }); $ws = $(if ($k -eq 'compact') { @($ui.Z.CompactW, $ui.Z.ActionW) } else { @($ui.Z.ActionW, $ui.Z.WideW) })
+  $need = 0; try { if ($B.Text) { $need = [int][System.Windows.Forms.TextRenderer]::MeasureText([string]$B.Text, $B.Font).Width + (& $ui.Sc (2 * $ui.Z.G2)) } } catch { $null = $_ }   # no measure: the first width
+  $w = $(if ($need -le (& $ui.Sc $ws[0])) { $ws[0] } else { $ws[1] })
+  return (New-Object System.Drawing.Size((& $s $w), (& $s $h))) }
+# Gives a button the size of its kind for its text ($ui.BtnSize). Takes the button.
+$ui.FitBtn = { param($B) try { $ns = & $ui.BtnSize $B; if ($B.Width -ne $ns.Width -or $B.Height -ne $ns.Height) { $B.Size = $ns } } catch { $null = $_ } }   # no size now: the next text sets it
+$ui.AutoNames = @{}   # the name $ui.AutoName gave each button
+# AccessibleName on every control (docs/window-design.md; fleet v2): a button whose name nobody set takes its text and
+# follows it when the text changes; a name set by hand stays. Takes the button; gives back nothing.
+$ui.AutoName = { param($B) if (-not [string]$B.AccessibleName -or [string]$ui.AutoNames[$B] -eq [string]$B.AccessibleName) {
+    $B.AccessibleName = [string]$B.Text; $ui.AutoNames[$B] = [string]$B.Text } }
+# Makes a button of a kind ('action' or 'compact'), styled, with its focus ring and own face. Takes the kind; gives back the button.
+$ui.Btn = { param([string]$Kind) $b = New-Object System.Windows.Forms.Button; $b.AutoSize = $false; $ui.BtnKind[$b] = $(if ($Kind -eq 'compact') { 'compact' } else { 'action' })
+  $b.Padding = (& $ui.Pad $ui.Z.G2 0 $ui.Z.G2 0); $b.Margin = (& $ui.Pad $ui.Z.M $ui.Z.M $ui.Z.M $ui.Z.M); $b.UseMnemonic = $false; & $ui.Style $b ''; & $ui.Cue $b; & $ui.Own $b
+  & $ui.FitBtn $b; $b.Add_TextChanged({ & $ui.FitBtn $this; & $ui.AutoName $this }); $b }   # gives back the button
+$ui.LinkBtn = { param([string]$Text) $b = New-Object System.Windows.Forms.Button; $b.Text = $Text; $b.AutoSize = $true; $b.AutoSizeMode = 'GrowAndShrink'; $b.MinimumSize = New-Object System.Drawing.Size(0, $ui.Z.LinkH); $b.Margin = (& $ui.Pad $ui.Z.M $ui.Z.M $ui.Z.M $ui.Z.M); $b.UseMnemonic = $false
+  $b.FlatStyle = 'Flat'; $b.FlatAppearance.BorderSize = 0; $b.BackColor = $ui.C.White; $b.ForeColor = $ui.C.Link; $b.Font = $ui.F.Link; $ui.Links += $b; try { $b.FlatAppearance.MouseOverBackColor = $ui.C.White; $b.FlatAppearance.MouseDownBackColor = $ui.C.Hair } catch { $null = $_ }; & $ui.Cue $b; & $ui.Own $b   # no hover colors: the link still works
+  & $ui.AutoName $b; $b.Add_TextChanged({ & $ui.AutoName $this }); $b }   # a link: Air Force blue, semibold and underlined (not color alone), 28 high
+$ui.Kinds = @{}; $ui.Links = @()   # the kind each button was last styled with; every link ($ui.Recolor styles them again)
+# ---- A contrast theme that changes while the window is open (UI standard v1, B11; backlog item 24)
+# The form's SystemColorsChanged event (Windows sends WM_SYSCOLORCHANGE when a contrast theme comes on or goes off) calls
+# $ui.Recolor on the window's own thread: PowerShell code cannot run on the thread of SystemEvents, and the event goes with
+# the form when it closes, so nothing is left to detach. $ui.Roles keeps, for each control and color property, the token
+# it was painted with (found from the colors it had), so a switch back gives each part its own color again.
+$ui.Roles = @{}; $ui.Recolor = {
+  <#
+  .SYNOPSIS
+  Paints the window again in the colors of the current Windows theme (its own colors, or a contrast theme's system colors).
+  .DESCRIPTION
+  Does nothing when the theme did not change, unless Force is set. Each property gets the color of its token (see above).
+  .PARAMETER Force
+  $true to paint again also when the theme did not change.
+  .OUTPUTS
+  Nothing.
+  #>
+  param([bool]$Force)
+  $hi = [bool](& $ui.HighOn); if ($hi -eq [bool]$ui.High -and -not $Force) { return }
+  try { $rev = @{}; foreach ($k in @($ui.Tok.Keys)) { $a = $ui.C[$k].ToArgb(); if (-not $rev.ContainsKey($a)) { $rev[$a] = $k } }   # the colors before the change: color -> token
+    $todo = New-Object System.Collections.Stack; $todo.Push($ui.Form); $all = @()
+    while ($todo.Count) { $c = $todo.Pop(); $all += $c; foreach ($k in @($c.Controls)) { $todo.Push($k) } }
+    foreach ($c in $all) { if (-not $ui.Roles.ContainsKey($c)) { $ui.Roles[$c] = @{} }; $r = $ui.Roles[$c]
+      foreach ($pp in 'ForeColor', 'BackColor') { try { $a = $c.$pp.ToArgb(); $t0 = [string]$r[$pp]   # the token it had keeps its place while its color is still on the control
+          if (-not ($t0 -and $ui.C[$t0].ToArgb() -eq $a)) { $t = $rev[$a]; if ($t) { $r[$pp] = $t } } } catch { $null = $_ } } }   # a color that is no token stays as it is
+    & $ui.UseColors $hi
+    foreach ($c in $all) { $r = $ui.Roles[$c]; foreach ($pp in @($r.Keys)) { try { $c.$pp = $ui.C[[string]$r[$pp]] } catch { $null = $_ } } }   # a property that cannot be set keeps its color
+    foreach ($b in @($ui.Kinds.Keys)) { try { $en = $b.Enabled; & $ui.Style $b ([string]$ui.Kinds[$b]); if ([string]$ui.Kinds[$b] -notin 'off', 'dangeroff') { $b.Enabled = $en } } catch { $null = $_ } }   # a button that is gone: nothing to paint
+    foreach ($b in @($ui.Links)) { try { $b.BackColor = $ui.C.White; $b.ForeColor = $ui.C.Link; $b.FlatAppearance.MouseOverBackColor = $ui.C.White; $b.FlatAppearance.MouseDownBackColor = $ui.C.Hair } catch { $null = $_ } }   # same: a link that is gone
+    if ($ui.CardNow -and -not $ui.RecOn -and -not $ui.Busy -and -not $ui.Running) { $k = @([string]$ui.Field.Text, [string]$ui.ErrBox.Text, [string]$ui.Note.Text); $on = $ui.LayOn; $ui.LayOn = $false
+      try { & $ui.SetCard $ui.CardNow } finally { $ui.LayOn = $on }; $ui.Field.Text = $k[0]; $ui.ErrBox.Text = $k[1]; & $ui.Say1 $k[2] }; $ui.Form.Invalidate($true) } catch { $null = $_ } }   # the card's own colors, typed text kept; never stops the window
+# Where ink starts, ink-tight text, long words, shortened text, drawing and measuring ($ui.Ink to $ui.Meas): engine/rade_ui_text.ps1.
+# ---- The layout self-check (docs/window-design.md "Proof"): in a test round, and in the Windows job, RADE measures each
+# card it showed: a text that needs more room than its control has, a control that a parent cuts, two parts that
+# overlap. The result is one line under "Window: OK" in the results e-mail draft ("PASS layout" or the defects), so a
+# cut text is found by a measure, not by a person's eye. A deploy does not run it. It reads sizes only.
+$ui.LayOn = $false; $ui.LayBad = New-Object System.Collections.Generic.List[string]; $ui.LaySeen = @{}; $ui.LayCards = @{}; $ui.LayScroll = @{}
+try { $ui.LayOn = [bool]([System.Windows.Forms.Application].GetMethod('SetCompatibleTextRenderingDefault') -and ($env:RADE_LAYOUT -eq '1' -or @($apps | Where-Object { [string]$_.Mode -ne 'deploy' }).Count)) } catch { $null = $_ }   # the real Windows Forms only: the test stand-ins have no layout
+$ui.NameOf = { param($C)
+  foreach ($k in @($ui.Keys)) { if ([object]::ReferenceEquals($ui[$k], $C)) { return [string]$k } }
+  foreach ($k in 'B', 'P') { for ($i = 0; $ui[$k] -and $i -lt @($ui[$k]).Count; $i++) { if ([object]::ReferenceEquals($ui[$k][$i], $C)) { return ($k + $i) } } }
+  return $C.GetType().Name }
+# ---- The alignment rules
+# The alignment rules (docs/window-design.md "Sizes"), on measured numbers so the tests can give them a layout:
+# RowBad: the parts of an aligned row (@{ N; Top; H; Kind }) share one midpoint within 1 px, and a box and a button in
+# it are as tall as each other. EdgeBad: the visible left edges of a card's parts (@{ N; X }) are within 1 px.
+$ui.RowBad = { param([string]$Card, [string]$Row, $Parts)
+  # A row that wraps (the test extras in a small window) has a midpoint on each line: Line = the top of a part's margin box.
+  $out = @(); $byLine = [ordered]@{}; foreach ($q in @($Parts | Where-Object { $_ })) { $k = [string][int]$q.Line; if (-not $byLine.Contains($k)) { $byLine[$k] = @() }; $byLine[$k] += $q }
+  if ($byLine.Count -gt 1) { foreach ($k in @($byLine.Keys)) { $out += & $ui.RowBad $Card $Row @($byLine[$k] | ForEach-Object { $c = $_.Clone(); $c.Line = 0; $c }) }; return $out }
+  $tol = [math]::Max(1, (& $ui.Sc 1)); $ps = @($Parts | Where-Object { $_ }); if ($ps.Count -lt 2) { return $out }
+  $m0 = $ps[0].Top + $ps[0].H / 2.0
+  foreach ($q in $ps) { $m = $q.Top + $q.H / 2.0; if ([math]::Abs($m - $m0) -gt $tol) { $out += ('LAYOUT ' + $Card + ' ' + $Row + ' ' + $q.N + ' midpoint: ' + $m + ', the row midpoint is ' + $m0) } }
+  $bx = @($ps | Where-Object { $_.Kind -eq 'box' }); $bt = @($ps | Where-Object { $_.Kind -eq 'button' })
+  foreach ($a in $bx) { foreach ($b in $bt) { if ([math]::Abs($a.H - $b.H) -gt $tol) { $out += ('LAYOUT ' + $Card + ' ' + $Row + ' heights: box ' + $a.N + ' ' + $a.H + ', button ' + $b.N + ' ' + $b.H) } } }
+  return $out }
+$ui.EdgeBad = { param([string]$Card, $Edges)
+  $out = @(); $tol = [math]::Max(1, (& $ui.Sc 1)); $es = @($Edges | Where-Object { $_ }); if ($es.Count -lt 2) { return $out }
+  foreach ($e in $es) { if ([math]::Abs($e.X - $es[0].X) -gt $tol) { $out += ('LAYOUT ' + $Card + ' ' + $e.N + ' edge: starts at ' + $e.X + ', the card edge is ' + $es[0].X + ' (' + $es[0].N + ')' + $(if ($e.D) { ' [' + $e.D + ']' } else { '' })) } }
+  return $out }
+# HeadBad (R29b V1): the ink of the word RADE and of the line under it (@{ N; X }) start at the same x; any difference is a defect.
+$ui.HeadBad = { param([string]$Card, $Title, $Sub)
+  if ([int]$Title.X -eq [int]$Sub.X) { return @() }
+  return @('LAYOUT ' + $Card + ' header ' + $Sub.N + ' edge: starts at ' + $Sub.X + ', ' + $Title.N + ' starts at ' + $Title.X) }
+# HeadRuleBad (L2, the Administrator, 2026-11-19; it replaces the 4 px box gap of R29b V1): without an application logo,
+# under the word RADE comes a gap, a thin line as wide as the word's ink and on its left edge, the same gap, then the
+# capitals of the application name. Takes the card, the measured numbers @{ WordBottom; WordLeft; WordW; RuleTop;
+# RuleBottom; RuleLeft; RuleW; AppTop } (AppTop $null: a name with no capital, digit or tall letter is not measured) and
+# the gap it must be (4 px, scaled); the tolerance is 1 px, scaled. Gives back the defect lines.
+$ui.HeadRuleBad = { param([string]$Card, $M, [int]$Want)
+  $out = @(); $tol = [math]::Max(1, (& $ui.Sc 1))
+  $g1 = [int]$M.RuleTop - [int]$M.WordBottom; if ([math]::Abs($g1 - $Want) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header gap: ' + $g1 + ' between the word RADE and the line, the gap is ' + $Want) }
+  if ($null -ne $M.AppTop) { $g2 = [int]$M.AppTop - [int]$M.RuleBottom; if ([math]::Abs($g2 - $Want) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header gap: ' + $g2 + ' between the line and the application name, the gap is ' + $Want) } }
+  if ([math]::Abs([int]$M.RuleW - [int]$M.WordW) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header line: ' + $M.RuleW + ' wide, the word RADE is ' + $M.WordW) }
+  if ([math]::Abs([int]$M.RuleLeft - [int]$M.WordLeft) -gt $tol) { $out += ('LAYOUT ' + $Card + ' header line: starts at ' + $M.RuleLeft + ', the word RADE starts at ' + $M.WordLeft) }
+  return $out }
+# AboveBad (L3, the Administrator, 2026-11-19): a label above its box. The label's bottom is not under the box's top, the
+# box starts on the card's edge and it is as wide as the card's text (from the edge to the end of the text column), each
+# within 1 px (scaled). Takes the card and @{ LabelBottom; BoxTop; BoxLeft; BoxW; Edge; TextW }; gives back the defect lines.
 # <<< rade-ui

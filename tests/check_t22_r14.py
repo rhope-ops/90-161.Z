@@ -106,7 +106,23 @@ def check_feedback():
         shutil.rmtree(d, ignore_errors=True)
 
 
+
+def check_ui_names():
+    """Each $ui.<Name> that a T22 part calls is defined in the T22 files (fleet v2, 2026-11-23: engine-v36 moved
+    $ui.Meas into engine/rade_ui_text.ps1, and a window that copied only engine/rade_ui.ps1 stopped on Windows).
+    The two copied UI blocks (-ui-, -ui2-) are left out as callers: their calls are the engine's own.
+    Takes nothing; raises AssertionError with the missing names.
+    """
+    defined, used = set(), set()
+    for f in sorted(GOV.glob('90161Z-T22-*-r14.ps1')):
+        t = f.read_text(encoding='utf-8')
+        defined |= set(re.findall(r'^\s*\$ui\.(\w+)\s*=', t, re.M))
+        if not re.search(r'-ui2?-r14\.ps1$', f.name):
+            used |= set(re.findall(r'&\s*\$ui\.(\w+)', t))
+    assert not used - defined, 'T22 calls $ui names that no T22 file defines: ' + ', '.join(sorted(used - defined))
+
 if __name__ == '__main__':
+    check_ui_names()   # no pwsh needed
     need_pwsh()
     check_feedback()
     check_walk()
