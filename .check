@@ -41,6 +41,7 @@ skip: ref/*.pdf
 skip: samples/*.png
 skip: samples/*.docx
 skip: templates/*.docx
+skip: docs/assets/*-social-preview.png
 # Code standard and audit settings (the keys: the header of scripts/check_settings.py).
 code-max-line-chars: 200
 code-generated: scripts/gov/paste/*.ps1
