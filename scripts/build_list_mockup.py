@@ -76,14 +76,17 @@ for n in ORD:
         note = '<p class="note">Reference rows (draft, not verified); the flow does not add them.</p>'
     head = ''.join(f'<th>{e(f["displayName"])}</th>' for f in F)
     body = ''.join('<tr>' + ''.join(f'<td>{cell(f, r.get(f["internalName"]))}</td>' for f in F) + '</tr>' for r in rows)
-    ref = ''.join(f'<tr><td class="lbl">{e(f["displayName"])}</td><td>{TYPES[f["type"]]}</td><td class="det">{det(f)}{("<br><em>" + e(f["description"]) + "</em>") if f.get("description") else ""}</td><td class="flags">{flags(f)}</td><td class="mono">{e(f["internalName"])}</td><td class="src">{e(tq_dates(f.get("ref", "")))}</td></tr>' for f in F)
+    ref = ''.join(f'<tr><td class="lbl">{e(f["displayName"])}</td><td>{TYPES[f["type"]]}</td>'
+                  f'<td class="det">{det(f)}{("<br><em>" + e(f["description"]) + "</em>") if f.get("description") else ""}</td>'
+                  f'<td class="flags">{flags(f)}</td><td class="mono">{e(f["internalName"])}</td><td class="src">{e(tq_dates(f.get("ref", "")))}</td></tr>' for f in F)
     tabs = '<span class="vtab on">All Items</span>' + ''.join(f'<span class="vtab">{e(v["name"])}</span>' for v in s.get('views', []))
     new = ' <span class="pill ok">New in r7</span>' if n == 'PFMReviews' else ''
     secs.append(f'''<section class="list" id="{n.lower()}">
 <header class="lhead"><div><h2>{e(s["title"])}{new}</h2><p class="url mono">/Lists/{n}</p></div><p class="desc">{e(s["description"])}</p></header>
 <div class="mockbar">{tabs}</div>
 <div class="scroll"><table class="grid"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>{note}
-<details><summary>{len(F)} columns: types, choices and sources</summary><div class="scroll"><table class="ref"><thead><tr><th>Column</th><th>Type</th><th>Choices, lookup or description</th><th>Flags</th><th>Internal name</th><th>Source</th></tr></thead><tbody>{ref}</tbody></table></div></details>
+<details><summary>{len(F)} columns: types, choices and sources</summary><div class="scroll"><table class="ref"><thead>\
+<tr><th>Column</th><th>Type</th><th>Choices, lookup or description</th><th>Flags</th><th>Internal name</th><th>Source</th></tr></thead><tbody>{ref}</tbody></table></div></details>
 </section>''')
     nav.append(f'<a href="#{n.lower()}">{e(s["title"][4:])}</a>')
 page = f'''<title>PFM Lists Mockup</title>
@@ -93,7 +96,10 @@ page = f'''<title>PFM Lists Mockup</title>
 {CSS}
 </style>
 <div class="wrap">
-<header><h1>90-161.Z SharePoint lists</h1><p class="lede">The {num(len(ORD))} lists that Task 2 r9 creates, in creation order, with every column. r7 added the DAFMAN 90-161 design check (eight action types, Coordination Stage, PFM Reviews, product links); r8 standardizes every name IAW DAFMAN 90-161 and The Tongue and Quill. Sample rows are fake. Open "columns" under each list for types, choices, lookup targets and the DAFMAN source of each column.</p></header>
+<header><h1>90-161.Z SharePoint lists</h1><p class="lede">The {num(len(ORD))} lists that Task 2 r9 creates, in creation order, with every column. \
+r7 added the DAFMAN 90-161 design check (eight action types, Coordination Stage, PFM Reviews, product links); \
+r8 standardizes every name IAW DAFMAN 90-161 and The Tongue and Quill. \
+Sample rows are fake. Open "columns" under each list for types, choices, lookup targets and the DAFMAN source of each column.</p></header>
 <nav aria-label="Lists">{''.join(nav)}</nav>
 {''.join(secs)}
 <p class="foot">Generated from schemas/lists/*.json and samples/lists/*.csv (T02 r9). Built-in columns Created, Modified, Created By and Modified By exist on every list and are not shown.</p>

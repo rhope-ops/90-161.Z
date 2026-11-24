@@ -31,7 +31,8 @@ bad = []
 
 
 def title_case(s, atoms=()):
-    """Check that a name is in title case (the T&Q chapter 27 rules: small words lower, hyphenated parts capitalized). Takes the name and quoted choice values to ignore; returns True when it follows the rules."""
+    """Check that a name is in title case (the T&Q chapter 27 rules: small words lower, hyphenated parts capitalized).
+    Takes the name and quoted choice values to ignore; returns True when it follows the rules."""
     for a in atoms:  # a choice value quoted inside a view name keeps its own capitals (whole words only)
         s = re.sub(r"(?<![\w-])" + re.escape(a) + r"(?![\w-])", "X", s)
     words = [w for w in re.split(r"( - |\u2014|: | |/)", s) if w and w not in (" ", "/")]
