@@ -1,4 +1,4 @@
-![90-161.Z: Kanon · Publications and Forms Management](https://repository-images.githubusercontent.com/1453511683/43db9448-2d1b-4421-85c2-eb674e43c7ee)
+![90-161.Z: Kanon · Publications and Forms Management](docs/assets/90-161.Z-social-preview.png)
 
 # Kanon
 <p><b>Publications and Forms Management</b></p>
