@@ -2,6 +2,8 @@
 
 Cloud sessions (PFM, 2026-11-11): start them on the environment "RADE"; its setup script does steps 1-2 below. On any other environment, do steps 1-2 by hand.
 
+Kit package mode (2026-11-24): 17 kit scripts in `scripts/` come from the package `archimedes-kit`, and git does not track them. In the project folder, run `scripts/check.sh --kit-install` before the first check. Run it again after each change of `.check.lock`. Without this step, `scripts/check.sh` fails and shows this command.
+
 Checks run PowerShell 7 on Linux. They check syntax and PS 5.1 compatibility only. Word COM and PnP cannot run here; those parts are verified on the gov device.
 
 1. pwsh 7.4.6: download `https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-linux-x64.tar.gz`, extract to /opt/pwsh, link /usr/local/bin/pwsh.
