@@ -13,6 +13,7 @@ What is scanned, by tool:
 Output: exit 0 lets the tool call run; exit 2 blocks it, and the masked findings go to stderr. Any error blocks: also
 a project's own finders (scripts/check_content_local.py) that cannot be loaded block every call that is scanned.
 Run: check_content.py imports it for --hook; not run alone.
+Prevents: a Claude Code tool call writes or sends a secret or personal datum before any commit check can see it
 Network: none.
 Writes: none.
 Credentials: none; it reads the word lists through check_content_scan.py and never prints an entry.

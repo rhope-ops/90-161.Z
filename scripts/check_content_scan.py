@@ -5,7 +5,8 @@ Inputs: text, repo-relative paths or git rev-list arguments; the word lists (env
 Outputs: findings as (where, line number, kind, masked value) tuples; nothing is printed here.
 Run: not run alone; check_content.py, check_content_hook.py and check_content_test.py import it (the checks, tiers and limits
 are described in the check_content.py header). The patterns and finders of each finding kind: check_content_finders.py.
-The readers of the word lists and of the settings file: check_content_scan_settings.py (its names are re-exported here).
+The readers of the settings file: check_content_scan_settings.py; of the word lists: check_content_scan_words.py (their
+names are re-exported here).
 
 A project's own finders (the extension point): when the file scripts/check_content_local.py stands next to this one,
 the scanner loads it. The kit has no such file, and the kit's own patterns stay the default. The module defines one
@@ -19,6 +20,7 @@ scanner when it is loaded (its own self-test may); `python3 scripts/check_conten
 and scripts/check.sh runs it when the file has one. A module that cannot be imported, or that has neither name in this
 shape, makes every scan fail (LOCAL_ERROR; scan_text raises LocalError) and the hook block: the scanner never falls
 back to the kit's patterns, and never to no check. The result line of a scan and --status say when a module is active.
+Prevents: a secret or personal datum in a text, a file or a commit goes unseen, or a broken project finder falls back to no check
 Network: none (it runs local git read commands).
 Writes: none.
 Credentials: none; it reads the name denylist and the terms list from an environment variable or a file.
@@ -32,12 +34,14 @@ import sys
 
 import check_content_finders as finders_mod   # scripts/check_content_finders.py: the patterns, the kit's finders, the loader
 from check_content_finders import LocalError, emails   # noqa: F401 - LocalError is part of this module's interface
-# scripts/check_content_scan_settings.py: the word lists and the settings file (kept apart, docs/code-standard.md C4).
+# scripts/check_content_scan_settings.py and check_content_scan_words.py: the settings file and the word lists (kept
+# apart, docs/code-standard.md C4).
 from check_content_scan_settings import (  # noqa: F401 - every name is re-exported: other scripts import them from here
-    _TIER, BLOCKED, BOTH_FILES, CONFIG_NAMES, MAX_BYTES, MAX_BYTES_CEILING, MAX_BYTES_LINE, MISSING_HELP, OPTION_LINE,
-    OPTION_MAX, PROFILE_LINE, SETTING_LINE, UNKNOWN_PROFILE, UNREADABLE, WARN_OPTION, _clean_entry, _covers, _exists,
-    blocked, config_name, denylist_source, dod_mode, fingerprint, is_option_line, is_tier_line, load_allow,
-    load_denylist, load_terms, max_bytes_of, parse_denylist, profile_of, skipped, terms_source, warn_mode)
+    _TIER, BLOCKED, BOTH_FILES, CONFIG_NAMES, MAX_BYTES, MAX_BYTES_CEILING, MAX_BYTES_LINE, OPTION_LINE, OPTION_MAX,
+    PROFILE_LINE, SETTING_LINE, UNKNOWN_PROFILE, UNREADABLE, WARN_OPTION, _covers, _exists, blocked, config_name,
+    dod_mode, is_option_line, is_tier_line, load_allow, max_bytes_of, profile_of, skipped, warn_mode)
+from check_content_scan_words import (  # noqa: F401 - every name is re-exported: other scripts import them from here
+    MISSING_HELP, _clean_entry, denylist_source, fingerprint, load_denylist, load_terms, parse_denylist, terms_source)
 
 ZERO = re.compile(r"^0+$")
 LOCAL_FILE = pathlib.Path(__file__).resolve().parent / finders_mod.LOCAL_NAME   # a project's own finders (see the header)
@@ -140,6 +144,11 @@ def scan_text(text, where, deny, allow, dod=False, terms=()):
                 continue
             seen.add(val)
             found.append((where, n, kind, mask(kind, val)))
+    split = [(kind, find) for kind, kit, find in finders_mod.SPLIT_FINDERS if kind in kinds and kit in FINDERS[kind]]
+    if split:   # a mark, or a keyword and its number, over two lines: reported at the first
+        near = range(len(lines) - 1) if rows is None else sorted({j for i in rows for j in (i - 1, i) if 0 <= j < len(lines) - 1})
+        found += [(where, i + 1, kind, mask(kind, val)) for i in near for kind, find in split
+                  for _, _, val in find(lines[i], lines[i + 1]) if val not in allow]
     return found
 
 

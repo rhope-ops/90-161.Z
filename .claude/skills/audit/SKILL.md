@@ -38,7 +38,8 @@ When the cause is spread over many files (layers of small additions), stop and p
 - Check lanes: run the full lane 3 times; `scripts/check.sh --record` after the 3rd pass stores each step; then `python3 scripts/bloat_check.py --compare check=<median wall time> --record` sets the wall time to the median of the 3 runs.
 - One time: `python3 scripts/bloat_check.py --compare NAME=SECONDS --record` (NAME as in the table; `check:<step>` for one step). Use the median of 3 runs.
 - Commands with a `cmd`: `python3 scripts/bloat_check.py --time --record`.
-- Commit the change to `.check.state.json`, with the before and after numbers in the commit message.
+- Commit the change to `.check.state.json`, with the before and after numbers, the 3 run times and the machine (`nproc` cores) in the commit message.
+- Record only on a quiet machine: a run while other agents or lanes share the CPU is not a measurement. When a lane gains or loses a step, record its baseline again in the same pull request.
 - A new baseline after a fix, or for a new step, is routine. A slower baseline with no fix (accepting the cost) needs the Maintainer's approval: put it under Suggest, with the numbers.
 
 ### Time a new repeatable process
@@ -54,6 +55,10 @@ The full periodic audit that AGENTS.md "Caps and audit" names. Claude or a perso
 Due: every 14 days or 300 commits to main, whichever comes first, and before a release. The Maintainer may set other values in `.check` (`audit-every-days:`, `audit-every-commits:`).
 
 Why: two audits of one project found layered bloat that made a simple operation 5x slower (116.6 s to 23.4 s after the fix). Each layer looked reasonable when an agent added it. Agents add; they seldom remove. This audit finds what to remove and proposes it.
+
+## Fleet audit
+
+At each kit release, or 14 days after the last fleet audit (AUDIT DUE (fleet) at the kit check-in), report it and ask the Maintainer; when the Maintainer says yes, run the full audit for every fleet repo in a fresh session. Report per repo: kit version and lock state, caps, open branches, kit lag; and the outcome metrics: defects found per check in the last 30 days, mutant kill rate where measured, files changed per kit change, and fix-of-a-fix rate (commits that fix a commit of the last 7 days). File size and file counts are warnings only. Write the date to `fleet.last_audit` in kit.config.json. Each check, and this skill, gets a retire / shrink / keep line in docs/tools.md.
 
 ## Rules for the auditor
 

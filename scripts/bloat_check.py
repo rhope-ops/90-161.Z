@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Cheap bloat and drift metrics for a project repo, and the audit due date. Report only, unless --record.
 
+Prevents: the instruction files and the session load growing past their caps unseen, rule lines that change with no conflict
+check, a path that AGENTS.md names and that is gone, and a skill that is malformed.
+
 Usage:
     python3 scripts/bloat_check.py            # full report
     python3 scripts/bloat_check.py --brief    # one line (scripts/session_checkin.sh runs this)
@@ -47,12 +50,21 @@ It measures:
     pointers      each `.claude/...`, `scripts/...` and `docs/...` path in backticks and each relative link in
                   AGENTS.md exists (text moved to a skill is not lost)
     readme        (--rules) when the AGENTS.md "- Purpose:" line is filled in: no README.md fails; a README.md whose
-                  first paragraph does not open with that purpose is a WARN line (AGENTS.md "README")
+                  first paragraph does not open with that purpose is a WARN line (AGENTS.md "One home")
     handoff       docs/NEXT_PROMPT.md lines
     duplicates    normalized text lines of 80+ characters found in 2 or more tracked files (not counted: the lines
                   of a generated block, between the marker lines "# >>> ... generated from ..." and "# <<< ...")
     big files     tracked files over the size budget
     audit due     days and commits on main since the last full audit (.check.state.json "audit": "last_audit")
+    tool rows     (--rules, T1) each tool file the repo owns has a docs/tools.md row, whose first cell names it: 3 candidate tools,
+                  or "none known" and the search terms; FAIL in the kit, WARN in a project (code: scripts/bloat_check_files.py)
+    script lines  (--rules, T2) the lines of scripts/*.py and *.sh against "script_lines": {"baseline": N} in the state file
+                  (`cat scripts/*.py scripts/*.sh | wc -l`); over it fails, and so does a baseline above main's with no DECISIONS row; no baseline: FAIL in the kit, SKIP in a project
+    role word     (--rules, T6) kit-synced text in the kit says "the Maintainer", not an old role word; FAIL in the kit, no check in a project
+    debt record   (--rules --gate, T5, kit) changed rule lines, a check entry point added to scripts/check.sh and a lower
+                  KIT_CAPS cap need a docs/reviews/*-debt.md file with the line "debt-check: <hash>" (the hash as the conflict gate)
+    fleet audit   (kit, R3) AUDIT DUE (fleet): kit.config.json "fleet": {"last_audit": "YYYY-MM-DD"} missing, over 14 days old,
+                  or older than a v* release tag at HEAD
     timings       (--time) wall time of each named command against its recorded baseline; (--compare) times that
                   a script measured itself: NAME is a timings key, NAME:STEP one of its "steps". Slower means over
                   max_slowdown (default +25%) and over min_slowdown_seconds (default 0.5 s), so noise on a small step
@@ -80,14 +92,16 @@ Credentials: none.
 import argparse
 import datetime
 import fnmatch
+import json
 import re
 import sys
 from pathlib import Path
 
+import bloat_check_files  # scripts/bloat_check_files.py: the file checks and the full --rules report (kept apart, code standard C4)
 import check_settings  # scripts/check_settings.py: the reader of .check and the reader and writer of .check.state.json
 # scripts/bloat_check_rules.py: the rule census (kept apart, code standard C4). The names the self-test reads are listed.
-from bloat_check_rules import (conflict_hash, git, lint, main_lint, rule_lines, rules_report,  # noqa: F401
-                               start_read)
+from bloat_check_files import is_kit, rules_report  # noqa: F401 - the full --rules report (rule census + file checks)
+from bloat_check_rules import conflict_hash, git, lint, main_lint, rule_lines, start_read  # noqa: F401
 # scripts/bloat_check_timing.py: the timed commands and the baseline comparison (kept apart, code standard C4).
 from bloat_check_timing import (SHELL_CHARS, TIMING_DIRS, compare_times, run_timings, save_timings,  # noqa: F401
                                 timing_argv)
@@ -184,6 +198,31 @@ def big_files(root, files, kb):
     """Return [(file, KB)] of the files over kb kilobytes, largest first."""
     return sorted(((rel, (root / rel).stat().st_size // 1024) for rel in files
                    if (root / rel).stat().st_size > kb * 1024), key=lambda f: -f[1])
+
+
+def fleet_audit_due(root, today, every_days=14):
+    """Why the fleet audit is due, or "" when it is not (the kit only: R3). Due when kit.config.json has no `fleet.last_audit`
+    date, when that date is more than every_days old, or when HEAD carries a kit release tag (v*) dated after it.
+
+    Args:
+        root: the repo root (a Path).
+        today: the date to count from (a datetime.date).
+        every_days: the days after which the audit is due again.
+
+    Returns:
+        The reason as a text, or "".
+    """
+    if not is_kit(root):
+        return ""
+    try:
+        last = datetime.date.fromisoformat(json.loads((root / "kit.config.json").read_text(encoding="utf-8"))["fleet"]["last_audit"])
+    except (ValueError, KeyError, TypeError, OSError):
+        return "no fleet.last_audit date in kit.config.json"
+    reasons = [f"{(today - last).days} days since {last}"] if (today - last).days > every_days else []
+    for tag in (git(root, "tag", "--points-at", "HEAD", "--list", "v[0-9]*", "--format=%(creatordate:short) %(refname:short)") or "").splitlines():
+        if tag.split()[0] > last.isoformat():
+            reasons.append(f"kit release {tag.split()[1]} is newer than {last}")
+    return "; ".join(reasons)
 
 
 def audit_due(root, cfg, today):
@@ -291,6 +330,10 @@ def report(root, args, today=None):
 
     tail = (f"AUDIT DUE ({due}): tell the Maintainer and ask whether to run the audit skill (.claude/skills/audit/SKILL.md, "
             "about 1 hour of agent time); never start it unasked") if due else "audit not due"
+    fleet = fleet_audit_due(root, today)
+    if fleet:
+        tail += (f" · AUDIT DUE (fleet: {fleet}): tell the Maintainer and ask whether to run the fleet audit "
+                 "(.claude/skills/audit/SKILL.md, section Fleet audit); never start it unasked")
     if args.brief:
         print(f"bloat:       {r_rows[0][13:]} · duplicate lines "
               f"{len(dups)} · big files {len(big)} · over: {', '.join(over) or 'none'}{' · ' + warn if warn else ''} · {tail}")

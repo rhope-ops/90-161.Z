@@ -13,6 +13,7 @@ What it gives:
   has_comment_above     rule C2: a comment line directly above a function
 Inputs:  the text or the lines of one file; for PowerShell, the repo root and the paths.
 Outputs: lists of tuples (see each function); nothing is printed.
+Prevents: the code standard misreads a file header or a function, so a missing header or comment passes the check
 Network: none.
 Writes: none.
 Credentials: none.

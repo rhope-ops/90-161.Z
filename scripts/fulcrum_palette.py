@@ -11,6 +11,7 @@ Inputs: docs/brand/fulcrum.json (primitives, derived colours, roles per theme, c
 Outputs: "FULCRUM PASS" and exit 0, or one line per finding and exit 1; with --write, docs/brand/fulcrum.css.
 The five primitives are pinned below to the Logo Studies standard; a change there is copied here by hand, on the Maintainer's request.
 Standard library only.
+Prevents: the design colours drift: a role names an unknown colour, a pair fails its contrast minimum, or the CSS is stale against the JSON
 Network: none.
 Writes: docs/brand/fulcrum.css with --write only (the self-test: temporary files).
 Credentials: none.

@@ -16,6 +16,7 @@ Logs are validated with scripts/log_check.py first; a log with findings is refus
 Public pages: the output holds everything in the log. A public repo's log is private on purpose (AGENTS.md
 "Project log"), so publish a timeline from it only to a private place, or sanitize the log first.
 Standard library only.
+Prevents: story events (decisions, misses, lessons) that stay hidden in a long Markdown log table that no one reads
 Network: none.
 Writes: the output file (-o, default timeline.html; or --outline FILE).
 Credentials: none.

@@ -67,7 +67,7 @@ Rules for the asking agent:
 2. Project log (answer 12, public repos in the full tier only): for A, make a private Claude doc named "<1> project log" with the Arcs and Log tables of docs/LOG.md, delete docs/LOG.md, and add to AGENTS.md "Project rules": "Project log: <doc link> (the owner, YYYY-MM-DD)". For B, keep docs/LOG.md. For C, delete docs/LOG.md and add to "Project rules": "No project log (the owner, YYYY-MM-DD)".
 3. Guard (answer 8): for B, delete `.check`: the pre-push hook and the Action then skip the scan. The tool-call hook still scans.
 4. License (answer 6): for A, copy docs/archimedes_lever-LICENSE.txt to `LICENSE` and change the copyright line to the current year and the GitHub account or organization from `<owner/repo>`, unless the user names another holder (a public repo never uses a real name the user has not given). For B, save the text from https://www.apache.org/licenses/LICENSE-2.0.txt, unchanged, as `LICENSE`. For C, add no LICENSE.
-5. Record the answers as the owner's decisions in docs/DECISIONS.md (with 4A, one row: "Recommended settings" and the list), and add one `decision` row to the project log (full tier only; not for 12C).
+5. Record the answers as the Maintainer's decisions in docs/DECISIONS.md (with 4A, one row: "Recommended settings" and the list), and add one `decision` row to the project log (full tier only; not for 12C).
 6. Commit with a noreply identity, and run `scripts/session_checkin.sh` (it installs the git hooks). Do not push yet: step 4 comes first.
 
 ## 4. The denylist, then the first push
@@ -80,7 +80,7 @@ With the guard on (8A) in the full tier (11B), every push and every pull-request
 | Each Claude cloud environment the repo uses | 9A or 9C | Environment menu in the session title bar > Edit > Environment variables: `PII_GUARD_DENYLIST=Name1,Name2,...`. Only a new session reads it |
 | GitHub pull-request check | always (after the first push is fine) | `https://github.com/<owner/repo>/settings/secrets/actions` > New repository secret > Name `PII_GUARD_DENYLIST` |
 
-Optional second list, the owner's own blocked terms (words that are not personal data: a client, a code name). Same format and the same three places, under other names: the file `~/.config/check/terms.txt`, the cloud environment variable `CHECK_TERMS`, and the repository secret `CHECK_TERMS`. With no terms list, nothing is missing: the check runs without it. `scripts/check.sh --status` prints the count and a fingerprint of each list, never the words.
+Optional second list, the Maintainer's own blocked terms (words that are not personal data: a client, a code name). Same format and the same three places, under other names: the file `~/.config/check/terms.txt`, the cloud environment variable `CHECK_TERMS`, and the repository secret `CHECK_TERMS`. With no terms list, nothing is missing: the check runs without it. `scripts/check.sh --status` prints the count and a fingerprint of each list, never the words.
 
 One master copy: the user keeps the list in one file in their own Google Drive and edits only that file. A computer with Drive for desktop reads it directly (set `PII_GUARD_DENYLIST_FILE` to the synced path); the cloud variable and the GitHub secret are pasted copies of it. An agent never opens the master file. To find a copy that differs, compare the fingerprint: `python3 scripts/check_content.py --status` in each place and the last line of the pull-request check print the same 8 characters when the lists are the same.
 

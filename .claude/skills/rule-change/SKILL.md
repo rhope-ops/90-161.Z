@@ -17,6 +17,8 @@ AGENTS.md "Rule text" holds the gate: the Maintainer approves the exact text. Th
 
 A change to "Hard rules" or "Defaults" is a change of the kit: make it in the kit repo (AGENTS.md "Kit files").
 
+Before a new rule, check or stricter cap: list what it would fail today in every fleet repo, with a fix plan, in `docs/reviews/YYYY-MM-DD-<topic>-debt.md`, with the line `debt-check: <hash>` for the hash that `python3 scripts/bloat_check.py --rules` prints (T5).
+
 ## Suggest (end-of-turn summary)
 
 - At most 3 items. Leave the part out when you have none.

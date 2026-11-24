@@ -1,0 +1,51 @@
+{
+ "_about": "Sample files for the self-test of scripts/worker_guard_scan.py (data, not code: the scan reads only code). The blocked word is invented.",
+ "word": "Zorblatt",
+ "samples": {
+  "a.py": [
+   "x = \"a\" + chr(64) + \"b\"\n",
+   "rebuilt"
+  ],
+  "b.py": [
+   "x = \"\".join([\"Zor\", \"blatt\"])\n",
+   "rebuilt"
+  ],
+  "c.py": [
+   "x = base64.b64decode(\"Wm9yYmxhdHQ=\")\n",
+   "rebuilt"
+  ],
+  "d.py": [
+   "x = \"\\x5a\\x6f\\x72\\x62\\x6c\\x61\\x74\\x74\"\n",
+   "rebuilt"
+  ],
+  "e.sh": [
+   "#!/bin/sh\ngit push --force origin claude/x\n",
+   "wrapped"
+  ],
+  "f.py": [
+   "x = chr(10).join([\"a\", \"b\"])\n",
+   null
+  ],
+  "g.sh": [
+   "#!/bin/sh\n# git push --force is not allowed\ngit status\n",
+   null
+  ],
+  "h.md": [
+   "Never run git push --force, and never build chr(64) at run time.\n",
+   null
+  ],
+  "j.py": [
+   "x = chr(0x40)\n",
+   "rebuilt"
+  ],
+  "k.py": [
+   "subprocess.run([\"git\", \"push\", \"--force\", \"origin\", \"claude/x\"])\n",
+   "wrapped"
+  ],
+  "l.py": [
+   "subprocess.run([\"git\", \"status\"])\n",
+   null
+  ]
+ },
+ "range": "x = 1\n++ 1\ny = \"\u00ff\"\nz = \"a\" + chr(64)\n"
+}

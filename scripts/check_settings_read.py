@@ -8,6 +8,7 @@ their defaults are listed in the header of scripts/check_settings.py.
 Inputs:  `.check` and `.check.state.json` in the working tree or at a git ref (`git show <ref>:<file>`).
 Outputs: settings as dicts; `.check.state.json` on a write (save_part).
 Usage:   imported by scripts/check_settings.py; it has no command line.
+Prevents: a wrong or unknown `code-` or `audit-` value in `.check` is accepted, so a cap or rule is silently off or wrong
 Network: none (it runs local git read commands).
 Writes: .check.state.json, only through save_part.
 Credentials: none.

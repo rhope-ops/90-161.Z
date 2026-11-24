@@ -65,13 +65,16 @@ Branch per worker: the branch the host requires (Claude cloud sessions: `claude/
 - Done criteria that can be measured (numbers, test names, PASS lines).
 - Checks to run.
 - "No design decisions: list candidates with trade-offs."
+- "A blocked command or a blocked check stops the task: report it; do not run it another way and do not change the text to pass."
+- "Read each skill you need in full with the Read tool, never by grep or sed."
+- For a change made to pass a check: the design goal, not the metric (AGENTS.md "Fresh review").
 - The tier and model, when the routing table says strong.
 
 ## Review and merge
 
 1. Scope: `git diff --stat origin/main...origin/<branch>`. Flag files outside the brief.
 2. Update by merge (AGENTS.md "Git history"): `git checkout -B review/<branch> origin/<branch> && git merge origin/main`. When intents conflict, stop and list the choice for the Maintainer.
-3. Fresh review: `reviewer` with only the diff and the brief. Verify each finding before you report it.
+3. Fresh review: `reviewer` with only the diff and the brief. Verify each finding before you report it. Before the review, run `python3 scripts/worker_guard.py --scan origin/main...origin/<branch> <scratch folder>` on the worker's branch and scratch folder, and give its findings to the reviewer. Any workaround of a guard (a string rebuilt to pass the content check, a command wrapped in a file to pass the worker guard), in the diff or in scratch output, is a MAJOR finding.
 4. Checks: the commands in AGENTS.md "Commands". Report before and after numbers.
 5. Merge: the steps of `.claude/skills/deliver/SKILL.md`.
 

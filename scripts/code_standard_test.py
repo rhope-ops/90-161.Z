@@ -23,10 +23,12 @@ import unittest
 from pathlib import Path
 
 import check_settings as settings   # scripts/check_settings.py: the reader of .check and .check.state.json
+import code_standard_rules as rules   # scripts/code_standard_rules.py: LINTERS
 # scripts/code_standard_test_gate.py and scripts/code_standard_test_docs.py: more case groups (kept apart, rule C4).
 from code_standard_test_gate import (FULL, PS, SAMPLE_GATE, SMALL, commit, config_of, fails, main,  # noqa: F401
                                      self_test_gate, self_test_gate_ratchet, write)
-from code_standard_test_docs import self_test_adopt_ratchet, self_test_docs, self_test_docs_forms  # noqa: F401
+from code_standard_test_docs import (self_test_adopt_ratchet, self_test_docs, self_test_docs_forms,  # noqa: F401
+                                     self_test_warns)
 
 
 def run(cs):
@@ -48,6 +50,52 @@ def run(cs):
         cs.GATE_FILE, cs.GATE = real_gate, None
     print('code standard self-test: pass')
     return 0
+
+
+def python_is_not_sized(cs, ROOT, g, good_py):
+    """A Python file over the file cap is not a C4 finding here: pylint warns about it (scripts/check.sh)."""
+    (ROOT / 'p.py').write_text(good_py + '#\n' * 50)
+    g('add', 'p.py')
+    assert cs.measure(config_of(ROOT, SMALL))['violations']['file_size'] == {}, 'a Python file is not measured for size here'
+    g('rm', '-qf', 'p.py')
+    python_for_the_linters(cs, ROOT, g, good_py)
+
+
+def python_for_the_linters(cs, ROOT, g, good_py):
+    """Ruff and pylint get the Python files this check covers: not an excluded or a generated file; a file with a
+    generated block only for parse and size, not for the line cap. A file that does not parse is no crash with
+    `code-c2: full`: the parse error is for the linters.
+
+    Args:
+        cs: the check module.
+        ROOT: the sample repo.
+        g: runs git in the sample repo.
+        good_py: the text of a sample Python file that passes.
+    """
+    (ROOT / 'vendor').mkdir(exist_ok=True)
+    (ROOT / 'x').mkdir(exist_ok=True)
+    (ROOT / 'vendor/v.py').write_text(good_py)
+    (ROOT / 'x/gen.py').write_text('# GENERATED from src/x.py by build.py\nx = 1\n')
+    (ROOT / 'x/blk.py').write_text(good_py + '# >>> s: generated from src/s.py by b.py\nx = 1\n# <<< s\n')
+    (ROOT / 'x/bad.py').write_text(good_py + 'def (:\n')
+    g('add', '-A')
+    config = config_of(ROOT, SMALL + FULL + 'code-exclude: vendor/**\ncode-generated: x/gen.py\n')
+    everything, lines = cs.python_files(config, 'all').split('\0')[:-1], cs.python_files(config, 'line').split('\0')[:-1]
+    assert 'vendor/v.py' not in everything and 'x/gen.py' not in everything, 'excluded and generated files: %s' % everything
+    assert {'x/blk.py', 'x/bad.py'} <= set(everything), 'a block file and a bad file are parsed and sized: %s' % everything
+    assert 'x/blk.py' not in lines and 'x/bad.py' in lines, 'a generated block: no line cap for that file: %s' % lines
+    (ROOT / 'vendor/v.sh').write_text('echo $1\n')
+    (ROOT / 'x/gen.sh').write_text('echo $1\n')
+    (ROOT / 'x/ok.sh').write_text('echo $1\n')
+    g('add', '-A')
+    config = config_of(ROOT, SMALL + FULL + 'code-exclude: vendor/**\ncode-generated: x/gen.sh\n')
+    assert cs.shell_files(config).split('\0')[:-1] == ['x/ok.sh'], 'shellcheck gets the covered shell files only: %r' % cs.shell_files(config)
+    kept = rules.LINTERS
+    for linters in (True, False):   # a file that does not parse: no traceback with `code-c2: full`
+        rules.LINTERS = linters
+        assert bool(cs.measure(config)['violations']['parse'].get('x/bad.py')) != linters, 'C10 here only without linters'
+    rules.LINTERS = kept
+    g('rm', '-rqf', 'vendor', 'x')
 
 
 def run_cases(cs, ROOT):
@@ -78,12 +126,13 @@ def run_cases(cs, ROOT):
         m = cs.measure(config)
         assert not any(m['violations'].values()), 'clean files pass: %s' % m['violations']
         assert not PS or [f['name'] for f in m['files']['b.ps1']['functions']] == ['Get-Upper'], 'generated block skipped'
-        (ROOT / 'p.py').write_text(good_py + '#\n' * 50)   # 57 lines: over the file cap 50 of SMALL
-        g('add', 'p.py')
+        (ROOT / 'p.sh').write_text('# Sample shell file: it is over the file cap, for the check self-test only.\n' + '#\n' * 55)   # 57 lines: over the file cap 50 of SMALL
+        g('add', 'p.sh')
         sizes = [cs.measure(config_of(ROOT, SMALL + extra))['violations']['file_size'] for extra in
-                 ('', 'code-paste: p.py\n', 'code-paste: p.py\ncode-max-file-lines-paste: 52\n')]
-        assert sizes == [{'p.py': 57}, {}, {'p.py': 57}], 'a `code-paste:` file has its own cap: %s' % sizes
-        g('rm', '-qf', 'p.py')
+                 ('', 'code-paste: p.sh\n', 'code-paste: p.sh\ncode-max-file-lines-paste: 52\n')]
+        assert sizes == [{'p.sh': 57}, {}, {'p.sh': 57}], 'a `code-paste:` file has its own cap: %s' % sizes
+        g('rm', '-qf', 'p.sh')
+        python_is_not_sized(cs, ROOT, g, good_py)
         config = config_of(ROOT, SMALL)
         (ROOT / 'a.py').write_text(good_py + '\n\ndef bare(x):\n    return x\n')
         new, fixed = cs.compare(cs.measure(config)['violations'], {}, config['caps'])
@@ -108,6 +157,7 @@ def run_cases(cs, ROOT):
         self_test_init(cs, ROOT)
         self_test_docs(cs, ROOT, g, config)
         self_test_gate(cs, ROOT, g)
+        self_test_warns(cs, ROOT, g, config)
 
 
 def self_test_kinds(cs, root, g, config):
@@ -237,7 +287,7 @@ def self_test_forms(cs, root, g, config):
     assert 'j.py::lead' not in v['comment'], 'a Python lead comment counts: %s' % v['comment']
     assert {'j.py::p', 'j.py::q'} <= set(v['duplicate']), 'docstring-only difference is a duplicate: %s' % v['duplicate']
     assert not any(k.startswith('k.js::') for k in v['comment'].keys() | v['length'].keys()), 'arrow: %s' % v['length']
-    assert v['parse'].get('l.py'), 'a Python parse error fails: %s' % v['parse']
+    assert bool(v['parse'].get('l.py')) != rules.LINTERS, 'a Python parse error: ruff and pylint, or here without them: %s' % v['parse']
     self_test_edges(cs, root, g, config)
     for f in ('h.sh', 'i.ps1', 'j.py', 'k.js', 'l.py'):
         (root / f).unlink(missing_ok=True)

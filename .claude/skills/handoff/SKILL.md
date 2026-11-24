@@ -13,7 +13,7 @@ AGENTS.md "Handoff" points here. The next session cannot see this chat: it reads
 2. Update docs/NEXT_PROMPT.md, within the AGENTS.md "Handoff" cap, in its sections:
    - `Updated:` date and time (the time zone in the AGENTS.md header) and who.
    - State: what is on main (commit), open branches and pull requests (full links), what runs now and who owns it.
-   - Approved plan: the plan the Maintainer approved, with the approval date; mark each step done as it lands. A plan that does not fit the 40-line cap goes in docs/reviews/, with a link here. This section is the plan's canonical place (not docs/DECISIONS.md).
+   - Approved plan: the plan the Maintainer approved, with the approval date; mark each step done as it lands. A plan that does not fit the 40-line cap goes in docs/reviews/, with a link here. This section is the plan's canonical place (not docs/DECISIONS.md). A plan made from a source plan first lists every source item as in, out or later, with a count table; the Maintainer approves that list before the plan; `python3 scripts/log_check.py --coverage <file>` fails on an unmarked or "ask" row or a count mismatch (T7).
    - Open (in order): the next steps, one line each, with what "done" is.
    - Needs the Maintainer: each open decision in one line, with its options and the recommendation.
    - Do not: approaches that failed, with one line of why.

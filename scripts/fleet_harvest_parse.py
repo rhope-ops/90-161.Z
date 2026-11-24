@@ -7,6 +7,7 @@ Format: docs/reviews/2026-11-19-fleet-contract.md, section 2 (the Maintainer, 20
 Inputs:  the text of docs/NEXT_PROMPT.md (or the handoff file) and docs/DECISIONS.md of a project folder.
 Outputs: parsed dicts and rows, and the lines that cannot be read; no output of its own.
 Usage:   imported by scripts/fleet_harvest.py; it has no command line.
+Prevents: a handoff or decisions line in the fleet format is misparsed, so the fleet page shows a wrong or missing item
 Network: none.
 Writes: none.
 Credentials: none.

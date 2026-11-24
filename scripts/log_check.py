@@ -3,6 +3,8 @@
 
 Usage:
     python3 scripts/log_check.py [FILE ...]        # default: docs/LOG.md
+    python3 scripts/log_check.py --decisions [FILE]  # approval quotes in docs/DECISIONS.md (T6)
+    python3 scripts/log_check.py --coverage FILE   # a plan coverage list (T7)
     python3 scripts/log_check.py --test            # self-test; prints LOG CHECK TEST PASS
 
 Checks (each failure prints FILE:LINE: message):
@@ -15,9 +17,19 @@ Checks (each failure prints FILE:LINE: message):
 - Type is milestone, breakthrough, miss or decision.
 - Arc is kebab-case and has a row in the Arcs table; every Arcs row is used at least once.
 - Evidence is not empty and not "-" (.claude/skills/project-log/SKILL.md: never chat text alone).
+--decisions (T6): a row of the "## Decisions" table whose By cell names the Maintainer (or the old word "owner") must
+  quote the approval of its exact text: a quoted OK in the By cell, for example the Maintainer "I approve the plan"
+  (own message, date time). Rows from the row named in the marker line `<!-- approval-quote-exempt-from: TEXT -->`
+  (above the table; TEXT starts that row's Decision cell) down to the end are older rows and exempt; the table is
+  newest first. With no marker line, every row is checked.
+--coverage (T7): a plan coverage list. Every row of each table with a Mark column has the mark in, out, later or ask
+  (first word of the cell; "in (added)" is in). A row marked ask or with no mark fails. The "Group | Rows | in | out |
+  later | ask" table must equal the rows counted per group (the letter of the nearest "## A." or "### B2." heading)
+  and its Total row the sums.
 Exit 0 and "LOG CHECK PASS: N rows" when clean, exit 1 with the findings otherwise.
 It does not judge whether a row's type or text is right; that stays a human review.
 Standard library only. It reads files only; it never writes.
+Prevents: a project log or a DECISIONS row is malformed or its approval quote is missing, so the story record is wrong or an approval is not shown
 Network: none.
 Writes: none (the self-test: temporary files).
 Credentials: none.
@@ -286,6 +298,8 @@ def self_test():
     expect("short Arcs row", GOOD.replace("| setup | 2026-11-10 | Start. | - | - | Ready | - |", "| setup | 2026-11-10 | Start. | Ready |"), "4 cells in Arcs row")
     expect("turning point names a missing row", GOOD.replace("#2 found", "#9 found"), "Turning point #9 is not a log row")
     expect("turning point without a row", GOOD.replace("#2 found the cause", "found the cause"), "must name a log row")
+    import log_check_plan  # here, not at the top: it imports this module
+    ok = log_check_plan.self_test_t6_t7() and ok
     print("LOG CHECK TEST " + ("PASS" if ok else "FAIL"))
     return 0 if ok else 1
 
@@ -297,14 +311,23 @@ def main():
         The exit code: 0 pass, 1 when a log has findings.
     """
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("files", nargs="*", default=["docs/LOG.md"])
+    ap.add_argument("files", nargs="*")
     ap.add_argument("--test", action="store_true", help="run the self-test")
+    ap.add_argument("--decisions", action="store_true", help="check the files as DECISIONS tables (default docs/DECISIONS.md)")
+    ap.add_argument("--coverage", action="store_true", help="check the files as plan coverage lists")
     a = ap.parse_args()
     if a.test:
         return self_test()
+    if a.decisions and a.coverage:
+        ap.error("use --decisions or --coverage, not both")
+    if a.coverage and not a.files:
+        ap.error("--coverage needs a file")
+    import log_check_plan  # here, not at the top: it imports this module
+    one = log_check_plan.check_decisions if a.decisions else log_check_plan.check_coverage if a.coverage else check
+    files = a.files or ["docs/DECISIONS.md" if a.decisions else "docs/LOG.md"]
     total, found = 0, []
-    for f in a.files:
-        n, fs = check(f)
+    for f in files:
+        n, fs = one(f)
         total += n
         found += fs
     for f in found:

@@ -4,12 +4,17 @@ against their caps, the lint of rule lines, the conflict-check gate for changed 
 names. Kept apart so bloat_check.py stays under the line cap of docs/code-standard.md C4 (what each measure
 means: the header of bloat_check.py).
 
+Prevents: AGENTS.md or the session load passing its cap, a changed rule line with no conflict-check record, and a path that
+AGENTS.md names and that is gone.
+
 What it gives:
   start_read        what every session loads, in lines, bytes and ~tokens
   rule_lines        the rule lines of an AGENTS.md text: the kit sections, "## Project rules", and every line
   lint              WARN lines: near-duplicate pairs, vague words, untested rules
-  readme_report     README.md exists and opens with the "- Purpose:" line of AGENTS.md (AGENTS.md "README")
-  rules_report      the lines of `--rules` and the problems that fail scripts/check.sh
+  readme_report     README.md exists and opens with the "- Purpose:" line of AGENTS.md (AGENTS.md "One home")
+  changed_lines     the rule lines added and removed against the default branch (the debt record of scripts/bloat_check_files.py reads it)
+  rules_report      the census lines of `--rules` and the problems that fail scripts/check.sh (scripts/bloat_check_files.py adds the
+                    file checks and the debt record, and the RULES FAIL lines)
   main_lint         the `--lint` mode
 Inputs:  the repo root, the audit settings (scripts/check_settings.py), AGENTS.md here and on origin/main,
          .claude/rule-tests.md and docs/reviews/.
@@ -214,11 +219,21 @@ def conflict_hash(added, removed):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
 
 
-def conflict_recorded(root, h):
-    """True when a file in docs/reviews/ holds the line "rule-conflict-check: <h>"."""
+def conflict_recorded(root, h, label="rule-conflict-check", pattern="*.md"):
+    """True when a file of docs/reviews/ that matches pattern holds the line "<label>: <h>".
+
+    Args:
+        root: the repo root (a Path).
+        h: the hash of the changed rule lines (conflict_hash).
+        label: the line label; the debt record uses "debt-check".
+        pattern: the file name pattern; the debt record uses "*-debt.md".
+
+    Returns:
+        True when a record names the hash.
+    """
     d = root / REVIEWS
-    return d.is_dir() and any(f"rule-conflict-check: {h}" in f.read_text(encoding="utf-8", errors="replace")
-                              for f in d.rglob("*.md"))
+    return d.is_dir() and any(f"{label}: {h}" in f.read_text(encoding="utf-8", errors="replace")
+                              for f in d.rglob(pattern))
 
 
 def missing_pointers(root, text):
@@ -248,6 +263,29 @@ def missing_pointers(root, text):
     return sorted(n for n in names if n and not re.search(r"[<>*{]", n) and not (root / n).exists())
 
 
+def changed_lines(root, parts):
+    """The rule lines added and removed against the default branch (the kit lines too, unless the lock holds them).
+
+    Args:
+        root: the repo root (a Path).
+        parts: (kit, project, every), the rule lines of AGENTS.md now (rule_lines).
+
+    Returns:
+        (added, removed), or None when the default branch has no AGENTS.md to compare with.
+    """
+    old = None
+    for ref in ("origin/main", "origin/master"):
+        old = git(root, "show", f"{ref}:{RULES_FILE}")
+        if old is not None:
+            break
+    if old is None:
+        return None
+    import check_lock  # in a synced project the kit checked the locked kit lines: only "Project rules" count here
+    part = 1 if check_lock.kit_text_locked(root) else 2
+    was = set(rule_lines(old)[part])
+    return [l for l in parts[part] if l not in was], sorted(was - set(parts[part]))
+
+
 def changed_rules(root, text, parts, gate):
     """The part of the rules report on rule lines that changed against the default branch: the lines, the state of
     their conflict check, and the lint of the added ones.
@@ -261,22 +299,14 @@ def changed_rules(root, text, parts, gate):
     Returns:
         (lines to print, problems).
     """
-    out, problems, old = [], [], None
-    for ref in ("origin/main", "origin/master"):
-        old = git(root, "show", f"{ref}:{RULES_FILE}")
-        if old is not None:
-            break
-    if old is None:
+    out, problems = [], []
+    found = changed_lines(root, parts)
+    if found is None:
         return out, problems
-    import check_lock  # in a synced project the kit checked the locked kit lines: only "Project rules" count here
-    part = 1 if check_lock.kit_text_locked(root) else 2
-    every = parts[part]
-    was = set(rule_lines(old)[part])
-    now = set(every)
-    added, removed = [l for l in every if l not in was], sorted(was - now)
+    added, removed = found
     for mark, lines in (("+", added), ("-", removed)):
         out += [f"  {mark} {l}" for l in lines]  # the whole line: a change near its end must show
-    if was != now:
+    if added or removed:
         out.append("  (rule lines changed against the default branch: each one needs the Maintainer's approval of its exact text)")
         h = conflict_hash(added, removed)
         if conflict_recorded(root, h):
@@ -293,7 +323,7 @@ def changed_rules(root, text, parts, gate):
 
 
 def readme_opening(text):
-    """The first paragraph of a README text, for the AGENTS.md "README" check.
+    """The first paragraph of a README text, for the AGENTS.md "One home" check.
 
     Skipped before it: YAML front matter, headings (ATX and setext), images, badges, HTML lines and blank lines. A
     blockquote marker is taken off. The lines of the paragraph are joined by spaces.
@@ -328,7 +358,7 @@ def plain_words(s):
 
 
 def readme_report(root, text):
-    """The AGENTS.md "README" default: README.md exists and opens with the "- Purpose:" value of AGENTS.md.
+    """The AGENTS.md "One home" default: README.md exists and opens with the "- Purpose:" value of AGENTS.md.
 
     Checked only when that value is filled in (empty, or the kit template's {{PURPOSE}}, is not). A missing README.md
     (any letter case) is a problem; an opening that does not start with the purpose, as whole words, is a WARN line
@@ -346,10 +376,10 @@ def readme_report(root, text):
         return [], []
     readme = next((f for f in sorted(root.iterdir()) if f.is_file() and f.name.lower() == "readme.md"), None)
     if readme is None:
-        return [], ["no README.md: it opens with the AGENTS.md \"Purpose\" line (AGENTS.md \"README\")"]
+        return [], ["no README.md: it opens with the AGENTS.md \"Purpose\" line (AGENTS.md \"One home\")"]
     want, got = plain_words(m.group(1)), plain_words(readme_opening(readme.read_text(encoding="utf-8", errors="replace")))
     if not (got.startswith(want) and (len(got) == len(want) or not got[len(want)].isalnum())):
-        return [f"WARN  {readme.name} does not open with the AGENTS.md \"Purpose\" line; update it (AGENTS.md \"README\")"], []
+        return [f"WARN  {readme.name} does not open with the AGENTS.md \"Purpose\" line; update it (AGENTS.md \"One home\")"], []
     return [], []
 
 
@@ -405,8 +435,6 @@ def rules_report(root, cfg, gate=False):
     rows, found = readme_report(root, text)
     out += rows
     problems += found
-    for pr in problems:
-        out.append(f"RULES FAIL:  {pr}")
     return out, problems
 
 

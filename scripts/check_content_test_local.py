@@ -85,6 +85,16 @@ def case_in_process(check, d):
               and kinds_of("see " + HOST) == [])
         check("local module: an added finder runs next to the kit's", kinds_of(key + " and gh" + "p_" + "A" * 36, False) == ["secret", "secret"])
         check("local module: a replaced DoD kind still runs only in the DoD tier", kinds_of("see x-base" + dot + "mil", False) == [])
+        check("local module: every line is scanned, and the kit's two-line finders still run on the kit's kinds",
+              kinds_of("FOR OFFICIAL\nUSE ONLY") == ["marking"] and kinds_of("EDIPI\n" + "12345" + "67890") == ["dodid"])
+        with open(path, "w") as f:
+            f.write("REPLACE = {'marking': [lambda line: iter(())], 'dodid': [lambda line: iter(())]}\n")
+        check_content_scan.use_local(path)
+        check("local module: a replaced kind has no two-line finder (the kit's one-line finder is not in use)",
+              kinds_of("FOR OFFICIAL\nUSE ONLY") == [] and kinds_of("EDIPI\n" + "12345" + "67890") == [])
+        with open(path, "w") as f:
+            f.write(SAMPLE)
+        check_content_scan.use_local(path)
         for label, text, why in BROKEN:
             with open(path, "w") as f:
                 f.write(text)

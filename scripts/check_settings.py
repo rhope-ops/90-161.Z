@@ -51,6 +51,7 @@ Usage:   python3 scripts/check_settings.py            print the settings and the
                                                       (the cases: scripts/check_settings_test.py)
 Parts:   scripts/check_settings_read.py (the keys, the readers and the state file; every name is re-exported here).
 Needs:   Python 3.8+ and git. Standard library only.
+Prevents: a `.check` code or audit setting is misread, so a cap or an adopted rule differs from what the Maintainer set
 Network: none (it runs local git read commands).
 Writes:  .check.state.json; with --migrate also .check, and it deletes the old settings files.
 Credentials: none.

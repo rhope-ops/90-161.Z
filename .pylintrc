@@ -1,0 +1,7 @@
+# Python checks of docs/code-standard.md that pylint runs: parse (C10), file size (C4, a warning) and line length.
+# scripts/check.sh adds the caps of `.check` (code-max-file-lines, code-max-line-chars); pin: pip install pylint==4.1.4
+[MAIN]
+persistent=no
+[MESSAGES CONTROL]
+disable=all
+enable=syntax-error,too-many-lines,line-too-long

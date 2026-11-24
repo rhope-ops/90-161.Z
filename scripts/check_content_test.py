@@ -162,6 +162,35 @@ def case_dod_patterns():
     expect("dod id: 11 digits are not an ID", "EDIPI 12345" + "678901", [], dod=True)
 
 
+def case_dod_split_lines():
+    """A phrase mark, or a DoD ID keyword and its number, over two lines in a row: found in the DoD tier only, reported
+    at the first line, allowed by its text; a blank line between the lines, or a third line, is not joined."""
+    for label, text in (("short form, after FOR", "FOR\nOFFICIAL USE ONLY"), ("short form, after OFFICIAL", "FOR OFFICIAL\nUSE ONLY"),
+                        ("short form, before ONLY", "for official use\nonly"), ("blanks at the break", "For Official  \n   Use Only"),
+                        ("long form", "Controlled Unclassified\nInformation"), ("long form, after the first word", "Controlled\nUnclassified Information")):
+        expect("dod marking over two lines: " + label, text, ["marking"], dod=True)
+    split = scan_text("x\nFOR OFFICIAL\nUSE ONLY\ny", "t", [], set(), True)
+    check(f"dod marking over two lines: one finding, on the first line: {split}", [(n, k) for _, n, k, _ in split] == [(2, "marking")])
+    expect("minimum tier: a mark over two lines is not checked", "FOR OFFICIAL\nUSE ONLY", [])
+    expect("dod: a mark over two lines, allowed as read", "FOR OFFICIAL\nUSE ONLY", [], allow=["FOR OFFICIAL " + "USE ONLY"], dod=True)
+    expect("dod: a mark over three lines is not read", "FOR OFFICIAL\nUSE\nONLY", [], dod=True)
+    expect("dod: words that only start a mark are not a mark", "FOR OFFICIAL\nBUSINESS ONLY", [], dod=True)
+    expect("dod: a mark over two lines, with words before the break", "the FOR OFFICIAL\nUSE ONLY rule", ["marking"], dod=True)
+    expect("dod: a mark inside a word is not a mark", "BEFOR OFFICIAL\nUSE ONLY", [], dod=True)
+    expect("dod marking over two lines: a blank line between the lines is a paragraph break, not joined", "FOR OFFICIAL\n\nUSE ONLY", [], dod=True)
+    for label, text in (("keyword, then number", "DoD ID:\n12345" + "67890"), ("number, then keyword", "12345" + "67890\n(EDIPI)"),
+                        ("blanks at the break", "EDIPI   \n   12345" + "67890")):
+        expect("dod id over two lines: " + label, text, ["dodid"], dod=True)
+    split = scan_text("x\nDoD ID\n12345" + "67890\ny", "t", [], set(), True)
+    check(f"dod id over two lines: one finding, on the first line: {split}", [(n, k) for _, n, k, _ in split] == [(2, "dodid")])
+    expect("minimum tier: an ID over two lines is not checked", "EDIPI\n12345" + "67890", [])
+    expect("dod id over two lines: the number allowed", "EDIPI\n12345" + "67890", [], allow=["12345" + "67890"], dod=True)
+    expect("dod id over two lines: a blank line between the lines is not joined", "EDIPI\n\n12345" + "67890", [], dod=True)
+    expect("dod id over two lines: three lines are not read", "EDIPI\nnote\n12345" + "67890", [], dod=True)
+    expect("dod id over two lines: 9 digits are not an ID", "EDIPI\n123456789", [], dod=True)
+    expect("dod id over two lines: no keyword", "ref\n12345" + "67890", [], dod=True)
+
+
 def case_profile_lines():
     """The tier line: accepted forms, unknown forms, and no slow match on long or odd lines."""
     good = profile_of({"Profile: DoD"}) == profile_of({"profile:dod"}) == profile_of({"profile :  dod"}) == "dod" \
@@ -245,7 +274,7 @@ def run():
     import check_content_test_local   # the cases for a project's own finders (scripts/check_content_local.py)
     with tempfile.TemporaryDirectory() as kit:
         without_local(kit, check_content_test_blocks)
-        for case in (case_speed, case_minimum_patterns, case_secrets_and_masks, case_dod_patterns, case_profile_lines,
+        for case in (case_speed, case_minimum_patterns, case_secrets_and_masks, case_dod_patterns, case_dod_split_lines, case_profile_lines,
                      case_denylist_and_fingerprint, case_cli, case_commits, case_hook):
             case()
         check_content_test_blocks.run(check)

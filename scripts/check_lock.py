@@ -14,6 +14,7 @@ Usage:
     python3 scripts/check_lock.py --test            # self-test; prints LOCK TEST PASS
 Input: the repo at the current folder (or --project DIR). Output: PASS, FAIL and WARN lines on stdout.
 Writes: .check.lock (--relock only). Standard library only.
+Prevents: a kit-owned file is changed inside a project without the Maintainer, or a project runs a kit version that no one can name
 Network: none.
 Credentials: none.
 """
@@ -89,14 +90,51 @@ def write(root, data):
 
 
 def load(root):
-    """The lock data, or None when the project has no lock; ValueError when the file is broken."""
+    """The lock data, or None when the project has no lock.
+
+    Args:
+        root: the repo root (a folder path).
+
+    Returns:
+        The lock data (a dict), or None when there is no lock file.
+
+    Raises:
+        ValueError: the file is broken (no "files" object, or "overrides" is not a list).
+    """
     path = pathlib.Path(root) / LOCK
     if not path.is_file():
         return None
     data = json.loads(path.read_text())
     if not isinstance(data, dict) or not isinstance(data.get("files"), dict):
         raise ValueError("no \"files\" object")
+    if not isinstance(data.get("overrides", []), list):
+        raise ValueError("\"overrides\" is not a list")
     return data
+
+
+def changed(root, writes=None):
+    """The locked kit files that are in the project now with text that differs from the lock, or that the lock lists
+    as an override (the Maintainer's approved change: a sync would still overwrite it).
+
+    Args:
+        root: the repo root (a folder path).
+        writes: the paths a sync is about to write; only these count (None: every locked file).
+
+    Returns:
+        A sorted list of lock keys; empty when the project has no lock or no such file exists (a missing file is not
+        listed: a sync writes it again).
+
+    Raises:
+        ValueError: the lock is broken.
+    """
+    data = load(root) or {}
+    over = set(data.get("overrides", []))
+    out = []
+    for rel, want in data.get("files", {}).items():
+        got = file_hash(root, rel)
+        if got is not None and (writes is None or (RULES if rel == KIT_PART else rel) in writes) and (rel in over or got != want):
+            out.append(rel)
+    return sorted(out)
 
 
 def verify(root):
@@ -139,7 +177,11 @@ def relock(root, files):
     Returns:
         The exit code: 0 pass, 1 fail.
     """
-    data = load(root)
+    try:
+        data = load(root)
+    except ValueError as e:
+        print(f"FAIL  {LOCK} is not readable ({e}): sync again from the kit")
+        return 1
     if data is None:
         print(f"no {LOCK}: nothing to relock")
         return 1
@@ -190,6 +232,7 @@ def self_test():
         (root / RULES).write_text(agents)
         (root / "scripts/a.py").write_text("print(2)\n")
         ok("a changed kit script fails", verify(root)[0][0] == "FAIL  kit file changed in this project: scripts/a.py")
+        ok("changed() lists the changed script, only when written", changed(root) == ["scripts/a.py"] and changed(root, {"b"}) == [])
         ok("relock of an unknown file is refused", relock(root, ["scripts/zzz.py"]) == 1)
         ok("relock accepts the file", relock(root, ["scripts/a.py"]) == 0)
         lines, bad = verify(root)

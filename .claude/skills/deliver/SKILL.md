@@ -41,6 +41,7 @@ Take the highest lane that any file or effect of the pull request falls in.
 - A lane C pull request that changes rule text shows each changed rule in full in its text, so the Maintainer's merge approves the exact text.
 - An approved plan can state the lane of each of its steps. A plan cannot move a lane C change to a lower lane.
 - In doubt between two lanes, take the higher one.
+- A script that `scripts/check.sh`, `scripts/check.local.sh` or a hook runs, and a workflow file, is a guard file: lane C.
 
 ## Check lanes
 

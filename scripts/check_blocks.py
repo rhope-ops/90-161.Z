@@ -13,6 +13,7 @@ Usage:
     python3 scripts/check_blocks.py --placeholders          # the same for every tracked text file (not the kit's own tools)
     python3 scripts/check_blocks.py --test                  # self-test; prints BLOCKS TEST PASS
 Input: the files named, or the repo at the current folder. Output: findings on stdout. Standard library only.
+Prevents: .claude/settings.json lacks a deny rule for a destructive git command or a protected file read, or a template placeholder stays in a project
 Network: none.
 Writes: none (the self-test writes temporary files only).
 Credentials: none.

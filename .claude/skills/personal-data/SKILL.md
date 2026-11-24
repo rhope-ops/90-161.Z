@@ -38,6 +38,7 @@ Not covered: claude.ai chats (no hooks), a Bash command that builds its payload 
 2. Remove the data. If it is in an unpushed commit, fix that commit.
 3. Push or call again.
 4. A finding that is wrong (a public reference text, an example value): tell the Maintainer. AGENTS.md "Guards and checks" says who may add an entry to `.check`. A private repo may put its owner's real name in the `- Owner:` line of AGENTS.md.
+- A block on invented test data: describe the pattern in words (for example "a 9-digit SSN with dashes"); never rebuild the string to pass the check.
 
 ## The word lists
 

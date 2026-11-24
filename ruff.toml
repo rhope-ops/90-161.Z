@@ -1,0 +1,4 @@
+# Python checks of docs/code-standard.md that ruff runs: parse (C10) and, when scripts/check.sh adds the cap of
+# `code-max-line-chars`, line length (E501). scripts/check.sh runs it; pin: pip install ruff==0.17.6
+[lint]
+select = ["E9"]

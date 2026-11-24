@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """The skills check of scripts/bloat_check.py (`python3 scripts/bloat_check.py --skills`; kept in its own file so the
-check stays under the line cap of docs/code-standard.md C4).
+check stays under the line cap of docs/code-standard.md C4), and the readers of the skill and agent files that the session
+load needs (listing_bytes, kit_files, second_homes).
 
-Input: the repo root; it reads each .claude/skills/*/SKILL.md and AGENTS.md. Output: FAIL lines (no frontmatter, no
-name or description, a name that differs from its folder), indented WARN lines (description start or length, file
-length, orphan skill) and the last line SKILLS PASS or SKILLS FAIL; exit 1 on a FAIL. Standard library only.
+Prevents: a skill that Claude cannot load or find (no frontmatter, no name or description, a name that differs from its
+folder), a rule stated a second time in a skill or agent file, and skill text that grows the session load unseen.
+
+Input: the repo root; it reads each .claude/skills/*/SKILL.md, .claude/agents/*.md and AGENTS.md. Output: FAIL lines (no
+frontmatter, no name or description, a name that differs from its folder), indented WARN lines (description start or length,
+file length, orphan skill) and the last line SKILLS PASS or SKILLS FAIL; exit 1 on a FAIL. Standard library only.
+The repo's tool files, script lines, role words and debt triggers: scripts/bloat_check_files.py.
 Network: none.
 Writes: none.
 Credentials: none.

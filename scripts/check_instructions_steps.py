@@ -7,6 +7,7 @@ check_instructions.py imports every name here and re-exports it, so `check_instr
 findings and the limits are described in the header of scripts/check_instructions.py.
 Inputs:  the text of one file, or of one step. Outputs: steps as (line, text, kind) and finding messages.
 Usage:   imported by scripts/check_instructions.py; it has no command line.
+Prevents: a step that a person follows is read wrongly, so a too-long, vague or multi-action step passes the instructions check
 Network: none.
 Writes: none.
 Credentials: none.
