@@ -180,7 +180,8 @@ MAIL_CHECKS = [
      {"emailMessage/To": ME, "emailMessage/From": OFFICE, "emailMessage/Subject": "90161Z TEST E04 from field",
       "emailMessage/Body": TEST_BODY, "emailMessage/Importance": "Normal"}, "-"),
     ("E05", "After 2 minutes: did E01, E03, E04 arrive, and how (from-me, sent-as-office, on-behalf-of-office, other)", "shared_office365", "HttpRequest",
-     {"Uri": "/v1.0/me/messages?$filter=receivedDateTime%20ge%20@{trigger()?['startTime']}%20and%20startswith(subject,%2790161Z%20TEST%20E0%27)&$orderby=receivedDateTime%20desc&$select=subject,from,sender&$top=20", "Method": "GET"},
+     {"Uri": "/v1.0/me/messages?$filter=receivedDateTime%20ge%20@{trigger()?['startTime']}%20and%20startswith(subject,%2790161Z%20TEST%20E0%27)"
+            "&$orderby=receivedDateTime%20desc&$select=subject,from,sender&$top=20", "Method": "GET"},
      "@{" + E05_KEEP + "}"),
 ]
 # Error text can quote the addresses: replace both before the text is kept.
@@ -232,7 +233,8 @@ def op(conn, operation, params, after):
 
 
 def record(cid, what, keep, hide=False, site=False):
-    """Build the action that appends one check result to the Results variable. Takes the check id, a description, a fixed output (or empty), hide (hide mail details) and site (hide site details); returns the action dict."""
+    """Build the action that appends one check result to the Results variable.
+    Takes the check id, a description, a fixed output (or empty), hide (hide mail details) and site (hide site details); returns the action dict."""
     err = f"if(greaterOrEquals(int(coalesce(outputs('{cid}')?['statusCode'], 0)), 400), take(string(body('{cid}')), 600), '')"
     out = f"take(string(body('{cid}')), 3000)"
     if hide: err, out = HIDE.format(x=err), HIDE.format(x=out)
@@ -278,7 +280,11 @@ def build():
     actions["Result"] = {"runAfter": {"Write_Result_File": ALL}, "type": "Compose", "inputs": "@variables('Results')"}
     return {
         "displayName": f"90161Z T11 Rights Probe r{REV}",
-        "description": ("Tests what the person who runs it, and an optional coworker, can do on a SharePoint site" + (", and what they can do with the office mailbox. Creates TEST objects, then deletes them; sends 3 test mails to the person who runs it, waits 2 minutes and reads how they arrived (no addresses kept)." if MAIL else ". Counts site group members by type, gives the coworker's own user Contribute on a TEST list and reads the coworker's rights there. Creates TEST objects, then deletes them; sends no e-mail.") + " Records status codes, permission masks and principal types only, no names."),
+        "description": ("Tests what the person who runs it, and an optional coworker, can do on a SharePoint site"
+            + (", and what they can do with the office mailbox. Creates TEST objects, then deletes them; "
+            "sends 3 test mails to the person who runs it, waits 2 minutes and reads how they arrived (no addresses kept)."
+            if MAIL else ". Counts site group members by type, gives the coworker's own user Contribute on a TEST list and reads the coworker's rights there. "
+            "Creates TEST objects, then deletes them; sends no e-mail.") + " Records status codes, permission masks and principal types only, no names."),
         "connections": ["shared_sharepointonline"] + (["shared_office365users", "shared_office365"] if MAIL else []),
         "triggers": {"manual": {"type": "Request", "kind": "Button", "inputs": {"schema": {"type": "object", "properties": {
             "text": {"title": "Site address", "type": "string", "x-ms-dynamically-added": True, "x-ms-content-hint": "TEXT",

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Session check-in: run at the start and the end of each session.
+# Prevents: a session starts with the git hooks path unset, a stale origin/main, or an unseen kit, denylist or audit notice, so a guard is off
 # Self-test of the hooks-path setup (temporary repos, no network): bash scripts/session_checkin.sh --test
 # Network: the git remote "origin" (one fetch of origin/main); none in the self-test.
 # Writes: the git config key core.hooksPath of this clone (the kit's hooks folder); the self-test: temporary repos.

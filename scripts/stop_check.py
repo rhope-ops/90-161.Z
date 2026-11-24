@@ -16,6 +16,7 @@ Configured in .claude/settings.json ("hooks" > "Stop"). Manual run:
 Self-test (temporary repos, no network):
     python3 scripts/stop_check.py --test
 Standard library only.
+Prevents: a turn ends with uncommitted or unpushed work, so the work is lost when the session or its clone is gone
 Network: the git remote "origin": at most one fetch of the default branch, and only when a clean branch looks ahead of it.
 Writes: none (the fetch updates the remote-tracking branch; the self-test: temporary repos).
 Credentials: none itself; the fetch uses the credentials git already has for origin.

@@ -148,4 +148,5 @@ if __name__ == '__main__':
         ok = os.path.exists(path) and open(path, encoding='utf-8').read() == text
         print('PAYLOAD up to date' if ok else 'PAYLOAD stale: run scripts/build_flow_payload.py'); sys.exit(0 if ok else 1)
     open(path, 'w', encoding='utf-8').write(text)
-    print(f"PAYLOAD lists={len(out['lists'])} fieldsAndViews={len(out['fields'])} rows={len(out['rows'])} updates={len(out['updates'])} seed={len(out['seed'])} permissions={len(out['permissions'])} order={','.join(out['listOrder'])}")
+    print(f"PAYLOAD lists={len(out['lists'])} fieldsAndViews={len(out['fields'])} rows={len(out['rows'])} updates={len(out['updates'])}"
+          f" seed={len(out['seed'])} permissions={len(out['permissions'])} order={','.join(out['listOrder'])}")

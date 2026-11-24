@@ -37,6 +37,13 @@ Something that does not fit: change the kit so that it fits (below). Do not edit
 7. Record a row in the project's docs/DECISIONS.md ("kit <version>, date; kept: ..."), and a project log row when it is a milestone. Do not copy the kit's docs/DECISIONS.md, docs/LOG.md or reviews: the project has its own.
 8. Deliver it (`.claude/skills/deliver/SKILL.md`). A kit update changes instruction and guard files, so it is lane C. The pull request text lists each kit rule line that changed.
 
+Package mode (plan 2026-11-23 P3, design B): the project does not track the kit scripts that no hook calls; the `archimedes-kit` package at the commit in `.check.lock` writes them (`scripts/kit_package.py`). `scripts/check.sh` then shows a `kit package` line. Only a project with the kit's own role word ("the Maintainer") can use it: the package holds the kit text, so a renamed role word fails the kit lock. In such a project, the steps above change:
+- Enter package mode once, by its own lane C pull request: keep tracked `scripts/check.sh`, `scripts/session_checkin.sh`, `scripts/git-hooks/pre-push`, each script that a hook in `.claude/settings.json` or `.claude/agents/*.md` calls (`scripts/worker_guard.py`), the scripts a workflow calls by name, and each kit script that these files import; run `git rm --cached` on the other `scripts/` files that `.check.lock` lists; run `scripts/check.sh --kit-install` (it installs the package at the commit in `.check.lock` and writes the kit scripts); run the full lane and make sure that it passes.
+- After step 5: run `scripts/check.sh --kit-install`. The sync also wrote the untracked kit scripts; `git status` does not show them (`.git/info/exclude`). Commit only what `git status` shows: `.check.lock`, the changed instruction files and the changed tracked kit files.
+- Step 6: the full lane shows `PASS  kit package`. Give the count of changed files.
+- Each cloud environment of the project runs `scripts/check.sh --kit-install` in its setup script, in the project folder; the `checks` workflow runs it before the checks. A new kit version needs no setup script change: the commit comes from `.check.lock`.
+- Rollback: revert the commit that untracked the kit scripts, then run the sync again (steps 3 to 6). The revert brings back the scripts of the day the project entered package mode; the sync makes them equal to the lock again. The `kit package` line then goes.
+
 ## Change the kit from a project
 
 1. A kit file or kit rule is wrong or does not fit: make the change in the kit repo, by its own pull request, with the project named as the reason.

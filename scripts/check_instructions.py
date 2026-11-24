@@ -30,6 +30,7 @@ Usage:   python3 scripts/check_instructions.py [FILE ...]   check the files (def
          python3 scripts/check_instructions.py --test       self-test (cases: scripts/check_instructions_test.py)
 Parts:   scripts/check_instructions_steps.py (the step reader and the step measures; its names are re-exported here).
 Exit 0 and "INSTRUCTIONS PASS" when there is no finding; 1 with the findings; 2 from --hook to block.
+Prevents: a step that a person follows has two actions, a vague word, a pointer or no next state, so the reader cannot do it right the first time
 Network: none (it runs local git read commands).
 Writes:  none; --hook without a readable transcript writes one marker file per session in .git/ (then it blocks
          only the first write of that session: a host with no transcript gets a reminder, not a proof).

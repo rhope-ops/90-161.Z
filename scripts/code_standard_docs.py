@@ -14,6 +14,7 @@ What it checks, for a function longer than SHORT_FUNCTION lines (a shorter one k
               returns a value
   Shell       not checked here (no parameter list); the lean C2 comment applies
 Inputs:  one file's text and the functions scripts/code_standard.py found in it. Outputs: the parts that are missing.
+Prevents: a function that needs full docs has no documented parameters or return value, so another unit cannot inspect it before running it
 Network: none.
 Writes: none.
 Credentials: none.

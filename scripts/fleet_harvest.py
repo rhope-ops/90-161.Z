@@ -23,6 +23,7 @@ Usage:
     python3 scripts/fleet_harvest.py --test
         Self-test on fixture files in a temporary folder (cases: scripts/fleet_harvest_test.py); prints FLEET TEST PASS.
 Parts: scripts/fleet_harvest_parse.py (the format reader; its names are re-exported here). Standard library only.
+Prevents: a project's handoff or DECISIONS row in the fleet format cannot be read, so the fleet page shows a missing or wrong status for it
 Network: none.
 Writes: --harvest FILE.<repo>.pending of --state and, with --out, one JSON file per document; --save-state the --state file (and deletes that pending file);
     --add-ids docs/DECISIONS.md; --test temporary folders.

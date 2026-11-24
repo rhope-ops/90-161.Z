@@ -20,6 +20,7 @@ and `--json` prints the same counts as JSON.
 Run:        python3 scripts/skill_use.py FILE [FILE ...] [--json]
 Self-test:  python3 scripts/skill_use.py --test
 Standard library only.
+Prevents: a skill that no session loads stays in the kit and costs tokens in every session, because nothing else records skill loads
 Network: none.
 Writes: none (stdout only).
 Credentials: none.
@@ -29,7 +30,7 @@ import json
 import re
 import sys
 
-SKILL_FILE = re.compile(r"([A-Za-z0-9_.-]+)/SKILL\.md")  # the folder name before SKILL.md is the skill's name
+SKILL_FILE = re.compile(r"(?:^|(?<=[/\s\"']))skills/([A-Za-z0-9_.-]+)/SKILL\.md")  # the skill's name: the folder after skills/ ("$f/SKILL.md" is no skill)
 AGENT_TOOLS = ("Agent", "Task")  # the tools that start a subagent
 SHELL_TOOLS = ("Bash",)  # the tools whose input is a shell command
 GROUPS = ("skill", "read", "shell", "agent", "tool")  # the order of the report
@@ -157,9 +158,10 @@ def self_test():
         return {"type": "tool_use", "id": call_id, "name": name, "input": tool_input}
 
     blocks = [use("a", "Skill", skill="deliver"), use("b", "Read", file_path="/r/.claude/skills/handoff/SKILL.md"),
-              use("c", "Bash", command="sed -n 1,9p .claude/skills/deliver/SKILL.md; cat x/audit/SKILL.md"),
+              use("c", "Bash", command="sed -n 1,9p .claude/skills/deliver/SKILL.md; cat x/skills/audit/SKILL.md"),
               use("d", "Agent", subagent_type="reviewer"), use("e", "Agent"), use("f", "Read", file_path="/r/AGENTS.md"),
-              use("g", "Bash", command="git status")]
+              use("g", "Bash", command="git status"),
+              use("i", "Bash", command='for f in a b; do grep x "$f/SKILL.md" x/audit/SKILL.md /r/myskills/z/SKILL.md; done')]  # not under skills/: no skill
     saved = "<other-session>\nnote\n" + json.dumps({"ccr": {"data": [{"assistant": {"message": {"content": blocks}}}]}}) + "\n</other-session>\n"
     log = "\n".join(json.dumps({"message": {"content": [block]}}) for block in blocks[:2] + [use("h", "Skill", skill="verify")])
     with tempfile.TemporaryDirectory() as folder:
@@ -177,7 +179,7 @@ def self_test():
         counts, empty = count_files(paths)
         more = {name: count_files([os.path.join(folder, name)]) for name in extra}
     want = {"skill": {"deliver": 1, "verify": 1}, "read": {"handoff": 1}, "shell": {"deliver": 1, "audit": 1},
-            "agent": {"reviewer": 1, "general-purpose": 1}, "tool": {"Read": 1, "Bash": 1}}
+            "agent": {"reviewer": 1, "general-purpose": 1}, "tool": {"Read": 1, "Bash": 2}}
     failed = [group for group in GROUPS if dict(counts[group]) != want[group]]
     for group in failed:
         print(f"FAIL  {group}: got {dict(counts[group])}, want {want[group]}")

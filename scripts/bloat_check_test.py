@@ -25,8 +25,9 @@ from pathlib import Path
 
 import bloat_check_skills as skills
 import check_settings
-from bloat_check_test_rules import (caps_and_paths_cases, conflict_gate_cases, git_in, lint_cases,  # noqa: F401
-                                    readme_cases, rule_count_cases, settings, third_party_cases)
+from bloat_check_test_rules import (caps_and_paths_cases, conflict_gate_cases, debt_gate_cases,  # noqa: F401
+                                    file_check_cases, git_in, lint_cases, readme_cases, rule_count_cases, sample_kit,
+                                    settings, third_party_cases)
 
 LONG = "This line is long enough to count as a duplicate when it shows up in two different files of a repo."
 
@@ -276,6 +277,31 @@ def skills_cases(rs):
     assert skills.skill_frontmatter("---\nname: f\ndescription: >\n  Use when folded.\n---\n")["description"] == "Use when folded.", "a folded description keeps no > marker"
 
 
+def fleet_cases(bloat, d):
+    """R3: the fleet audit is due in the kit when kit.config.json has no `fleet.last_audit`, when it is more than 14 days old, or
+    when HEAD carries a release tag (v*) dated after it; a project never reports it; the --brief line carries it.
+
+    Args:
+        bloat: the module under test.
+        d: an empty temporary folder (a Path).
+    """
+    root = sample_kit(d, {"AGENTS.md": "## A\n\n- r.\n"})
+    due = lambda today: bloat.fleet_audit_due(root, datetime.date.fromisoformat(today))
+    assert "no fleet.last_audit" in due("2026-11-23"), "no date: due"
+    (root / "kit.config.json").write_text('{"fleet": {"last_audit": "2999-01-01"}}')
+    assert due("2999-01-15") == "" and "15 days since 2999-01-01" in due("2999-01-16"), "due after 14 days, not on the 14th"
+    git_in(root, "tag", "v1.0.0")
+    assert due("2999-01-02") == "", "a tag older than the audit: not due"
+    (root / "kit.config.json").write_text('{"fleet": {"last_audit": "2000-01-01"}}')
+    assert "kit release v1.0.0 is newer than 2000-01-01" in due("2000-01-02"), "a release tag at HEAD newer than the audit: due"
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        bloat.report(root, argparse.Namespace(brief=True, time=False, record=False, strict=False))
+    assert "AUDIT DUE (fleet: " in buf.getvalue() and "kit release v1.0.0" in buf.getvalue(), "the brief line (the kit check-in) says so: %s" % buf.getvalue()
+    (root / "kit.config.json").unlink()
+    assert due("2026-11-23") == "", "a project: never"
+
+
 def run(bloat):
     """Run every case against the module bloat in temporary repos; print BLOAT TEST PASS (an assert stops on a failure).
 
@@ -303,6 +329,9 @@ def run(bloat):
             caps_and_paths_cases(bloat, Path(o), caps)
             conflict_gate_cases(bloat, Path(o), caps)
             lint_cases(bloat, Path(o))
+        for name, cases in (("files", file_check_cases), ("debt", debt_gate_cases), ("fleet", fleet_cases)):
+            with tempfile.TemporaryDirectory() as o:
+                cases(bloat, Path(o), *([caps] if name == "debt" else []))
         report_cases(bloat, root, cfg, strict)
         compare_cases(bloat, root)
     with tempfile.TemporaryDirectory() as d:

@@ -41,7 +41,8 @@ for n in zf.namelist():
         if req != ("0" if "<defaultvalue>" in x else "1"): bad(f"{n}: isrequired {req} (want 0 with a default, else 1)")
 for sz in (ROOT / "flow" / "solution").glob("90161Z-T1[78]-*.zip"):
     for n in zipfile.ZipFile(sz).namelist():
-        if n.startswith("environmentvariabledefinitions/") and "<isrequired>1</isrequired>" not in zipfile.ZipFile(sz).read(n).decode("utf-8"): bad(f"{sz.name} {n}: slice and test solutions keep isrequired 1")
+        if n.startswith("environmentvariabledefinitions/") and "<isrequired>1</isrequired>" not in zipfile.ZipFile(sz).read(n).decode("utf-8"):
+            bad(f"{sz.name} {n}: slice and test solutions keep isrequired 1")
 declared = set(re.findall(r'connectionreferencelogicalname="([^"]+)"', cust))
 declared_ids = set(re.findall(r"<connectorid>/providers/Microsoft.PowerApps/apis/(\w+)</connectorid>", cust))
 for n in zf.namelist():
@@ -108,7 +109,8 @@ for z in sorted((ROOT / "flow" / "solution").glob("90161Z-T17-*.zip")):
             if lg != lw:
                 diff = next(((g, w) for g, w in zip(lg, lw) if g != w), (lg[len(lw):len(lw) + 1], lw[len(lg):len(lg) + 1]))
                 bad(f"{z.name} {f}: layout differs from the export sample at {diff}")
-        if zz.read("[Content_Types].xml") != (ref_ct := ref_ct or "\ufeff<?xml version=\"1.0\" encoding=\"utf-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ContentType=\"application/octet-stream\" /><Default Extension=\"json\" ContentType=\"application/octet-stream\" /></Types>".encode("utf-8")):
+        if zz.read("[Content_Types].xml") != (ref_ct := ref_ct or "\ufeff<?xml version=\"1.0\" encoding=\"utf-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
+            "<Default Extension=\"xml\" ContentType=\"application/octet-stream\" /><Default Extension=\"json\" ContentType=\"application/octet-stream\" /></Types>".encode("utf-8")):
             bad(f"{z.name}: [Content_Types].xml differs from the export")
         for n in zz.namelist():
             if n.startswith("Workflows/"):
@@ -196,10 +198,12 @@ th, td = re.findall(r"'<th style=\\?\"([^\"\\]+)\\?\">'", f04_html), re.findall(
 if not (th and td and th == td and "text-align:left" in th[0]): bad(f"F04: heads and cells must share one alignment: th {th} td {td}")
 if "replace(replace(body('Create_HTML_table'), '<th>'" not in f04_html: bad("F04: the table heads and cells are not styled")
 num = f04_try["Create_HTML_table"]["inputs"]["columns"][0]
-if num["header"] != "Number" or "'-'" not in num["value"] or "PublicationNumber" not in num["value"] or "['Product']?['Value']" not in num["value"]: bad(f"F04: the Number column must show the number or a dash: {num}")
+if num["header"] != "Number" or "'-'" not in num["value"] or "PublicationNumber" not in num["value"] or "['Product']?['Value']" not in num["value"]:
+    bad(f"F04: the Number column must show the number or a dash: {num}")
 f01 = json.loads(next(s for s in r27_defs if "-F01-" in s.name).read_text(encoding="utf-8"))
 f01_state = json.dumps(f01["actions"]["Try"]["actions"]["Current_state"]["inputs"])
-if sorted(re.findall(r"\['(\w+)'\]", f01_state)) != sorted(["ActionType", "ProcessStep", "ActionStatus", "Value", "Value", "Value"]): bad(f"F01: the logged state must read exactly Action Type, Process Step and Action Status: {f01_state}")
+if sorted(re.findall(r"\['(\w+)'\]", f01_state)) != sorted(["ActionType", "ProcessStep", "ActionStatus", "Value", "Value", "Value"]):
+    bad(f"F01: the logged state must read exactly Action Type, Process Step and Action Status: {f01_state}")
 if "Own_log_rows" not in f01["actions"]["Try"]["actions"]: bad("F01: the last logged state must come from rows this flow wrote (Own_log_rows)")
 # R34 (PFM 19 Nov 26, F3 C): F01 checks PFM Publications every 15 minutes (was every minute), in the def and in the zip.
 # R35 (PFM 19 Nov 26): F05 checks every minute, so no action passes step 7 between 2 checks without its Legal rows.
@@ -229,11 +233,14 @@ if s7.get("expression") != {"equals": ["@body('Get_process_step')?['StepNumber']
 if set(s7.get("runAfter", {}).get("If_step_6", [])) != {"Succeeded", "Skipped"}: bad("F05: If_step_7 must run after If_step_6 whether it ran or was skipped")
 if "5.1.7" not in s7.get("description", "") or "5.1.7" not in f05["description"]: bad("F05: the step-7 rule must cite DAFMAN 90-161 5.1.7")
 s7_acts = s7.get("actions", {})
-if s7_acts.get("Get_legal_offices_at_step_7", {}).get("inputs", {}).get("parameters", {}).get("$filter") != "CoordinateLast eq 1 and IsActive eq 1": bad("F05: step 7 must read the active CoordinateLast (Legal) offices")
+if s7_acts.get("Get_legal_offices_at_step_7", {}).get("inputs", {}).get("parameters", {}).get("$filter") != "CoordinateLast eq 1 and IsActive eq 1":
+    bad("F05: step 7 must read the active CoordinateLast (Legal) offices")
 if s7_acts.get("Create_legal_rows_at_step_7", {}).get("foreach") != "@body('Missing_legal_offices_at_step_7')": bad("F05: step 7 must create rows only for the missing offices")
 legal_rows = f05_open["actions"]["Legal_rows"]["inputs"]
-if legal_rows != {"from": "@body('Get_endorsement_rows')?['value']", "where": "@equals(item()?['CoordinationStage']?['Value'], 'Legal')"}: bad(f"F05: Legal_rows must be every Legal row of the action: {legal_rows}")
-if f05_open["actions"]["Get_endorsement_rows"]["inputs"]["parameters"].get("$filter") != "@concat('Publication/Id eq ', string(triggerBody()?['ID']))": bad("F05: the endorsement rows must be read for this action in this run")
+if legal_rows != {"from": "@body('Get_endorsement_rows')?['value']", "where": "@equals(item()?['CoordinationStage']?['Value'], 'Legal')"}:
+    bad(f"F05: Legal_rows must be every Legal row of the action: {legal_rows}")
+if f05_open["actions"]["Get_endorsement_rows"]["inputs"]["parameters"].get("$filter") != "@concat('Publication/Id eq ', string(triggerBody()?['ID']))":
+    bad("F05: the endorsement rows must be read for this action in this run")
 # R35 (R34 plan open points 7 and 9): a Formal or Legal row title cuts the publication title, never the office, so every new row
 # ends with ' - <office>|' in the title list; the older full-title key (r4 rows, cut at 250) counts only for a publication title
 # under 247 characters (from 247 on, that key was the same for every office, so one row hid all the others).
@@ -279,8 +286,10 @@ if t8.get("runtimeConfiguration") != {"concurrency": {"runs": 1}}: bad("F08: one
 try8 = f08["actions"]["Try"]["actions"]
 if try8["Get_offices"]["inputs"]["parameters"]["table"] != "@parameters('List PFM Offices (pfm_ListOffices)')" or "$filter" in try8["Get_offices"]["inputs"]["parameters"]:
     bad("F08: the wing leaders are the Leader of any PFM Offices row (no filter)")
-if try8["Wing_leader_rows"]["inputs"].get("where") != "@equals(toLower(trim(coalesce(item()?['Leader']?['Email'], ''))), outputs('Approver_email'))": bad("F08: a wing leader is matched by the Leader e-mail")
-if "['WaiverApprover']?['Email']" not in try8["Approver_email"]["inputs"] or "['Tier']?['Value']" not in try8["Tier"]["inputs"]: bad("F08: reads Tier and the Waiver Approver e-mail of the trigger row")
+if try8["Wing_leader_rows"]["inputs"].get("where") != "@equals(toLower(trim(coalesce(item()?['Leader']?['Email'], ''))), outputs('Approver_email'))":
+    bad("F08: a wing leader is matched by the Leader e-mail")
+if "['WaiverApprover']?['Email']" not in try8["Approver_email"]["inputs"] or "['Tier']?['Value']" not in try8["Tier"]["inputs"]:
+    bad("F08: reads Tier and the Waiver Approver e-mail of the trigger row")
 lead8 = try8["If_wing_leader"]
 if lead8["expression"] != {"and": [{"equals": ["@contains(createArray('T-0', 'T-1', 'T-2'), outputs('Tier'))", True]}, {"not": {"equals": ["@outputs('Approver_email')", ""]}},
                                    {"greater": ["@length(body('Wing_leader_rows'))", 0]}]}:
@@ -304,7 +313,8 @@ a10_8 = w8["If_not_yet_warned"]["actions"]["Table_A10_1_approver"]["inputs"]
 for tier, text in (("T-0", "not waivable by the DAF"), ("T-1", "NGB/CF, delegable no lower than ANGRC/CC"), ("T-2", "also to NGB Directors")):
     if f"'{tier}: " not in a10_8 or text not in a10_8: bad(f"F08: the Table A10.1 approver for {tier} must be named ({text})")
 mails8 = [(n, a) for n, a in walk_actions(f08["actions"]) if isinstance(a.get("inputs"), dict) and a["inputs"].get("host", {}).get("operationId", "").endswith("SendEmailV2")]
-if sorted(n for n, _ in mails8) != ["E-mail_the_failure", "E-mail_the_warning"] or any(a["inputs"]["parameters"]["emailMessage/To"] != "@parameters('Alert e-mail (pfm_AlertEmail)')" for _, a in mails8):
+if (sorted(n for n, _ in mails8) != ["E-mail_the_failure", "E-mail_the_warning"]
+        or any(a["inputs"]["parameters"]["emailMessage/To"] != "@parameters('Alert e-mail (pfm_AlertEmail)')" for _, a in mails8)):
     bad(f"F08: one warning e-mail and the failure e-mail, both to the alert address only: {[n for n, _ in mails8]}")
 mail8 = w8["If_not_yet_warned"]["actions"]["E-mail_the_warning"]
 if mail8["runAfter"] != {"Log_waiver_warning": ["Succeeded"]} or "{Link}" not in json.dumps(mail8): bad("F08: the e-mail follows the Activity Log row and links to the waiver row")
@@ -351,7 +361,9 @@ for src in t21_defs:
             if "text" not in t["inputs"]["schema"]["properties"]: bad(f"{src.name}: PowerAppV2 trigger has no text input")
         elif t.get("type") == "OpenApiConnectionNotification":
             # R27: the SharePoint "For a selected item" trigger (the view button); no polling, no condition.
-            if t["inputs"]["host"]["operationId"] != "OnSelectedItem" or t["inputs"]["parameters"].get("dataset") != "@parameters('Site URL (pfm_SiteUrl)')" or t["inputs"]["parameters"].get("table") != "90161Z Probe":
+            if (t["inputs"]["host"]["operationId"] != "OnSelectedItem"
+                    or t["inputs"]["parameters"].get("dataset") != "@parameters('Site URL (pfm_SiteUrl)')"
+                    or t["inputs"]["parameters"].get("table") != "90161Z Probe"):
                 bad(f"{src.name}: a selected-item trigger must be OnSelectedItem on the probe list")
         else:
             c = t.get("conditions")
@@ -406,4 +418,5 @@ for zname, (nwf, ncr) in T21_EXPECT.items():
 
 if errs:
     print("\n".join(errs)); sys.exit(1)
-print(f"PASS flow solution: flows_in_r5=10 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']} actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")
+print(f"PASS flow solution: flows_in_r5=10 t21_zips={len(t21_zips)} t21_defs={len(t21_defs)} defs={counts['defs']}"
+      f" actions={counts['actions']} columns_checked={counts['columns']} strings={counts['strings']}")

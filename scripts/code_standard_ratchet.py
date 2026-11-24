@@ -8,6 +8,7 @@ itself as `cs`, so the repo root, the gate and the helpers that a self-test sets
 Inputs:  the settings and debt list of the working tree, and those at the merge base (git; scripts/check_settings.py).
 Outputs: problem lines and notes; adopt prints its result line.
 Usage:   imported by scripts/code_standard.py; it has no command line.
+Prevents: code-standard debt rises, or a cap or rule in `.check` changes without the Maintainer's decision, so the ratchet is quietly loosened
 Network: none (it runs local git read commands).
 Writes: .check.state.json, only through adopt (--adopt).
 Credentials: none.

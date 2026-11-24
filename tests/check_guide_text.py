@@ -72,7 +72,8 @@ POINTERS = [
     (r'\b%s (?:says?|lists?|describes?|tells?|explains?)\b' % THING, 'defers to a file or window'),
     (r'\b(?:in|from|of|under) (?:the|that|this) (?:\w+ )?(?:file|guide|document|section|readme)\b(?! (?:name|path|box|explorer|menu|tab)\b)', 'defers to a file or section'),
     (r'\b(?:previous|earlier|same) steps?\b|\bsteps? (?:above|below|before)\b', 'names another step'),
-    (r'\b(?:described|explained|listed|given|shown) in (?:the |this |that )?(?:\w+ )?(?:file|guide|document|section|readme|step|window|notes?|appendix|attachment)\b|\b(?:do|does) the same\b|(?:^|[.;:,] |then |and )repeat\b', 'refers elsewhere'),
+    (r'\b(?:described|explained|listed|given|shown) in (?:the |this |that )?(?:\w+ )?(?:file|guide|document|section|readme|step|window|notes?|appendix|attachment)\b'
+     r'|\b(?:do|does) the same\b|(?:^|[.;:,] |then |and )repeat\b', 'refers elsewhere'),
     (r'(?:^|[.;:,] )see\b|\b(?:refer to|according to|as above|as below|as before|as described|same as)\b', 'refers elsewhere'),
 ]
 WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")

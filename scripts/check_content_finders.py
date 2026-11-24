@@ -13,6 +13,7 @@ What it gives:
 Inputs:  one line of text; for load_local the path of scripts/check_content_local.py.
 Outputs: matches as (start, end, value) tuples; nothing is printed here.
 Run:     not run alone; check_content_scan.py imports it. Proved by `python3 scripts/check_content.py --test`.
+Prevents: the content check misses a kind of personal datum or secret, or a broken project finder silently weakens the scan
 Network: none.
 Writes: none.
 Credentials: none.
@@ -77,11 +78,13 @@ SECRET = [re.compile(r) for r in (
 MILHOST = re.compile(
     r"(?i)(?<![A-Za-z0-9-])(?<![A-Za-z0-9-]\.)(?:(?:[a-z0-9-]+\.)+mil(?![A-Za-z0-9-]|\.[A-Za-z0-9])"   # any host under the military domain
     r"|(?:[a-z0-9-]+\.)*sharepoint-mil\.us\b|(?:[a-z0-9-]+\.)*dod\.teams\.microsoft\.us\b)")          # DoD cloud tenant hosts
+MARKING_LONG = [re.compile(r) for r in (   # the marks that are phrases: they may also stand over two lines (find_split_marking)
+    r"(?i)\bcontrolled\s+unclassified\s+" r"information\b", r"(?i)\bfor\s+official\s+use\s+" r"only\b")]
 MARKING = [re.compile(r) for r in (
-    r"\bCUI/" r"/", r"^[^A-Za-z0-9]*CU" r"I[^A-Za-z0-9]*$", r"(?i)\bcontrolled\s+unclassified\s+" r"information\b",
+    r"\bCUI/" r"/", r"^[^A-Za-z0-9]*CU" r"I[^A-Za-z0-9]*$", MARKING_LONG[0].pattern,
     r"^[^A-Za-z0-9]*(?:SEC" r"RET|CONFID" r"ENTIAL|UNCLASS" r"IFIED)[^A-Za-z0-9]*$",  # one word alone on its line, upper case
     r"(?i)^[^A-Za-z0-9]*TOP\s+SEC" r"RET[^A-Za-z0-9]*$",                               # two words alone on a line, any case
-    r"\bFO" r"UO\b", r"(?i)\bfor\s+official\s+use\s+" r"only\b", r"\bNOF" r"ORN\b",
+    r"\bFO" r"UO\b", MARKING_LONG[1].pattern, r"\bNOF" r"ORN\b",
     r"(?i)\b(?:SECRET|CONFIDENTIAL|UNCLASSIFIED)/" r"/",
 )]
 _DODID_KW = r"(?<![A-Za-z])(?:DOD[\s_-]*ID|EDIPI|CAC)(?![A-Za-z])"  # also dod_id, and DODID joined to the number
@@ -146,6 +149,45 @@ def find_marking(line):
     for rx in MARKING:
         for m in rx.finditer(line):
             yield m.start(), m.end(), m.group().strip()
+
+
+def find_split_marking(first, second):
+    """Yield (start, end, mark) for each phrase mark (MARKING_LONG) that stands over the end of `first` and the start of
+    `second`, two lines in a row. The mark is read with one space at the break; start and end are in `first` plus that
+    space plus `second` (the lines without the blanks at the break).
+
+    Args:
+        first: a line of text.
+        second: the line after it.
+    """
+    head = first.rstrip()
+    joined = head + " " + second.lstrip()
+    for rx in MARKING_LONG:
+        for m in rx.finditer(joined):
+            if m.start() < len(head) < m.end() - 1:
+                yield m.start(), m.end(), m.group()
+
+
+def find_split_dodid(first, second):
+    """Yield (start, end, number) for each DoD ID keyword and 10-digit number (DODID) that stand over the end of
+    `first` and the start of `second`, two lines in a row. The lines are joined as in find_split_marking; start and end
+    are those of the number in the joined text.
+
+    Args:
+        first: a line of text.
+        second: the line after it.
+    """
+    head = first.rstrip()
+    joined = head + " " + second.lstrip()
+    for rx in DODID:
+        for m in rx.finditer(joined):
+            if m.start() < len(head) < m.end() - 1:
+                yield m.start(1), m.end(1), m.group(1)
+
+
+# (kind, the kit's finder of one line, the finder of two lines in a row): scan_text runs a two-line finder only while the
+# kit's one-line finder of its kind is in use. A blank line between the two lines is a paragraph break: not joined.
+SPLIT_FINDERS = (("marking", find_marking, find_split_marking), ("dodid", find_dodid, find_split_dodid))
 
 
 KIT_FINDERS = {"email": [find_email], "secret": [find_secret], "phone": [find_phone], "id": [find_id],

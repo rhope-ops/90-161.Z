@@ -54,8 +54,8 @@ Checks:
     blocked    a tracked, pushed or named file that a `block:` line names
 DoD checks (only with `profile: dod`):
     milhost    a host name in the US military top-level domain (also inside a URL), and the DoD cloud hosts in MILHOST
-    marking    controlled-information and classification banner marks (the list: MARKING)
-    dodid      10 digits next to a DoD ID keyword (the list: DODID)
+    marking    controlled-information and classification banner marks (the list: MARKING; a phrase mark also over two lines)
+    dodid      10 digits next to a DoD ID keyword (the list: DODID; the keyword and number also over two lines)
     unscanned  a file the scanner cannot read: a SKIP_SUFFIX type, a binary file (Office files too) or one over
                MAX_BYTES (a `content-max-bytes: <number>` line in .check raises it; the tool-call hook keeps its
                own limit on the total of the files one call names, HOOK_MAX_BYTES in scripts/check_content_hook.py,
@@ -72,8 +72,9 @@ A project's own finders: a file scripts/check_content_local.py replaces or adds 
 interface: the header of check_content_scan.py). The result line and --status say when it is active; when it cannot
 be loaded, every scan fails and the hook blocks. Limit: that file is the project's own trusted code, like any script
 a hook runs; a file that ends the process itself while it loads (os._exit) ends the scan with its own exit code (0 lets a hooked call run).
-The code is split by concern into modules next to this file: check_content_scan.py (the scans) with check_content_scan_settings.py (the word lists and the settings file),
+The code is split by concern into modules next to this file: check_content_scan.py (the scans) with check_content_scan_settings.py (the settings file) and check_content_scan_words.py (the word lists),
 check_content_finders.py (the patterns and finders), check_content_hook.py (--hook) and check_content_test.py (--test).
+Prevents: a secret or personal datum (email, phone, ID number, token, key, listed name or term) reaches a commit, a push or an outgoing tool call
 Network: none (it runs local git read commands).
 Writes: none (findings go to stdout or stderr; the self-test uses temporary folders).
 Credentials: none; it reads the name denylist and the terms list (environment variable or file) and never prints an entry.
@@ -97,7 +98,7 @@ if "--hook" in sys.argv[1:]:   # before the scanner (and a project's own module)
 def missing_part(err):
     """Stop with exit 2 when a part of the guard is missing: a copy without its parts must block, not pass (exit 2
     also blocks the PreToolUse hook)."""
-    print('CONTENT CHECK FAIL: %s; copy check_content_scan.py, check_content_scan_settings.py, check_content_finders.py, check_content_hook.py and '
+    print('CONTENT CHECK FAIL: %s; copy check_content_scan.py, check_content_scan_settings.py, check_content_scan_words.py, check_content_finders.py, check_content_hook.py and '
           'the check_content_test*.py files next to check_content.py (scripts/sync_baseline.py does this)' % err, file=sys.stderr)
     sys.exit(2)
 

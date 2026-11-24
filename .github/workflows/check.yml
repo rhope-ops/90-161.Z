@@ -16,10 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Install the linters
+        run: pip install ruff==0.17.6 pylint==4.1.4 shellcheck-py==0.9.0.6
+      - name: Kit package (package mode only; else it prints "not used")
+        run: scripts/check.sh --kit-install
       - name: Repo checks (self-tests, project log in the full tier, project tests)
         run: scripts/check.sh
       - name: Content check of files and commits
