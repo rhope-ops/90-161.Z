@@ -12,6 +12,7 @@ Writes: temporary repos only.
 Credentials: none.
 """
 import contextlib
+import datetime
 import io
 import json
 import subprocess
@@ -421,3 +422,25 @@ def debt_gate_cases(bloat, d, caps):
     (root / "docs/reviews/r-debt.md").unlink()
     (root / "kit.config.json").unlink()
     assert debt() == [], "a project (not the kit): no debt gate"
+
+
+def archive_due_cases(bloat, root, files):
+    """ARCHIVE DUE on the sample repo of archive_cases (4 files archivable on 2026-01-19): the archivable count and bytes
+    "reach" their limits (>=). The limits are put back after the cases.
+
+    Args:
+        bloat: the module under test.
+        root: the sample repo of archive_cases (a Path).
+        files: its tracked files.
+    """
+    f, day = bloat.bloat_check_files, datetime.date(2026, 1, 19)
+    old = f.ARCHIVE_SET
+    found = sum(b for _, b in f.archivable(root, files, day))
+    assert f.archive_due(root, files, day) == "", "4 files and %d bytes: not due" % found
+    f.ARCHIVE_SET = (4, 10**9)
+    assert f.archive_due(root, files, day).startswith("4 files, 0 KB archivable"), "the count reaches it"
+    f.ARCHIVE_SET = (10**9, found)
+    assert f.archive_due(root, files, day).startswith("4 files"), "the bytes reach it"
+    f.ARCHIVE_SET = (10**9, found + 1)
+    assert f.archive_due(root, files, day) == "", "the bytes do not reach found + 1"
+    f.ARCHIVE_SET = old

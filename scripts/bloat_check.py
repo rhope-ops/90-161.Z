@@ -59,14 +59,15 @@ It measures:
     tool rows     (--rules, T1) each tool file the repo owns has a docs/tools.md row, whose first cell names it: 3 candidate tools,
                   or "none known" and the search terms; FAIL in the kit, WARN in a project (code: scripts/bloat_check_files.py)
     script lines  (--rules, T2) the lines of scripts/*.py and *.sh against "script_lines": {"baseline": N} in the state file
-                  (`cat scripts/*.py scripts/*.sh | wc -l`); over it fails, and so does a baseline above main's with no DECISIONS row; below it fails unless "cap": true; no baseline: FAIL in the kit, SKIP in a project
+                  (`cat scripts/*.py scripts/*.sh | wc -l`); over it fails, and so does a baseline above main's with no DECISIONS row;
+                  below it fails unless "cap": true; no baseline: FAIL in the kit, SKIP in a project
     role word     (--rules, T6) kit-synced text in the kit says "the Maintainer", not an old role word; FAIL in the kit, no check in a project
     debt record   (--rules --gate, T5, kit) changed rule lines, a check entry point added to scripts/check.sh and a lower
                   KIT_CAPS cap need a docs/reviews/*-debt.md file with the line "debt-check: <hash>" (the hash as the conflict gate)
     fleet audit   (kit, R3) AUDIT DUE (fleet): kit.config.json "fleet": {"last_audit": "YYYY-MM-DD"} missing, over 14 days old,
                   or older than a v* release tag at HEAD
-    archive due   ARCHIVE DUE: the archivable files of docs/reviews/ reach 20 files or 200 KB, or docs/reviews/ passes 200
-                  files or 1 MB (the tests and limits: archive_due in scripts/bloat_check_files.py)
+    archive due   ARCHIVE DUE: the archivable files of docs/reviews/ reach 20 files or 200 KB; the folder's total size
+                  does not count (the tests and limits: archive_due in scripts/bloat_check_files.py)
     timings       (--time) wall time of each named command against its recorded baseline; (--compare) times that
                   a script measured itself: NAME is a timings key, NAME:STEP one of its "steps". Slower means over
                   max_slowdown (default +25%) and over min_slowdown_seconds (default 0.5 s), so noise on a small step

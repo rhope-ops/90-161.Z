@@ -55,9 +55,8 @@ ROLE_ALLOW = {
 ENTRY = re.compile(r"(?:python3|bash)\s+(scripts/[\w.-]+\.(?:py|sh))|^[ \t]*(?:selftest|extension)\s+\S+\s+(scripts/[\w.-]+\.(?:py|sh))", re.M)
 CAPS_FILE = "scripts/check_settings_read.py"
 # The archive step (.claude/skills/audit/SKILL.md, item 16): the thresholds the Maintainer approved on 2026-11-25
-# (docs/reviews/2026-11-25-archival-inventory-kit.md), in decimal KB. The set "reaches" (>=); docs/reviews/ "passes" (>).
-ARCHIVE_SET = (20, 200_000)       # the archivable files: count, bytes
-ARCHIVE_ALL = (200, 1_000_000)    # every file of docs/reviews/: count, bytes
+# (docs/reviews/2026-11-25-archival-inventory-kit.md), in decimal KB. The set "reaches" them (>=).
+ARCHIVE_SET = (20, 200_000)       # the archivable files: count, bytes (no folder-total trigger: the Maintainer, 2026-11-25)
 ARCHIVE_DAYS = {True: 7, False: 14}   # days since the newest change: a plan (closed), the rest
 HISTORY_DOCS = ("docs/DECISIONS.md", "docs/LOG.md", "docs/CHANGELOG.md")   # a link from these is history, not live
 CHECK_READ = re.compile(r"(?:rule-conflict-check|debt-check): ")   # bloat_check_rules.conflict_recorded reads these
@@ -399,7 +398,8 @@ def archivable(root, files, today):
 
 
 def archive_due(root, files, today):
-    """Why the archive step is due, or "": the archivable set reaches ARCHIVE_SET, or docs/reviews/ passes ARCHIVE_ALL.
+    """Why the archive step is due, or "": the archivable set reaches ARCHIVE_SET. The size of docs/reviews/ does not count
+    (files a check reads stay there for good). A shallow clone has no age test, so it is never due.
 
     Args:
         root: the repo root (a Path).
@@ -409,14 +409,10 @@ def archive_due(root, files, today):
     Returns:
         The reason as a text, or "".
     """
-    files = [r for r in files if (root / r).is_file()]
-    allrev = [(r, (root / r).stat().st_size) for r in files if r.startswith(brules.REVIEWS + "/")]
-    found, reasons = archivable(root, files, today), []
+    found = archivable(root, [r for r in files if (root / r).is_file()], today)
     if found and (len(found) >= ARCHIVE_SET[0] or sum(b for _, b in found) >= ARCHIVE_SET[1]):
-        reasons.append(f"{len(found)} files, {sum(b for _, b in found) // 1000} KB archivable")
-    if len(allrev) > ARCHIVE_ALL[0] or sum(b for _, b in allrev) > ARCHIVE_ALL[1]:
-        reasons.append(f"{brules.REVIEWS}/ {len(allrev)} files, {sum(b for _, b in allrev) // 1000} KB")
-    return "; ".join(reasons + (["age unknown: shallow clone"] if reasons and found is None else []))
+        return f"{len(found)} files, {sum(b for _, b in found) // 1000} KB archivable"
+    return ""
 
 
 def rules_report(root, cfg, gate=False):

@@ -62,7 +62,7 @@ At each kit release, or 14 days after the last fleet audit (AUDIT DUE (fleet) at
 
 ## The archive step
 
-Item 16 in Step 2 finds the candidates; this step archives them. Run it when the check-in says ARCHIVE DUE and the Maintainer says yes. ARCHIVE DUE prints when the archivable files reach 20 files or 200 KB, or when docs/reviews/ passes 200 files or 1 MB (decimal KB; code: `archive_due` in `scripts/bloat_check_files.py`).
+Item 16 in Step 2 finds the candidates; this step archives them. Run it when the check-in says ARCHIVE DUE and the Maintainer says yes. ARCHIVE DUE prints when the archivable files reach 20 files or 200 KB (decimal KB; code: `archive_due` in `scripts/bloat_check_files.py`). The total size of docs/reviews/ does not count: files that a check reads stay there.
 
 The retention schedule (the Maintainer, 2026-11-25; source: the kit's archival inventory report of 2026-11-25 in its docs/reviews folder):
 
