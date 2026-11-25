@@ -19,7 +19,7 @@ Network: none.
 Writes: README.md (the part between the task markers); nothing with --check.
 Credentials: none.
 """
-import json, re, sys
+import html, json, re, sys, urllib.parse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,26 +33,41 @@ import site_config   # noqa: E402  scripts/site_config.py: the account values li
 U = site_config.urls()
 RAW = U['raw']
 BARE = re.compile(r'^(?:https://)?(raw\.githubusercontent\.com/\S*)$')
-# A URL that GitHub shows as a link (with a scheme, or a bare host name such as rhope-ops.github.io/RADE).
-URL = re.compile(r'(?:https?://)?(?:[a-z0-9-]+\.)+[a-z]{2,}/[^\s)>"\'\]]*|(?:https?://)?[a-z0-9-]+\.github\.io\b', re.I)
+# Every place that GitHub can show as a link: a link target ([x](t), <t>, href="t", a reference [id]: t), or a bare URL
+# (with a scheme, or a bare host name such as rhope-ops.github.io/RADE).
+TARGETS = (
+    re.compile(r'\]\(\s*<([^>]+)>'),                     # [x](<target with spaces>)
+    re.compile(r'\]\(\s*([^\s<][^\s]*?)(?:\s+["\'(][^)]*)?\)(?!\))'),   # [x](target) and [x](target "title")
+    re.compile(r'\]\(\s*([^\s<]+)'),                      # [x](target with brackets in it ...
+    re.compile(r'<([a-z][a-z0-9+.-]*:[^>\s]+)>', re.I),    # <https://...>
+    re.compile(r'href\s*=\s*["\']([^"\']+)', re.I),          # href="..." or href='...'
+    re.compile(r'(?m)^\s*\[[^\]]+\]:\s*<?(\S+?)>?\s*$'),   # [id]: target
+    re.compile(r'https?://\S+', re.I),                    # a bare URL with a scheme (also an IP host, a port, localhost)
+    re.compile(r'(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/\S*', re.I),   # a bare host and path
+    re.compile(r'(?:[a-z0-9-]+\.)*[a-z0-9-]+\.github\.io\b', re.I),  # any github.io host
+)
+TRAIL = '.,;:!?*_~)\'">]'   # characters that end a sentence or a format mark, not a URL
 
 
 def bad_links(text):
-    """The URLs in text that break the work computer: a .ps1 file, or any github.io page (the PFM, 2026-11-25).
+    """The link targets and URLs in text that break the work computer: a .ps1 file, or any github.io page (the PFM, 2026-11-25).
 
-    A plain file name (T22\\name.ps1, with no host) is not a URL, so it does not count.
+    A plain file name with no link around it (T22\\name.ps1) is not a link, so it does not count. A relative link target
+    ([x](a.ps1)) counts. Percent and HTML encodings are decoded first.
 
     Args:
         text: README text.
     Returns:
-        A sorted list of the bad URLs (empty when there is none).
+        A sorted list of the bad targets (empty when there is none).
     """
     bad = set()
-    for m in URL.finditer(text):
-        u = m.group(0).rstrip('.,;:')
-        path = re.split(r'[?#]', u, maxsplit=1)[0]
-        if 'github.io' in u.lower() or path.lower().endswith('.ps1'):
-            bad.add(u)
+    for pattern in TARGETS:
+        for m in pattern.finditer(text):
+            raw = m.group(1) if pattern.groups else m.group(0)
+            u = urllib.parse.unquote(html.unescape(raw)).strip().rstrip(TRAIL)
+            path = re.split(r'[?#]', u, maxsplit=1)[0].rstrip(TRAIL).lower()
+            if 'github.io' in u.lower() or path.endswith('.ps1'):
+                bad.add(raw)
     return sorted(bad)
 
 
