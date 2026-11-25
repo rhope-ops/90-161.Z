@@ -1,6 +1,6 @@
 # Dev setup (agent workspace, Linux)
 
-Cloud sessions (PFM, 2026-11-11): start them on the environment "Work"; its setup script does steps 1-2 below. On any other environment, do steps 1-2 by hand.
+Cloud sessions (PFM, 2026-11-11; the environment name is "Work" since 2026-11-24, the only one with this setup script): start them on the environment "Work"; its setup script does steps 1-2 below. On any other environment, do steps 1-2 by hand.
 
 Kit package mode (2026-11-24): 17 kit scripts in `scripts/` come from the package `archimedes-kit`, and git does not track them. In the project folder, run `scripts/check.sh --kit-install` before the first check. Run it again after each change of `.check.lock`. Without this step, `scripts/check.sh` fails and shows this command.
 
