@@ -29,8 +29,9 @@ def urls(cfg=None):
 
     Returns:
         A dict: raw (raw file base, ends in /), blob (GitHub file view base, ends in /), home (the repository README page on
-        github.com, the RADE manifest home; GitHub Pages is off, the PFM 2026-11-25), pages (the old github.io page),
-        pages_host (the github.io host name), and re_owner, re_repo (the two names escaped for a regular expression).
+        github.com, the RADE manifest home; GitHub Pages is off, the PFM 2026-11-25),
+        pages_host (the github.io host name; tests/check_names.py removes it from text before it checks names), and re_owner, re_repo, re_branch (the
+        three names escaped for a regular expression).
     """
     c = cfg or load()
     o, r, b = c['owner'], c['repo'], c['branch']
@@ -38,7 +39,6 @@ def urls(cfg=None):
         'raw': 'https://raw.githubusercontent.com/%s/%s/%s/' % (o, r, b),
         'blob': 'https://github.com/%s/%s/blob/%s/' % (o, r, b),
         'home': 'https://github.com/%s/%s' % (o, r),
-        'pages': 'https://%s.github.io/%s' % (o, r),
         'pages_host': '%s.github.io' % o,
         're_owner': re.escape(o),
         're_repo': re.escape(r),
