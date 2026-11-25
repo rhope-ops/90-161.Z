@@ -5,7 +5,9 @@ Prevents: a later change that weakens the check, so that a .ps1 or github.io lin
 2026-11-25: such a link breaks the work computer). Each case is a Markdown text and the expected result.
 Usage: python3 tests/check_readme_links.py   Pass = last line "README LINKS cases=N fails=0".
 tests/run.sh runs it.
-Network: none. Writes: nothing. Credentials: none.
+Network: none.
+Writes: nothing.
+Credentials: none.
 """
 import sys
 from pathlib import Path
