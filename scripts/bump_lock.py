@@ -37,7 +37,7 @@ TAG_RE = r"engine-v[0-9]{1,4}"
 PASTE = os.path.join(ROOT, "scripts", "gov", "paste")
 BUNDLES = os.path.join(ROOT, "scripts", "paste_bundles.json")   # round definitions: the raise changes bundle names here
 GO = os.path.join(ROOT, "go.md")                                   # the task page: the raise changes a linked bundle name
-BUNDLE_FILES = (".ps1", ".ps1.sha256.json")   # a round bundle and, from engine-v21, its stored hash file beside it
+BUNDLE_FILES = (".ps1", ".ps1.sha256.json", ".txt")   # a round bundle, its stored hash file (engine-v21 on) and its .txt copy
 GIT_TIMEOUT = 120   # seconds a git call to the network may take
 BY = "scripts/bump_lock.py (run at the PFM's request)"   # the DECISIONS "By" text: the script wrote the row
 
@@ -250,7 +250,7 @@ def snapshot():
 
 def restore(snap):
     """Write back the files of a snapshot (the old lock, definitions, go.md, bundles and task scripts), and delete each
-    round bundle, task script and stored hash file that the snapshot does not hold (a file the failed run made).
+    round bundle, task script, stored hash file and .txt copy that the snapshot does not hold (a file the failed run made).
 
     Args:
         snap: the dict that snapshot() returned.
