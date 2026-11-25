@@ -384,7 +384,7 @@
                         "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
                         "2. In the second RADE window, click \"90-161.Z 0.1.0\". You see \"90-161.Z 0.1.0\" at the top.",
                         "3. In the window \"90-161.Z 0.1.0\", click \"Maintenance\". You see \"Back up\" and \"Restore\".",
-                        "4. Click \"Back up\". You see the Back up start.",
+                        "4. Click \"Back up\". You see the Back up log in the window.",
                         "5. If a CAC sign-in window opens, write down its size: \"Small\" or \"Large\".",
                         "6. If the CAC sign-in window is open, sign in with your CAC.",
                         "7. Wait until the window \"90-161.Z 0.1.0\" shows \"All 12 lists were saved.\"",
@@ -399,7 +399,7 @@
                         {
                             "kind": "pick",
                             "choices": [
-                                "Small, in the center",
+                                "Small",
                                 "Large",
                                 "No sign-in window opened"
                             ],
@@ -454,11 +454,12 @@
                         "2. In the second RADE window, click \"90-161.Z 0.1.0\". You see \"90-161.Z 0.1.0\" at the top.",
                         "3. In the window \"90-161.Z 0.1.0\", click \"Maintenance\". You see \"Back up\" and \"Restore\".",
                         "4. Click \"Restore\". You see the list of backups.",
-                        "5. If RADE asks \"Is the saved site a test site?\", type the name from your test site home page.",
-                        "6. If you typed the name, click \"Mark as test site\".",
-                        "7. Click the backup marked \"Newest\". If a sign-in window opens, sign in with your CAC.",
+                        "5. If RADE asks \"Is the saved site a test site?\", close the window \"90-161.Z 0.1.0\" with its X.",
+                        "6. Click the backup marked \"Newest\". You see the log of the dry run.",
+                        "7. If a CAC sign-in window opens, sign in with your CAC.",
                         "8. Wait until the window \"90-161.Z 0.1.0\" shows a line that starts with \"Dry run:\".",
-                        "9. Keep the window \"90-161.Z 0.1.0\" open."
+                        "9. Keep the window \"90-161.Z 0.1.0\" open.",
+                        "If you closed the window at line 5: click \"It failed\" and type: RADE asked for the test site"
                     ],
                     "estimate": 3,
                     "after": [
