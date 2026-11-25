@@ -21,8 +21,8 @@ How actions are counted (kept simple on purpose):
   such as "the", "to", "not" or "must", or at the end of a sentence, is not an action.
 - A "then" with no verb after it is one more action (select Open, then Next = 2); "then wait", "then keep",
   "then remember" and a "then" at the end add none. A verb right after "then" counts, capitalized or not.
-- A sentence with "if" is a fallback: it may hold up to 3 actions of its own (If one reads Off, turn
-  it on). The other sentences of the step may hold up to 3 actions together.
+- A sentence with "if" is a fallback (If one reads Off, turn it on). The fallback with the most actions and the
+  other sentences of the step may hold up to 3 actions together.
 - A line with no number (the "If it fails" line of a guide) is tested for 1 and 3 only.
 
 Limits (a pass here is not proof that a step is clear; the fresh-reader check in the rule does that):
@@ -121,8 +121,8 @@ def check_step(text):
                 cond_max = max(cond_max, n)
             else:
                 plain += n
-        if plain > MAX_ACTIONS or cond_max > MAX_ACTIONS:
-            out.append('holds %d actions' % max(plain, cond_max))
+        if plain + cond_max > MAX_ACTIONS:   # the main part and the fallback together
+            out.append('holds %d actions' % (plain + cond_max))
     if len(text) > MAX_LEN:
         out.append('is %d characters (limit %d)' % (len(text), MAX_LEN))
     return out
@@ -266,6 +266,8 @@ BAD_STEPS = [
     ('8. Select Save and repeat for the other files.', 'points'),
     ('9. Select the code listed in Appendix B.', 'points'),
     ('10. If it is offered: select it, open its Prompt list, select Save and look at the names.', 'holds 4'),
+    ('11. Click File, then New, then Save. If it fails, click Back.', 'holds 4'),
+    ('12. Select Save, then Open, then Close, then Next.', 'holds 4'),
     ('11. Select the field. ' + 'The field is the one with the long name. ' * 5, 'characters'),
 ]
 
