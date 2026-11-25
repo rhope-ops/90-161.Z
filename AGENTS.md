@@ -75,6 +75,7 @@ These are defaults: how work normally goes here. The method is yours unless the 
 - Deployable package (2026-11-16): other wings install it through RADE; a step that needs extra rights has a tested fallback, built after its easy path fails once. Assume no platform limit unless confidence is high.
 - Gov device (2026-11-13): no Claude app there and no e-mail sent to it; scripts do every step they can in the RADE round, go.md only the rest: `.claude/skills/round/SKILL.md`.
 - What people see (2026-11-14): plain, professional English; go.md and runner text meet the round skill's usability bar.
+- Screen names (the PFM, 2026-11-25): a step names only screen text from its round's bundle, in the code's card order (tests/check_screen_names.py; the round skill's fresh reader).
 - Round results (2026-11-15): Gmail and result e-mails: only as the round skill says.
 - No scripts in results (the PFM, 2026-11-20; cannot be changed): a round never collects or sends a .ps1 or other script file; the bundle build fails a collect pattern that can match one: scripts/check_collect.py.
 - Next-step link (2026-11-25): to open a round or task, link https://github.com/rhope-ops/90-161.Z (the README); never a github.io page or a .ps1 file.
