@@ -32,8 +32,9 @@ function Get-GridBlock([string]$Key, [string]$Name) {
   foreach ($s in @($Cards[$Key].Cols[0])) { foreach ($b in @($s.Blocks)) { if ($b.T -eq 'grid' -and $b.Name -eq $Name) { return $b } } }
   throw ('no grid ' + $Name + ' on ' + $Key)
 }
-# Fit one stand-in grid like the device had it. Takes the card, the grid name, the grid width W and the width the columns
-# summed to (the R42 line). The columns get their planned minimums and the extra goes to the widest plain column (the fill's).
+# Fit one stand-in grid like the device had it, and record the result. Takes the card key, the grid name, the grid width W and
+# the width the columns summed to (the R42 line). The columns get their planned minimums and the extra goes to the widest plain
+# column (an assumption: the device logged only the sum). Returns nothing; the fit must leave the sum under W less the bar.
 function Test-DeviceGrid([string]$Key, [string]$Name, [int]$W, [int]$Need) {
   $b = Get-GridBlock $Key $Name; $rows = @($b.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols @($b.Cols) $W $pw $rows
   $p = & $wn.ColPlan $cols $W 0 (& $wn.PubMin $cols $pw) $rows
@@ -48,7 +49,9 @@ function Test-DeviceGrid([string]$Key, [string]$Name, [int]$W, [int]$Need) {
   $null = & $wn.FitGrid $g; $left = 0; $chipOk = $true
   foreach ($k in $gc) { $left += [int]$k.Width; if ([int]$k.Width -lt [int]$k.MinimumWidth) { $chipOk = $false } }
   $again = & $wn.FitGrid $g   # a later open of the same card: nothing more to change
-  Test-That ($Key + ' ' + $Name) (($left -le $W - $script:bar) -and $chipOk -and -not $again) ('columns need ' + $Need + ' at the start, the grid has ' + $W + ', scroll bar ' + $script:bar + '; after the fit the columns need ' + $left + ' (limit ' + ($W - $script:bar) + '), none under its minimum: ' + $chipOk + ', second fit changes nothing: ' + (-not $again))
+  $nums = 'columns need ' + $Need + ' at the start, the grid has ' + $W + ', scroll bar ' + $script:bar + '; after the fit the columns need ' + $left +
+    ' (limit ' + ($W - $script:bar) + '), none under its minimum: ' + $chipOk + ', second fit changes nothing: ' + (-not $again)
+  Test-That ($Key + ' ' + $Name) (($left -le $W - $script:bar) -and $chipOk -and -not $again) $nums
 }
 Test-DeviceGrid 'home' 'Who has it now' 961 979
 Test-DeviceGrid 'empty' 'Who has it now' 961 979

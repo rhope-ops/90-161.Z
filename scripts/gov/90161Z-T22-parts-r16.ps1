@@ -309,11 +309,12 @@ $wn.Blocks.filter = {
   $cmb.SelectedIndex = [int]$wn.Field.show; $cmb.Add_SelectedIndexChanged({ $wn.Field.show = $this.SelectedIndex; & $wn.Refilter }); & $ui.Cue $cmb; [void]$f.Controls.Add($cmb)
   & $wn.CenterRow $f }
 # R16 (R42 finding 3: the box next to "Find a publication" sat lower than the list next to it): puts the middle of every control
-# of flow row $F on one line, the middle of the tallest control. Each control keeps its left and right margin; its top margin
-# becomes the gap above it and its bottom margin 0. Takes the flow; returns nothing.
+# of flow row $F on one line. Each control's middle is now its top margin plus half its height; the line is the lowest of
+# them, and a control above it gets the difference added to its top margin (no margin gets smaller, so the 4 px for the
+# focus ring stay; the bottom margins and the left and right margins do not change). Takes the flow; returns nothing.
 $wn.CenterRow = { param($F)
-  $h = 0; foreach ($c in $F.Controls) { $h = [math]::Max($h, [int]$c.Height) }
-  foreach ($c in $F.Controls) { $m = $c.Margin; $c.Margin = & $ui.Pad $m.Left ([int][math]::Round(($h - [int]$c.Height) / 2.0)) $m.Right 0 } }
+  $line = 0.0; foreach ($c in $F.Controls) { $line = [math]::Max($line, [double]$c.Margin.Top + [double]$c.Height / 2.0) }
+  foreach ($c in $F.Controls) { $m = $c.Margin; $top = [int][math]::Round($line - [double]$c.Height / 2.0); $c.Margin = & $ui.Pad $m.Left $top $m.Right $m.Bottom } }
 # R12 (R38 finding 2, UI standard B1): a one-line text box drawn by Windows is as high as its font (39 px at 150 %);
 # the rule is the compact height ($ui.Z.CompactH, 45 px at 150 %). The box goes without its own border into a white
 # frame of that height, in the middle; the frame is the box for the focus ring and the self-check ($ui.Boxes,

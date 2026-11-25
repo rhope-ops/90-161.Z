@@ -57,6 +57,10 @@ $wn.Answer = { param([string]$Result)
   $j = & $wn.WalkAt
   # R16: a look step asks about the card the person is on: it counts as opened when that card shows
   if ($j -ge 0 -and [string]$Walk[$j].Via -eq 'look' -and [string]$wn.Cur -eq [string]$Walk[$j].Key) { $wn.WalkOpen[$j] = $true }
+  # R16 (R42 finding 3: step12 was answered with no click, so no open failed and no line was written): an answer on a step whose card never opened leaves a NOTE
+  if ($j -ge 0 -and -not $wn.WalkOpen[$j]) {
+    $lines.Add('NOTE screen ' + ($j + 1) + ' of ' + $Walk.Count + ' (' + [string]$Walk[$j].Key + ') was answered ' + $Result +
+      ' without an open: the window shows ' + [string]$wn.Cur) }
   if ($j -ge 0) { $wn.WalkAns[$j] = $Result } else { $wn.Answers[$wn.CheckAt] = $Result }
   $wn.CheckAt++
   & $wn.BarShow }

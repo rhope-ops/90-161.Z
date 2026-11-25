@@ -438,6 +438,19 @@ function Get-CheckPlan {
 }
 <#
 .SYNOPSIS
+R16 (R42 finding 3: WALK 13 step12 was answered "not opened"): the name of card $Key for a click-through step; the name of the
+card, and, when another card has the same name, its step line before the dot ("step 12 of 12") so that a card that shows now
+is not taken for the card of the step.
+#>
+function Get-WalkName([string]$Key) {
+  $name = Get-CardName $Key
+  $same = @($Cards.Keys | Where-Object { [string]$_ -ne $Key -and (Get-CardName ([string]$_)) -eq $name })
+  if (-not $same.Count) { return $name }
+  $cap = ''; foreach ($col in @($Cards[$Key].Cols)) { foreach ($sec in @($col)) { foreach ($b in @($sec.Blocks)) { if (-not $cap -and $b.T -eq 'chips' -and $b.Cap) { $cap = [string]$b.Cap } } } }
+  if (-not $cap) { return $name }
+  return ($name + ', ' + ([string]@($cap -split [regex]::Escape($mid))[0]).Trim().ToLowerInvariant()) }
+<#
+.SYNOPSIS
 R14 (R41 plan row 3): how a person opens card $To from card $From with one selection that only opens a screen.
 .DESCRIPTION
 In this order: a rail item that opens $To (the rail shows on every card); a button of $From that goes to $To with
@@ -485,7 +498,7 @@ function Get-WalkPlan {
     [void]$left.Remove($key)
     $what = $(if ($op.Via -eq 'rail') { $op.Text + ' in the list on the left' } elseif ($op.Via -eq 'link') { 'the link "' + $op.Text + '" at the top' }
       elseif ($op.Beside) { '"' + $op.Text + '" beside "' + $op.Beside + '"' } elseif ($op.Via -eq 'open') { '"Open this screen" in this bar' } else { '"' + $op.Text + '"' })
-    $text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': select ' + $what + '. Pass if ' + (Get-CardName $key) + ' opens and looks right.'
+    $text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': select ' + $what + '. Pass if ' + (Get-WalkName $key) + ' opens and looks right.'
     $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text; From = $cur }; $cur = $key
     # R16 (R42 finding 4; R43 T3): the step after the waves card asks about its grid, with its own Pass and Fail
     if ($key -eq 'waves') { $out += @{ Key = $key; Via = 'look'; Opener = 'Wave 1 answers'; From = 'waves'

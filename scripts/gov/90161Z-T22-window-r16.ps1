@@ -423,9 +423,10 @@ $wn.ScrollCheck = {
   #>
   $st = New-Object System.Collections.Stack; $st.Push($page)
   while ($st.Count) { foreach ($c in $st.Pop().Controls) {
-      if ($c -is [Windows.Forms.DataGridView]) { $sum = 0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width } }
+      if ($c -is [Windows.Forms.DataGridView]) { $sum = 0; $mn = 0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width; $mn += $k.MinimumWidth } }
+        # R14 (R41): which open it was; R16 (R43 T1): and the sum of the column minimums, to tell a fit that did not run from a fill that overflowed
         if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' +
-            $c.ClientSize.Width + ' (open: ' + $wn.OpenKind + ')') }   # R14 (R41): which open it was
+            $c.ClientSize.Width + ' (column minimums ' + $mn + ')' + ' (open: ' + $wn.OpenKind + ')') }
         $edge = & $wn.EdgeCheck $c $wn.Cur   # R11 (R38): no chip or text ends closer than a scroll bar's width to the grid's right edge
         if ($edge) { $ui.LayBad.Add($edge) } }
       elseif ($c.Controls.Count) { $st.Push($c) } } }
