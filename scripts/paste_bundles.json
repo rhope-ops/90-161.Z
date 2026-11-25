@@ -372,7 +372,7 @@
                     "answers": [
                         {
                             "key": "w-answer",
-                            "prompt": "In the window \"Publications and Forms Management\", did the grid \"Wave 1 answers\" show the answer of the second person?",
+                            "prompt": "Screen 10 of 17 has the grid \"Wave 1 answers\". Did that grid show the answer of the second person?",
                             "kind": "yesno"
                         },
                         {
