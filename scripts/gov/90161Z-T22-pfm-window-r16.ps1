@@ -8,9 +8,15 @@
   site part: your CAC sign-in, a SOURCE line, a READ line per list, WRITES=0; a card picture only when every site row it
   shows has a fake-data marker); a grid whose list has no rows shows its empty state. When the site cannot be read the
   cards keep their FAKE data (SOURCE fake), as -Measure and -PlanOnly always do. After the 4 checks the check bar walks
-  you through every screen in order, one Pass or Fail each (the bar part: 17 screens, a WALK line each; Feedback on
+  you through every screen in order, one Pass or Fail each (the bar part: 17 screens, from R16 18 steps, a WALK line each; Feedback on
   every screen as before). The grid fit runs again after the layout settles, and the layout self-check line names the
   open (first, kept, rebuild, resize; R40 finding 3). The parts: 13 (R14 adds bar and site).
+  WHAT R16 CHANGES (round R43 T1 to T3; R42 findings 2 to 5): a grid whose columns still end past it after the fit is cut to its
+  room (the grid part, tests/ps/Test-T22GridWidth.ps1); the box next to "Find a publication" is level with the list beside
+  it, a status chip in a row has the gap above it that text has, and a check box is level with its text (the parts part); a
+  rail click that opens another card is not held by the 400 ms guard, and every open or click that does nothing leaves a NOTE
+  line (the window and bar parts); the step after the waves card asks about the grid Wave 1 answers (the cards and bar
+  parts: 18 steps, a WALK line each).
   WHAT R15 CHANGES (round R42 T1; R41 finding 4): every grid keeps the room for the scroll bar and its grid fit works on
   the column minimums, so no Status chip ends under the bar (the grid part); the click-through opens the endorsement
   screen with "Start Endorsement" on Confirm, shows "Open this screen" on any step while the screen shown is not the one

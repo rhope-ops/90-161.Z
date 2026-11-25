@@ -472,11 +472,12 @@ first card not yet walked that one rail item, button or crumb link opens (Get-Wa
 first card not yet walked, opened with the link "Open this screen" of the check bar. Each step is one action and one
 Pass or Fail, in the words of the 4 checks. Pure data: no window.
 .OUTPUTS
-An array of @{ Key; Via (rail, button, link or open); Opener (what to select); Text (the bar text); From (R15: the card it starts on) }.
+An array of @{ Key; Via (rail, button, link, open or, R16, look); Opener (what to select); Text (the bar text); From (R15: the card it starts on) }.
+R16: Via look is the step after the waves card: it asks about the grid Wave 1 answers on the card the person is on.
 #>
 function Get-WalkPlan {
   $left = New-Object System.Collections.Generic.List[string]; foreach ($k in $Cards.Keys) { $left.Add([string]$k) }
-  $out = @(); $cur = ''; $n = $left.Count
+  $out = @(); $cur = ''; $n = $left.Count + $(if ($left.Contains('waves')) { 1 } else { 0 })   # R16: the waves card has one more step
   while ($left.Count) {
     $key = ''; $op = $null
     foreach ($k in $left) { $o = Get-WalkOpener $cur $k; if ($o) { $key = $k; $op = $o; break } }
@@ -485,7 +486,10 @@ function Get-WalkPlan {
     $what = $(if ($op.Via -eq 'rail') { $op.Text + ' in the list on the left' } elseif ($op.Via -eq 'link') { 'the link "' + $op.Text + '" at the top' }
       elseif ($op.Beside) { '"' + $op.Text + '" beside "' + $op.Beside + '"' } elseif ($op.Via -eq 'open') { '"Open this screen" in this bar' } else { '"' + $op.Text + '"' })
     $text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': select ' + $what + '. Pass if ' + (Get-CardName $key) + ' opens and looks right.'
-    $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text; From = $cur }; $cur = $key }
+    $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text; From = $cur }; $cur = $key
+    # R16 (R42 finding 4; R43 T3): the step after the waves card asks about its grid, with its own Pass and Fail
+    if ($key -eq 'waves') { $out += @{ Key = $key; Via = 'look'; Opener = 'Wave 1 answers'; From = 'waves'
+        Text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': look at the grid Wave 1 answers. Pass if the grid Wave 1 answers shows the second person.' } } }
   return $out
 }
 # The click-through as -PlanOnly lines: WALK <n> <card> <via>: <text> (tests/run.sh reads them).

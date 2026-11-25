@@ -54,12 +54,17 @@ def check_walk():
     out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r16.ps1'), '-PlanOnly'],
                          capture_output=True, text=True, timeout=120, cwd=ROOT).stdout.splitlines()
     cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
+    # R16 (R43 T3): 17 screens and, after the waves card, one look step with its own Pass and Fail: 18 steps in all
     pat = r'WALK (\d+) (\S+) (rail|button|link|open): (Screen (\d+) of (\d+): select .+\. Pass if .+ opens and looks right\.)$'
-    wk = [re.match(pat, l) for l in out if l.startswith('WALK ')]
-    assert len(wk) == len(cards) == 17 and all(wk), [l for l in out if l.startswith('WALK ')]
-    assert sorted(m.group(2) for m in wk) == sorted(cards) and [int(m.group(1)) for m in wk] == list(range(1, 18)), wk
-    assert all(len(m.group(4)) <= 200 and m.group(5) == m.group(1) and m.group(6) == '17' for m in wk), wk
-    assert wk[0].group(2) == 'home' and all(ord(c) < 128 for m in wk for c in m.group(0)), wk[0].group(0)
+    look = r'WALK (\d+) waves look: (Screen (\d+) of (\d+): look at the grid Wave 1 answers\. Pass if the grid Wave 1 answers shows the second person\.)$'
+    lines = [l for l in out if l.startswith('WALK ')]
+    wk = [re.match(pat, l) for l in lines if ' waves look: ' not in l]; lk = [re.match(look, l) for l in lines if ' waves look: ' in l]
+    assert len(cards) == 17 and len(wk) == 17 and all(wk) and len(lk) == 1 and all(lk), lines
+    assert sorted(m.group(2) for m in wk) == sorted(cards), wk
+    assert [int(l.split()[1]) for l in lines] == list(range(1, 19)) and int(lk[0].group(1)) == int(wk[[m.group(2) for m in wk].index('waves')].group(1)) + 1, lines
+    assert all(len(m.group(4)) <= 200 and m.group(5) == m.group(1) and m.group(6) == '18' for m in wk), wk
+    assert len(lk[0].group(2)) <= 200 and lk[0].group(3) == lk[0].group(1) and lk[0].group(4) == '18', lk[0].group(0)
+    assert wk[0].group(2) == 'home' and all(ord(c) < 128 for m in wk + lk for c in m.group(0)), wk[0].group(0)
 
 
 def check_parts():
@@ -268,7 +273,10 @@ def check_walk_path():
             buttons[key][t.replace(' (blue)', '')] = go
     cur = 'home'
     for l in [l for l in out if l.startswith('WALK ')]:
-        m = re.match(r'WALK (\d+) (\S+) (rail|button|link|open): Screen \d+ of 17: select (.+?)\. Pass if', l)
+        if ' waves look: ' in l:   # R16: the look step asks about the card the step before opened
+            assert cur == 'waves', l
+            continue
+        m = re.match(r'WALK (\d+) (\S+) (rail|button|link|open): Screen \d+ of 18: select (.+?)\. Pass if', l)
         n, to, via, what = m.groups()
         if via == 'rail':
             assert rail.get(what[:-len(' in the list on the left')]) == to, ('no rail item opens it', l)
@@ -278,10 +286,14 @@ def check_walk_path():
         else:
             assert via == 'open' and what == '"Open this screen" in this bar', l
         cur = to
-    assert ('waves', 'step13') == tuple(re.match(r'WALK \d+ (\S+) (\S+):', l).group(1) for l in out if l.startswith(('WALK 10 ', 'WALK 11 '))), out
+    assert ('waves', 'waves', 'step13') == tuple(re.match(r'WALK \d+ (\S+) (\S+):', l).group(1) for l in out if l.startswith(('WALK 10 ', 'WALK 11 ', 'WALK 12 '))), out
     bar = part('bar')
-    for x in ("[string]$Walk[$j].From -ne [string]$wn.Cur", '& $wn.OpenFail $k $_', "'NOTE the screen ' + $Key + ' did not open: '"):
+    for x in ("[string]$Walk[$j].From -ne [string]$wn.Cur", '& $wn.OpenFail $k $_', "'NOTE the screen ' + $Key + ' did not open: '",
+              '& $wn.OpenCheck $k', '& $wn.IgnoreNote'):   # R16: no open fails without a NOTE line
         assert x in bar, 'the bar part lacks ' + x
+    win = part('window')
+    for x in ("& $wn.IgnoreNote ('the button '", '& $wn.OpenCheck $go', "$go -eq $wn.Cur", "'NOTE the screen ' + $Key + ' did not open: no such screen"):
+        assert x in win, 'the window part lacks ' + x
 
 
 def check_ui_names():

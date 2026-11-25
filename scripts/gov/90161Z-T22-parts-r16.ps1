@@ -216,11 +216,12 @@ $wn.Blocks.ck = {
   param($Parent, $b, [int]$W)
   $p = & $wn.Panel $W 8
   $cb = New-Object System.Windows.Forms.CheckBox; $cb.Text = ''; $cb.AutoSize = $false; $cb.Size = [Drawing.Size]::new((& $wn.Sc 24), (& $wn.Sc 24))
-  $cb.Location = [Drawing.Point]::new((& $wn.Sc 4), (& $wn.Sc 2))
   $cb.AccessibleName = [string]$b.Text; $cb.BackColor = $ui.C.White; $cb.Tag = [string]$b.Id; $cb.Checked = [bool]$wn.Field[$b.Id]; & $ui.Cue $cb
   $cb.Add_CheckedChanged({ $wn.Field[[string]$this.Tag] = [bool]$this.Checked }); [void]$p.Controls.Add($cb)
   $x = & $wn.Sc 38
-  $t = & $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Checkbox text' $null; $t.Location = [Drawing.Point]::new($x, 0)
+  $t = & $wn.Txt $p $b.Text $ui.F.Body $ui.C.Ink 0 ($W - $x) 'Checkbox text' $null
+  # R16 (R42 finding 3: some check boxes were not level with their text): the box's middle is the middle of the text's first line, as a chip's ($wn.ChipTops)
+  $tops = & $wn.ChipTops $cb.Height $t.Font 0; $cb.Location = [Drawing.Point]::new((& $wn.Sc 4), $tops.Chip); $t.Location = [Drawing.Point]::new($x, $tops.Text)
   if (Test-CheckLink $b) { $l = & $wn.Link $b.Link; $l.Location = [Drawing.Point]::new($x, ($t.Bottom + (& $wn.Sc 2))); [void]$p.Controls.Add($l) }
   & $wn.Fit $p 4; [void]$Parent.Controls.Add($p) }
 $wn.Blocks.rows = {
@@ -244,7 +245,8 @@ $wn.Blocks.rows = {
     $p = & $wn.Panel $W 0
     $lw = [int]($W * 0.5); $vw = $W - $lw - (& $wn.Sc 16)
     $a = & $wn.Txt $p $r[0] $ui.F.Small $ui.C.Ink 0 $lw 'Label' $null; $a.Location = [Drawing.Point]::new(0, (& $wn.Sc 8))
-    if ($r[2]) { $v = & $wn.Chip $r[2] $r[1] $ui.C.White; $tops = & $wn.ChipTops $v.Height $a.Font (& $wn.Sc 8)
+    # R16 (R42 finding 3: a status chip sat too near the line above it): the chip has the same gap above it as a text row (8 px at 100 %); the label goes down level with the chip
+    if ($r[2]) { $v = & $wn.Chip $r[2] $r[1] $ui.C.White; $tops = & $wn.ChipTops $v.Height $a.Font ((& $wn.Sc 8) + [int][math]::Round(($v.Height - (& $wn.LineH $a.Font)) / 2.0))
       $a.Location = [Drawing.Point]::new(0, $tops.Text); $v.Location = [Drawing.Point]::new(($W - $v.Width), $tops.Chip); [void]$p.Controls.Add($v); & $wn.KeepChip $v $a 'rows' }
     else { $v = & $wn.Txt $p $r[1] $ui.F.SmallB $ui.C.Ink 0 $vw 'Value' $null; $v.Location = [Drawing.Point]::new(($W - $v.Width), (& $wn.Sc 8)) }
     & $wn.Fit $p 8; [void]$Parent.Controls.Add($p); $first = $false } }
@@ -304,7 +306,14 @@ $wn.Blocks.filter = {
   $cmb = New-Object System.Windows.Forms.ComboBox; $cmb.DropDownStyle = 'DropDownList'; $cmb.Font = $ui.F.Body; $cmb.Width = & $wn.Sc 230; $cmb.AccessibleName = 'Show'
   $cmb.Margin = & $ui.Pad (& $wn.Sc 4) (& $wn.Sc 4) (& $wn.Sc 4) (& $wn.Sc 4)
   foreach ($o in 'All open actions', 'Needs you', 'Late or no answer') { [void]$cmb.Items.Add($o) }
-  $cmb.SelectedIndex = [int]$wn.Field.show; $cmb.Add_SelectedIndexChanged({ $wn.Field.show = $this.SelectedIndex; & $wn.Refilter }); & $ui.Cue $cmb; [void]$f.Controls.Add($cmb) }
+  $cmb.SelectedIndex = [int]$wn.Field.show; $cmb.Add_SelectedIndexChanged({ $wn.Field.show = $this.SelectedIndex; & $wn.Refilter }); & $ui.Cue $cmb; [void]$f.Controls.Add($cmb)
+  & $wn.CenterRow $f }
+# R16 (R42 finding 3: the box next to "Find a publication" sat lower than the list next to it): puts the middle of every control
+# of flow row $F on one line, the middle of the tallest control. Each control keeps its left and right margin; its top margin
+# becomes the gap above it and its bottom margin 0. Takes the flow; returns nothing.
+$wn.CenterRow = { param($F)
+  $h = 0; foreach ($c in $F.Controls) { $h = [math]::Max($h, [int]$c.Height) }
+  foreach ($c in $F.Controls) { $m = $c.Margin; $c.Margin = & $ui.Pad $m.Left ([int][math]::Round(($h - [int]$c.Height) / 2.0)) $m.Right 0 } }
 # R12 (R38 finding 2, UI standard B1): a one-line text box drawn by Windows is as high as its font (39 px at 150 %);
 # the rule is the compact height ($ui.Z.CompactH, 45 px at 150 %). The box goes without its own border into a white
 # frame of that height, in the middle; the frame is the box for the focus ring and the self-check ($ui.Boxes,

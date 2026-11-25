@@ -55,17 +55,32 @@ $wn.BarShow = {
 $wn.Answer = { param([string]$Result)
   if ($wn.CheckAt -ge (& $wn.StepCount)) { return }
   $j = & $wn.WalkAt
+  # R16: a look step asks about the card the person is on: it counts as opened when that card shows
+  if ($j -ge 0 -and [string]$Walk[$j].Via -eq 'look' -and [string]$wn.Cur -eq [string]$Walk[$j].Key) { $wn.WalkOpen[$j] = $true }
   if ($j -ge 0) { $wn.WalkAns[$j] = $Result } else { $wn.Answers[$wn.CheckAt] = $Result }
   $wn.CheckAt++
   & $wn.BarShow }
 # R14: the link "Open this screen" opens the card of the click-through step shown, as a person's open.
 $wn.OpenStep = {
-  $j = & $wn.WalkAt; if ($j -lt 0 -or -not (& $ui.Settled)) { return }
+  $j = & $wn.WalkAt; if ($j -lt 0) { return }
+  if (-not (& $ui.Settled)) { & $wn.IgnoreNote 'the link Open this screen'; return }
   $script:presses++; $wn.Notice = ''; $wn.Err = ''; $k = [string]$Walk[$j].Key
-  try { & $wn.Show $k } catch { & $wn.OpenFail $k $_ } }
+  try { & $wn.Show $k } catch { & $wn.OpenFail $k $_ }
+  & $wn.OpenCheck $k }
 # R15 (R41 finding 4: 2 screens did not open, and the result did not say why): a NOTE line when an open by the person stops.
 $wn.OpenFail = { param([string]$Key, $Err) $m = [string]$Err.Exception.Message
   $lines.Add('NOTE the screen ' + $Key + ' did not open: ' + $m.Substring(0, [Math]::Min(160, $m.Length))) }
+# R16 (R42 finding 3: step12 did not open and the result had no CARDTIME line and no NOTE line): every way an open can fail
+# leaves a NOTE. The guard that holds a click in the first $ui.GuardMs ms after a card changed returned with no line; it
+# writes one now ($wn.IgnoreNote, at most 12 lines), and an open that returns with no error while the window stays on the old
+# card writes one ($wn.OpenCheck). $Where names the control that was clicked; $Key the card that should show.
+$wn.IgnoreN = 0
+$wn.IgnoreNote = { param([string]$Where)
+  if ($wn.IgnoreN -ge 12) { return }; $wn.IgnoreN++
+  $ms = [int]($ui.Clock.Elapsed.TotalMilliseconds - [double]$ui.CardAt)
+  $lines.Add('NOTE a click on ' + $Where + ' was not used: the card ' + [string]$wn.Cur + ' changed ' + $ms + ' ms before (the guard holds a click for ' + [int]$ui.GuardMs + ' ms)') }
+$wn.OpenCheck = { param([string]$Key)
+  if ($Key -and [string]$wn.Cur -ne $Key) { $lines.Add('NOTE the screen ' + $Key + ' did not open: the window stayed on ' + [string]$wn.Cur) } }
 $wn.BarLayout = {
   <#
   .SYNOPSIS

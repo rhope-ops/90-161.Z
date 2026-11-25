@@ -24,6 +24,10 @@
   R15 (R42 T1; R41 finding 4: at 1920 x 1094 and 150 % 3 Status chips ended under the 26 px bar): the column plan is pure
   arithmetic ($wn.ColPlan, run by tests/check_t22_r16.py) and keeps the scroll bar room; the grid fit ($wn.FitGrid) works
   on the column minimums against that room, so a grid that fits keeps its chip (r14 took the chip under the bar).
+  R16 (R43 T1; R42 finding 2: home, empty and queue still "columns need 979, the grid has 961" and "1442, 1428"): r15 made the
+  plan keep the bar room and the fit work on the column minimums; those grids' minimums already fitted, so the fit had
+  nothing to give back while the grid's own fill laid the columns wider than the grid. The fit now also cuts the widths
+  ($wn.TrimWidths); tests/ps/Test-T22GridWidth.ps1 runs it on those numbers.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
   Run: not alone; 90161Z-T22-pfm-window-r16.ps1 dot-sources it from its own folder inside its try block.
   Network: none.

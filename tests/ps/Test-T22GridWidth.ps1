@@ -15,7 +15,7 @@ param([string]$Rev = 'r16', [string]$Root = (Split-Path -Parent (Split-Path -Par
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
 $gov = Join-Path $Root 'scripts/gov'
-$wn = @{}; $ui = @{ Dpi = 144.0; F = @{ Small = 10.5; SmallB = 11.4; Link = 11.4 } }; $pc = @{}; $Again = $false
+$wn = @{}; $ui = @{ Dpi = 144.0; F = @{ Small = 10.5; SmallB = 11.4; Link = 11.4 } }; $Again = $false
 $ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }; $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
 . (Join-Path $gov ('90161Z-T22-cards-' + $Rev + '.ps1'))
 . (Join-Path $gov ('90161Z-T22-grid-' + $Rev + '.ps1'))   # replaces nothing below: only these two stand-ins come after it
