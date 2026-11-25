@@ -12,15 +12,15 @@ python3 scripts/bundle_revision.py --test && python3 scripts/bundle_revision.py 
 # TASKS.md is the copy of go.md for when github.io is blocked (the PFM, 2026-11-21): a stale copy fails the push.
 python3 scripts/build_readme.py --check || exit 1
 # The task cards of index.html are built from go.md (master plan P4b, 2026-11-24): a stale page fails the push.
-# This check needs markdown-it-py (requirements.txt); the pull-request Action installs it below, so it runs there after the install.
-if [ -z "${GITHUB_ACTIONS:-}" ]; then python3 scripts/build_go_page.py --check || exit 1; fi
+# Its self-test (hostile go.md, links, images) runs first. Both need markdown-it-py (requirements.txt); the pull-request Action installs it below, so it runs there after the install.
+if [ -z "${GITHUB_ACTIONS:-}" ]; then python3 scripts/build_go_page.py --test && python3 scripts/build_go_page.py --check || exit 1; fi
 # In the pull-request Action only: install the test packages first (the versions in requirements.txt and
 # package-lock.json; this project's own step, kept here because the kit's workflow file is locked).
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
   PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --quiet --user -r requirements.txt || exit 1
   npm ci --silent --ignore-scripts || exit 1
   export NODE_PATH="$PWD/node_modules"
-  python3 scripts/build_go_page.py --check || exit 1
+  python3 scripts/build_go_page.py --test && python3 scripts/build_go_page.py --check || exit 1
 fi
 log=$(mktemp)
 tests/run.sh "$@" >"$log" 2>&1; rc=$?

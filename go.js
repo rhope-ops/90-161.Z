@@ -118,9 +118,6 @@ function preload(m){
 /**
  * wire(m): copy and .txt buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print.
  * @param {Element} m the page main element.
-/**
- * wire(m): copy and .txt buttons, script preload, remembered open state, Expand/Collapse/Reload, links, print.
- * @param {Element} m the page main element.
  */
 function wire(m){
   m.addEventListener('click',function(e){

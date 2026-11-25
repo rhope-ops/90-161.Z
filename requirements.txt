@@ -3,6 +3,7 @@
 python-docx==1.2.0
 pillow==13.0.0
 jsonschema==4.26.0
-# markdown-it-py: scripts/build_go_page.py builds the page cards from go.md (master plan P4b, 2026-11-24). The
-# linkify extra (linkify-it-py) is not needed: the build gives markdown-it-py its own link finder.
+# markdown-it-py: scripts/build_go_page.py builds the page cards from go.md (master plan P4b, 2026-11-24). mdurl is the
+# one package it needs. The linkify extra (linkify-it-py) is not needed: the build finds the links itself.
 markdown-it-py==4.3.0
+mdurl==0.1.2

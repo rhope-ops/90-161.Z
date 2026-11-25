@@ -42,7 +42,8 @@ except ImportError:  # a clear stop, never a skip: a stale page must not pass
 BEGIN = '<!-- >>> go:page: generated from go.md by scripts/build_go_page.py (do not edit) -->'
 END = '<!-- <<< go:page -->'
 HC = re.compile(r'(<div class="count" id="hc" aria-live="polite">)(.*?)(</div>)', re.S)
-CSP_SRC = re.compile(r'(connect-src )(\S+)(;)')
+CSP_SRC = re.compile(r'(<meta http-equiv="Content-Security-Policy" content="[^"]*?connect-src )([^\s;"]+)(;)')
+NAME = re.compile(r'^[A-Za-z0-9_.-]+$')  # an owner, repo or branch name: nothing else may enter the CSP or a URL
 # The link rule of the old go.js inl(): an http(s) URL, or a bare raw.githubusercontent.com or *.github.io URL.
 LINK = re.compile(r'(https?://[^\s<]+|(?:raw\.githubusercontent\.com|[a-z0-9-]+\.github\.io)/[^\s<]*)')
 REL = 'noopener noreferrer'
@@ -53,45 +54,14 @@ def esc(s):
     return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 
-class _Link:
-    """One link found in a text run, in the form markdown-it-py's linkify rule reads."""
-
-    def __init__(self, m):
-        """Take one regular-expression match of LINK."""
-        u = m.group(0)
-        self.index, self.last_index, self.text = m.start(), m.end(), u
-        self.url = u if u.startswith('http') else 'https://' + u
-        self.schema = 'https:'  # never empty: markdown-it-py would put http:// in front of the text
-
-
-class HostLinks:
-    """The linkify object for markdown-it-py: finds the same links as go.js did, and no fuzzy domains (go.md, x.md)."""
-
-    def pretest(self, text):
-        """True when text can hold a link."""
-        return bool(LINK.search(text))
-
-    test = pretest
-
-    def match(self, text):
-        """The links in text, in order."""
-        return [_Link(m) for m in LINK.finditer(text)]
-
-    def match_at_start(self, text):
-        """No link rule at the start of a run: the core linkify rule finds them all."""
-        return None
-
-
 def make_md():
-    """The markdown-it-py renderer: CommonMark, raw HTML off, our link finder, rel on each link.
+    """The markdown-it-py renderer: CommonMark with raw HTML, images and linkify off; a link keeps http(s) or #.
 
     Returns:
-        A MarkdownIt object; renderInline(text) gives the HTML of one line.
+        A MarkdownIt object; renderInline(text) gives the HTML of one line, and each link gets rel.
     """
-    md = MarkdownIt('commonmark', {'html': False, 'linkify': True}).enable('linkify')
-    md.disable('linkify', ignoreInvalid=True)  # the inline rule (scheme at start); the core rule stays on
-    md.core.ruler.enable('linkify')
-    md.linkify = HostLinks()
+    md = MarkdownIt('commonmark', {'html': False}).disable('image')
+    md.validateLink = lambda url: bool(re.match(r'^(https?://|#)', url, re.I))  # no //host, mailto:, data: or file links
 
     def link_open(renderer, tokens, idx, options, env):
         """Each link gets rel="noopener noreferrer": no access to the page, and no page address sent."""
@@ -103,18 +73,45 @@ def make_md():
 
 
 MD = make_md()
+# A URL is held out of the Markdown pass as a mark of private-use characters (go.md never has them), then put back as
+# a link, so a _ or * in a URL is never Markdown.
+MARK = re.compile('\ue000(\\d+)\ue001')
 
 
-def _plain(part):
-    """Escape the Markdown signs go.md does not use, outside a code span: a backslash stays a backslash, and a single
-    * or _ stays a sign (go.md has only **bold**, as go.js read it)."""
+def link_html(u):
+    """The link of a URL found by LINK: the visible text as written, the address with https:// in front if none."""
+    h = u if u.startswith('http') else 'https://' + u
+    return '<a href="%s" rel="%s">%s</a>' % (esc(h), REL, esc(u))
+
+
+def _plain(part, links):
+    """Prepare text outside a code span for Markdown.
+
+    Args:
+        part: a piece of a go.md line with no code span in it.
+        links: the list that keeps each held-out URL; its index is the number in the mark.
+
+    Returns:
+        The text with each URL as a mark, each backslash doubled (it stays a backslash), and each single * or _
+        escaped (it stays a sign: go.md has only **bold**, as go.js read it).
+    """
+    def hold(m):
+        """Keep the URL (without a trailing * of **bold**) and give its mark; a [text](URL) address stays Markdown."""
+        if m.string[max(0, m.start() - 2):m.start()] == '](':
+            return m.group(0)
+        u = m.group(0).rstrip('*')
+        links.append(u)
+        return '\ue000%d\ue001%s' % (len(links) - 1, m.group(0)[len(u):])
+    part = LINK.sub(hold, part)
     part = part.replace('\\', '\\\\').replace('_', '\\_')
     return re.sub(r'(?<!\*)\*(?!\*)', r'\\*', part)
 
 
 def inl(s):
-    """The HTML of one go.md text line: escaped text, **bold**, `code` and links."""
-    return MD.renderInline(''.join(p if p.startswith('`') else _plain(p) for p in re.split(r'(`[^`]+`)', s)))
+    """The HTML of one go.md text line: escaped text, **bold**, `code`, [text](https://...) and bare links."""
+    links = []
+    text = ''.join(p if p.startswith('`') else _plain(p, links) for p in re.split(r'(`[^`]+`)', s))
+    return MARK.sub(lambda m: link_html(links[int(m.group(1))]), MD.renderInline(text))
 
 
 def slug(s, i):
@@ -374,12 +371,15 @@ def build(page, md, urls):
     """
     if page.count(BEGIN) != 1 or page.count(END) != 1 or page.index(BEGIN) > page.index(END):
         raise ValueError('index.html needs one %s line and one %s line after it' % (BEGIN, END))
+    raw = urls['raw'][len('https://raw.githubusercontent.com/'):].rstrip('/').split('/')
+    if not urls['raw'].startswith('https://raw.githubusercontent.com/') or len(raw) != 3 or not all(NAME.match(x) for x in raw):
+        raise ValueError('site.config.json needs owner, repo and branch of letters, digits, ".", "_" and "-" only')
     body, n_open = main_html(md, urls)
     a, b = page.index(BEGIN) + len(BEGIN), page.index(END)
     page = page[:a] + '\n' + body + '\n' + page[b:]
     count = '<b>%d</b>open task%s' % (n_open, '' if n_open == 1 else 's')
     if len(HC.findall(page)) != 1 or len(CSP_SRC.findall(page)) != 1:
-        raise ValueError('index.html needs one #hc count box and one CSP connect-src source')
+        raise ValueError('index.html needs one #hc count box and one connect-src source in its CSP meta tag')
     page = HC.sub(lambda m: m.group(1) + count + m.group(3), page)
     return CSP_SRC.sub(lambda m: m.group(1) + urls['raw'] + m.group(3), page)
 
@@ -413,16 +413,31 @@ def self_test():
     check('a round script gets Open as .txt and Copy script, no .ps1 link', 'data-txt=' in r and 'data-script=' in r
           and not re.search(r'<a href="[^"]*\.ps1"', r))
     check('file names are not links', '<a' not in inl('See go.md, TASKS.md and check.sh.'))
+    check('a _ or * in a URL stays in the link', all(x in inl(t) for t, x in (
+        ('raw.githubusercontent.com/o/r/main/scripts/build_go_page.py is it', 'href="https://raw.githubusercontent.com/o/r/main/scripts/build_go_page.py"'),
+        ('See https://e.x/a*b*c', 'href="https://e.x/a*b*c"'), ('see https://e.x/a_b.', 'href="https://e.x/a_b."'))))
+    check('[text](https://...) is a link; **URL** is bold', inl('[t](https://e.x/a_b) **https://e.x/y**') ==
+          '<a href="https://e.x/a_b" rel="%s">t</a> <strong><a href="https://e.x/y" rel="%s">https://e.x/y</a></strong>'
+          % (REL, REL))
+    bad = inl('![p](data:image/png;base64,AA) [a](//evil.example/p) [b](mailto:x@y.z) [c](go.md) [d](javascript:x) '
+              '<mailto:x@y.z> <https://ok.example/>')
+    check('no image; links keep http(s) only', '<img' not in bad and bad.count('<a ') == 1 and 'https://ok.example/' in bad)
     check('a backslash stays', 'Rounds\\&lt;round&gt;' in inl('Rounds\\<round>'))
     check('a single * or _ is no italic, also in code', inl('2*3*4 a_b_c _x_ `a_b\\c`') ==
           '2*3*4 a_b_c _x_ <code>a_b\\c</code>')
     check('bold, code and a bare raw link', inl('**b** `c` raw.githubusercontent.com/o/r/x') ==
           '<strong>b</strong> <code>c</code> <a href="https://raw.githubusercontent.com/o/r/x" rel="%s">'
           'raw.githubusercontent.com/o/r/x</a>' % REL)
-    page = ('<meta content="default-src \'none\'; connect-src https://old/;"><div class="count" id="hc" '
+    page = ('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; connect-src https://old/;"><div class="count" id="hc" '
             'aria-live="polite"></div><main>%s\n%s</main>' % (BEGIN, END))
     out = build(page, grouped, u)
     check('build writes the count and the CSP source', '<b>2</b>open tasks' in out and 'connect-src %s;' % u['raw'] in out)
+    try:
+        build(page, grouped, {'raw': 'https://raw.githubusercontent.com/o/r"; script-src *;/main/'})
+        check('a bad name in site.config.json stops the build', False)
+    except ValueError:
+        pass
+    check('a connect-src text in go.md is not the CSP', build(out, grouped + 'connect-src x;\n', u).count('connect-src x;') == 1)
     check('a second build changes nothing', build(out, grouped, u) == out)
     if fails:
         for f in fails:
