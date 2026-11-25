@@ -106,7 +106,7 @@ Change later (Settings screen, PFM and alternate only): the app calls a flow on 
 | Installed version | The app shows its installed version only. There is no "Check for updates" button and no central Releases list |
 | Who compares | RADE compares versions at each run (PFM, 14 Nov 26). How the window shows the result: not decided yet |
 | How you update | Paste the current round again (Part 0 above). The window lists each file as New, Replace or Recycle before you press Run. Importing the solution "90-161.Z flows" over the older copy is an upgrade: the flows keep their connections (docs/power-automate-provisioning.md section 5) |
-| Is the script the right one | Not decided yet: the window title bar shows only the build code, not the README **Code:** value. |
+| Is the script the right one | Compare the round script name in the README (**Round script:**) with the round name of the open task. The window title bar shows only the build code, not the README **Code:** value. |
 | Lists | A run of T20 skips what exists. It does not change an existing column. How a list change reaches a wing that has the old list: not decided yet |
 | App (Power Apps) | How a new app version is installed: not decided yet |
 

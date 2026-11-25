@@ -8,7 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-25 | Project rule "Screen names" (exact short text in AGENTS.md); check tests/check_screen_names.py in the full lane; round skill 5: fresh reader gets the --map card order. Scope: every session. | PFM (question dialog) | docs/reviews/2026-11-25-rule-conflict.md |
+| 2026-11-25 | Project rule "Screen names" (AGENTS.md); tests/check_screen_names.py in both lanes; round skill 5: fresh reader gets the --map order; skill description list cut (cap). Scope: every session. | PFM (question dialog; merge "yes") | docs/reviews/2026-11-25-rule-conflict.md |
 | 2026-11-25 | R42 r3 (card lines in the bundle: "the window 90-161.Z 0.1.0", "the Back up log") is built after the PFM's current R42 r2 run ends. Scope: R42. | PFM ("1b", chat) | docs/NEXT_PROMPT.md |
 | 2026-11-25 | Ask RADE to rename the F2 screen "Record (F2)" to "Details (F2)" (it holds checks, step boxes, files and the log). Scope: a later RADE engine release. | PFM (question dialog) | RADE |
 | 2026-11-25 | GitHub Pages off for 90-161.Z and RADE (the PFM clicks Settings > Pages > None). paste_bundles.json `home` is https://github.com/rhope-ops/90-161.Z, so the next bundle (R43) has no github.io link; the R42 r2 bundle keeps its links until then. docs/setup-and-updates.md section 2 steps use the README. index.html and the gh-pages branch stay in the repo (no longer served). Scope: 90-161.Z. | the PFM ("let's turn off the old page"; dialog answer "Both") | Rows of 2026-11-13 and 2026-11-14 (bookmark rhope-ops.github.io/90-161.Z) |

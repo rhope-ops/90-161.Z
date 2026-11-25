@@ -150,7 +150,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 14. If the card **One check needs you.** shows, click the button on the card. Do what the card says. Wait until a new card shows.
 15. If the card **One check failed.** or **Your OneDrive folder was not found.** shows, do "Send a line to Claude" on this page with the first 10 words of the card. The steps of this task stop here.
 16. If the card **Ready to run round R42.** shows **Run** or **Resume at step**, click it. Wait until you see a progress bar. The next 21 steps come in any order, often more than one time.
-17. If a CAC sign-in window opens and the card in RADE asks for its size, write down `Small` or `Large`. Go on.
+17. If a RADE card asks for the size of the CAC sign-in window, write down `Small` or `Large`. You see the size on paper. Go on.
 18. If a CAC sign-in window opens (each time), sign in with your CAC. Wait until the sign-in window closes.
 19. If the small window **90-161.Z test T4** asks for an address, type the address of the second person that you wrote down. You see the address in the box. Go on.
 20. If the address is in the box of the small window **90-161.Z test T4**, click **OK**. The small window closes. Go on.
@@ -160,7 +160,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 24. If a card in the window **RADE** shows a question with buttons or rows (each time), click your answer. You see the next card. Go on.
 25. If a card in the window **RADE** shows a box (each time, also **Last question**), type one line with no names. Go on.
 26. If the line is in the box, click **Continue**. You see the next card. Go on.
-27. If the card **What did the error say?** shows, type the first line of the error. Go on.
+27. If the card **What did the error say?** shows, type the error message in the box. Go on.
 28. If the error line is in the box, click **Report the failure**. You see the next card. Go on.
 29. If the window **Publications and Forms Management** opens, find its bottom bar. You see a line that starts with **Check 1 of**. Go on.
 30. If the bottom bar shows a line (each time), do what the line says. You see the result in the window. Go on.

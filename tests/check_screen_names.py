@@ -15,8 +15,13 @@ Example: "Ready to run round R42." passes because "Ready to run round" is in the
 A name of another program (Windows, ISE, Outlook, GitHub, Teams, the README) is in OUTSIDE and is not read.
 A quoted name that is the name of a go.md "Steps ..." list ("Send a line to Claude") is a page name, not a screen name.
 
-What it does not see: a name that is in the code but shows on another card or at another time. The fresh reader gets
-the card order from the bundle for that (the round skill, section 5).
+The step text of the round (guide lines, notes, question prompts and help lines of scripts/paste_bundles.json) is
+copied into the bundle too; it is left out of the screen text, so a guide line cannot pass by finding itself.
+
+What it does not see: a name that is in a string of the code but shows on another card, at another time, or only in the
+log ("Repair", "Log" and "Writes to" are all strings of the R42 r2 bundle). The fresh reader gets the card order from
+the bundle for that: the round skill, section 5, and --map. --map lists literal button texts only; a button text the
+code builds at run time ("Run" or "Install", "Resume at step <n> of <m>") is not in its BUTTONS line.
 
 Usage:   python3 tests/check_screen_names.py          check; exit 1 on any name the bundle does not hold
          python3 tests/check_screen_names.py --test   self-test with good and bad sample names
@@ -55,12 +60,45 @@ def bundle_path():
     return found[0]
 
 
-def screen_text(code):
-    """Gives back the text of every string value in the bundle code ('...' with '' for ', and "..."), one per line.
-    Comments, variable names and code words are left out, so a name matches only text the window can show."""
-    out = [m.replace("''", "'") for m in re.findall(r"'((?:[^'\n]|'')*)'", code)]
-    out += re.findall(r'"([^"\n]*)"', code)
+def screen_text(code, drop=()):
+    """Gives back the text of every string value in the bundle code, one per line.
+
+    Comments, variable names and code words are left out, so a name matches only text in a string.
+
+    Args:
+        code: the code of the round bundle ('...' strings with '' for ', and "..." strings).
+        drop: string values to leave out (the step text of the round, from authored_text).
+
+    Returns:
+        The string values joined by line breaks.
+    """
+    drop = set(drop)
+    out = []
+
+    def keep(m):
+        """Keeps one '...' string value unless it is step text; step text is cut from the code, so its inner
+        "quoted" names are not read as "..." strings below."""
+        s = m.group(1).replace("''", "'")
+        if s in drop:
+            return "''"
+        out.append(s)
+        return m.group(0)
+
+    rest = re.sub(r"'((?:[^'\n]|'')*)'", keep, code)
+    out += re.findall(r'"([^"\n]*)"', rest)
     return '\n'.join(out)
+
+
+def authored_text(bundles):
+    """Gives back the step text that the round build copies into the bundle (guide lines, notes, question prompts and
+    help lines of every bundle in scripts/paste_bundles.json): text written for the person, not screen names."""
+    out = set()
+    for b in bundles.get('bundles', []):
+        for s in b.get('steps', []):
+            out.update(str(g) for g in (s.get('guide') or []))
+            out.update(str(s.get(k)) for k in ('note', 'help') if s.get(k))
+            out.update(str(a.get('prompt')) for a in (s.get('answers') or []) if a.get('prompt'))
+    return out
 
 
 def app_names(code):
@@ -125,7 +163,11 @@ def go_names(go_text):
     """
     lines = go_text.split('\n')
     end = next((i for i, l in enumerate(lines) if l.startswith('## Done')), len(lines))
-    pages = ' '.join(l.lower() for l in lines[:end] if l.startswith('Steps '))
+    pages = set()   # the names of go.md's own lists: "Steps to send a line to Claude." gives "send a line to claude"
+    for l in lines[:end]:
+        if l.startswith('Steps '):
+            head = re.split(r'[.:]', l, maxsplit=1)[0].lower()
+            pages.update({head, re.sub(r'^steps (?:to|if) ', '', head)})
     out = []
     for i, l in enumerate(lines[:end]):
         if not re.match(r'\s*\d+\.\s', l):
@@ -170,10 +212,20 @@ def self_test():
             "Don't stop", 'Screen 10 of 17', 'Send', '0.1.0']
     bad = ['Writes to NOT found', 'Log', 'Repair', 'Back up log']
     errs = [n for n in good if check_name(code, apps, n)] + [n for n in bad if not check_name(code, apps, n)]
-    gt = '1. Click **Run**. Do "Send a line to Claude".\nSteps to send a line to Claude:\n## Done\n1. **Old**'
+    gt = '1. Click **Run**. Do "Send a line to Claude". Read "a line to".\nSteps to send a line to Claude:\n## Done\n1. **Old**'
     got = [n for _, n in go_names(gt)]
-    if got != ['Run']:
+    if got != ['Run', 'a line to']:   # a page name is left out only when it is the whole name of a list
         errs.append('go_names: %r' % got)
+    # A guide line copied into the bundle must not hold its own names (review MAJOR, 2026-11-25).
+    data = {'bundles': [{'out': 'x/b.ps1', 'steps': [{'title': 'T', 'guide': ['5. Click "Frobnicate Zeta".'],
+                                                      'answers': [{'prompt': 'In the window "Zork", say?'}]}]}]}
+    raw = "Text = 'Maintenance'\nGuide = @('5. Click \"Frobnicate Zeta\".')\nPrompt = 'In the window \"Zork\", say?'"
+    scr = screen_text(raw, authored_text(data))
+    for _, n in guide_names(data, 'b.ps1'):
+        if not check_name(scr, [], n):
+            errs.append('guide self-match: %s' % n)
+    if check_name(scr, [], 'Zork') == [] or check_name(scr, [], 'Maintenance'):
+        errs.append('authored text not left out, or screen text lost')
     if errs:
         sys.exit('SELF-TEST FAIL: %s' % errs)
     print('SCREEN NAMES SELF-TEST PASS')
@@ -221,9 +273,9 @@ def main():
         return
     raw = bp.read_text(encoding='utf-8')
     apps = app_names(raw)
-    code = screen_text(raw)
-    names = [('go.md:%d' % n, x) for n, x in go_names((ROOT / 'go.md').read_text(encoding='utf-8'))]
     data = json.loads((ROOT / 'scripts/paste_bundles.json').read_text(encoding='utf-8'))
+    code = screen_text(raw, authored_text(data))
+    names = [('go.md:%d' % n, x) for n, x in go_names((ROOT / 'go.md').read_text(encoding='utf-8'))]
     names += [('guide "%s"' % t, x) for t, x in guide_names(data, bp.name)]
     failed = 0
     for where, x in names:
