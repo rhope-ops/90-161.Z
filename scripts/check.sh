@@ -230,6 +230,26 @@ rc=1"
   printf '%s\n' '{"commit": "c0ffee", "files": {"scripts/gone.py": "x"}}' > "$t/r/.check.lock"
   mkdir -p "$t/pkgbin"; printf '#!/bin/sh\necho "KIT PACKAGE PASS: $*"\n' > "$t/pkgbin/archimedes-kit"; chmod +x "$t/pkgbin/archimedes-kit"
   ok "package mode runs the package's verify" "$(cd "$t/r" && PATH="$t/pkgbin:$PATH" bash scripts/check.sh 2>&1 | grep -c '^PASS  kit package')" 1
+  # --kit-install under PEP 668: a fake python3 whose pip refuses the system Python (or fails with $PIPERR).
+  mkdir -p "$t/pep668"
+  cat >"$t/pep668/python3" <<EOF
+#!/bin/sh
+case "\$*" in
+  *"-m pip install"*) echo "\$*" >>"$t/pip.log"; case "\$*" in *--user*) exit 0;; esac
+    echo "error: \${PIPERR:-externally-managed-environment}" >&2; exit 1;;
+  *"-m archimedes_kit.kit_package"*) shift 2; echo "KIT PACKAGE PASS: module \$*"; exit 0;;
+esac
+exec $(command -v python3) "\$@"
+EOF
+  chmod +x "$t/pep668/python3"; nokit="$t/pep668:$(dirname "$(command -v git)"):/usr/bin:/bin"  # no archimedes-kit command
+  out="$(cd "$t/r" && PATH="$nokit" bash scripts/check.sh --kit-install 2>&1)"
+  ok "--kit-install: pip refused by PEP 668 makes a user install" "$(grep -c -- '--user --break-system-packages' "$t/pip.log")" 1
+  ok "--kit-install: with no archimedes-kit command the package module writes the scripts" \
+    "$(printf '%s\n' "$out" | grep -c '^KIT PACKAGE PASS: module --install$')" 1
+  ok "the package step finds the package module with no archimedes-kit command" \
+    "$(cd "$t/r" && PATH="$nokit" bash scripts/check.sh 2>&1 | grep -c '^PASS  kit package')" 1
+  rm "$t/pip.log"; out="$(cd "$t/r" && PIPERR="no network" PATH="$nokit" bash scripts/check.sh --kit-install 2>&1; echo "rc=$?")"
+  ok "--kit-install: another pip error fails, shows it and makes no user install" "$(printf '%s\n' "$out" | grep -c -e '^error: no network$' -e '^rc=1$')$(grep -c -- '--user' "$t/pip.log")" 20
   g add -f .check.lock; printf 'x\n' > "$t/r/scripts/gone.py"; g add -f scripts/gone.py
   ok "with each locked script tracked there is no package step" "$(c | grep -c 'kit package')" 0
   ok "with each locked script tracked --kit-install does nothing" "$(c --kit-install; echo "rc=$?")" "KIT PACKAGE: not used (each kit script in .check.lock is tracked)
@@ -264,12 +284,21 @@ try: f = [k for k in json.load(open(".check.lock"))["files"] if k.startswith("sc
 except Exception: sys.exit(0)
 sys.exit(0 if set(f) - set(subprocess.run(["git", "ls-files", "-z", "--"] + f, capture_output=True, text=True).stdout.split("\0")) else 1)'
 }
+# The kit package's command: archimedes-kit, else its module (a user install can put the command off PATH).
+kit() { if command -v archimedes-kit >/dev/null; then archimedes-kit "$@"; else python3 -m archimedes_kit.kit_package "$@"; fi; }
 # --kit-install: in package mode, install the kit package at the lock commit and write the kit scripts (the CI step, the
-# SessionStart hook at startup, the setup script and kit-update use it: one home for the install command); else nothing.
+# SessionStart hook at startup, kit-update and a setup script that calls it use it: one home for the install command); else nothing.
 if [ "$kitinstall" = 1 ]; then
   pkg_mode || { echo "KIT PACKAGE: not used (each kit script in .check.lock is tracked)"; exit 0; }
   c="$(python3 -c 'import json; print(json.load(open(".check.lock"))["commit"])')" || exit 1
-  python3 -m pip install -q --force-reinstall "git+https://github.com/rhope-ops/archimedes_lever@$c" && archimedes-kit --install
+  u="git+https://github.com/rhope-ops/archimedes_lever@$c"
+  if ! o="$(python3 -m pip install -q --force-reinstall "$u" 2>&1)"; then
+    # PEP 668: a system Python that refuses pip outside a venv gets a user install (many such systems have no venv module).
+    grep -q 'externally-managed-environment' <<<"$o" || { printf '%s\n' "$o"; exit 1; }
+    echo "KIT PACKAGE: pip refuses the system Python (PEP 668); it makes a user install"
+    python3 -m pip install -q --user --break-system-packages --force-reinstall "$u" || exit 1
+  fi
+  kit --install
   exit $?
 fi
 if [ "$cached" = 1 ] && [ -f "$stamp" ] && clean && ! pkg_mode; then
@@ -475,7 +504,7 @@ fi
 # installed kit package must be at the lock commit and each such file must equal its copy (pkg_mode, above: from the lock
 # alone, because with the package missing the untracked scripts are missing too, and their steps above skip).
 kit_package() {
-  command -v archimedes-kit >/dev/null && archimedes-kit --verify && return 0
+  kit --verify && return 0
   echo "install: scripts/check.sh --kit-install (pip installs the kit package at the commit in .check.lock)"
   return 1
 }
