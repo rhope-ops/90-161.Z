@@ -5,7 +5,8 @@
 # Cases: Make makes the fake publication and the endorsement row to edit once and keeps their numbers; the publication also holds the
 # 4 columns that the exit of step 1 needs (R43; the PFM, 25 Nov 26: OPR = the first office row, Applies to Level and Publication Type =
 # choices of the schema, the master 673 link on example.test with the fake-data marker; the proof that the T27 Step exit conditions pass
-# on it is in tests/ps/Test-T27.ps1); Make stops when PFM Offices has no row; a second Make reuses them; Read records ENDORSE-EDIT REFUSED (no PASS or FAIL word) until another person changed that row, then PASS; Read with
+# on it is in tests/ps/Test-T27.ps1); Make stops when PFM Offices has no row; a second Make reuses them;
+# Read records ENDORSE-EDIT REFUSED (no PASS or FAIL word) until another person changed that row, then PASS; Read with
 # no answer fails; Read finds the answer of another person (not your own row), in ASCII, and counts it; an unknown
 # answer reads "other"; Clean recycles the endorsement and log rows and the publication, then the state file; no line
 # shows the site host; the script file is ASCII.
@@ -157,7 +158,8 @@ try {
   Test-That 'Make with no process steps: STOPPED, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED: ') $r.File
   New-Site; $global:F.Lists['PFM Offices'].Clear()
   $r = Invoke-T26 'Make'
-  Test-That 'Make with no PFM Offices row: STOPPED, exit 1, no publication made' ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED: OFFICE not found' -and @($global:F.Lists['PFM Publications']).Count -eq 0) $r.File
+  $ok = ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED: OFFICE not found' -and @($global:F.Lists['PFM Publications']).Count -eq 0)
+  Test-That 'Make with no PFM Offices row: STOPPED, exit 1, no publication made' $ok $r.File
   New-Site; $global:FailList = 'PFM Endorsements'
   $r = Invoke-T26 'Make'; $global:FailList = $null
   $st = $(if (Test-Path -LiteralPath $stateFile) { Get-Content -LiteralPath $stateFile -Raw } else { '' })

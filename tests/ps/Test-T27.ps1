@@ -5,7 +5,8 @@
 # Cases: the Uninstall parts (Lists, Access, Local). Lists removes each own list BY ITS FIXED TITLE (the PFM, 25 Nov 26), also on a site where
 # the fake RADE_MADE file is empty or names other things (the 12 lists were made before RADE installs). Access (the PFM, 25 Nov 26: a group
 # cannot go to a Recycle Bin) removes the group PFM Office and the level PFM Office Edit All Items only when RADE_MADE names them: with an
-# empty made list both stay and print SKIP "not made by the install"; named, they go; a foreign group or level always stays. A list of another folder name with an own title stays, a list of an own folder with another title stays, a list of a
+# empty made list both stay and print SKIP "not made by the install"; named, they go; a foreign group or level always stays.
+# A list of another folder name with an own title stays, a list of an own folder with another title stays, a list of a
 # person with a similar title (suffix, case, space) stays, a name that is not ours is refused; a second run removes nothing and prints
 # SKIP; a bad gate (wrong RADE_MODE, no file, bad JSON, wrong schema, wrong app) makes no sign-in and no remove call and prints FAIL.
 # The checks Gone and Install, and the process step Step (step 1 to step 2 with the exit conditions of step 1 checked before and after
@@ -152,9 +153,20 @@ function Get-PnPListItem {
       foreach ($k in $names) { $it[$k] = $(if ($row.ContainsKey($k)) { $row[$k] } else { $null }) }
       $it })
 }
-# Fake Add-PnPListItem (strict, as SharePoint is): the schema of PFM Publications decides. An unknown column, a missing required column, a
-# choice that is not a choice of the schema, or a lookup number that is not a row of the target list throws. A stored lookup reads back as
-# a value object (LookupId), a link as an object with Url. Other lists: stored as given (the publication lookup as a value object).
+<#
+.SYNOPSIS
+  Fake Add-PnPListItem, strict as SharePoint is: the schema of PFM Publications decides. An unknown column, a missing required column, a
+  choice that is not a choice of the schema, or a lookup number that is not a row of the target list throws.
+.DESCRIPTION
+  A stored lookup reads back as a value object (LookupId), a link as an object with Url. Other lists: stored as given (the publication
+  lookup as a value object).
+.PARAMETER List
+  The title of the list.
+.PARAMETER Values
+  The column values (internal name to value).
+.OUTPUTS
+  System.Management.Automation.PSObject. The new row, with its Id.
+#>
 function Add-PnPListItem {
   [CmdletBinding()] param([string]$List, [hashtable]$Values)
   $global:S.RowNext++; $row = @{ Id = $global:S.RowNext }
@@ -167,7 +179,8 @@ function Add-PnPListItem {
       if ($f.type -eq 'Choice' -and @($f.choices) -cnotcontains [string]$v) { throw ('FAKE: ' + $k + ' is not a choice: ' + $v) }
       if ($f.type -eq 'Lookup') {
         $target = @{ PFMOffices = 'PFM Offices'; PFMProcessSteps = 'PFM Process Steps'; PFMSeries = 'PFM Series'; PFMProductIndex = 'PFM Product Index' }[[string]$f.lookup.list]
-        if (-not $target -or -not $global:S.Rows.ContainsKey($target) -or -not @($global:S.Rows[$target] | Where-Object { $_.Id -eq [int]$v }).Count) { throw ('FAKE: no row ' + $v + ' for the lookup ' + $k) }
+        $has = $target -and $global:S.Rows.ContainsKey($target) -and @($global:S.Rows[$target] | Where-Object { $_.Id -eq [int]$v }).Count
+        if (-not $has) { throw ('FAKE: no row ' + $v + ' for the lookup ' + $k) }
         $v = [pscustomobject]@{ LookupId = [int]$v }
       }
       if ($f.type -eq 'URL') {
@@ -177,7 +190,9 @@ function Add-PnPListItem {
     } elseif ($k -eq 'Publication') { $v = [pscustomobject]@{ LookupId = [int]$v } }
     $row[$k] = $v
   }
-  if ($List -eq 'PFM Publications') { foreach ($fld in $global:PubSchema.fields) { if ($fld.required -and -not $row.ContainsKey([string]$fld.internalName)) { throw ('FAKE: required column ' + $fld.internalName + ' missing') } } }
+  if ($List -eq 'PFM Publications') {
+    foreach ($fld in $global:PubSchema.fields) { if ($fld.required -and -not $row.ContainsKey([string]$fld.internalName)) { throw ('FAKE: required column ' + $fld.internalName + ' missing') } }
+  }
   $null = $global:S.Rows[$List].Add($row); return (New-Object psobject -Property @{ Id = $row.Id })
 }
 # Fake Set-PnPListItem: sets fields of one row, and logs the call.
@@ -364,7 +379,8 @@ try {
   Test-That 'Access with only the level named: the level goes, the group stays (SKIP)' ($r.Code -eq 0 -and (@($global:S.Calls) -join ',') -ceq 'level:PFM Office Edit All Items' -and
       $global:S.Groups -contains 'PFM Office' -and $r.File -match '(?m)^ITEM a1-group SKIP not made by the install' -and
       $r.File -match '(?m)^RESULT UNINSTALL ACCESS PASS removed=1') $r.File
-  New-Site; Set-Made @(@{ kind = 'group'; name = 'Site Owners' }, @{ kind = 'level'; name = 'Edit' }, @{ kind = 'group'; name = 'pfm office' }, @{ kind = 'level'; name = 'PFM Office Edit All Items 2' })
+  New-Site; Set-Made @(@{ kind = 'group'; name = 'Site Owners' }, @{ kind = 'level'; name = 'Edit' }, @{ kind = 'group'; name = 'pfm office' },
+    @{ kind = 'level'; name = 'PFM Office Edit All Items 2' })
   $r = Invoke-T27 'Access'
   Test-That 'a group or a level that is not ours (also a near name) is refused (NOTE) and stays; our pair stays too, as it is not named' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and
       $global:S.Groups.Count -eq 2 -and $global:S.Groups -contains 'Site Owners' -and $global:S.Groups -contains 'PFM Office' -and $global:S.Levels.Count -eq 2 -and
