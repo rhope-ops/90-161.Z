@@ -43,7 +43,7 @@ GRAPH = {
     # Task scripts get the shared blocks after the generators that write other blocks into them.
     'task_scripts': ([PY, 'scripts/build_task_scripts.py'], [PY, 'scripts/build_task_scripts.py', '--check'],
                      ['probe_samples', 'test_app', 'rights_rows']),
-    # Round bundles embed the task scripts and samples; the build also rewrites TASKS.md (build_readme.py) at its end.
+    # Round bundles embed the task scripts and samples; the build also rewrites the README task part (build_readme.py) at its end.
     'paste_bundles': ([PY, 'scripts/build_paste_bundles.py'], [PY, 'scripts/build_paste_bundles.py', '--check'],
                       ['task_scripts', 'messy_draft', 'test_seals', 'flow_package', 'flow_solution']),
     'readme_tasks': ([PY, 'scripts/build_readme.py'], [PY, 'scripts/build_readme.py', '--check'], ['paste_bundles']),

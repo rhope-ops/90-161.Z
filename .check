@@ -61,5 +61,5 @@ audit-ignore: flow/provisioning-payload.json
 audit-ignore: flow/packages/**
 audit-ignore: tests/fixtures/*.publication.json
 audit-instructions: go.md
-audit-instructions: TASKS.md
+audit-instructions: README.md
 audit-instructions: scripts/paste_bundles.json
