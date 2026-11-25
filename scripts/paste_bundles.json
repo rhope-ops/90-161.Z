@@ -185,7 +185,7 @@
                     "file": "90161Z-T22-maint-r16.ps1",
                     "args": "-Part Install",
                     "minutes": 5,
-                    "note": "The one step of the test install. RADE keeps an install record and saves its newest copy for the RADE shortcut. Nothing on the site changes.",
+                    "note": "The last step of the test install. RADE keeps an install record and saves its newest copy for the RADE shortcut. Nothing on the site changes.",
                     "estimate": 1,
                     "help": "Send the results as they are. The step can be run again.",
                     "doing": "Recording the test install."
@@ -789,7 +789,10 @@
                         "pnp",
                         "net-site"
                     ],
-                    "doing": "Reading the lists of the site."
+                    "doing": "Reading the lists of the site.",
+                    "after": [
+                        "T27 Check Uninstall removed the lists r1"
+                    ]
                 },
                 {
                     "name": "T26 Make the fake publication after install r2",
@@ -805,23 +808,29 @@
                         "pnp",
                         "net-site"
                     ],
-                    "doing": "Making the fake publication."
+                    "doing": "Making the fake publication.",
+                    "after": [
+                        "T27 Check the new install r1"
+                    ]
                 },
                 {
                     "name": "T27 Move the fake publication one step r1",
-                    "title": "Take the fake publication through one process step",
+                    "title": "Move the fake publication from step 1 to step 2",
                     "dir": "T27",
                     "file": "90161Z-T27-lifecycle-r1.ps1",
                     "args": "-Part Step",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Moves the fake publication from step 1 to step 2, Drafting with SMEs (DAFMAN 90-161 3.2), and reads it back from the site.",
+                    "note": "Signs in (CAC). Moves the fake publication out of step 1, Request (DAFMAN 90-161 3.1), into step 2, Drafting with SMEs (3.2), and reads it back from the site. It does not test the exit of a step.",
                     "estimate": 1,
                     "help": "Send the results as they are. A second run changes nothing.",
                     "needs": [
                         "pnp",
                         "net-site"
                     ],
-                    "doing": "Moving the fake publication to step 2."
+                    "doing": "Moving the fake publication to step 2.",
+                    "after": [
+                        "T26 Make the fake publication after install r2"
+                    ]
                 },
                 {
                     "name": "T26 Remove the fake rows after install r2",

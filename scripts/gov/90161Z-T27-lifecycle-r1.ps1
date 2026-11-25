@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 27 r1 (round R43; the PFM, 25 Nov 26: RADE Uninstall, install from zero, 1 fake publication through 1 full process
-  step; test site only): the Uninstall steps of the app 90-161.Z, and the read-only checks and the process step that follow
+  90-161.Z Task 27 r1 (round R43; the PFM, 25 Nov 26: RADE Uninstall, install from zero, 1 fake publication through 1 process step
+  (a move from step 1 to step 2; see the module check); test site only): the Uninstall steps of the app 90-161.Z, and the read-only checks and the process step that follow
   them. Windows PowerShell 5.1 (also 7), the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v40: a Back up first, then these steps); they remove only
@@ -19,8 +19,8 @@
   The read-only checks and the step (a round step; they need no made list). Module: 90161Z-T27-check-r1.ps1.
     Gone    After Uninstall: none of the 12 lists is on the site.
     Install After the install from zero: the 12 lists are on the site, and the process steps the next part needs are in PFM Process Steps.
-    Step    1 fake publication (made by T26 Make) goes through 1 full process step: it moves from step 1 to the next, and the move is
-            read back. See the module for the step and its DAFMAN 90-161 paragraph.
+    Step    1 fake publication (made by T26 Make) moves from step 1 (Request, DAFMAN 90-161 3.1) to step 2 (Drafting with SMEs, 3.2), and
+            the move is read back. It does not test the exit conditions of the steps. See the module.
   WHAT IT CHANGES ON THE SITE: Lists, Access: the removals above. Step: 1 field (the process step) of the fake publication of T26.
   Gone and Install change nothing. Local: 1 file on this computer.
   Counts, list names of this product and status words only: no names, addresses or row text. The site address stays in

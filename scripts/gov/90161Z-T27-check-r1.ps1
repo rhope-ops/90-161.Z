@@ -7,10 +7,12 @@
   Inputs: the values and helpers of the main file and of the modules it loads (Add-Item, $lines, $OwnLists, Get-SiteList, Find-OurList,
   Get-GroupId, Get-RoleLevel, $OwnGroup, $OwnLevel). Outputs: ITEM and RESULT lines through them.
   THE PROCESS STEP (the PFM, 25 Nov 26: "Full process step"; the choice of step is the builder's, listed as open in the R43 notes):
-  stage 2, "Drafting with SMEs", DAFMAN 90-161 paragraph 3.2 (docs/process-model.md "Stages", row 2: exit condition "Draft uploaded",
-  60 target business days, Table A5.2). The fake publication of T26 Make starts at step 1 (Request); Step moves it to step 2, which
-  is what the PFM does when the request is saved and confirmed (docs/process-model.md, row 1 exit), and reads it back from the site.
-  The 60 days are read from the site row of the step (the seed of PFM Process Steps), so the part also shows that the install made the seed.
+  the move from step 1, "Request" (DAFMAN 90-161 3.1; docs/process-model.md "Stages", row 1: exit "Request saved; PFM confirms; DAF Form 673
+  started"), to step 2, "Drafting with SMEs" (DAFMAN 90-161 3.2; row 2: exit "Draft uploaded", 60 target business days, Table A5.2).
+  The fake publication of T26 Make starts at step 1; Step moves it to step 2, as the PFM does when the request is confirmed, and reads
+  it back from the site. It proves that the installed lists take the move. It does NOT test the exit conditions of either step (no
+  person and no flow acts here), so it is a move between 2 steps, not a whole step with its exit.
+  The 60 days are read from the site row of step 2 (the seed of PFM Process Steps), so the part also shows that the install made the seed.
   The flows write the activity log row for the change when they are imported; this part reports the count as information only
   (a site with no flows has 0), so it does not depend on them.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection of the main file.
@@ -84,7 +86,7 @@ function Find-FakePubId([string]$Dir) {
 }
 <#
 .SYNOPSIS
-  The part Step: the fake publication of T26 goes from step 1 to step 2 (DAFMAN 90-161 3.2, "Drafting with SMEs"), and the move is read back.
+  The part Step: the fake publication of T26 moves from step 1 (Request, DAFMAN 90-161 3.1) to step 2 (Drafting with SMEs, 3.2), and the move is read back.
 .PARAMETER Dir
   The T27 folder (its neighbor T26 holds the T26 state file).
 #>
