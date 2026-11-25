@@ -239,9 +239,10 @@ $wn.FitGrid = {
   that shows now, the larger; the excess is the sum of the minimums of the visible columns less the room, so a grid
   that fits gives nothing back however its fill columns share the width. The excess comes off the columns that are not the pub column, the one with the most width above its head
   ($wn.HeadMin) first: the other columns above their heads, then the chip column above its head, then any column under
-  its head (never under 2 px). When the minimums changed, or the filled columns are wider than the grid, the grid lays
+  its head (never under 2 px). When the minimums changed, or the filled columns end past the grid or under a bar that shows, the grid lays
   out its columns again (a 1 px size change makes the fill columns share the room again).
-  R16 (R42 finding 2): when the grid is still wider than itself after that layout, its widths are cut to the room ($wn.TrimWidths).
+  R16 (R42 finding 2): when the columns still end past the grid, or under a bar that shows, after that layout, their widths
+  are cut to the room ($wn.TrimWidths).
   R15 (R42 ps51 keep test: a later open of the Wave 1 answers card took 114 ms, 13 before): when the fit took off a bar
   that shows beyond the plan's reserve, Tag.Reserve becomes that bar and the columns keep their widths (AutoSizeMode
   None): their fill width no longer depends on the bar, and the bar no longer on the row heights the widths give, so a

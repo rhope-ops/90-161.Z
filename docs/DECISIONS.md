@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-25 | The R42 sign-in window block stays only in the RADE engine: no copy in this repo; a task script that needs it gets it from the engine. Scope: R43 and later rounds. | PFM (dialog: "shouldn't we use the kit version and standardize?") | docs/reviews/2026-11-25-r43-plan.md T6 |
 | 2026-11-25 | RADE engine-v40 Uninstall: test sites only; record kept, marked uninstalled; button off with a line when an app has none; also "Remove RADE" (warn if other apps remain). Scope: RADE. | PFM (question dialogs) | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-25 | R43: RADE Uninstall (backup first), then install from zero on this computer (replaces "by a second account"); pass: 1 fake publication through a full process step; test site. Scope: R43. | PFM (question dialogs) | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-25 | R43: all R42 carry-overs and R42 r3 items; install steps get bundle screen names; second person again, with a look at Wave 1 answers; plus install from zero by a second account. Scope: R43. | PFM (question dialog) | docs/reviews/2026-11-25-r42-results.md |
