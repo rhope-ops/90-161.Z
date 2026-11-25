@@ -170,7 +170,7 @@ def orphan_scripts():
 bad += orphan_scripts()
 # The RADE manifest keeps its own "repo" and "home" (the engine reads them); they must equal site.config.json (fleet v2 DEC 7).
 _cfg, _app = site_config.load(), json.loads((ROOT / "scripts" / "paste_bundles.json").read_text(encoding="utf-8"))["application"]
-if _app.get("repo") != _cfg["owner"] + "/" + _cfg["repo"] or _app.get("home") != site_config.urls()["pages"]:
+if _app.get("repo") != _cfg["owner"] + "/" + _cfg["repo"] or _app.get("home") != site_config.urls()["home"]:
     bad.append("scripts/paste_bundles.json application repo/home differ from site.config.json")
 print("\n".join(bad) or "OK names")
 sys.exit(1 if bad else 0)

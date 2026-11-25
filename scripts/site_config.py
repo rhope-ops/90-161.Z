@@ -28,7 +28,8 @@ def urls(cfg=None):
         cfg: a dict from load(), or None to read the file.
 
     Returns:
-        A dict: raw (raw file base, ends in /), blob (GitHub file view base, ends in /), pages (the github.io page),
+        A dict: raw (raw file base, ends in /), blob (GitHub file view base, ends in /), home (the repository README page on
+        github.com, the RADE manifest home; GitHub Pages is off, the PFM 2026-11-25), pages (the old github.io page),
         pages_host (the github.io host name), and re_owner, re_repo (the two names escaped for a regular expression).
     """
     c = cfg or load()
@@ -36,6 +37,7 @@ def urls(cfg=None):
     return {
         'raw': 'https://raw.githubusercontent.com/%s/%s/%s/' % (o, r, b),
         'blob': 'https://github.com/%s/%s/blob/%s/' % (o, r, b),
+        'home': 'https://github.com/%s/%s' % (o, r),
         'pages': 'https://%s.github.io/%s' % (o, r),
         'pages_host': '%s.github.io' % o,
         're_owner': re.escape(o),
