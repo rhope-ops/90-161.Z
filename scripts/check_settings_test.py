@@ -21,7 +21,7 @@ import unittest
 from pathlib import Path
 
 from check_settings import (AUDIT_DEFAULTS, CHECK, CODE_DEFAULTS, HEADER_BLOCK, KIT_CAPS, MIGRATE, NAMES_CHECK, OLD_AUDIT,
-                            OLD_CHECK, OLD_CODE, OLD_HEADERS, STATE, STATE_PARTS, STRICT, audit_config, audit_from_old,
+                            OLD_CHECK, OLD_CODE, OLD_HEADERS, STATE, STATE_PARTS, STRICT, audit_config,
                             audit_lines, audit_settings, code_base, code_config, code_from_old, code_lines,
                             code_settings, load_state, migrate, pairs, save_part, state_text)
 

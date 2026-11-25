@@ -16,7 +16,8 @@
 #      code standard (scripts/code_standard.py, when .check.state.json holds its baseline; settings: the `code-` lines of .check),
 #   1b. the Python parse, line length and file size: ruff and pylint (ruff.toml, .pylintrc; a SKIP line when a linter is missing),
 #   1c. shellcheck on the shell files the code standard covers: findings are WARN lines and never fail (a SKIP line when it is missing),
-#   1d. bandit on scripts/ (full lane; the scan of .github/workflows/security.yml; a SKIP line when it is missing),
+#   1d. bandit on scripts/ and gitleaks on the tracked files (full lane; the scans of .github/workflows/security.yml;
+#       a SKIP line when one is missing),
 #   1e. the kit package (scripts/kit_package.py --verify), when .check.lock lists a script that git does not track
 #       (scripts/check.sh --kit-install installs it at the lock commit),
 #   2. the rule caps and the paths AGENTS.md names, the lint of changed rule lines (WARN lines), and in the full lane
@@ -150,13 +151,13 @@ PY
   ok "a large baseline on the default branch, state file deleted: the code standard runs" "$(c | grep -c '^PASS  code standard$')" 1
   g checkout -q .check.state.json; g update-ref -d refs/remotes/origin/main
   # The Python lint (ruff and pylint): no config files, no step; with them and a linter missing, a SKIP line that names the install, never a silent pass.
-  # The PATH of the case puts, in place of each folder that holds ruff, pylint, shellcheck or bandit, a folder of links to its
+  # The PATH of the case puts, in place of each folder that holds ruff, pylint, shellcheck, bandit or gitleaks, a folder of links to its
   # other programs (a runner can have shellcheck in /usr/bin, next to bash and git).
   nolint=""; i=0
   while IFS= read -r d; do
-    if [ -x "$d/ruff" ] || [ -x "$d/pylint" ] || [ -x "$d/shellcheck" ] || [ -x "$d/bandit" ]; then
+    if [ -x "$d/ruff" ] || [ -x "$d/pylint" ] || [ -x "$d/shellcheck" ] || [ -x "$d/bandit" ] || [ -x "$d/gitleaks" ]; then
       i=$((i+1)); mkdir -p "$t/nolint/$i"
-      for f in "$d"/*; do case "${f##*/}" in ruff|pylint|shellcheck|bandit) ;; *) [ -x "$f" ] && ln -s "$f" "$t/nolint/$i/";; esac; done
+      for f in "$d"/*; do case "${f##*/}" in ruff|pylint|shellcheck|bandit|gitleaks) ;; *) [ -x "$f" ] && ln -s "$f" "$t/nolint/$i/";; esac; done
       d="$t/nolint/$i"
     fi
     nolint+="${nolint:+:}$d"
@@ -173,6 +174,9 @@ PY
   ok "a missing bandit is a SKIP line that names the install (full lane)" \
     "$(cd "$t/r" && PATH="$nolint" bash scripts/check.sh 2>&1 | grep -c '^SKIP  bandit (bandit is missing: pip install bandit==1.9.4)$')" 1
   ok "the fast lane runs no bandit" "$(cd "$t/r" && PATH="$nolint" bash scripts/check.sh --fast 2>&1 | grep -c 'bandit')" 0
+  ok "a missing gitleaks is a SKIP line that names the install (full lane)" \
+    "$(cd "$t/r" && PATH="$nolint" bash scripts/check.sh 2>&1 | grep -c '^SKIP  gitleaks (gitleaks is missing: go install github.com/zricethezav/gitleaks/v8@v8.30.1)$')" 1
+  ok "the fast lane runs no gitleaks" "$(cd "$t/r" && PATH="$nolint" bash scripts/check.sh --fast 2>&1 | grep -c 'gitleaks')" 0
   if command -v shellcheck >/dev/null; then
     printf '%s\n' '#!/bin/bash' 'echo $1' > "$t/r/bad.sh"; printf '%s\n' 'import sys' 'sys.stdout.write("bad.sh\0" if "--shell-files" in sys.argv else "")' > "$t/r/scripts/code_standard.py"
     out="$(c)"; ok "a shellcheck finding is a WARN line" "$(printf '%s\n' "$out" | grep -c '^      WARN  bad.sh:2:.*SC2086')" 1
@@ -494,11 +498,20 @@ if [ -f scripts/code_standard.py ]; then
   if command -v shellcheck >/dev/null; then run "shellcheck" shell_lint
   else skip "shellcheck" "shellcheck is missing: pip install shellcheck-py==0.9.0.6"; fi
 fi
-# bandit (medium severity and higher) on scripts/, full lane only: the scan of .github/workflows/security.yml, which skips
-# pull requests in a private repo. Never a silent pass: a missing bandit is a SKIP line that names the install.
+# bandit (medium severity and higher) on scripts/ and gitleaks on the working tree, full lane only: the scans of
+# .github/workflows/security.yml, which skips pull requests in a private repo. Never a silent pass: a missing tool is a
+# SKIP line that names the install.
+# gitleaks reads a copy of the tracked files (uncommitted edits included): the files of the CI checkout, as gitleaks
+# does not skip ignored files (a self-test's __pycache__ is a false finding; the Maintainer, 2026-11-25).
+gitleaks_tracked() {
+  mkdir "$tmp/gitleaks" && git ls-files -z | tar --null --ignore-failed-read -T - -cf - 2>/dev/null | tar -xf - -C "$tmp/gitleaks" &&
+    gitleaks detect --no-git --source "$tmp/gitleaks" --redact
+}
 if [ "$lane" = full ] && [ -d scripts ]; then
   if command -v bandit >/dev/null; then run "bandit" bandit -q -r scripts/ -ll
   else skip "bandit" "bandit is missing: pip install bandit==1.9.4"; fi
+  if command -v gitleaks >/dev/null; then run "gitleaks" gitleaks_tracked
+  else skip "gitleaks" "gitleaks is missing: go install github.com/zricethezav/gitleaks/v8@v8.30.1"; fi
 fi
 
 # Rule caps, paths, the lint of changed rule lines, and (full lane) the conflict-check record for changed rule lines.

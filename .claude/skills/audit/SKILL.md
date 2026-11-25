@@ -60,6 +60,32 @@ Why: two audits of one project found layered bloat that made a simple operation 
 
 At each kit release, or 14 days after the last fleet audit (AUDIT DUE (fleet) at the kit check-in), report it and ask the Maintainer; when the Maintainer says yes, run the full audit for every fleet repo in a fresh session. Report per repo: kit version and lock state, caps, open branches, kit lag; and the outcome metrics: defects found per check in the last 30 days, mutant kill rate where measured, files changed per kit change, and fix-of-a-fix rate (commits that fix a commit of the last 7 days). File size and file counts are warnings only. Write the date to `fleet.last_audit` in kit.config.json. Each check, and this skill, gets a retire / shrink / keep line in docs/tools.md.
 
+## The archive step
+
+Item 16 in Step 2 finds the candidates; this step archives them. Run it when the check-in says ARCHIVE DUE and the Maintainer says yes. ARCHIVE DUE prints when the archivable files reach 20 files or 200 KB, or when docs/reviews/ passes 200 files or 1 MB (decimal KB; code: `archive_due` in `scripts/bloat_check_files.py`).
+
+The retention schedule (the Maintainer, 2026-11-25; source: the kit's archival inventory report of 2026-11-25 in its docs/reviews folder):
+
+| File class | Archive when | Test |
+|---|---|---|
+| Plan (`*-plan.md`) | 7 days after it closes (a release row in CHANGELOG, or every box checked and the handoff does not name it) | script: the boxes, a live link, the age (7 days after the last change of the plan and of the handoff); person: a release row in CHANGELOG |
+| Plan evidence (worker reports, coverage list, briefs, prompts, plan handoff) | with its plan; a coverage list stays while check.sh runs it | person |
+| Audit reports (per repo and parent) | when the open questions of the parent close, or at the next audit of the same scope; keep the last audit in `.check.state.json` "audit" | person |
+| Test fixtures and one-off notes (folders) | 14 days after they are added, if no live file links them | script |
+| Handoff archives (`*-kit-handoff-archive.md`) | the older ones; keep the newest | script (the handoff links the newest) |
+| Conflict and debt records | keep until phase 3 of the archival plan decides whether the gate needs records for merged hashes | script (its `rule-conflict-check:` or `debt-check:` line); person: a record with no such line |
+| DECISIONS, LOG, CHANGELOG, scripts, skills, instruction files, docs outside docs/reviews/ | never | script (not in docs/reviews/; docs/reviews/README.md is kept) |
+
+Exceptions, always kept: a plan that is open and approved, a file that a check reads (a `rule-conflict-check:` or `debt-check:` line, a `*-coverage.md` list, the fixed paths of the checks), and a conflict or debt record. A live link is a link from a tracked file outside docs/reviews/, DECISIONS.md, LOG.md and CHANGELOG.md, or from an open plan in docs/reviews/.
+
+The script (`archivable` in `scripts/bloat_check_files.py`) makes these tests: the age, a live link, a check reads the file, and a plan with a checked box and no open box (`[ ]`, `[~`) is closed. It counts a plan with no box as open, and a shallow clone as age unknown. The script cannot make the person tests, so its count is an upper bound: the dry run removes the files that fail a person test. The 7 days of a plan also count from the last change of the handoff, so in a repo whose handoff changes each week the script seldom lists a plan: a person adds a closed plan to the dry run by the close tests of the schedule (a release row, or every box checked and the handoff does not name it), 7 days after the close. A person makes these tests: a plan closed by a release row in CHANGELOG, the evidence of a closed plan, that a candidate is not the evidence of an open plan (an open plan does not always link its evidence), the close of an audit report, and a coverage list that check.sh no longer runs.
+
+1. Make the list: the units that pass every test, with path, bytes and reason. This is the dry run: change no file. Send the list and the totals (files, bytes) to the Maintainer.
+2. For each file, record the last commit on main before you delete it: `git log -1 --format=%H origin/main -- <path>`.
+3. Add one row for each file to the archive index, docs/reviews/archive-index.md: path, the link `https://github.com/<owner>/<repo>/blob/<sha>/<path>`, the date, the reason. Make the file if it is not there.
+4. Delete the files with `git rm`. In each kept file that links a deleted file, change the link to its row in the index.
+5. Prove it in the pull request: `scripts/check.sh` passes, 0 broken links, `git cat-file -e <sha>:<path>` passes for each row, the files and bytes before and after, and one restore: `git show <sha>:<path> > <path>`, then delete that file again.
+
 ## Rules for the auditor
 
 - Measure first, then change. Every finding has evidence: a path and line, a count, a size or a time. No finding from impression.
@@ -105,7 +131,7 @@ Every item below finds; it does not fix. A fix that removes, shortens, rewords, 
 13. Context cost: everything loaded at session start costs tokens on every turn of every session. Move reference text (long tables, history, evidence) out of start-read files into files read on demand. The decision log is a record, not a start-read file: check that no start-read file imports it or tells agents to read it at start, and that a decision that must bind every session is one line in "Project rules".
 14. Rule census: count the rules (`bloat_check.py --rules`) and compare with the last audit. Run `bloat_check.py --lint` and put each flag (near-duplicate, vague, untested) in the census. "The rule has a reason" is not a pass: every rule has one. For each rule in AGENTS.md and "Project rules", write one of: enforced by a hook or test (shorten it to a pointer); a procedure (move it to a skill); the model does it without the rule (retire); evidence that it changed an outcome since the last audit (a log row, a review, a corrected turn: keep); no evidence (retire, or give it a review date). Report the count for each class.
 15. Cross-host duplication: the same rule in the repo, a claude.ai Project, personal preferences and memory. The repo is the source; other places hold a pointer only. Personal preferences hold personal style, not project rules.
-16. Handoff and memory rot: NEXT_PROMPT.md, memory files and review folders that keep closed items, old links and repeated status. Keep the handoff at its line budget; archive reviews older than 90 days into a single index.
+16. Handoff and memory rot: NEXT_PROMPT.md, memory files and review folders that keep closed items, old links and repeated status. Keep the handoff at its line budget; archive review files with the archive step (section "The archive step").
 17. Agent-made helpers: one-off scripts, debug files, scratch copies, "_v2"/"_new"/"_old" files and extra wrappers left by agents. Each needs a caller or a recorded reason; if it has neither, propose its removal.
 18. Defensive layering: try/except, fallbacks, retries, validation and comments added by agents "to be safe" that hide errors or duplicate a check one layer up. Keep the one check at the right layer.
 19. Hooks and tools: hook run time per session and per turn (time each one), permission and allow-list sprawl, MCP servers, skills and plugins nobody uses. Skill use, where the host has session records (a Claude cloud session: `list_events` with kinds `assistant` and `user` for the last 10 or more sessions of the project; each large result is saved to a file): `python3 scripts/skill_use.py <saved files>` prints the calls per skill, agent type and tool. A skill with 0 calls: propose a better description, a merge or its removal.

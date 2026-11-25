@@ -352,6 +352,8 @@ def ratchet_cases(sk, root):
     (root / check_settings.STATE).write_text(json.dumps({"script_lines": {"baseline": 4}}))
     problems = sk.ratchet_report(root)[1]
     assert any("below the baseline 4 (-1)" in x and '"baseline": 3' in x for x in problems), "freed lines lower the baseline: %s" % problems
+    (root / check_settings.STATE).write_text(json.dumps({"script_lines": {"baseline": 4, "cap": True}}))
+    assert not any("below the baseline" in x for x in sk.ratchet_report(root)[1]), "a cap baseline allows fewer lines"
 
 
 def role_cases(sk, root):
