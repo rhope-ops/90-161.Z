@@ -17,7 +17,7 @@ import build_readme   # noqa: E402  the module under test
 
 # Texts that GitHub shows as a link to a .ps1 file or to a github.io page: each must be found.
 BAD = [
-    '[x](a.ps1)', '[x](scripts/gov/paste/a.ps1)', '[x](a.ps1/)', '![i](a.ps1)',
+    '[x](a.ps1)', '[x](a.PS1)', '[x](https://x.com/a%252Eps1)', 'https://x.com/a&#46;ps1', '[x](scripts/gov/paste/a.ps1)', '[x](a.ps1/)', '![i](a.ps1)',
     '[a](https://x.com/y.ps1 "t")', '[x](<https://x.com/a b.ps1>)', '[x](https://x.com/a(1).ps1)',
     '[x](https://x.com/a%2Eps1)', '[x](https://x.com/a&#46;ps1)', '[c](https://x/y.ps1#L2)',
     '[x][id]\n\n[id]: a.ps1 "t"', "[x][id]\n\n[id]: a.ps1 't'", '[x][id]\n\n[id]: <a.ps1> "t"',
