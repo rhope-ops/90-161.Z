@@ -336,7 +336,7 @@
                     "dir": "T22",
                     "file": "90161Z-T22-pfm-window-r15.ps1",
                     "minutes": 40,
-                    "note": "Signs in (CAC) and reads the fake rows of your test site; it writes nothing there. Do the 4 checks, then the 17 screens, in the bar at the bottom of the window \"Publications and Forms Management\". Then close that window with its X. Keep the RADE window open.",
+                    "note": "Signs in (CAC) and reads the fake rows of your test site; writes nothing. In the window \"Publications and Forms Management\", do the 21 lines of its bottom bar. Then close it with its X.",
                     "estimate": 20,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [
@@ -814,7 +814,7 @@
             "apps": [
                 {
                     "name": "90-161.Z R42",
-                    "summary": "Round R42 r1: window r15 with room for the scroll bar, an endorser answer, a small CAC sign-in window, and RADE Restore of fake rows with their Recycle Bin row numbers.",
+                    "summary": "Round R42 r1: window r15 with scroll bar room, an endorser answer, a small sign-in window, and Restore of fake rows.",
                     "steps": [
                         "T21 Check the test site is clean r12",
                         "T21 Answer: the sign-in window r12",
