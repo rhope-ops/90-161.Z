@@ -1,5 +1,7 @@
 name: security
-# Static security scans: bandit on scripts/ and gitleaks on the working tree. Pull requests and manual runs only, never on push (Actions minutes).
+# Static security scans: bandit on scripts/ (in package mode after --kit-install writes the kit scripts) and gitleaks on the working tree.
+# Pull requests and manual runs only, never on push (Actions minutes). A private repo skips the pull-request run, as check.yml does: the content
+# check covers secrets on each push, and bandit runs only on a manual run there.
 on:
   pull_request:
   workflow_dispatch:
@@ -8,27 +10,31 @@ permissions:
 jobs:
   bandit:
     name: bandit
+    if: github.event_name != 'pull_request' || github.event.repository.private == false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.12"
       - name: Install bandit
         run: pip install bandit==1.9.4
+      - name: Kit package (package mode only; else it prints "not used"), so bandit also scans the package scripts
+        run: scripts/check.sh --kit-install
       - name: Scan scripts (medium severity and higher)
         run: bandit -r scripts/ -ll
   gitleaks:
     name: gitleaks
+    if: github.event_name != 'pull_request' || github.event.repository.private == false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       GITLEAKS_VERSION: 8.30.1
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
       - name: Download gitleaks and verify its checksum

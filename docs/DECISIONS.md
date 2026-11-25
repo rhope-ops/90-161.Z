@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-25 | Kit 13.1.1 (commit 640561d) synced: archive step in the audit skill, gitleaks in the full lane, T2 cap option, 200-character line fix, security.yml replaced; kept: every Project rule, `.check`, SECURITY.md, dependabot.yml. | PFM ("do it now and audit the entire fleet"; "I approve you to attach and finish this work", 2026-11-25) | kit docs/CHANGELOG.md 13.1.1 |
 | 2026-11-25 | R43: RADE Uninstall (backup first), then install from zero on this computer (replaces "by a second account"); pass: 1 fake publication through a full process step; test site. | PFM (question dialogs) | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-25 | R43: all R42 carry-overs and R42 r3 items; install steps get bundle screen names; second person again, with a look at Wave 1 answers; plus install from zero by a second account. Scope: R43. | PFM (question dialog) | docs/reviews/2026-11-25-r42-results.md |
 | 2026-11-25 | Kit 12.0.0 (merge commit c0fa5f1, no tag yet), synced: the hard rule "Instructions people follow" at 80% (no "Go on."), the instructions check and skill, shorter skill descriptions; kept: every Project rule, `.check`, check.local.sh. tests/check_guide_text.py allows up to 3 actions per step, as the rule does. | PFM ("Approve text and plan", 2026-11-25) | kit docs/reviews/2026-11-25-instructions-80-plan.md |
