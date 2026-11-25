@@ -100,6 +100,16 @@
             "timeout": 15
           }
         ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && { archimedes-kit --verify >/dev/null 2>&1 || { o=$(scripts/check.sh --kit-install 2>&1) && { printf '%s\\n' \"$o\" | grep -v \"^KIT PACKAGE: not used\" | tail -1; true; } || echo \"KIT PACKAGE FAIL: the install at session start failed; run scripts/check.sh --kit-install to see why (checks fail closed until then)\"; }; }",
+            "timeout": 180
+          }
+        ]
       }
     ]
   },

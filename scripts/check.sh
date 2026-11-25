@@ -265,7 +265,7 @@ except Exception: sys.exit(0)
 sys.exit(0 if set(f) - set(subprocess.run(["git", "ls-files", "-z", "--"] + f, capture_output=True, text=True).stdout.split("\0")) else 1)'
 }
 # --kit-install: in package mode, install the kit package at the lock commit and write the kit scripts (the CI step, the
-# cloud setup script and the kit-update skill use it: one home for the install command); else nothing to do.
+# SessionStart hook at startup, the setup script and kit-update use it: one home for the install command); else nothing.
 if [ "$kitinstall" = 1 ]; then
   pkg_mode || { echo "KIT PACKAGE: not used (each kit script in .check.lock is tracked)"; exit 0; }
   c="$(python3 -c 'import json; print(json.load(open(".check.lock"))["commit"])')" || exit 1
