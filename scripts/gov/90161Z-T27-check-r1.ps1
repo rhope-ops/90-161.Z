@@ -95,7 +95,10 @@ function Invoke-StepPart([string]$Dir) {
   $steps = @(Get-StepRow)
   $to = @($steps | Where-Object { [int]$_['StepNumber'] -eq $StepTo })
   $from = @($steps | Where-Object { [int]$_['StepNumber'] -eq $StepFrom })
-  if ($to.Count -ne 1 -or $from.Count -ne 1) { Add-Item 's1-publication' 'FAIL' ('PFM Process Steps has no single row for step ' + $StepFrom + ' or step ' + $StepTo + ' (the install did not seed it)'); $lines.Add('RESULT STEP FAIL no step rows'); return }
+  if ($to.Count -ne 1 -or $from.Count -ne 1) {
+    Add-Item 's1-publication' 'FAIL' ('PFM Process Steps has no single row for step ' + $StepFrom + ' or step ' + $StepTo + ' (the install did not seed it)')
+    $lines.Add('RESULT STEP FAIL no step rows'); return
+  }
   $now = Get-LookupNumber (@(Get-PnPListItem -List 'PFM Publications' -Fields 'Title', 'ProcessStep' -PageSize 500 -ErrorAction Stop | Where-Object { [int]$_.Id -eq $pubId })[0]['ProcessStep'])
   $at = $(if ($now -eq [int]$from[0].Id) { 'step ' + $StepFrom } elseif ($now -eq [int]$to[0].Id) { 'step ' + $StepTo } else { 'another step' })
   Add-Item 's1-publication' 'PASS' ('the fake publication is on the site and is at ' + $at)

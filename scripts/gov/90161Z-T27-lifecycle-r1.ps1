@@ -43,7 +43,8 @@
   A word (lower-case letters) for the result file name, so a part that runs twice in a round keeps both files: Install with the label
   before writes 90161Z-T27-install-before-r1.txt.
 #>
-param([string]$Id, [Parameter(Mandatory = $true)][ValidateSet('Lists', 'Access', 'Local', 'Gone', 'Install', 'Step')][string]$Part, [switch]$NoPause, [string]$TestDir, [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
+param([string]$Id, [Parameter(Mandatory = $true)][ValidateSet('Lists', 'Access', 'Local', 'Gone', 'Install', 'Step')][string]$Part,
+  [switch]$NoPause, [string]$TestDir, [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
 $task = 'T27'
 $Rev = 'r1'
 
@@ -179,11 +180,15 @@ function Add-UninstallResult([int]$Removed) {
   $word = $(if ($script:failed) { 'FAIL' } elseif ($Removed) { 'PASS' } else { 'SKIP' })
   $lines.Add('RESULT UNINSTALL ' + $Part.ToUpperInvariant() + ' ' + $word + ' removed=' + $Removed)
 }
-# Loads PnP.PowerShell and signs in to the one site with the web login (CAC).
-function Connect-LifecycleSite {
+# Loads the newest installed PnP.PowerShell; stops with a plain message when it is not installed.
+function Import-PnPNewest {
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
+}
+# Signs in to the one site with the web login (CAC), after the module is loaded.
+function Connect-LifecycleSite {
+  Import-PnPNewest
   Write-Host 'NOW Signing in to the site (if a sign-in window opens, sign in with your CAC)'
   $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
   $lines.Add('ROUTE web-login PASS')
@@ -234,13 +239,20 @@ function Invoke-ListsPart($Made) {
 #>
 function Invoke-AccessPart($Made) {
   $wantGroup = $false; $wantLevel = $false
-  foreach ($n in (Get-MadeName $Made.Items 'group')) { if (Test-OwnName 'group' $n) { $wantGroup = $true } else { $lines.Add('NOTE refused: a group in the made list is not the group of 90-161.Z (not removed)') } }
-  foreach ($n in (Get-MadeName $Made.Items 'level')) { if (Test-OwnName 'level' $n) { $wantLevel = $true } else { $lines.Add('NOTE refused: a level in the made list is not the level of 90-161.Z (not removed)') } }
+  foreach ($n in (Get-MadeName $Made.Items 'group')) {
+    if (Test-OwnName 'group' $n) { $wantGroup = $true } else { $lines.Add('NOTE refused: a group in the made list is not the group of 90-161.Z (not removed)') }
+  }
+  foreach ($n in (Get-MadeName $Made.Items 'level')) {
+    if (Test-OwnName 'level' $n) { $wantLevel = $true } else { $lines.Add('NOTE refused: a level in the made list is not the level of 90-161.Z (not removed)') }
+  }
   if (-not $wantGroup -and -not $wantLevel) { Add-Item 'a00-access' 'SKIP' 'no group or level of 90-161.Z is named in the made list: nothing to remove'; Add-UninstallResult 0; return }
   Connect-LifecycleSite
   $removed = 0
   if ($wantGroup) { $removed += Invoke-OwnAccessRemoval 'a1-group' $OwnGroup { Get-GroupId $OwnGroup } { Remove-PnPGroup -Identity $OwnGroup -Force -ErrorAction Stop } }
-  if ($wantLevel) { $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel { $v = Get-RoleLevel $OwnLevel 0; if ($v) { [int]$v.Id } else { 0 } } { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop } }
+  if ($wantLevel) {
+    $findLevel = { $v = Get-RoleLevel $OwnLevel 0; if ($v) { [int]$v.Id } else { 0 } }
+    $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel $findLevel { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop }
+  }
   Add-UninstallResult $removed
 }
 <#
@@ -327,7 +339,8 @@ try {
   $lines.Add('LIFECYCLE ' + $Part + ' done: passed=' + $script:passed + ' skipped=' + $script:skipped + ' failed=' + $script:failed)
   # Every line is masked once more before it is shown or saved.
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T27-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  $resultName = '90161Z-T27-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-' + $Rev + '.txt'
+  if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir $resultName) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause -and -not $env:RADE_CONTRACT) { [void](Read-Host 'Press Enter to close') }
 }

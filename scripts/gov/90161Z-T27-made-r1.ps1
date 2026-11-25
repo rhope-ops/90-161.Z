@@ -13,7 +13,9 @@
   Safety rule (the PFM's data boundary and "delete only what the install made"): a thing is removed only when ALL of these agree:
   RADE_MODE is uninstall, the file is rade-made/1 of the app 90-161.Z, an entry names the thing, and the thing is in the own-name
   table below. The site is read last (the main file): a list must also have its internal name as its folder name.
-  Network: none. Writes: none. Credentials: none.
+  Network: none.
+  Writes: none.
+  Credentials: none.
   Run: not alone.
 #>
 
@@ -36,6 +38,9 @@ $OwnLevel = 'PFM Office Edit All Items'
 # RADE keeps it and marks it uninstalled (DECISIONS 2026-11-25), so no script of this task touches it.
 $OwnNote = '^90161Z-T22-install-r\d+\.txt$'
 
+# The answer of Read-MadeFile for a made list that is not accepted: not Ok, the reason, no entries.
+function Get-MadeRefusal([string]$Why) { return @{ Ok = $false; Why = $Why; Items = @(); Dropped = 0 } }
+
 <#
 .SYNOPSIS
   Reads RADE's made list and checks it before anything is removed.
@@ -48,12 +53,11 @@ $OwnNote = '^90161Z-T22-install-r\d+\.txt$'
   have a step, a kind and a name, as text), Dropped (the count of entries that miss one of the three).
 #>
 function Read-MadeFile([string]$Mode, [string]$Path) {
-  $bad = { param($why) return @{ Ok = $false; Why = $why; Items = @(); Dropped = 0 } }
-  if ($Mode -cne 'uninstall') { return (& $bad 'RADE_MODE is not uninstall: nothing is removed') }
-  if (-not $Path -or -not (Test-Path -LiteralPath $Path -PathType Leaf)) { return (& $bad 'RADE_MADE is not a file: nothing is removed') }
-  try { $j = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json } catch { return (& $bad 'RADE_MADE is not valid JSON: nothing is removed') }
-  if ([string]$j.schema -cne $MadeSchema) { return (& $bad ('RADE_MADE schema is not ' + $MadeSchema + ': nothing is removed')) }
-  if ([string]$j.app -cne $MadeApp) { return (& $bad ('RADE_MADE is not for the app ' + $MadeApp + ': nothing is removed')) }
+  if ($Mode -cne 'uninstall') { return (Get-MadeRefusal 'RADE_MODE is not uninstall: nothing is removed') }
+  if (-not $Path -or -not (Test-Path -LiteralPath $Path -PathType Leaf)) { return (Get-MadeRefusal 'RADE_MADE is not a file: nothing is removed') }
+  try { $j = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json } catch { return (Get-MadeRefusal 'RADE_MADE is not valid JSON: nothing is removed') }
+  if ([string]$j.schema -cne $MadeSchema) { return (Get-MadeRefusal ('RADE_MADE schema is not ' + $MadeSchema + ': nothing is removed')) }
+  if ([string]$j.app -cne $MadeApp) { return (Get-MadeRefusal ('RADE_MADE is not for the app ' + $MadeApp + ': nothing is removed')) }
   $items = @(); $dropped = 0
   foreach ($m in @($j.made)) {
     if ($m -and $m.step -and $m.kind -and $m.name) { $items += @{ Step = [string]$m.step; Kind = [string]$m.kind; Name = [string]$m.name } } else { $dropped++ }
