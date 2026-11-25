@@ -21,20 +21,20 @@ Updated: 25 Nov 26 (R42 r2 is ready).
 7. If no window opens and text runs in ISE, stop and post `No RADE window` in the Teams channel **RHOPE-OPS**.
 8. In the window **RADE**, click the row **90-161.Z 0.1.0**, then the button **Maintenance**, then **Repair**.
 9. If the card **One check needs you.** shows, click the button on the card and do what the card says.
-10. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button on the card.
+10. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button (for example **Run checks again**).
 11. If the card **One check failed.** shows again, stop and post the first 10 words of the card in **RHOPE-OPS**.
 12. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. Wait until an end card shows (up to 5 minutes).
 13. If the end card is not **90-161.Z 0.1.0 is installed.**, stop and post the first 10 words of the card in **RHOPE-OPS**.
 14. Click **Close**. In ISE, press `F5`. Wait until the window **RADE** opens again.
 15. Click the row **90-161.Z R42**. Wait until a card shows (up to 2 minutes).
 16. If the card **One check needs you.** shows, click the button on the card and do what the card says.
-17. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button on the card.
+17. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button (for example **Run checks again**).
 18. If the card **One check failed.** shows again, or **Your OneDrive folder was not found.** shows, stop and post the first 10 words in **RHOPE-OPS**.
 19. On the card **Ready to run round R42.**, click **Run** (or **Resume at step**, if it shows).
 20. Each time a CAC sign-in window opens, sign in. The next cards come in any order and can repeat.
 21. Each time the card "Insert your CAC, then select Resume." shows, insert the CAC, then click **Resume**.
 22. On each card with numbered lines, do the lines, then click **Done**.
-23. If a line fails, click **It failed**, then type the first line of the error.
+23. If a line fails, click **It failed**, type the first line of the error, then click **Report the failure**.
 24. On each question, click the answer.
 25. On a card with a box, type one line with no names, then click **Continue**.
 26. When the small window **90-161.Z test T4** asks for an e-mail address, type the address that you wrote down, then click **OK**.
