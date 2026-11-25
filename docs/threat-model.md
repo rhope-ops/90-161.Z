@@ -38,5 +38,5 @@ Scope: this repository's page (index.html, go.js), its build scripts, the round 
 
 - `style-src` keeps `'unsafe-inline'`: the page has one inline `<style>` block, and no go.md text reaches CSS.
 - GitHub Pages does not let this repository set HTTP headers, so the CSP is a `<meta>` tag: `frame-ancestors` and reporting are not available.
-- The page reads `site.config.json` from its own site, so it does not draw from a `file://` copy; use the github.io page or TASKS.md.
+- The page draws go.md from the branch folder on raw.githubusercontent.com, never from a local copy; to read a local go.md, use TASKS.md.
 - A person can still paste a bundle from another source. The page and go.md name the one source; the bundle shows its round and revision.

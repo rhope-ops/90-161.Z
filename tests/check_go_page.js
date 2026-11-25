@@ -65,8 +65,14 @@ const tag = (page.match(/<script src="go\.js"([^>]*)>/) || [])[1] || '';
 /** attr(n): the value of the data-n attribute on the go.js tag, or undefined. */
 const attr = n => (tag.match(new RegExp(' data-' + n + '="([^"]*)"')) || [])[1];
 check('the go.js tag owner, repo and branch equal site.config.json', ['owner', 'repo', 'branch'].every(k => attr(k) === cfg[k]));
-const rawLinks = fs.readFileSync(path.join(__dirname, '..', 'go.md'), 'utf8').match(/https:\/\/raw\.githubusercontent\.com\/[^\s)\]>"]*/gi) || [];
-check('each raw.githubusercontent.com link in go.md is in the CSP source (same case, repo and branch)', rawLinks.every(u => u.startsWith(t.rawBase(cfg))));
+// go.js makes a bare URL line into a file card and a .ps1 URL into a Copy button: each one must be in the CSP source.
+const md = fs.readFileSync(path.join(__dirname, '..', 'go.md'), 'utf8');
+/** full(u): the URL with https:// in front when the go.md line has no scheme (as go.js fileCard does). */
+const full = u => /^[a-z]+:\/\//i.test(u) ? u : 'https://' + u;
+const rawLinks = (md.match(/(?:[a-z]+:\/\/)?raw\.githubusercontent\.com\/[^\s)\]>"`]*/gi) || []).map(full);
+const ps1Links = (md.match(/(?:[a-z]+:\/\/)?[a-z0-9.-]+\.[a-z]{2,}\/[^\s)\]>"`]*\.ps1\b/gi) || []).map(full);
+check('each raw.githubusercontent.com link and each .ps1 link in go.md is in the CSP source (same case, repo and branch)',
+  rawLinks.concat(ps1Links).every(u => u.startsWith(t.rawBase(cfg))));
 const fakeTag = { getAttribute: n => ({ 'data-owner': 'o', 'data-repo': 'r', 'data-branch': 'b' })[n] || null };
 check('tagCfg reads the three data attributes, and no tag gives null', JSON.stringify(t.tagCfg(fakeTag)) === '{"owner":"o","repo":"r","branch":"b"}' && t.tagCfg(null) === null);
 check('a config name with a slash, dot path or quote is refused',
