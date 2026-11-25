@@ -92,6 +92,7 @@ def order_case(name, build_ok, check_ok, rel, crash=None):
             os.remove(os.path.join(gov, n))
     open(bl.LOCK, "w").write('{"commit": "old"}')
     open(os.path.join(bl.PASTE, "b.ps1"), "w").write("old bundle")
+    open(os.path.join(bl.PASTE, "b.txt"), "w").write("old copy")   # the .txt copy of the bundle (README link)
     for p in (bl.BUNDLES, bl.GO):   # the raise edits these two; a failed run must put them back
         open(p, "w").write("old")
     open(bl.DECISIONS, "w").write("| Date | What | By | Where |\n|---|---|---|---|\n")
@@ -102,9 +103,11 @@ def order_case(name, build_ok, check_ok, rel, crash=None):
         return fake_build(rel, seen, gov, build_ok, crash)
 
     def revise():
-        """Fake revision raise: the old bundle b.ps1 leaves and the next revision c.ps1 comes."""
-        os.remove(os.path.join(bl.PASTE, "b.ps1"))
+        """Fake revision raise: the old bundle b.ps1 and its .txt copy leave; the next revision c.ps1 and c.txt come."""
+        for n in ("b.ps1", "b.txt"):
+            os.remove(os.path.join(bl.PASTE, n))
         open(os.path.join(bl.PASTE, "c.ps1"), "w").write("raised bundle")
+        open(os.path.join(bl.PASTE, "c.txt"), "w").write("raised copy")
         for p in (bl.BUNDLES, bl.GO):
             open(p, "w").write("raised")
 
@@ -142,9 +145,10 @@ def order_verdict(name, good, row, kept, gov):
     task = os.path.exists(os.path.join(gov, "t.ps1"))
     if name == "pass":
         return (good and row == 1 and json.load(open(bl.LOCK))["serial"] == 5 and task and kept == ["raised"] * 2
-                and sorted(os.listdir(bl.PASTE)) == ["c.ps1", "c.ps1.sha256.json"])
+                and sorted(os.listdir(bl.PASTE)) == ["c.ps1", "c.ps1.sha256.json", "c.txt"])
     return (good and row == 0 and open(bl.LOCK).read() == '{"commit": "old"}' and not task and kept == ["old"] * 2
-            and open(os.path.join(bl.PASTE, "b.ps1")).read() == "old bundle" and os.listdir(bl.PASTE) == ["b.ps1"])
+            and open(os.path.join(bl.PASTE, "b.ps1")).read() == "old bundle" and sorted(os.listdir(bl.PASTE)) == ["b.ps1", "b.txt"]
+            and open(os.path.join(bl.PASTE, "b.txt")).read() == "old copy")
 
 
 def cache_case():
@@ -165,7 +169,7 @@ def cache_case():
 def raise_case():
     """Test raise_bundle_revisions itself (not a fake) in a temp folder with a fake main: the bundle that main has gets
     the next revision in the round definitions and in its go.md link, and its old file and stored hash file leave; the
-    bare file name in other go.md text stays.
+    bare file name in other go.md text stays; the old .txt copy leaves too (the build writes the new one).
 
     Returns:
         True when the case passes.
@@ -176,7 +180,7 @@ def raise_case():
         os.makedirs(os.path.join(t, "scripts", "gov", "paste"))
         with open(os.path.join(t, "scripts", "paste_bundles.json"), "w") as f:
             json.dump({"bundles": [{"out": old, "round": "R01", "title": "Round R01 r6: on main"}]}, f, indent=2)
-        for rel_path, text in ((old, "built on main"), (old + ".sha256.json", "{}"), ("go.md", "link .../%s\nDone: 90161Z-R01-round-r6.ps1 ran\n" % old)):
+        for rel_path, text in ((old, "built on main"), (old + ".sha256.json", "{}"), (old[:-4] + ".txt", "copy"), ("go.md", "link .../%s\nDone: 90161Z-R01-round-r6.ps1 ran\n" % old)):
             with open(os.path.join(t, rel_path), "w") as f:
                 f.write(text)
         moved = bl.raise_bundle_revisions(t, {old: b"built on main"}.get)
