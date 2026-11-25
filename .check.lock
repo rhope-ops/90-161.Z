@@ -1,5 +1,5 @@
 {
- "commit": "a3bed38d937714e12b309d57f7e23a48f8be1bfc",
+ "commit": "a6295509a846e955550f1ab238fb76514c302cad",
  "files": {
   ".claude/agents/reviewer.md": "0d75ec9a2c69947ef968ff5c48407a34318a59b1d5b32b4a3b88b13882b9e0d8",
   ".claude/agents/scout.md": "977d957d96b90c3b8c9d9793456d57401952810b9aa17cb25c34955381771e2d",
@@ -22,7 +22,7 @@
   "AGENTS.md (kit sections)": "633e281ecc83bb41091d9e7acbeba7ba80212ab55b8db2d8e511187acfa7ede0",
   "docs/brand/fulcrum.css": "58953ec99a252954ddecfe4ef232e844582cd59f39e8d75b8be0fb6d85d5cc7e",
   "docs/brand/fulcrum.json": "e8ada71c83455d5e789f430dc96ba4b299ba56be3205f7b35413ec6fa3711e6d",
-  "docs/code-standard.md": "5c22552abb19a62e98869b0be02a7cc90e2d18b5decf062a2b4d94c53ba29bfb",
+  "docs/code-standard.md": "61242de51f86f6e4aae8dc5cd5040c8857970c2ce322b1be4b5e5850e0c530cb",
   "ruff.toml": "00aa4adc48cce9a83fb94abce0175b4dc8e1dbc402a995e0409a6503f3ad6432",
   "scripts/bloat_check.py": "a2c1a8d7765676c8728646d5ae6cb7251a8edf30ef7369e79476343ed1589f56",
   "scripts/bloat_check_files.py": "41a006ec9bd3198f45abc67dba766f82cbd470ebaa2b9440b25c5f86aadf6503",
@@ -57,8 +57,8 @@
   "scripts/code_standard_parse.py": "d45d4c0426aeb67df35c4f2114fab3979fcf2a5ca4091e0c83a67794f2c642c4",
   "scripts/code_standard_ratchet.py": "4d799b62cdb2bcfc75232c90548268f07f1d8787d09b093f5c93733db937e859",
   "scripts/code_standard_rules.py": "e766451c633dd91e8181f17e13f09144fbdea2f6b4aacd38058af1cd941975ac",
-  "scripts/code_standard_strict.py": "1aa8d7bed4f68bbcb057a240b937455ccfd502a2875908fd2c0f9e9dd0086288",
-  "scripts/code_standard_strict_test.py": "e022451074d86584629a98cba68e44bee3961dad592194685c130e3d8a583fc5",
+  "scripts/code_standard_strict.py": "fa286de8041531fd3ac96d12c3aa3507cd94207cff43108f59b64865df5600a3",
+  "scripts/code_standard_strict_test.py": "df8969485f930c7731f440391187cda63165a7801f7d6be1f326dfa8ac1d8965",
   "scripts/code_standard_test.py": "682341f3aca23541eb226ce487a0e0aa5cdc786a42aa5476e5c9ee7223856f25",
   "scripts/code_standard_test_docs.py": "d9b5175c53ce5ed73764efc6207e022e27d1e8e1a18bd16e3e18c65628c6d705",
   "scripts/code_standard_test_gate.py": "8487dd65ab01ceb159c05694e8949dc7e2669afcc109362f464ec446f22dc403",
