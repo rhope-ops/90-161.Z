@@ -38,9 +38,17 @@ BLOCKS.append((UI, '# >>> rade-ui: generated from the pinned RADE shared UI file
 # cap (code standard C4); UI2 holds the second half, from the first top-level "$ui." line past the middle (ui_text).
 UI2 = 'rade-ui-2'
 BLOCKS.append((UI2, '# >>> rade-ui-2: generated from the pinned RADE shared UI file (second half) by scripts/build_task_scripts.py (do not edit)', '# <<< rade-ui-2'))
-GENERATED = (LOGO, UI, UI2)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
+# R42 (E3; the PFM, 2026-11-21: the CAC sign-in window about 480 x 360, centered): the RADE sign-in window size block, copied
+# unchanged from the pinned engine/ps/16-site-scripts.ps1 (its start line to its end line), as the engine asks an app to do.
+SIGNIN = 'signin-size'
+BLOCKS.append((SIGNIN, '# >>> signin-size: generated from the pinned RADE engine/ps/16-site-scripts.ps1 by scripts/build_task_scripts.py (do not edit)',
+               '# <<< signin-size'))
+SIGNIN_START = '# ---- RADE sign-in window size (start'
+SIGNIN_END = '# ---- RADE sign-in window size (end)'
+GENERATED = (LOGO, UI, UI2, SIGNIN)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
 _logo = []
 _ui = []
+_signin = []
 
 
 CHECK = []   # set by main: a --check run never writes the logo record
@@ -86,6 +94,28 @@ def ui_text(part=1):
     return _ui[part - 1]
 
 
+def signin_text():
+    """Read the RADE sign-in window size block from the locked engine, once per run.
+
+    Returns: the block from its start line to its end line, with LF line ends.
+    Raises: SystemExit when the pinned engine has no such block (the build stops).
+    """
+    if not _signin:
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        import build_paste_bundles as B
+        lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
+        text = (B.fetch(lock) / 'engine/ps/16-site-scripts.ps1').read_text(encoding='utf-8').replace('\r\n', '\n')
+        a, b = text.find(SIGNIN_START), text.find(SIGNIN_END)
+        if a < 0 or b < a:
+            sys.exit('FAIL the pinned RADE engine has no sign-in window size block (scripts/build_task_scripts.py signin_text)')
+        # The engine text stays unchanged inside a here-string, as the engine itself holds it ($signInSize): the
+        # function loads at run time, so PSScriptAnalyzer lints this loader, not the copied engine code (its Start verb
+        # has no ShouldProcess; no lint exemption is added). A failed load leaves the sign-in window at its own size.
+        _signin.append("$SignInSizeCode = @'\n" + text[a:b + len(SIGNIN_END)] + "\n'@\n"
+                       + 'try { . ([scriptblock]::Create($SignInSizeCode)) } catch { $null = $_ }   # no block: the window keeps its size\n')
+    return _signin[0]
+
+
 def split_ui(text):
     """Split the shared UI text in 2 at the first top-level "$ui." line past its middle with every brace before it closed.
 
@@ -111,6 +141,8 @@ def body(src=SRC):
         return ui_text(1)
     if src == UI2:
         return ui_text(2)
+    if src == SIGNIN:
+        return signin_text()
     text = src.read_text(encoding='utf-8').replace('\r\n', '\n')
     return text[text.index('\nfunction ') + 1:].rstrip('\n') + '\n'
 

@@ -205,5 +205,7 @@ else sk "T22 window preview cards (r14)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
+# R42 E3 (the PFM, 2026-11-21): every bundled script that signs in with the CAC web login sizes the sign-in window first.
+sg=$(python3 tests/check_signin_size.py) && ok "sign-in window size ($(echo "$sg" | tail -1))" || { echo "$sg"; bad "sign-in window size: a script signs in without the signin-size block"; }
 gp=$(node tests/check_go_page.js) && ok "bookmark page renderer ($(echo "$gp" | tail -1))" || { echo "$gp"; bad "bookmark page renderer (tests/check_go_page.js)"; }
 if [ "${on[lint]}" = 1 ]; then wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }; else sk "lint"; fi

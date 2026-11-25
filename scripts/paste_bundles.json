@@ -106,31 +106,31 @@
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-probe-r11.ps1"
+                    "src": "scripts/gov/90161Z-T21-probe-r12.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-common-r11.ps1"
+                    "src": "scripts/gov/90161Z-T21-common-r12.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-make-r11.ps1"
+                    "src": "scripts/gov/90161Z-T21-make-r12.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-person-r11.ps1"
+                    "src": "scripts/gov/90161Z-T21-person-r12.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-look-r11.ps1"
+                    "src": "scripts/gov/90161Z-T21-look-r12.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-read-r11.ps1"
+                    "src": "scripts/gov/90161Z-T21-read-r12.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-office-r11.ps1"
+                    "src": "scripts/gov/90161Z-T21-office-r12.ps1"
                 },
                 {
                     "dir": "T21",
@@ -138,11 +138,11 @@
                 },
                 {
                     "dir": "T26",
-                    "src": "scripts/gov/90161Z-T26-endorse-r1.ps1"
+                    "src": "scripts/gov/90161Z-T26-endorse-r2.ps1"
                 },
                 {
                     "dir": "T26",
-                    "src": "scripts/gov/90161Z-T26-restore-r1.ps1"
+                    "src": "scripts/gov/90161Z-T26-restore-r2.ps1"
                 }
             ],
             "steps": [
@@ -162,7 +162,7 @@
                     "name": "T21 Check the test site is clean r11",
                     "title": "Check that the last round left nothing on the test site",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
+                    "file": "90161Z-T21-probe-r12.ps1",
                     "args": "-Part Clean -Label first",
                     "minutes": 20,
                     "note": "Signs in (CAC). Removes a test list, library or Visitors member left by the last round.",
@@ -179,7 +179,7 @@
                     "name": "T21 Make the probe list r11",
                     "title": "Make the test list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
+                    "file": "90161Z-T21-probe-r12.ps1",
                     "args": "-Part Make",
                     "minutes": 20,
                     "note": "Signs in (CAC). Makes the fake test list and library that the next step needs, with one fake workbook. The last step removes them again.",
@@ -196,7 +196,7 @@
                     "name": "T21 Add the second person r11",
                     "title": "Add the second person to the test site",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
+                    "file": "90161Z-T21-probe-r12.ps1",
                     "args": "-Part Person",
                     "minutes": 20,
                     "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group.",
@@ -216,7 +216,7 @@
                     "name": "T26 Make the fake publication r1",
                     "title": "Make the fake publication and endorsement",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r1.ps1",
+                    "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Make",
                     "minutes": 10,
                     "note": "Signs in (CAC). Makes one fake publication and one fake endorsement on the test site, or finds them. Puts 2 form links and 8 steps for the second person on the clipboard.",
@@ -286,7 +286,7 @@
                     "name": "T26 Read the endorser answer r1",
                     "title": "Read the 2 answers of the second person",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r1.ps1",
+                    "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Read",
                     "minutes": 10,
                     "note": "Signs in (CAC). Reads the new answer row, and whether your fake endorsement was changed. A refused change is expected and recorded; it does not count against the round.",
@@ -392,7 +392,7 @@
                     "name": "T26 Make the Restore test rows r1",
                     "title": "Make the fake rows for the Restore test",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r1.ps1",
+                    "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Rows",
                     "minutes": 10,
                     "note": "Signs in (CAC). Sets the pause-switch row of PFM Settings to No (Restore turns it on while it writes; flows read it from the next round). Makes 3 fake endorsement rows and 1 fake log row.",
@@ -448,7 +448,7 @@
                     "name": "T26 Delete and add the test rows r1",
                     "title": "Delete 4 fake rows and add 1 on the test site",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r1.ps1",
+                    "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Change",
                     "minutes": 10,
                     "note": "Signs in (CAC). Moves the 3 fake endorsement rows to the site Recycle Bin, deletes the fake log row for good, and adds 1 new fake endorsement row. Restore puts the 4 deleted rows back next.",
@@ -572,7 +572,7 @@
                     "name": "T26 Check the restored rows r1",
                     "title": "Check the rows that Restore put back",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r1.ps1",
+                    "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Check",
                     "minutes": 10,
                     "note": "Signs in (CAC) and reads only: the 3 rows back with their old numbers, the log row with a new number, the new row still there, the pause-switch row at No, and the fresh backup.",
@@ -696,7 +696,7 @@
                     "name": "T26 Remove the fake rows r1",
                     "title": "Remove the fake publication and its answers",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r1.ps1",
+                    "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Clean",
                     "minutes": 10,
                     "note": "Signs in (CAC). Moves the fake publication, its endorsement rows (yours and the answers) and its log rows to the site Recycle Bin. Runs after any failure.",
@@ -712,7 +712,7 @@
                     "name": "T21 Remove the test list and library r11",
                     "title": "Remove the test person, list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r11.ps1",
+                    "file": "90161Z-T21-probe-r12.ps1",
                     "args": "-Part Clean -Label last",
                     "minutes": 20,
                     "note": "Signs in (CAC). Takes the second person out of Visitors and moves the test list and library to the Recycle Bin. Runs after any failure.",
@@ -829,32 +829,32 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-first-r11.txt",
+                    "name": "90161Z-T21-probe-clean-first-r12.txt",
                     "step": "T21 Check the test site is clean r11"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-make-r11.txt",
+                    "name": "90161Z-T21-probe-make-r12.txt",
                     "step": "T21 Make the probe list r11"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-person-r11.txt",
+                    "name": "90161Z-T21-probe-person-r12.txt",
                     "step": "T21 Add the second person r11"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-make-r1.txt",
+                    "name": "90161Z-T26-endorse-make-r2.txt",
                     "step": "T26 Make the fake publication r1"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-read-r1.txt",
+                    "name": "90161Z-T26-endorse-read-r2.txt",
                     "step": "T26 Read the endorser answer r1"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-rows-r1.txt",
+                    "name": "90161Z-T26-endorse-rows-r2.txt",
                     "step": "T26 Make the Restore test rows r1"
                 },
                 {
@@ -864,22 +864,22 @@
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-change-r1.txt",
+                    "name": "90161Z-T26-endorse-change-r2.txt",
                     "step": "T26 Delete and add the test rows r1"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-check-r1.txt",
+                    "name": "90161Z-T26-endorse-check-r2.txt",
                     "step": "T26 Check the restored rows r1"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-clean-r1.txt",
+                    "name": "90161Z-T26-endorse-clean-r2.txt",
                     "step": "T26 Remove the fake rows r1"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-last-r11.txt",
+                    "name": "90161Z-T21-probe-clean-last-r12.txt",
                     "step": "T21 Remove the test list and library r11"
                 }
             ],
@@ -1390,7 +1390,7 @@
                     "kind": "dir"
                 },
                 {
-                    "path": "T16\\90161Z-T16-setup-r11.txt",
+                    "path": "T16\\90161Z-T16-setup-r12.txt",
                     "kind": "glob"
                 },
                 {
@@ -1938,7 +1938,7 @@
                     "kind": "glob"
                 },
                 {
-                    "path": "T22\\90161Z-T22-*-r11.txt",
+                    "path": "T22\\90161Z-T22-*-r12.txt",
                     "kind": "glob"
                 },
                 {
