@@ -84,6 +84,9 @@ def screen_text(code, drop=()):
         out.append(s)
         return m.group(0)
 
+    # Comments are not screen text: drop <# ... #> blocks and whole-line # comments first (review MINOR, 2026-11-25).
+    code = re.sub(r'<#.*?#>', '', code, flags=re.S)
+    code = re.sub(r'(?m)^[ \t]*#.*$', '', code)
     rest = re.sub(r"'((?:[^'\n]|'')*)'", keep, code)
     out += re.findall(r'"([^"\n]*)"', rest)
     return '\n'.join(out)
@@ -219,6 +222,8 @@ def self_test():
     # A guide line copied into the bundle must not hold its own names (review MAJOR, 2026-11-25).
     data = {'bundles': [{'out': 'x/b.ps1', 'steps': [{'title': 'T', 'guide': ['5. Click "Frobnicate Zeta".'],
                                                       'answers': [{'prompt': 'In the window "Zork", say?'}]}]}]}
+    if not check_name(screen_text("# a 'Ghost' comment\n<# 'Shade' #>\nText = 'Real'"), [], 'Ghost'):
+        errs.append('comment text read as screen text')
     raw = "Text = 'Maintenance'\nGuide = @('5. Click \"Frobnicate Zeta\".')\nPrompt = 'In the window \"Zork\", say?'"
     scr = screen_text(raw, authored_text(data))
     for _, n in guide_names(data, 'b.ps1'):
