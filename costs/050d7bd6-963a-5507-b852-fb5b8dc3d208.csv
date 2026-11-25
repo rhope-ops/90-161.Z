@@ -1,2 +1,2 @@
 session_id,written_at,source,agent_id,type,model,status,usd,input,output,cache_read,cache_write,started_at,ended_at,session_usd
-050d7bd6-963a-5507-b852-fb5b8dc3d208,2026-11-25T10:26:28.792Z,main,,,,,30.600379099999998,2,100,427964,1127,,,30.600379099999998
+050d7bd6-963a-5507-b852-fb5b8dc3d208,2026-11-25T10:26:36.694Z,main,,,,,30.789874999999995,8,181,1287748,3106,,,30.789874999999995
