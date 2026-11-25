@@ -176,35 +176,6 @@
                     "doing": "Checking that the test site is clean."
                 },
                 {
-                    "name": "T21 Answer: the sign-in window r12",
-                    "title": "Answer 1 question about the sign-in window",
-                    "kind": "guide",
-                    "guide": [],
-                    "dir": "T21",
-                    "file": "",
-                    "note": "1 question about the CAC sign-in window of the step before. It is new in this round.",
-                    "estimate": 1,
-                    "after": [
-                        "T21 Check the test site is clean r12"
-                    ],
-                    "answersOnly": true,
-                    "answers": [
-                        {
-                            "kind": "pick",
-                            "choices": [
-                                "Small, in the center",
-                                "Large",
-                                "No sign-in window opened"
-                            ],
-                            "failOn": [
-                                "Large"
-                            ],
-                            "key": "w-signin",
-                            "prompt": "What size did you write down for the CAC sign-in window?"
-                        }
-                    ]
-                },
-                {
                     "name": "T21 Make the probe list r12",
                     "title": "Make the test list and library",
                     "dir": "T21",
@@ -274,7 +245,7 @@
                         "4. Click \"New chat\". You see the box \"To\".",
                         "5. In the box \"To\", type the e-mail address of the second person that you wrote down.",
                         "6. Click in the chat box at the bottom. You see the cursor in the box.",
-                        "7. Press Ctrl+V. You see 2 form links and 8 steps in the box.",
+                        "7. Press Ctrl+V. You see the 2 form links and 8 steps that RADE put on the clipboard.",
                         "8. Press Enter. You see your message in the chat.",
                         "9. Wait until the second person sends 2 replies. Do not click \"Done\" until then.",
                         "If nobody can help today: click \"Skip\". The round goes on and removes the test rows at the end."
@@ -413,9 +384,11 @@
                         "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
                         "2. In the second RADE window, click \"90-161.Z 0.1.0\". You see \"90-161.Z 0.1.0\" at the top.",
                         "3. In the window \"90-161.Z 0.1.0\", click \"Maintenance\". You see \"Back up\" and \"Restore\".",
-                        "4. Click \"Back up\". If a sign-in window opens, sign in with your CAC.",
-                        "5. Wait until the window \"90-161.Z 0.1.0\" shows \"All 12 lists were saved.\"",
-                        "6. Close the window \"90-161.Z 0.1.0\" with its X. You see this window again.",
+                        "4. Click \"Back up\". You see the Back up start.",
+                        "5. If a CAC sign-in window opens, write down its size: \"Small\" or \"Large\".",
+                        "6. If the CAC sign-in window is open, sign in with your CAC.",
+                        "7. Wait until the window \"90-161.Z 0.1.0\" shows \"All 12 lists were saved.\"",
+                        "8. Close the window \"90-161.Z 0.1.0\" with its X. You see this window again.",
                         "If lists were not saved: click \"It failed\" and type the first line of the message."
                     ],
                     "estimate": 3,
@@ -431,7 +404,7 @@
                                 "No sign-in window opened"
                             ],
                             "key": "b-signin",
-                            "prompt": "In the window \"90-161.Z 0.1.0\", did a CAC sign-in window open? If yes, what size was it?"
+                            "prompt": "What size did you write down for the CAC sign-in window of the window \"90-161.Z 0.1.0\"?"
                         }
                     ]
                 },
@@ -481,7 +454,7 @@
                         "2. In the second RADE window, click \"90-161.Z 0.1.0\". You see \"90-161.Z 0.1.0\" at the top.",
                         "3. In the window \"90-161.Z 0.1.0\", click \"Maintenance\". You see \"Back up\" and \"Restore\".",
                         "4. Click \"Restore\". You see the list of backups.",
-                        "5. If RADE asks \"Is the saved site a test site?\", type the name of your test site.",
+                        "5. If RADE asks \"Is the saved site a test site?\", type the name from your test site home page.",
                         "6. If you typed the name, click \"Mark as test site\".",
                         "7. Click the backup marked \"Newest\". If a sign-in window opens, sign in with your CAC.",
                         "8. Wait until the window \"90-161.Z 0.1.0\" shows a line that starts with \"Dry run:\".",
@@ -532,8 +505,8 @@
                     "guide": [
                         "1. In the window \"90-161.Z 0.1.0\", click in the box \"Type 90-161.Z to confirm\".",
                         "2. Type: 90-161.Z",
-                        "3. Click \"Restore\". You see Restore run. Wait until the result shows.",
-                        "4. Do not close the window \"90-161.Z 0.1.0\" while Restore runs.",
+                        "3. Do not close the window \"90-161.Z 0.1.0\" while Restore runs.",
+                        "4. Click \"Restore\". You see Restore run. Wait until the result shows.",
                         "5. In the result, find the line that starts with \"PFM Endorsements\".",
                         "6. Keep the window \"90-161.Z 0.1.0\" open for the 3 questions."
                     ],
@@ -817,7 +790,6 @@
                     "summary": "Round R42 r1: window r15 with scroll bar room, an endorser answer, a small sign-in window, and Restore of fake rows.",
                     "steps": [
                         "T21 Check the test site is clean r12",
-                        "T21 Answer: the sign-in window r12",
                         "T21 Make the probe list r12",
                         "T21 Add the second person r12",
                         "T26 Make the fake publication r2",

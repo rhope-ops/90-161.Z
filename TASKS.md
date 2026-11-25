@@ -90,7 +90,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 #### Round R42 r1: my window r15, an endorser answer, a small sign-in window and Restore
 
-**For:** the round after R41. It tests the R41 fixes: my 90-161.Z window r15 (room for the scroll bar; the screens Waves and Step 13 open), the answer of a second person, a small CAC sign-in window, and RADE Restore of fake rows with their old row numbers. The first RADE window shows **90-161.Z R42** at the top. The second RADE window (from the RADE shortcut) shows **90-161.Z 0.1.0** at the top.\
+**For:** the round after R41. It tests the R41 fixes: my 90-161.Z window r15 (room for the scroll bar; the screens Waves and Step 13 open), the answer of a second person, a small CAC sign-in window for Back up and Restore, and RADE Restore of fake rows with their old row numbers. The first RADE window shows **90-161.Z R42** at the top. The second RADE window (from the RADE shortcut) shows **90-161.Z 0.1.0** at the top.\
 **Time:** about 40 minutes, with about 5 minutes of a second person from my office (an estimate).\
 **Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T21, T22 and T26, 17 pictures of the window screens, and one backup of the 12 test site lists). The old files of T21 r11, T22 r14 and T26 r1 go to the Recycle Bin. The Repair saves a new copy of RADE for the RADE shortcut. On the test site: a test list and library, the second person in the Visitors group, one fake publication and fake endorsement rows. The last steps of the round move them to the site Recycle Bin. Before Run, the window lists every file.\
 **Steps:**
@@ -101,18 +101,20 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 5. In the window **RADE**, click **Close**. Wait until you see ISE with the script in the white pane.
 6. In ISE, press `F5`. You see the window **RADE** again. Wait until it shows (up to 2 minutes, an estimate).
 7. In the window **RADE**, click **90-161.Z R42**. Wait until you see **90-161.Z R42** at the top and the button **Run**.
-8. If the bold line **Writes to** shows **NOT found**, write down `Writes to: NOT found` and send it to Claude. Go on.
+8. If the bold line **Writes to** shows **NOT found**, do not click **Run**. Do "Send a line to Claude" on this page with the line `Writes to: NOT found`. The steps of this task stop here.
 9. If the box **Send results to** is empty, type your own e-mail address. You see the address in the box. Go on.
 10. In the window **90-161.Z R42**, click **Run**. Wait until you see the log.
-11. If a CAC sign-in window opens, sign in with your CAC. Write down its size: `Small` or `Large`.
-12. If the small window asks for the e-mail address of the second person, type the address that you wrote down. You see the address in the box. Go on.
-13. If a card shows in the window **90-161.Z R42**, do the numbered lines on that card. You see the next card. Go on.
-14. If the bottom bar shows **Screen 10 of 17**, look at the grid **Wave 1 answers**. Write down `Yes` if it shows the second person, else `No`.
-15. If the bottom bar has no more lines, close the window **Publications and Forms Management** with its X. You see the window **90-161.Z R42**. Go on.
-16. When the log shows `DONE`, you see an Outlook draft. In the draft, click **Send**. The draft closes. The task is complete.
+11. If a CAC sign-in window opens, sign in with your CAC. You see the log again. Go on.
+12. If the window **90-161.Z test T4** asks for an e-mail address, type the address that you wrote down. You see the address in the box. Go on.
+13. If a card shows in the window **90-161.Z R42**, do the numbered lines on that card. You see the last line of the card. Go on.
+14. If the card shows the button **Done**, click **Done**. You see the next card or a question. Go on.
+15. If the bottom bar of the window **Publications and Forms Management** shows **Screen 10 of 17**, look at the grid **Wave 1 answers**. Write down `Yes` if it shows the second person, else `No`.
+16. If the bottom bar has no line after **Screen 17 of 17**, close the window **Publications and Forms Management** with its X. You see the window **90-161.Z R42**. Go on.
+17. If the log shows `DONE` and you see an Outlook draft, click **Send** in the draft. The draft closes. Go on.
+18. Do "Send a line to Claude" on this page with the line `R42 sent`. You see your line in the chat. The task is complete.
 
-**Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder. Then send the line `R42 sent` to Claude with the steps "Send a line to Claude" on this page.\
-**If it fails:** do the line that starts with **What to do**. If the button **Repair** does not show, write down the button text that shows. Send it to Claude with the steps "Send a line to Claude" on this page. If the second person cannot help today, click **Skip** on that card. The round goes on and removes the test rows at the end.
+**Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder.\
+**If it fails:** in the log of the window **90-161.Z R42**, do the line that starts with **What to do**. If the button **Repair** does not show, write down the button text that shows. Send it to Claude with the steps "Send a line to Claude" on this page. If the second person cannot help today, click **Skip** on that card. The round goes on and removes the test rows at the end.
 
 ### Done
 

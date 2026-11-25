@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe, r12 (round R42: CAC sign-in window size; r11: R38). Windows PowerShell 5.1, PnP.PowerShell 1.12.0 (no other module).
+  90-161.Z Task 21 probe, r12 (round R42; the code is the same as r11 of R38). Windows PowerShell 5.1, PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for: the device side of the T21 probe. R26 settled most of the front-end tests (T2, T3, T5, T6, T7, T9, T10
   passed); R29a proved T4 (a second person writes a row). The 2 probe flows are now flows of the solution "90-161.Z flows"
