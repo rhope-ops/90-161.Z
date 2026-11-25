@@ -100,7 +100,10 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 4. In the window **RADE**, click **Close**. Wait until you see ISE with the script in the white pane.
 5. In ISE, press `F5`. You see the window **RADE** again. Wait until it shows (up to 2 minutes, an estimate).
 6. In the window **RADE**, click **90-161.Z R42**. Wait until you see **90-161.Z R42** at the top and the button **Run**.
-7. Do "Steps if the window RADE opens" on this page. You see the cards of the round in the window **90-161.Z R42**. The task is complete.
+7. During the round, if a card shows in the window **90-161.Z R42**, do the numbered lines on that card. You see the next card. Go on.
+8. During the round, if the window **Publications and Forms Management** opens, do the lines in its bottom bar. You see each screen open. Go on.
+9. If the bottom bar has no more lines, close the window **Publications and Forms Management** with its X. You see the window **90-161.Z R42**. Go on.
+10. Do "Steps if the window RADE opens" on this page. You see `DONE` in the window **90-161.Z R42** at the end. The task is complete.
 
 **Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder. Then tell Claude that the e-mail is sent.\
 **If it fails:** do the line that starts with **What to do**. If the button **Repair** does not show, write down the button text that shows. Send it to Claude with the steps "Send a line to Claude" on this page. If the second person cannot help today, click **Skip** on that card. The round goes on and removes the test rows at the end.

@@ -176,6 +176,35 @@
                     "doing": "Checking that the test site is clean."
                 },
                 {
+                    "name": "T21 Answer: the sign-in window r12",
+                    "title": "Answer 1 question about the sign-in window",
+                    "kind": "guide",
+                    "guide": [],
+                    "dir": "T21",
+                    "file": "",
+                    "note": "1 question about the CAC sign-in window of the step before. It is new in this round.",
+                    "estimate": 1,
+                    "after": [
+                        "T21 Check the test site is clean r12"
+                    ],
+                    "answersOnly": true,
+                    "answers": [
+                        {
+                            "kind": "pick",
+                            "choices": [
+                                "Small, in the center",
+                                "Large",
+                                "No sign-in window opened"
+                            ],
+                            "failOn": [
+                                "Large"
+                            ],
+                            "key": "w-signin",
+                            "prompt": "Did a CAC sign-in window open in the step before? If yes, what size was it?"
+                        }
+                    ]
+                },
+                {
                     "name": "T21 Make the probe list r12",
                     "title": "Make the test list and library",
                     "dir": "T21",
@@ -243,7 +272,7 @@
                         "2. Open Teams. You see the Teams window.",
                         "3. In Teams, click \"Chat\". You see your chats.",
                         "4. Click \"New chat\". You see the box \"To\".",
-                        "5. In the box \"To\", type the e-mail address that you gave RADE. You see the name.",
+                        "5. In the box \"To\", type the address of the second person, as in the small RADE window.",
                         "6. Click in the chat box at the bottom. You see the cursor in the box.",
                         "7. Press Ctrl+V. You see 2 form links and 8 steps in the box.",
                         "8. Press Enter. You see your message in the chat.",
@@ -307,7 +336,7 @@
                     "dir": "T22",
                     "file": "90161Z-T22-pfm-window-r15.ps1",
                     "minutes": 40,
-                    "note": "Signs in (CAC) and reads the fake rows of your test site; it writes nothing there. Do the 4 checks, then the 17 screens, in the bar at the bottom of the window. Then close the window with its X.",
+                    "note": "Signs in (CAC) and reads the fake rows of your test site; it writes nothing there. Do the 4 checks, then the 17 screens, in the bar at the bottom of the window \"Publications and Forms Management\". Then close that window with its X. Keep the RADE window open.",
                     "estimate": 20,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [
@@ -330,12 +359,12 @@
                 },
                 {
                     "name": "T22 Answer: look and cards r15",
-                    "title": "Answer 3 questions about this round",
+                    "title": "Answer 2 questions about the window",
                     "kind": "guide",
                     "guide": [],
                     "dir": "T22",
                     "file": "",
-                    "note": "3 questions: the answer of the second person, the CAC sign-in window and your first change. About 2 minutes.",
+                    "note": "2 questions: the answer of the second person and your first change. About 2 minutes.",
                     "estimate": 2,
                     "after": [
                         "T22 Did the window open r15"
@@ -343,21 +372,8 @@
                     "answers": [
                         {
                             "key": "w-answer",
-                            "prompt": "In the 90-161.Z window, did the grid \"Wave 1 answers\" show the answer of the second person?",
+                            "prompt": "In the window \"Publications and Forms Management\", did the grid \"Wave 1 answers\" show the answer of the second person?",
                             "kind": "yesno"
-                        },
-                        {
-                            "key": "w-signin",
-                            "prompt": "When a CAC sign-in window opened in this round, what size was it?",
-                            "kind": "pick",
-                            "choices": [
-                                "Small, in the center",
-                                "Large",
-                                "No sign-in window opened"
-                            ],
-                            "failOn": [
-                                "Large"
-                            ]
                         },
                         {
                             "key": "w-change",
@@ -405,6 +421,21 @@
                     "estimate": 3,
                     "after": [
                         "T26 Make the Restore test rows r2"
+                    ],
+                    "answers": [
+                        {
+                            "kind": "pick",
+                            "choices": [
+                                "Small, in the center",
+                                "Large",
+                                "No sign-in window opened"
+                            ],
+                            "failOn": [
+                                "Large"
+                            ],
+                            "key": "b-signin",
+                            "prompt": "In the window \"90-161.Z 0.1.0\", did a CAC sign-in window open? If yes, what size was it?"
+                        }
                     ]
                 },
                 {
@@ -773,6 +804,7 @@
                     "summary": "Round R42 r1: window r15 with room for the scroll bar, an endorser answer, a small CAC sign-in window, and RADE Restore of fake rows with their Recycle Bin row numbers.",
                     "steps": [
                         "T21 Check the test site is clean r12",
+                        "T21 Answer: the sign-in window r12",
                         "T21 Make the probe list r12",
                         "T21 Add the second person r12",
                         "T26 Make the fake publication r2",
