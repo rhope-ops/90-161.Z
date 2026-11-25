@@ -1,2 +1,2 @@
 session_id,written_at,source,agent_id,type,model,status,usd,input,output,cache_read,cache_write,started_at,ended_at,session_usd
-3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,2026-11-25T02:29:38.271Z,main,,,,,1.6348912000000002,36,6933,1964577,134024,,,1.6348912000000002
+3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,2026-11-25T02:31:01.793Z,main,,,,,1.7758204000000002,44,7559,2371399,135530,,,1.7758204000000002
