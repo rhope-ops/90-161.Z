@@ -24,9 +24,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R42-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R42-round-r2.ps1",
             "round": "R42",
-            "title": "Round R42 r1: my window r15 with room for the scroll bar, an endorser answer, a small CAC sign-in window, and RADE Restore with Recycle Bin row numbers",
+            "title": "Round R42 r2: my window r15 with room for the scroll bar, an endorser answer, a small CAC sign-in window, and RADE Restore with Recycle Bin row numbers",
             "files": [
                 {
                     "dir": "T22",

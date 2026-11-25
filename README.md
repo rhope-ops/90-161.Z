@@ -33,11 +33,11 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 ---
 
 <!-- >>> tasks: generated from go.md and the round bundle by scripts/build_readme.py (do not edit) -->
-[**Open the script**](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R42-round-r1.txt)
+[**Open the script**](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R42-round-r2.txt)
 
 The steps to run it are at the top of the script.
 
-**Round script:** `90161Z-R42-round-r1.txt` · **Code:** `bb3d8429fde2...70f0`
+**Round script:** `90161Z-R42-round-r2.txt` · **Code:** `df7bc454380b...63f8`
 
 ---
 
@@ -55,7 +55,7 @@ Never send real publication content, names, site addresses or group names. Reply
 **For:** a round is one block of text I paste into PowerShell ISE. It opens the RADE window (Redacted Application Deployment Engine, formerly the 90-161.Z Deployer), saves its own files, runs the tests and makes the results e-mail. The ISSM allows this for scripts that use no elevated credentials (13 Nov 26).\
 **Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: most checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). The .txt copy of the script (**Open the script**) is not a task file. A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.\
 Steps to start a round. Do these steps when an open task on this page says "run the round". That task gives the round name, for example **R42**:
-1. On GitHub, on the page **rhope-ops/90-161.Z**, find **Round script** under **Open the script**. You see the round name, for example `90161Z-R42-round-r1.txt`. Go on.
+1. On GitHub, on the page **rhope-ops/90-161.Z**, find **Round script** under **Open the script**. You see the round name, for example `90161Z-R42-round-r2.txt`. Go on.
 2. If the round name is not the round of the open task, do not open the script. You see the other round name next to **Round script**. Write down `README shows another round`. Send it to Claude with the steps "Send a line to Claude" on this page.
 3. If the round name is right, click **Open the script**. You see the script as plain text on a new page, with the steps to run it at the top. Go on.
 4. On the new page, do these actions:
