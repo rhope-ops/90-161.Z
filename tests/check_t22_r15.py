@@ -126,7 +126,7 @@ $ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }; $wn.Sc
 $script:known = @{}   # W7: text widths measured on the Windows job, used in place of the stand-in
 $wn.TextW = { param([string]$Text, $F) if ($script:known.ContainsKey($Text)) { return [int]$script:known[$Text] }
   return [int][math]::Ceiling($Text.Length * [double]$F) }
-$script:bar = 26; $wn.BarW = { return $script:bar }
+$script:bar = 26; $wn.BarW = { return $script:bar }; $wn.BarShown = { param($G) return [int]$G.BarShown }   # a stand-in grid says its bar
 # The width of grid $Name on card $Key at client width $Client (the window part's arithmetic, $wn.ShowCols).
 function Get-GridW([int]$Client, [string]$Key, [string]$Name) {
   $wide = ($Client -ge (& $ui.Sc 1500)); $rail = $(if ($wide) { & $ui.Sc 220 } else { & $ui.Sc 200 })
@@ -164,6 +164,18 @@ $script:known = @{ 'OFFICE' = 54; 'ANSWER' = 67; 'COMMENTS' = 89; 'SIGNATURE' = 
 $b7 = (Get-GridW 1280 'waves' 'Wave 1 answers').B; $r7 = @($b7.Rows); $c7 = & $wn.DropCols @($b7.Cols) 474 (& $wn.PubWidths $r7) $r7
 $p7 = & $wn.ColPlan $c7 474 0 0 $r7
 'HEADS ' + (@(foreach ($c in $c7) { [string]$c.N + '=' + $p7.Min[[string]$c.N] + '/' + (& $wn.HeadMin $c) }) -join ' ')
+# RESERVE (review MAJOR 2): the W7 plan kept 2 px; its rows wrap and a 17 px bar shows. The grid fit must take the bar
+# off (room = W - 17), and the self-check must name columns that end under it although no chip was kept whole.
+$k7 = @{}; foreach ($c in $c7) { $k7[[string]$c.N] = [string]$c.K }
+foreach ($what in 'fit', 'edge') {
+  $gc = @(); $i = 0; foreach ($c in $c7) { $m = [int]$p7.Min[[string]$c.N]
+    $gc += [pscustomobject]@{ Name = [string]$c.N; Visible = $true; MinimumWidth = $m; Width = $m; DisplayIndex = $i }; $i++ }
+  $s = 0; foreach ($c in $gc) { $s += $c.Width }; $gc[0].Width += 472 - $s; $gc[0].MinimumWidth += 472 - $s   # the plan's 472 px, all used
+  $g7 = [pscustomobject]@{ AccessibleName = 'Wave 1 answers'; ClientSize = @{ Width = 474 }; Width = 474; Columns = $gc; BarShown = 17
+    Tag = @{ Kind = $k7; Cols = $c7; Shown = $r7; ChipKept = $p7.ChipKept; Reserve = $p7.Reserve } }
+  if ($what -eq 'fit') { $ch = & $wn.FitGrid $g7; $s = 0; foreach ($c in $gc) { $s += $c.MinimumWidth }
+    'RESERVE fit reserve=' + $p7.Reserve + ' changed=' + $ch + ' sum=' + $s + ' room=' + (474 - 17) }
+  else { 'RESERVE edge ' + [string](& $wn.EdgeCheck $g7 'waves') } }
 $script:known = @{}
 # FIT: the grid fit on a stand-in grid at 1920 x 1094 and 150 % (normal font, FAKE rows): "fits" is a grid whose columns
 # fill the whole grid with no bar shown (r14 took 26 px from the chip on each pass), "over" has minimums 42 px wider
@@ -206,7 +218,9 @@ def check_grid_plan():
     for p in plan:
         w, bar, room, s, end = (int(p[k]) for k in ('W', 'bar', 'room', 'sum', 'end'))
         # the bar room is kept, or (W7) given to the heads when they do not fit beside it: then no chip is kept whole
-        assert (room == w - bar - 2 or (room == w - 2 and p['kept'] == 'False')) and s <= room, ('the column minimums need more than the room', p)
+        # the bar room is always kept with a pub column; a grid with none (waves) may give it to its heads (W7), no chip kept
+        bare = p['at'][0] == 'waves' and room == w - 2 and p['kept'] == 'False'
+        assert (room == w - bar - 2 or bare) and s <= room, ('the column minimums need more than the room beside the scroll bar', p)
         assert p['last'] == 'chip' and p['kept'] in ('True', 'False'), p
         if p['kept'] == 'True':
             assert end <= w - bar, ('the Status chip can end under the scroll bar', p)
@@ -219,6 +233,11 @@ def check_grid_plan():
         assert have >= need, ('W7: a column of Wave 1 answers is narrower than its head at 96 dpi', heads[0])
     fit = {tuple(l.split()[1:3]): dict(x.split('=', 1) for x in l.split()[3:]) for l in out if l.startswith('FIT ')}
     assert len(fit) == 6, res.stdout
+    rf = [l for l in out if l.startswith('RESERVE fit ')]; re_ = [l for l in out if l.startswith('RESERVE edge ')]
+    assert len(rf) == 1 and len(re_) == 1, out
+    f = dict(x.split('=', 1) for x in rf[0].split()[2:])
+    assert f['reserve'] == '2' and f['changed'] == 'True' and int(f['sum']) <= int(f['room']), ('the fit left columns under a bar that shows', rf[0])
+    assert 'LAYOUT waves R15 grid Wave 1 answers: the columns end at 472' in re_[0] and 'scroll bar of 17 showing' in re_[0], re_[0]
     for (g, kind), f in fit.items():
         c0, c1 = f['chip'].split('>')
         if kind == 'fits':

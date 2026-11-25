@@ -3,7 +3,6 @@
   90-161.Z Task 22 r15, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
-  R11 (R38; PFM 20 Nov 26): column widths come from the widest value, a chip never ends under the scroll bar, the head "Weekdays in step" may wrap, and the layout self-check has the edge test.
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
   column kind: pub (the number as a link, the title beside or under it), with and bold (semibold), chip (a status
   chip) and plain. Double-click or Enter on a row opens its card.
@@ -22,12 +21,9 @@
   as its values or its head, and a head marked HW wraps to 2 lines ($wn.HeadWrap, $wn.HeadMin, $wn.GridHeight). Each grid
   can say where its content ends ($wn.GridEdges), so the layout self-check ($wn.EdgeCheck) fails a chip or text that
   ends closer to the grid's right edge than the vertical scroll bar is wide.
-  R15 (R42 T1; R41 finding 4: at 1920 x 1094 and 150 % the Status chips of 3 grids ended under the 26 px scroll bar, and
-  2 grids had columns wider than the grid): the column plan is pure arithmetic ($wn.ColPlan: no window, so
-  tests/check_t22_r15.py runs it) and keeps the room for the scroll bar in every grid, with or without a pub column; the
-  grid fit ($wn.FitGrid) works on the column minimums against that same room, so it changes nothing in a grid that
-  fits (r14 compared the filled widths with the room less the bar, took the difference from the chip column on every
-  pass and pushed the chip under the bar), and it takes width from a chip column only after the other columns.
+  R15 (R42 T1; R41 finding 4: at 1920 x 1094 and 150 % 3 Status chips ended under the 26 px bar): the column plan is pure
+  arithmetic ($wn.ColPlan, run by tests/check_t22_r15.py) and keeps the scroll bar room; the grid fit ($wn.FitGrid) works
+  on the column minimums against that room, so a grid that fits keeps its chip (r14 took the chip under the bar).
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
   Run: not alone; 90161Z-T22-pfm-window-r15.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
@@ -126,11 +122,10 @@ $wn.ColPlan = {
   minimums share; Reserve = the grid width less that room ($wn.FitGrid keeps it); ChipKept = $true or $false when the grid has a chip column (its chip kept whole), else $null }.
   #>
   param($Cols, [int]$W, [int]$Scroll, [int]$PubMin, $Rows = @())
-  # R15: the room for the scroll bar is kept in every grid (r14: only with a pub column) while every head fits beside it;
-  # ps51 W7 (96 dpi, narrowest page): when the heads do not fit there and no bar shows, the heads take that room (as r14).
-  $bar = [math]::Max($Scroll, [int](& $wn.BarW)); $heads = 0
-  foreach ($c in $Cols) { $heads += $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { [math]::Max((& $wn.Sc 60), $PubMin) } else { [int](& $wn.HeadMin $c) }) }
-  if ($Scroll -eq 0 -and $heads -gt $W - $bar - 2) { $bar = 0 }
+  # R15: the room for the scroll bar is kept in every grid (r14: only with a pub column). ps51 W7 (96 dpi, narrowest page):
+  # a grid with no pub column and no bar showing gives that room to its heads when only then they all fit (as r14).
+  $bar = [math]::Max($Scroll, [int](& $wn.BarW)); $heads = 0; foreach ($c in $Cols) { $heads += [int](& $wn.HeadMin $c) }
+  if ($PubMin -le 0 -and $Scroll -eq 0 -and $heads -gt $W - $bar - 2 -and $heads -le $W - 2) { $bar = 0 }
   $fixed = 0; $keep = 0; $rest = 0; $n = @($Cols).Count; $avail = $W - $bar - 2; $kept = $null
   $pubOwn = [math]::Max(2, [math]::Min([math]::Max((& $wn.Sc 60), $PubMin), $avail - 2 * ($n - 1)))   # a pub column never leaves less than 2 px a column
   $own = @{}; $hard = @{}; $spare = & $wn.HeadSpare $Cols $avail $PubMin $pubOwn; foreach ($c in $Cols) {   # R11: a chip is kept only while the heads fit
@@ -166,8 +161,9 @@ $wn.GridCols = {
     $dc.AutoSizeMode='Fill'; $dc.MinimumWidth = [math]::Max(2, [int]$plan.Min[[string]$c.N]); $dc.FillWeight = $plan.Weight[[string]$c.N]
     [void]$G.Columns.Add($dc); $kinds[[string]$c.N] = [string]$c.K }
   return $kinds }
-# R15: the width of a vertical scroll bar, in pixels (one place, so tests/check_t22_r15.py can give 26 off Windows).
+# R15: the width of a vertical scroll bar ($wn.BarW) and of the bar grid $G shows now, else 0 ($wn.BarShown), in px.
 $wn.BarW = { return [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth }
+$wn.BarShown = { param($G) $v = @($G.Controls | Where-Object { $_ -is [Windows.Forms.VScrollBar] -and $_.Visible }); if ($v.Count) { return [int]$v[0].Width }; return 0 }
 # R11 (R38; ps51 W7 at 96 dpi): the room a grid of width $Avail has above all its column heads (the pub column counts
 # $PubOwn when $PubMin is above 0). $wn.GridCols keeps a status chip whole only while that room holds the chip's extra
 # width, else the chip column shares the room as in r10, so a narrow window never cuts the other heads.
@@ -233,11 +229,9 @@ $wn.FitGrid = {
   .SYNOPSIS
   R10, R15: fits one grid (see $wn.FitGrids): lowers column minimums by the excess of the minimums over the grid's room.
   .DESCRIPTION
-  R15 (R42 T1; R41 finding 4): the room is the one of $wn.ColPlan (Tag.Reserve): the client width less a scroll bar and
-  2 px whether the bar shows or not, unless the heads needed the bar room. The excess is the sum of the minimums of the visible columns less the room, so a
-  grid that fits gives nothing back however its fill columns share the width (r14 compared the filled widths with the
-  room less a bar that showed, found an excess in a grid that fitted and took it from the chip column on every pass).
-  The excess comes off the columns that are not the pub column, the one with the most width above its head
+  R15 (R41 finding 4): the room is the client width less the plan's reserve (Tag.Reserve, $wn.ColPlan) or less the bar
+  that shows now, the larger; the excess is the sum of the minimums of the visible columns less the room, so a grid
+  that fits gives nothing back however its fill columns share the width. The excess comes off the columns that are not the pub column, the one with the most width above its head
   ($wn.HeadMin) first: the other columns above their heads, then the chip column above its head, then any column under
   its head (never under 2 px). When the minimums changed, or the filled columns are wider than the grid, the grid lays
   out its columns again (a 1 px size change makes the fill columns share the room again).
@@ -248,7 +242,9 @@ $wn.FitGrid = {
   $true when it changed a column or laid the grid out again, else $false.
   #>
   param($G)
-  $res = $(if ($null -ne $G.Tag.Reserve) { [int]$G.Tag.Reserve } else { [int](& $wn.BarW) + 2 }); $room = [int]$G.ClientSize.Width - $res   # the plan's room
+  # the plan's room (Tag.Reserve), and never under a vertical bar that shows now (rows that wrap can bring one)
+  $res = $(if ($null -ne $G.Tag.Reserve) { [int]$G.Tag.Reserve } else { [int](& $wn.BarW) + 2 })
+  $room = [int]$G.ClientSize.Width - [math]::Max($res, [int](& $wn.BarShown $G))
   $vis = @($G.Columns | Where-Object { $_.Visible }); $mins = 0; $sum = 0
   foreach ($k in $vis) { $mins += [int]$k.MinimumWidth; $sum += [int]$k.Width }
   $excess = $mins - $room; $stale = ($sum -gt [int]$G.ClientSize.Width + 1)   # stale: the filled widths need a new layout
@@ -335,7 +331,11 @@ $wn.GridEdges = {
 # edge (none when it does not).
 $wn.EdgeCheck = { param($G, [string]$Card)
   $e = & $wn.GridEdges $G
-  if (-not $e.Fits) { return $null }   # too narrow for every head and the whole chip: the heads come first (Test-EdgeBar prints INFO)
+  if (-not $e.Fits) {   # too narrow for every head and the whole chip: the heads come first (Test-EdgeBar prints INFO); R15: but
+    $sb = [int](& $wn.BarShown $G); $s = 0; foreach ($k in @($G.Columns)) { if ($k.Visible) { $s += [int]$k.Width } }   # never under a bar that shows
+    if ($sb -gt 0 -and $s -gt $e.Width - $sb) { return ('LAYOUT ' + $Card + ' R15 grid ' + $e.Grid + ': the columns end at ' + $s + ', the grid is ' + $e.Width +
+        ' wide with a scroll bar of ' + $sb + ' showing') }
+    return $null }
   if ($e.Edge -gt $e.Width - $e.Bar) {
     return ('LAYOUT ' + $Card + ' R11 grid ' + $e.Grid + ': column ' + $e.Col + ' ends at ' + $e.Edge + ', the grid is ' + $e.Width + ' wide with a scroll bar of ' + $e.Bar) }
   return $null }
