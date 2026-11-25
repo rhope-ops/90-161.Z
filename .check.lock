@@ -1,5 +1,5 @@
 {
- "commit": "3806284552e1e47310894ccd716d805628acfb6d",
+ "commit": "790d832e337cb467bf9368e03fbf1c870cd0cdff",
  "files": {
   ".claude/agents/reviewer.md": "0d75ec9a2c69947ef968ff5c48407a34318a59b1d5b32b4a3b88b13882b9e0d8",
   ".claude/agents/scout.md": "977d957d96b90c3b8c9d9793456d57401952810b9aa17cb25c34955381771e2d",
@@ -11,7 +11,7 @@
   ".claude/skills/deliver/SKILL.md": "9512ea2f869f8ffc122469e8e9910c35c66abd4bac99bc9b6149907241e883b3",
   ".claude/skills/handoff/SKILL.md": "cf9d44345d1d9ac7e7b8bd19d123a914f34dc1baec9bff07179e193f83c476bb",
   ".claude/skills/instructions/SKILL.md": "cf62216e0713ebd01e11c7682ce9421deb592276ec35283e18bba45259233812",
-  ".claude/skills/kit-update/SKILL.md": "8f75e31a769aa6e1f7dbd253aadbd40fc320c3b9556416b7f2a4182223933ee1",
+  ".claude/skills/kit-update/SKILL.md": "5d396260432da396909b16f2b0a22b3f0e1d1089678bac0defab65efe387bdda",
   ".claude/skills/personal-data/SKILL.md": "2b7df05f81d69b2bc3130491aa6396b7e8e70de3fed36c38d563e7a3d9921cc8",
   ".claude/skills/project-log/SKILL.md": "1ac825cd44037b197a36ba912504ea6c1579e124bd6a7a2d936969fbc0da3c26",
   ".claude/skills/rule-change/SKILL.md": "270938f8a14a590a17c115a9af7f0e2cd879d3ff61e28d7cf5f2020327bd3135",
@@ -33,7 +33,7 @@
   "scripts/bloat_check_timing.py": "791fd309ef8333cd3c8cd5b760596d49f5c4bbbde858202c500b764f27c36a96",
   "scripts/build_site.py": "63ddc43ed672ffc22ae115268a4cba3e6dec72c13a4c5a8a89c73b59d71a9235",
   "scripts/build_site_html.py": "615398fae778ba2d8cccd36009bfe42a535efbfb3064477c5abb43f999b44cec",
-  "scripts/check.sh": "97ed9cc63efb15d39eaae2b6410be25048abdb136b878649014eafd7b0aead58",
+  "scripts/check.sh": "b56fcb951f293f31657d03965f57fbc6e3fee314a691443a77aa00e326f30f1c",
   "scripts/check_blocks.py": "8f353b7aef1a6f3441a8715271b46096407a9e6d465b8467669c9f0e3fdfebcc",
   "scripts/check_content.py": "efafb44178b1bf3e28ad0089fd76b40e23a3b714c48766ca02c4c03148946c4f",
   "scripts/check_content_finders.py": "9392028385a2ee47fc8f76c2742d5206ec1a4b40c28b9dd22548d52082683034",
@@ -74,7 +74,7 @@
   "scripts/skill_use.py": "182f1199f0c9d8d632bd9eb12d242d7ecef85b3504f08615607f36dfeef4414d",
   "scripts/stop_check.py": "55195a5a01e5ceaa502605a2fd5f341abd7c0178bcffcb988c87f752d896c6b2",
   "scripts/timeline.py": "d5c9a80525867f98c2bebfbe05551864742a5917bdfc03c1795c084a0707d729",
-  "scripts/worker_guard.py": "b08a35c3195000ae38f8e8f51b8b477ef1b85457ed45badb0dd9887a01a34245",
+  "scripts/worker_guard.py": "33211bbd9a1be7d70b4c633a4ca31fd361caee638c474cdeb6e5886605f97d6e",
   "scripts/worker_guard_scan.py": "2f5c142096dfb5bf5fe9d755ad09cff22eb69f545cf6458cf6ce21237fbada9f",
   "scripts/worker_guard_scan_samples.json": "445b4875e07e78157e9cf4e4fa17937f0b4c609f934f97c43730b08f024ff455"
  },

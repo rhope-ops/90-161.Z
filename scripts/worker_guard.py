@@ -212,6 +212,8 @@ def reason(cmd, branch=None, readonly=False, depth=0):
                 if why:
                     return why
                 break
+            if readonly and w.rsplit('/', 1)[-1] in {'rm', 'rmdir', 'unlink', 'shred'}:
+                return 'the reviewer is read-only: it never deletes files (a test copy goes in a new mktemp -d folder it leaves)'
             if w == 'git' or w.endswith('/git'):
                 why = check_git(seg[k + 1:], branch if branch is not None else current_branch(), readonly)
                 if why:
@@ -248,7 +250,7 @@ def selftest():
     for c in ['git commit -m x', 'git checkout -b y', 'git add .', 'cd a && git merge origin/main',
               'bash -c "git checkout main"', 'sh -lc \'git switch main\'', 'eval "git checkout main"', '/bin/bash -c "cd x; git commit -m y"',
               'bash --norc -c "git checkout main"', 'bash --rcfile x -c "git checkout main"', 'bash -c -- "git checkout main"',
-              'ksh -c "git checkout main"']:
+              'ksh -c "git checkout main"', 'rm -rf x', 'cd /tmp/a && /bin/rm -r b', 'bash -c "rmdir x"']:
         if not reason(c, 'claude/x', readonly=True):
             bad.append(c + ' (readonly)')
     for c in ['git diff origin/main...HEAD', 'git log -p', 'git show HEAD:x', 'git status', 'git fetch origin',
