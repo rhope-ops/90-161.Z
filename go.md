@@ -1,10 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
 Updated: 24 Nov 26 (R42 is ready).
-rhope-ops.github.io/90-161.Z
-Fallback (plain text):
-raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md
-If github.io is blocked:
 github.com/rhope-ops/90-161.Z
 
 Every task below has the same parts: **For** (why), **Time** (an estimate), **Changes** (what it writes or changes, before I start), **Steps**, **Report** (what to send back) and **If it fails**.
@@ -14,26 +10,25 @@ Never send real publication content, names, site addresses or group names. Reply
 ## How a paste task (round) works
 
 **For:** a round is one block of text I paste into PowerShell ISE. It opens the RADE window (Redacted Application Deployment Engine, formerly the 90-161.Z Deployer), saves its own files, runs the tests and makes the results e-mail. The ISSM allows this for scripts that use no elevated credentials (13 Nov 26).
-**Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: most checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). The optional .txt copy of the script (View as .txt) is not a task file. A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.
+**Changes:** it writes only into my own OneDrive folder RADE\90-161.Z (the window shows the full path in bold): the task folders it needs (for example T01), Config and its results folder Rounds\<round>. RADE\Config holds RADE's own settings: the results e-mail address and the saved checks (rade-checks.json: most checks that passed are not run again for 7 days). From R17 on, RADE moves my old OneDrive folder 90-161.Z into RADE once, when I select Run (one folder move; every file keeps its place). It makes missing folders and replaces files of the same name. From R06 on it also moves finished files to the Recycle Bin (only files 90-161.Z made). Before Run, the window lists every file, marked New, Replace or Recycle. Every file a task needs comes inside the round: there are no separate downloads (14 Nov 26). The .txt copy of the script (**Open the script**) is not a task file. A step marked "(needs you)" opens a small window with numbered steps for work in another program, such as a flow import.
 Steps to start a round. Do these steps when an open task on this page says "run the round". That task gives the round name, for example **R42**:
-1. On the RADE page, find the label **Test round** on the card. You see the round name after it, for example **Test round R42**. Go on.
-2. If the round name on the card is not the round of the open task, do not copy the script. You see the card with the other round name. Write down `RADE shows another round`. Send it to Claude with the steps "Send a line to Claude" on this page.
-3. If the round name is right, click **Copy script** on the card. You see the heading **Copied. Now paste it in PowerShell ISE.**, or the card **The browser blocked the copy.** Go on.
-4. If you see the card **The browser blocked the copy.**, click **View as .txt**. You see the script as plain text on a new page. Go on.
-5. If you clicked **View as .txt**, do these actions on the new page:
+1. On GitHub, on the page **rhope-ops/90-161.Z**, find **Round script** under **Open the script**. You see the round name, for example `90161Z-R42-round-r1.txt`. Go on.
+2. If the round name is not the round of the open task, do not open the script. You see the other round name next to **Round script**. Write down `README shows another round`. Send it to Claude with the steps "Send a line to Claude" on this page.
+3. If the round name is right, click **Open the script**. You see the script as plain text on a new page, with the steps to run it at the top. Go on.
+4. On the new page, do these actions:
    1. Press `Ctrl+A`.
    2. Press `Ctrl+C`.
    You see all the text in blue. `Ctrl+C` puts the text on the clipboard. Go on.
-6. Click the Windows **Start** button. You see the search box. Go on.
-7. Type `ISE`. You see **Windows PowerShell ISE** in the list. Go on.
-8. Click **Windows PowerShell ISE**. Do not click **Run as administrator**. You see the window **Windows PowerShell ISE**. Go on.
-9. In the window **Windows PowerShell ISE**, do these actions:
+5. Click the Windows **Start** button. You see the search box. Go on.
+6. Type `ISE`. You see **Windows PowerShell ISE** in the list. Go on.
+7. Click **Windows PowerShell ISE**. Do not click **Run as administrator**. You see the window **Windows PowerShell ISE**. Go on.
+8. In the window **Windows PowerShell ISE**, do these actions:
    1. Click **File**.
    2. Click **New**.
    You see a new white script pane. Go on.
-10. In the white script pane, press `Ctrl+V`. You see the script text in the pane. Go on.
-11. Press `F5`. You see the window **RADE**, red text in ISE, or the round steps as text in ISE. Wait until one shows (up to 2 minutes, an estimate).
-12. If nothing shows after 2 minutes, write down `Nothing after F5`. Send it to Claude with the steps "Send a line to Claude" on this page. Wait until Claude answers.
+9. In the white script pane, press `Ctrl+V`. You see the script text in the pane. Go on.
+10. Press `F5`. You see the window **RADE**, red text in ISE, or the round steps as text in ISE. Wait until one shows (up to 2 minutes, an estimate).
+11. If nothing shows after 2 minutes, write down `Nothing after F5`. Send it to Claude with the steps "Send a line to Claude" on this page. Wait until Claude answers.
 
 Steps to send a line to Claude. Do these steps when a step on this page says "Send it to Claude":
 1. On your phone, open the Claude chat of 90-161.Z. You see the chat. Go on.
