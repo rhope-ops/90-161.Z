@@ -40,13 +40,15 @@ TARGETS = (
     re.compile(r'\]\(\s*([^\s<][^\s]*?)(?:\s+["\'(][^)]*)?\)(?!\))'),   # [x](target) and [x](target "title")
     re.compile(r'\]\(\s*([^\s<]+)'),                      # [x](target with brackets in it ...
     re.compile(r'<([a-z][a-z0-9+.-]*:[^>\s]+)>', re.I),    # <https://...>
-    re.compile(r'href\s*=\s*["\']([^"\']+)', re.I),          # href="..." or href='...'
-    re.compile(r'(?m)^\s*\[[^\]]+\]:\s*<?(\S+?)>?\s*$'),   # [id]: target
+    re.compile(r'(?:href|src)\s*=\s*["\']([^"\']+)', re.I),   # href="..." or src='...'
+    re.compile(r'(?:href|src)\s*=\s*([^"\'\s>]+)', re.I),      # href=... with no quotes
+    re.compile(r'(?m)^[ \t>*+-]*(?:\d+[.)][ \t]+)?\[[^\]]+\]:\s*<?([^\s>]+)'),   # [id]: target, also with a title or in a quote or list
     re.compile(r'https?://\S+', re.I),                    # a bare URL with a scheme (also an IP host, a port, localhost)
     re.compile(r'(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/\S*', re.I),   # a bare host and path
     re.compile(r'(?:[a-z0-9-]+\.)*[a-z0-9-]+\.github\.io\b', re.I),  # any github.io host
 )
 TRAIL = '.,;:!?*_~)\'">]'   # characters that end a sentence or a format mark, not a URL
+GITHUB_IO = re.compile(r'(?:^|[^a-z0-9-])(?:[a-z0-9-]+\.)*github\.io(?![a-z0-9-])', re.I)   # a github.io host, as a whole name
 
 
 def bad_links(text):
@@ -66,7 +68,7 @@ def bad_links(text):
             raw = m.group(1) if pattern.groups else m.group(0)
             u = urllib.parse.unquote(html.unescape(raw)).strip().rstrip(TRAIL)
             path = re.split(r'[?#]', u, maxsplit=1)[0].rstrip(TRAIL).lower()
-            if 'github.io' in u.lower() or path.endswith('.ps1'):
+            if GITHUB_IO.search(u) or path.endswith('.ps1'):
                 bad.add(raw)
     return sorted(bad)
 
