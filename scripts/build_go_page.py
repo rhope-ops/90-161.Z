@@ -36,6 +36,7 @@ import site_config  # noqa: E402  scripts/site_config.py reads site.config.json 
 
 try:
     from markdown_it import MarkdownIt
+    from markdown_it.token import Token
 except ImportError:  # a clear stop, never a skip: a stale page must not pass
     sys.exit('FAIL markdown-it-py is not installed: run python3 -m pip install -r requirements.txt')
 
@@ -44,8 +45,8 @@ END = '<!-- <<< go:page -->'
 HC = re.compile(r'(<div class="count" id="hc" aria-live="polite">)(.*?)(</div>)', re.S)
 CSP_SRC = re.compile(r'(<meta http-equiv="Content-Security-Policy" content="[^"]*?connect-src )([^\s;"]+)(;)')
 NAME = re.compile(r'^[A-Za-z0-9_.-]+$')  # an owner, repo or branch name: nothing else may enter the CSP or a URL
-# The link rule of the old go.js inl(): an http(s) URL, or a bare raw.githubusercontent.com or *.github.io URL.
-LINK = re.compile(r'(https?://[^\s<]+|(?:raw\.githubusercontent\.com|[a-z0-9-]+\.github\.io)/[^\s<]*)')
+# The link rule of the old go.js inl(): an http(s) URL, or a bare raw.githubusercontent.com or *.github.io URL (a > or ] ends it).
+LINK = re.compile(r'(https?://[^\s<>\]]+|(?:raw\.githubusercontent\.com|[a-z0-9-]+\.github\.io)/[^\s<>\]]*)')
 REL = 'noopener noreferrer'
 
 
@@ -73,15 +74,47 @@ def make_md():
 
 
 MD = make_md()
-# A URL is held out of the Markdown pass as a mark of private-use characters (go.md never has them), then put back as
-# a link, so a _ or * in a URL is never Markdown.
+# A URL is held out of the Markdown pass as a mark of private-use characters (removed from go.md text first), so a _
+# or * in a URL is never Markdown. put_links() then makes each mark in a text token a link token again; a mark
+# anywhere else (a link title or address) becomes the plain URL text. So no URL is ever put back as raw HTML.
 MARK = re.compile('\ue000(\\d+)\ue001')
 
 
-def link_html(u):
-    """The link of a URL found by LINK: the visible text as written, the address with https:// in front if none."""
-    h = u if u.startswith('http') else 'https://' + u
-    return '<a href="%s" rel="%s">%s</a>' % (esc(h), REL, esc(u))
+def put_links(tokens, links):
+    """Turn the marks back into URLs in the inline tokens of one line.
+
+    Args:
+        tokens: the inline tokens from MD.parseInline (changed in place).
+        links: the held-out URLs; a mark holds the index of its URL.
+
+    Returns:
+        None. A mark in a text token outside a link becomes link_open, text and link_close tokens (the address with
+        https:// in front if none); in a text token inside a link, or in any attribute, it becomes the URL text.
+    """
+    def plain(t):
+        """The text with each mark as its URL."""
+        return MARK.sub(lambda m: links[int(m.group(1))], t)
+
+    for line in tokens:
+        out, depth = [], 0
+        for tok in line.children or []:
+            depth += (tok.type == 'link_open') - (tok.type == 'link_close')
+            for key, val in list((tok.attrs or {}).items()):
+                tok.attrSet(key, plain(str(val)))
+            if tok.type != 'text' or depth or not MARK.search(tok.content):
+                tok.content = plain(tok.content)
+                out.append(tok)
+                continue
+            pos = 0
+            for m in MARK.finditer(tok.content):
+                u = links[int(m.group(1))]
+                out.append(Token('text', '', 0, content=tok.content[pos:m.start()]))
+                out.append(Token('link_open', 'a', 1, attrs={'href': u if u.startswith('http') else 'https://' + u}))
+                out.append(Token('text', '', 0, content=u))
+                out.append(Token('link_close', 'a', -1))
+                pos = m.end()
+            out.append(Token('text', '', 0, content=tok.content[pos:]))
+        line.children = out
 
 
 def _plain(part, links):
@@ -99,7 +132,7 @@ def _plain(part, links):
         """Keep the URL (without a trailing * of **bold**) and give its mark; a [text](URL) address stays Markdown."""
         if m.string[max(0, m.start() - 2):m.start()] == '](':
             return m.group(0)
-        u = m.group(0).rstrip('*')
+        u = m.group(0).split('**')[0]
         links.append(u)
         return '\ue000%d\ue001%s' % (len(links) - 1, m.group(0)[len(u):])
     part = LINK.sub(hold, part)
@@ -109,9 +142,11 @@ def _plain(part, links):
 
 def inl(s):
     """The HTML of one go.md text line: escaped text, **bold**, `code`, [text](https://...) and bare links."""
-    links = []
+    links, s = [], s.replace('\ue000', '').replace('\ue001', '')
     text = ''.join(p if p.startswith('`') else _plain(p, links) for p in re.split(r'(`[^`]+`)', s))
-    return MARK.sub(lambda m: link_html(links[int(m.group(1))]), MD.renderInline(text))
+    tokens = MD.parseInline(text)
+    put_links(tokens, links)
+    return MD.renderer.render(tokens, MD.options, {})
 
 
 def slug(s, i):
@@ -384,6 +419,35 @@ def build(page, md, urls):
     return CSP_SRC.sub(lambda m: m.group(1) + urls['raw'] + m.group(3), page)
 
 
+def inline_cases(check):
+    """The self-test cases of one text line: links, link safety, images, escapes and **bold**.
+
+    Args:
+        check: the self-test function check(name, ok), which notes a failed case.
+    """
+    check('file names are not links', '<a' not in inl('See go.md, TASKS.md and check.sh.'))
+    check('a _ or * in a URL stays in the link', all(x in inl(t) for t, x in (
+        ('raw.githubusercontent.com/o/r/main/scripts/build_go_page.py is it', 'href="https://raw.githubusercontent.com/o/r/main/scripts/build_go_page.py"'),
+        ('See https://e.x/a*b*c', 'href="https://e.x/a*b*c"'), ('see https://e.x/a_b.', 'href="https://e.x/a_b."'))))
+    check('[text](https://...) is a link; **URL** is bold', inl('[t](https://e.x/a_b) **https://e.x/y**') ==
+          '<a href="https://e.x/a_b" rel="%s">t</a> <strong><a href="https://e.x/y" rel="%s">https://e.x/y</a></strong>'
+          % (REL, REL))
+    bad = inl('![p](data:image/png;base64,AA) [a](//evil.example/p) [b](mailto:x@y.z) [c](go.md) [d](javascript:x) '
+              '<mailto:x@y.z> <https://ok.example/>')
+    t2 = inl('[t](#a "https://e.x/a/onmouseover=alert(1)// ") x\ue000' + '0\ue001 `\ue0000\ue001`')
+    check('a URL in a link title stays text; mark signs are removed', t2.count('<a ') == 1 and 'onmouseover="' not in t2
+          and '\ue000' not in t2 and re.findall(r' (\w+)=', t2) == ['href', 'title', 'rel'])
+    check('[text with URL](URL) and **URL**, make one link each', inl('[see https://a.b/c](https://c.d/)').count('<a ') == 1
+          and 'href="https://e.x/y"' in inl('**https://e.x/y**,'))
+    check('no image; links keep http(s) only', '<img' not in bad and re.findall(r'<a href="([^"]*)"', bad) == ['https://ok.example/'])
+    check('a backslash stays', 'Rounds\\&lt;round&gt;' in inl('Rounds\\<round>'))
+    check('a single * or _ is no italic, also in code', inl('2*3*4 a_b_c _x_ `a_b\\c`') ==
+          '2*3*4 a_b_c _x_ <code>a_b\\c</code>')
+    check('bold, code and a bare raw link', inl('**b** `c` raw.githubusercontent.com/o/r/x') ==
+          '<strong>b</strong> <code>c</code> <a href="https://raw.githubusercontent.com/o/r/x" rel="%s">'
+          'raw.githubusercontent.com/o/r/x</a>' % REL)
+
+
 def self_test():
     """Invented go.md text only. Prints GO BUILD TEST PASS, or each failed case and exits 1."""
     u = {'raw': 'https://raw.githubusercontent.com/o/r/main/'}
@@ -412,22 +476,7 @@ def self_test():
     r, _ = main_html(rnd, u)
     check('a round script gets Open as .txt and Copy script, no .ps1 link', 'data-txt=' in r and 'data-script=' in r
           and not re.search(r'<a href="[^"]*\.ps1"', r))
-    check('file names are not links', '<a' not in inl('See go.md, TASKS.md and check.sh.'))
-    check('a _ or * in a URL stays in the link', all(x in inl(t) for t, x in (
-        ('raw.githubusercontent.com/o/r/main/scripts/build_go_page.py is it', 'href="https://raw.githubusercontent.com/o/r/main/scripts/build_go_page.py"'),
-        ('See https://e.x/a*b*c', 'href="https://e.x/a*b*c"'), ('see https://e.x/a_b.', 'href="https://e.x/a_b."'))))
-    check('[text](https://...) is a link; **URL** is bold', inl('[t](https://e.x/a_b) **https://e.x/y**') ==
-          '<a href="https://e.x/a_b" rel="%s">t</a> <strong><a href="https://e.x/y" rel="%s">https://e.x/y</a></strong>'
-          % (REL, REL))
-    bad = inl('![p](data:image/png;base64,AA) [a](//evil.example/p) [b](mailto:x@y.z) [c](go.md) [d](javascript:x) '
-              '<mailto:x@y.z> <https://ok.example/>')
-    check('no image; links keep http(s) only', '<img' not in bad and bad.count('<a ') == 1 and 'https://ok.example/' in bad)
-    check('a backslash stays', 'Rounds\\&lt;round&gt;' in inl('Rounds\\<round>'))
-    check('a single * or _ is no italic, also in code', inl('2*3*4 a_b_c _x_ `a_b\\c`') ==
-          '2*3*4 a_b_c _x_ <code>a_b\\c</code>')
-    check('bold, code and a bare raw link', inl('**b** `c` raw.githubusercontent.com/o/r/x') ==
-          '<strong>b</strong> <code>c</code> <a href="https://raw.githubusercontent.com/o/r/x" rel="%s">'
-          'raw.githubusercontent.com/o/r/x</a>' % REL)
+    inline_cases(check)
     page = ('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; connect-src https://old/;"><div class="count" id="hc" '
             'aria-live="polite"></div><main>%s\n%s</main>' % (BEGIN, END))
     out = build(page, grouped, u)
