@@ -1,6 +1,6 @@
 ---
 name: deliver
-description: Use to commit, push, merge, publish or republish; when a push, merge or stop check is blocked; before a turn ends with work not on origin; and before you report repo work as done.
+description: Use to commit, push, merge, publish or republish; when a push, merge or stop check is blocked; before a turn ends with work not on origin; and before you report repo work done.
 ---
 
 # Deliver a change

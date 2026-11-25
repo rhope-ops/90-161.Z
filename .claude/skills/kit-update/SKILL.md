@@ -1,6 +1,6 @@
 ---
 name: kit-update
-description: Use when a project takes a kit release or has a kit-update pull request, when drift.py or the kit lock shows a difference, to change a kit file or rule from a project, and for a first sync.
+description: Use when a project takes a kit release or kit-update pull request, when drift.py or the kit lock differs, to change a kit file or rule from a project, and for a first sync.
 ---
 
 # Take a kit update

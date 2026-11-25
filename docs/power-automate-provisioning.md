@@ -25,7 +25,7 @@ Columns, views and their DAFMAN references: `schemas/lists/*.json` (one file per
 
 ## 2. How the lists are made (task T20)
 
-The script is `scripts/gov/90161Z-T20-provision-lists-r4.ps1`. You run it through RADE, in a round (go.md, "How a paste task (round) works"). It signs in to the site with PnP.PowerShell and builds the lists from `flow/provisioning-payload.json`. That file is generated from `schemas/lists/*.json`. The script header gives its modes and what it changes on the site. In short, a run on a clean site does this:
+The script is `scripts/gov/90161Z-T20-provision-lists-r4.ps1`. You run it through RADE, in a round (the README, "Open the script"). It signs in to the site with PnP.PowerShell and builds the lists from `flow/provisioning-payload.json`. That file is generated from `schemas/lists/*.json`. The script header gives its modes and what it changes on the site. In short, a run on a clean site does this:
 1. Creates the 12 lists under their URL names, with versioning on.
 2. Adds the columns (199) and views (18).
 3. Adds the 88 starting rows to PFM Offices, PFM Series, PFM Process Steps and PFM Settings.

@@ -21,7 +21,7 @@ import check_instructions as ci
 GOOD = """# Restore the backup
 
 1. In the window **Backup**, click **Restore**. You see the card **Restore code**. Write down the code on the card.
-2. In the window **Restore**, type the code from the card **Restore code**. You see the code in the box. Go on.
+2. In the window **Restore**, type the code from the card **Restore code**. You see the code in the box.
 3. Press **Enter**. You see **Restoring**.
    Wait until the card **Restore done** shows. Do not close the window.
 4. Close the window **Backup**. The window closes. The task is complete.
@@ -52,6 +52,15 @@ def kinds(text, path="go.md"):
     return [line.split(": ", 2)[1].split(":")[0] for line in findings(text, path)]
 
 
+STEP_CASES = [  # (step text, findings): "Go on." filler, texts that are no filler, and a 4-action list
+    ("Click **Restore**. Go on.", ["filler"]), ("Click **Restore**. Continue.", ["filler"]), ("Click **A**, click **B**, click **C** and click **D**.", ["actions"]),
+    ("Click **A**. Then go on.", ["filler"]), ("Click **A**, then go on.", ["filler"]), ("Click **A**; go on.", ["filler"]), ("Press **Enter** to continue.", []), ("Do not go on.", []),
+    ("Click **A**. Now go on.", ["filler"]), ("Click **Restore**.", []), ("Click **A**. Do not go on until **Done** shows.", []),
+    ("If you see **Done**: continue.", []), ("Go on with step 2.", ["pointer"]), ("If you see **Error**, continue.", []), ("Otherwise, continue.", []),
+    ("When the window opens, go on.", []), ("Click **A** and go on.", ["filler"]), ("Click **A** then go on.", ["filler"]),
+]
+
+
 def step(body):
     """A two-step procedure whose first step is `body` and whose second step is clean."""
     return f"1. {body}\n2. Click **Close**. The window closes. The task is complete.\n"
@@ -61,56 +70,58 @@ def case_steps():
     """Each finding kind, a clean procedure, a list of facts and a lead-in with numbered actions."""
     assert findings(GOOD) == [], findings(GOOD)
     assert findings(FACTS) == [], "a numbered list of facts is not a procedure"
-    assert kinds(step("Click **Open**, then type `abc`. You see the form. Go on.")) == ["actions"]
-    assert kinds(step("Click **Open** and close the window. You see the form. Go on.")) == ["actions"]
-    assert kinds(step("Click **Save** as described above. You see the form. Go on.")) == ["pointer"]
-    assert kinds(step("Do the actions in step 3. You see the form. Go on.")) == ["pointer"]
-    assert kinds(step("Open [the guide](docs/guide.md). You see the guide. Go on.")) == ["pointer"]
-    assert kinds(step("Open [the page](https://example.com/a). You see the page. Go on.")) == []
-    assert kinds(step("Select the appropriate file. You see the form. Go on.")) == ["vague"]
+    assert kinds(step("Click **Open**, then type `abc`. You see the form.")) == [], "up to 3 actions on one screen"
+    assert kinds(step("Click **Open** and type `a`, then click **Save** and close the window.")) == ["actions"]
+    assert kinds(step("Click **Save** as described above. You see the form.")) == ["pointer"]
+    assert kinds(step("Do the actions in step 3. You see the form.")) == ["pointer"]
+    assert kinds(step("Open [the guide](docs/guide.md). You see the guide.")) == ["pointer"]
+    assert kinds(step("Open [the page](https://example.com/a). You see the page.")) == []
+    assert kinds(step("Select the appropriate file. You see the form.")) == ["vague"]
     assert kinds(step("Click **Restore**. You see the card. Wait a few minutes.")) == ["vague", "wait"]
     assert kinds(step("Click **Restore**. Wait until the card **Done** shows.")) == []
-    assert kinds(step("Click **Restore**. Go on.")) == ["next"]
-    assert kinds(step("Click **Restore**. You see the card **Done**.")) == ["cue"]
+    for text, want in STEP_CASES:
+        assert kinds(step(text)) == want, (text, findings(step(text)))
     long_sentence = "Click **Open** in the window that is on the left side of the screen near the top of the list of all the files."
-    assert kinds(step(long_sentence + " You see it. Go on.")) == ["long"]
+    assert kinds(step(long_sentence + " You see it.")) == ["long"]
     lead = "1. On the screen **Sign in**, do these actions:\n   1. Type `name` in **User**.\n   2. Type `pass` in **Key**.\n" \
-           "   You see the button **Sign in** turn blue. Go on.\n2. Click **Sign in**. You see the start page. The task is complete.\n"
+           "   You see the button **Sign in** turn blue.\n2. Click **Sign in**. You see the start page. The task is complete.\n"
     assert findings(lead) == [], findings(lead)
-    assert kinds("1. Click **A** and click **B**. You see C. Go on.\n2. Click **D**. You see E. Go on.\n") == ["actions"]
+    assert kinds("1. Click **A** and click **B**, then click **C** and click **F**.\n2. Click **D**.\n") == ["actions"]
     for seen in ("the table **Totals**", "the list of files", "the guide **Start**", "the **Backup** section",
                  "the section **Backup**", "the other steps in the panel"):
-        assert kinds(step(f"Click **Report**. You see {seen}. Go on.")) == [], seen
-    assert kinds(step("Click **Report**. You see 5 minutes in May. Go on.")) == []
+        assert kinds(step(f"Click **Report**. You see {seen}.")) == [], seen
+    assert kinds(step("Click **Report**. You see 5 minutes in May.")) == []
     for told in ("See page 4.", "See the file **notes.txt**.", "Read the section **Install**.",
                  "Follow the **Install** section of the README.", "Do the earlier list again.", "See the next step.",
                  "See the next page.", "Do the next step again.", "Skip the following steps.", "Repeat that step.",
                  "Do the other steps again.", "See chapter 2.", "Click **A**, and see step 3."):
-        assert kinds(step(told + " You see the form. Go on.")) == ["pointer"], told
+        assert kinds(step(told + " You see the form.")) == ["pointer"], told
     for run in ("Let it run for 10 minutes.", "Let it run for ten minutes.", "Let it run for 2 mins."):
-        assert kinds(step(run + " You see **Done**. Go on.")) == ["wait"], run
-    assert kinds(step("Click **Go**. You see the timer count for 10 minutes. Go on.")) == []
-    assert kinds(step("Click **Go**. You see the form, and see step 3. Go on.")) == ["pointer"]
-    assert kinds(step("Click **Go**. You see the form then see step 3. Go on.")) == ["pointer"]
-    assert kinds(step("Click **Go**. You see the spinner and wait for 10 minutes. Go on.")) == ["wait"]
-    assert kinds(step("Click **Go**. You see the page and it restarts. Go on.")) == ["wait"]
+        assert kinds(step(run + " You see **Done**.")) == ["wait"], run
+    assert kinds(step("Click **Go**. You see the timer count for 10 minutes.")) == []
+    assert kinds(step("Click **Go**. You see the form, and see step 3.")) == ["pointer"]
+    assert kinds(step("Click **Go**. You see the form then see step 3.")) == ["pointer"]
+    assert kinds(step("Click **Go**. You see the spinner and wait for 10 minutes.")) == ["wait"]
+    assert kinds(step("Click **Go**. You see the page and it restarts.")) == ["wait"]
     for plain_ui in ("Click **A** for a second time.", "Click **A** in this list.", "Click **A** in that list.",
                      "Type the chapter name.", "Open the chapters list."):
-        assert kinds(step(plain_ui + " You see the form. Go on.")) == [], plain_ui
+        assert kinds(step(plain_ui + " You see the form.")) == [], plain_ui
     bad_lead = "1. Open the app and click **Settings**, then do these actions:\n   1. Type `a` in **A**.\n" \
-               "   2. Type `b` in **B**.\n   You see **Saved**. Go on.\n2. Click **D**. You see E. Go on.\n"
+               "   2. Type `b` in **B**.\n   You see **Saved**.\n2. Click **D**. You see E.\n"
     assert kinds(bad_lead) == ["actions"], findings(bad_lead)
+    assert kinds("1. On **A**, do these actions:\n   1. Type `a`. Go on.\n2. Click **D**.\n") == ["filler"]
+    assert kinds("1. On **A**, do these actions:\n   1. Type `a`.\n   2. Type `b`.\n   3. Type `c`.\n   4. Type `d`.\n2. Click **D**.\n") == ["actions"]
     tabbed = lead.replace("   1.", "\t1.").replace("   2.", "\t2.").replace("   You", "\tYou")
     assert findings(tabbed) == [], findings(tabbed)
 
 
 def case_html_and_globs():
     """The HTML parser (code and bold are one word, a local link is a pointer) and the glob form."""
-    page = ("<ol><li>Click <b>Restore</b>. You see the card <code>Restore code</code>. Go on.</li>"
-            "<li>Read <a href='other.html'>the notes</a>. You see the notes. Go on.</li></ol>")
+    page = ("<ol><li>Click <b>Restore</b>. You see the card <code>Restore code</code>.</li>"
+            "<li>Read <a href='other.html'>the notes</a>. You see the notes.</li></ol>")
     assert kinds(page, "page.html") == ["pointer"], findings(page, "page.html")
-    mixed = ("<ol><li>Click <b>A</b> and click <b>B</b>. You see C. Go on.<ul><li>a note</li></ul>"
-             "<li>Click <b>D</b>. You see E. Go on.</ol>")
+    mixed = ("<ol><li>Click <b>A</b> and click <b>B</b>, then click <b>F</b> and click <b>G</b>. You see C.<ul><li>a note</li></ul>"
+             "<li>Click <b>D</b>. You see E.</ol>")
     assert kinds(mixed, "page.html") == ["actions"], "a <ul> is no lead-in, and an <li> with no end tag ends at the next"
     rx = ci.glob_regex
     assert rx("docs/**/*.md").match("docs/a/b/go.md") and rx("docs/**/*.md").match("docs/go.md")
@@ -129,7 +140,7 @@ def case_local(root):
     mod.write_text("VAGUE = [r'\\bsoonish\\b']\nLIMITS = {'sentence_words': 5, 'step_words': 500}\n")
     rules = ci.load_rules(ci.load_local(root))
     assert rules["sentence_words"] == 5 and rules["step_words"] == ci.STEP_WORDS, "a project can only lower a limit"
-    text = step("Click **Open** soonish. You see the form. Go on.")
+    text = step("Click **Open** soonish. You see the form.")
     got = [line.split(": ", 2)[1].split(":")[0] for line in ci.check_file("go.md", text, rules)]
     assert got == ["vague"], got
     mod.write_text("LIMITS = {'words': 5}\n")

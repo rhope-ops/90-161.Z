@@ -10,7 +10,7 @@ A step FAILS when it:
 1. POINTS ELSEWHERE: it sends the reader to another file, section or step for its content
    ("step 10", "block 1", "items 4 to 6", the part "X", "as the window lists", "in the file", "see ...",
    "the previous step", "described in the file", "do the same", "repeat ...").
-2. HOLDS 2 ACTIONS: more than one thing to do.
+2. HOLDS 4 ACTIONS: more than MAX_ACTIONS (3) things to do on one screen.
 3. IS LONG: more than 200 characters.
 
 How actions are counted (kept simple on purpose):
@@ -21,8 +21,8 @@ How actions are counted (kept simple on purpose):
   such as "the", "to", "not" or "must", or at the end of a sentence, is not an action.
 - A "then" with no verb after it is one more action (select Open, then Next = 2); "then wait", "then keep",
   "then remember" and a "then" at the end add none. A verb right after "then" counts, capitalized or not.
-- A sentence with "if" is a fallback: it may hold 1 action of its own (If one reads Off, turn
-  it on). The other sentences of the step may hold 1 action together.
+- A sentence with "if" is a fallback (If one reads Off, turn it on). The fallback with the most actions and the
+  other sentences of the step may hold up to 3 actions together.
 - A line with no number (the "If it fails" line of a guide) is tested for 1 and 3 only.
 
 Limits (a pass here is not proof that a step is clear; the fresh-reader check in the rule does that):
@@ -57,6 +57,7 @@ ROOT = Path(__file__).resolve().parent.parent
 BUNDLES = ROOT / 'scripts/paste_bundles.json'
 GO = ROOT / 'go.md'
 MAX_LEN = 200
+MAX_ACTIONS = 3   # actions in one step, on one screen (AGENTS.md "Instructions people follow", kit 12.0.0)
 
 VERBS = ('select', 'press', 'type', 'paste', 'open', 'click', 'right-click', 'double-click', 'drag', 'tick', 'untick',
          'choose', 'copy', 'cut', 'delete', 'remove', 'close', 'save', 'sign', 'draw', 'add', 'attach', 'return', 'go',
@@ -120,8 +121,8 @@ def check_step(text):
                 cond_max = max(cond_max, n)
             else:
                 plain += n
-        if plain > 1 or cond_max > 1:
-            out.append('holds %d actions' % max(plain, cond_max))
+        if plain + cond_max > MAX_ACTIONS:   # the main part and the fallback together
+            out.append('holds %d actions' % (plain + cond_max))
     if len(text) > MAX_LEN:
         out.append('is %d characters (limit %d)' % (len(text), MAX_LEN))
     return out
@@ -239,6 +240,13 @@ GOOD_STEPS = [
     '19. Select the item shown in the list.',
     '20. Select Save, then.',
     '21. Look at the new tab: the draft should open in the browser.',
+    '4. Select Save then close.',
+    '5. Select Save, then Select Open.',
+    '6. Select Import solution, then Browse.',
+    '7. Press Ctrl+V, select Open, then Next.',
+    '8. Select Save. Select Publish.',
+    '9. Return to RADE and select "Done: imported".',
+    '10. If it is offered: select it, open its Prompt list and look at the names.',
 ]
 
 # (step, text its failure must contain) pairs that must fail check_step (the self-test).
@@ -252,17 +260,14 @@ BAD_STEPS = [
     ('1. Paste the text from the previous step.', 'points'),
     ('2. Run the script described in the README.', 'points'),
     ('3. Do the same for the second app.', 'points'),
-    ('4. Select Save then close.', 'holds 2'),
-    ('5. Select Save, then Select Open.', 'holds 2'),
+    ('4. Select Save, then select Open. Press Ctrl+V. Select Next.', 'holds 4'),
     ('6. Select Save. Repeat for the other files.', 'points'),
     ('7. Select the value shown in the file.', 'points'),
     ('8. Select Save and repeat for the other files.', 'points'),
     ('9. Select the code listed in Appendix B.', 'points'),
-    ('6. Select Import solution, then Browse.', 'holds 2'),
-    ('7. Press Ctrl+V, select Open, then Next.', 'holds 3'),
-    ('8. Select Save. Select Publish.', 'holds 2'),
-    ('9. Return to RADE and select "Done: imported".', 'holds 2'),
-    ('10. If it is offered: select it, open its Prompt list and look at the names.', 'holds 3'),
+    ('10. If it is offered: select it, open its Prompt list, select Save and look at the names.', 'holds 4'),
+    ('11. Click File, then New, then Save. If it fails, click Back.', 'holds 4'),
+    ('12. Select Save, then Open, then Close, then Next.', 'holds 4'),
     ('11. Select the field. ' + 'The field is the one with the long name. ' * 5, 'characters'),
 ]
 

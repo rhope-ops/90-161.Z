@@ -1,6 +1,6 @@
 ---
 name: worker
-description: Sonnet worker: one task with a clear brief on its own branch, with checks and a report. No design, merges, artifacts or deploys.
+description: Sonnet worker: one task with a clear brief on its own branch, with checks and a report. No design, merges or deploys.
 model: sonnet
 tools: Read, Edit, Write, Bash, Grep, Glob
 hooks:

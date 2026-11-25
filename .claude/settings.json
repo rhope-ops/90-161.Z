@@ -49,6 +49,13 @@
       "Bash(git switch -f*)",
       "Bash(git *--discard-changes*)",
       "Bash(git *branch --delete --force*)",
+      "Bash(git tag*)",
+      "Bash(git *push*--follow-t*)",
+      "Bash(git *push*--mirror*)",
+      "Bash(git -* tag *)",
+      "Bash(git *update-ref*refs/tags/*)",
+      "Bash(git *push*--tags*)",
+      "Bash(git *push*refs/tags/*)",
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./**/*.pem)",
@@ -102,7 +109,7 @@
         ]
       },
       {
-        "matcher": "startup",
+        "matcher": "startup|resume",
         "hooks": [
           {
             "type": "command",
