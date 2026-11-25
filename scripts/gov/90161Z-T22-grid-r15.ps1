@@ -163,6 +163,7 @@ $wn.GridCols = {
   return $kinds }
 # R15: the width of a vertical scroll bar ($wn.BarW) and of the bar grid $G shows now, else 0 ($wn.BarShown), in px.
 $wn.BarW = { return [int][Windows.Forms.SystemInformation]::VerticalScrollBarWidth }
+# R15: the width of the vertical scroll bar that grid $G shows now (0 when none shows); $wn.FitGrid and $wn.EdgeCheck use it.
 $wn.BarShown = { param($G) $v = @($G.Controls | Where-Object { $_ -is [Windows.Forms.VScrollBar] -and $_.Visible }); if ($v.Count) { return [int]$v[0].Width }; return 0 }
 # R11 (R38; ps51 W7 at 96 dpi): the room a grid of width $Avail has above all its column heads (the pub column counts
 # $PubOwn when $PubMin is above 0). $wn.GridCols keeps a status chip whole only while that room holds the chip's extra
