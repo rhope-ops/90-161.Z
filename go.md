@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for my work computer
 
-Updated: 24 Nov 26 (R42 is ready).
+Updated: 25 Nov 26 (R42 results; R43 is being built).
 github.com/rhope-ops/90-161.Z
 
 Every task below has the same parts: **For** (why), **Time** (an estimate), **Changes** (what it writes or changes, before I start), **Steps**, **Report** (what to send back) and **If it fails**.
@@ -85,59 +85,12 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R42 r2: my window r15, an endorser answer, a small sign-in window and Restore
-
-**For:** the round after R41. It tests the R41 fixes: my 90-161.Z window r15 (room for the scroll bar; the screens Waves and Step 13 open), the answer of a second person, a small CAC sign-in window for Back up and Restore, and RADE Restore of fake rows with their old row numbers. The window **RADE** lists 2 rows: **90-161.Z R42** (the round) and **90-161.Z 0.1.0** (the test install, with its **Maintenance** tools).
-**Time:** about 40 minutes, with about 5 minutes of a second person from my office (an estimate).
-**Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T21, T22 and T26, 17 pictures of the window screens, and one backup of the 12 test site lists). The old files of T21 r11, T22 r14 and T26 r1 go to the Recycle Bin. The Repair saves a new copy of RADE for the RADE shortcut. On the test site: a test list and library, the second person in the Visitors group, one fake publication and fake endorsement rows. The last steps of the round move them to the site Recycle Bin. Before Run, **Record (F2)** lists every file.
-**Steps:**
-1. Ask one person of your office to help in this task (about 5 minutes, an estimate). You see that the person agrees. Write down the e-mail address of that person.
-2. Do "Steps to start a round" on this page with the round name **R42**. Wait until you see the window **RADE**.
-3. In the window **RADE**, click the row **90-161.Z 0.1.0**. Wait until you see the card **Maintenance** with the button **Maintenance**.
-4. Click the button **Maintenance**. Wait until you see the rows **Diagnose**, **Back up**, **Restore** and the button **Repair**.
-5. Click **Repair**. You see **Checking this computer and your access.** Wait until a new card shows (up to 2 minutes, an estimate).
-6. If the card **One check needs you.** shows, click the button on the card. Do what the card says. Wait until a new card shows.
-7. If the card **One check failed.** shows, do "Send a line to Claude" on this page with the first 10 words under it. The steps of this task stop here.
-8. If the card **Ready to install 90-161.Z 0.1.0.** shows, click **Install**. You see **Installing 90-161.Z.** Wait until an end card shows (up to 5 minutes, an estimate).
-9. If the card **The install is not complete.** or **The install stopped.** shows, do "Send a line to Claude" on this page with the first 10 words under it. The steps of this task stop here.
-10. If the card **The run passed, but version 0.1.0 is not recorded as installed.** shows, do "Send a line to Claude" on this page with `Repair not recorded`. The steps of this task stop here.
-11. If the card **90-161.Z 0.1.0 is installed.** shows, click **Close**. Wait until you see ISE with the script in the white pane.
-12. In ISE, press `F5`. You see the window **RADE** again. Wait until the row **90-161.Z R42** shows (up to 2 minutes, an estimate).
-13. In the window **RADE**, click the row **90-161.Z R42**. You see **Checking this computer and your access.** Wait until a new card shows (up to 2 minutes, an estimate).
-14. If the card **One check needs you.** shows, click the button on the card. Do what the card says. Wait until a new card shows.
-15. If the card **One check failed.** or **Your OneDrive folder was not found.** shows, do "Send a line to Claude" on this page with the first 10 words of the card. The steps of this task stop here.
-16. If the card **Ready to run round R42.** shows **Run** or **Resume at step**, click it. Wait until you see a progress bar. The next 21 steps come in any order, often more than one time.
-17. If a RADE card asks for the size of the CAC sign-in window, write down `Small` or `Large`. You see the size on paper. Go on.
-18. If a CAC sign-in window opens (each time), sign in with your CAC. Wait until the sign-in window closes.
-19. If the small window **90-161.Z test T4** asks for an address, type the address of the second person that you wrote down. You see the address in the box. Go on.
-20. If the address is in the box of the small window **90-161.Z test T4**, click **OK**. The small window closes. Go on.
-21. If a card in the window **RADE** shows numbered lines (each time), do the lines on the card. You see the button **Done**. Go on.
-22. If the lines on the card are complete, click **Done**. You see the next card. Go on.
-23. If the second person cannot help today, click **Skip** on the card **Ask the second person to answer the endorsement**. You see the next card. Go on.
-24. If a card in the window **RADE** shows a question with buttons or rows (each time), click your answer. You see the next card. Go on.
-25. If a card in the window **RADE** shows a box (each time, also **Last question**), type one line with no names. Go on.
-26. If the line is in the box, click **Continue**. You see the next card. Go on.
-27. If the card **What did the error say?** shows, type the error message in the box. Go on.
-28. If the error message is in the box, click **Report the failure** or **Continue**. You see the next card. Go on.
-29. If the window **Publications and Forms Management** opens, find its bottom bar. You see a line that starts with **Check 1 of**. Go on.
-30. If the bottom bar shows a line (each time), do what the line says. You see the result in the window. Go on.
-31. If the result is what the line says, click **Pass** in the bottom bar, else **Fail**. You see the next line. Go on.
-32. If the bottom bar shows **Screen 10 of 17**, write down `Yes` if the grid **Wave 1 answers** shows the second person, else `No`. Go on.
-33. If the bottom bar shows "All checks done. Close this window with its X.", click the X of the window. You see the window **RADE**. Go on.
-34. If a card asks about **Screen 10 of 17** and **Wave 1 answers**, click the answer that you wrote down: **Yes** or **No**. You see the next card. Go on.
-35. If the card "Insert your CAC, then select Resume." shows, put your CAC in the reader. Go on.
-36. If your CAC is in the reader, click **Resume** on that card. You see the progress bar again. Go on.
-37. If the card **The round stopped.** shows, do "Send a line to Claude" on this page with the first 10 words under it. The steps of this task stop here.
-38. If an end card shows, wait until an Outlook draft or the results folder opens (up to 2 minutes). The end card is **Round R42 is done.** or **The round needs review.**
-39. If the Outlook draft shows and its **To** line is empty, type your own e-mail address in **To**. You see the address in **To**. Go on.
-40. If the Outlook draft shows, click **Send** in the draft. The draft closes. Go on.
-41. If the results folder shows and no draft, do "Send the results by hand" on this page. You see the e-mail close. Go on.
-42. Do "Send a line to Claude" on this page with the line `R42 sent`. You see your line in the chat. The task is complete.
-
-**Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder.
-**If it fails:** on the card in the window **RADE**, do the line that starts with **What to do**. If the button **Repair** does not show after you click **Maintenance**, write down the text of each button on the card. Send it to Claude with the steps "Send a line to Claude" on this page. If the second person cannot help today, click **Skip** on that card. The round goes on and removes the test rows at the end.
+R43 is being built. This page shows it when it is ready.
 
 ## Done
+
+- Round R42 r2 (25 Nov 26): needs review. Checks 12 of 12, Window OK, 12 of 21 steps passed. Passed: the probe list, the second person and the answer row by that person, the waves grid and screens 10 and 11, and the clean-up. Needs work: Back up and Restore did not run (the install steps were not clear), the home and queue grids, and 3 screens.
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-25-r42-results.md
 
 - Round R41 r1 (21 Nov 26): needs review. Checks 12 of 12, Window OK, 19 of 24 steps passed. Passed: the probe list, the second person, Back up and Restore of 4 fake rows in a second RADE window, the pause row back at No, and the clean-up. Needs work: the Recycle Bin rows got new row numbers, the window grids and 2 screens, and the answer buttons. The endorser answer was skipped.
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-21-r41-results.md
