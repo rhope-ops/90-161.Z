@@ -250,11 +250,12 @@ function Invoke-AccessPart($Made) {
   $removed = 0
   if ($wantGroup) { $removed += Invoke-OwnAccessRemoval 'a1-group' $OwnGroup { Get-GroupId $OwnGroup } { Remove-PnPGroup -Identity $OwnGroup -Force -ErrorAction Stop } }
   if ($wantLevel) {
-    $findLevel = { $v = Get-RoleLevel $OwnLevel 0; if ($v) { [int]$v.Id } else { 0 } }
-    $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel $findLevel { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop }
+    $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel { Get-OwnLevelId } { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop }
   }
   Add-UninstallResult $removed
 }
+# The number of the permission level PFM Office Edit All Items on the site, or 0 when it is not there.
+function Get-OwnLevelId { $v = Get-RoleLevel $OwnLevel 0; if ($v) { return [int]$v.Id }; return 0 }
 <#
 .SYNOPSIS
   Removes one named thing of the site (the group or the level) when it is there, and reads it back.

@@ -36,8 +36,12 @@ $payload = Get-Content -LiteralPath (Join-Path $Root 'flow/provisioning-payload.
 $internal = @($payload.listOrder | ForEach-Object { [string]$_ })
 $display = @{}
 foreach ($u in $payload.updates) { if ([string]$u.uri -match "getbytitle\('([^']+)'\)$") { $display[$Matches[1]] = [string]$u.body.Title } }
-# Reset the fake site: the 12 lists of 90-161.Z, one list of a person, the group, the level, 13 process steps and no calls.
-# Takes nothing; returns nothing.
+<#
+.SYNOPSIS
+  Reset the fake site: the 12 lists of 90-161.Z, one list of a person, the group, the level, 13 process steps and no calls.
+.OUTPUTS
+  None. It sets the global fake site $global:S.
+#>
 function New-Site {
   $global:S = @{ Lists = (New-Object System.Collections.ArrayList); Groups = @('Site Owners', 'PFM Office'); Levels = @('Edit', 'PFM Office Edit All Items')
     Calls = (New-Object System.Collections.ArrayList); Connects = 0; Next = 100; Rows = @{ 'PFM Process Steps' = (New-Object System.Collections.ArrayList)
