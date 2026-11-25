@@ -27,7 +27,7 @@ const root = path.join(__dirname, '..');
 const page = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const js = fs.readFileSync(path.join(root, 'go.js'), 'utf8');
 check('the .txt name replaces .ps1', t.txtName('https://x/y/90161Z-R01-test.ps1') === '90161Z-R01-test.txt');
-check('index.html loads go.js and has no inline script', /<script src="go\.js"><\/script>/.test(page) && !/<script>/.test(page));
+check('index.html loads go.js and no other script (any letter case)', /<script src="go\.js"><\/script>/.test(page) && (page.match(/<script\b/gi) || []).length === 1);
 check('go.js sets no innerHTML and makes no HTML from text', !/innerHTML|insertAdjacentHTML|DOMParser|document\.write/.test(js));
 check('go.js fetches only the round scripts (one fetch call)', (js.match(/\bfetch\(/g) || []).length === 1 && /fetch\(h,/.test(js));
 check('the page has the built cards', /<!-- >>> go:page: [^>]*-->\n<p class="mut">Built from go\.md\./.test(page) && /<details class="sec/.test(page));
