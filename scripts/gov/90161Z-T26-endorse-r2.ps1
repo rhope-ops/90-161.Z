@@ -282,7 +282,7 @@ function Invoke-MakePart {
   else {
     $step = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'Title', 'StepNumber' -ErrorAction Stop | Where-Object { [int]$_['StepNumber'] -eq 1 })
     if (-not $step.Count) { throw 'STEP not found: PFM Process Steps has no row with step number 1 (run T20 first).' }
-    # The OPR is a lookup to PFM Offices: the first seeded office row (lowest row number) is used; no row is made there (PFM 25 Nov 26).
+    # The OPR is a lookup to PFM Offices: the first seeded office row (lowest row number) is used; no row is made there (the worker's pick for the PFM's fake-value decision of 25 Nov 26; it is a seed row, with no fake-data marker).
     $office = @(Get-PnPListItem -List 'PFM Offices' -Fields 'Title' -PageSize 500 -ErrorAction Stop | Sort-Object { $_.Id })
     if (-not $office.Count) { throw 'OFFICE not found: PFM Offices has no row (run T20 first).' }
     Write-Host 'NOW Making the fake publication'

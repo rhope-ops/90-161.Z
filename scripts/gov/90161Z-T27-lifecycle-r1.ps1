@@ -4,11 +4,11 @@
   (a move from step 1 to step 2; see the module check); test site only): the Uninstall steps of the app 90-161.Z, and the read-only checks and the process step that follow
   them. Windows PowerShell 5.1 (also 7), the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v40: a Back up first, then these steps). The lists, the group and
-  the level are removed BY THEIR FIXED NAMES (the PFM, 25 Nov 26: the 12 lists of the test site were made before RADE installs, so RADE
-  has no record of them): the own-name table of the module 90161Z-T27-made-r1.ps1, whether or not RADE_MADE names them. The group and the
-  level are different (the PFM, 25 Nov 26): a group cannot go to a Recycle Bin, so its removal cannot be undone; they go only when
-  RADE_MADE names them. Never a list, group or level whose name is not in that table. The other gates stay: RADE_MODE=uninstall, a made list (RADE_MADE) of schema
+  Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v40: a Back up first, then these steps). The lists are removed
+  BY THEIR FIXED TITLES (the PFM, 25 Nov 26: the 12 lists of the test site were made before RADE installs, so RADE has no record of them):
+  the own-name table of the module 90161Z-T27-made-r1.ps1, whether or not RADE_MADE names them. The group and the level are different
+  (the PFM, 25 Nov 26): a group cannot go to a Recycle Bin, so its removal cannot be undone; they go only when RADE_MADE names them.
+  Never a list, group or level whose name is not in that table. The other gates stay: RADE_MODE=uninstall, a made list (RADE_MADE) of schema
   rade-made/1 for the app 90-161.Z, the app name and the own-name table. They print one ITEM line for each thing (PASS removed, SKIP
   nothing left, FAIL) and one RESULT line (PASS, SKIP or FAIL). A second run finds nothing left and prints SKIP. Without RADE_MODE=uninstall
   and a made list of schema rade-made/1 for 90-161.Z they remove nothing and print FAIL.
