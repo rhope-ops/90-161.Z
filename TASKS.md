@@ -94,18 +94,24 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 **Time:** about 40 minutes, with about 5 minutes of a second person from my office (an estimate).\
 **Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T21, T22 and T26, 17 pictures of the window screens, and one backup of the 12 test site lists). The old files of T21 r11, T22 r14 and T26 r1 go to the Recycle Bin. The Repair saves a new copy of RADE for the RADE shortcut. On the test site: a test list and library, the second person in the Visitors group, one fake publication and fake endorsement rows. The last steps of the round move them to the site Recycle Bin. Before Run, the window lists every file.\
 **Steps:**
-1. Do "Steps to start a round" on this page with the round name **R42**. Wait until you see the window **RADE**.
-2. In the window **RADE**, click **90-161.Z 0.1.0**. Wait until you see **90-161.Z 0.1.0** at the top and the button **Repair**.
-3. Click **Repair**. You see the log. Wait until the log shows `DONE` (up to 5 minutes, an estimate).
-4. In the window **RADE**, click **Close**. Wait until you see ISE with the script in the white pane.
-5. In ISE, press `F5`. You see the window **RADE** again. Wait until it shows (up to 2 minutes, an estimate).
-6. In the window **RADE**, click **90-161.Z R42**. Wait until you see **90-161.Z R42** at the top and the button **Run**.
-7. During the round, if a card shows in the window **90-161.Z R42**, do the numbered lines on that card. You see the next card. Go on.
-8. During the round, if the window **Publications and Forms Management** opens, do the lines in its bottom bar. You see each screen open. Go on.
-9. If the bottom bar has no more lines, close the window **Publications and Forms Management** with its X. You see the window **90-161.Z R42**. Go on.
-10. Do "Steps if the window RADE opens" on this page. You see `DONE` in the window **90-161.Z R42** at the end. The task is complete.
+1. Ask one person of your office to help in this task (about 5 minutes, an estimate). You see that the person agrees. Write down the e-mail address of that person.
+2. Do "Steps to start a round" on this page with the round name **R42**. Wait until you see the window **RADE**.
+3. In the window **RADE**, click **90-161.Z 0.1.0**. Wait until you see **90-161.Z 0.1.0** at the top and the button **Repair**.
+4. Click **Repair**. You see the log. Wait until the log shows `DONE` (up to 5 minutes, an estimate).
+5. In the window **RADE**, click **Close**. Wait until you see ISE with the script in the white pane.
+6. In ISE, press `F5`. You see the window **RADE** again. Wait until it shows (up to 2 minutes, an estimate).
+7. In the window **RADE**, click **90-161.Z R42**. Wait until you see **90-161.Z R42** at the top and the button **Run**.
+8. If the bold line **Writes to** shows **NOT found**, write down `Writes to: NOT found` and send it to Claude. Go on.
+9. If the box **Send results to** is empty, type your own e-mail address. You see the address in the box. Go on.
+10. In the window **90-161.Z R42**, click **Run**. Wait until you see the log.
+11. If a CAC sign-in window opens, sign in with your CAC. Write down its size: `Small` or `Large`.
+12. If the small window asks for the e-mail address of the second person, type the address that you wrote down. You see the address in the box. Go on.
+13. If a card shows in the window **90-161.Z R42**, do the numbered lines on that card. You see the next card. Go on.
+14. If the bottom bar shows **Screen 10 of 17**, look at the grid **Wave 1 answers**. Write down `Yes` if it shows the second person, else `No`.
+15. If the bottom bar has no more lines, close the window **Publications and Forms Management** with its X. You see the window **90-161.Z R42**. Go on.
+16. When the log shows `DONE`, you see an Outlook draft. In the draft, click **Send**. The draft closes. The task is complete.
 
-**Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder. Then tell Claude that the e-mail is sent.\
+**Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder. Then send the line `R42 sent` to Claude with the steps "Send a line to Claude" on this page.\
 **If it fails:** do the line that starts with **What to do**. If the button **Repair** does not show, write down the button text that shows. Send it to Claude with the steps "Send a line to Claude" on this page. If the second person cannot help today, click **Skip** on that card. The round goes on and removes the test rows at the end.
 
 ### Done

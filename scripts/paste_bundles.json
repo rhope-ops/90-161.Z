@@ -200,7 +200,7 @@
                                 "Large"
                             ],
                             "key": "w-signin",
-                            "prompt": "Did a CAC sign-in window open in the step before? If yes, what size was it?"
+                            "prompt": "What size did you write down for the CAC sign-in window?"
                         }
                     ]
                 },
@@ -272,7 +272,7 @@
                         "2. Open Teams. You see the Teams window.",
                         "3. In Teams, click \"Chat\". You see your chats.",
                         "4. Click \"New chat\". You see the box \"To\".",
-                        "5. In the box \"To\", type the address of the second person, as in the small RADE window.",
+                        "5. In the box \"To\", type the e-mail address of the second person that you wrote down.",
                         "6. Click in the chat box at the bottom. You see the cursor in the box.",
                         "7. Press Ctrl+V. You see 2 form links and 8 steps in the box.",
                         "8. Press Enter. You see your message in the chat.",
@@ -372,7 +372,7 @@
                     "answers": [
                         {
                             "key": "w-answer",
-                            "prompt": "Screen 10 of 17 has the grid \"Wave 1 answers\". Did that grid show the answer of the second person?",
+                            "prompt": "At screen 10 of 17, did the grid \"Wave 1 answers\" show the second person? Use what you wrote down.",
                             "kind": "yesno"
                         },
                         {
