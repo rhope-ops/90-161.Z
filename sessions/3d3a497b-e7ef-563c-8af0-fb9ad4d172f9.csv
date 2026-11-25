@@ -1,0 +1,10 @@
+message_id,timestamp,turn,session_id,repo,model,source,agent,agent_id,input_tokens,cache_creation_input_tokens,cache_read_input_tokens,output_tokens,cache_write_1h_tokens,speed,web_search_requests,inference_geo,skill_use
+msg_011ChNrYdJmVcSvgqfn8KWmt,2026-11-25T02:26:36.145Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,97909,0,187,97909,standard,0,global,
+msg_011ChNrZCUorBSfa2bxhSNLc,2026-11-25T02:26:45.161Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,1681,97909,244,1681,standard,0,global,
+msg_011ChNrZhfyUubEgBYbVero9,2026-11-25T02:26:51.174Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,6163,99590,458,6163,standard,0,global,
+msg_011ChNra9mriq9eopFfv9wx5,2026-11-25T02:26:57.861Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,2426,105753,242,2426,standard,0,global,
+msg_011ChNraamHVZgPtYrcEvRFr,2026-11-25T02:27:01.722Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,268,108179,213,268,standard,0,global,
+msg_011ChNratPvVbx9yb6ZLeouu,2026-11-25T02:27:05.084Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,369,108447,137,369,standard,0,global,
+msg_011ChNrb6Wh5mM9PQguW1JHH,2026-11-25T02:27:10.293Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,503,108816,396,503,standard,0,global,
+msg_011ChNrbUpNZayweDoW9B5Wy,2026-11-25T02:27:14.782Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,916,109319,94,916,standard,0,global,
+msg_011ChNrcaF5kQ9rDxQVWAWkB,2026-11-25T02:27:37.471Z,1,3d3a497b-e7ef-563c-8af0-fb9ad4d172f9,90-161.Z,claude-opus-5-5,main,main,,2,236,110235,834,236,standard,0,global,
