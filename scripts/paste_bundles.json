@@ -143,6 +143,38 @@
                 {
                     "dir": "T26",
                     "src": "scripts/gov/90161Z-T26-restore-r2.ps1"
+                },
+                {
+                    "dir": "T20",
+                    "src": "scripts/gov/90161Z-T20-provision-lists-r4.ps1"
+                },
+                {
+                    "dir": "T20",
+                    "src": "scripts/gov/90161Z-T20-helpers-r4.ps1"
+                },
+                {
+                    "dir": "T20",
+                    "src": "scripts/gov/90161Z-T20-access-r4.ps1"
+                },
+                {
+                    "dir": "T20",
+                    "src": "flow/provisioning-payload.json"
+                },
+                {
+                    "dir": "T27",
+                    "src": "scripts/gov/90161Z-T27-lifecycle-r1.ps1"
+                },
+                {
+                    "dir": "T27",
+                    "src": "scripts/gov/90161Z-T27-made-r1.ps1"
+                },
+                {
+                    "dir": "T27",
+                    "src": "scripts/gov/90161Z-T27-check-r1.ps1"
+                },
+                {
+                    "dir": "T27",
+                    "src": "scripts/gov/90161Z-T20-helpers-r4.ps1"
                 }
             ],
             "steps": [
@@ -630,6 +662,182 @@
                         "site-rights"
                     ],
                     "doing": "Removing the test list and library."
+                },
+                {
+                    "name": "T20 Make the 12 lists r4",
+                    "title": "Make the 12 lists of 90-161.Z on the site",
+                    "dir": "T20",
+                    "file": "90161Z-T20-provision-lists-r4.ps1",
+                    "minutes": 30,
+                    "note": "Signs in (CAC). Makes the 12 lists of 90-161.Z on the site with their columns, views and start rows, and the group PFM Office with its permission level. Skips what is there. Removes nothing.",
+                    "estimate": 5,
+                    "help": "Send the results as they are. A second run changes nothing.",
+                    "needs": [
+                        "pnp",
+                        "net-site",
+                        "site-rights"
+                    ],
+                    "doing": "Making the 12 lists."
+                },
+                {
+                    "name": "T27 Remove the 12 lists r1",
+                    "title": "Remove the 12 lists that the install made",
+                    "dir": "T27",
+                    "file": "90161Z-T27-lifecycle-r1.ps1",
+                    "args": "-Part Lists",
+                    "minutes": 10,
+                    "note": "Signs in (CAC). Uninstall step. Moves the lists that the install made to the site Recycle Bin. A list that the install did not make stays.",
+                    "estimate": 2,
+                    "help": "Send the results as they are. A second run finds nothing left.",
+                    "needs": [
+                        "pnp",
+                        "net-site",
+                        "site-rights"
+                    ],
+                    "doing": "Removing the 12 lists."
+                },
+                {
+                    "name": "T27 Remove the group and level r1",
+                    "title": "Remove the group and level that the install made",
+                    "dir": "T27",
+                    "file": "90161Z-T27-lifecycle-r1.ps1",
+                    "args": "-Part Access",
+                    "minutes": 10,
+                    "note": "Signs in (CAC). Uninstall step. Removes the group PFM Office and its permission level, only when the install made them.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. A second run finds nothing left.",
+                    "needs": [
+                        "pnp",
+                        "net-site",
+                        "site-rights"
+                    ],
+                    "doing": "Removing the group and the level."
+                },
+                {
+                    "name": "T27 Remove the install note r1",
+                    "title": "Remove the install note on this computer",
+                    "dir": "T27",
+                    "file": "90161Z-T27-lifecycle-r1.ps1",
+                    "args": "-Part Local",
+                    "minutes": 10,
+                    "note": "Uninstall step. Removes the install note file of this computer. RADE keeps its own install record.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. A second run finds nothing left.",
+                    "doing": "Removing the install note."
+                },
+                {
+                    "name": "T27 Remove the flows by hand r1",
+                    "title": "Remove the flows of 90-161.Z in Power Automate",
+                    "kind": "guide",
+                    "dir": "T27",
+                    "file": "",
+                    "note": "Uninstall step. Removes the solution of the 90-161.Z flows, if it was imported by hand. The install does not make it. Words marked \"not from the bundle\" are Power Automate text.",
+                    "guide": [
+                        "1. Open the Power Automate site for your environment.",
+                        "2. On the left, click \"Solutions\" (not from the bundle). You see the solutions.",
+                        "3. Find the solution \"90-161.Z flows\". If it is not there, click \"Skip\".",
+                        "4. Click the 3 dots next to \"90-161.Z flows\" (not from the bundle).",
+                        "5. Click \"Delete\", then click \"Delete\" again in the question (not from the bundle).",
+                        "6. Wait until \"90-161.Z flows\" is not in the list of solutions.",
+                        "If the delete fails: click \"It failed\" and type the first line of the message."
+                    ],
+                    "estimate": 3
+                },
+                {
+                    "name": "T27 Check the lists before Uninstall r1",
+                    "title": "Check the 12 lists before Uninstall",
+                    "dir": "T27",
+                    "file": "90161Z-T27-lifecycle-r1.ps1",
+                    "args": "-Part Install -Label before",
+                    "minutes": 10,
+                    "note": "Signs in (CAC) and reads only. Shows that the 12 lists are on the site before Uninstall.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Reading the lists of the site."
+                },
+                {
+                    "name": "T27 Check Uninstall removed the lists r1",
+                    "title": "Check that Uninstall removed the 12 lists",
+                    "dir": "T27",
+                    "file": "90161Z-T27-lifecycle-r1.ps1",
+                    "args": "-Part Gone",
+                    "minutes": 10,
+                    "note": "Signs in (CAC) and reads only. Passes when none of the 12 lists of 90-161.Z is on the site.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Reading the lists of the site."
+                },
+                {
+                    "name": "T27 Check the new install r1",
+                    "title": "Check the 12 lists after the new install",
+                    "dir": "T27",
+                    "file": "90161Z-T27-lifecycle-r1.ps1",
+                    "args": "-Part Install -Label after",
+                    "minutes": 10,
+                    "note": "Signs in (CAC) and reads only. Passes when the 12 lists are on the site again with their process steps.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Reading the lists of the site."
+                },
+                {
+                    "name": "T26 Make the fake publication after install r2",
+                    "title": "Make the fake publication on the new install",
+                    "dir": "T26",
+                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "args": "-Part Make",
+                    "minutes": 10,
+                    "note": "Signs in (CAC). Makes one fake publication and one fake endorsement on the test site, or finds them. Puts text on the clipboard that this part does not use.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. A second run makes no second row.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Making the fake publication."
+                },
+                {
+                    "name": "T27 Move the fake publication one step r1",
+                    "title": "Take the fake publication through one process step",
+                    "dir": "T27",
+                    "file": "90161Z-T27-lifecycle-r1.ps1",
+                    "args": "-Part Step",
+                    "minutes": 10,
+                    "note": "Signs in (CAC). Moves the fake publication from step 1 to step 2, Drafting with SMEs (DAFMAN 90-161 3.2), and reads it back from the site.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. A second run changes nothing.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Moving the fake publication to step 2."
+                },
+                {
+                    "name": "T26 Remove the fake rows after install r2",
+                    "title": "Remove the fake publication and its rows",
+                    "dir": "T26",
+                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "args": "-Part Clean",
+                    "minutes": 10,
+                    "note": "Signs in (CAC). Moves the fake publication and its rows to the site Recycle Bin. Runs after any failure.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Removing the fake rows."
                 }
             ],
             "collect": [
@@ -782,6 +990,56 @@
                     "dir": "T21",
                     "name": "90161Z-T21-probe-clean-last-r12.txt",
                     "step": "T21 Remove the test list and library r12"
+                },
+                {
+                    "dir": "T20",
+                    "name": "90161Z-T20-provision-lists-r4.txt",
+                    "step": "T20 Make the 12 lists r4"
+                },
+                {
+                    "dir": "T27",
+                    "name": "90161Z-T27-lists-r1.txt",
+                    "step": "T27 Remove the 12 lists r1"
+                },
+                {
+                    "dir": "T27",
+                    "name": "90161Z-T27-access-r1.txt",
+                    "step": "T27 Remove the group and level r1"
+                },
+                {
+                    "dir": "T27",
+                    "name": "90161Z-T27-local-r1.txt",
+                    "step": "T27 Remove the install note r1"
+                },
+                {
+                    "dir": "T27",
+                    "name": "90161Z-T27-install-before-r1.txt",
+                    "step": "T27 Check the lists before Uninstall r1"
+                },
+                {
+                    "dir": "T27",
+                    "name": "90161Z-T27-gone-r1.txt",
+                    "step": "T27 Check Uninstall removed the lists r1"
+                },
+                {
+                    "dir": "T27",
+                    "name": "90161Z-T27-install-after-r1.txt",
+                    "step": "T27 Check the new install r1"
+                },
+                {
+                    "dir": "T26",
+                    "name": "90161Z-T26-endorse-make-r2.txt",
+                    "step": "T26 Make the fake publication after install r2"
+                },
+                {
+                    "dir": "T27",
+                    "name": "90161Z-T27-step-r1.txt",
+                    "step": "T27 Move the fake publication one step r1"
+                },
+                {
+                    "dir": "T26",
+                    "name": "90161Z-T26-endorse-clean-r2.txt",
+                    "step": "T26 Remove the fake rows after install r2"
                 }
             ],
             "fetch": [],
@@ -810,15 +1068,22 @@
                         "T26 Close the second window r2",
                         "T26 Check the restored rows r2",
                         "T26 Remove the fake rows r2",
-                        "T21 Remove the test list and library r12"
+                        "T21 Remove the test list and library r12",
+                        "T27 Check the lists before Uninstall r1",
+                        "T27 Check Uninstall removed the lists r1",
+                        "T27 Check the new install r1",
+                        "T26 Make the fake publication after install r2",
+                        "T27 Move the fake publication one step r1",
+                        "T26 Remove the fake rows after install r2"
                     ]
                 },
                 {
                     "name": "90-161.Z",
-                    "summary": "Test install of 90-161.Z 0.1: RADE records it, so Maintenance (Diagnose, Back up, Restore) can be tested. Nothing on the site changes.",
+                    "summary": "Install of 90-161.Z 0.1: makes the 12 lists, then RADE records it. Maintenance (Back up, Restore, Uninstall) can be tested.",
                     "mode": "deploy",
                     "version": "0.1.0",
                     "steps": [
+                        "T20 Make the 12 lists r4",
                         "T22 Record the test install r16"
                     ],
                     "backup": [
@@ -843,7 +1108,13 @@
                             "field": "SettingValue",
                             "on": "Yes"
                         }
-                    }
+                    },
+                    "uninstall": [
+                        "T27 Remove the flows by hand r1",
+                        "T27 Remove the 12 lists r1",
+                        "T27 Remove the group and level r1",
+                        "T27 Remove the install note r1"
+                    ]
                 }
             ],
             "cleanup": [
