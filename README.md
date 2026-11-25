@@ -161,7 +161,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 25. If a card in the window **RADE** shows a box (each time, also **Last question**), type one line with no names. Go on.
 26. If the line is in the box, click **Continue**. You see the next card. Go on.
 27. If the card **What did the error say?** shows, type the error message in the box. Go on.
-28. If the error line is in the box, click **Report the failure**. You see the next card. Go on.
+28. If the error message is in the box, click **Report the failure** or **Continue**. You see the next card. Go on.
 29. If the window **Publications and Forms Management** opens, find its bottom bar. You see a line that starts with **Check 1 of**. Go on.
 30. If the bottom bar shows a line (each time), do what the line says. You see the result in the window. Go on.
 31. If the result is what the line says, click **Pass** in the bottom bar, else **Fail**. You see the next line. Go on.
