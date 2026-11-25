@@ -33,43 +33,59 @@ import site_config   # noqa: E402  scripts/site_config.py: the account values li
 U = site_config.urls()
 RAW = U['raw']
 BARE = re.compile(r'^(?:https://)?(raw\.githubusercontent\.com/\S*)$')
-# Every place that GitHub can show as a link: a link target ([x](t), <t>, href="t", a reference [id]: t), or a bare URL
-# (with a scheme, or a bare host name such as rhope-ops.github.io/RADE).
-TARGETS = (
-    re.compile(r'\]\(\s*<([^>]+)>'),                     # [x](<target with spaces>)
-    re.compile(r'\]\(\s*([^\s<][^\s]*?)(?:\s+["\'(][^)]*)?\)(?!\))'),   # [x](target) and [x](target "title")
-    re.compile(r'\]\(\s*([^\s<]+)'),                      # [x](target with brackets in it ...
-    re.compile(r'<([a-z][a-z0-9+.-]*:[^>\s]+)>', re.I),    # <https://...>
+# Link targets in raw HTML (an <a href> or <img src> that the Markdown parser keeps as HTML), and bare URLs that GitHub
+# turns into links on its own (GFM autolinks; CommonMark does not): with a scheme, or a bare host name and path.
+RAW_HTML = (
     re.compile(r'(?:href|src)\s*=\s*["\']([^"\']+)', re.I),   # href="..." or src='...'
     re.compile(r'(?:href|src)\s*=\s*([^"\'\s>]+)', re.I),      # href=... with no quotes
-    re.compile(r'(?m)^[ \t>*+-]*(?:\d+[.)][ \t]+)?\[[^\]]+\]:\s*<?([^\s>]+)'),   # [id]: target, also with a title or in a quote or list
-    re.compile(r'https?://\S+', re.I),                    # a bare URL with a scheme (also an IP host, a port, localhost)
-    re.compile(r'(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/\S*', re.I),   # a bare host and path
-    re.compile(r'(?:[a-z0-9-]+\.)*[a-z0-9-]+\.github\.io\b', re.I),  # any github.io host
+)
+BARE_URLS = (
+    re.compile(r'https?://\S+', re.I),                                  # a URL with a scheme (also an IP host, a port, localhost)
+    re.compile(r'(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/\S*', re.I),        # a bare host and path
+    re.compile(r'(?:[a-z0-9-]+\.)*[a-z0-9-]+\.github\.io\b', re.I),      # any github.io host
 )
 TRAIL = '.,;:!?*_~)\'">]'   # characters that end a sentence or a format mark, not a URL
 GITHUB_IO = re.compile(r'(?:^|[^a-z0-9-])(?:[a-z0-9-]+\.)*github\.io(?![a-z0-9-])', re.I)   # a github.io host, as a whole name
 
 
+def link_targets(text):
+    """Every link and image target of a Markdown text, as a CommonMark parser reads it (markdown-it-py, pinned in
+    requirements.txt): inline links, autolinks, reference definitions in any form, and href or src in raw HTML.
+
+    Args:
+        text: Markdown text.
+    Returns:
+        A list of the target strings, in the order found.
+    """
+    from markdown_it import MarkdownIt   # only the build needs it; scripts/build_go_page.py uses the same package
+    out = []
+    for tok in MarkdownIt('commonmark', {'html': True}).parse(text):
+        for t in [tok] + list(tok.children or []):
+            out += [v for k, v in (t.attrs or {}).items() if k in ('href', 'src')]
+            if t.type in ('html_inline', 'html_block'):
+                out += [m.group(1) for pattern in RAW_HTML for m in pattern.finditer(t.content)]
+    return out
+
+
 def bad_links(text):
     """The link targets and URLs in text that break the work computer: a .ps1 file, or any github.io page (the PFM, 2026-11-25).
 
-    A plain file name with no link around it (T22\\name.ps1) is not a link, so it does not count. A relative link target
-    ([x](a.ps1)) counts. Percent and HTML encodings are decoded first.
+    It checks every target the Markdown parser finds (link_targets) and every bare URL that GitHub links on its own.
+    A plain file name with no link around it (T22\\name.ps1) is not a link, so it does not count. Percent and HTML
+    encodings are decoded first.
 
     Args:
         text: README text.
     Returns:
         A sorted list of the bad targets (empty when there is none).
     """
+    found = link_targets(text) + [m.group(0) for pattern in BARE_URLS for m in pattern.finditer(text)]
     bad = set()
-    for pattern in TARGETS:
-        for m in pattern.finditer(text):
-            raw = m.group(1) if pattern.groups else m.group(0)
-            u = urllib.parse.unquote(html.unescape(raw)).strip().rstrip(TRAIL)
-            path = re.split(r'[?#]', u, maxsplit=1)[0].rstrip(TRAIL).lower()
-            if GITHUB_IO.search(u) or path.endswith('.ps1'):
-                bad.add(raw)
+    for raw in found:
+        u = urllib.parse.unquote(urllib.parse.unquote(html.unescape(raw))).strip().rstrip(TRAIL)
+        path = re.split(r'[?#]', u, maxsplit=1)[0].rstrip(TRAIL + '/').lower()
+        if GITHUB_IO.search(u) or path.endswith('.ps1'):
+            bad.add(raw)
     return sorted(bad)
 
 
