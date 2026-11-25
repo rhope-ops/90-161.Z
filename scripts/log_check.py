@@ -17,11 +17,13 @@ Checks (each failure prints FILE:LINE: message):
 - Type is milestone, breakthrough, miss or decision.
 - Arc is kebab-case and has a row in the Arcs table; every Arcs row is used at least once.
 - Evidence is not empty and not "-" (.claude/skills/project-log/SKILL.md: never chat text alone).
---decisions (T6): a row of the "## Decisions" table whose By cell names the Maintainer (or the old word "owner") must
-  quote the approval of its exact text: a quoted OK in the By cell, for example the Maintainer "I approve the plan"
-  (own message, date time). Rows from the row named in the marker line `<!-- approval-quote-exempt-from: TEXT -->`
+--decisions (T6): a row of the "## Decisions" table whose By cell names the Maintainer (or an old word: "owner",
+  "Administrator") must quote the approval of its exact text: a quoted OK in the By cell, for example the Maintainer
+  "I approve the plan" (own message, date time). Rows from the row named in the marker line `<!-- approval-quote-exempt-from: TEXT -->`
   (above the table; TEXT starts that row's Decision cell) down to the end are older rows and exempt; the table is
-  newest first. With no marker line, every row is checked.
+  newest first. With no marker line, every row is checked. A table with the columns Date | Scope | Decision has no By
+  cell: a Decision cell that holds a role word must start with its quoted approval (By: the Maintainer: "I approve").
+  The marker names the Decision cell.
 --coverage (T7): a plan coverage list. Every row of each table with a Mark column has the mark in, out, later or ask
   (first word of the cell; "in (added)" is in). A row marked ask or with no mark fails. The "Group | Rows | in | out |
   later | ask" table must equal the rows counted per group (the letter of the nearest "## A." or "### B2." heading)

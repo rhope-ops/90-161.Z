@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Fresh reviewer: gets only a diff and its brief; reports defects, out-of-brief files, rule conflicts and missing checks by severity.
+description: Fresh reviewer: gets only a diff and its brief; reports defects, out-of-brief files, rule conflicts and missing checks.
 model: inherit
 tools: Read, Grep, Glob, Bash
 hooks:
