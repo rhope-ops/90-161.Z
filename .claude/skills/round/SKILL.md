@@ -63,7 +63,7 @@ Also:
 - go.md holds only the steps that start the round; the runner window holds every other step (one place per step).
 - Write go.md in the PFM's voice. Open tasks go first; finished ones move to "Done".
 - Link every file and every zip by its raw.githubusercontent.com URL, one per line; never a rhope-ops.github.io copy of a file or a github.com archive link. No code in go.md.
-- The PFM types only the first address by hand (the bookmark rhope-ops.github.io/90-161.Z); keep any address he must type short.
+- The PFM types only the first address by hand (the bookmark github.com/rhope-ops/90-161.Z, the README); keep any address he must type short.
 - Before a round ships: `python3 tests/check_guide_text.py` passes (it fails a step that points elsewhere, holds 2 actions or is over 200 characters), and a fresh agent that has not seen the build reads only the steps and says back each action. Rewrite any step it cannot say back.
 
 ## 6. Release order
@@ -76,4 +76,4 @@ Also:
 6. Verify that origin/main has the commit.
 7. If index.html changed on main: copy it to the gh-pages branch as one commit.
 8. Write the NEXT_PROMPT state and the DECISIONS rows.
-9. Tell the PFM the round is ready, with the link https://rhope-ops.github.io/RADE.
+9. Tell the PFM the round is ready, with the link https://github.com/rhope-ops/90-161.Z (the README; never a github.io page or a .ps1 file).

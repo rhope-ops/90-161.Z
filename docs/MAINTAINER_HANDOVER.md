@@ -9,7 +9,7 @@ This page is for the person who takes over this repository. It names where each 
 | Account values (GitHub owner, repository, branch, Teams channel) | `site.config.json` |
 | The RADE engine version and its file hashes | `scripts/rade.lock.json` |
 | The round definitions | `scripts/paste_bundles.json` |
-| The task page text | `go.md` (the page `index.html` and `TASKS.md` show it) |
+| The task page text | `go.md` (the page `index.html` and the README "Current tasks" part show it) |
 | The shared PowerShell blocks of the task scripts | `scripts/gov/src/*.ps1` |
 | The order of all generators | `scripts/rebuild_all.py` |
 | Decisions | `docs/DECISIONS.md` |
