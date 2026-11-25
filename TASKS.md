@@ -7,7 +7,7 @@ On this page, the first steps of a round task are different: write down the **Co
 <!-- >>> tasks: generated from go.md by scripts/build_readme.py (do not edit) -->
 ## 90-161.Z: tasks for my work computer
 
-Updated: 21 Nov 26 (R41 results; R42 is being built).\
+Updated: 24 Nov 26 (R42 is ready).\
 <https://rhope-ops.github.io/90-161.Z>\
 Fallback (plain text):\
 <https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/go.md>\
@@ -88,7 +88,22 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ### Open tasks
 
-R42 is being built. This page shows it when it is ready.
+#### Round R42 r1: my window r15, an endorser answer, a small sign-in window and Restore
+
+**For:** the round after R41. It tests the R41 fixes: my 90-161.Z window r15 (room for the scroll bar; the screens Waves and Step 13 open), the answer of a second person, a small CAC sign-in window, and RADE Restore of fake rows with their old row numbers. The first RADE window shows **90-161.Z R42** at the top. The second RADE window (from the RADE shortcut) shows **90-161.Z 0.1.0** at the top.\
+**Time:** about 40 minutes, with about 5 minutes of a second person from my office (an estimate).\
+**Changes:** on my computer: my OneDrive folder RADE\90-161.Z (scripts and result files in T21, T22 and T26, 17 pictures of the window screens, and one backup of the 12 test site lists). The old files of T21 r11, T22 r14 and T26 r1 go to the Recycle Bin. The Repair saves a new copy of RADE for the RADE shortcut. On the test site: a test list and library, the second person in the Visitors group, one fake publication and fake endorsement rows. The last steps of the round move them to the site Recycle Bin. Before Run, the window lists every file.\
+**Steps:**
+1. Do "Steps to start a round" on this page with the round name **R42**. Wait until you see the window **RADE**.
+2. In the window **RADE**, click **90-161.Z 0.1.0**. Wait until you see **90-161.Z 0.1.0** at the top and the button **Repair**.
+3. Click **Repair**. You see the log. Wait until the log shows `DONE` (up to 5 minutes, an estimate).
+4. In the window **RADE**, click **Close**. Wait until you see ISE with the script in the white pane.
+5. In ISE, press `F5`. You see the window **RADE** again. Wait until it shows (up to 2 minutes, an estimate).
+6. In the window **RADE**, click **90-161.Z R42**. Wait until you see **90-161.Z R42** at the top and the button **Run**.
+7. Do "Steps if the window RADE opens" on this page. You see the cards of the round in the window **90-161.Z R42**. The task is complete.
+
+**Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder. Then tell Claude that the e-mail is sent.\
+**If it fails:** do the line that starts with **What to do**. If the button **Repair** does not show, write down the button text that shows. Send it to Claude with the steps "Send a line to Claude" on this page. If the second person cannot help today, click **Skip** on that card. The round goes on and removes the test rows at the end.
 
 ### Done
 

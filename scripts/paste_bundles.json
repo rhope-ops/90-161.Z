@@ -24,69 +24,69 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R41-round-r2.ps1",
-            "round": "R41",
-            "title": "Round R41 r2: my window r14 with my test site lists, every screen in order, an endorser answer by list form, and RADE Restore",
+            "out": "scripts/gov/paste/90161Z-R42-round-r1.ps1",
+            "round": "R42",
+            "title": "Round R42 r1: my window r15 with room for the scroll bar, an endorser answer, a small CAC sign-in window, and RADE Restore with Recycle Bin row numbers",
             "files": [
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-pfm-window-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-pfm-window-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-maint-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-maint-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-cards-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-cards-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-types-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-types-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui2-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui2-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-parts-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-parts-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-grid-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-grid-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-logo-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-logo-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-window-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-window-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-bar-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-bar-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-keep-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-keep-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-feedback-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-feedback-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-measure-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-measure-r15.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-site-r14.ps1"
+                    "src": "scripts/gov/90161Z-T22-site-r15.ps1"
                 },
                 {
                     "dir": "T22",
@@ -147,19 +147,19 @@
             ],
             "steps": [
                 {
-                    "name": "T22 Record the test install r14",
+                    "name": "T22 Record the test install r15",
                     "title": "Record the test install of 90-161.Z 0.1",
                     "dir": "T22",
-                    "file": "90161Z-T22-maint-r14.ps1",
+                    "file": "90161Z-T22-maint-r15.ps1",
                     "args": "-Part Install",
                     "minutes": 5,
-                    "note": "The one step of the test install. RADE then keeps an install record, so its Maintenance screen opens for 90-161.Z. Nothing else is installed; nothing on the site changes.",
+                    "note": "The one step of the test install. RADE keeps an install record and saves its newest copy for the RADE shortcut. Nothing on the site changes.",
                     "estimate": 1,
                     "help": "Send the results as they are. The step can be run again.",
                     "doing": "Recording the test install."
                 },
                 {
-                    "name": "T21 Check the test site is clean r11",
+                    "name": "T21 Check the test site is clean r12",
                     "title": "Check that the last round left nothing on the test site",
                     "dir": "T21",
                     "file": "90161Z-T21-probe-r12.ps1",
@@ -176,7 +176,7 @@
                     "doing": "Checking that the test site is clean."
                 },
                 {
-                    "name": "T21 Make the probe list r11",
+                    "name": "T21 Make the probe list r12",
                     "title": "Make the test list and library",
                     "dir": "T21",
                     "file": "90161Z-T21-probe-r12.ps1",
@@ -193,7 +193,7 @@
                     "doing": "Making the test list and library."
                 },
                 {
-                    "name": "T21 Add the second person r11",
+                    "name": "T21 Add the second person r12",
                     "title": "Add the second person to the test site",
                     "dir": "T21",
                     "file": "90161Z-T21-probe-r12.ps1",
@@ -208,12 +208,12 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r11"
+                        "T21 Make the probe list r12"
                     ],
                     "doing": "Adding the second person to the Visitors group."
                 },
                 {
-                    "name": "T26 Make the fake publication r1",
+                    "name": "T26 Make the fake publication r2",
                     "title": "Make the fake publication and endorsement",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r2.ps1",
@@ -227,33 +227,33 @@
                         "net-site"
                     ],
                     "after": [
-                        "T21 Add the second person r11"
+                        "T21 Add the second person r12"
                     ],
                     "doing": "Making the fake publication."
                 },
                 {
-                    "name": "T26 Second person answers r1",
+                    "name": "T26 Second person answers r2",
                     "title": "Ask the second person to answer the endorsement",
                     "kind": "guide",
                     "dir": "T26",
                     "file": "",
                     "note": "You need one person of your office for about 5 minutes, now. They add one answer in the new row form, then try to change your fake endorsement in its edit form. A refusal there is expected.",
                     "guide": [
-                        "1. Ask the second person to stay at a computer for about 5 minutes.",
-                        "2. Open Teams.",
-                        "3. Select \"Chat\".",
-                        "4. Select \"New chat\".",
-                        "5. In the box \"To\", type the e-mail address you gave RADE for the second person.",
-                        "6. Select the chat box.",
-                        "7. Press Ctrl+V (2 form links and 8 steps for the second person are on the clipboard).",
-                        "8. Press Enter.",
-                        "9. Wait for 2 replies: the new row saved or not, and the change saved or refused.",
-                        "If the person is not there yet: keep this card open. Skip only if nobody can help today."
+                        "1. Ask the second person to stay at a computer for 5 minutes.",
+                        "2. Open Teams. You see the Teams window.",
+                        "3. In Teams, click \"Chat\". You see your chats.",
+                        "4. Click \"New chat\". You see the box \"To\".",
+                        "5. In the box \"To\", type the e-mail address that you gave RADE. You see the name.",
+                        "6. Click in the chat box at the bottom. You see the cursor in the box.",
+                        "7. Press Ctrl+V. You see 2 form links and 8 steps in the box.",
+                        "8. Press Enter. You see your message in the chat.",
+                        "9. Wait until the second person sends 2 replies. Do not click \"Done\" until then.",
+                        "If nobody can help today: click \"Skip\". The round goes on and removes the test rows at the end."
                     ],
                     "marker": "90161Z-T26-answer-asked.txt",
                     "estimate": 5,
                     "after": [
-                        "T26 Make the fake publication r1"
+                        "T26 Make the fake publication r2"
                     ],
                     "answers": [
                         {
@@ -283,7 +283,7 @@
                     ]
                 },
                 {
-                    "name": "T26 Read the endorser answer r1",
+                    "name": "T26 Read the endorser answer r2",
                     "title": "Read the 2 answers of the second person",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r2.ps1",
@@ -297,17 +297,17 @@
                         "net-site"
                     ],
                     "after": [
-                        "T26 Second person answers r1"
+                        "T26 Second person answers r2"
                     ],
                     "doing": "Reading the answer of the second person."
                 },
                 {
-                    "name": "T22 Open the 90-161.Z window r14",
+                    "name": "T22 Open the 90-161.Z window r15",
                     "title": "Open the 90-161.Z window and walk every screen",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r14.ps1",
+                    "file": "90161Z-T22-pfm-window-r15.ps1",
                     "minutes": 40,
-                    "note": "Signs in (CAC) and reads the fake rows of your test site; it writes nothing there. Do the 4 checks, then the 17 screens, in the bar at the bottom, then close the window with its X.",
+                    "note": "Signs in (CAC) and reads the fake rows of your test site; it writes nothing there. Do the 4 checks, then the 17 screens, in the bar at the bottom of the window. Then close the window with its X.",
                     "estimate": 20,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [
@@ -317,10 +317,10 @@
                     "doing": "Opening the 90-161.Z window."
                 },
                 {
-                    "name": "T22 Did the window open r14",
+                    "name": "T22 Did the window open r15",
                     "title": "Check that the window opened",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r14.ps1",
+                    "file": "90161Z-T22-pfm-window-r15.ps1",
                     "args": "-Opened",
                     "minutes": 2,
                     "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
@@ -329,56 +329,35 @@
                     "doing": "Reading the result of the window step."
                 },
                 {
-                    "name": "T22 Open the window again r14",
-                    "title": "Open the 90-161.Z window again and do its 1 check",
-                    "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r14.ps1",
-                    "args": "-Again",
-                    "minutes": 15,
-                    "note": "Opens your 90-161.Z window a second time. It should open on the screen you closed it on. Do the 1 check in the bar at the bottom, then close the window.",
-                    "estimate": 3,
-                    "help": "Send the results as they are. The step can be run again.",
-                    "needs": [
-                        "pnp",
-                        "net-site"
-                    ],
-                    "after": [
-                        "T22 Did the window open r14"
-                    ],
-                    "doing": "Opening the 90-161.Z window again."
-                },
-                {
-                    "name": "T22 Answer: look and cards r14",
-                    "title": "Answer 4 questions about the window",
+                    "name": "T22 Answer: look and cards r15",
+                    "title": "Answer 3 questions about this round",
                     "kind": "guide",
                     "guide": [],
                     "dir": "T22",
                     "file": "",
-                    "note": "4 questions about the look of the window and the answer of the second person. About 2 minutes.",
+                    "note": "3 questions: the answer of the second person, the CAC sign-in window and your first change. About 2 minutes.",
                     "estimate": 2,
                     "after": [
-                        "T22 Did the window open r14"
+                        "T22 Did the window open r15"
                     ],
                     "answers": [
                         {
-                            "key": "w-look",
-                            "prompt": "Does the window look like your vision of the 90-161.Z app?",
+                            "key": "w-answer",
+                            "prompt": "In the 90-161.Z window, did the grid \"Wave 1 answers\" show the answer of the second person?",
+                            "kind": "yesno"
+                        },
+                        {
+                            "key": "w-signin",
+                            "prompt": "When a CAC sign-in window opened in this round, what size was it?",
                             "kind": "pick",
                             "choices": [
-                                "Yes, as it is",
-                                "Close, with small changes",
-                                "No"
+                                "Small, in the center",
+                                "Large",
+                                "No sign-in window opened"
+                            ],
+                            "failOn": [
+                                "Large"
                             ]
-                        },
-                        {
-                            "key": "w-cards",
-                            "prompt": "Did every screen open and fit with no scroll bar?",
-                            "kind": "yesno"
-                        },
-                        {
-                            "key": "w-answer",
-                            "prompt": "Did the screen with the endorsement answers show the answer of the second person?",
-                            "kind": "yesno"
                         },
                         {
                             "key": "w-change",
@@ -389,7 +368,7 @@
                     "answersOnly": true
                 },
                 {
-                    "name": "T26 Make the Restore test rows r1",
+                    "name": "T26 Make the Restore test rows r2",
                     "title": "Make the fake rows for the Restore test",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r2.ps1",
@@ -403,49 +382,48 @@
                         "net-site"
                     ],
                     "after": [
-                        "T26 Make the fake publication r1"
+                        "T26 Make the fake publication r2"
                     ],
                     "doing": "Making the fake rows for the Restore test."
                 },
                 {
-                    "name": "T26 Back up in a second window r1",
+                    "name": "T26 Back up in a second window r2",
                     "title": "Back up the 12 lists in a second RADE window",
                     "kind": "guide",
                     "dir": "T26",
                     "file": "",
-                    "note": "This window waits while a second RADE window saves the 12 lists of your test site to this computer. Nothing on the site changes.",
+                    "note": "This window waits. A second RADE window saves the 12 lists of your test site to this computer. Nothing on the site changes.",
                     "guide": [
-                        "1. Double-click the RADE shortcut on your Desktop. A second RADE window opens.",
-                        "2. In the second window, select \"90-161.Z\".",
-                        "3. Select \"Maintenance\".",
-                        "4. Select \"Back up\".",
-                        "5. If a sign-in window opens, sign in with your CAC.",
-                        "6. Wait for the line \"All 12 lists were saved.\" in the second window.",
-                        "7. Close the second window with its X.",
-                        "If it says that lists were not saved: select \"It failed\" and paste its first line."
+                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "2. In the second RADE window, click \"90-161.Z 0.1.0\". You see \"90-161.Z 0.1.0\" at the top.",
+                        "3. In the window \"90-161.Z 0.1.0\", click \"Maintenance\". You see \"Back up\" and \"Restore\".",
+                        "4. Click \"Back up\". If a sign-in window opens, sign in with your CAC.",
+                        "5. Wait until the window \"90-161.Z 0.1.0\" shows \"All 12 lists were saved.\"",
+                        "6. Close the window \"90-161.Z 0.1.0\" with its X. You see this window again.",
+                        "If lists were not saved: click \"It failed\" and type the first line of the message."
                     ],
                     "estimate": 3,
                     "after": [
-                        "T26 Make the Restore test rows r1"
+                        "T26 Make the Restore test rows r2"
                     ]
                 },
                 {
-                    "name": "T22 Check the Back up r14",
+                    "name": "T22 Check the Back up r15",
                     "title": "Check that the Back up saved all 12 lists",
                     "dir": "T22",
-                    "file": "90161Z-T22-maint-r14.ps1",
+                    "file": "90161Z-T22-maint-r15.ps1",
                     "args": "-Part Backup",
                     "minutes": 2,
                     "note": "Reads the newest backup folder on this computer: for each list, its 2 files and its row count. It reads no row values and changes nothing.",
                     "estimate": 1,
                     "help": "Send the results as they are. If a list is missing, the Restore test stops here.",
                     "after": [
-                        "T26 Back up in a second window r1"
+                        "T26 Back up in a second window r2"
                     ],
                     "doing": "Reading the newest backup."
                 },
                 {
-                    "name": "T26 Delete and add the test rows r1",
+                    "name": "T26 Delete and add the test rows r2",
                     "title": "Delete 4 fake rows and add 1 on the test site",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r2.ps1",
@@ -459,105 +437,105 @@
                         "net-site"
                     ],
                     "after": [
-                        "T22 Check the Back up r14"
+                        "T22 Check the Back up r15"
                     ],
                     "doing": "Deleting 4 fake rows and adding 1."
                 },
                 {
-                    "name": "T26 Start Restore in a second window r1",
+                    "name": "T26 Start Restore in a second window r2",
                     "title": "Start Restore in a second RADE window",
                     "kind": "guide",
                     "dir": "T26",
                     "file": "",
-                    "note": "This window waits. Restore first runs a dry run: it shows what it would put back and writes nothing. Leave the second window open after it.",
+                    "note": "This window waits. Restore first does a dry run in the second window: it shows what it would put back and writes nothing. Keep the second window open after the dry run.",
                     "guide": [
-                        "1. Double-click the RADE shortcut on your Desktop.",
-                        "2. In the second window, select \"90-161.Z\".",
-                        "3. Select \"Maintenance\".",
-                        "4. Select \"Restore\".",
+                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "2. In the second RADE window, click \"90-161.Z 0.1.0\". You see \"90-161.Z 0.1.0\" at the top.",
+                        "3. In the window \"90-161.Z 0.1.0\", click \"Maintenance\". You see \"Back up\" and \"Restore\".",
+                        "4. Click \"Restore\". You see the list of backups.",
                         "5. If RADE asks \"Is the saved site a test site?\", type the name of your test site.",
-                        "6. If you typed the name, select \"Mark as test site\".",
-                        "7. Select the backup marked \"Newest\".",
-                        "8. If a sign-in window opens, sign in with your CAC.",
-                        "9. Wait for the result of the dry run."
+                        "6. If you typed the name, click \"Mark as test site\".",
+                        "7. Click the backup marked \"Newest\". If a sign-in window opens, sign in with your CAC.",
+                        "8. Wait until the window \"90-161.Z 0.1.0\" shows a line that starts with \"Dry run:\".",
+                        "9. Keep the window \"90-161.Z 0.1.0\" open."
                     ],
                     "estimate": 3,
                     "after": [
-                        "T26 Delete and add the test rows r1"
+                        "T26 Delete and add the test rows r2"
                     ]
                 },
                 {
-                    "name": "T26 Answer: the Restore dry run r1",
-                    "title": "Answer 2 questions about the dry run",
+                    "name": "T26 Answer: the Restore dry run r2",
+                    "title": "Answer 1 question about the dry run",
                     "kind": "guide",
                     "guide": [],
                     "dir": "T26",
                     "file": "",
-                    "note": "2 questions about the dry run in the second window. If it says the Recycle Bin could not be read, close the second window with its X first: the Restore test stops here.",
+                    "note": "1 question about the line \"Dry run:\" in the second window. Keep the second window open.",
                     "estimate": 1,
                     "after": [
-                        "T26 Start Restore in a second window r1"
+                        "T26 Start Restore in a second window r2"
                     ],
                     "answers": [
                         {
                             "key": "r-dry",
-                            "prompt": "What does the dry run say? Its first line starts with \"Dry run:\".",
+                            "prompt": "In the window \"90-161.Z 0.1.0\", what does the line \"Dry run:\" say?",
                             "kind": "pick",
                             "choices": [
                                 "4 rows, 3 from the Recycle Bin",
-                                "The Recycle Bin was not read",
+                                "The Recycle Bin could not be read",
                                 "Something else"
                             ],
                             "failOn": [
-                                "The Recycle Bin was not read",
+                                "The Recycle Bin could not be read",
                                 "Something else"
-                            ]
-                        },
-                        {
-                            "key": "r-lists",
-                            "prompt": "Do the other 10 lists each say \"Would put back 0\"?",
-                            "kind": "yesno",
-                            "failOn": [
-                                "No"
                             ]
                         }
                     ],
                     "answersOnly": true
                 },
                 {
-                    "name": "T26 Restore with the app name r1",
+                    "name": "T26 Restore with the app name r2",
                     "title": "Confirm Restore with the app name",
                     "kind": "guide",
                     "dir": "T26",
                     "file": "",
-                    "note": "First a name in the wrong capitals, which Restore must refuse, then the right name. Restore then saves a fresh backup and puts the 4 rows back.",
+                    "note": "Restore saves a fresh backup and puts the 4 rows back. Keep the second window open for the questions.",
                     "guide": [
-                        "1. In the second window, click in the box \"Type 90-161.Z to confirm\".",
-                        "2. Type: 90-161.z",
-                        "3. Select \"Restore\". One gray line should ask for the app name, and nothing runs.",
-                        "4. Press Ctrl+A in the box.",
-                        "5. Type: 90-161.Z",
-                        "6. Select \"Restore\".",
-                        "7. Wait for the result. Do not close the second window while Restore runs."
+                        "1. In the window \"90-161.Z 0.1.0\", click in the box \"Type 90-161.Z to confirm\".",
+                        "2. Type: 90-161.Z",
+                        "3. Click \"Restore\". You see Restore run. Wait until the result shows.",
+                        "4. Do not close the window \"90-161.Z 0.1.0\" while Restore runs.",
+                        "5. In the result, find the line that starts with \"PFM Endorsements\".",
+                        "6. Keep the window \"90-161.Z 0.1.0\" open for the 3 questions."
                     ],
                     "estimate": 3,
                     "after": [
-                        "T26 Answer: the Restore dry run r1"
+                        "T26 Answer: the Restore dry run r2"
                     ],
                     "answers": [
                         {
-                            "key": "r-wrong",
-                            "prompt": "Did the name in the wrong capitals show one gray line, with nothing run?",
-                            "kind": "yesno"
-                        },
-                        {
                             "key": "r-result",
-                            "prompt": "What does the first line of the Restore result say?",
+                            "prompt": "In the window \"90-161.Z 0.1.0\", what does the first line of the result say?",
                             "kind": "pick",
                             "choices": [
                                 "Put back 4 of 4 rows",
                                 "Another number",
                                 "Restore wrote no rows"
+                            ]
+                        },
+                        {
+                            "key": "r-bin",
+                            "prompt": "The line \"PFM Endorsements\" says \"X back from the Recycle Bin, Y made new\". What are X and Y?",
+                            "kind": "pick",
+                            "choices": [
+                                "X is 3 and Y is 0",
+                                "Other numbers",
+                                "There is no such line"
+                            ],
+                            "failOn": [
+                                "Other numbers",
+                                "There is no such line"
                             ]
                         },
                         {
@@ -569,7 +547,22 @@
                     "doneLog": "Confirmed by you: Restore ran in the second window."
                 },
                 {
-                    "name": "T26 Check the restored rows r1",
+                    "name": "T26 Close the second window r2",
+                    "title": "Close the second RADE window",
+                    "kind": "guide",
+                    "dir": "T26",
+                    "file": "",
+                    "note": "The Restore test in the second window is complete.",
+                    "guide": [
+                        "1. Close the window \"90-161.Z 0.1.0\" with its X. You see this window again."
+                    ],
+                    "estimate": 1,
+                    "after": [
+                        "T26 Restore with the app name r2"
+                    ]
+                },
+                {
+                    "name": "T26 Check the restored rows r2",
                     "title": "Check the rows that Restore put back",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r2.ps1",
@@ -583,117 +576,12 @@
                         "net-site"
                     ],
                     "after": [
-                        "T26 Restore with the app name r1"
+                        "T26 Restore with the app name r2"
                     ],
                     "doing": "Checking the rows that Restore put back."
                 },
                 {
-                    "name": "T26 Restore again r1",
-                    "title": "Restore the same backup again",
-                    "kind": "guide",
-                    "dir": "T26",
-                    "file": "",
-                    "note": "The same backup again must find nothing to restore: no row is made twice.",
-                    "guide": [
-                        "1. Close the second window with its X.",
-                        "2. Double-click the RADE shortcut on your Desktop.",
-                        "3. In the second window, select \"90-161.Z\".",
-                        "4. Select \"Maintenance\".",
-                        "5. Select \"Restore\".",
-                        "6. Select the second backup in the list, the one under \"Newest\".",
-                        "7. If a sign-in window opens, sign in with your CAC.",
-                        "8. Wait for the result of the dry run."
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T26 Restore with the app name r1"
-                    ]
-                },
-                {
-                    "name": "T26 Answer: Restore again r1",
-                    "title": "Answer 1 question about Restore again",
-                    "kind": "guide",
-                    "guide": [],
-                    "dir": "T26",
-                    "file": "",
-                    "note": "1 question about the dry run of the same backup in the second window.",
-                    "estimate": 1,
-                    "after": [
-                        "T26 Restore again r1"
-                    ],
-                    "answers": [
-                        {
-                            "key": "r-again",
-                            "prompt": "What does the second window say now?",
-                            "kind": "pick",
-                            "choices": [
-                                "Nothing to restore",
-                                "Rows would come back",
-                                "Something else"
-                            ],
-                            "failOn": [
-                                "Rows would come back",
-                                "Something else"
-                            ]
-                        }
-                    ],
-                    "answersOnly": true
-                },
-                {
-                    "name": "T26 Restore the fresh backup r1",
-                    "title": "Restore the fresh backup",
-                    "kind": "guide",
-                    "dir": "T26",
-                    "file": "",
-                    "note": "The fresh backup that Restore saved must also find nothing to restore.",
-                    "guide": [
-                        "1. Close the second window with its X.",
-                        "2. Double-click the RADE shortcut on your Desktop.",
-                        "3. In the second window, select \"90-161.Z\".",
-                        "4. Select \"Maintenance\".",
-                        "5. Select \"Restore\".",
-                        "6. Select the backup marked \"Newest\".",
-                        "7. If a sign-in window opens, sign in with your CAC.",
-                        "8. Wait for the result of the dry run, and remember what it says.",
-                        "9. Close the second window with its X."
-                    ],
-                    "estimate": 2,
-                    "after": [
-                        "T26 Restore again r1"
-                    ]
-                },
-                {
-                    "name": "T26 Answer: the fresh backup r1",
-                    "title": "Answer 1 question about the fresh backup",
-                    "kind": "guide",
-                    "guide": [],
-                    "dir": "T26",
-                    "file": "",
-                    "note": "1 question about the dry run of the fresh backup in the second window.",
-                    "estimate": 1,
-                    "after": [
-                        "T26 Restore the fresh backup r1"
-                    ],
-                    "answers": [
-                        {
-                            "key": "r-fresh",
-                            "prompt": "What did the second window say?",
-                            "kind": "pick",
-                            "choices": [
-                                "Nothing to restore",
-                                "Rows would come back",
-                                "Something else"
-                            ],
-                            "failOn": [
-                                "Rows would come back",
-                                "Something else"
-                            ]
-                        }
-                    ],
-                    "answersOnly": true
-                },
-                {
-                    "name": "T26 Remove the fake rows r1",
+                    "name": "T26 Remove the fake rows r2",
                     "title": "Remove the fake publication and its answers",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r2.ps1",
@@ -709,7 +597,7 @@
                     "doing": "Removing the fake rows."
                 },
                 {
-                    "name": "T21 Remove the test list and library r11",
+                    "name": "T21 Remove the test list and library r12",
                     "title": "Remove the test person, list and library",
                     "dir": "T21",
                     "file": "90161Z-T21-probe-r12.ps1",
@@ -729,190 +617,181 @@
             "collect": [
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-r14.txt",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-window-r15.txt",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
                     "name": "90161Z-T22-feedback-*.txt;90161Z-T22-feedback-*.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-again-r14.txt",
-                    "step": "T22 Open the window again r14"
+                    "name": "90161Z-T22-card-home-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-home-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-empty-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-empty-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-queue-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-queue-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-reviews-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-reviews-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-step8-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step8-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-confirm-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-confirm-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-sendback-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-sendback-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-waves-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-waves-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-step11-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step11-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-step12-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step12-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-step13-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step13-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-pub-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-pub-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-settings-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-settings-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-loading-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-loading-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-failed-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-failed-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-noperm-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-noperm-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
-                },
-                {
-                    "dir": "T22",
-                    "name": "90161Z-T22-card-remindall-r14.png",
-                    "step": "T22 Open the 90-161.Z window r14"
+                    "name": "90161Z-T22-card-remindall-r15.png",
+                    "step": "T22 Open the 90-161.Z window r15"
                 },
                 {
                     "dir": "T21",
                     "name": "90161Z-T21-probe-clean-first-r12.txt",
-                    "step": "T21 Check the test site is clean r11"
+                    "step": "T21 Check the test site is clean r12"
                 },
                 {
                     "dir": "T21",
                     "name": "90161Z-T21-probe-make-r12.txt",
-                    "step": "T21 Make the probe list r11"
+                    "step": "T21 Make the probe list r12"
                 },
                 {
                     "dir": "T21",
                     "name": "90161Z-T21-probe-person-r12.txt",
-                    "step": "T21 Add the second person r11"
+                    "step": "T21 Add the second person r12"
                 },
                 {
                     "dir": "T26",
                     "name": "90161Z-T26-endorse-make-r2.txt",
-                    "step": "T26 Make the fake publication r1"
+                    "step": "T26 Make the fake publication r2"
                 },
                 {
                     "dir": "T26",
                     "name": "90161Z-T26-endorse-read-r2.txt",
-                    "step": "T26 Read the endorser answer r1"
+                    "step": "T26 Read the endorser answer r2"
                 },
                 {
                     "dir": "T26",
                     "name": "90161Z-T26-endorse-rows-r2.txt",
-                    "step": "T26 Make the Restore test rows r1"
+                    "step": "T26 Make the Restore test rows r2"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-backup-r14.txt",
-                    "step": "T22 Check the Back up r14"
+                    "name": "90161Z-T22-backup-r15.txt",
+                    "step": "T22 Check the Back up r15"
                 },
                 {
                     "dir": "T26",
                     "name": "90161Z-T26-endorse-change-r2.txt",
-                    "step": "T26 Delete and add the test rows r1"
+                    "step": "T26 Delete and add the test rows r2"
                 },
                 {
                     "dir": "T26",
                     "name": "90161Z-T26-endorse-check-r2.txt",
-                    "step": "T26 Check the restored rows r1"
+                    "step": "T26 Check the restored rows r2"
                 },
                 {
                     "dir": "T26",
                     "name": "90161Z-T26-endorse-clean-r2.txt",
-                    "step": "T26 Remove the fake rows r1"
+                    "step": "T26 Remove the fake rows r2"
                 },
                 {
                     "dir": "T21",
                     "name": "90161Z-T21-probe-clean-last-r12.txt",
-                    "step": "T21 Remove the test list and library r11"
+                    "step": "T21 Remove the test list and library r12"
                 }
             ],
             "fetch": [],
             "apps": [
                 {
-                    "name": "90-161.Z R41",
-                    "summary": "Round R41 r1: window r14 with your test site lists (read only), every screen, an endorser answer by list form, and RADE Restore of fake rows.",
+                    "name": "90-161.Z R42",
+                    "summary": "Round R42 r1: window r15 with room for the scroll bar, an endorser answer, a small CAC sign-in window, and RADE Restore of fake rows with their Recycle Bin row numbers.",
                     "steps": [
-                        "T21 Check the test site is clean r11",
-                        "T21 Make the probe list r11",
-                        "T21 Add the second person r11",
-                        "T26 Make the fake publication r1",
-                        "T26 Second person answers r1",
-                        "T26 Read the endorser answer r1",
-                        "T22 Open the 90-161.Z window r14",
-                        "T22 Did the window open r14",
-                        "T22 Open the window again r14",
-                        "T22 Answer: look and cards r14",
-                        "T26 Make the Restore test rows r1",
-                        "T26 Back up in a second window r1",
-                        "T22 Check the Back up r14",
-                        "T26 Delete and add the test rows r1",
-                        "T26 Start Restore in a second window r1",
-                        "T26 Answer: the Restore dry run r1",
-                        "T26 Restore with the app name r1",
-                        "T26 Check the restored rows r1",
-                        "T26 Restore again r1",
-                        "T26 Answer: Restore again r1",
-                        "T26 Restore the fresh backup r1",
-                        "T26 Answer: the fresh backup r1",
-                        "T26 Remove the fake rows r1",
-                        "T21 Remove the test list and library r11"
+                        "T21 Check the test site is clean r12",
+                        "T21 Make the probe list r12",
+                        "T21 Add the second person r12",
+                        "T26 Make the fake publication r2",
+                        "T26 Second person answers r2",
+                        "T26 Read the endorser answer r2",
+                        "T22 Open the 90-161.Z window r15",
+                        "T22 Did the window open r15",
+                        "T22 Answer: look and cards r15",
+                        "T26 Make the Restore test rows r2",
+                        "T26 Back up in a second window r2",
+                        "T22 Check the Back up r15",
+                        "T26 Delete and add the test rows r2",
+                        "T26 Start Restore in a second window r2",
+                        "T26 Answer: the Restore dry run r2",
+                        "T26 Restore with the app name r2",
+                        "T26 Close the second window r2",
+                        "T26 Check the restored rows r2",
+                        "T26 Remove the fake rows r2",
+                        "T21 Remove the test list and library r12"
                     ]
                 },
                 {
@@ -921,7 +800,7 @@
                     "mode": "deploy",
                     "version": "0.1.0",
                     "steps": [
-                        "T22 Record the test install r14"
+                        "T22 Record the test install r15"
                     ],
                     "backup": [
                         "PFM Activity Log",
@@ -1963,6 +1842,34 @@
                 },
                 {
                     "path": "T22\\90161Z-T22-*-r13.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-*-r11.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T21\\90161Z-T21-probe-*-r11.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r14.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r14.png",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T22\\90161Z-T22-*-r14.txt",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T26\\90161Z-T26-*-r1.ps1",
+                    "kind": "glob"
+                },
+                {
+                    "path": "T26\\90161Z-T26-endorse-*-r1.txt",
                     "kind": "glob"
                 }
             ]
