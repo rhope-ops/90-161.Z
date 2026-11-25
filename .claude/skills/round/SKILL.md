@@ -68,7 +68,7 @@ Also:
 
 ## 6. Release order
 
-1. Build: task scripts, round definition, bundle, go.md task.
+1. Build: task scripts, round definition, bundle, go.md task; then run `python3 scripts/build_go_page.py` (it writes the task cards into index.html).
 2. Push the branch: the pre-push hook runs the fast lane.
 3. Run the full lane once on the head commit (`scripts/check.sh`).
 4. Fresh review of the code diff (AGENTS.md "Delegation"); start it while the hosted check runs.
