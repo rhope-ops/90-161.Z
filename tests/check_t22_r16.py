@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""T22 r15 checks (round R42 T1: docs/reviews/2026-11-21-r42-plan.md; the R41 checks: docs/reviews/2026-11-21-r41-plan.md rows 1, 3, 4).
+"""T22 r16 checks (round R42 T1: docs/reviews/2026-11-21-r42-plan.md; the R41 checks: docs/reviews/2026-11-21-r41-plan.md rows 1, 3, 4).
 
 What it checks, on the window's text form (-PlanOnly; no window here: tests/ps/Test-T22Layout.ps1 measures the window on
 the Windows job) and on the part files:
@@ -23,7 +23,7 @@ the Windows job) and on the part files:
 Network: none.
 Writes: one temporary folder for the Feedback case and one for the grid case, each removed at the end (it runs pwsh on the cards and feedback parts).
 Credentials: none.
-Usage: python3 tests/check_t22_r15.py   exit 0 = pass (last line T22R15 PASS), 1 = a failed assertion."""
+Usage: python3 tests/check_t22_r16.py   exit 0 = pass (last line T22R16 PASS), 1 = a failed assertion."""
 import pathlib
 import re
 import shutil
@@ -40,18 +40,18 @@ def need_pwsh():
     Takes nothing; returns nothing; exits 1 with the install pointer when pwsh is not on the PATH.
     """
     if not shutil.which('pwsh'):
-        sys.exit('FAIL tests/check_t22_r15.py needs pwsh (PowerShell 7) for the walk and feedback cases; '
+        sys.exit('FAIL tests/check_t22_r16.py needs pwsh (PowerShell 7) for the walk and feedback cases; '
                  'install it (docs/dev-setup.md), then run again.')
 
 
 def part(name):
-    """The text of T22 part <name> r15. Takes the part name; returns the file text."""
-    return (GOV / ('90161Z-T22-%s-r15.ps1' % name)).read_text(encoding='utf-8')
+    """The text of T22 part <name> r16. Takes the part name; returns the file text."""
+    return (GOV / ('90161Z-T22-%s-r16.ps1' % name)).read_text(encoding='utf-8')
 
 
 def check_walk():
     """The click-through plan of -PlanOnly. Takes nothing; raises AssertionError on a bad plan."""
-    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r15.ps1'), '-PlanOnly'],
+    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r16.ps1'), '-PlanOnly'],
                          capture_output=True, text=True, timeout=120, cwd=ROOT).stdout.splitlines()
     cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
     pat = r'WALK (\d+) (\S+) (rail|button|link|open): (Screen (\d+) of (\d+): select .+\. Pass if .+ opens and looks right\.)$'
@@ -73,12 +73,12 @@ def check_parts():
     w = part('window')
     for x in ("' (open: ' + $wn.OpenKind + ')'", '& $wn.FitSettled', '$wn.FitTries -lt 3', '& $wn.WalkSeen $Key'):
         assert x in w, 'the window part lacks ' + x
-    main = (GOV / '90161Z-T22-pfm-window-r15.ps1').read_text(encoding='utf-8')
+    main = (GOV / '90161Z-T22-pfm-window-r16.ps1').read_text(encoding='utf-8')
     assert "foreach ($l in @(& $wn.WalkLines)) { $lines.Add($l) }" in main and 'Invoke-SiteRead $siteAt' in main, 'main script'
 
 
 FEEDBACK_PS = r"""
-$ErrorActionPreference = 'Stop'; $Rev = 'r15'; $dir = $args[0]; $who = $null; $lines = New-Object System.Collections.Generic.List[string]
+$ErrorActionPreference = 'Stop'; $Rev = 'r16'; $dir = $args[0]; $who = $null; $lines = New-Object System.Collections.Generic.List[string]
 $wn = @{ PngDir = '' }; $form = $null; $ui = @{}
 function Hide-Site([string]$Text, [string]$Site) { return $Text }
 function ConvertTo-Masked([string]$Text, $Secret) { return $Text }
@@ -88,7 +88,7 @@ $wn.PngSave = { param($Shot, [string]$Path) Set-Content -LiteralPath $Path -Valu
 $a = & $wn.FeedbackSave 'home' 'FAKE comment one' $shot; $b = & $wn.FeedbackSave 'queue' 'FAKE comment two' $shot; & $wn.FeedbackList
 $lines | ForEach-Object { 'LINE ' + $_ }
 Get-ChildItem -LiteralPath $dir -Name | Sort-Object | ForEach-Object { 'FILE ' + $_ }
-Get-Content -LiteralPath (Join-Path $dir '90161Z-T22-feedback-r15.txt') | ForEach-Object { 'LIST ' + $_ }
+Get-Content -LiteralPath (Join-Path $dir '90161Z-T22-feedback-r16.txt') | ForEach-Object { 'LIST ' + $_ }
 """
 
 
@@ -99,16 +99,16 @@ def check_feedback():
     try:
         ps = pathlib.Path(d, 'case.ps1')
         ps.write_text(FEEDBACK_PS, encoding='utf-8')
-        out = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), d, str(GOV / '90161Z-T22-feedback-r15.ps1')],
+        out = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), d, str(GOV / '90161Z-T22-feedback-r16.ps1')],
                              capture_output=True, text=True, timeout=60).stdout.splitlines()
         files = [l[5:] for l in out if l.startswith('FILE ')]
         lines = [l[5:] for l in out if l.startswith('LINE ')]
         lst = [l[5:] for l in out if l.startswith('LIST ')]
-        assert 'FEEDBACK home: 90161Z-T22-feedback-home-r15.txt' in lines and 'FEEDBACK home: picture not saved (2 site rows without a fake-data marker)' in lines, out
-        assert 'FEEDBACK queue: 90161Z-T22-feedback-queue-r15.txt and 90161Z-T22-feedback-queue-r15.png' in lines, out
-        assert '90161Z-T22-feedback-home-r15.png' not in files and '90161Z-T22-feedback-queue-r15.png' in files and '90161Z-T22-feedback-home-r15.txt' in files, files
-        assert '  90161Z-T22-feedback-home-r15.txt (picture not saved)' in lst and not any('home-r15.png' in l for l in lst + lines), lst
-        assert '  90161Z-T22-feedback-queue-r15.txt and 90161Z-T22-feedback-queue-r15.png' in lst, lst
+        assert 'FEEDBACK home: 90161Z-T22-feedback-home-r16.txt' in lines and 'FEEDBACK home: picture not saved (2 site rows without a fake-data marker)' in lines, out
+        assert 'FEEDBACK queue: 90161Z-T22-feedback-queue-r16.txt and 90161Z-T22-feedback-queue-r16.png' in lines, out
+        assert '90161Z-T22-feedback-home-r16.png' not in files and '90161Z-T22-feedback-queue-r16.png' in files and '90161Z-T22-feedback-home-r16.txt' in files, files
+        assert '  90161Z-T22-feedback-home-r16.txt (picture not saved)' in lst and not any('home-r16.png' in l for l in lst + lines), lst
+        assert '  90161Z-T22-feedback-queue-r16.txt and 90161Z-T22-feedback-queue-r16.png' in lst, lst
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -187,7 +187,7 @@ foreach ($g in $grids) { foreach ($kind in 'fits', 'over') {
     $at = Get-GridW 1920 $g[0] $g[1]; $rows = @($at.B.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols @($at.B.Cols) $at.W $pw $rows
     $p = & $wn.ColPlan $cols $at.W 0 (& $wn.PubMin $cols $pw) $rows
     $gc = @(); $kinds = @{}; foreach ($c in $cols) { $kinds[[string]$c.N] = [string]$c.K
-      $gc += [pscustomobject]@{ Name = [string]$c.N; Visible = $true; MinimumWidth = [int]$p.Min[[string]$c.N]; Width = [int]$p.Min[[string]$c.N] } }
+      $gc += [pscustomobject]@{ Name = [string]$c.N; Visible = $true; MinimumWidth = [int]$p.Min[[string]$c.N]; Width = [int]$p.Min[[string]$c.N]; AutoSizeMode = 'Fill' } }
     $s = 0; foreach ($c in $gc) { $s += $c.Width }; $x = $at.W - 28 - $s + 42   # over: 42 px more than the room
     if ($kind -eq 'over') { $pl = @($gc | Where-Object { $kinds[$_.Name] -eq 'plain' } | Sort-Object MinimumWidth -Descending)[0]; $pl.MinimumWidth += $x; $pl.Width += $x }
     else { $gc[0].Width += $at.W - $s }   # fits: the fill gives the rest of the grid to the first column
@@ -207,8 +207,8 @@ def check_grid_plan():
     try:
         ps = pathlib.Path(d, 'grid.ps1')
         ps.write_text(GRID_PS, encoding='utf-8')
-        res = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), str(GOV / '90161Z-T22-grid-r15.ps1'),
-                              str(GOV / '90161Z-T22-cards-r15.ps1'), str(GOV / '90161Z-T22-site-r15.ps1')],
+        res = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), str(GOV / '90161Z-T22-grid-r16.ps1'),
+                              str(GOV / '90161Z-T22-cards-r16.ps1'), str(GOV / '90161Z-T22-site-r16.ps1')],
                              capture_output=True, text=True, timeout=120)
     finally:
         shutil.rmtree(d, ignore_errors=True)
@@ -253,7 +253,7 @@ def check_walk_path():
     """R15 (R41 finding 4): each walk step names a control that is on the screen shown at that step: a rail item, a
     button of the card the step before opened (not in a wide-only section, needing nothing), or the bar's own link.
     Takes nothing; raises AssertionError."""
-    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r15.ps1'), '-PlanOnly'],
+    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r16.ps1'), '-PlanOnly'],
                          capture_output=True, text=True, timeout=120, cwd=ROOT).stdout.splitlines()
     rail, buttons, key, wide = {}, {}, None, False
     for l in out:
@@ -291,10 +291,10 @@ def check_ui_names():
     Takes nothing; raises AssertionError with the missing names.
     """
     defined, used = set(), set()
-    for f in sorted(GOV.glob('90161Z-T22-*-r15.ps1')):
+    for f in sorted(GOV.glob('90161Z-T22-*-r16.ps1')):
         t = f.read_text(encoding='utf-8')
         defined |= set(re.findall(r'^\s*\$ui\.(\w+)\s*=', t, re.M))
-        if not re.search(r'-ui2?-r15\.ps1$', f.name):
+        if not re.search(r'-ui2?-r16\.ps1$', f.name):
             used |= set(re.findall(r'&\s*\$ui\.(\w+)', t))
     assert not used - defined, 'T22 calls $ui names that no T22 file defines: ' + ', '.join(sorted(used - defined))
 
@@ -306,5 +306,5 @@ if __name__ == '__main__':
     check_parts()
     check_grid_plan()
     check_walk_path()
-    print('T22R15 PASS')
+    print('T22R16 PASS')
     sys.exit(0)
