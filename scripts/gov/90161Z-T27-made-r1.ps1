@@ -10,9 +10,10 @@
   the ONE table of those exact names: kind 'list' with the title of one of the 12 lists, 'group' PFM Office, 'level' PFM Office Edit
   All Items; kind 'file' (the install note of T22) stays from the first build. tests/ps/Test-T20.ps1 checks that T20 prints these names.
   Safety rule (the PFM's data boundary): a thing is removed only when ALL of these agree: RADE_MODE is uninstall, the file is rade-made/1
-  of the app 90-161.Z, and the thing is in the own-name table below. The PFM's decision of 25 Nov 26: the lists, the group and the level
-  are removed by their fixed names whether or not the made list names them (the 12 lists of the test site were made before RADE installs);
-  the made list adds only NOTE lines for a name that is not ours. A list must also have its internal name as its folder name, and its
+  of the app 90-161.Z, and the thing is in the own-name table below. The PFM's decision of 25 Nov 26: the lists are removed by their fixed
+  names whether or not the made list names them (the 12 lists of the test site were made before RADE installs); the group and the level
+  go only when the made list names them (a group cannot go to a Recycle Bin, so its removal cannot be undone); the made list adds
+  NOTE lines for a name that is not ours. A list must also have its internal name as its folder name, and its
   fixed title (the one it has after T20 step 4) or, for a list that a stopped install left, its internal name as title.
   Network: none.
   Writes: none.

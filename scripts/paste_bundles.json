@@ -251,7 +251,7 @@
                     "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Make",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Makes one fake publication and one fake endorsement on the test site, or finds them. Puts 2 form links and 8 steps for the second person on the clipboard.",
+                    "note": "Signs in (CAC). Makes one fake publication (with OPR, level, type, 673 link) and one fake endorsement, or finds them. Puts 2 form links and 8 steps for the second person on the clipboard.",
                     "estimate": 1,
                     "help": "Send the results as they are. A second run makes no second row.",
                     "needs": [
@@ -703,7 +703,7 @@
                     "file": "90161Z-T27-lifecycle-r1.ps1",
                     "args": "-Part Access",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Uninstall step. Removes the group PFM Office and its permission level, found by their names. No other group or level is removed.",
+                    "note": "Signs in (CAC). Uninstall step. Removes the group PFM Office and its permission level only when RADE recorded that the install made them. Otherwise they stay. No other group or level is removed.",
                     "estimate": 1,
                     "help": "Send the results as they are. A second run finds nothing left.",
                     "needs": [
@@ -801,7 +801,7 @@
                     "file": "90161Z-T26-endorse-r2.ps1",
                     "args": "-Part Make",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Makes one fake publication and one fake endorsement on the test site, or finds them. Puts text on the clipboard that this part does not use.",
+                    "note": "Signs in (CAC). Makes one fake publication (with OPR, level, type and 673 link) and one fake endorsement on the test site, or finds them. Puts text on the clipboard that this part does not use.",
                     "estimate": 1,
                     "help": "Send the results as they are. A second run makes no second row.",
                     "needs": [

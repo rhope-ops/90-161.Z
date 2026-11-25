@@ -6,8 +6,9 @@
 .DESCRIPTION
   Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v40: a Back up first, then these steps). The lists, the group and
   the level are removed BY THEIR FIXED NAMES (the PFM, 25 Nov 26: the 12 lists of the test site were made before RADE installs, so RADE
-  has no record of them): the own-name table of the module 90161Z-T27-made-r1.ps1, whether or not RADE_MADE names them. Never a list,
-  group or level whose name is not in that table. The other gates stay: RADE_MODE=uninstall, a made list (RADE_MADE) of schema
+  has no record of them): the own-name table of the module 90161Z-T27-made-r1.ps1, whether or not RADE_MADE names them. The group and the
+  level are different (the PFM, 25 Nov 26): a group cannot go to a Recycle Bin, so its removal cannot be undone; they go only when
+  RADE_MADE names them. Never a list, group or level whose name is not in that table. The other gates stay: RADE_MODE=uninstall, a made list (RADE_MADE) of schema
   rade-made/1 for the app 90-161.Z, the app name and the own-name table. They print one ITEM line for each thing (PASS removed, SKIP
   nothing left, FAIL) and one RESULT line (PASS, SKIP or FAIL). A second run finds nothing left and prints SKIP. Without RADE_MODE=uninstall
   and a made list of schema rade-made/1 for 90-161.Z they remove nothing and print FAIL.
@@ -15,8 +16,9 @@
             folder name is its internal name AND its title is its fixed title (or, for a list that a stopped install left, its internal
             name): a list that a person made and titled like ours, and a list of ours that a person retitled, stay and print SKIP. A list
             that other lists point to is removed after the lists that point to it.
-    Access  Removes the group PFM Office and the permission level PFM Office Edit All Items by those 2 names. T20 makes each one only
-            when the site has none, so a group that was there before the install is removed too (test sites only).
+    Access  Removes the group PFM Office and the permission level PFM Office Edit All Items, each one only when RADE_MADE names it (the
+            install made it). A group or level that RADE_MADE does not name stays and prints SKIP "not made by the install" (T20 makes
+            each one only when the site has none, so one that was there before the install is not ours to remove).
     Local   Removes the install note file of this computer (T22 folder), only when the made list names it (a file is not covered by
             the decision of 25 Nov 26). RADE keeps its own install record and marks it uninstalled; this script never touches that record.
   The read-only checks and the step (a round step; they need no made list). Module: 90161Z-T27-check-r1.ps1.
@@ -235,10 +237,11 @@ function Invoke-ListsPart($Made) {
 }
 <#
 .SYNOPSIS
-  The part Access: removes the group PFM Office, then the permission level PFM Office Edit All Items, by these 2 fixed names, whether or
-  not the made list names them. No other group and no other level is ever removed.
+  The part Access: removes the group PFM Office, then the permission level PFM Office Edit All Items, each only when the made list names
+  it (the install made it; a group cannot go to a Recycle Bin). A name that is not named stays and prints SKIP. No other group and no
+  other level is ever removed.
 .PARAMETER Made
-  The result of Read-MadeFile (accepted). It only adds NOTE lines here: a group or level name in it that is not ours is refused.
+  The result of Read-MadeFile (accepted). A group or level name in it that is not ours is refused (NOTE) and never removed.
 #>
 function Invoke-AccessPart($Made) {
   foreach ($n in (Get-MadeName $Made.Items 'group')) {
@@ -247,20 +250,24 @@ function Invoke-AccessPart($Made) {
   foreach ($n in (Get-MadeName $Made.Items 'level')) {
     if (-not (Test-OwnName 'level' $n)) { $lines.Add('NOTE refused: a level in the made list is not the level of 90-161.Z (not removed)') }
   }
+  $madeGroup = @(Get-MadeName $Made.Items 'group') -ccontains $OwnGroup
+  $madeLevel = @(Get-MadeName $Made.Items 'level') -ccontains $OwnLevel
   Connect-LifecycleSite
-  $removed = Invoke-OwnAccessRemoval 'a1-group' $OwnGroup { Get-GroupId $OwnGroup } { Remove-PnPGroup -Identity $OwnGroup -Force -ErrorAction Stop }
-  $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel { Get-OwnLevelId } { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop }
+  $removed = Invoke-OwnAccessRemoval 'a1-group' $OwnGroup $madeGroup { Get-GroupId $OwnGroup } { Remove-PnPGroup -Identity $OwnGroup -Force -ErrorAction Stop }
+  $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel $madeLevel { Get-OwnLevelId } { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop }
   Add-UninstallResult $removed
 }
 # The number of the permission level PFM Office Edit All Items on the site, or 0 when it is not there.
 function Get-OwnLevelId { $v = Get-RoleLevel $OwnLevel 0; if ($v) { return [int]$v.Id }; return 0 }
 <#
 .SYNOPSIS
-  Removes one named thing of the site (the group or the level) when it is there, and reads it back.
+  Removes one named thing of the site (the group or the level) when the made list names it and it is there, and reads it back.
 .PARAMETER Tag
   The item name for the result line.
 .PARAMETER Name
   The name of the thing (it is one of the 2 fixed names of the module; the caller checked it).
+.PARAMETER Named
+  Whether the made list names the thing (the install made it). When it does not, nothing is removed and the item is a SKIP.
 .PARAMETER Find
   A script block that returns the number of the thing, or 0 when it is not on the site.
 .PARAMETER Remove
@@ -268,7 +275,8 @@ function Get-OwnLevelId { $v = Get-RoleLevel $OwnLevel 0; if ($v) { return [int]
 .OUTPUTS
   System.Int32. 1 when it was removed and read back, else 0.
 #>
-function Invoke-OwnAccessRemoval([string]$Tag, [string]$Name, [scriptblock]$Find, [scriptblock]$Remove) {
+function Invoke-OwnAccessRemoval([string]$Tag, [string]$Name, [bool]$Named, [scriptblock]$Find, [scriptblock]$Remove) {
+  if (-not $Named) { Add-Item $Tag 'SKIP' ('not made by the install: ' + $Name + ' stays'); return 0 }
   if (-not (& $Find)) { Add-Item $Tag 'SKIP' ('not on the site: nothing left to remove: ' + $Name); return 0 }
   try { Write-Host ('NOW Removing ' + $Name); $null = & $Remove }
   catch { Add-Item $Tag 'FAIL' ('could not be removed: ' + (Get-ShortError $_) + ' (run this step again)'); return 0 }
