@@ -686,7 +686,7 @@
                     "file": "90161Z-T27-lifecycle-r1.ps1",
                     "args": "-Part Lists",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Uninstall step. Moves the lists that the install made to the site Recycle Bin. A list that the install did not make stays.",
+                    "note": "Signs in (CAC). Uninstall step. Moves the 12 lists of 90-161.Z to the site Recycle Bin, found by their fixed titles. A list with another title stays.",
                     "estimate": 2,
                     "help": "Send the results as they are. A second run finds nothing left.",
                     "needs": [
@@ -703,7 +703,7 @@
                     "file": "90161Z-T27-lifecycle-r1.ps1",
                     "args": "-Part Access",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Uninstall step. Removes the group PFM Office and its permission level, only when the install made them.",
+                    "note": "Signs in (CAC). Uninstall step. Removes the group PFM Office and its permission level, found by their names. No other group or level is removed.",
                     "estimate": 1,
                     "help": "Send the results as they are. A second run finds nothing left.",
                     "needs": [
@@ -820,7 +820,7 @@
                     "file": "90161Z-T27-lifecycle-r1.ps1",
                     "args": "-Part Step",
                     "minutes": 10,
-                    "note": "Signs in (CAC). Moves the fake publication out of step 1, Request (DAFMAN 90-161 3.1), into step 2, Drafting with SMEs (3.2), and reads it back from the site. It does not test the exit of a step.",
+                    "note": "Signs in (CAC). Checks the exit conditions of step 1 (DAFMAN 90-161 3.1) on the fake publication, moves it to step 2 (3.2) only if they hold, reads it back and checks them again.",
                     "estimate": 1,
                     "help": "Send the results as they are. A second run changes nothing.",
                     "needs": [

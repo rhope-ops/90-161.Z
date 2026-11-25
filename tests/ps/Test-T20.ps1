@@ -1,6 +1,6 @@
 # Tests scripts/gov/90161Z-T20-provision-lists-r4.ps1 (with its part 90161Z-T20-access-r4.ps1) and scripts/gov/90161Z-T19-list-update-r6.ps1 against the strict fake in
 # tests/fake-pnp (pwsh 7, cloud only). Proves the logic: order, list ids, lookup ids, skip-what-exists, the PFM Office level
-# (F2 A), the per-list access read-back (R34 plan, open point 12), Contribute for the Visitors group on the intake lists (r4, PFM 19 Nov 26), the T19 choices (S3 A: T-0) and the suspense setting (15), the checks and the masking. The real service is proved only by a gov device round.
+# (F2 A), the per-list access read-back (R34 plan, open point 12), Contribute for the Visitors group on the intake lists (r4, PFM 19 Nov 26), the T19 choices (S3 A: T-0) and the suspense setting (15), the MADE lines (RADE engine-v40: one for each item that a run made, none otherwise), the checks and the masking. The real service is proved only by a gov device round.
 # Last line: "T20 pass=N fail=0".
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
@@ -96,6 +96,11 @@ function New-FakeSite { & $fakeModule { New-FakeSite } }
 }
 # The level Ids of Read and Contribute on the fake site (the fake gives them fixed numbers).
 function Get-FakeLevelId([string]$Name) { return [int]@($global:FakeSP.Levels | Where-Object { $_['Name'] -eq $Name })[0]['Id'] }
+# The own-name table of T27 (what Uninstall removes) and the line that RADE engine-v40 reads (case sensitive).
+. (Join-Path $Root 'scripts/gov/90161Z-T27-made-r1.ps1')
+$engineMade = '^\s*MADE\s+([a-z][a-z-]{0,30}):\s+(\S.*)$'
+# The MADE lines of one run (a result of Invoke-T20), as 'kind: name' texts in output order. Takes the result; returns an array.
+function Get-MadeText($Run) { return @($Run.Out | Where-Object { $_ -cmatch $engineMade } | ForEach-Object { $_ -replace '^\s*MADE\s+', '' }) }
 # The three intake lists of the fake site. Takes nothing; returns the list objects.
 function Get-IntakeLists { return @($global:FakeSP.Lists | Where-Object { @('PFMPublications', 'PFMEndorsements', 'PFMRecommendations') -contains $_.RootFolder.Name }) }
 
@@ -107,6 +112,7 @@ Test-That 'check writes nothing' ($global:FakeSP.Posts -eq 0)
 Test-That 'check result file' (Test-Path -LiteralPath (Join-Path $t20 '90161Z-T20-clean-check-r4.txt'))
 
 $r = Invoke-T20 'DryRun'
+Test-That 'dry run: no MADE line (nothing is made)' (@($r.Out | Where-Object { $_ -match 'MADE' }).Count -eq 0) $r.Text
 Test-That 'dry run: counts' ($r.Text -match 'DRYRUN would create lists=12 fields=200 views=18 view-column requests=115 rows=93; set: updates=21 permissions=2') $r.Text
 Test-That 'dry run writes nothing' ($global:FakeSP.Posts -eq 0 -and (Get-Ours).Count -eq 0 -and $global:FakeSP.BreakCalls -eq 0 -and $global:FakeSP.GrantCalls -eq 0)
 Test-That 'dry run: the 3 intake lists would get own permissions and Contribute for Visitors (r4)' ($r.Text -match 'DRYRUN would create for the intake lists: own permissions=3 Visitors given Contribute=3') $r.Text
@@ -114,6 +120,11 @@ Test-That 'dry run: PFM Office would get the group, the level and the role (F2 A
 
 $r = Invoke-T20 ''
 $ours = Get-Ours
+$mt = Get-MadeText $r
+$wantMade = @($OwnLists.Values | ForEach-Object { 'list: ' + $_ }) + @(('group: ' + $OwnGroup), ('level: ' + $OwnLevel))
+Test-That 'create: 14 MADE lines (12 lists, the group, the level), each one the engine pattern, each line once' ($mt.Count -eq 14 -and @($r.Out | Where-Object { $_ -match '^\s*MADE' }).Count -eq 14 -and @($mt | Sort-Object -Unique).Count -eq 14) ($mt -join '|')
+Test-That 'create: the MADE names are the own-name table of T27 (the 12 titles, PFM Office, PFM Office Edit All Items)' ((($mt | Sort-Object) -join '|') -ceq (($wantMade | Sort-Object) -join '|')) ($mt -join '|')
+Test-That 'create: the MADE lines name the titles the site shows (every list of the site has a MADE line)' (@($ours | Where-Object { $mt -cnotcontains ('list: ' + $_.Title) }).Count -eq 0) ($mt -join '|')
 Test-That 'create: exit 0 and no problems' ($r.Code -eq 0 -and $r.Text -match 'PROVISION done, items with problems=0') $r.Text
 Test-That 'create: 12 list lines pass' (@($r.Out | Where-Object { $_ -match '^ITEM L\d\d-PFM\w+ PASS' }).Count -eq 12)
 Test-That 'create: counts line' ($r.Text -match 'CREATED lists=12 fields=200 views=18 view-column requests=115 rows=93')
@@ -151,6 +162,7 @@ Test-That 'every POST body equals the payload body, in order' ($want.Count -eq 4
 $posts = $global:FakeSP.Posts
 $r = Invoke-T20 ''
 Test-That 'second run: creates nothing and passes' ($r.Code -eq 0 -and $r.Text -match 'CREATED lists=0 fields=0 views=0 view-column requests=115 rows=0' -and $r.Text -match 'items with problems=0') $r.Text
+Test-That 'second run: no MADE line (nothing was made)' ((Get-MadeText $r).Count -eq 0 -and @($r.Out | Where-Object { $_ -match '^\s*MADE' }).Count -eq 0) $r.Text
 Test-That 'second run: only the 115 view-column requests are sent again' ($global:FakeSP.Posts -eq $posts + 115)
 Test-That 'second run r4: no inheritance broken, no role given again, W01 to W03 PASS' ($global:FakeSP.BreakCalls -eq 3 -and $global:FakeSP.GrantCalls -eq 3 -and $r.Text -match 'CREATED for the intake lists: own permissions=0 Visitors given Contribute=0' -and @($r.Out | Where-Object { $_ -match '^ITEM W0[1-3]-\S+ PASS ' }).Count -eq 3) $r.Text
 Test-That 'second run: PFM Office: nothing made again, read back PASS' ($r.Text -match 'CREATED for PFM Office: group=0 level=0 level given to the group=0' -and $r.Text -match 'ITEM P01-pfm-office PASS' -and @($global:FakeSP.Levels).Count -eq 5) $r.Text
@@ -300,6 +312,7 @@ $pub.ViewList.RemoveAt(0)
 $r = Invoke-T20 ''
 Test-That 'repair run: fills only what is missing and passes' ($r.Code -eq 0 -and $r.Text -match 'CREATED lists=1 ' -and $r.Text -match ' views=1 ' -and $r.Text -match 'items with problems=0') $r.Text
 Test-That 'repair run: 12 lists again' ((Get-Ours).Count -eq 12)
+Test-That 'repair run: one MADE line, for the one list that was made again (nothing for what was there)' ((@(Get-MadeText $r) -join '|') -ceq 'list: PFM Waivers') ((Get-MadeText $r) -join '|')
 
 # Leftovers the check must name.
 $null = Add-FakeList '90-161.Z' 101 '90-161.Z'
@@ -322,6 +335,8 @@ foreach ($stopAt in 20, 300, 351, 400) {
   $global:FakeSP.FailAfter = 0
   $r2 = Invoke-T20 ''
   $o = Get-Ours
+  $both = @(Get-MadeText $r1) + @(Get-MadeText $r2)
+  Test-That ('stopped after ' + $stopAt + ' requests: the 2 runs together print each of the 14 MADE lines once') ($both.Count -eq 14 -and @($both | Sort-Object -Unique).Count -eq 14) ($both -join '|')
   Test-That ('stopped after ' + $stopAt + ' requests: the next run completes the site') ($r1.Code -eq 1 -and $r2.Code -eq 0 -and $r2.Text -match 'items with problems=0' -and $o.Count -eq 12 -and (($o | ForEach-Object { $_.Items.Count }) | Measure-Object -Sum).Sum -eq 93 -and (($o | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 200 -and @($o | ForEach-Object { $_.ViewList } | Where-Object { $_.Columns.Count -lt 1 }).Count -eq 0) ($r1.Out[-1] + ' / ' + $r2.Out[-1])
 }
 
@@ -353,6 +368,7 @@ Test-That 'after a stop: the next run finishes the site' ($r.Code -eq 0 -and $r.
 New-FakeSite
 $global:FakeSP.Groups = @('Members', 'PFM Office')
 $r = Invoke-T20 ''
+Test-That 'a group PFM Office that is there: no group line, the 12 lists and the level' (@(Get-MadeText $r).Count -eq 13 -and @(Get-MadeText $r | Where-Object { $_ -like 'group:*' }).Count -eq 0 -and @(Get-MadeText $r) -ccontains ('level: ' + $OwnLevel)) ((Get-MadeText $r) -join '|')
 Test-That 'a group PFM Office that is there: used, only the level and its role are made' ($r.Code -eq 0 -and $r.Text -match 'CREATED for PFM Office: group=0 level=1 level given to the group=1' -and @($global:FakeSP.WebRoles[2]).Count -eq 1 -and @($global:FakeSP.Groups).Count -eq 2) $r.Text
 New-FakeSite
 $global:FakeSP.Levels.RemoveAt(1)

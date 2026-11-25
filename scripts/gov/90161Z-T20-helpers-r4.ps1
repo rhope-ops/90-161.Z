@@ -79,6 +79,11 @@ function Find-OurList($SiteLists, [string]$Internal) {
   return $null
 }
 
+# Adds the line "MADE <kind>: <name>" to the output lines for one item that THIS run created (RADE engine-v40 reads it, and the Uninstall
+# of 90-161.Z gets it back in RADE_MADE). Kind is a lowercase word (list, group, level). Call it only after the item is made, never in a
+# dry run and never for an item that was already there. The final lines pass the mask, which keeps these product names.
+function Add-MadeLine([string]$Kind, [string]$Name) { $lines.Add('MADE ' + $Kind + ': ' + $Name) }
+
 # A MERGE of the payload, written through CSOM: every property of the body except __metadata is set, then Update.
 function Write-CsomMerge([string]$ListId, [string]$FieldName, $Body) {
   $ctx = Get-PnPContext

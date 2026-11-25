@@ -4,23 +4,27 @@
   (a move from step 1 to step 2; see the module check); test site only): the Uninstall steps of the app 90-161.Z, and the read-only checks and the process step that follow
   them. Windows PowerShell 5.1 (also 7), the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v40: a Back up first, then these steps); they remove only
-  what the install made, as RADE's made list names it (RADE_MADE), and only when the thing is also in the own-name table of the
-  module 90161Z-T27-made-r1.ps1. They print one ITEM line for each thing (PASS removed, SKIP nothing left, FAIL) and one RESULT
-  line (PASS, SKIP or FAIL). A second run finds nothing left and prints SKIP. Without RADE_MODE=uninstall and a made list of
-  schema rade-made/1 for 90-161.Z they remove nothing and print FAIL.
-    Lists   Removes the 12 lists the install made (T20) that the made list names, to the site Recycle Bin (restorable for 93
-            days). A list is removed only when its folder name is its internal name (never a list that a person made and
-            titled like ours). A list that other lists point to is removed after the lists that point to it.
-    Access  Removes the group PFM Office and the permission level PFM Office Edit All Items, only when the made list names them
-            (T20 makes each one only when the site has none, so a group that was there before is never in the made list).
-    Local   Removes the install note file of this computer (T22 folder), only when the made list names it. RADE keeps its own
-            install record and marks it uninstalled; this script never touches that record.
+  Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v40: a Back up first, then these steps). The lists, the group and
+  the level are removed BY THEIR FIXED NAMES (the PFM, 25 Nov 26: the 12 lists of the test site were made before RADE installs, so RADE
+  has no record of them): the own-name table of the module 90161Z-T27-made-r1.ps1, whether or not RADE_MADE names them. Never a list,
+  group or level whose name is not in that table. The other gates stay: RADE_MODE=uninstall, a made list (RADE_MADE) of schema
+  rade-made/1 for the app 90-161.Z, the app name and the own-name table. They print one ITEM line for each thing (PASS removed, SKIP
+  nothing left, FAIL) and one RESULT line (PASS, SKIP or FAIL). A second run finds nothing left and prints SKIP. Without RADE_MODE=uninstall
+  and a made list of schema rade-made/1 for 90-161.Z they remove nothing and print FAIL.
+    Lists   Removes each of the 12 lists of 90-161.Z to the site Recycle Bin (restorable for 93 days). A list is removed only when its
+            folder name is its internal name AND its title is its fixed title (or, for a list that a stopped install left, its internal
+            name): a list that a person made and titled like ours, and a list of ours that a person retitled, stay and print SKIP. A list
+            that other lists point to is removed after the lists that point to it.
+    Access  Removes the group PFM Office and the permission level PFM Office Edit All Items by those 2 names. T20 makes each one only
+            when the site has none, so a group that was there before the install is removed too (test sites only).
+    Local   Removes the install note file of this computer (T22 folder), only when the made list names it (a file is not covered by
+            the decision of 25 Nov 26). RADE keeps its own install record and marks it uninstalled; this script never touches that record.
   The read-only checks and the step (a round step; they need no made list). Module: 90161Z-T27-check-r1.ps1.
     Gone    After Uninstall: none of the 12 lists is on the site.
     Install After the install from zero: the 12 lists are on the site, and the process steps the next part needs are in PFM Process Steps.
     Step    1 fake publication (made by T26 Make) moves from step 1 (Request, DAFMAN 90-161 3.1) to step 2 (Drafting with SMEs, 3.2), and
-            the move is read back. It does not test the exit conditions of the steps. See the module.
+            the move is read back, but only when the exit conditions of step 1 that the lists can show hold on it
+            (checked before and after the move; the list and the sources are in the module header).
   WHAT IT CHANGES ON THE SITE: Lists, Access: the removals above. Step: 1 field (the process step) of the fake publication of T26.
   Gone and Install change nothing. Local: 1 file on this computer.
   Counts, list names of this product and status words only: no names, addresses or row text. The site address stays in
@@ -197,26 +201,24 @@ function Connect-LifecycleSite {
 function Get-ShortError($ErrorRecord) { $m = [string]$ErrorRecord.Exception.Message; return $m.Substring(0, [Math]::Min(120, $m.Length)) }
 <#
 .SYNOPSIS
-  The part Lists: removes the lists that the made list names and that are ours, to the site Recycle Bin, and reads each back.
+  The part Lists: removes each of the 12 lists of 90-161.Z by its fixed title (the own-name table), to the site Recycle Bin, whether or
+  not the made list names it, and reads each back. A list is removed only when its folder name is its internal name AND its title is
+  its fixed title; any other list stays.
 .PARAMETER Made
-  The result of Read-MadeFile (accepted).
+  The result of Read-MadeFile (accepted). It only adds NOTE lines here: a list name in it that is not one of the 12 is refused.
 #>
 function Invoke-ListsPart($Made) {
-  $want = @{}
   foreach ($n in (Get-MadeName $Made.Items 'list')) {
-    $k = Resolve-OwnList $n
-    if ($k) { $want[$k] = 1 } else { $lines.Add('NOTE refused: a list in the made list is not one of the 12 lists of 90-161.Z (not removed)') }
+    if (-not (Resolve-OwnList $n)) { $lines.Add('NOTE refused: a list in the made list is not one of the 12 lists of 90-161.Z (not removed)') }
   }
-  if (-not $want.Count) { Add-Item 'l00-lists' 'SKIP' 'no list of 90-161.Z is named in the made list: nothing to remove'; Add-UninstallResult 0; return }
   Connect-LifecycleSite
   Write-Host 'NOW Reading the lists of the site'
   $siteLists = Get-SiteList
   $removed = @(); $n = 0
   foreach ($k in $OwnLists.Keys) {
-    if (-not $want.ContainsKey($k)) { continue }
     $n++; $tag = 'l' + $n.ToString('00') + '-' + $k
-    $l = Find-OurList $siteLists $k   # ours = its folder name is the internal name
-    if (-not $l) { Add-Item $tag 'SKIP' 'the list is not on the site: nothing left to remove'; continue }
+    $l = Find-OwnListToRemove $siteLists $k
+    if (-not $l) { Add-Item $tag 'SKIP' (Get-ListLeftReason $siteLists $k); continue }
     try {
       Write-Host ('NOW Removing the list ' + $OwnLists[$k])
       $null = Remove-PnPList -Identity ([string]$l.Id) -Recycle -Force -ErrorAction Stop
@@ -226,32 +228,28 @@ function Invoke-ListsPart($Made) {
   $after = @(Get-SiteList)
   foreach ($k in $removed) {
     $tag = 'r-' + $k
-    if (Find-OurList $after $k) { Add-Item $tag 'FAIL' 'the list is still on the site after the remove (run this step again)' }
+    if (Find-OwnListToRemove $after $k) { Add-Item $tag 'FAIL' 'the list is still on the site after the remove (run this step again)' }
     else { Add-Item $tag 'PASS' ('the list is removed (moved to the site Recycle Bin): ' + $OwnLists[$k]) }
   }
   Add-UninstallResult $removed.Count
 }
 <#
 .SYNOPSIS
-  The part Access: removes the group PFM Office, then the permission level PFM Office Edit All Items, when the made list names them.
+  The part Access: removes the group PFM Office, then the permission level PFM Office Edit All Items, by these 2 fixed names, whether or
+  not the made list names them. No other group and no other level is ever removed.
 .PARAMETER Made
-  The result of Read-MadeFile (accepted).
+  The result of Read-MadeFile (accepted). It only adds NOTE lines here: a group or level name in it that is not ours is refused.
 #>
 function Invoke-AccessPart($Made) {
-  $wantGroup = $false; $wantLevel = $false
   foreach ($n in (Get-MadeName $Made.Items 'group')) {
-    if (Test-OwnName 'group' $n) { $wantGroup = $true } else { $lines.Add('NOTE refused: a group in the made list is not the group of 90-161.Z (not removed)') }
+    if (-not (Test-OwnName 'group' $n)) { $lines.Add('NOTE refused: a group in the made list is not the group of 90-161.Z (not removed)') }
   }
   foreach ($n in (Get-MadeName $Made.Items 'level')) {
-    if (Test-OwnName 'level' $n) { $wantLevel = $true } else { $lines.Add('NOTE refused: a level in the made list is not the level of 90-161.Z (not removed)') }
+    if (-not (Test-OwnName 'level' $n)) { $lines.Add('NOTE refused: a level in the made list is not the level of 90-161.Z (not removed)') }
   }
-  if (-not $wantGroup -and -not $wantLevel) { Add-Item 'a00-access' 'SKIP' 'no group or level of 90-161.Z is named in the made list: nothing to remove'; Add-UninstallResult 0; return }
   Connect-LifecycleSite
-  $removed = 0
-  if ($wantGroup) { $removed += Invoke-OwnAccessRemoval 'a1-group' $OwnGroup { Get-GroupId $OwnGroup } { Remove-PnPGroup -Identity $OwnGroup -Force -ErrorAction Stop } }
-  if ($wantLevel) {
-    $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel { Get-OwnLevelId } { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop }
-  }
+  $removed = Invoke-OwnAccessRemoval 'a1-group' $OwnGroup { Get-GroupId $OwnGroup } { Remove-PnPGroup -Identity $OwnGroup -Force -ErrorAction Stop }
+  $removed += Invoke-OwnAccessRemoval 'a2-level' $OwnLevel { Get-OwnLevelId } { Remove-PnPRoleDefinition -Identity $OwnLevel -Force -ErrorAction Stop }
   Add-UninstallResult $removed
 }
 # The number of the permission level PFM Office Edit All Items on the site, or 0 when it is not there.

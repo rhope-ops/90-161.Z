@@ -4,15 +4,16 @@
   can make, and the gate that reads RADE's list of what the install made (RADE_MADE).
 .DESCRIPTION
   Loaded by 90161Z-T27-lifecycle-r1.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
-  The contract (the R43 plan, "Engine facts for T5 and T7"; RADE engine-v40 is not released yet, so this is coded against the
-  plan text): RADE runs an uninstall step with RADE_MODE=uninstall and RADE_MADE = the path of a JSON file of schema
-  rade-made/1: { schema, app, made: [ { step, kind, name } ] }. The plan does not say which kind words RADE writes or whether
-  a list name is its title or its internal name. This file is the ONE place that decides it: kind 'list', 'group', 'level' and
-  'file' (the table below); a list name is accepted as its display title or its internal name. A different word makes the
-  entry "refused" (nothing is removed for it). Change the table here when the real file differs.
-  Safety rule (the PFM's data boundary and "delete only what the install made"): a thing is removed only when ALL of these agree:
-  RADE_MODE is uninstall, the file is rade-made/1 of the app 90-161.Z, an entry names the thing, and the thing is in the own-name
-  table below. The site is read last (the main file): a list must also have its internal name as its folder name.
+  The contract (RADE engine-v40; the R43 plan, "Engine facts"): RADE runs an uninstall step with RADE_MODE=uninstall and RADE_MADE = the
+  path of a JSON file of schema rade-made/1: { schema, app, made: [ { step, kind, name } ] }. Each made entry comes from one line that an
+  install step printed: "MADE <kind>: <name>" (T20 prints them: kind list with the display title, kind group, kind level). This file is
+  the ONE table of those exact names: kind 'list' with the title of one of the 12 lists, 'group' PFM Office, 'level' PFM Office Edit
+  All Items; kind 'file' (the install note of T22) stays from the first build. tests/ps/Test-T20.ps1 checks that T20 prints these names.
+  Safety rule (the PFM's data boundary): a thing is removed only when ALL of these agree: RADE_MODE is uninstall, the file is rade-made/1
+  of the app 90-161.Z, and the thing is in the own-name table below. The PFM's decision of 25 Nov 26: the lists, the group and the level
+  are removed by their fixed names whether or not the made list names them (the 12 lists of the test site were made before RADE installs);
+  the made list adds only NOTE lines for a name that is not ours. A list must also have its internal name as its folder name, and its
+  fixed title (the one it has after T20 step 4) or, for a list that a stopped install left, its internal name as title.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -22,7 +23,8 @@
 # The app that the made list must name.
 $MadeApp = '90-161.Z'
 $MadeSchema = 'rade-made/1'
-# The 12 lists the install makes (T20 creates each under its internal name, then sets the display title). Order: the lists that
+# The 12 lists the install makes: internal name = display title (T20 creates each under its internal name, then sets the display
+# title, and prints "MADE list: <display title>"). Order: the lists that
 # other lists point to by a lookup column come LAST, so Uninstall removes a list before the lists it points to
 # (the reverse of the payload order in flow/provisioning-payload.json; tests/ps/Test-T27.ps1 checks the names and the order).
 $OwnLists = [ordered]@{
@@ -83,15 +85,49 @@ function Get-MadeName($Items, [string]$Kind) {
 
 <#
 .SYNOPSIS
-  The internal name of an own list, from its display title or its internal name; '' for any other name.
+  The internal name of an own list, from its display title as T20 prints it in "MADE list: <title>"; '' for any other name.
 .PARAMETER Name
   The name in the made list.
 .OUTPUTS
-  System.String. The internal name (a key of $OwnLists), or ''.
+  System.String. The internal name (a key of $OwnLists), or ''. The match is case sensitive.
 #>
 function Resolve-OwnList([string]$Name) {
-  foreach ($k in $OwnLists.Keys) { if ($Name -ceq $k -or $Name -ceq $OwnLists[$k]) { return [string]$k } }
+  foreach ($k in $OwnLists.Keys) { if ($Name -ceq $OwnLists[$k]) { return [string]$k } }
   return ''
+}
+
+<#
+.SYNOPSIS
+  The site list to remove for one own list: its folder name is the internal name AND its title is the fixed title (or the internal name,
+  which a list has between T20 step 1 and step 4); $null for any other list.
+.PARAMETER SiteLists
+  The lists of the site (Get-SiteList).
+.PARAMETER Key
+  The internal name (a key of $OwnLists).
+.OUTPUTS
+  The site list, or $null. A list with an own title and another folder name, and a list with the own folder name and another title,
+  are never returned.
+#>
+function Find-OwnListToRemove($SiteLists, [string]$Key) {
+  $l = Find-OurList $SiteLists $Key
+  if ($l -and ([string]$l.Title -ceq $OwnLists[$Key] -or [string]$l.Title -ceq $Key)) { return $l }
+  return $null
+}
+
+<#
+.SYNOPSIS
+  The reason text for an own list that Find-OwnListToRemove did not return (nothing left, or a list that is not ours holds the title).
+.PARAMETER SiteLists
+  The lists of the site.
+.PARAMETER Key
+  The internal name.
+.OUTPUTS
+  System.String. The text for the SKIP line (no title of a list that is not ours).
+#>
+function Get-ListLeftReason($SiteLists, [string]$Key) {
+  if (Find-OurList $SiteLists $Key) { return 'the list with this folder name has another title, so it is not removed' }
+  if (@($SiteLists | Where-Object { [string]$_.Title -ceq $OwnLists[$Key] }).Count) { return 'a list with this title is on the site, but it is not ours (another folder name): not removed' }
+  return 'the list is not on the site: nothing left to remove'
 }
 
 <#

@@ -2,11 +2,14 @@
 # zero, 1 fake publication through 1 full process step) against a small fake site. The PnP cmdlets the script uses are fakes in this file
 # (an empty PnP.PowerShell 1.12.0 module in a temporary folder lets the script's module check pass). Proves the logic, not the real
 # service and not RADE engine-v40 (not released): the gov device round is that proof.
-# Cases: the Uninstall parts (Lists, Access, Local) remove ONLY what a fake RADE_MADE file names and the own-name table allows: a list
-# that the file does not name stays; a list of another folder name with an own title stays; a name that is not ours is refused; a
-# second run removes nothing and prints SKIP; a bad gate (wrong RADE_MODE, no file, bad JSON, wrong schema, wrong app) makes no
-# sign-in and no remove call and prints FAIL. The checks Gone and Install, and the process step Step, on the fake site. The own-name
-# table equals flow/provisioning-payload.json; the fake publication title equals the one of T26.
+# Cases: the Uninstall parts (Lists, Access, Local). Lists and Access remove each own list, the group and the level BY THEIR FIXED NAMES
+# (the PFM, 25 Nov 26), also on a site where the fake RADE_MADE file is empty or names other things (the 12 lists were made before RADE
+# installs); a list of another folder name with an own title stays, a list of an own folder with another title stays, a list of a
+# person with a similar title (suffix, case, space) stays, a name that is not ours is refused; a second run removes nothing and prints
+# SKIP; a bad gate (wrong RADE_MODE, no file, bad JSON, wrong schema, wrong app) makes no sign-in and no remove call and prints FAIL.
+# The checks Gone and Install, and the process step Step (step 1 to step 2 with the exit conditions of step 1 checked before and after
+# the move, on the fake publication: each condition passes, and each one that is missing stops the move). The own-name table equals
+# flow/provisioning-payload.json; the fake publication title equals the one of T26; the required columns equal the schema.
 # Network: none.
 # Writes: one temporary folder (the T22, T26 and T27 folders of the test, the fake module); removed at the end.
 # Credentials: none.
@@ -121,11 +124,27 @@ function Remove-PnPRoleDefinition {
   [CmdletBinding()] param([string]$Identity, [switch]$Force)
   $null = $global:S.Calls.Add('level:' + $Identity); $global:S.Levels = @($global:S.Levels | Where-Object { $_ -ne $Identity })
 }
-# Fake Get-PnPListItem: the rows of one of the 3 fake row lists (throws for another list).
+# A fake list item: like a real one, it throws for a column that was not named in -Fields.
+Add-Type -TypeDefinition @'
+public class FakeItem {
+  private System.Collections.Generic.Dictionary<string, object> d = new System.Collections.Generic.Dictionary<string, object>();
+  public int Id;
+  public object this[string k] {
+    get { if (!d.ContainsKey(k)) { throw new System.InvalidOperationException("FAKE: the column " + k + " was not loaded (-Fields)"); } return d[k]; }
+    set { d[k] = value; }
+  }
+}
+'@
+# Fake Get-PnPListItem: the rows of one of the 3 fake row lists as items that hold only the columns named in -Fields (all when none
+# is named); throws for another list.
 function Get-PnPListItem {
   [CmdletBinding()] param([string]$List, [string[]]$Fields, [int]$PageSize)
   if (-not $global:S.Rows.ContainsKey($List)) { throw ('FAKE: no list titled ' + $List) }
-  return @($global:S.Rows[$List])
+  return @($global:S.Rows[$List] | ForEach-Object {
+      $row = $_; $it = New-Object FakeItem; $it.Id = [int]$row.Id
+      $names = $(if ($Fields) { $Fields } else { @($row.Keys) })
+      foreach ($k in $names) { $it[$k] = $(if ($row.ContainsKey($k)) { $row[$k] } else { $null }) }
+      $it })
 }
 # Fake Set-PnPListItem: sets fields of one row, and logs the call.
 function Set-PnPListItem {
@@ -133,6 +152,7 @@ function Set-PnPListItem {
   $hit = @($global:S.Rows[$List] | Where-Object { $_.Id -eq $Identity }); if (-not $hit.Count) { throw 'FAKE 404 row' }
   foreach ($k in $Values.Keys) { $hit[0][$k] = [pscustomobject]@{ LookupId = [int]$Values[$k] } }   # a lookup reads back as its value object
   $null = $global:S.Calls.Add('row:' + $List)
+  if ($global:S.BlankOnMove) { $hit[0][$global:S.BlankOnMove] = $null }   # a test hook: a column that the move clears
 }
 # Run one part against the fake site. Takes the part name; returns @{ Code; Text (the screen output); File (the result file text) }.
 function Invoke-T27([string]$Part) {
@@ -158,6 +178,16 @@ function Get-ListEntry([string[]]$Names) {
 }
 # The folder names of the own lists that are on the fake site now.
 function Get-OwnLeft { return @($global:S.Lists | Where-Object { $internal -contains $_.Folder } | ForEach-Object { $_.Folder }) }
+# Add a fake publication row with every exit condition of step 1 met; $Extra overrides columns (a $null value clears one). Returns nothing.
+function Add-FakePub([int]$Id, [hashtable]$Extra = @{}, [string]$Title = '90161Z TEST R41 endorse (delete me)') {
+  $row = @{ Id = $Id; Title = $Title; ActionType = 'New'; ProductType = 'Publication'; ProcessStep = [pscustomobject]@{ LookupId = 201 }; ActionStatus = 'On Track'
+    PublicationType = 'Instruction'; Product = $null; OPR = [pscustomobject]@{ LookupId = 301 }; AppliesToLevel = 'Wing and Units Below'
+    MasterForm673Link = [pscustomobject]@{ Url = 'https://example.test/fake673' } }
+  foreach ($k in $Extra.Keys) { $row[$k] = $Extra[$k] }
+  $null = $global:S.Rows['PFM Publications'].Add($row)
+}
+# The row of one fake publication. Takes its number; returns the row hashtable.
+function Get-FakePub([int]$Id) { return @($global:S.Rows['PFM Publications'] | Where-Object { $_.Id -eq $Id })[0] }
 try {
   New-Site
   # ---- the own-name table and the one-home checks ----
@@ -173,53 +203,77 @@ try {
   $chk = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T27-check-r1.ps1') -Raw
   $a = [regex]::Match($t26txt, "(?m)^\`$PubTitle = '([^']+)'").Groups[1].Value; $b = [regex]::Match($chk, "(?m)^\`$PubTitle = '([^']+)'").Groups[1].Value
   $c = [regex]::Match($t26txt, "(?m)^\`$StateName = '([^']+)'").Groups[1].Value; $d = [regex]::Match($chk, "(?m)^\`$T26State = '([^']+)'").Groups[1].Value
+  . (Join-Path $Root 'scripts/gov/90161Z-T27-check-r1.ps1')
+  $schema = Get-Content -LiteralPath (Join-Path $Root 'schemas/lists/PFMPublications.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+  $req = @($schema.fields | Where-Object { $_.required } | ForEach-Object { [string]$_.internalName })
+  $sameReq = ((@($PubRequired | Sort-Object) -join ',') -ceq (@($req | Sort-Object) -join ','))
+  Test-That 'the required columns of the step check equal the "required" columns of the PFM Publications schema' $sameReq ($req -join ',')
+  $allCols = @($schema.fields | ForEach-Object { [string]$_.internalName })
+  Test-That 'every column the step check reads is a column of the PFM Publications schema' (@($PubFields | Where-Object { $allCols -cnotcontains $_ }).Count -eq 0) ''
   Test-That 'the fake publication title and the state file name equal the ones of T26' ($a -and $a -ceq $b -and $c -and $c -ceq $d) ($a + ' / ' + $b)
 
   # ---- Uninstall, Lists ----
   Set-Made (Get-ListEntry $internal)
   $r = Invoke-T27 'Lists'
   $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and (Get-OwnLeft).Count -eq 0 -and @($global:S.Lists).Count -eq 1 -and $global:S.Lists[0].Title -eq 'Budget Notes')
-  Test-That 'Lists removes the 12 named lists and leaves the list of a person' $ok $r.File
+  Test-That 'Lists removes the 12 own lists and leaves the list of a person' $ok $r.File
   $order = (@($global:S.Calls) -join ','); $want = (@($rev | ForEach-Object { 'list:' + $_ }) -join ',')
-  Test-That 'Lists removes a list before the lists it points to (reverse payload order), by title or by internal name' ($order -ceq $want) $order
+  Test-That 'Lists removes a list before the lists it points to (reverse payload order)' ($order -ceq $want) $order
   Test-That 'Lists prints RESULT UNINSTALL LISTS PASS removed=12 and 12 PASS read-backs' ($r.File -match '(?m)^RESULT UNINSTALL LISTS PASS removed=12\r?$' -and
       ([regex]::Matches($r.File, '(?m)^ITEM r-\S+ PASS')).Count -eq 12) $r.File
   $r = Invoke-T27 'Lists'
   $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and $r.File -match '(?m)^RESULT UNINSTALL LISTS SKIP removed=0\r?$' -and
-      ([regex]::Matches($r.File, '(?m)^ITEM l\d\d-\S+ SKIP')).Count -eq 12)
+      ([regex]::Matches($r.File, '(?m)^ITEM l\d\d-\S+ SKIP the list is not on the site')).Count -eq 12)
   Test-That 'a second Lists run removes nothing and prints SKIP (12 SKIP items, exit 0)' $ok $r.File
 
+  # The 12 lists were made before RADE installs: the made list is empty (or names 2 lists, or other things), and all 12 still go, by title.
+  New-Site; Set-Made @()
+  $r = Invoke-T27 'Lists'
+  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and (Get-OwnLeft).Count -eq 0 -and @($global:S.Lists).Count -eq 1 -and $r.File -match '(?m)^MADE entries=0;' -and
+      $r.File -match '(?m)^RESULT UNINSTALL LISTS PASS removed=12')
+  Test-That 'Lists with an EMPTY made list removes the 12 own lists by title (RADE has no record of them) and keeps the list of a person' $ok $r.File
   New-Site; Set-Made (Get-ListEntry @('PFMSeries', 'PFMGuidance'))
   $r = Invoke-T27 'Lists'
-  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 2 -and (Get-OwnLeft).Count -eq 10 -and (Get-OwnLeft) -notcontains 'PFMSeries' -and (Get-OwnLeft) -notcontains 'PFMGuidance')
-  Test-That 'Lists removes only the 2 lists in the made file: the other 10 of ours stay' $ok $r.File
-
-  New-Site; Remove-FakeList { $_.Folder -eq 'PFMSeries' }; Add-FakeList 'Lists/SeriesByHand' 'PFM Series'
-  Set-Made @(@{ kind = 'list'; name = 'PFM Series' })
+  Test-That 'Lists with a made list of 2 lists still removes all 12' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and (Get-OwnLeft).Count -eq 0) $r.File
+  New-Site; Set-Made @(@{ kind = 'group'; name = 'PFM Office' })
   $r = Invoke-T27 'Lists'
-  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and @($global:S.Lists | Where-Object { $_.Folder -eq 'Lists/SeriesByHand' }).Count -eq 1 -and
-      $r.File -match '(?m)^ITEM l01-PFMSeries SKIP')
-  Test-That 'a list with an own title but another folder name is never removed (SKIP)' $ok $r.File
+  Test-That 'Lists with a made list that has no list entry removes the 12 own lists' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and (Get-OwnLeft).Count -eq 0) $r.File
 
-  New-Site; Set-Made @(@{ kind = 'list'; name = 'Budget Notes' }, @{ kind = 'list'; name = 'Documents' }, @{ kind = 'group'; name = 'PFM Series' })
+  # A list that is not ours stays: own title and another folder; own folder and another title; a similar title (suffix, case, space).
+  New-Site; Remove-FakeList { $_.Folder -eq 'PFMSeries' }; Add-FakeList 'Lists/SeriesByHand' 'PFM Series'; Set-Made @()
   $r = Invoke-T27 'Lists'
-  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and $global:S.Connects -eq 0 -and (Get-OwnLeft).Count -eq 12 -and $r.File -match '(?m)^NOTE refused' -and
-      $r.File -match '(?m)^RESULT UNINSTALL LISTS SKIP removed=0')
-  Test-That 'names that are not ours are refused and removed never (no sign-in, no remove call, SKIP)' $ok $r.File
+  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 11 -and @($global:S.Lists | Where-Object { $_.Folder -eq 'Lists/SeriesByHand' }).Count -eq 1 -and
+      $r.File -match '(?m)^ITEM l\d\d-PFMSeries SKIP a list with this title is on the site, but it is not ours')
+  Test-That 'a list with an own title but another folder name is never removed (SKIP, own 11 go)' $ok $r.File
+  New-Site; Add-FakeList 'Lists/Copy1' 'PFM Series (copy)'; Add-FakeList 'Lists/Copy2' 'pfm series'; Add-FakeList 'Lists/Copy3' 'PFM Series '
+  Add-FakeList 'Lists/Copy4' 'PFM Offices 2'; Set-Made @()
+  $r = Invoke-T27 'Lists'
+  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and @($global:S.Lists | Where-Object { $_.Folder -like 'Lists/Copy*' }).Count -eq 4 -and (Get-OwnLeft).Count -eq 0)
+  Test-That 'foreign lists with a similar title (suffix, other case, trailing space) stay; the 12 own lists go' $ok $r.File
+  New-Site; ($global:S.Lists | Where-Object { $_.Folder -eq 'PFMSettings' }).Title = 'PFM Settings (old)'; Set-Made @()
+  $r = Invoke-T27 'Lists'
+  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 11 -and @($global:S.Lists | Where-Object { $_.Folder -eq 'PFMSettings' }).Count -eq 1 -and
+      $r.File -match '(?m)^ITEM l\d\d-PFMSettings SKIP the list with this folder name has another title' -and $r.File -notmatch '\(old\)')
+  Test-That 'a list of an own folder whose title is not the fixed title stays (SKIP, the title is not printed)' $ok $r.File
+  New-Site; ($global:S.Lists | Where-Object { $_.Folder -eq 'PFMSettings' }).Title = 'PFMSettings'; Set-Made @()
+  $r = Invoke-T27 'Lists'
+  Test-That 'a list that a stopped install left under its internal name as title is removed' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and (Get-OwnLeft).Count -eq 0) $r.File
 
-  New-Site; Set-Made @(@{ kind = 'list'; name = 'PFM Offices' }, @{ kind = 'list'; name = 'PFM Reviews' }, @{ kind = 'list'; name = 'Budget Notes' })
+  New-Site; Set-Made @(@{ kind = 'list'; name = 'Budget Notes' }, @{ kind = 'list'; name = 'Documents' }, @{ kind = 'group'; name = 'PFM Series' }, @{ kind = 'list'; name = 'PFMSeries' })
   $r = Invoke-T27 'Lists'
-  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 2 -and (Get-OwnLeft).Count -eq 10 -and @($global:S.Lists | Where-Object { $_.Title -eq 'Budget Notes' }).Count -eq 1)
-  Test-That 'an own name next to a foreign name: the own list goes, the foreign one stays' $ok $r.File
+  $ok = ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and (Get-OwnLeft).Count -eq 0 -and @($global:S.Lists | Where-Object { $_.Title -eq 'Budget Notes' }).Count -eq 1 -and
+      ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 3)
+  Test-That 'names in the made list that are not ours are refused (NOTE) and never removed; the 12 own lists go' $ok $r.File
 
   New-Site; Set-Made (Get-ListEntry @('PFMSeries', 'PFMGuidance')); $global:S.FailList = 'PFMSeries'
   $r = Invoke-T27 'Lists'; $global:S.FailList = $null
-  $ok = ($r.Code -eq 1 -and $r.File -match '(?m)^ITEM l\d\d-PFMGuidance|(?m)^ITEM r-PFMGuidance PASS' -and $r.File -match '(?m)^ITEM l\d\d-PFMSeries FAIL' -and
-      $r.File -match '(?m)^RESULT UNINSTALL LISTS FAIL removed=1')
-  Test-That 'a list that cannot be removed: FAIL, exit 1, the other list is still removed' $ok $r.File
+  $ok = ($r.Code -eq 1 -and $global:S.Calls.Count -eq 11 -and $r.File -match '(?m)^ITEM r-PFMGuidance PASS' -and $r.File -match '(?m)^ITEM l\d\d-PFMSeries FAIL' -and
+      $r.File -match '(?m)^RESULT UNINSTALL LISTS FAIL removed=11')
+  Test-That 'a list that cannot be removed: FAIL, exit 1, the other 11 are still removed' $ok $r.File
   $r = Invoke-T27 'Lists'
   Test-That 'Lists run again after that failure removes the list that is left' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 1 -and
       $r.File -match '(?m)^RESULT UNINSTALL LISTS PASS removed=1') $r.File
+
 
   # ---- the gate: nothing is removed and nobody signs in ----
   New-Site
@@ -242,7 +296,7 @@ try {
   }
   Set-Made @(@{ kind = 'list'; name = $display['PFMSeries'] }, @{ step = ''; kind = 'list'; name = $display['PFMGuidance'] }, @{ kind = ''; name = 'x' })
   $r = Invoke-T27 'Lists'
-  Test-That 'an entry with no step, kind or name is dropped and counted, never used' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 1 -and
+  Test-That 'an entry with no step, kind or name is dropped and counted, never used (the lists go by title anyway)' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 12 -and
       $r.File -match '(?m)^MADE entries=1; without step, kind or name=2') $r.File
 
   # ---- Uninstall, Access ----
@@ -257,12 +311,19 @@ try {
       $r.File -match '(?m)^ITEM a1-group SKIP' -and $r.File -match '(?m)^ITEM a2-level SKIP') $r.File
   New-Site; Set-Made @(@{ kind = 'group'; name = 'Site Owners' }, @{ kind = 'level'; name = 'Edit' })
   $r = Invoke-T27 'Access'
-  Test-That 'a group or a level that is not ours is refused and stays' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and $global:S.Groups.Count -eq 2 -and
-      $global:S.Levels.Count -eq 2 -and $r.File -match '(?m)^NOTE refused') $r.File
+  Test-That 'a group or a level that is not ours is refused (NOTE) and stays; our own pair goes by name' ($r.Code -eq 0 -and
+      (@($global:S.Calls) -join ',') -ceq 'group:PFM Office,level:PFM Office Edit All Items' -and
+      $global:S.Groups.Count -eq 1 -and $global:S.Groups -contains 'Site Owners' -and $global:S.Levels.Count -eq 1 -and $global:S.Levels -contains 'Edit' -and
+      ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 2) $r.File
+  New-Site; Set-Made @()
+  $r = Invoke-T27 'Access'
+  Test-That 'Access with an EMPTY made list removes the group and the level by their names (RADE has no record of them), and nothing else' ($r.Code -eq 0 -and
+      (@($global:S.Calls) -join ',') -ceq 'group:PFM Office,level:PFM Office Edit All Items' -and $global:S.Groups.Count -eq 1 -and $global:S.Levels.Count -eq 1 -and
+      $r.File -match '(?m)^RESULT UNINSTALL ACCESS PASS removed=2') $r.File
   New-Site; Set-Made (Get-ListEntry @('PFMSeries'))
   $r = Invoke-T27 'Access'
-  Test-That 'Access with no group or level in the made file removes nothing (the group of the site was there before the install)' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and
-      $global:S.Connects -eq 0 -and $r.File -match '(?m)^RESULT UNINSTALL ACCESS SKIP') $r.File
+  Test-That 'Access with a made list that names only a list still removes the group and the level by name' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 2 -and $global:S.Connects -eq 1 -and
+      $r.File -match '(?m)^RESULT UNINSTALL ACCESS PASS removed=2') $r.File
 
   # ---- Uninstall, Local ----
   foreach ($f in '90161Z-T22-install-r16.txt', '90161Z-T22-maint-r16.txt', 'keep.txt') { Set-Content -LiteralPath (Join-Path $t22 $f) -Value 'x' }
@@ -296,18 +357,65 @@ try {
   New-Site
   $r = Invoke-T27 'Step'
   Test-That 'Step with no fake publication: FAIL, exit 1, no write' ($r.Code -eq 1 -and $r.File -match '(?m)^RESULT STEP FAIL' -and $global:S.Calls.Count -eq 0) $r.File
-  $null = $global:S.Rows['PFM Publications'].Add(@{ Id = 50; Title = '90161Z TEST R41 endorse (delete me)'; ProcessStep = [pscustomobject]@{ LookupId = 201 } })
-  $null = $global:S.Rows['PFM Publications'].Add(@{ Id = 51; Title = 'Another publication'; ProcessStep = [pscustomobject]@{ LookupId = 201 } })
+  Add-FakePub 50
+  Add-FakePub 51 @{ OPR = $null } 'Another publication'   # another publication, with a missing condition: it must never be read or moved
   $null = $global:S.Rows['PFM Activity Log'].Add(@{ Id = 70; Title = 'FAKE log'; Publication = [pscustomobject]@{ LookupId = 50 } })
   $r = Invoke-T27 'Step'
-  $pubRows = @($global:S.Rows['PFM Publications'])
-  $now = @($pubRows | Where-Object { $_.Id -eq 50 })[0].ProcessStep.LookupId; $other = @($pubRows | Where-Object { $_.Id -eq 51 })[0].ProcessStep.LookupId
+  $now = (Get-FakePub 50).ProcessStep.LookupId; $other = (Get-FakePub 51).ProcessStep.LookupId
   $ok = ($r.Code -eq 0 -and $now -eq 202 -and $other -eq 201 -and $global:S.Calls.Count -eq 1 -and $r.File -match '(?m)^ITEM s2-move PASS moved from step 1 to step 2' -and
       $r.File -match '(?m)^RESULT STEP PASS from=1 to=2 target-days=60')
   Test-That 'Step moves the fake publication from step 1 to step 2, reads it back, and leaves another publication alone' $ok $r.File
+  $names = '1-saved', '2-product', '3-opr', '4-directive', '5-level', '6-form673'
+  $okB = @($names | Where-Object { $r.File -match ('(?m)^ITEM b' + $_ + ' PASS exit condition of step 1') }).Count
+  $okA = @($names | Where-Object { $r.File -match ('(?m)^ITEM a' + $_ + ' PASS exit condition of step 1') }).Count
+  Test-That 'Step checks the 6 exit conditions of step 1 before the move (b) and again after it (a): all PASS' ($okB -eq 6 -and $okA -eq 6 -and
+      $r.File.IndexOf('ITEM b1-saved') -lt $r.File.IndexOf('ITEM s2-move') -and $r.File.IndexOf('ITEM s2-move') -lt $r.File.IndexOf('ITEM a1-saved')) $r.File
+  Test-That 'Step writes a NOTE for what the lists cannot show (PFM confirms; the actions of 3.1.2 to 3.1.8)' (
+      $r.File -match '(?m)^NOTE not shown by the lists, so not checked: "PFM confirms"' -and $r.File -match '3\.1\.2 to 3\.1\.8') $r.File
   Test-That 'Step reports the target days of step 2 and the activity log rows as information' ($r.File -match 'target business days of step 2=60; activity log rows on the publication=1') $r.File
   $r = Invoke-T27 'Step'
-  Test-That 'a second Step writes nothing and prints SKIP for the move' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and $r.File -match '(?m)^ITEM s2-move SKIP') $r.File
+  Test-That 'a second Step writes nothing, prints SKIP for the move and checks the conditions again' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 0 -and
+      $r.File -match '(?m)^ITEM s2-move SKIP' -and $r.File -match '(?m)^ITEM b6-form673 PASS' -and $r.File -match '(?m)^ITEM a6-form673 PASS') $r.File
+
+  # An exit condition of step 1 that is not met stops the move (no write): one case for each condition and each way to miss it.
+  $miss = @(
+    @('1-saved', 'a required column (Action Status) is blank', @{ ActionStatus = $null }),
+    @('1-saved', 'a required column (Action Type) is blank', @{ ActionType = '' }),
+    @('2-product', 'the action is a Rewrite and the product is not named', @{ ActionType = 'Rewrite' }),
+    @('3-opr', 'the OPR is not named', @{ OPR = $null }),
+    @('3-opr', 'the OPR lookup is empty (number 0)', @{ OPR = [pscustomobject]@{ LookupId = 0 } }),
+    @('4-directive', 'a publication has no publication type', @{ PublicationType = $null }),
+    @('5-level', 'the scope level is blank', @{ AppliesToLevel = '  ' }),
+    @('6-form673', 'the master 673 link is not set', @{ MasterForm673Link = $null }),
+    @('6-form673', 'the master 673 link has no address', @{ MasterForm673Link = [pscustomobject]@{ Url = '' } }))
+  foreach ($m in $miss) {
+    New-Site; Add-FakePub 60 $m[2]
+    $r = Invoke-T27 'Step'
+    $ok = ($r.Code -eq 1 -and $global:S.Calls.Count -eq 0 -and (Get-FakePub 60).ProcessStep.LookupId -eq 201 -and $r.File -match ('(?m)^ITEM b' + $m[0] + ' FAIL exit condition of step 1 not met') -and
+        $r.File -match '(?m)^RESULT STEP FAIL exit conditions of step 1 not met: no move' -and $r.File -notmatch '(?m)^ITEM s2-move')
+    Test-That ('Step: ' + $m[0].Substring(2) + ' not met (' + $m[1] + '): FAIL, exit 1, no write, still at step 1') $ok $r.File
+  }
+  # The conditions that hold in other cases.
+  New-Site; Add-FakePub 61 @{ ActionType = 'Rewrite'; Product = [pscustomobject]@{ LookupId = 5 } }
+  $r = Invoke-T27 'Step'
+  Test-That 'Step: a Rewrite with a named product passes the product condition and moves' ($r.Code -eq 0 -and (Get-FakePub 61).ProcessStep.LookupId -eq 202) $r.File
+  New-Site; Add-FakePub 62 @{ ProductType = 'Form'; PublicationType = $null }
+  $r = Invoke-T27 'Step'
+  Test-That 'Step: a form needs no publication type (the directive condition passes) and moves' ($r.Code -eq 0 -and (Get-FakePub 62).ProcessStep.LookupId -eq 202) $r.File
+  New-Site; Add-FakePub 63 @{ ProcessStep = [pscustomobject]@{ LookupId = 205 } }
+  $r = Invoke-T27 'Step'
+  Test-That 'Step: a publication at neither step 1 nor step 2 is not moved: FAIL, exit 1, no write' ($r.Code -eq 1 -and $global:S.Calls.Count -eq 0 -and
+      (Get-FakePub 63).ProcessStep.LookupId -eq 205 -and
+      $r.File -match '(?m)^ITEM s1-publication FAIL .*neither step 1 nor step 2' -and $r.File -match '(?m)^RESULT STEP FAIL not at step 1') $r.File
+  New-Site; Add-FakePub 64; $global:S.BlankOnMove = 'OPR'
+  $r = Invoke-T27 'Step'; $global:S.BlankOnMove = $null
+  Test-That 'Step: a condition that no longer holds after the move (the OPR is cleared) is found: FAIL, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^ITEM s2-move PASS' -and
+      $r.File -match '(?m)^ITEM a3-opr FAIL' -and
+      $r.File -match '(?m)^RESULT STEP FAIL exit conditions of step 1 no longer hold after the move') $r.File
+  New-Site; Add-FakePub 65
+  $r = Invoke-T27 'Step'
+  Test-That 'Step reads only the columns it names in -Fields (the fake item throws for any other column): no STOPPED line' ($r.Code -eq 0 -and $r.File -notmatch '(?m)^STOPPED') $r.File
+  New-Site; Add-FakePub 66
   Remove-FakeStepRow 2
   $r = Invoke-T27 'Step'
   Test-That 'Step with no step 2 row (the install did not seed it): FAIL, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^RESULT STEP FAIL no step rows') $r.File

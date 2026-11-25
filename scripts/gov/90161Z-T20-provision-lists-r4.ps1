@@ -32,7 +32,8 @@
        section 7). A list that inherits its permissions from the site gets its own first, with the site's role assignments
        copied; "edit own rows" stays as it is. The site itself stays Read for Visitors. A list that has the role already is
        not touched.
-  A second run skips what is there, so a run that stopped can be run again.
+  A second run skips what is there, so a run that stopped can be run again. RADE engine-v40: one output line "MADE <kind>: <name>"
+  (kind list, group or level; name = the display title) for each item THIS run made, none for an item that was there, none in -DryRun.
   r3 (R34 plan, open point 12): the read-back also checks that each of the 12 lists inherits its permissions from the site or,
   with its own, gives the group PFM Office the level. The read-backs of the level and the lists are in 90161Z-T20-access-r4.ps1
   (r4 loads that file as it is). r4: one more read-back per intake list (ITEM W01 to W03): Visitors hold Contribute on it.
@@ -291,6 +292,7 @@ try {
       $name = [string]$l.body.Title
       if ($found.ContainsKey($name)) { $skip.lists++; continue }
       if ($write) { Write-Host ('  Creating the list ' + $name + ' ...'); $null = Invoke-Rest 'Post' ([string]$l.uri) ($l.body | ConvertTo-Json -Depth 20 -Compress) }
+      if ($write) { Add-MadeLine 'list' $plan[$name].Display }   # RADE engine-v40: one MADE line for each list this run made
       $made.lists++
     }
     if ($write) {
