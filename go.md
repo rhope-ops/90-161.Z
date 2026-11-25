@@ -76,7 +76,7 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 
 ## Open tasks
 
-### Round R42 r1: my window r15, an endorser answer, a small sign-in window and Restore
+### Round R42 r2: my window r15, an endorser answer, a small sign-in window and Restore
 
 **For:** the round after R41. It tests the R41 fixes: my 90-161.Z window r15 (room for the scroll bar; the screens Waves and Step 13 open), the answer of a second person, a small CAC sign-in window for Back up and Restore, and RADE Restore of fake rows with their old row numbers. The first RADE window shows **90-161.Z R42** at the top. The second RADE window (from the RADE shortcut) shows **90-161.Z 0.1.0** at the top.
 **Time:** about 40 minutes, with about 5 minutes of a second person from my office (an estimate).
