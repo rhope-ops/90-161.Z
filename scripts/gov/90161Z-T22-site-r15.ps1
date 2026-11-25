@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r14, part "site": the PFM window reads the PFM lists of the test site, read-only, and fills its cards
+  90-161.Z Task 22 r15, part "site": the PFM window reads the PFM lists of the test site, read-only, and fills its cards
   from them (round R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 1).
 .DESCRIPTION
   What it reads: the rows of 2 PFM lists, PFM Publications (the grids Who Has It Now of Your Work and of the "nothing
@@ -21,11 +21,13 @@
   without a marker=<n>. Counts only: no row text, no address.
   Inputs: $Cards, $GridQueue, $lines, $dir (the cards part and the main script). Outputs: the functions below and
   $script:SiteSource, $script:SiteShown (card key -> the titles of the site rows it shows).
-  Run: not alone; 90161Z-T22-pfm-window-r14.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r15.ps1 dot-sources it from its own folder inside its try block.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell; read only.
   Writes: none on the site; on this computer only, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window; nothing is stored.
 #>
+# >>> signin-size: generated from the pinned RADE engine/ps/16-site-scripts.ps1 by scripts/build_task_scripts.py (do not edit)
+# <<< signin-size
 $script:SiteSource = 'fake'; $script:SiteShown = @{}
 $script:FakeMarks = @('90161Z TEST', 'XXX XXX ')   # the repo's fake-data markers (see the header)
 # The lists this window reads and the columns it reads from each (internal names, schemas/lists).
@@ -134,6 +136,7 @@ function Invoke-SiteRead([string]$Site) {
     if (-not $mod.Count) { throw 'PnP.PowerShell is not on this computer' }
     Write-Host 'NOW Signing in to the site to read the PFM lists (if a sign-in window opens, sign in with your CAC)'
     $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
+    Start-SignInSize   # R42 E3: the CAC sign-in window opens at about 480 x 360, centered (the signin-size block)
     $null = & { Connect-PnPOnline -Url $Site -UseWebLogin -ErrorAction Stop } *>&1
     foreach ($l in $script:SiteLists.Keys) {
       Write-Host ('NOW Reading the list ' + $l)
