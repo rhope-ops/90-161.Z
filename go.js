@@ -1,12 +1,15 @@
 // go.js: draws the bookmark page (index.html) from go.md: task cards, round script buttons, remembered open state.
 // Moved out of index.html (fleet v2, 2026-11-23) so the page's Content-Security-Policy can say script-src 'self' with no
 // 'unsafe-inline'. Runs in the browser; tests/check_go_page.js loads it in node with window.GO_TEST set.
-// Network: site.config.json (same site), then go.md and the round scripts from raw.githubusercontent.com.
+// Network: go.md and the round scripts from this repository's branch folder on raw.githubusercontent.com only (the page
+// CSP connect-src allows that one source; master plan P4b 2026-11-24). The owner, repo and branch come from the go.js
+// script tag in index.html (data-owner, data-repo, data-branch), which tests/check_go_page.js holds equal to site.config.json.
 // Writes: this browser's localStorage key go-open-v1 (which cards are open).
 // Credentials: none.
 'use strict';
-var SRC='';   // the go.md URL, built from site.config.json (fleet v2 DEC 7: the account values have one home)
-var CFG=null; // site.config.json: owner, repo, branch
+var SRC='';   // the go.md URL, built from the script tag values (fleet v2 DEC 7: their home is site.config.json)
+var CFG=null; // owner, repo, branch from the script tag
+var ME=typeof document!=='undefined'?document.currentScript:null; // this script tag, read while go.js runs (null in node)
 var NAME=/^[A-Za-z0-9_.-]+$/; // an owner, repo or branch name: nothing else may enter a URL
 /**
  * validCfg(c): true when site.config.json holds safe owner, repo and branch names.
@@ -373,17 +376,24 @@ function failed(e){
   while(m.firstChild)m.removeChild(m.firstChild);m.appendChild(p);
 }
 /**
- * start(): exposes the functions to tests/check_go_page.js, or draws a given go.md text, or loads site.config.json,
- * then go.md, and draws the page.
+ * tagCfg(e): the owner, repo and branch from the data-owner, data-repo and data-branch attributes of the go.js tag.
+ * @param {Element} e the script element (or null).
+ * @returns {object|null} the config, or null when there is no tag.
+ */
+function tagCfg(e){return e?{owner:e.getAttribute('data-owner'),repo:e.getAttribute('data-repo'),branch:e.getAttribute('data-branch')}:null}
+/**
+ * start(): exposes the functions to tests/check_go_page.js, or draws a given go.md text, or reads the config from the
+ * go.js script tag, then loads go.md, and draws the page.
  */
 function start(){
   if(window.GO_TEST&&typeof window.GO_TEST==='object'){
     var T=window.GO_TEST;T.parse=parse;T.renderSecs=renderSecs;T.txtName=txtName;T.validState=validState;
-    T.validCfg=validCfg;T.keepAttr=keepAttr;T.rawBase=rawBase;return}
+    T.validCfg=validCfg;T.keepAttr=keepAttr;T.rawBase=rawBase;T.tagCfg=tagCfg;return}
   if(typeof window.GO_MD==='string'){render(window.GO_MD);return}
-  fetch('site.config.json',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('site.config.json HTTP '+r.status);return r.json()})
-    .then(function(c){if(!validCfg(c))throw new Error('site.config.json has no valid owner, repo and branch');CFG=c;SRC=rawBase(c)+'go.md';
-      return fetch(SRC,{cache:'no-store'})})
+  var c=tagCfg(ME);
+  if(!validCfg(c)){failed(new Error('the go.js tag has no valid data-owner, data-repo and data-branch'));return}
+  CFG=c;SRC=rawBase(c)+'go.md';
+  fetch(SRC,{cache:'no-store'})
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(render).catch(failed);
 }
 start();

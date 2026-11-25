@@ -48,7 +48,7 @@ check('a round script card has no .ps1 link and no Copy link', !/<a href="[^"]*\
 check('the .txt name replaces .ps1', t.txtName('https://x/y/90161Z-R01-test.ps1') === '90161Z-R01-test.txt');
 // Fleet v2 guards: page wiring, stored state, config names and the attributes the safe DOM copy keeps.
 const page = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-check('index.html loads go.js and has no inline script', /<script src="go\.js"><\/script>/.test(page) && !/<script>/.test(page));
+check('index.html loads go.js and has no inline script', /<script src="go\.js"[^>]*><\/script>/.test(page) && !/<script>/.test(page));
 check('go.js sets no innerHTML', !/innerHTML/.test(fs.readFileSync(path.join(__dirname, '..', 'go.js'), 'utf8')));
 const vs = t.validState({ 'Round A': true, x: 'yes', y: 1, __proto__: { polluted: true }, ['z'.repeat(201)]: true });
 check('stored state keeps only short names with true/false values', Object.keys(vs).join() === 'Round A' && vs.polluted === undefined);
@@ -56,6 +56,17 @@ check('stored state that is not an object becomes empty', ['[]', 'null', '"x"', 
 check('a stored "__proto__" key cannot change the prototype', t.validState(JSON.parse('{"__proto__":{"a":true}}')).a === undefined);
 const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'site.config.json'), 'utf8'));
 check('site.config.json is valid and builds the go.md folder', t.validCfg(cfg) && t.rawBase(cfg) === 'https://raw.githubusercontent.com/' + cfg.owner + '/' + cfg.repo + '/' + cfg.branch + '/');
+// Master plan P4b (2026-11-24): the page fetches from one source only, and that source and the go.js tag values are
+// the site.config.json values (their one home), so a changed config cannot leave the page pointing elsewhere.
+const csp = (page.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/) || [])[1] || '';
+const conn = ((csp.split(';').map(d => d.trim()).find(d => d.startsWith('connect-src ')) || '').split(/\s+/)).slice(1);
+check('the CSP connect-src is one source: the site.config.json branch folder', conn.length === 1 && conn[0] === t.rawBase(cfg));
+const tag = (page.match(/<script src="go\.js"([^>]*)>/) || [])[1] || '';
+/** attr(n): the value of the data-n attribute on the go.js tag, or undefined. */
+const attr = n => (tag.match(new RegExp(' data-' + n + '="([^"]*)"')) || [])[1];
+check('the go.js tag owner, repo and branch equal site.config.json', ['owner', 'repo', 'branch'].every(k => attr(k) === cfg[k]));
+const fakeTag = { getAttribute: n => ({ 'data-owner': 'o', 'data-repo': 'r', 'data-branch': 'b' })[n] || null };
+check('tagCfg reads the three data attributes, and no tag gives null', JSON.stringify(t.tagCfg(fakeTag)) === '{"owner":"o","repo":"r","branch":"b"}' && t.tagCfg(null) === null);
 check('a config name with a slash, dot path or quote is refused',
   !t.validCfg({ owner: 'a/b', repo: 'r', branch: 'main' }) && !t.validCfg({ owner: 'o', repo: '"x', branch: 'main' }) && !t.validCfg(null));
 check('safe DOM keeps http(s) and # links only', t.keepAttr('href', 'https://x') && t.keepAttr('href', '#s1') && !t.keepAttr('href', 'javascript:alert(1)') && !t.keepAttr('href', 'data:text/html,x'));
