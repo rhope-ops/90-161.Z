@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-25 | RADE lock moves to release engine-v39 (RADE b231e2e, serial 27) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-25 | Round skill, "6. Release order" step 1: after the go.md task, run `python3 scripts/build_go_page.py` (it writes the task cards into index.html; PR 235 builds the page from go.md). Scope: this repo, every round. | the Maintainer: "Approve text (Recommended)" (dialog answer to the exact text, 2026-11-25, fleet coordinator chat) | Replaces step 1 without the page build. |
 | 2026-11-24 | RADE lock moves to release engine-v38 (RADE f5b4687, serial 26) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-24 | R42 r1: test-site writes as in R41 (fake rows only, removed at the end); a Repair of 90-161.Z 0.1.0 first; steps that passed in R41 left out. Scope: R42. | the Maintainer: "i approve" (chat, 2026-11-24) | [r42 plan](reviews/2026-11-21-r42-plan.md) |
