@@ -169,12 +169,14 @@ $p7 = & $wn.ColPlan $c7 474 0 0 $r7
 $k7 = @{}; foreach ($c in $c7) { $k7[[string]$c.N] = [string]$c.K }
 foreach ($what in 'fit', 'edge') {
   $gc = @(); $i = 0; foreach ($c in $c7) { $m = [int]$p7.Min[[string]$c.N]
-    $gc += [pscustomobject]@{ Name = [string]$c.N; Visible = $true; MinimumWidth = $m; Width = $m; DisplayIndex = $i }; $i++ }
+    $gc += [pscustomobject]@{ Name = [string]$c.N; Visible = $true; MinimumWidth = $m; Width = $m; DisplayIndex = $i; AutoSizeMode = 'Fill' }; $i++ }
   $s = 0; foreach ($c in $gc) { $s += $c.Width }; $gc[0].Width += 472 - $s; $gc[0].MinimumWidth += 472 - $s   # the plan's 472 px, all used
   $g7 = [pscustomobject]@{ AccessibleName = 'Wave 1 answers'; ClientSize = @{ Width = 474 }; Width = 474; Columns = $gc; BarShown = 17
     Tag = @{ Kind = $k7; Cols = $c7; Shown = $r7; ChipKept = $p7.ChipKept; Reserve = $p7.Reserve } }
   if ($what -eq 'fit') { $ch = & $wn.FitGrid $g7; $s = 0; foreach ($c in $gc) { $s += $c.MinimumWidth }
-    'RESERVE fit reserve=' + $p7.Reserve + ' changed=' + $ch + ' sum=' + $s + ' room=' + (474 - 17) }
+    $ch2 = & $wn.FitGrid $g7   # the same grid, the same bar (a later open): nothing to do
+    'RESERVE fit reserve=' + $p7.Reserve + ' changed=' + $ch + ' sum=' + $s + ' room=' + (474 - 17) + ' again=' + $ch2 + ' kept=' + $g7.Tag.Reserve +
+      ' modes=' + (@($gc | ForEach-Object { $_.AutoSizeMode } | Sort-Object -Unique) -join ',') }
   else { 'RESERVE edge ' + [string](& $wn.EdgeCheck $g7 'waves') } }
 $script:known = @{}
 # FIT: the grid fit on a stand-in grid at 1920 x 1094 and 150 % (normal font, FAKE rows): "fits" is a grid whose columns
@@ -237,6 +239,7 @@ def check_grid_plan():
     assert len(rf) == 1 and len(re_) == 1, out
     f = dict(x.split('=', 1) for x in rf[0].split()[2:])
     assert f['reserve'] == '2' and f['changed'] == 'True' and int(f['sum']) <= int(f['room']), ('the fit left columns under a bar that shows', rf[0])
+    assert f['again'] == 'False' and f['kept'] == '17' and f['modes'] == 'None', ('a second fit with the same bar must change nothing', rf[0])
     assert 'LAYOUT waves R15 grid Wave 1 answers: the columns end at 472' in re_[0] and 'scroll bar of 17 showing' in re_[0], re_[0]
     for (g, kind), f in fit.items():
         c0, c1 = f['chip'].split('>')

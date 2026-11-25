@@ -236,6 +236,10 @@ $wn.FitGrid = {
   ($wn.HeadMin) first: the other columns above their heads, then the chip column above its head, then any column under
   its head (never under 2 px). When the minimums changed, or the filled columns are wider than the grid, the grid lays
   out its columns again (a 1 px size change makes the fill columns share the room again).
+  R15 (R42 ps51 keep test: a later open of the Wave 1 answers card took 114 ms, 13 before): when the fit took off a bar
+  that shows beyond the plan's reserve, Tag.Reserve becomes that bar and the columns keep their widths (AutoSizeMode
+  None): their fill width no longer depends on the bar, and the bar no longer on the row heights the widths give, so a
+  second fit, and a later open of the kept card, find nothing to do.
   .PARAMETER G
   The grid (its Tag holds the column kinds and the column list, $wn.Grid); any object with ClientSize, Width, Columns
   (Name, Visible, Width, MinimumWidth) and that Tag (tests/check_t22_r15.py gives one off Windows).
@@ -245,7 +249,7 @@ $wn.FitGrid = {
   param($G)
   # the plan's room (Tag.Reserve), and never under a vertical bar that shows now (rows that wrap can bring one)
   $res = $(if ($null -ne $G.Tag.Reserve) { [int]$G.Tag.Reserve } else { [int](& $wn.BarW) + 2 })
-  $room = [int]$G.ClientSize.Width - [math]::Max($res, [int](& $wn.BarShown $G))
+  $shown = [int](& $wn.BarShown $G); $room = [int]$G.ClientSize.Width - [math]::Max($res, $shown)
   $vis = @($G.Columns | Where-Object { $_.Visible }); $mins = 0; $sum = 0
   foreach ($k in $vis) { $mins += [int]$k.MinimumWidth; $sum += [int]$k.Width }
   $excess = $mins - $room; $stale = ($sum -gt [int]$G.ClientSize.Width + 1)   # stale: the filled widths need a new layout
@@ -261,6 +265,8 @@ $wn.FitGrid = {
       $k.MinimumWidth = [int]$k.MinimumWidth - $give; $excess -= $give; $gave++ } }
   if (-not $gave -and -not $stale) { return $false }   # excess, but no column could give any width back: nothing changed
   $G.Width = $G.Width - 1; $G.Width = $G.Width + 1   # the fill columns share the room again
+  if ($shown -gt $res) {   # R15: the grid keeps the room of the bar that shows, and its widths stop following the bar
+    $G.Tag.Reserve = $shown; foreach ($k in $vis) { $k.AutoSizeMode = 'None' } }   # (no fill and row layout again on each open)
   return $true }
 # The widest number (as a link) and the widest title of the pub values ("number|title") of $Rows, in pixels, measured as
 # $wn.PaintPub draws them. All rows, not only the shown ones, so a filter does not move the title column.
