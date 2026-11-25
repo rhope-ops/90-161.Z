@@ -27,7 +27,7 @@ import bloat_check_skills as skills
 import check_settings
 from bloat_check_test_rules import (caps_and_paths_cases, conflict_gate_cases, debt_gate_cases,  # noqa: F401
                                     file_check_cases, git_in, lint_cases, readme_cases, rule_count_cases, sample_kit,
-                                    settings, third_party_cases)
+                                    settings, third_party_cases, archive_due_cases)
 
 LONG = "This line is long enough to count as a duplicate when it shows up in two different files of a repo."
 
@@ -306,8 +306,7 @@ def archive_cases(bloat, d):
     """ARCHIVE DUE: a unit of docs/reviews/ is archivable when it is old enough (14 days; 7 for a closed plan), no live text
     names it (a link from a history doc does not count; a link from an open plan does) and no check reads it; a plan is
     closed only with a checked box and no open box; a folder is one unit, as old as its newest file; the line prints at 20
-    archivable files or 200 KB (reached), or when docs/reviews/ passes 200 files or 1 MB; a shallow clone makes no age test;
-    the --brief line carries it.
+    archivable files or 200 KB (reached), never for the folder's total size; a shallow clone makes no age test.
 
     Args:
         bloat: the module under test.
@@ -348,43 +347,38 @@ def archive_cases(bloat, d):
     files = git_in_out(root, "ls-files").splitlines()
     assert "docs/reviews/new.md" not in names("2027-01-01"), "a file with no commit: no age, not archivable"
     (root / ".git/shallow").write_text(git_in_out(root, "rev-parse", "HEAD") + "\n")
-    day, old = datetime.date(2026, 1, 19), f.ARCHIVE_ALL
+    day = datetime.date(2026, 1, 19)
     assert f.archivable(root, files, day) is None, "a shallow clone: age unknown"
-    f.ARCHIVE_ALL = (1, 10**9)
-    assert f.archive_due(root, files, day).endswith("age unknown: shallow clone"), "it says so"
-    f.ARCHIVE_ALL = old
+    assert f.archive_due(root, files, day) == "", "a shallow clone: not due"
 
 
-def archive_due_cases(bloat, root, files):
-    """ARCHIVE DUE on the sample repo of archive_cases (4 files archivable on 2026-01-19, 13 files in docs/reviews/):
-    the archivable count and bytes "reach" their limits (>=), the count and bytes of docs/reviews/ "pass" theirs (>),
-    and the --brief line carries the line. The limits are put back after the cases.
+def archive_volume_cases(bloat, d):
+    """ARCHIVE DUE at the real limits: 201 files a check reads (over 1 MB, 0 archivable) print nothing; with 19 old
+    archivable files, nothing; with 20, the line, and the --brief line carries it.
 
     Args:
         bloat: the module under test.
-        root: the sample repo of archive_cases (a Path).
-        files: its tracked files.
+        d: an empty temporary folder (a Path).
     """
-    f, day = bloat.bloat_check_files, datetime.date(2026, 1, 19)
-    old = (f.ARCHIVE_SET, f.ARCHIVE_ALL)
-    found = sum(b for _, b in f.archivable(root, files, day))
-    assert f.archive_due(root, files, day) == "", "4 files and %d bytes: not due" % found
-    f.ARCHIVE_SET = (4, 10**9)
-    assert f.archive_due(root, files, day).startswith("4 files, 0 KB archivable"), "the count reaches it"
-    f.ARCHIVE_SET = (10**9, found)
-    assert f.archive_due(root, files, day).startswith("4 files"), "the bytes reach it"
-    size = sum((root / r).stat().st_size for r in files if r.startswith("docs/reviews/"))
-    f.ARCHIVE_SET, f.ARCHIVE_ALL = (10**9, found + 1), (13, size)
-    assert f.archive_due(root, files, day) == "", "the bytes do not reach found + 1; 13 files and %d bytes do not pass themselves" % size
-    f.ARCHIVE_ALL = (13, size - 1)
-    assert "docs/reviews/ 13 files" in f.archive_due(root, files, day), "the bytes pass"
-    f.ARCHIVE_ALL = (12, 10**9)
-    assert "docs/reviews/ 13 files" in f.archive_due(root, files, day), "13 files pass 12"
+    root, f = sample_kit(d, {"AGENTS.md": "## A\n\n- r.\n"}), bloat.bloat_check_files
+    (root / "docs/reviews").mkdir(parents=True)
+    for i in range(201):
+        (root / f"docs/reviews/r{i}.md").write_text(f"rule-conflict-check: {i}\n" + "x" * 5000)
+    plain = [f"docs/reviews/n{i}.md" for i in range(20)]
+    for rel in plain:
+        (root / rel).write_text("x")
+    git_in(root, "add", "-A")
+    subprocess.run(["git", "-C", root, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "old"], check=True,
+                   env={**os.environ, "GIT_COMMITTER_DATE": "2026-01-01T12:00:00"})
+    files, day = git_in_out(root, "ls-files").splitlines(), datetime.date(2026, 2, 1)
+    keep = [r for r in files if r not in plain]
+    assert f.archive_due(root, keep, day) == "", "a large folder (201 files, over 1 MB), 0 archivable: nothing"
+    assert f.archive_due(root, keep + plain[:19], day) == "", "19 archivable files: nothing"
+    assert f.archive_due(root, files, day).startswith("20 files, 0 KB archivable"), "20 archivable files: due"
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         bloat.report(root, argparse.Namespace(brief=True, time=False, record=False, strict=False))
-    assert "ARCHIVE DUE (docs/reviews/ 13 files" in buf.getvalue(), "the brief line says so: %s" % buf.getvalue()
-    f.ARCHIVE_SET, f.ARCHIVE_ALL = old
+    assert "ARCHIVE DUE (20 files, 0 KB archivable)" in buf.getvalue(), "the brief line says so: %s" % buf.getvalue()
 
 
 def git_in_out(folder, *args):
@@ -420,7 +414,7 @@ def run(bloat):
             conflict_gate_cases(bloat, Path(o), caps)
             lint_cases(bloat, Path(o))
         for name, cases in (("files", file_check_cases), ("debt", debt_gate_cases), ("fleet", fleet_cases),
-                            ("archive", archive_cases)):
+                            ("archive", archive_cases), ("volume", archive_volume_cases)):
             with tempfile.TemporaryDirectory() as o:
                 cases(bloat, Path(o), *([caps] if name == "debt" else []))
         report_cases(bloat, root, cfg, strict)
