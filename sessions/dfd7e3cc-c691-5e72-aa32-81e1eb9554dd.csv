@@ -1,0 +1,5 @@
+message_id,timestamp,turn,session_id,repo,model,source,agent,agent_id,input_tokens,cache_creation_input_tokens,cache_read_input_tokens,output_tokens,cache_write_1h_tokens,speed,web_search_requests,inference_geo,skill_use
+msg_011ChQLBTScwgGpa5FUcuag4,2026-11-25T21:09:35.833Z,1,dfd7e3cc-c691-5e72-aa32-81e1eb9554dd,90-161.Z,claude-sonnet-5-5,main,main,,2,32821,63462,750,32821,standard,0,global,"{""kit-update"":{""read"":1}}"
+msg_011ChQLCD8BTrrWWG58DcofB,2026-11-25T21:09:43.333Z,1,dfd7e3cc-c691-5e72-aa32-81e1eb9554dd,90-161.Z,claude-sonnet-5-5,main,main,,2,14679,96283,321,14679,standard,0,global,"{""audit"":{""read"":1}}"
+msg_011ChQLCWP1Vwdr4TjFxYwK4,2026-11-25T21:09:51.250Z,1,dfd7e3cc-c691-5e72-aa32-81e1eb9554dd,90-161.Z,claude-sonnet-5-5,main,main,,2,7335,110962,973,7335,standard,0,global,
+msg_011ChQLDBg8xekV2nFGFEPZG,2026-11-25T21:10:00.885Z,1,dfd7e3cc-c691-5e72-aa32-81e1eb9554dd,90-161.Z,claude-sonnet-5-5,main,main,,2,988,118297,753,988,standard,0,global,
