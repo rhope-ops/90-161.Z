@@ -40,9 +40,9 @@ RAW_HTML = (
     re.compile(r'(?:href|src)\s*=\s*([^"\'\s>]+)', re.I),      # href=... with no quotes
 )
 BARE_URLS = (
-    re.compile(r'https?://\S+', re.I),                                  # a URL with a scheme (also an IP host, a port, localhost)
-    re.compile(r'(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/\S*', re.I),        # a bare host and path
-    re.compile(r'(?:[a-z0-9-]+\.)*[a-z0-9-]+\.github\.io\b', re.I),      # any github.io host
+    re.compile(r'https?://[^\s<|]+', re.I),                                  # a URL with a scheme (also an IP host, a port, localhost)
+    re.compile(r'(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/[^\s<|]*', re.I),        # a bare host and path
+    re.compile(r'(?:[a-z0-9-]+\.)*[a-z0-9-]+\.github\.io(?![a-z0-9-])', re.I),      # any github.io host
 )
 TRAIL = '.,;:!?*_~)\'">]'   # characters that end a sentence or a format mark, not a URL
 GITHUB_IO = re.compile(r'(?:^|[^a-z0-9-])(?:[a-z0-9-]+\.)*github\.io(?![a-z0-9-])', re.I)   # a github.io host, as a whole name
@@ -82,7 +82,9 @@ def bad_links(text):
     found = link_targets(text) + [m.group(0) for pattern in BARE_URLS for m in pattern.finditer(text)]
     bad = set()
     for raw in found:
-        u = urllib.parse.unquote(urllib.parse.unquote(html.unescape(raw))).strip().rstrip(TRAIL)
+        # GitHub ends a bare link before a < or a | (a table cell) and drops a closing &name; (GFM extended autolinks).
+        u = re.sub(r'&[a-z0-9]+;$', '', raw, flags=re.I)
+        u = urllib.parse.unquote(urllib.parse.unquote(html.unescape(u))).strip().rstrip(TRAIL)
         path = re.split(r'[?#]', u, maxsplit=1)[0].rstrip(TRAIL + '/').lower()
         if GITHUB_IO.search(u) or path.endswith('.ps1'):
             bad.add(raw)
