@@ -12,8 +12,8 @@ var CFG=null; // owner, repo, branch from the script tag
 var ME=typeof document!=='undefined'?document.currentScript:null; // this script tag, read while go.js runs (null in node)
 var NAME=/^[A-Za-z0-9_.-]+$/; // an owner, repo or branch name: nothing else may enter a URL
 /**
- * validCfg(c): true when site.config.json holds safe owner, repo and branch names.
- * @param {object} c the parsed site.config.json.
+ * validCfg(c): true when a config holds safe owner, repo and branch names.
+ * @param {object} c the config (from the go.js tag, or the parsed site.config.json in the test).
  * @returns {boolean} true when all three names are safe.
  */
 function validCfg(c){return !!c&&typeof c==='object'&&['owner','repo','branch'].every(function(k){return typeof c[k]==='string'&&NAME.test(c[k])})}

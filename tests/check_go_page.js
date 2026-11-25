@@ -65,6 +65,8 @@ const tag = (page.match(/<script src="go\.js"([^>]*)>/) || [])[1] || '';
 /** attr(n): the value of the data-n attribute on the go.js tag, or undefined. */
 const attr = n => (tag.match(new RegExp(' data-' + n + '="([^"]*)"')) || [])[1];
 check('the go.js tag owner, repo and branch equal site.config.json', ['owner', 'repo', 'branch'].every(k => attr(k) === cfg[k]));
+const rawLinks = fs.readFileSync(path.join(__dirname, '..', 'go.md'), 'utf8').match(/https:\/\/raw\.githubusercontent\.com\/[^\s)\]>"]*/gi) || [];
+check('each raw.githubusercontent.com link in go.md is in the CSP source (same case, repo and branch)', rawLinks.every(u => u.startsWith(t.rawBase(cfg))));
 const fakeTag = { getAttribute: n => ({ 'data-owner': 'o', 'data-repo': 'r', 'data-branch': 'b' })[n] || null };
 check('tagCfg reads the three data attributes, and no tag gives null', JSON.stringify(t.tagCfg(fakeTag)) === '{"owner":"o","repo":"r","branch":"b"}' && t.tagCfg(null) === null);
 check('a config name with a slash, dot path or quote is refused',
