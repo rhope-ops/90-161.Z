@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-25 | 90-161.Z install makes the 12 lists and PFM Office (prints MADE lines); Uninstall removes its own lists by title after the Back up, test site; R43 process test: step 1 to 2 with step 1 exits checked. Scope: R43, install. | PFM (question dialog) | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-25 | RADE previews approved: "Details (F2)" (RADE PR 193 ded3f88) and the 8 Uninstall and Remove RADE cards (PR 194 af69980); release engine-v40. Scope: RADE engine-v40. | PFM (dialog: "Approve, release v40") | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-25 | "Remove RADE": engine-v40 blocks it while an app is installed ("Uninstall these apps first."); one run later. R43 times the engine rights check with and without the watch (app steps never used it). Scope: RADE, R43. | PFM (question dialog) | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-25 | The R42 sign-in window block stays only in the RADE engine: no copy in this repo; a task script that needs it gets it from the engine. Scope: R43 and later rounds. | PFM (dialog: "shouldn't we use the kit version and standardize?") | docs/reviews/2026-11-25-r43-plan.md T6 |
