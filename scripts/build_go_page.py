@@ -89,15 +89,28 @@ def put_links(tokens, links):
 
     Returns:
         None. A mark in a text token outside a link becomes link_open, text and link_close tokens (the address with
-        https:// in front if none); in a text token inside a link, or in any attribute, it becomes the URL text.
+        https:// in front if none); in a text token inside a link, or in any attribute, it becomes the URL text. A
+        mark that holds no URL (go.md wrote it as an entity) becomes nothing. A link with an empty address is dropped
+        and keeps its text.
     """
+    def url(m):
+        """The URL of mark m, or '' when the mark holds no URL."""
+        i = int(m.group(1))
+        return links[i] if i < len(links) else ''
+
     def plain(t):
         """The text with each mark as its URL."""
-        return MARK.sub(lambda m: links[int(m.group(1))], t)
+        return MARK.sub(url, t)
 
     for line in tokens:
-        out, depth = [], 0
+        out, depth, dropped = [], 0, []
         for tok in line.children or []:
+            if tok.type == 'link_open':
+                dropped.append(not tok.attrGet('href'))
+                if dropped[-1]:
+                    continue
+            if tok.type == 'link_close' and dropped and dropped.pop():
+                continue
             depth += (tok.type == 'link_open') - (tok.type == 'link_close')
             for key, val in list((tok.attrs or {}).items()):
                 tok.attrSet(key, plain(str(val)))
@@ -107,12 +120,14 @@ def put_links(tokens, links):
                 continue
             pos = 0
             for m in MARK.finditer(tok.content):
-                u = links[int(m.group(1))]
+                u = url(m)
                 out.append(Token('text', '', 0, content=tok.content[pos:m.start()]))
+                pos = m.end()
+                if not u:
+                    continue
                 out.append(Token('link_open', 'a', 1, attrs={'href': u if u.startswith('http') else 'https://' + u}))
                 out.append(Token('text', '', 0, content=u))
                 out.append(Token('link_close', 'a', -1))
-                pos = m.end()
             out.append(Token('text', '', 0, content=tok.content[pos:]))
         line.children = out
 
@@ -439,6 +454,8 @@ def inline_cases(check):
           and '\ue000' not in t2 and re.findall(r' (\w+)=', t2) == ['href', 'title', 'rel'])
     check('[text with URL](URL) and **URL**, make one link each', inl('[see https://a.b/c](https://c.d/)').count('<a ') == 1
           and 'href="https://e.x/y"' in inl('**https://e.x/y**,'))
+    check('an entity mark and an empty address make no crash and no link', '<a' not in inl('&#xE000;5&#xE001; [Open]()')
+          and 'Open' in inl('[Open]()'))
     check('no image; links keep http(s) only', '<img' not in bad and re.findall(r'<a href="([^"]*)"', bad) == ['https://ok.example/'])
     check('a backslash stays', 'Rounds\\&lt;round&gt;' in inl('Rounds\\<round>'))
     check('a single * or _ is no italic, also in code', inl('2*3*4 a_b_c _x_ `a_b\\c`') ==
