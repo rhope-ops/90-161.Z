@@ -16,7 +16,7 @@ Changes after tests 3 to 5: the NOT found gate stops the task; the small window 
 Not changed, with the reason:
 - The bar lines "Pass if ... opens and looks right" (tests 2, 3): the PFM's own judgment is the test; the same form passed in R41 (15 of 17 screens).
 - The page sections "Steps to start a round", "Send a line to Claude" and "Send the results by hand" (test 2): released after the fresh-reader test of 21 Nov 26 (4 tests, 0 blockers).
-- No card line says "Done" (tests 1 to 3): the runner text rule forbids it (tests/check_guide_text.py); go.md step 14 says it.
+- No card line says "Done" (tests 1 to 3): the runner text rule forbids it (tests/check_guide_text.py); the go.md step "Each time a card shows the button Done" says it.
 - The test site name (tests 2 to 4): RADE asks only if it has no test-site mark; R41 saved one. If it asks, the PFM closes the window and reports it (no name is typed, so no site can be marked by mistake).
 - Test 5 minor points (the Teams list pick, the place of the **Stopped** step, one window name in step 5): left for the R43 redraft.
 
