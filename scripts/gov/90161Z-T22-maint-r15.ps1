@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r14, Maintenance (round R39; the PFM, 20 Nov 26): the test install of 90-161.Z 0.1, and the read-back
+  90-161.Z Task 22 r15, Maintenance (round R39; the PFM, 20 Nov 26): the test install of 90-161.Z 0.1, and the read-back
   of what RADE's Maintenance tools Diagnose and Back up made. Windows PowerShell 5.1 (also 7); no module.
 .DESCRIPTION
   RADE shows its Maintenance screen (Diagnose, Back up) only for an app that a RADE deploy installed (RADE engine-v30,
   engine/ps/window/06-open.ps1). R39 therefore deploys 90-161.Z version 0.1.0 first.
-  -Part Install: the one step of that deploy. It writes 90161Z-T22-install-r14.txt and passes; RADE keeps the install
+  -Part Install: the one step of that deploy. It writes 90161Z-T22-install-r15.txt and passes; RADE keeps the install
   record (RADE\Config\installed). It installs nothing else and changes nothing on the site.
   -Part Read: reads, on this computer only, (1) the install record of 90-161.Z (version and last run state), (2) the
   newest Diagnose report (RADE\90-161.Z\Diagnose\diagnose-*.txt): its PASS, FINDING and NOTE counts and each FINDING
@@ -15,20 +15,20 @@
   -Part Backup (round R41, the Restore test; the PFM, 21 Nov 26): reads only (3), the newest Back up folder, so the round
   knows that the Back up before the Restore test saved every list (12 from R41: the 12th is "PFM Recommendations (DAF Form
   847)", a title with parentheses that RADE engine-v31 can back up). It also needs a backup made after the T26 part
-  Rows made the fake rows (RowsAt in T26\90161Z-T26-endorse-state-r1.txt): an older backup, or no Rows time, is a FAIL.
+  Rows made the fake rows (RowsAt in T26\90161Z-T26-endorse-state-r2.txt): an older backup, or no Rows time, is a FAIL.
   Result lines: RESULT INSTALL, RESULT DIAGNOSE and RESULT BACKUP, each PASS or FAIL. Exit 1 when one is FAIL.
   A report or backup older than $FreshHours hours is from an earlier day and counts as missing.
-  Run: by RADE (powershell.exe -File 90161Z-T22-maint-r14.ps1 -Part Install, Read or Backup -NoPause), or by hand in T22.
+  Run: by RADE (powershell.exe -File 90161Z-T22-maint-r15.ps1 -Part Install, Read or Backup -NoPause), or by hand in T22.
   Parameters: -Id (the DODID; the profile folder name when not given), -Part, -NoPause, -TestDir (the T22 folder of a
   test; its parent is the app folder and the parent of that the RADE folder).
   Network: none.
-  Writes: Install: 90161Z-T22-install-r14.txt; Read: 90161Z-T22-maint-r14.txt; Backup: 90161Z-T22-backup-r14.txt, all in
+  Writes: Install: 90161Z-T22-install-r15.txt; Read: 90161Z-T22-maint-r15.txt; Backup: 90161Z-T22-backup-r15.txt, all in
           the T22 folder (or -TestDir).
   Credentials: none.
 #>
 param([string]$Id, [ValidateSet('Install', 'Read', 'Backup')][string]$Part = 'Read', [switch]$NoPause, [string]$TestDir)
 $task = 'T22'
-$Rev = 'r14'
+$Rev = 'r15'
 $FreshHours = 6   # a Diagnose report or a backup older than this is not from this round
 $BackupLists = 12   # the lists the R41 manifest names in "backup" (scripts/paste_bundles.json; tests/ps/Test-T22Maint.ps1 checks they match): fewer is a FAIL
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
@@ -223,7 +223,7 @@ function Get-BackupResult([string]$App, $Since = $null) {
 
 # The time the T26 part Rows made the fake rows of the Restore test (RowsAt in the T26 state file), or $null. Takes the app folder.
 function Get-RowsTime([string]$App) {
-  $f = Join-Path (Join-Path $App 'T26') '90161Z-T26-endorse-state-r1.txt'
+  $f = Join-Path (Join-Path $App 'T26') '90161Z-T26-endorse-state-r2.txt'
   $l = @(Get-Content -LiteralPath $f -ErrorAction SilentlyContinue | Where-Object { ([string]$_).StartsWith('RowsAt=') }) | Select-Object -First 1
   if (-not $l) { return $null }
   try { return [datetime]::ParseExact(([string]$l).Substring(7), 'yyyy-MM-ddTHH:mm:ss', [Globalization.CultureInfo]::InvariantCulture) } catch { return $null }

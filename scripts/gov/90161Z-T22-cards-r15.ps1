@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r14, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
+  90-161.Z Task 22 r15, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
   R14 (R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3): the click-through of every screen in order
@@ -9,7 +9,7 @@
   (Get-AgainText; the main script gives it the saved card); the closing line of the check bar names no card.
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r14.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r15.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems, $Walk
   and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan, Get-CheckPlan,
