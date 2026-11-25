@@ -108,10 +108,12 @@ def signin_text():
         a, b = text.find(SIGNIN_START), text.find(SIGNIN_END)
         if a < 0 or b < a:
             sys.exit('FAIL the pinned RADE engine has no sign-in window size block (scripts/build_task_scripts.py signin_text)')
-        # The engine text stays unchanged inside a here-string, as the engine itself holds it ($signInSize): the
-        # function loads at run time, so PSScriptAnalyzer lints this loader, not the copied engine code (its Start verb
-        # has no ShouldProcess; no lint exemption is added). A failed load leaves the sign-in window at its own size.
-        _signin.append("$SignInSizeCode = @'\n" + text[a:b + len(SIGNIN_END)] + "\n'@\n"
+        # The engine text stays unchanged, as data: one quoted string for each line (a here-string cannot go in a bundle,
+        # which embeds each task script in one). The function loads at run time, so PSScriptAnalyzer lints this loader, not
+        # the copied engine code (its Start verb has no ShouldProcess; no lint exemption is added). A failed load leaves
+        # the sign-in window at its own size.
+        rows = text[a:b + len(SIGNIN_END)].split('\n')
+        _signin.append('$SignInSizeCode = @(\n' + ',\n'.join("  '" + r.replace("'", "''") + "'" for r in rows) + '\n) -join "`n"\n'
                        + 'try { . ([scriptblock]::Create($SignInSizeCode)) } catch { $null = $_ }   # no block: the window keeps its size\n')
     return _signin[0]
 
@@ -134,7 +136,12 @@ def split_ui(text):
 
 
 def body(src=SRC):
-    """Get the text that a shared block in the task scripts must hold. Takes the source (a script file, or the LOGO or UI marker); returns text."""
+    """Get the text that a shared block in the task scripts must hold.
+
+    Args:
+        src: the source: a script file under scripts/gov/src, or the LOGO, UI, UI2 or SIGNIN marker.
+    Returns: the text of the block, with LF line ends.
+    """
     if src == LOGO:
         return logo_text()
     if src == UI:

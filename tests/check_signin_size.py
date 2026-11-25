@@ -10,7 +10,9 @@ scripts/paste_bundles.json carries:
 - each such Connect-PnPOnline line has a "Start-SignInSize" line within the 3 lines before it;
 - with pwsh on the PATH and RADE_SIGNIN_TEST=1, the block loads and Start-SignInSize compiles its helper type (no window).
 
-Network: none. Writes: none. Credentials: none.
+Network: none.
+Writes: none.
+Credentials: none.
 Usage: python3 tests/check_signin_size.py   exit 0 = pass (last line SIGNIN pass ...), 1 = a failed check."""
 import json
 import pathlib
@@ -21,7 +23,8 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 BEGIN = '# >>> signin-size: generated from'
-CONNECT = re.compile(r'^\s*(\$null = & \{ )?Connect-PnPOnline\b.*-UseWebLogin')   # a code line, not help text
+# A code line that signs in, not a line of help text.
+CONNECT = re.compile(r'^\s*(\$null = & \{ )?Connect-PnPOnline\b.*-UseWebLogin')
 
 
 def bundle_scripts():
@@ -31,11 +34,12 @@ def bundle_scripts():
 
 
 def check_file(path, task_has_block):
-    """Return the failure lines of one script (an empty list when it passes).
+    """Return the failure lines of one script.
 
     Args:
         path: the script.
         task_has_block: True when a file of the same task in the bundle holds a filled block.
+    Returns: the failure lines; an empty list when the script passes.
     """
     lines = path.read_text(encoding='utf-8').split('\n')
     bad = []
@@ -58,14 +62,19 @@ def compile_case(path):
     """Load the block of `path` in pwsh with RADE_SIGNIN_TEST=1 and return '' when the helper type compiles, else the error."""
     text = path.read_text(encoding='utf-8')
     block = text[text.index(BEGIN):text.index('# <<< signin-size')]
-    code = block + "\nif (-not (Get-Command Start-SignInSize -ErrorAction Ignore)) { 'NOT COMPILED: not loaded' }\nStart-SignInSize\nif ('RadeSignIn.Size' -as [type]) { 'COMPILED' } else { 'NOT COMPILED' }\n"
+    code = (block + "\nif (-not (Get-Command Start-SignInSize -ErrorAction Ignore)) { 'NOT COMPILED: not loaded' }\n"
+            + "Start-SignInSize\nif ('RadeSignIn.Size' -as [type]) { 'COMPILED' } else { 'NOT COMPILED' }\n")
     env = dict(__import__('os').environ, RADE_SIGNIN_TEST='1')
     r = subprocess.run(['pwsh', '-NoProfile', '-Command', code], capture_output=True, text=True, env=env, timeout=120)
     return '' if 'COMPILED' in r.stdout and 'NOT COMPILED' not in r.stdout else (r.stdout + r.stderr).strip()[-300:]
 
 
 def main():
-    """Run the checks; print the failures and the summary line. Returns the exit code."""
+    """Run the checks on every bundled task script and print the failures and the summary line.
+
+    Args: none.
+    Returns: the exit code: 0 when every check passes, else 1.
+    """
     files = [p for p in bundle_scripts() if p.name.startswith('90161Z-T')]
     tasks = {}
     for p in files:

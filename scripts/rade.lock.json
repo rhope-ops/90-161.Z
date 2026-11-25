@@ -1,8 +1,8 @@
 {
   "repo": "rhope-ops/RADE",
-  "commit": "6efe5c7e6f0b5503cb77c71146b191e5fea4cca5",
-  "tag": "engine-v36",
-  "serial": 25,
+  "commit": "b645019542d0a11a38523dee0d1a374b158c04c4",
+  "tag": "engine-v37",
+  "serial": 26,
   "engine": "engine/rade_build.py",
   "files": {
     "apps.json": "ec8e483322c5aede68c7c64ea4bde1b51699842b2c2388f881bd7bc402687ffb",
@@ -38,7 +38,7 @@
     "engine/ps/window/09-record.ps1": "217a9342ecc74af8074b3395e5d84785c91b606b2090f365d85f7eaa08b2d9e0",
     "engine/ps/window/10-keys.ps1": "e700467926e2861659bf59f4595a7bcb0e5c9bafa463576463434b2d22a819b9",
     "engine/ps/window/11-tools.ps1": "9a246adeb2e694aa7a9dc429212da69ea21cfca01d3fc7122c3b52a4e5523269",
-    "engine/rade_build.py": "c9f5b668b9c7e1e1f6f5bda2b7aa434f4edca06d47fd9d42b43bd3d483370b6f",
+    "engine/rade_build.py": "897eae5aedb90d2f032d3d509a5d9a96731518f5a062210c0c33df836bbf142f",
     "engine/rade_fields.py": "205d818a8b90147bfd91ebb447495df4abc152decf30e35b9156cb8dcf9724db",
     "engine/rade_hash.py": "3af3cde278e8c143bdf9b8b16e2013d2c3d04beca87b3fc6e8822051351b0678",
     "engine/rade_parts.py": "fd915c91b9f52aa33a05e31cc91050c896dbf43d5ec13a8034d0a4be71dce3c8",

@@ -8,6 +8,8 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-24 | R42 r1: test-site writes as in R41 (fake rows only, removed at the end); a Repair of 90-161.Z 0.1.0 first; steps that passed in R41 left out. Scope: R42. | the Maintainer: "i approve" (chat, 2026-11-24) | [r42 plan](reviews/2026-11-21-r42-plan.md) |
+| 2026-11-24 | RADE lock moves to release engine-v37 (RADE b645019, serial 26) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-24 | Kit sync to 11.1.0 (main a629550; tag v11.1.0 waits for the Maintainer): T6 marker (kit #179); Python line gate without ruff/pylint (#178, #183); hook verify order (#180). | Agent | kit-sync PR |
 | 2026-11-24 | Kit sync to main 790d832 (no tag; version 11.0.1): SessionStart hook installs the kit package (kit #173); reviewer delete block (#174). No baseline or .check change. | Agent | kit-sync PR |
 | 2026-11-24 | Kit package mode (plan 2026-11-23 P3): 17 kit scripts come from archimedes-kit at the .check.lock commit, untracked; 36 kit scripts stay tracked. Rollback: revert, then sync. | Agent | package-mode PR |

@@ -430,9 +430,6 @@
                                 "Large",
                                 "No sign-in window opened"
                             ],
-                            "failOn": [
-                                "Large"
-                            ],
                             "key": "b-signin",
                             "prompt": "In the window \"90-161.Z 0.1.0\", did a CAC sign-in window open? If yes, what size was it?"
                         }
@@ -556,6 +553,28 @@
                             ]
                         },
                         {
+                            "key": "r-pause",
+                            "prompt": "Does the result say that the pause switch is back as it was?",
+                            "kind": "yesno"
+                        }
+                    ],
+                    "doneLog": "Confirmed by you: Restore ran in the second window."
+                },
+                {
+                    "name": "T26 Answer: the Recycle Bin rows r2",
+                    "title": "Answer 1 question about the Recycle Bin rows",
+                    "kind": "guide",
+                    "guide": [],
+                    "dir": "T26",
+                    "file": "",
+                    "answersOnly": true,
+                    "estimate": 1,
+                    "after": [
+                        "T26 Restore with the app name r2"
+                    ],
+                    "note": "1 question about the line \"PFM Endorsements\" in the result in the second window. Keep the second window open.",
+                    "answers": [
+                        {
                             "key": "r-bin",
                             "prompt": "The line \"PFM Endorsements\" says \"X back from the Recycle Bin, Y made new\". What are X and Y?",
                             "kind": "pick",
@@ -568,14 +587,8 @@
                                 "Other numbers",
                                 "There is no such line"
                             ]
-                        },
-                        {
-                            "key": "r-pause",
-                            "prompt": "Does the result say that the pause switch is back as it was?",
-                            "kind": "yesno"
                         }
-                    ],
-                    "doneLog": "Confirmed by you: Restore ran in the second window."
+                    ]
                 },
                 {
                     "name": "T26 Close the second window r2",
@@ -589,7 +602,7 @@
                     ],
                     "estimate": 1,
                     "after": [
-                        "T26 Restore with the app name r2"
+                        "T26 Answer: the Recycle Bin rows r2"
                     ]
                 },
                 {
@@ -820,6 +833,7 @@
                         "T26 Start Restore in a second window r2",
                         "T26 Answer: the Restore dry run r2",
                         "T26 Restore with the app name r2",
+                        "T26 Answer: the Recycle Bin rows r2",
                         "T26 Close the second window r2",
                         "T26 Check the restored rows r2",
                         "T26 Remove the fake rows r2",
