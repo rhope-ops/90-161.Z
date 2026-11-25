@@ -11,8 +11,8 @@ README.md is the one page the PFM opens on the work computer (github.io and .ps1
     GitHub keeps go.md's line breaks.
 go.md stays the one home of the tasks: edit go.md, then run this script. scripts/build_paste_bundles.py runs it at the
 end of each round build.
-The build fails when the README has a link to a .ps1 file or to github.io (the PFM, 2026-11-25), or when go.md has a
-round script line (a .ps1 URL): the script link comes only from the bundle's .txt copy.
+The build fails when the README has a URL of a .ps1 file or of github.io, in any form GitHub shows as a link (the PFM,
+2026-11-25): the script link comes only from the bundle's .txt copy.
 Usage: python3 scripts/build_readme.py [--check]
   --check: write nothing; exit 1 when README.md is not the text this script would write.
 Network: none.
@@ -33,8 +33,27 @@ import site_config   # noqa: E402  scripts/site_config.py: the account values li
 U = site_config.urls()
 RAW = U['raw']
 BARE = re.compile(r'^(?:https://)?(raw\.githubusercontent\.com/\S*)$')
-# A link target that breaks the work computer: a .ps1 file, or any github.io page (the PFM, 2026-11-25).
-BAD_LINK = re.compile(r'(?:\]\(|<|href=")[^)>"\s]*(?:\.ps1(?:[)>"?#]|$)|github\.io)', re.I)
+# A URL that GitHub shows as a link (with a scheme, or a bare host name such as rhope-ops.github.io/RADE).
+URL = re.compile(r'(?:https?://)?(?:[a-z0-9-]+\.)+[a-z]{2,}/[^\s)>"\'\]]*|(?:https?://)?[a-z0-9-]+\.github\.io\b', re.I)
+
+
+def bad_links(text):
+    """The URLs in text that break the work computer: a .ps1 file, or any github.io page (the PFM, 2026-11-25).
+
+    A plain file name (T22\\name.ps1, with no host) is not a URL, so it does not count.
+
+    Args:
+        text: README text.
+    Returns:
+        A sorted list of the bad URLs (empty when there is none).
+    """
+    bad = set()
+    for m in URL.finditer(text):
+        u = m.group(0).rstrip('.,;:')
+        path = re.split(r'[?#]', u, maxsplit=1)[0]
+        if 'github.io' in u.lower() or path.lower().endswith('.ps1'):
+            bad.add(u)
+    return sorted(bad)
 
 
 def script_lines():
@@ -68,7 +87,7 @@ def tasks(text):
     Returns:
         The README task lines, without a final empty line.
     Raises:
-        SystemExit: when go.md has no "Updated" line or a round script (.ps1) line.
+        SystemExit: when go.md has no "Updated" line.
     """
     lines = text.split('\n')
     start = next((i for i, s in enumerate(lines) if s.startswith('Updated:')), None)
@@ -79,8 +98,6 @@ def tasks(text):
         if line.startswith('## Done'):
             break
         s = line.strip()
-        if s.endswith('.ps1'):
-            sys.exit('FAIL go.md links a .ps1 file (%s): the README links only the .txt copy of the bundle' % s)
         m = BARE.match(s)
         if m:
             out.append('<https://%s>' % m.group(1))
@@ -114,15 +131,21 @@ def hard_breaks(lines):
 
 
 def build():
-    """README.md with its task part made again. Exits when a marker line is missing or a bad link is in the README."""
+    """README.md with its task part made again from go.md and the round bundle.
+
+    Returns:
+        The whole new text of README.md.
+    Raises:
+        SystemExit: when a marker line is missing or out of order, or the new text links a .ps1 file or github.io.
+    """
     readme = README.read_text(encoding='utf-8')
-    if BEGIN not in readme or END not in readme:
-        sys.exit('FAIL README.md has no task markers (%s ... %s)' % (BEGIN, END))
+    if BEGIN not in readme or END not in readme.split(BEGIN, 1)[1]:
+        sys.exit('FAIL README.md has no task markers in order (%s ... %s)' % (BEGIN, END))
     head, rest = readme.split(BEGIN, 1)
     tail = rest.split(END, 1)[1]
     part = script_lines() + ['', '---', '', '### 🔺 Current tasks', ''] + tasks(GO.read_text(encoding='utf-8'))
     new = head + BEGIN + '\n' + '\n'.join(part) + '\n' + END + tail
-    bad = sorted({m.group(0) for m in BAD_LINK.finditer(new)})
+    bad = bad_links(new)
     if bad:
         sys.exit('FAIL README.md links a .ps1 file or github.io: %s' % ', '.join(bad))
     return new
