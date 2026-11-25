@@ -205,5 +205,8 @@ else sk "T22 window preview cards (r15)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"
 gt=$(python3 tests/check_guide_text.py) && ok "guide text ($(echo "$gt" | tail -1))" || { echo "$gt"; bad "guide text: a step points elsewhere, holds 2 actions or is over 200 characters"; }
+# Screen names (Project rule, the PFM, 2026-11-25): every bold or quoted name in a step is screen text of the round bundle.
+python3 tests/check_screen_names.py --test >/dev/null && ok "screen names self-test" || bad "screen names self-test"
+sn=$(python3 tests/check_screen_names.py) && ok "screen names ($(echo "$sn" | tail -1))" || { echo "$sn"; bad "screen names: a step names text that no RADE screen shows"; }
 gp=$(node tests/check_go_page.js) && ok "bookmark page renderer ($(echo "$gp" | tail -1))" || { echo "$gp"; bad "bookmark page renderer (tests/check_go_page.js)"; }
 if [ "${on[lint]}" = 1 ]; then wait "$lint_pid" && ok "lint ($(tail -1 "$bg/lint.out"))" || { cat "$bg/lint.out"; bad "lint"; }; else sk "lint"; fi

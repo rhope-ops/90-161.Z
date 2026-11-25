@@ -1,6 +1,6 @@
 ---
 name: round
-description: Use to build, revise or release a gov-device test round (R<NN>) or a task script (90161Z-T<NN>), to write or change a go.md task or a runner step the PFM reads, and to record a round's results. Gives the start of a round build, the results file, task-script and file-name rules, the round definition, the bundle, the go.md usability bar and the release order.
+description: Use to build, revise or release a gov-device test round (R<NN>) or a task script (90161Z-T<NN>), to write or change a go.md task or a runner step the PFM reads, and to record a round's results.
 ---
 
 # Build and release a round
@@ -65,6 +65,7 @@ Also:
 - Link every file and every zip by its raw.githubusercontent.com URL, one per line; never a rhope-ops.github.io copy of a file or a github.com archive link. No code in go.md.
 - The PFM types only the first address by hand (the bookmark github.com/rhope-ops/90-161.Z, the README); keep any address he must type short.
 - Before a round ships: `python3 tests/check_guide_text.py` passes (it fails a step that points elsewhere, holds 2 actions or is over 200 characters), and a fresh agent that has not seen the build reads only the steps and says back each action. Rewrite any step it cannot say back.
+- Screen names (Project rule, the PFM, 2026-11-25): copy each window, card, button, row and bar text from the round's bundle code, at the point in the flow where the code shows it; never from an older go.md or from memory. `python3 tests/check_screen_names.py` fails a bold or quoted name that no string of the bundle holds. It cannot see a real name at the wrong time, so give the fresh reader the steps plus the output of `python3 tests/check_screen_names.py --map` (each card and its sentence, in code order, and the button texts), and ask it to mark each step whose card, button or order differs from the code.
 
 ## 6. Release order
 
