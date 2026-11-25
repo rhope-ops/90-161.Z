@@ -1,10 +1,10 @@
 # Next prompt: 90-161.Z
 
-Updated 2026-11-23 Central (fleet v2 Stage 3A local items; earlier: 2026-11-21 R41 results, R42 plan).
+Updated 2026-11-24 Central (R42 r1 built; earlier: 2026-11-21 R41 results, R42 plan).
 
 ## Open
 
-0. Fleet v2 Stage 3A DONE (plan: rhope-ops/archimedes_lever docs/reviews/2026-11-23-fleet-v2-plan.md): PRs #217-#221 merged 2026-11-23. Main is on RADE engine-v36 and kit 11.0.1; R41 r2 is built, not run on a device (R42 is next). Status: docs/reviews/2026-11-23-fleet-v2-3a.md.
-1. R41 done (results: docs/reviews/2026-11-21-r41-results.md). R42 plan approved 21 Nov 26 15:25 Central: docs/reviews/2026-11-21-r42-plan.md (kit rule K1, engine E1-E5 in a RADE session, T1-T4 here). Continue it from the first step not done.
-2. Lock: engine-v30 (Maintenance: Diagnose and Back up; before: v29 pause/resume, Fulcrum logo, no scripts at collect, UI standard v1). Not verified on a device: Resume and Paused cards, CAC removal text. RADE UI file split into T22 parts ui and ui2 (build_task_scripts.py split_ui).
-3. T22 r13 is the window on main (kept cards, paint times). Known limits: [detail](reviews/2026-11-21-handoff-detail.md). Also open: 12th backup list (RADE), F01 log rows, T06, RADE pause and resume not verified.
+1. R42 r1 is on the RADE page (PR #231; engine-v38): T22 window r15, 22 redrafted steps, a Repair of 90-161.Z 0.1.0 first. Not run on a device. Next: record its results (round skill section 1). Fresh readers: docs/reviews/2026-11-24-fresh-reader.md.
+2. Watch in R42: the LAYOUT lines (home, queue, waves), WALK 10 and 11, a "did not open" NOTE, a SCALE line per RADE window, `b-signin`, `r-bin` (pass: 3 and 0), RESTORE-BIN.
+3. E3 in task scripts is out of R42 (review MAJOR: the RADE block, as live code, needs a lint exemption; in T22 it also sizes the window). RADE fix first: a verb that changes no state.
+4. Also open: 12th backup list (RADE), F01 log rows, T06, RADE pause/resume. [Detail](reviews/2026-11-21-handoff-detail.md).
