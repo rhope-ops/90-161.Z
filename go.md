@@ -89,7 +89,7 @@ R43 is being built. This page shows it when it is ready.
 
 ## Done
 
-- Round R42 r2 (25 Nov 26): needs review. Checks 12 of 12, Window OK, 12 of 21 steps passed. Passed: the probe list, the second person and the answer row by that person, the waves grid and screens 10 and 11, and the clean-up. Needs work: Back up and Restore did not run (the install steps were not clear), the home and queue grids, and 3 screens.
+- Round R42 r2 (25 Nov 26): needs review. Checks 12 of 12, Window OK, 11 of 21 steps passed. Passed: the probe list, the second person and the answer row by that person, the waves grid and screens 10 and 11, and the clean-up. Needs work: Back up and Restore did not run (the install steps were not clear), the home and queue grids, and 3 screens.
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-25-r42-results.md
 
 - Round R41 r1 (21 Nov 26): needs review. Checks 12 of 12, Window OK, 19 of 24 steps passed. Passed: the probe list, the second person, Back up and Restore of 4 fake rows in a second RADE window, the pause row back at No, and the clean-up. Needs work: the Recycle Bin rows got new row numbers, the window grids and 2 screens, and the answer buttons. The endorser answer was skipped.
