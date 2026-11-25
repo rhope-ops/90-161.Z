@@ -123,11 +123,14 @@ $wn.ColPlan = {
   R11: all the rows of the grid, to measure each column's widest value ($wn.ValueMin); none: the declared widths.
   .OUTPUTS
   @{ Min = the smallest width by column name, in column order; Weight = the fill weight by name; Room = the room the
-  minimums share; ChipKept = $true or $false when the grid has a chip column (its chip kept whole), else $null }.
+  minimums share; Reserve = the grid width less that room ($wn.FitGrid keeps it); ChipKept = $true or $false when the grid has a chip column (its chip kept whole), else $null }.
   #>
   param($Cols, [int]$W, [int]$Scroll, [int]$PubMin, $Rows = @())
-  # R15: the room for the scroll bar is always kept (r14 kept it only with a pub column): narrower columns wrap, rows grow.
-  $bar = [math]::Max($Scroll, [int](& $wn.BarW))
+  # R15: the room for the scroll bar is kept in every grid (r14: only with a pub column) while every head fits beside it;
+  # ps51 W7 (96 dpi, narrowest page): when the heads do not fit there and no bar shows, the heads take that room (as r14).
+  $bar = [math]::Max($Scroll, [int](& $wn.BarW)); $heads = 0
+  foreach ($c in $Cols) { $heads += $(if ($c.K -eq 'pub' -and $PubMin -gt 0) { [math]::Max((& $wn.Sc 60), $PubMin) } else { [int](& $wn.HeadMin $c) }) }
+  if ($Scroll -eq 0 -and $heads -gt $W - $bar - 2) { $bar = 0 }
   $fixed = 0; $keep = 0; $rest = 0; $n = @($Cols).Count; $avail = $W - $bar - 2; $kept = $null
   $pubOwn = [math]::Max(2, [math]::Min([math]::Max((& $wn.Sc 60), $PubMin), $avail - 2 * ($n - 1)))   # a pub column never leaves less than 2 px a column
   $own = @{}; $hard = @{}; $spare = & $wn.HeadSpare $Cols $avail $PubMin $pubOwn; foreach ($c in $Cols) {   # R11: a chip is kept only while the heads fit
@@ -151,12 +154,12 @@ $wn.ColPlan = {
       elseif ($floor -le $pool) { $f + $(if ($more -gt 0) { [int][math]::Floor(($pool - $floor) * [math]::Max(0, $o - $f) / [double]$more) } else { 0 }) }
       else { [math]::Max(2, [int][math]::Floor($o * $k)) })
     $wts[[string]$c.N] = [single]$(if ($c.W -eq 0) { [math]::Max(60, $W - $fixed - $Scroll) } else { [math]::Max(1, $o) }) }
-  return @{ Min = $mins; Weight = $wts; Room = $avail; ChipKept = $kept } }
+  return @{ Min = $mins; Weight = $wts; Room = $avail; Reserve = $W - $avail; ChipKept = $kept } }
 # Adds the columns of the plan ($wn.ColPlan; the parameters are its own) to grid $G: each fills, with its smallest width
 # and its fill weight. Gives back the column kinds by name (@{ name = kind }); $wn.ChipKept is the plan's ChipKept.
 $wn.GridCols = {
   param($G, $Cols, [int]$W, [int]$Scroll, [int]$PubMin, $Rows = @())
-  $plan = & $wn.ColPlan $Cols $W $Scroll $PubMin $Rows; $wn.ChipKept = $plan.ChipKept
+  $plan = & $wn.ColPlan $Cols $W $Scroll $PubMin $Rows; $wn.ChipKept = $plan.ChipKept; $wn.Reserve = $plan.Reserve
   $kinds = @{}
   foreach ($c in $Cols) {
     $dc = New-Object System.Windows.Forms.DataGridViewTextBoxColumn; $dc.Name = [string]$c.N; $dc.HeaderText = $(if ($c.H) { [string]$c.H } else { [string]$c.N }); $dc.SortMode = 'NotSortable'
@@ -208,7 +211,7 @@ $wn.Grid = {
   $wn.ChipKept = $null; $kinds = & $wn.GridCols $g $cols $W $scroll (& $wn.PubMin $cols $pw) $rows
   $chipKind = @{}; foreach ($r in $rows) { if ($r.Status) { $chipKind[[string]$r.Status] = [string]$r.Kind } }
   $g.Tag = @{ Kind = $kinds; Chip = $chipKind; Cols = $cols; Shown = $rows; PubW = $pw.Num; PubT = $pw.Title; PubGap = (& $ui.Sc 6); Drawn = @{}; Head = $null
-    Heads = [ordered]@{}; ChipKept = $wn.ChipKept }
+    Heads = [ordered]@{}; ChipKept = $wn.ChipKept; Reserve = $wn.Reserve }
   & $wn.GridFill $g $rows
   $g.Add_CellPainting({ param($s, $e) & $wn.PaintCell $s $e })
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
@@ -230,8 +233,8 @@ $wn.FitGrid = {
   .SYNOPSIS
   R10, R15: fits one grid (see $wn.FitGrids): lowers column minimums by the excess of the minimums over the grid's room.
   .DESCRIPTION
-  R15 (R42 T1; R41 finding 4): the room is the one of $wn.ColPlan: the client width less a scroll bar ($wn.BarW) and
-  2 px, whether the bar shows or not. The excess is the sum of the minimums of the visible columns less the room, so a
+  R15 (R42 T1; R41 finding 4): the room is the one of $wn.ColPlan (Tag.Reserve): the client width less a scroll bar and
+  2 px whether the bar shows or not, unless the heads needed the bar room. The excess is the sum of the minimums of the visible columns less the room, so a
   grid that fits gives nothing back however its fill columns share the width (r14 compared the filled widths with the
   room less a bar that showed, found an excess in a grid that fitted and took it from the chip column on every pass).
   The excess comes off the columns that are not the pub column, the one with the most width above its head
@@ -245,7 +248,7 @@ $wn.FitGrid = {
   $true when it changed a column or laid the grid out again, else $false.
   #>
   param($G)
-  $room = [int]$G.ClientSize.Width - [int](& $wn.BarW) - 2
+  $res = $(if ($null -ne $G.Tag.Reserve) { [int]$G.Tag.Reserve } else { [int](& $wn.BarW) + 2 }); $room = [int]$G.ClientSize.Width - $res   # the plan's room
   $vis = @($G.Columns | Where-Object { $_.Visible }); $mins = 0; $sum = 0
   foreach ($k in $vis) { $mins += [int]$k.MinimumWidth; $sum += [int]$k.Width }
   $excess = $mins - $room; $stale = ($sum -gt [int]$G.ClientSize.Width + 1)   # stale: the filled widths need a new layout

@@ -123,7 +123,9 @@ $ErrorActionPreference = 'Stop'; $Again = $false; $lines = New-Object System.Col
 $wn = @{}; $ui = @{ Dpi = 96.0; F = @{} }; $pc = @{}
 $ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }; $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
 . $args[0]
-$wn.TextW = { param([string]$Text, $F) return [int][math]::Ceiling($Text.Length * [double]$F) }
+$script:known = @{}   # W7: text widths measured on the Windows job, used in place of the stand-in
+$wn.TextW = { param([string]$Text, $F) if ($script:known.ContainsKey($Text)) { return [int]$script:known[$Text] }
+  return [int][math]::Ceiling($Text.Length * [double]$F) }
 $script:bar = 26; $wn.BarW = { return $script:bar }
 # The width of grid $Name on card $Key at client width $Client (the window part's arithmetic, $wn.ShowCols).
 function Get-GridW([int]$Client, [string]$Key, [string]$Name) {
@@ -155,6 +157,14 @@ foreach ($case in @(@(1920, 144, 26), @(1200, 144, 26), @(1280, 96, 17))) {
         $end = $at.W - [int]$p.Min[[string]$last.N] + (& $ui.Sc 10) + $chip + (& $ui.Sc 20)
         'PLAN ' + $g[0] + ' ' + $case[0] + '@' + $case[1] + ' ' + $font + ' ' + $src + ' W=' + $at.W + ' bar=' + $script:bar + ' room=' + $p.Room +
           ' sum=' + $sum + ' last=' + $last.K + ' kept=' + $p.ChipKept + ' end=' + $end } } } }
+# HEADS (R15, ps51 W7 at 96 dpi: OFFICE 32 of 54 px, COMMENTS 13 of 89): the Wave 1 answers grid at 100 %, its page
+# column at its floor (900 px: grid 474, bar 17), with the head widths the Windows job measured; each column keeps its head.
+$ui.Dpi = 96.0; $script:bar = 17; $ui.F = @{ Small = 7.0; SmallB = 7.6; Link = 7.6 }
+$script:known = @{ 'OFFICE' = 54; 'ANSWER' = 67; 'COMMENTS' = 89; 'SIGNATURE' = 84; 'STATUS' = 58 }
+$b7 = (Get-GridW 1280 'waves' 'Wave 1 answers').B; $r7 = @($b7.Rows); $c7 = & $wn.DropCols @($b7.Cols) 474 (& $wn.PubWidths $r7) $r7
+$p7 = & $wn.ColPlan $c7 474 0 0 $r7
+'HEADS ' + (@(foreach ($c in $c7) { [string]$c.N + '=' + $p7.Min[[string]$c.N] + '/' + (& $wn.HeadMin $c) }) -join ' ')
+$script:known = @{}
 # FIT: the grid fit on a stand-in grid at 1920 x 1094 and 150 % (normal font, FAKE rows): "fits" is a grid whose columns
 # fill the whole grid with no bar shown (r14 took 26 px from the chip on each pass), "over" has minimums 42 px wider
 # than the room (in its widest plain column).
@@ -195,12 +205,18 @@ def check_grid_plan():
     assert sorted({(p['at'][0], p['W']) for p in plan if p['at'][1] == '1920@144'}) == [('home', '961'), ('queue', '1428'), ('waves', '871')], plan
     for p in plan:
         w, bar, room, s, end = (int(p[k]) for k in ('W', 'bar', 'room', 'sum', 'end'))
-        assert room == w - bar - 2 and s <= room, ('the column minimums need more than the room beside the scroll bar', p)
+        # the bar room is kept, or (W7) given to the heads when they do not fit beside it: then no chip is kept whole
+        assert (room == w - bar - 2 or (room == w - 2 and p['kept'] == 'False')) and s <= room, ('the column minimums need more than the room', p)
         assert p['last'] == 'chip' and p['kept'] in ('True', 'False'), p
         if p['kept'] == 'True':
             assert end <= w - bar, ('the Status chip can end under the scroll bar', p)
         if p['at'][1] == '1920@144' and p['at'][2] == 'normal':
-            assert p['kept'] == 'True', ('at the R41 size the Status chip must be kept whole', p)
+            assert p['kept'] == 'True' and room == w - bar - 2, ('at the R41 size the Status chip must be kept whole, beside the bar room', p)
+    heads = [l for l in out if l.startswith('HEADS ')]
+    assert len(heads) == 1 and len(heads[0].split()) == 6, out
+    for x in heads[0].split()[1:]:
+        have, need = (int(v) for v in x.split('=')[1].split('/'))
+        assert have >= need, ('W7: a column of Wave 1 answers is narrower than its head at 96 dpi', heads[0])
     fit = {tuple(l.split()[1:3]): dict(x.split('=', 1) for x in l.split()[3:]) for l in out if l.startswith('FIT ')}
     assert len(fit) == 6, res.stdout
     for (g, kind), f in fit.items():
