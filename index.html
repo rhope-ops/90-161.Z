@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- Fleet v2 (2026-11-23): page policy. Scripts only from this site (go.js); data only from this site and raw.githubusercontent.com
-     (go.md and the round scripts); no frames, forms, plugins or base change. Inline <style> stays (no user data reaches CSS). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://raw.githubusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<!-- Page policy (fleet v2 2026-11-23; connect-src: master plan P4b 2026-11-24). Scripts only from this site (go.js); data only
+     from one source, this repository's branch folder on raw.githubusercontent.com (go.md and the round scripts for the Copy
+     button); nothing from this site. No frames, forms, plugins or base change. Inline <style> stays (no user data reaches CSS).
+     The connect-src source and the go.js data-owner, data-repo and data-branch values must equal site.config.json:
+     tests/check_go_page.js fails when they differ. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0b2545" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e141c" media="(prefers-color-scheme: dark)">
@@ -325,4 +328,4 @@ button.primary:hover{background:#F2916F;border-color:#F2916F;color:var(--fm-on-a
 </div></section>
 <main id="m" tabindex="-1"><p class="mut">Loading…</p></main>
 <p id="say" class="sr" aria-live="polite"></p>
-<script src="go.js"></script></body></html>
+<script src="go.js" data-owner="rhope-ops" data-repo="90-161.Z" data-branch="main"></script></body></html>

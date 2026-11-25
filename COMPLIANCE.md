@@ -9,7 +9,7 @@ Each control below names the rule it meets and the check or record that proves i
 | Every stage, time limit and format rule cites DAFMAN 90-161 | AGENTS.md "Project rules", source authority | `ref/` copies with `ref/SHA256SUMS` (`cd ref && sha256sum -c SHA256SUMS`) |
 | Color contrast meets WCAG 2.1 AA (4.5:1 text, 3:1 controls) | WCAG 2.1 SC 1.4.3, 1.4.11 | `tests/check_palette.py`: docs/palette.json pairs and the real CSS tokens of index.html and templates/list-mockup.css |
 | The page has a skip link, a visible focus ring and a live region for button results | WCAG 2.1 SC 2.4.1, 2.4.7, 4.1.3 | index.html; `.claude/skills/verify/measure.mjs` (contrast, target size, overflow) |
-| The page runs no inline script and loads data only from named hosts | Defense in depth (OWASP ASVS V14.4) | index.html CSP; `docs/threat-model.md` |
+| The page runs no inline script and loads data from one source only (this repository's branch folder on raw.githubusercontent.com) | Defense in depth (OWASP ASVS V14.4) | index.html CSP; `docs/threat-model.md` |
 | Python and JavaScript code is scanned for security defects | Master plan P4b (2026-11-23) | `.github/workflows/codeql.yml` (CodeQL v4.39.5, pinned by commit; pull requests and manual runs). No PowerShell support: PSScriptAnalyzer in `scripts/lint.sh`. |
 | Code is modular, commented and readable as plain text | AGENTS.md "Project rules", code standard | `scripts/code_standard.py` and `docs/code-standard-90-161.md` |
 | Hand-written source files stay at 450 lines or fewer; generated files and user-paste scripts at 600 | Fleet v2 DEC 6 | `wc -l` by hand: `scripts/code_standard.py` C4 enforces 600 until the kit 11.0.0 sync. Open: `scripts/build_flow_solution.py` (482) and `scripts/logo_svg.py` (458). |
