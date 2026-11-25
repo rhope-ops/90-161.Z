@@ -22,7 +22,7 @@ The app cannot check rights before it exists, so setup has 4 parts. Each part st
 
 ## 2a. Part 0: install through RADE
 
-RADE is the Redacted Application Deployment Engine: https://github.com/rhope-ops/RADE. It replaces the setup-check flow (PFM, 14 Nov 26 "One preflight"). Sources: go.md "How a paste task (round) works"; docs/dev-setup.md "RADE engine".
+RADE is the Redacted Application Deployment Engine: https://github.com/rhope-ops/RADE. It replaces the setup-check flow (PFM, 14 Nov 26 "One preflight"). Sources: the README "Open the script" and the open task in go.md; docs/dev-setup.md "RADE engine".
 
 What you do:
 1. Open https://github.com/rhope-ops/90-161.Z (the README). Every file a task needs comes inside the round.

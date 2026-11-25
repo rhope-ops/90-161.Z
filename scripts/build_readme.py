@@ -6,7 +6,8 @@ README.md is the one page the PFM opens on the work computer (github.io and .ps1
   - one "Open the script" link to the .txt copy of the round bundle in scripts/gov/paste/ (RADE engine-v34 or later),
     the sentence "The steps to run it are at the top of the script.", the round script name and its code (the "short"
     value of its .sha256.json, the code the RADE title bar shows). The build fails unless exactly one .txt bundle is there;
-  - the current tasks: go.md from its "Updated" line to its "## Done" heading, headings two levels lower, bare
+  - the current tasks: go.md from its "Updated" line to its "## Done" heading, with no "## Open tasks" heading and
+    the other headings one level lower, bare
     raw.githubusercontent.com URLs as links, and a backslash at the end of a text line before another text line, so
     GitHub keeps go.md's line breaks.
 go.md stays the one home of the tasks: edit go.md, then run this script. scripts/build_paste_bundles.py runs it at the
@@ -139,7 +140,9 @@ def tasks(text):
             continue
         # GitHub reads a backslash before punctuation as an escape (Rounds\\<round> showed as Rounds<round>): double it.
         line = re.sub(r'\\(?=[!-/:-@\[-`{-~])', r'\\\\', line)
-        out.append('##' + line if line.startswith('#') else line)
+        if line.startswith('## Open tasks'):   # the README heading "Current tasks" already says it
+            continue
+        out.append('#' + line if line.startswith('#') else line)
     return hard_breaks(out[:-1] if out and not out[-1].strip() else out)
 
 

@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: Use before you delegate to a subagent, run more than one agent, write a brief, pick a model, or review and merge a worker's branch.
+description: Use before you delegate, run more than one agent, write a brief, pick a model, or review and merge a worker's branch.
 ---
 
 # Orchestration: more than one agent

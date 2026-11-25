@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Use when a run is slower than its baseline or said to be slow, before you add a time baseline or a repeated process, for an audit the Maintainer asks for, on AUDIT DUE, and before a release.
+description: Use when a run is slower than its baseline or said to be slow, before you add a baseline or a repeated process, for an asked audit, on AUDIT DUE, and before a release.
 ---
 
 # Slow runs and the full audit

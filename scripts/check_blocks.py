@@ -27,7 +27,7 @@ import tempfile
 
 # Git commands that can lose work, and reads of key files. scripts/git-hooks/pre-push blocks the push forms for
 # every git client; these rules stop the local forms in Claude Code. scripts/worker_guard.py parses the same
-# commands for the worker and reviewer subagents.
+# commands for the worker and reviewer subagents. Tags: only the Release Manager (the Maintainer, 2026-11-25).
 DENY = [
     "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push * --force*)", "Bash(git push * -f*)",
     "Bash(git reset --hard*)", "Bash(git clean*)", "Bash(*--no-verify*)", "Bash(git *core.hooksPath*)",
@@ -36,7 +36,8 @@ DENY = [
     "Bash(git *hookspath*)", "Bash(git *HOOKSPATH*)", "Bash(git * stash*)", "Bash(git * restore *)",
     "Bash(git * branch -D*)", "Bash(git * checkout -- *)", "Bash(git checkout .*)", "Bash(git * checkout .*)",
     "Bash(git checkout -f*)", "Bash(git switch -f*)", "Bash(git *--discard-changes*)",
-    "Bash(git *branch --delete --force*)",
+    "Bash(git *branch --delete --force*)", "Bash(git tag*)", "Bash(git *push*--follow-t*)", "Bash(git *push*--mirror*)",
+    "Bash(git -* tag *)", "Bash(git *update-ref*refs/tags/*)", "Bash(git *push*--tags*)", "Bash(git *push*refs/tags/*)",
     "Read(./.env)", "Read(./.env.*)", "Read(./**/*.pem)", "Read(./**/*.key)", "Read(./**/id_rsa*)",
     "Read(./**/id_ed25519*)",
 ]

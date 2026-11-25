@@ -378,6 +378,9 @@ def role_cases(sk, root):
     (root / ".check.lock").unlink()
     (root / "docs/x.md").write_text("the Maintainer\n")
     assert sk.role_report(root) == ([], []), "no role word: no line"
+    (root / "docs/x.md").write_text("the Administrator decides\nRule (the Administrator, 2026-11-23: ok)\n")
+    problems = sk.role_report(root)[1]
+    assert len(problems) == 1 and "1 line(s)" in problems[0] and "docs/x.md:1" in problems[0], "the old role word Administrator fails: %s" % problems
 
 
 def debt_gate_cases(bloat, d, caps):

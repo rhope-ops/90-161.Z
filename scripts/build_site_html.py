@@ -1,5 +1,5 @@
-"""HTML parts of the kit's pages: the Markdown-to-HTML builders of scripts/build_site.py (moved here so that file stays
-under its line cap) and the shared shell of a page the kit builds from scratch (scripts/timeline.py): a skip link, one
+"""HTML parts of the kit's pages: the README section readers and Markdown-to-HTML builders of scripts/build_site.py (kept
+here for its line cap) and the shared shell of a page the kit builds from scratch (scripts/timeline.py): a skip link, one
 main landmark, theme-colour meta tags, reduced motion, and, only when the repo's `.check` has `dod-security: on`, a
 Content-Security-Policy and a no-referrer meta tag (fleet v2 plan 2026-11-23: docs/reviews/2026-11-23-fleet-v2-plan.md).
 Standard library only.
@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 
 README = 'README.md'
+SITE = 'index.html'
 CHECK = '.check'
 # The Fulcrum Minimal page colours (docs/brand/fulcrum.json roles "page": cream in light, ink in dark).
 THEME_LIGHT, THEME_DARK = '#F3EEE4', '#15171D'
@@ -42,7 +43,7 @@ def dod_security(root):
     """
     path = Path(root) / CHECK
     text = path.read_text(encoding='utf-8-sig', errors='replace') if path.is_file() else ''
-    found = [re.match(r'(?i)^dod-security\s*:\s*(.*?)\s*$', line.strip()) for line in text.splitlines()]
+    found = [re.match(r'(?i)^dod-security\s*:\s*(.*)$', line.strip()) for line in text.splitlines()]
     values = [m.group(1) for m in found if m]
     if len(values) > 1 or any(v not in ('on', 'off') for v in values):
         raise ValueError(f'{CHECK}: `dod-security:` takes one line, `on` or `off`')
@@ -104,9 +105,11 @@ BOLD = (r'(?:(?<=^)|(?<=[\s("\'“‘-]))\*\*(?=[^\s*`])([^*`]*?[^\s*`])\*\*'
         r'(?=$|[\s.,;:!?)"\'”’-])')
 # Rendered by GitHub although every character is on the allow list: HTML entities (also with digits, &frac12;),
 # emoji codes (:warning:; a name that starts with a letter, not right after a letter or digit, so 09:00-17:00 and
-# 1:2:3 pass), and web addresses of any scheme or case (ftp://, HTTP://, WWW.).
+# 1:2:3 pass), and web addresses of any scheme or case (ftp://, HTTP://, WWW.). A scheme is tried only at the start of a run
+# of scheme characters, so a long run with no "://" takes linear time, not quadratic (ReDoS; CodeQL in 90-161.Z #232).
+SCHEME = r'(?<![A-Za-z0-9+.-])[0-9+.-]*[A-Za-z][A-Za-z0-9+.-]*://'   # build_site.py address_test: same strings as the old form
 ENTITY_OR_ADDRESS = (r'&(#\d+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]*);|(?<![A-Za-z0-9]):[A-Za-z_+][A-Za-z0-9_+-]*:'
-                     r'|[A-Za-z][A-Za-z0-9+.-]*://|(?i:www\.)')
+                     r'|' + SCHEME + r'|(?i:www\.)')
 # A line that starts a list (also an empty item: "+" or "1." alone), is indented (an indented code block, or a
 # continuation GitHub may read differently), ends with a hard break, or underlines a heading ("===" or "---").
 LIST_START = r'([-+]|\d+[.)])(\s|$)'
@@ -235,3 +238,70 @@ def build_key_facts(markdown, indent, need_source=False):
                     f'<dd>{html.escape(text.strip(), quote=False)}</dd>' for label, text in rows)
     tail = ''.join(f'\n{indent}<p class="small mut">{inline(part)}</p>' for part in paragraphs(rest))
     return f'{indent}<dl class="facts">{items}\n{indent}</dl>{tail}'
+
+
+# A README section and a generated block on the page; NAME is lower-case letters, digits and "-". Each end mark starts
+# its own line (after the indent), so no old text can stay in front of it; the body may be empty.
+SECTION = re.compile(r'<!-- site:([a-z0-9-]+) -->\n(?:(.*?)\n)?<!-- /site:\1 -->', re.S)
+BLOCK = re.compile(r'^([ \t]*)<!-- >>> site:([a-z0-9-]+): generated from README\.md by scripts/build_site\.py --write '
+                   r'\(do not edit\) -->\n(?:(.*?)\n)?[ \t]*<!-- <<< site:\2 -->', re.S | re.M)
+# Any site mark, also a broken one (a typo in a name or an end mark): each must be used by SECTION or BLOCK (stray_marks).
+README_MARK = re.compile(r'<!-- /?site:[^>]*-->')
+SITE_MARK = re.compile(r'<!-- (?:>>>|<<<) site:[^>]*-->')
+# A quote mark at a line's start, and a GitHub alert line; both are taken off before a section is built (unquote).
+QUOTE_MARK = r'^>[ \t]?'
+ALERT_LINE = r'\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]'
+
+
+def readme_sections(readme):
+    """Return the README's site sections by name, each without its marks and quote marks, stripped.
+
+    Args:
+        readme: the whole README.md.
+    Returns:
+        A dict of section name to its Markdown.
+    Raises:
+        ValueError: when a name is used for two sections.
+    """
+    found = {}
+    for name, body in SECTION.findall(readme):
+        if name in found:
+            raise ValueError(f'{README}: two sections <!-- site:{name} -->')
+        found[name] = unquote(body or '').strip()
+    return found
+
+
+def unquote(markdown):
+    """Return Markdown with quote marks ("> ") taken off and GitHub alert lines ("[!CAUTION]") dropped.
+
+    A README can show a line as a quote or a GitHub alert box; the site shows the same words in its own style, so the
+    builder reads them as the plain text inside.
+
+    Args:
+        markdown: the text of one README section.
+    Returns:
+        The same text without quote marks and alert lines.
+    """
+    lines = [re.sub(QUOTE_MARK, '', line) for line in markdown.splitlines()]
+    return '\n'.join(line for line in lines if not re.fullmatch(ALERT_LINE, line.strip()))
+
+
+def stray_marks(readme, site):
+    """Return findings for site marks that are not the two ends of a section or block (a typo, capitals, a missing end
+    mark, or a mark inside another block, which a rebuild would drop).
+
+    Args:
+        readme: the text of README.md.
+        site: the text of index.html.
+    Returns:
+        A list of finding lines, empty when every mark belongs to a section or a block.
+    """
+    found = []
+    for text, file, mark, pair in ((readme, README, README_MARK, SECTION), (site, SITE, SITE_MARK, BLOCK)):
+        used = set()
+        for pm in pair.finditer(text):  # only the first and the last mark of a match are its two ends
+            ends = list(mark.finditer(pm.group(0)))
+            used |= {pm.start() + ends[0].start(), pm.start() + ends[-1].start()}
+        found += [f'{file}: a site mark with no pair or a name not in a-z, 0-9 and "-": {m.group(0)}'
+                  for m in mark.finditer(text) if m.start() not in used]
+    return found

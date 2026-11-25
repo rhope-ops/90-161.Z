@@ -9,12 +9,11 @@ What a step is: an item of a numbered list (Markdown `1.` or `1)`, HTML `<ol><li
          with its own numbered list is a lead-in: its sub-items are the actions on one screen.
 Findings (FILE:LINE: message; each one fails the check):
     long       a step over STEP_WORDS words, or a sentence over SENTENCE_WORDS words (ASD-STE100: 20 in a procedure)
-    actions    two or more actions in one step (a lead-in with numbered actions on one screen is allowed)
+    actions    more than MAX_ACTIONS (3) actions in one step; the numbered actions of a lead-in count as its actions
     pointer    a pointer to another file, step or section ("see step 3", "as above", a link to a local file)
     vague      a vague word ("appropriate", "as needed", "should", "some", ...)
     wait       the step names a wait but not the state to wait for ("Wait until <what the person sees>")
-    next       the step does not say what the person sees next ("You see ...", "The window ... opens")
-    cue        the step does not say whether to wait, go on or note a value
+    filler     a filler cue: a clause that is only "Go on." or "Continue." (not in a sentence that starts with a condition)
 Text in `code`, **bold** or "quotes" (the exact thing on the screen, or the exact text to type) counts as one word
 and is not read for verbs, vague words or pointers.
 A project's own module (optional; a module that cannot be loaded fails the check) can define:
@@ -30,7 +29,7 @@ Usage:   python3 scripts/check_instructions.py [FILE ...]   check the files (def
          python3 scripts/check_instructions.py --test       self-test (cases: scripts/check_instructions_test.py)
 Parts:   scripts/check_instructions_steps.py (the step reader and the step measures; its names are re-exported here).
 Exit 0 and "INSTRUCTIONS PASS" when there is no finding; 1 with the findings; 2 from --hook to block.
-Prevents: a step that a person follows has two actions, a vague word, a pointer or no next state, so the reader cannot do it right the first time
+Prevents: a step that a person follows has too many actions, a vague word, a pointer or a filler cue, so the reader cannot do it right the first time
 Network: none (it runs local git read commands).
 Writes:  none; --hook without a readable transcript writes one marker file per session in .git/ (then it blocks
          only the first write of that session: a host with no transcript gets a reminder, not a proof).
@@ -49,7 +48,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_settings  # noqa: E402 - the one reader of `.check` settings
 # scripts/check_instructions_steps.py: the step reader and measures (kept apart, docs/code-standard.md C4).
 from check_instructions_steps import (  # noqa: E402,F401 - every name is re-exported: other scripts read them here
-    ACTION_VERBS, CLAUSES, CUE, FENCE, ITEM, LEAD_SEP, LEAD_WORDS, LOCAL_LINK, NEXT_STATE, NOT_ACTION, POINTERS, SEEN,
+    ACTION_VERBS, CLAUSES, FENCE, FILLER, ITEM, LEAD_SEP, LEAD_WORDS, LOCAL_LINK, MAX_ACTIONS, NOT_ACTION, POINTERS, SEEN,
     SENTENCE_WORDS, SENTENCES, STEP_WORDS, SUFFIXES_HTML, TOKEN, VAGUE, WAIT_STATE, WAIT_WORDS, WORD, _ListParser,
     count_actions, first_word, html_items, markdown_items, plain, procedure_steps, step_findings)
 
