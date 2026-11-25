@@ -9,6 +9,7 @@ Updated: 25 Nov 26 (R42 r2 is ready).
 **For:** tests the R41 fixes: the 90-161.Z window r15 (room for the scroll bar; the screens Waves and Step 13 open), an endorser answer from a second person, a small CAC sign-in window for Back up and Restore, and RADE Restore of fake rows with the old row numbers.
 **Time:** about 40 minutes, with about 5 minutes of a second person from the office (an estimate).
 **Changes:** on the computer, the OneDrive folder RADE\90-161.Z: scripts and result files in T21, T22 and T26, 17 screen pictures, and one backup of the 12 test site lists. The old files of T21 r11, T22 r14 and T26 r1 go to the Recycle Bin. The Repair saves a new copy of RADE for the RADE shortcut. On the test site: a test list and library, the second person in the Visitors group, one fake publication and fake endorsement rows. The last steps of the round move them to the site Recycle Bin.
+**PFM:** the person who runs this task.
 **Keep:** the folder RADE\Config (it holds the sensitivity label for renders) and, in T07, the file `90161Z-T07-key-r1.txt`. Rounds do not touch them.
 **Steps:**
 1. Ask one person in the office to help with this task, and write down the e-mail address of that person.
@@ -17,29 +18,32 @@ Updated: 25 Nov 26 (R42 r2 is ready).
 4. From the Start menu, open **Windows PowerShell ISE** (not **Run as administrator**).
 5. In ISE, click **File** > **New**, then press `Ctrl+V`.
 6. Press `F5`. Wait until the window **RADE** opens (up to 2 minutes).
-7. If no RADE window opens, the round runs as text in ISE. Wait until a line starts with `DONE in` and the results folder opens.
+7. If no window opens, the round runs as text in ISE. It needs no clicks until a line starts with `DONE`.
 8. In the window **RADE**, click the row **90-161.Z 0.1.0**, then the button **Maintenance**, then **Repair**.
-9. If the card **One check needs you.** shows, click its button and do what the card says.
-10. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. Wait until an end card shows (up to 5 minutes).
-11. If the end card is not **90-161.Z 0.1.0 is installed.**, stop and post its first 10 words in the Teams channel **RHOPE-OPS**.
-12. Click **Close**, then press `F5` in ISE. Wait until the window **RADE** opens again.
-13. Click the row **90-161.Z R42**. Wait until a card shows (up to 2 minutes).
-14. If the card **One check failed.** or **Your OneDrive folder was not found.** shows, stop and post its first 10 words in **RHOPE-OPS**.
-15. On the card **Ready to run round R42.**, click **Run** (or **Resume at step**, if it shows). If a CAC sign-in window opens, sign in.
-16. The next cards come in any order and can repeat. On each card with numbered lines, do the lines, then click **Done**.
-17. On each question, click the answer. On a card with a box, type one line with no names, then click **Continue**.
-18. When the small window **90-161.Z test T4** asks for an e-mail address, type the address that you wrote down, then click **OK**.
-19. If the second person cannot help today, click **Skip** on the card **Ask the second person to answer the endorsement**.
-20. In the window **Publications and Forms Management**, do what each line of the bottom bar says, then click **Pass** or **Fail**.
-21. On **Screen 10 of 17**, write down `Yes` if the grid **Wave 1 answers** shows the second person, else `No`.
-22. When a card asks about **Screen 10 of 17**, click the answer that you wrote down: **Yes** or **No**.
-23. When the bar shows "All checks done. Close this window with its X.", close the window **Publications and Forms Management**.
-24. If the card "Insert your CAC, then select Resume." shows, insert the CAC, then click **Resume**.
-25. When **Round R42 is done.** or **The round needs review.** shows, an Outlook draft opens. If **To** is empty, type the PFM e-mail address.
-26. If the draft opened, click **Send** in the draft.
-27. If no draft opens, the results folder opens and the e-mail text is on the clipboard. In Outlook, start a new e-mail, then paste the text.
-28. If you started a new e-mail, type the PFM e-mail address in **To**. Move the first line of the body to **Subject**.
-29. If you started a new e-mail, attach every file of the results folder, then click **Send**.
+9. If the card **One check needs you.** shows, click the button on the card and do what the card says.
+10. If the card **One check failed.** shows, stop and post the first 10 words of the card in the Teams channel **RHOPE-OPS**.
+11. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. Wait until an end card shows (up to 5 minutes).
+12. If the end card is not **90-161.Z 0.1.0 is installed.**, stop and post the first 10 words of the card in **RHOPE-OPS**.
+13. Click **Close**. In ISE, press `F5`. Wait until the window **RADE** opens again.
+14. Click the row **90-161.Z R42**. Wait until a card shows (up to 2 minutes).
+15. If the card **One check needs you.** shows, click the button on the card and do what the card says.
+16. If the card **One check failed.** or **Your OneDrive folder was not found.** shows, stop and post the first 10 words of the card in **RHOPE-OPS**.
+17. On the card **Ready to run round R42.**, click **Run** (or **Resume at step**, if it shows).
+18. Each time a CAC sign-in window opens, sign in. The next cards come in any order and can repeat.
+19. On each card with numbered lines, do the lines, then click **Done**. On each question, click the answer.
+20. On a card with a box, type one line with no names, then click **Continue**.
+21. When the small window **90-161.Z test T4** asks for an e-mail address, type the address that you wrote down, then click **OK**.
+22. If the second person cannot help today, click **Skip** on the card **Ask the second person to answer the endorsement**.
+23. In the window **Publications and Forms Management**, do what each line of the bottom bar says, then click **Pass** or **Fail**.
+24. On **Screen 10 of 17**, write down `Yes` if the grid **Wave 1 answers** shows the second person, else `No`.
+25. When a card asks about **Screen 10 of 17**, click the answer that you wrote down: **Yes** or **No**.
+26. When the bar shows "All checks done. Close this window with its X.", close the window **Publications and Forms Management**.
+27. If the card "Insert your CAC, then select Resume." shows, insert the CAC, then click **Resume**.
+28. When the round ends, wait until an Outlook draft or the results folder opens (up to 2 minutes).
+29. If a draft opened and **To** is empty, type the e-mail address of the PFM. Click **Send**.
+30. If no draft opened, the e-mail text is on the clipboard. In Outlook, start a new e-mail, click in the body, then press `Ctrl+V`.
+31. If you started a new e-mail, type the e-mail address of the PFM in **To**. Move the first line of the body to **Subject**.
+32. If you started a new e-mail, attach every file of the results folder, then click **Send**.
 
 **Report:** the e-mail of the round, with the subject `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW` and every file of the results folder.
 **If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE, post the first 10 words in the Teams channel **RHOPE-OPS**. **Record (F2)** at the bottom of the window **RADE** shows all checks, steps and the log.
