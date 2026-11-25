@@ -4,6 +4,8 @@ Newest first. "By" = PFM for a decision. "By" = Agent for a recommendation that 
 A record that agents read on demand, not at the start of a session (the PFM, 2026-11-16): a row binds the task or thing it names; only a line in AGENTS.md binds every session (AGENTS.md "Rules and decisions").
 One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one line per decision, 200 characters or fewer; detail lives in the linked doc. Rows from before 13 Nov 26 15:30 have full text in docs/decisions-archive.md "Full text of current rows"; read it before you act on them.
 
+<!-- approval-quote-exempt-from: Kit sync to main 790d832 (no tag; version 11.0.1): SessionStart hook installs the kit package (kit #173); reviewer delete block (#174). No baseline or .check change. -->
+
 | Date | Decision | By | Detail |
 |---|---|---|---|
 | 2026-11-24 | Kit sync to main 790d832 (no tag; version 11.0.1): SessionStart hook installs the kit package (kit #173); reviewer delete block (#174). No baseline or .check change. | Agent | kit-sync PR |
