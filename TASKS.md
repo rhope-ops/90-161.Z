@@ -106,17 +106,18 @@ Sensitivity label: every render gets the label from Config\90161Z-label.json. Ne
 10. In the window **90-161.Z R42**, click **Run**. Wait until you see the log.
 11. If a CAC sign-in window opens, sign in with your CAC. You see the log again. Go on.
 12. If the window **90-161.Z test T4** asks for an e-mail address, type the address that you wrote down. You see the address in the box. Go on.
-13. Each time a card shows in the window **90-161.Z R42**, do the numbered lines on that card. Wait until you see the last line of the card.
-14. Each time a card shows the button **Done**, click **Done**. Wait until you see the next card or a question.
-15. Each time a question shows in the window **90-161.Z R42**, click your answer. Wait until you see the next card or question.
-16. Each time the bottom bar of the window **Publications and Forms Management** shows a line, do what the line says. Wait until you see the screen that it names.
-17. If the screen is right, click **Pass** in the bottom bar (else **Fail**). Wait until you see the next line of the bar.
+13. If the window **90-161.Z test T4** shows your address in the box, click **OK**. The window closes. Go on.
+14. Each time a card shows in the window **90-161.Z R42**, do the numbered lines on that card. Wait until you see the last line of the card.
+15. Each time a card shows the button **Done**, click **Done**. Wait until you see the next card or a question.
+16. Each time a question shows in the window **90-161.Z R42**, click your answer. Wait until you see the next card or question.
+17. Each time the bottom bar of the window **Publications and Forms Management** shows a line, do what the line says. Wait until you see the screen that it names.
 18. If the bottom bar shows **Screen 10 of 17**, look at the grid **Wave 1 answers**. Write down `Yes` if it shows the second person, else `No`.
-19. If the bottom bar has no line after **Screen 17 of 17**, close the window **Publications and Forms Management** with its X. You see the window **90-161.Z R42**. Go on.
-20. If the log shows `DONE` and you see an Outlook draft, click **Send** in the draft. The draft closes. Go on.
-21. If the log shows `DONE` and no Outlook draft shows, do "Send the results by hand" on this page. You see the e-mail close. Go on.
-22. If the card **Stopped** shows, do "Send a line to Claude" on this page with the first 10 words of the card. The steps of this task stop here.
-23. Do "Send a line to Claude" on this page with the line `R42 sent`. You see your line in the chat. The task is complete.
+19. If the screen is right, click **Pass** in the bottom bar (else **Fail**). Wait until you see the next line of the bar.
+20. If the bottom bar has no line after **Screen 17 of 17**, close the window **Publications and Forms Management** with its X. You see the window **90-161.Z R42**. Go on.
+21. If the log shows `DONE` and you see an Outlook draft, click **Send** in the draft. The draft closes. Go on.
+22. If the log shows `DONE` and no Outlook draft shows, do "Send the results by hand" on this page. You see the e-mail close. Go on.
+23. If the card **Stopped** shows, do "Send a line to Claude" on this page with the first 10 words of the card. The steps of this task stop here.
+24. Do "Send a line to Claude" on this page with the line `R42 sent`. You see your line in the chat. The task is complete.
 
 **Report:** send the Outlook draft that the round makes. Its subject is `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW`, and it has every file of the results folder.\
 **If it fails:** in the log of the window **90-161.Z R42**, do the line that starts with **What to do**. If the button **Repair** does not show, write down the button text that shows. Send it to Claude with the steps "Send a line to Claude" on this page. If the second person cannot help today, click **Skip** on that card. The round goes on and removes the test rows at the end.
