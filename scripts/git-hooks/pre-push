@@ -5,7 +5,8 @@
 # Also runs scripts/check.sh (when present): the full lane for a push to main, master or the default branch (the
 # remote's HEAD, init.defaultBranch, or each name in the git config key check.fullLaneBranch), the fast lane for any other
 # branch (.claude/skills/deliver/SKILL.md), and the content check (scripts/check_content.py) on the tracked files and the
-# pushed commits (when the repo root has the settings file .check, or .pii-guard, its old name).
+# pushed commits (when the repo root has the settings file .check, or .pii-guard, its old name). A push of only the
+# token log branch (log_only) skips check.sh, and its content check scans only the pushed commits.
 # Blocks: a push that git runs outside the repo's own work tree (own_tree), a push that is not a fast-forward (every force-push form, including --force-with-lease),
 # deleting main or master on the remote, pushing a remote commit this clone has not fetched, and a push that adds a commit
 # whose author or committer e-mail is not a GitHub noreply address (check_identity; it prints the length, never the address).
@@ -81,6 +82,38 @@ lane_of() {  # lane_of [BRANCH...]: reads the same lines; prints "full" when a p
        NF>=4 && $2 !~ /^0+$/ && ($3 in full) {f=1} END {print (f ? "full" : "fast")}'
 }
 
+log_only() {  # log_only: reads the same lines; true when every pushed ref is the token log branch claude/token-usage
+             # and every pushed commit changes, against each parent (a root commit: the empty tree), only regular
+             # sessions/, costs/ or limits/ CSV files, as scripts/token_log.py writes them. Plumbing only (rev-list,
+             # diff-tree: no porcelain config such as log.diffMerges or diff.ignoreSubmodules), no replace refs, no
+             # commit-graph; grafts, a shallow file, an object that is not a commit, or one git cannot list, fail closed. A TOKEN_LOG_BRANCH override runs the
+             # normal checks.
+  local n=0 lref lsha rref rsha range list c ps p out e
+  # grafts (GIT_GRAFT_FILE, info/grafts) can fake parents and a shallow file (GIT_SHALLOW_FILE, shallow) can hide
+  # them: fail closed; the commit-graph file is not read either
+  [ -z "${GIT_GRAFT_FILE:-}${GIT_SHALLOW_FILE:-}" ] && [ ! -e "$(git rev-parse --git-path info/grafts)" ] \
+    && [ ! -e "$(git rev-parse --git-path shallow)" ] || return 1
+  e=$(git hash-object -t tree /dev/null) || return 1
+  while read -r lref lsha rref rsha; do
+    [ -z "${rref:-}" ] && continue
+    [ "$rref" = refs/heads/claude/token-usage ] || return 1
+    n=1; is_zero "$lsha" && continue
+    [ "$(git --no-replace-objects cat-file -t "$lsha" 2>/dev/null)" = commit ] || return 1
+    range=$lsha; is_zero "$rsha" || range="$rsha..$lsha"
+    list=$(git --no-replace-objects -c core.commitGraph=false rev-list --parents "$range" -- 2>/dev/null) || return 1
+    while read -r c ps; do
+      [ -z "$c" ] && continue
+      for p in ${ps:-$e}; do
+        out=$(git --no-replace-objects diff-tree -r --no-renames --ignore-submodules=none --raw "$p" "$c" 2>/dev/null) \
+          || return 1
+        printf '%s\n' "$out" | grep -qvE \
+          '^(:[0-7]{6} (100644|000000) [0-9a-f]+ [0-9a-f]+ [AMD]'$'\t''(sessions|costs|limits)/[^/]+\.csv)?$' && return 1
+      done
+    done <<< "$list"
+  done
+  [ "$n" = 1 ]
+}
+
 # default_branches REMOTE: the names this clone knows for a default branch, on one line
 default_branches() {
   local r="${1:-origin}" d out=""
@@ -139,6 +172,57 @@ if [ "${1:-}" = "--test" ]; then
   lane "branch and main: full lane"   full "refs/heads/x $c refs/heads/x $zero
 refs/heads/main $b refs/heads/main $a"
   lane "delete only: fast lane"       fast "(delete) $zero refs/heads/main $b"
+  # logs NAME WANT INPUT: feed the push lines to log_only and compare (yes or no)
+  logs() { local got=no; printf '%s\n' "$3" | log_only && got=yes
+           if [ "$got" = "$2" ]; then echo "ok   $1"; else echo "FAIL $1 (got $got)"; fails=1; fi; }
+  logs "token log branch only: log-only"   yes "refs/heads/x $c refs/heads/claude/token-usage $a"
+  logs "log branch and another: not"       no  "refs/heads/x $c refs/heads/claude/token-usage $a
+refs/heads/y $c refs/heads/y $zero"
+  logs "another branch: not"               no  "refs/heads/x $c refs/heads/claude/token-usagex $zero"
+  logs "no lines: not"                     no  ""
+  git checkout -q -b logb "$a"; mkdir -p sessions; echo x > sessions/s.csv; git add sessions/s.csv; cm log; l=$(git rev-parse HEAD)
+  logs "log branch, a log file: log-only"  yes "refs/heads/x $l refs/heads/claude/token-usage $a"
+  echo y > code.py; git add code.py; cm code; k=$(git rev-parse HEAD)
+  logs "log branch with a code file: not"  no  "refs/heads/x $k refs/heads/claude/token-usage $a"
+  logs "a commit git does not know: not"   no  "refs/heads/x 1234567890123456789012345678901234567890 refs/heads/claude/token-usage $a"
+  git checkout -q "$l"; git replace "$k" "$l"
+  logs "a replace ref cannot hide code: not" no "refs/heads/x $k refs/heads/claude/token-usage $a"
+  git replace -d "$k" >/dev/null; git checkout -q --orphan r0; git rm -rqf .; echo z > c.py; git add c.py; cm root
+  r=$(git rev-parse HEAD); git config log.showRoot false
+  logs "new branch, root commit with code: not" no "refs/heads/x $r refs/heads/claude/token-usage $zero"
+  git config --unset log.showRoot; git checkout -q -f logb; git rm -q code.py; ln -s ../x sessions/p.csv; git add sessions/p.csv; cm sym; y=$(git rev-parse HEAD)
+  logs "a symlink named .csv: not"         no  "refs/heads/x $y refs/heads/claude/token-usage $k"
+  git checkout -q logb
+  # a merge whose first parent already has the code: compared with each parent, so not log-only
+  ct() { git -c user.email=t@t -c user.name=t commit-tree "$@" -m t; }
+  git checkout -q -b mx "$l"; echo y > code.py; git add code.py; cm x; x=$(git rev-parse HEAD)  # r..m is m alone
+  git rm -q code.py; echo r > sessions/r.csv; git add sessions/r.csv; cm r; r=$(git rev-parse HEAD)
+  echo y > code.py; git add code.py; w=$(git write-tree); git rm -q --cached code.py; rm -f code.py
+  m=$(ct "$w" -p "$x" -p "$r"); git config log.diffMerges first-parent
+  logs "merge with code from its first parent, log.diffMerges=first-parent: not" no "refs/heads/x $m refs/heads/claude/token-usage $r"
+  git config --unset log.diffMerges; git config diff.ignoreSubmodules all
+  git update-index --add --cacheinfo "160000,$a,sessions/g.csv"; w=$(git write-tree); g=$(ct "$w" -p "$r")
+  logs "a gitlink, diff.ignoreSubmodules=all: not" no "refs/heads/x $g refs/heads/claude/token-usage $r"
+  git config --unset diff.ignoreSubmodules; git rm -q --cached sessions/g.csv
+  logs "log push, the control case: log-only" yes "refs/heads/x $l refs/heads/claude/token-usage $a"
+  echo "$l $a" > "$(git rev-parse --git-path info/grafts)"
+  logs "info/grafts present: not"          no  "refs/heads/x $l refs/heads/claude/token-usage $a"
+  rm -f "$(git rev-parse --git-path info/grafts)"
+  GIT_GRAFT_FILE=/dev/null logs "GIT_GRAFT_FILE set: not" no "refs/heads/x $l refs/heads/claude/token-usage $a"
+  GIT_SHALLOW_FILE=/dev/null logs "GIT_SHALLOW_FILE set: not" no "refs/heads/x $l refs/heads/claude/token-usage $a"
+  git rev-parse "$a" > "$(git rev-parse --git-path shallow)"
+  logs "a shallow file: not"               no  "refs/heads/x $l refs/heads/claude/token-usage $a"
+  rm -f "$(git rev-parse --git-path shallow)"
+  # a commit-graph file present does not change the result (a forged parent in it needs a binary edit: not tested)
+  git checkout -q -b cg "$l"; echo y > code.py; git add code.py; cm cx; cx=$(git rev-parse HEAD)
+  git rm -q code.py; echo q > sessions/q.csv; git add sessions/q.csv; cm cq; cq=$(git rev-parse HEAD)
+  git -c core.commitGraph=true commit-graph write --reachable 2>/dev/null
+  logs "with a commit-graph file present, code in the range is still found: not" no \
+    "refs/heads/x $cq refs/heads/claude/token-usage $l"
+  rm -f "$(git rev-parse --git-path objects/info/commit-graph)"; git checkout -q -f logb
+  logs "a tree, not a commit: not"         no  "refs/heads/x $(git rev-parse "$r^{tree}") refs/heads/claude/token-usage $zero"
+  git checkout -q -f logb
+  git checkout -q side; git branch -q -D logb
   # eq NAME GOT WANT: print ok or FAIL, and remember a failure
   eq() { if [ "$2" = "$3" ]; then echo "ok   $1"; else echo "FAIL $1 (got '$2', want '$3')"; fails=1; fi; }
   eq "no origin/HEAD, no config: no extra default branch" "$(default_branches origin)" ""
@@ -214,9 +298,12 @@ idout=$(printf '%s\n' "$input" | check_identity "${1:-origin}") || { echo "$idou
 # Lane: full for main, master or a default branch (default_branches), so nothing reaches it on a fast-lane pass; fast for other branches.
 # --cached: a lane that already passed on this commit with a clean tree is not run again.
 # --no-content: with the content check on, the guard step below scans the tracked files and the pushed commits in one run.
-carries=0
+# A push of only the token log branch (log_only) skips check.sh: its commits hold no work-tree files, so the checks
+# would test files it does not carry. The content check still scans its pushed commits (the Maintainer, 2026-11-25).
+carries=0 logs=0
 printf '%s\n' "$input" | awk 'NF>=4 && $2 !~ /^0+$/ {f=1} END {exit !f}' && carries=1
-if [ -f "$top/scripts/check.sh" ] && [ "$carries" = 1 ]; then
+printf '%s\n' "$input" | log_only && logs=1
+if [ -f "$top/scripts/check.sh" ] && [ "$carries" = 1 ] && [ "$logs" = 0 ]; then
   args=(--cached)
   # shellcheck disable=SC2046  # the names are split on purpose
   [ "$(printf '%s\n' "$input" | lane_of $(default_branches "${1:-origin}"))" = fast ] && args+=(--fast)
@@ -240,7 +327,7 @@ if [ -f "$top/.check" ] || [ -f "$top/.pii-guard" ]; then
     echo "pre-push: blocked: .check is on but check_content.py was not found (scripts/ or tools/)." >&2; exit 1
   fi
   gargs=(--push --require-denylist)
-  [ "$carries" = 1 ] && gargs=(--all "${gargs[@]}")  # one run: every tracked file, and the pushed commits
+  [ "$carries" = 1 ] && [ "$logs" = 0 ] && gargs=(--all "${gargs[@]}")  # one run: every tracked file, and the pushed commits
   g0=$(date +%s%N 2>/dev/null)
   pout=$(printf '%s\n' "$input" | python3 "$guard" "${gargs[@]}" 2>&1); rc=$?
   [ -n "$pout" ] && printf '%s\n' "$pout" >&2

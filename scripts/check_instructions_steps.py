@@ -17,7 +17,8 @@ import html.parser
 import re
 
 
-STEP_WORDS = 60       # a step: one action, the thing on the screen, the next state and the cue (kit, 2026-11-21)
+STEP_WORDS = 60       # a step: up to MAX_ACTIONS actions on one screen and the thing on the screen (kit, 2026-11-21)
+MAX_ACTIONS = 3       # actions in one step, all on one screen (AGENTS.md "Instructions people follow")
 SENTENCE_WORDS = 20   # ASD-STE100 rule 5.1: a sentence in a procedure has at most 20 words
 
 
@@ -47,20 +48,18 @@ WAIT_WORDS = re.compile(r"\b(?:wait|waiting|loading|takes|for (?:about )?(?:\d+|
                         r"(?:secs?|seconds?|mins?|minutes?|hrs?|hours?)\b|for (?:about )?(?:a minute|an hour)\b|restarts?|restarting|reboots?|processing|"
                         r"syncing|in progress|spinner|progress bar)\b")
 WAIT_STATE = re.compile(r"\bwait until\b|\bwait for\b[^.]*\b(?:to|until)\b|\bdo not [^.]*\buntil\b|\buntil you see\b")
-NEXT_STATE = re.compile(r"\byou (?:now |will )?(?:see|get|hear)\b|\b(?:shows|opens|appears|closes|changes|turns|loads|"
-                        r"starts|stops|ends|displays|disappears|goes away|comes up|is shown|are shown|is open|is closed)\b")
-CUE = re.compile(r"\bwait\b|\bgo on\b|\bcontinue\b|\bnext step\b|\bwrite down\b|\bnote (?:the|down|this|it)\b|"
-                 r"\bdone\b|\bfinished\b|\bcomplete\b|\bstop\b|\bdo not go on\b")
+FILLER = re.compile(r"(?:then |now |and )?(?:go on|continue)")  # a clause that is only "Go on." or "Continue." (fullmatch)
+COND = {"if", "when", "after", "before", "once", "while", "unless", "otherwise"}  # a sentence that starts so is a branch
 ITEM = re.compile(r"^(\s*)(\d+)[.)]\s+(.*)$")
 FENCE = re.compile(r"^\s*(?:```|~~~)")
 WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9'’-]*")
-CLAUSES = re.compile(r"\s*[,;]?\s*(?:and\s+)?then\s+|;\s*|,\s+and\s+|\s+and\s+", re.IGNORECASE)
+CLAUSES = re.compile(r"\s*[,;]?\s*(?:and\s+)?then\s+|;\s*|,\s+and\s+|\s+and\s+|,\s+", re.IGNORECASE)
 SENTENCES = re.compile(r"(?<=[.!?])\s+")
 # A next-state span ("you see <the thing>", up to the next "and", "then" or mark): it names what is on the screen,
 # so it is not read for pointers or wait words; the rest of the sentence is.
 SEEN = re.compile(r"\byou (?:now |will )?see\b.*?(?=\s+(?:and|then)\s+|[,;:.!?]|$)")
 TOKEN = " X "  # what code, bold and quoted text become: one word, no verb, no vague word
-LEAD_SEP = "\n\x1e\n"  # between a lead-in's own text and the text of its actions (procedure_steps)
+LEAD_SEP = "\n\x1e\n"  # between a lead-in's own text and the text of its actions, which " \x1f " separates
 
 
 def plain(raw):
@@ -72,7 +71,7 @@ def plain(raw):
 
 
 def count_actions(sentence, verbs=ACTION_VERBS):
-    """The number of actions in one sentence: clauses (split on "then", "and", ";") whose first word, after a
+    """The number of actions in one sentence: clauses (split on "then", "and", ";", ",") whose first word, after a
     leading condition up to its comma, is one of `verbs`.
 
     Args:
@@ -235,7 +234,7 @@ def procedure_steps(items, verbs=ACTION_VERBS):
         kind = "lead" if item["kids"] else ("action" if item["parent"] in in_procedure else "step")
         text = " ".join(item["parts"])
         if kind == "lead":  # the next state and the cue can follow the actions: read them with the lead-in
-            text += LEAD_SEP + " ".join(" ".join(items[k]["parts"]) for k in range(len(items)) if items[k]["parent"] == i)
+            text += LEAD_SEP + " \x1f ".join(" ".join(items[k]["parts"]) for k in range(len(items)) if items[k]["parent"] == i)
         out.append((item["line"], text, kind))
     return out
 
@@ -261,8 +260,10 @@ def step_findings(raw, kind, rules):
         if len(WORD.findall(s)) > rules["sentence_words"]:
             out.append(f"long: a sentence has {len(WORD.findall(s))} words (at most {rules['sentence_words']}): \"{s.strip()[:60]}\"")
     acts = sum(count_actions(s, rules["verbs"]) for s in sentences)
-    if acts > 1:
-        out.append(f"actions: {acts} actions in one step: give each action its own step, or number the actions on one screen")
+    if kind == "lead":  # a lead-in: each numbered action counts with the actions in it (at least 1)
+        acts += sum(max(1, count_actions(plain(a), rules["verbs"])) for a in raw.split(LEAD_SEP, 1)[1].split("\x1f"))
+    if acts > MAX_ACTIONS:
+        out.append(f"actions: {acts} actions in one step (at most {MAX_ACTIONS}, all on one screen): split the step")
     told = SEEN.sub(" ", own)
     pointers = [p for p in rules["pointers"] if re.search(p, told)] + (["a link to a local file or section"] if LOCAL_LINK.search(own_raw) else [])
     if pointers:
@@ -270,12 +271,10 @@ def step_findings(raw, kind, rules):
     vague = sorted({m.group(0) for p in rules["vague"] for m in re.finditer(p, own)})
     if vague:
         out.append(f"vague: {', '.join(vague)}: name the exact thing, number or condition")
+    if any(FILLER.fullmatch(c.strip(" ,.!")) for s in SENTENCES.split(own) if (WORD.findall(s) or [""])[0] not in COND for c in CLAUSES.split(s.strip())):
+        out.append("filler: \"Go on.\" tells the reader nothing: delete it (the next step is the cue)")
     if kind == "action":
         return out
     if WAIT_WORDS.search(SEEN.sub(" ", text)) and not WAIT_STATE.search(text):
         out.append("wait: the step names a wait but not the state to wait for: write \"Wait until <what the person sees>.\"")
-    if not NEXT_STATE.search(text):
-        out.append("next: the step does not say what the person sees next: write \"You see <the thing on the screen>.\"")
-    if not CUE.search(text):
-        out.append("cue: the step does not say whether to wait, go on or note a value: end with \"Wait until ...\", \"Go on.\" or \"Write down ...\"")
     return out

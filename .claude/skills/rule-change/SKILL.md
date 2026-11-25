@@ -1,6 +1,6 @@
 ---
 name: rule-change
-description: Use when the Maintainer asks to add, change or remove a rule, when a rule or skill change would help, when you write Suggest in a turn summary, and on a rule line of check.sh.
+description: Use when the Maintainer asks to add, change or remove a rule, when a rule or skill change would help, for Suggest in a turn summary, and on a check.sh rule line.
 ---
 
 # Change a rule

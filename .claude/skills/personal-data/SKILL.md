@@ -1,6 +1,6 @@
 ---
 name: personal-data
-description: Use when the content check blocks a push, pull request or tool call, before you send content the hook does not cover, on DENYLIST, and before you change `.check`.
+description: Use when the content check blocks a push, pull request or tool call, before you send content the hook does not cover, on DENYLIST, and before a `.check` change.
 ---
 
 # The content check (personal data, secrets, blocked terms and files)
