@@ -32,11 +32,11 @@ What you do:
 5. Open the Start menu, type ISE and open Windows PowerShell ISE. Do not choose "Run as administrator".
 6. Select File > New. Click in the white script pane.
 7. Press Ctrl+V, then F5. The RADE window opens.
-8. Look at the title bar of the RADE window. After the word "script" it shows a short code. The README shows the same code after **Code:**, on the **Round script** line (the "Script check", PFM 18 Nov 26, engine-v21). If the code is missing, differs or the title bar says "DOES NOT MATCH", select Exit and do not run. Whom to tell: not decided yet.
-9. Look at the bold "Writes to" line. It must show your OneDrive RADE\90-161.Z folder. The first time, type the e-mail address for the results in "Send results to".
-10. Before you run, the window lists every file it will write (New, Replace or Recycle). Read the list.
-11. Press Run (or Enter). Keep the window open until the log says DONE.
-12. At DONE an Outlook draft opens with the checks, the summary and the result files. Send it.
+8. Look at the title bar of the RADE window. It shows "Redacted Application Deployment Engine" and "build" with a short build code (R42 r2: build fb27c401). The title bar does not show the README **Code:** value; the bundle hash is in the log and the report (engine-v39).
+9. In the RADE window, click the row of the round (for example **90-161.Z R42**). RADE runs its checks, then shows the card **Ready to run round R42.**
+10. On that card, read the line that starts with "Writes to". It must show your OneDrive RADE\90-161.Z folder and the count of new, replaced and recycled files. **Record (F2)** at the bottom of the window lists every file.
+11. Click **Run**. Keep the window open until the card **Round R42 is done.** or **The round needs review.** shows.
+12. An Outlook draft opens with the checks, the summary and the result files. If its To line is empty, type your own e-mail address. Send it.
 
 What RADE checks: the window runs its checks first and reports each as passed or not. Most checks that passed are not run again for 7 days. A check that fails shows a line "What to do". Do that line; do not work around it. Which checks RADE runs for another wing: not decided yet (the sources do not list them).
 
@@ -106,7 +106,7 @@ Change later (Settings screen, PFM and alternate only): the app calls a flow on 
 | Installed version | The app shows its installed version only. There is no "Check for updates" button and no central Releases list |
 | Who compares | RADE compares versions at each run (PFM, 14 Nov 26). How the window shows the result: not decided yet |
 | How you update | Paste the current round again (Part 0 above). The window lists each file as New, Replace or Recycle before you press Run. Importing the solution "90-161.Z flows" over the older copy is an upgrade: the flows keep their connections (docs/power-automate-provisioning.md section 5) |
-| Is the script the right one | Compare the short code in the window title bar with the code after **Code:** in the README ("Script check"). They must match |
+| Is the script the right one | Compare the round script name in the README (**Round script:**) with the round name of the open task. The window title bar shows only the build code (engine-v39), not the README **Code:** |
 | Lists | A run of T20 skips what exists. It does not change an existing column. How a list change reaches a wing that has the old list: not decided yet |
 | App (Power Apps) | How a new app version is installed: not decided yet |
 
