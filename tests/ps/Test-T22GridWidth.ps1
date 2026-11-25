@@ -16,11 +16,19 @@ $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
 $gov = Join-Path $Root 'scripts/gov'
 $wn = @{}; $ui = @{ Dpi = 144.0; F = @{ Small = 10.5; SmallB = 11.4; Link = 11.4 } }; $Again = $false
-$ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }; $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
+# Stand-in: scales $Px logical pixels to the test dpi, as the UI part does on the device.
+$ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }
+# Stand-in: the window's scale, the same as $ui.Sc.
+$wn.Sc = { param([double]$Px) & $ui.Sc $Px }
 . (Join-Path $gov ('90161Z-T22-cards-' + $Rev + '.ps1'))
 . (Join-Path $gov ('90161Z-T22-grid-' + $Rev + '.ps1'))   # replaces nothing below: only these two stand-ins come after it
+# Stand-in: the width of $Text at $F pixels a character (no font measure off Windows).
 $wn.TextW = { param([string]$Text, $F) return [int][math]::Ceiling($Text.Length * [double]$F) }
-$script:bar = 26; $wn.BarW = { return $script:bar }; $wn.BarShown = { param($G) return [int]$G.BarShown }
+$script:bar = 26
+# Stand-in: the width of the vertical scroll bar (26, as on the device in R42).
+$wn.BarW = { return $script:bar }
+# Stand-in: the scroll bar width that grid $G shows.
+$wn.BarShown = { param($G) return [int]$G.BarShown }
 
 # Record one result and print PASS or FAIL with its numbers. Takes the name, the condition and the numbers; returns nothing.
 function Test-That([string]$Name, [bool]$Ok, [string]$Numbers = '') {
@@ -32,9 +40,21 @@ function Get-GridBlock([string]$Key, [string]$Name) {
   foreach ($s in @($Cards[$Key].Cols[0])) { foreach ($b in @($s.Blocks)) { if ($b.T -eq 'grid' -and $b.Name -eq $Name) { return $b } } }
   throw ('no grid ' + $Name + ' on ' + $Key)
 }
-# Fit one stand-in grid like the device had it, and record the result. Takes the card key, the grid name, the grid width W and
-# the width the columns summed to (the R42 line). The columns get their planned minimums and the extra goes to the widest plain
-# column (an assumption: the device logged only the sum). Returns nothing; the fit must leave the sum under W less the bar.
+<#
+.SYNOPSIS
+  Fits one stand-in grid like the device had it in R42, and records the result.
+.DESCRIPTION
+  The columns get their planned minimums and the extra width goes to the widest plain column (an assumption: the
+  device logged only the sum). The fit must leave the sum under the grid width less the scroll bar. Returns nothing.
+.PARAMETER Key
+  The card key (home, empty or queue).
+.PARAMETER Name
+  The grid name on that card.
+.PARAMETER W
+  The grid width from the R42 LAYOUT line.
+.PARAMETER Need
+  The width the columns summed to on the device (the R42 LAYOUT line).
+#>
 function Test-DeviceGrid([string]$Key, [string]$Name, [int]$W, [int]$Need) {
   $b = Get-GridBlock $Key $Name; $rows = @($b.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols @($b.Cols) $W $pw $rows
   $p = & $wn.ColPlan $cols $W 0 (& $wn.PubMin $cols $pw) $rows

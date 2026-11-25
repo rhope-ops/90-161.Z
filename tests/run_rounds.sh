@@ -136,13 +136,13 @@ for title, name, ch in got:
 PYEOF
 # T22 PFM window test r16 (R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and
 # the 4 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
-# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r14 gone, r16 and its
+# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r15 gone, r16 and its
 # parts only, no '0 findings' link (V3), UI block current, palette tokens.
 if [ "${on[t22]}" = 1 ]; then
 python3 - <<'PYT22' && python3 tests/check_t22_r16.py && ok "T22 window preview cards (r16; R42: grid room for the scroll bar, walk path)" || bad "T22 window preview cards (r16)"
 import json, re, subprocess, pathlib
 f = 'scripts/gov/90161Z-T22-pfm-window-r16.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r16.ps1' % n)
-assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[01234].ps1')], 'an older revision is still there'
+assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[012345].ps1')], 'an older revision is still there'
 parts = [x.strip().strip("'") for x in re.search(r"\$Parts = @\(([^)]*)\)", pathlib.Path(f).read_text()).group(1).split(',')]
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
@@ -202,7 +202,9 @@ assert got == {'open': ('PASS the window opened (17 of 17 cards)', 0),
         'old': ('FAIL the window did not open (no result from this round)', 1)} and len(list(pathlib.Path(d).iterdir())) == 1, got
 PYT22
 # R43 T1 (R42 finding 2): the grid fit cuts columns that end past the grid (the R42 device numbers 979 of 961 and 1442 of 1428; the r15 part fails this).
-out=$(pwsh -NoProfile -File tests/ps/Test-T22GridWidth.ps1 2>&1); [ $? -eq 0 ] && ok "T22 grid fit: columns end before the scroll bar ($(echo "$out" | tail -1))" || { echo "$out"; bad "T22 grid fit: columns end past the grid"; }
+out=$(pwsh -NoProfile -File tests/ps/Test-T22GridWidth.ps1 2>&1); rc=$?
+[ $rc -eq 0 ] && ok "T22 grid fit: columns end before the scroll bar ($(echo "$out" | tail -1))" ||
+  { echo "$out"; bad "T22 grid fit: columns end past the grid"; }
 else sk "T22 window preview cards (r16)"; fi
 # Guide text (AGENTS.md "Gov-device usability" point 3, PFM 2026-11-16): every step passes, no baseline.
 python3 tests/check_guide_text.py --test >/dev/null && ok "guide text self-test" || bad "guide text self-test"

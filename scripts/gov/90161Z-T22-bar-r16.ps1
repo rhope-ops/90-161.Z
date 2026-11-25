@@ -52,7 +52,17 @@ $wn.BarShow = {
     $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false }
   & $wn.OpenShow }
 # Keeps the answer (PASS or FAIL) to the step shown and shows the next one.
-$wn.Answer = { param([string]$Result)
+$wn.Answer = {
+  <#
+  .SYNOPSIS
+  Keeps the answer $Result (PASS or FAIL) for the step shown, then shows the next step.
+  .DESCRIPTION
+  R16: a look step counts as opened when its card shows. A click-through step answered while its card never opened
+  adds a NOTE line, so the result says why the step has no open.
+  .PARAMETER Result
+  PASS or FAIL, from the bar buttons.
+  #>
+  param([string]$Result)
   if ($wn.CheckAt -ge (& $wn.StepCount)) { return }
   $j = & $wn.WalkAt
   # R16: a look step asks about the card the person is on: it counts as opened when that card shows
@@ -79,10 +89,12 @@ $wn.OpenFail = { param([string]$Key, $Err) $m = [string]$Err.Exception.Message
 # writes one now ($wn.IgnoreNote, at most 12 lines), and an open that returns with no error while the window stays on the old
 # card writes one ($wn.OpenCheck). $Where names the control that was clicked; $Key the card that should show.
 $wn.IgnoreN = 0
+# Writes a NOTE for a click that the guard held ($Where: the control), at most 12 times in a run.
 $wn.IgnoreNote = { param([string]$Where)
   if ($wn.IgnoreN -ge 12) { return }; $wn.IgnoreN++
   $ms = [int]($ui.Clock.Elapsed.TotalMilliseconds - [double]$ui.CardAt)
   $lines.Add('NOTE a click on ' + $Where + ' was not used: the card ' + [string]$wn.Cur + ' changed ' + $ms + ' ms before (the guard holds a click for ' + [int]$ui.GuardMs + ' ms)') }
+# Writes a NOTE when the window does not show card $Key after an open that returned with no error.
 $wn.OpenCheck = { param([string]$Key)
   if ($Key -and [string]$wn.Cur -ne $Key) { $lines.Add('NOTE the screen ' + $Key + ' did not open: the window stayed on ' + [string]$wn.Cur) } }
 $wn.BarLayout = {
