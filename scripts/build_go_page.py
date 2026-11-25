@@ -1,0 +1,543 @@
+#!/usr/bin/env python3
+"""Build the task cards of the bookmark page (index.html) from go.md at build time, with markdown-it-py.
+
+Why: the page drew go.md in the browser with its own regex Markdown parser and fetched go.md at run time (master plan
+P4b, 2026-11-23: build-time HTML with a standard Markdown library; rhope-ops/archimedes_lever
+docs/reviews/2026-11-23-tool-retirement-plan.md). Now the cards are in the page itself: the page fetches only the round
+scripts for the Copy script button, and go.md text never becomes HTML in the browser.
+What it does: go.md is "# Title", intro lines, then "## " sections. A section with "### " sub-headings is a group: its
+lines before the first "###" are the group's intro, and each "###" is one card. A section with no "###" is one card. A
+card's state comes from "(open, <when>)" or "(done, <when>)" at the end of its heading, else from its group ("Open
+tasks" = open, "Done" = done). The card layer (lists, file cards, folder lines, notes, sub-headings) is the same line
+rules go.js had; markdown-it-py (CommonMark, raw HTML off) renders the text of each line: escaping, **bold**, `code`
+and links. Links: http(s) URLs and bare raw.githubusercontent.com / <owner>.github.io URLs, as before.
+It writes three parts of index.html: the block between the go:page marker lines in <main id="m">, the open count in
+the header (#hc), and the CSP connect-src source (the raw folder from site.config.json, the one home of the account
+values: fleet v2 DEC 7).
+Usage:   python3 scripts/build_go_page.py           rebuild index.html from go.md
+         python3 scripts/build_go_page.py --check   write nothing; exit 1 when index.html is not what go.md gives
+         python3 scripts/build_go_page.py --test    self-test with invented go.md text; prints GO BUILD TEST PASS
+Needs:   markdown-it-py 4.3.0 (requirements.txt). Without it the build stops with FAIL and the install command.
+Prevents: go.md text that becomes script or a hostile link on the page, a stale page after a go.md change, and a CSP
+          source that differs from site.config.json
+Network: none.
+Writes:  index.html (no flag only); nothing with --check or --test.
+Credentials: none.
+"""
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+GO = ROOT / 'go.md'
+PAGE = ROOT / 'index.html'
+sys.path.insert(0, str(ROOT / 'scripts'))
+import site_config  # noqa: E402  scripts/site_config.py reads site.config.json (fleet v2 DEC 7)
+
+try:
+    from markdown_it import MarkdownIt
+    from markdown_it.token import Token
+except ImportError:  # a clear stop, never a skip: a stale page must not pass
+    sys.exit('FAIL markdown-it-py is not installed: run python3 -m pip install -r requirements.txt')
+
+BEGIN = '<!-- >>> go:page: generated from go.md by scripts/build_go_page.py (do not edit) -->'
+END = '<!-- <<< go:page -->'
+HC = re.compile(r'(<div class="count" id="hc" aria-live="polite">)(.*?)(</div>)', re.S)
+CSP_SRC = re.compile(r'(<meta http-equiv="Content-Security-Policy" content="[^"]*?connect-src )([^\s;"]+)(;)')
+NAME = re.compile(r'^[A-Za-z0-9_.-]+$')  # an owner, repo or branch name: nothing else may enter the CSP or a URL
+# The link rule of the old go.js inl(): an http(s) URL, or a bare raw.githubusercontent.com or *.github.io URL (a > or ] ends it).
+LINK = re.compile(r'(https?://[^\s<>\]]+|(?:raw\.githubusercontent\.com|[a-z0-9-]+\.github\.io)/[^\s<>\]]*)')
+REL = 'noopener noreferrer'
+
+
+def esc(s):
+    """Escape text for HTML (&, <, >, "), as go.js esc() did."""
+    return str(s).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+
+def make_md():
+    """The markdown-it-py renderer: CommonMark with raw HTML, images and linkify off; a link keeps http(s) or #.
+
+    Returns:
+        A MarkdownIt object; renderInline(text) gives the HTML of one line, and each link gets rel.
+    """
+    md = MarkdownIt('commonmark', {'html': False}).disable('image')
+    md.validateLink = lambda url: bool(re.match(r'^(https?://|#)', url, re.I))  # no //host, mailto:, data: or file links
+
+    def link_open(renderer, tokens, idx, options, env):
+        """Each link gets rel="noopener noreferrer": no access to the page, and no page address sent."""
+        tokens[idx].attrSet('rel', REL)
+        return renderer.renderToken(tokens, idx, options, env)
+
+    md.add_render_rule('link_open', link_open)
+    return md
+
+
+MD = make_md()
+# A URL is held out of the Markdown pass as a mark of private-use characters (removed from go.md text first), so a _
+# or * in a URL is never Markdown. put_links() then makes each mark in a text token a link token again; a mark
+# anywhere else (a link title or address) becomes the plain URL text. So no URL is ever put back as raw HTML.
+MARK = re.compile('\ue000(\\d+)\ue001')
+
+
+def put_links(tokens, links):
+    """Turn the marks back into URLs in the inline tokens of one line.
+
+    Args:
+        tokens: the inline tokens from MD.parseInline (changed in place).
+        links: the held-out URLs; a mark holds the index of its URL.
+
+    Returns:
+        None. A mark in a text token outside a link becomes link_open, text and link_close tokens (the address with
+        https:// in front if none); in a text token inside a link, or in any attribute, it becomes the URL text. A
+        mark that holds no URL (go.md wrote it as an entity) becomes nothing. A link with an empty address is dropped
+        and keeps its text.
+    """
+    def url(m):
+        """The URL of mark m, or '' when the mark holds no URL."""
+        i = int(m.group(1))
+        return links[i] if i < len(links) else ''
+
+    def plain(t):
+        """The text with each mark as its URL."""
+        return MARK.sub(url, t)
+
+    for line in tokens:
+        out, depth, dropped = [], 0, []
+        for tok in line.children or []:
+            if tok.type == 'link_open':
+                dropped.append(not tok.attrGet('href'))
+                if dropped[-1]:
+                    continue
+            if tok.type == 'link_close' and dropped and dropped.pop():
+                continue
+            depth += (tok.type == 'link_open') - (tok.type == 'link_close')
+            for key, val in list((tok.attrs or {}).items()):
+                tok.attrSet(key, plain(str(val)))
+            if tok.type != 'text' or depth or not MARK.search(tok.content):
+                tok.content = plain(tok.content)
+                out.append(tok)
+                continue
+            pos = 0
+            for m in MARK.finditer(tok.content):
+                u = url(m)
+                out.append(Token('text', '', 0, content=tok.content[pos:m.start()]))
+                pos = m.end()
+                if not u:
+                    continue
+                out.append(Token('link_open', 'a', 1, attrs={'href': u if u.startswith('http') else 'https://' + u}))
+                out.append(Token('text', '', 0, content=u))
+                out.append(Token('link_close', 'a', -1))
+            out.append(Token('text', '', 0, content=tok.content[pos:]))
+        line.children = out
+
+
+def _plain(part, links):
+    """Prepare text outside a code span for Markdown.
+
+    Args:
+        part: a piece of a go.md line with no code span in it.
+        links: the list that keeps each held-out URL; its index is the number in the mark.
+
+    Returns:
+        The text with each URL as a mark, each backslash doubled (it stays a backslash), and each single * or _
+        escaped (it stays a sign: go.md has only **bold**, as go.js read it).
+    """
+    def hold(m):
+        """Keep the URL (without a trailing * of **bold**) and give its mark; a [text](URL) address stays Markdown."""
+        if m.string[max(0, m.start() - 2):m.start()] == '](':
+            return m.group(0)
+        u = m.group(0).split('**')[0]
+        links.append(u)
+        return '\ue000%d\ue001%s' % (len(links) - 1, m.group(0)[len(u):])
+    part = LINK.sub(hold, part)
+    part = part.replace('\\', '\\\\').replace('_', '\\_')
+    return re.sub(r'(?<!\*)\*(?!\*)', r'\\*', part)
+
+
+def inl(s):
+    """The HTML of one go.md text line: escaped text, **bold**, `code`, [text](https://...) and bare links."""
+    links, s = [], s.replace('\ue000', '').replace('\ue001', '')
+    text = ''.join(p if p.startswith('`') else _plain(p, links) for p in re.split(r'(`[^`]+`)', s))
+    tokens = MD.parseInline(text)
+    put_links(tokens, links)
+    return MD.renderer.render(tokens, MD.options, {})
+
+
+def slug(s, i):
+    """A page id for card i with name s."""
+    return 's%d-%s' % (i, re.sub(r'^-|-$', '', re.sub(r'[^a-z0-9]+', '-', s.lower()))[:40])
+
+
+def is_round(h):
+    """True for a link to a round script (scripts/gov/paste/*.ps1)."""
+    return bool(re.search(r'/scripts/gov/paste/[^/]+\.ps1$', h))
+
+
+def txt_name(h):
+    """The .txt file name of a round script link."""
+    return re.sub(r'\.ps1$', '', h.split('/')[-1], flags=re.I) + '.txt'
+
+
+def file_card(u):
+    """The HTML of a file card for a bare URL line; a round script gets Open as .txt and Copy script (PFM 20 Nov 26).
+
+    Args:
+        u: the URL, with or without https://.
+
+    Returns:
+        The HTML text of the card: a round script has no .ps1 link and no Copy link, only its two buttons.
+    """
+    h = u if u.startswith('http') else 'https://' + u
+    name = h.split('/')[-1]
+    if is_round(h):
+        return ('<div class="file"><span class="fn"><strong>%s</strong></span>'
+                '<button type="button" data-txt="%s" data-label="Open as .txt" aria-label="Open as .txt: save %s to read'
+                ' the script before you paste it">Open as .txt</button><button type="button" class="primary"'
+                ' data-script="%s" aria-label="Copy the whole script %s">Copy script</button></div>'
+                % (esc(name), esc(h), esc(txt_name(h)), esc(h), esc(name)))
+    return ('<div class="file"><span class="fn"><a href="%s" rel="%s">%s</a><span class="fu">%s</span></span>'
+            '<button type="button" data-copy="%s" aria-label="Copy link to %s">Copy link</button></div>'
+            % (esc(h), REL, esc(name), esc(h), esc(h), esc(name)))
+
+
+def folder_box(lbl, path):
+    """The HTML of a folder line with a Copy button."""
+    return ('<div class="folder"><span class="lbl">%s</span><code>%s</code><button type="button" data-copy="%s"'
+            ' aria-label="Copy folder path">Copy</button></div>' % (esc(lbl), esc(path), esc(path)))
+
+
+def render_body(lines):
+    """The HTML of a card body: lists, file cards, folder lines, notes, sub-headings and paragraphs.
+
+    Args:
+        lines: the go.md lines of the card (or of a group intro, or of the page intro).
+
+    Returns:
+        The HTML text. A numbered line keeps its number (<li value="N">); a "- " line is a Done list item.
+    """
+    out, st = [], {'list': None, 'item': False}
+
+    def close_item():
+        """End the open list item."""
+        if st['item']:
+            out.append('</li>')
+            st['item'] = False
+
+    def close_list():
+        """End the open list."""
+        close_item()
+        if st['list']:
+            out.append('</%s>' % st['list'])
+            st['list'] = None
+
+    for line in lines:
+        t = line.strip()
+        if not t:
+            continue
+        if re.match(r'^(https?://|raw\.githubusercontent\.com/)\S+$', t):  # a file card stays inside the open step
+            out.append(file_card(t))
+            continue
+        m = re.match(r'^(\d+)\.\s+(.*)$', t)
+        if m:
+            if st['list'] != 'ol':
+                close_list()
+                out.append('<ol>')
+                st['list'] = 'ol'
+            close_item()
+            out.append('<li value="%s">%s' % (m.group(1), inl(m.group(2))))
+            st['item'] = True
+            continue
+        m = re.match(r'^[-*]\s+(.*)$', t)
+        if m:
+            if st['list'] != 'ul':
+                close_list()
+                out.append('<ul class="done-list">')
+                st['list'] = 'ul'
+            close_item()
+            out.append('<li>' + inl(m.group(1)))
+            st['item'] = True
+            continue
+        close_list()
+        out.append(text_line(t))
+    close_list()
+    return ''.join(out)
+
+
+def text_line(t):
+    """The HTML of a go.md line that is not a list item or a file card.
+
+    Args:
+        t: the line, stripped.
+
+    Returns:
+        A folder line with a Copy button, a note (Report, Status, Decided, FAIL, WARN), a sub-heading (a short line
+        that ends in ":"), or a paragraph.
+    """
+    m = re.match(r'^(Folder|Bookmark[^:]*|Fallback[^:]*):\s*(.*)$', t)
+    if m and re.search(r'[\\/]', m.group(2)):
+        path = re.sub(r'\.\s.*$', '', m.group(2))
+        rest = re.sub(r'^\.\s*', '', m.group(2)[len(path):])
+        return folder_box(m.group(1) + ':', path) + ('<p>%s</p>' % inl(rest) if rest else '')
+    m = re.match(r'^(Report|Status[^:]*|Decided|FAIL|WARN):\s*(.*)$', t)
+    if m:
+        return '<p class="note"><span class="lbl">%s:</span> %s</p>' % (esc(m.group(1)), inl(m.group(2)))
+    if re.match(r'^[A-Z][^.]{2,80}:$', t) or re.match(r'^Part [A-Z]\b.*:$', t):
+        return '<h3>%s</h3>' % inl(t[:-1])
+    return '<p>%s</p>' % inl(t)
+
+
+def parse(md):
+    """Split go.md text into its title, intro, sections and cards.
+
+    Args:
+        md: the whole text of go.md.
+
+    Returns:
+        {title, intro[], secs[{h, lines[], items[{h, lines[]}]}]}: items are the "###" cards of a group section.
+    """
+    doc, sec, item = {'title': '', 'intro': [], 'secs': []}, None, None
+    for line in md.replace('\r', '').split('\n'):
+        if line.startswith('# ') and not doc['title']:
+            doc['title'] = line[2:]
+        elif line.startswith('## '):
+            sec, item = {'h': line[3:], 'lines': [], 'items': []}, None
+            doc['secs'].append(sec)
+        elif line.startswith('### ') and sec:
+            item = {'h': line[4:], 'lines': []}
+            sec['items'].append(item)
+        else:
+            (item['lines'] if item else sec['lines'] if sec else doc['intro']).append(line)
+    return doc
+
+
+def state_of(h, fallback=''):
+    """Read "(open|done, when)" from a heading: {name, state, when}."""
+    m = re.match(r'^(.*?)\s*\((open|done)[,\s]*([^)]*)\)\s*$', h, re.I)
+    if m:
+        return {'name': m.group(1), 'state': m.group(2).lower(), 'when': m.group(3)}
+    return {'name': h, 'state': fallback, 'when': ''}
+
+
+def group_state(h):
+    """The state a group gives its "###" cards: "Open tasks" = open, "Done" = done, else none."""
+    return 'open' if re.match(r'^open tasks$', h, re.I) else 'done' if re.match(r'^done$', h, re.I) else ''
+
+
+def card(info, lines, cid, extra=''):
+    """One collapsible card; open when its state is open (go.js then applies this browser's remembered choice)."""
+    cls = 'sec' + (' open-task' if info['state'] == 'open' else ' done-task' if info['state'] == 'done' else '')
+    chip = ('<span class="chip %s">%s</span>' % (info['state'], 'Open' if info['state'] == 'open' else 'Done')
+            if info['state'] else '')
+    when = '<span class="when">%s</span>' % esc(info['when']) if info['when'] else ''
+    return ('<details class="%s" id="%s" data-name="%s"%s><summary><span class="st">%s</span><span class="meta">%s%s%s'
+            '</span></summary><div class="body">%s</div></details>'
+            % (cls, cid, esc(info['name']), ' open' if info['state'] == 'open' else '', inl(info['name']), chip, when,
+               extra, render_body(lines)))
+
+
+def done_count(lines):
+    """The "N items" label of a Done list (one item per "- " line)."""
+    return '<span class="when">%d items</span>' % sum(1 for x in lines if re.match(r'^\s*-\s', x))
+
+
+def render_secs(secs):
+    """The section links, the cards and the open count of all sections.
+
+    Args:
+        secs: the sections from parse().
+
+    Returns:
+        {nav: the HTML of the section links, body: one HTML text for each card or group, open: the open card count}.
+    """
+    r, n = {'nav': '', 'body': [], 'open': 0}, 0
+    for s in secs:
+        gs = group_state(s['h'])
+        if not s['items']:  # a plain section: one card (only "Done" gets a state without "(open|done)")
+            info = state_of(s['h'], 'done' if gs == 'done' else '')
+            cid, n = slug(info['name'], n), n + 1
+            r['open'] += info['state'] == 'open'
+            r['nav'] += '<li><a href="#%s"%s>%s</a></li>' % (cid, ' class="is-open"' if info['state'] == 'open' else '',
+                                                           inl(info['name']))
+            r['body'].append(card(info, s['lines'], cid, done_count(s['lines']) if re.match(r'^done$', s['h'], re.I)
+                                  else ''))
+            continue
+        gid, n = slug(s['h'], n), n + 1
+        cards, links = [], ''
+        for it in s['items']:
+            info = state_of(it['h'], gs)
+            cid, n = slug(info['name'], n), n + 1
+            if info['state'] == 'open':
+                r['open'] += 1
+                links += '<li><a href="#%s" class="is-open">%s</a></li>' % (cid, inl(info['name']))
+            cards.append(card(info, it['lines'], cid))
+        r['nav'] += '<li><a href="#%s">%s (%d)</a></li>%s' % (gid, inl(s['h']), len(s['items']), links)
+        intro = '<div class="gintro">%s</div>' % render_body(s['lines']) if any(x.strip() for x in s['lines']) else ''
+        r['body'].append('<section class="grp" id="%s"><h2>%s</h2>%s\n%s\n</section>' % (gid, inl(s['h']), intro,
+                                                                                       '\n'.join(cards)))
+    return r
+
+
+def main_html(md, urls):
+    """The HTML of <main>: the bar, the section links, How to use this page, the cards and the source line.
+
+    Args:
+        md: the whole text of go.md.
+        urls: site_config.urls() (only "raw" is read).
+
+    Returns:
+        (html, open count).
+    """
+    doc = parse(md)
+    r = render_secs(doc['secs'])
+    src, where = urls['raw'] + 'go.md', '%s/%s' % (urls['raw'].split('/')[3], urls['raw'].split('/')[4])
+    parts = [
+        '<p class="mut">Built from go.md. After a change, GitHub can take up to 10 minutes to show the new page: press'
+        ' Reload for the newest.</p>',
+        '<div class="bar"><button type="button" id="ex">Expand all</button><button type="button" id="co">Collapse all'
+        '</button><button type="button" id="rl">Reload</button></div>',
+        '<nav aria-label="Sections"><ul class="toc">%s</ul></nav>' % r['nav'],
+        '<details class="sec" data-name="__how"><summary><span class="st">How to use this page</span></summary>'
+        '<div class="body">%s</div></details>' % render_body(doc['intro']),
+    ] + r['body'] + [
+        '<p class="mut foot">Source: <a href="%s" rel="%s">go.md</a> in %s. Open and closed sections are remembered in'
+        ' this browser.</p>' % (esc(src), REL, esc(where))]
+    return '\n'.join(parts), r['open']
+
+
+def build(page, md, urls):
+    """The new text of index.html.
+
+    Args:
+        page: the text of index.html.
+        md: the text of go.md.
+        urls: site_config.urls() (only "raw" is read).
+
+    Returns:
+        The page with the go:page block, the #hc count and the CSP connect-src source made again.
+
+    Raises:
+        ValueError: when a marker line, the count box or the CSP source is not there exactly once.
+    """
+    if page.count(BEGIN) != 1 or page.count(END) != 1 or page.index(BEGIN) > page.index(END):
+        raise ValueError('index.html needs one %s line and one %s line after it' % (BEGIN, END))
+    raw = urls['raw'][len('https://raw.githubusercontent.com/'):].rstrip('/').split('/')
+    if not urls['raw'].startswith('https://raw.githubusercontent.com/') or len(raw) != 3 or not all(NAME.match(x) for x in raw):
+        raise ValueError('site.config.json needs owner, repo and branch of letters, digits, ".", "_" and "-" only')
+    body, n_open = main_html(md, urls)
+    a, b = page.index(BEGIN) + len(BEGIN), page.index(END)
+    page = page[:a] + '\n' + body + '\n' + page[b:]
+    count = '<b>%d</b>open task%s' % (n_open, '' if n_open == 1 else 's')
+    if len(HC.findall(page)) != 1 or len(CSP_SRC.findall(page)) != 1:
+        raise ValueError('index.html needs one #hc count box and one connect-src source in its CSP meta tag')
+    page = HC.sub(lambda m: m.group(1) + count + m.group(3), page)
+    return CSP_SRC.sub(lambda m: m.group(1) + urls['raw'] + m.group(3), page)
+
+
+def inline_cases(check):
+    """The self-test cases of one text line: links, link safety, images, escapes and **bold**.
+
+    Args:
+        check: the self-test function check(name, ok), which notes a failed case.
+    """
+    check('file names are not links', '<a' not in inl('See go.md, TASKS.md and check.sh.'))
+    check('a _ or * in a URL stays in the link', all(x in inl(t) for t, x in (
+        ('raw.githubusercontent.com/o/r/main/scripts/build_go_page.py is it', 'href="https://raw.githubusercontent.com/o/r/main/scripts/build_go_page.py"'),
+        ('See https://e.x/a*b*c', 'href="https://e.x/a*b*c"'), ('see https://e.x/a_b.', 'href="https://e.x/a_b."'))))
+    check('[text](https://...) is a link; **URL** is bold', inl('[t](https://e.x/a_b) **https://e.x/y**') ==
+          '<a href="https://e.x/a_b" rel="%s">t</a> <strong><a href="https://e.x/y" rel="%s">https://e.x/y</a></strong>'
+          % (REL, REL))
+    bad = inl('![p](data:image/png;base64,AA) [a](//evil.example/p) [b](mailto:x@y.z) [c](go.md) [d](javascript:x) '
+              '<mailto:x@y.z> <https://ok.example/>')
+    t2 = inl('[t](#a "https://e.x/a/onmouseover=alert(1)// ") x\ue000' + '0\ue001 `\ue0000\ue001`')
+    check('a URL in a link title stays text; mark signs are removed', t2.count('<a ') == 1 and 'onmouseover="' not in t2
+          and '\ue000' not in t2 and re.findall(r' (\w+)=', t2) == ['href', 'title', 'rel'])
+    check('[text with URL](URL) and **URL**, make one link each', inl('[see https://a.b/c](https://c.d/)').count('<a ') == 1
+          and 'href="https://e.x/y"' in inl('**https://e.x/y**,'))
+    check('an entity mark and an empty address make no crash and no link', '<a' not in inl('&#xE000;5&#xE001; [Open]()')
+          and 'Open' in inl('[Open]()'))
+    check('no image; links keep http(s) only', '<img' not in bad and re.findall(r'<a href="([^"]*)"', bad) == ['https://ok.example/'])
+    check('a backslash stays', 'Rounds\\&lt;round&gt;' in inl('Rounds\\<round>'))
+    check('a single * or _ is no italic, also in code', inl('2*3*4 a_b_c _x_ `a_b\\c`') ==
+          '2*3*4 a_b_c _x_ <code>a_b\\c</code>')
+    check('bold, code and a bare raw link', inl('**b** `c` raw.githubusercontent.com/o/r/x') ==
+          '<strong>b</strong> <code>c</code> <a href="https://raw.githubusercontent.com/o/r/x" rel="%s">'
+          'raw.githubusercontent.com/o/r/x</a>' % REL)
+
+
+def self_test():
+    """Invented go.md text only. Prints GO BUILD TEST PASS, or each failed case and exits 1."""
+    u = {'raw': 'https://raw.githubusercontent.com/o/r/main/'}
+    fails = []
+
+    def check(name, ok):
+        """Note a failed case."""
+        if not ok:
+            fails.append(name)
+
+    grouped = '# T\n## Open tasks\n### Round A (run first)\nx\n### Round B\ny\n## Done\n- a\n- b\n'
+    hostile = ('# T\n## Open tasks\n### <script>alert(1)</script>\n<img src=x onerror=alert(1)>\n'
+               '[x](javascript:alert(1)) https://e.x/"onmouseover="alert(1)\n')
+    rnd = '# T\n## Open tasks\n### R\nraw.githubusercontent.com/o/r/main/scripts/gov/paste/90161Z-R01-t.ps1\n'
+    html, n = main_html(grouped, u)
+    check('2 "###" rounds under Open tasks count 2', n == 2 and html.count('class="is-open"') == 2)
+    check('Done keeps its item count', '2 items' in html)
+    check('"Open questions" makes no open card', main_html('# T\n## Open questions\n### Q\nz\n', u)[1] == 0)
+    check('an Open tasks section with no "###" counts 0', main_html('# T\n## Open tasks\n\nNothing.\n## Done\n- a\n', u)[1] == 0)
+    check('old "## Round (open, date)" headings still count', main_html('# T\n## R (open, 1 Jan)\nx\n## Z (done, 1 Jan)\n', u)[1] == 1)
+    h, _ = main_html(hostile, u)
+    check('no script, image or event attribute from go.md', '<script' not in h and '<img' not in h
+          and not re.search(r'<[^>]*\son\w+=', h))
+    check('no javascript: link', 'href="javascript' not in h)
+    check('each link out of the page has rel', all('rel="%s"' % REL in a for a in re.findall(r'<a href="http[^>]*>', h)))
+    r, _ = main_html(rnd, u)
+    check('a round script gets Open as .txt and Copy script, no .ps1 link', 'data-txt=' in r and 'data-script=' in r
+          and not re.search(r'<a href="[^"]*\.ps1"', r))
+    inline_cases(check)
+    page = ('<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; connect-src https://old/;"><div class="count" id="hc" '
+            'aria-live="polite"></div><main>%s\n%s</main>' % (BEGIN, END))
+    out = build(page, grouped, u)
+    check('build writes the count and the CSP source', '<b>2</b>open tasks' in out and 'connect-src %s;' % u['raw'] in out)
+    try:
+        build(page, grouped, {'raw': 'https://raw.githubusercontent.com/o/r"; script-src *;/main/'})
+        check('a bad name in site.config.json stops the build', False)
+    except ValueError:
+        pass
+    check('a connect-src text in go.md is not the CSP', build(out, grouped + 'connect-src x;\n', u).count('connect-src x;') == 1)
+    check('a second build changes nothing', build(out, grouped, u) == out)
+    if fails:
+        for f in fails:
+            print('FAIL ' + f)
+        sys.exit(1)
+    print('GO BUILD TEST PASS')
+
+
+def main(argv):
+    """Rebuild or check index.html from go.md.
+
+    Args:
+        argv: the command-line arguments: --check, --test, or none.
+
+    Returns:
+        None; exits 1 with a FAIL line when the page is stale (--check) or cannot be built.
+    """
+    if '--test' in argv:
+        return self_test()
+    page = PAGE.read_text(encoding='utf-8')
+    try:
+        new = build(page, GO.read_text(encoding='utf-8'), site_config.urls())
+    except ValueError as e:
+        sys.exit('FAIL %s' % e)
+    if '--check' in argv:
+        if new != page:
+            sys.exit('FAIL index.html is not the build of go.md: run python3 scripts/build_go_page.py')
+        print('GO PAGE BUILD CHECK PASS')
+        return None
+    if new != page:
+        PAGE.write_text(new, encoding='utf-8')
+    print('GO PAGE BUILT: index.html from go.md')
+    return None
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

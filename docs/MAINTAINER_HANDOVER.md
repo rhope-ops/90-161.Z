@@ -69,32 +69,25 @@ Offline form: a computer with no access to github.com uses a RADE clone that has
 3. In the editor, save the file. You see the saved file. Go on.
 
    The old address is `raw.githubusercontent.com/<old owner>/<old repo>/<old branch>/`, with the old values. Do not type `https://` in front of it. The new address has the new value in its place. Today the address is `raw.githubusercontent.com/rhope-ops/90-161.Z/main/`.
-4. For a new owner, repo or branch, open `index.html` and do these actions:
-   1. Replace all the old address with the new address.
-   2. Find the line `<script src="go.js"`.
-   3. On that line, type the new value in `data-owner`, `data-repo` or `data-branch`.
-   4. Save the file.
-
-   You see the new address after `connect-src`. Go on.
-5. For a new owner, repo or branch, open `go.md` and do these actions:
+4. For a new owner, repo or branch, open `go.md` and do these actions:
    1. Replace all the old address with the new address.
    2. Save the file.
 
    You see the new raw links. Go on.
-6. In a terminal, in the repository folder, do these actions:
-   1. Type `node tests/check_go_page.js`.
-   2. Press **Enter**.
-
-   You see `GO PAGE PASS` on the last line. If you see `GO PAGE FAIL`, read the lines with `FAIL`. Correct the address or the value in `site.config.json`, `index.html` or `go.md`. Go on.
-7. In the terminal, do these actions:
+5. In a terminal, in the repository folder, do these actions:
    1. Type `python3 scripts/rebuild_all.py`.
    2. Press **Enter**.
 
    You see the line `REBUILD CHECK` with `fail=0`. Go on.
-8. In the terminal, do these actions:
+6. In the terminal, do these actions:
+   1. Type `node tests/check_go_page.js`.
+   2. Press **Enter**.
+
+   You see `GO PAGE PASS` on the last line. If you see `GO PAGE FAIL`, read the lines with `FAIL`. Correct the address or the value in `site.config.json` or `go.md`. Go on.
+7. In the terminal, do these actions:
    1. Type `bash scripts/check.sh`.
    2. Press **Enter**.
 
    Wait until the line `CHECK PASS` shows. The task is complete.
 
-The page cannot read `site.config.json` (its CSP allows one source only), so `index.html` keeps a copy of `owner`, `repo` and `branch`, and go.md links use the same address; `tests/check_go_page.js` fails when the copy or a link differs. If you change `owner`, the github.io page address changes too. The Python scripts read them through `scripts/site_config.py`. The Teams channel name on the page comes from `README.md`: change it there too, then rebuild. The round definitions `scripts/paste_bundles.json` keep their own "repo" and "home" values: change them too, then rebuild.
+The rebuild writes the page CSP source from `site.config.json` (`scripts/build_go_page.py`). The go.md links keep the address as typed, so `tests/check_go_page.js` fails when a link differs. If you change `owner`, the github.io page address changes too. The Python scripts read them through `scripts/site_config.py`. The Teams channel name on the page comes from `README.md`: change it there too, then rebuild. The round definitions `scripts/paste_bundles.json` keep their own "repo" and "home" values: change them too, then rebuild.

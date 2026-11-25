@@ -48,6 +48,7 @@ GRAPH = {
                       ['task_scripts', 'messy_draft', 'test_seals', 'flow_package', 'flow_solution']),
     'readme_tasks': ([PY, 'scripts/build_readme.py'], [PY, 'scripts/build_readme.py', '--check'], ['paste_bundles']),
     'site': ([PY, 'scripts/build_site.py', '--write'], [PY, 'scripts/build_site.py', '--check'], []),
+    'go_page': ([PY, 'scripts/build_go_page.py'], [PY, 'scripts/build_go_page.py', '--check'], ['site']),
 }
 
 # scripts/build_* files that write no committed file, with the reason (the --test keeps this list honest).
