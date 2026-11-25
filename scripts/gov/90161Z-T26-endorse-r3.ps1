@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 26 r2 (round R42; the code is that of r1 of R41, plus the 4 columns of the fake publication in R43): an endorser answers through the SharePoint list form of PFM Endorsements, and the
+  90-161.Z Task 26 r3 (round R43; the code of r2 of R42, plus the 4 columns of the fake publication): an endorser answers through the SharePoint list form of PFM Endorsements, and the
   answer is read back. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for (PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 2; the test site write of the round, approved
@@ -57,9 +57,9 @@
   Writes: on the site, the rows above; on this computer the T26 folder (the result file, the state file), the clipboard
           (Make) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T26-endorse-<part>-r2.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
+  Output: 90161Z-T26-endorse-<part>-r3.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
   Exit 1 only when the part could not run (sign-in, missing list or module).
-  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r2.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r3.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
@@ -73,11 +73,11 @@
 #>
 param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch)
 $task = 'T26'
-$Rev = 'r2'
+$Rev = 'r3'
 $PubTitle = '90161Z TEST R41 endorse (delete me)'   # the fake publication the answer is about
 $AnswerTitle = '90161Z TEST R41 answer'             # the Title the second person types
 $EditTitle = '90161Z TEST R41 edit me'              # the row you make that the second person tries to edit (PFM 20 Nov 26)
-$StateName = '90161Z-T26-endorse-state-r2.txt'
+$StateName = '90161Z-T26-endorse-state-r3.txt'
 $script:noLaunch = [bool]$NoLaunch   # the tests: no clipboard
 $EndorseFolder = 'PFMEndorsements'                  # the folder name of PFM Endorsements (T20 makes each list under its internal name)
 # The answers a row can hold (schemas/lists/PFMEndorsements.json, Endorsement Status), in ASCII: the dash of
@@ -423,8 +423,8 @@ $fatal = $false; $site = ''; $secret = @(); $dir = ''
 try {
   $ErrorActionPreference = 'Stop'
   # The Restore test parts are dot-sourced here, in this script's scope, so they see the values and helpers above.
-  $restoreFile = Join-Path $PSScriptRoot '90161Z-T26-restore-r2.ps1'
-  if (-not (Test-Path -LiteralPath $restoreFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T26-restore-r2.ps1 is not in the folder of this script. Run the round again.' }
+  $restoreFile = Join-Path $PSScriptRoot '90161Z-T26-restore-r3.ps1'
+  if (-not (Test-Path -LiteralPath $restoreFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T26-restore-r3.ps1 is not in the folder of this script. Run the round again.' }
   . $restoreFile
   if (-not $Part) { throw 'PART not given: use -Part Make, Read, Clean, Rows, Change or Check.' }
   $who = Get-TaskId $Id; $secret = $who.Secret

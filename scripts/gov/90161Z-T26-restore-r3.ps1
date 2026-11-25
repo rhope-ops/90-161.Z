@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 26 r2, module "restore": the parts Rows, Change and Check of the RADE Restore test (R41). Moved here from
-  90161Z-T26-endorse-r2.ps1 (code standard file size cap, C4); the code is unchanged.
+  90-161.Z Task 26 r3, module "restore": the parts Rows, Change and Check of the RADE Restore test (R41). Moved here from
+  90161Z-T26-endorse-r3.ps1 (code standard file size cap, C4); the code is unchanged.
 .DESCRIPTION
-  Loaded by 90161Z-T26-endorse-r2.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
+  Loaded by 90161Z-T26-endorse-r3.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
   Inputs: the values and helpers of the main file ($lines, $Pause, $script:stateFile, Add-Item,
   Read-State, Save-State, Get-RowsFor, Find-FakePub). Outputs: RESULT lines in $lines; the part functions Invoke-RowsPart,
   Invoke-ChangePart and Invoke-CheckPart.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection of the main file.
   Writes: Rows and Change: the fake rows named in the main file (and the pause-switch row) on the site and the state file; Check writes nothing.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T26-endorse-r2.ps1 loads it.
+  Run: not alone; powershell.exe -File 90161Z-T26-endorse-r3.ps1 loads it.
 #>
 # The Restore test (R41): the fake rows on the fake publication (moved here with the parts that use them).
 $BinTitle = '90161Z TEST R41 restore {0} (delete me)'   # the 3 endorsement rows that go to the Recycle Bin ({0} = 1 to 3)

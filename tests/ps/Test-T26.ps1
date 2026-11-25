@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T26-endorse-r2.ps1 (round R41; the PFM, 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md row 2)
+# Tests scripts/gov/90161Z-T26-endorse-r3.ps1 (round R41; the PFM, 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md row 2)
 # against a small fake site: the PnP cmdlets the script uses are fakes in this file (an empty PnP.PowerShell 1.12.0
 # module in a temporary folder lets the script's module check pass). Proves the logic, not the real service: the gov
 # device round is that proof.
@@ -35,7 +35,7 @@ Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psd1') -Value "@{ Ro
 $env:PSModulePath = (Join-Path $work 'mods') + [IO.Path]::PathSeparator + $env:PSModulePath
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r2.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r3.ps1'
 
 # ---- the fake site and its cmdlets ----
 # Reset the fake site: the 5 lists the script reads, the process step rows 0 to 2, 2 office rows (31, 32), you are user 11. Takes nothing; returns nothing.
@@ -105,10 +105,10 @@ function Invoke-FakeRestore {
 function Invoke-T26([string]$Part) {
   $global:LASTEXITCODE = 0
   $out = & $script -Id 'tester01' -Part $Part -NoPause -NoLaunch -TestDir $t26 *>&1 | ForEach-Object { [string]$_ }
-  $file = Join-Path $t26 ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + '-r2.txt')
+  $file = Join-Path $t26 ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + '-r3.txt')
   return @{ Code = $LASTEXITCODE; Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
 }
-$stateFile = Join-Path $t26 '90161Z-T26-endorse-state-r2.txt'
+$stateFile = Join-Path $t26 '90161Z-T26-endorse-state-r3.txt'
 try {
   New-Site
   $r = Invoke-T26 'Make'

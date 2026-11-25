@@ -248,7 +248,7 @@ try {
   $man = Get-Content -LiteralPath (Join-Path $Root 'scripts/paste_bundles.json') -Raw | ConvertFrom-Json
   $back = @(@($man.bundles | ForEach-Object { $_.apps } | Where-Object { $_.mode -eq 'deploy' }) | ForEach-Object { $_.backup })
   Test-That 'the own-list titles equal the "backup" lists of the deploy app in the manifest' ((@($OwnLists.Values | Sort-Object) -join '|') -ceq (@($back | Sort-Object) -join '|')) ''
-  $t26txt = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r2.ps1') -Raw
+  $t26txt = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r3.ps1') -Raw
   $chk = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T27-check-r1.ps1') -Raw
   $a = [regex]::Match($t26txt, "(?m)^\`$PubTitle = '([^']+)'").Groups[1].Value; $b = [regex]::Match($chk, "(?m)^\`$PubTitle = '([^']+)'").Groups[1].Value
   $c = [regex]::Match($t26txt, "(?m)^\`$StateName = '([^']+)'").Groups[1].Value; $d = [regex]::Match($chk, "(?m)^\`$T26State = '([^']+)'").Groups[1].Value
@@ -483,10 +483,10 @@ try {
   Test-That 'Step reads only the columns it names in -Fields (the fake item throws for any other column): no STOPPED line' ($r.Code -eq 0 -and $r.File -notmatch '(?m)^STOPPED') $r.File
   # The fake publication of T26 Make (R43; the PFM, 25 Nov 26): the exit conditions of step 1 hold on what T26 Make really writes.
   New-Site
-  $t26script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r2.ps1'
+  $t26script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r3.ps1'
   $global:LASTEXITCODE = 0; $null = & $t26script -Id 'tester01' -Part 'Make' -NoPause -NoLaunch -TestDir $t26 *>&1
   $made = @($global:S.Rows['PFM Publications'] | Where-Object { $_.Title -ceq $PubTitle })
-  $r26 = $(if (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r2.txt')) { Get-Content -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r2.txt') -Raw } else { '' })
+  $r26 = $(if (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r3.txt')) { Get-Content -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r3.txt') -Raw } else { '' })
   Test-That 'T26 Make makes the fake publication on the strict fake site (the 4 columns are accepted by the schema rules)' ($LASTEXITCODE -eq 0 -and $made.Count -eq 1 -and
       $made[0].OPR.LookupId -eq 301 -and $made[0].MasterForm673Link.Url -ceq 'https://example.test/90161Z-TEST-673') $r26
   $r = Invoke-T27 'Step'
@@ -495,7 +495,7 @@ try {
   $okA = @($names | Where-Object { $r.File -match ('(?m)^ITEM a' + $_ + ' PASS exit condition of step 1') }).Count
   Test-That 'Step on the publication that T26 Make made: all 6 exit conditions of step 1 pass before (b) and after (a) the move, it moves, RESULT STEP PASS' ($r.Code -eq 0 -and
       $okB -eq 6 -and $okA -eq 6 -and $made[0].ProcessStep.LookupId -eq 202 -and $r.File -match '(?m)^RESULT STEP PASS from=1 to=2') $r.File
-  Remove-Item -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-state-r2.txt') -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-state-r3.txt') -ErrorAction SilentlyContinue
   New-Site; Add-FakePub 66
   Remove-FakeStepRow 2
   $r = Invoke-T27 'Step'

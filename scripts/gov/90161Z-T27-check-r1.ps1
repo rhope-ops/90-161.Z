@@ -40,10 +40,10 @@
 # The step the fake publication goes to (PFM Process Steps, StepNumber), and the step it starts at (T26 Make: step 1).
 $StepFrom = 1
 $StepTo = 2
-# The title of the fake publication that T26 Make makes (scripts/gov/90161Z-T26-endorse-r2.ps1: $PubTitle; tests/ps/Test-T27.ps1 checks that they match)
+# The title of the fake publication that T26 Make makes (scripts/gov/90161Z-T26-endorse-r3.ps1: $PubTitle; tests/ps/Test-T27.ps1 checks that they match)
 # and the state file in which T26 keeps its row number (T26 folder).
 $PubTitle = '90161Z TEST R41 endorse (delete me)'
-$T26State = '90161Z-T26-endorse-state-r2.txt'
+$T26State = '90161Z-T26-endorse-state-r3.txt'
 # The columns of PFM Publications that the step reads, and those that are required (tests/ps/Test-T27.ps1 checks the second list against the schema).
 $PubFields = @('Title', 'ProcessStep', 'ActionStatus', 'ActionType', 'ProductType', 'PublicationType', 'Product', 'OPR', 'AppliesToLevel', 'MasterForm673Link')
 $PubRequired = @('Title', 'ActionType', 'ProductType', 'ProcessStep', 'ActionStatus')

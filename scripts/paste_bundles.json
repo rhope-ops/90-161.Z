@@ -138,11 +138,11 @@
                 },
                 {
                     "dir": "T26",
-                    "src": "scripts/gov/90161Z-T26-endorse-r2.ps1"
+                    "src": "scripts/gov/90161Z-T26-endorse-r3.ps1"
                 },
                 {
                     "dir": "T26",
-                    "src": "scripts/gov/90161Z-T26-restore-r2.ps1"
+                    "src": "scripts/gov/90161Z-T26-restore-r3.ps1"
                 },
                 {
                     "dir": "T20",
@@ -245,10 +245,10 @@
                     "doing": "Adding the second person to the Visitors group."
                 },
                 {
-                    "name": "T26 Make the fake publication r2",
+                    "name": "T26 Make the fake publication r3",
                     "title": "Make the fake publication and endorsement",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Make",
                     "minutes": 10,
                     "note": "Signs in (CAC). Makes one fake publication (with OPR, level, type, 673 link) and one fake endorsement, or finds them. Puts 2 form links and 8 steps for the second person on the clipboard.",
@@ -264,7 +264,7 @@
                     "doing": "Making the fake publication."
                 },
                 {
-                    "name": "T26 Second person answers r2",
+                    "name": "T26 Second person answers r3",
                     "title": "Ask the second person to answer the endorsement",
                     "kind": "guide",
                     "dir": "T26",
@@ -285,7 +285,7 @@
                     "marker": "90161Z-T26-answer-asked.txt",
                     "estimate": 5,
                     "after": [
-                        "T26 Make the fake publication r2"
+                        "T26 Make the fake publication r3"
                     ],
                     "answers": [
                         {
@@ -315,10 +315,10 @@
                     ]
                 },
                 {
-                    "name": "T26 Read the endorser answer r2",
+                    "name": "T26 Read the endorser answer r3",
                     "title": "Read the 2 answers of the second person",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Read",
                     "minutes": 10,
                     "note": "Signs in (CAC). Reads the new answer row, and whether your fake endorsement was changed. A refused change is expected and recorded; it does not count against the round.",
@@ -329,7 +329,7 @@
                         "net-site"
                     ],
                     "after": [
-                        "T26 Second person answers r2"
+                        "T26 Second person answers r3"
                     ],
                     "doing": "Reading the answer of the second person."
                 },
@@ -387,10 +387,10 @@
                     "answersOnly": true
                 },
                 {
-                    "name": "T26 Make the Restore test rows r2",
+                    "name": "T26 Make the Restore test rows r3",
                     "title": "Make the fake rows for the Restore test",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Rows",
                     "minutes": 10,
                     "note": "Signs in (CAC). Sets the pause-switch row of PFM Settings to No (Restore turns it on while it writes; flows read it from the next round). Makes 3 fake endorsement rows and 1 fake log row.",
@@ -401,12 +401,12 @@
                         "net-site"
                     ],
                     "after": [
-                        "T26 Make the fake publication r2"
+                        "T26 Make the fake publication r3"
                     ],
                     "doing": "Making the fake rows for the Restore test."
                 },
                 {
-                    "name": "T26 Back up in a second window r2",
+                    "name": "T26 Back up in a second window r3",
                     "title": "Back up the 12 lists in a second RADE window",
                     "kind": "guide",
                     "dir": "T26",
@@ -425,7 +425,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T26 Make the Restore test rows r2"
+                        "T26 Make the Restore test rows r3"
                     ],
                     "answers": [
                         {
@@ -451,15 +451,15 @@
                     "estimate": 1,
                     "help": "Send the results as they are. If a list is missing, the Restore test stops here.",
                     "after": [
-                        "T26 Back up in a second window r2"
+                        "T26 Back up in a second window r3"
                     ],
                     "doing": "Reading the newest backup."
                 },
                 {
-                    "name": "T26 Delete and add the test rows r2",
+                    "name": "T26 Delete and add the test rows r3",
                     "title": "Delete 4 fake rows and add 1 on the test site",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Change",
                     "minutes": 10,
                     "note": "Signs in (CAC). Moves the 3 fake endorsement rows to the site Recycle Bin, deletes the fake log row for good, and adds 1 new fake endorsement row. Restore puts the 4 deleted rows back next.",
@@ -475,7 +475,7 @@
                     "doing": "Deleting 4 fake rows and adding 1."
                 },
                 {
-                    "name": "T26 Start Restore in a second window r2",
+                    "name": "T26 Start Restore in a second window r3",
                     "title": "Start Restore in a second RADE window",
                     "kind": "guide",
                     "dir": "T26",
@@ -495,11 +495,11 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T26 Delete and add the test rows r2"
+                        "T26 Delete and add the test rows r3"
                     ]
                 },
                 {
-                    "name": "T26 Answer: the Restore dry run r2",
+                    "name": "T26 Answer: the Restore dry run r3",
                     "title": "Answer 1 question about the dry run",
                     "kind": "guide",
                     "guide": [],
@@ -508,7 +508,7 @@
                     "note": "1 question about the line \"Dry run:\" in the second window. Keep the second window open.",
                     "estimate": 1,
                     "after": [
-                        "T26 Start Restore in a second window r2"
+                        "T26 Start Restore in a second window r3"
                     ],
                     "answers": [
                         {
@@ -529,7 +529,7 @@
                     "answersOnly": true
                 },
                 {
-                    "name": "T26 Restore with the app name r2",
+                    "name": "T26 Restore with the app name r3",
                     "title": "Confirm Restore with the app name",
                     "kind": "guide",
                     "dir": "T26",
@@ -545,7 +545,7 @@
                     ],
                     "estimate": 3,
                     "after": [
-                        "T26 Answer: the Restore dry run r2"
+                        "T26 Answer: the Restore dry run r3"
                     ],
                     "answers": [
                         {
@@ -567,7 +567,7 @@
                     "doneLog": "Confirmed by you: Restore ran in the second window."
                 },
                 {
-                    "name": "T26 Answer: the Recycle Bin rows r2",
+                    "name": "T26 Answer: the Recycle Bin rows r3",
                     "title": "Answer 1 question about the Recycle Bin rows",
                     "kind": "guide",
                     "guide": [],
@@ -576,7 +576,7 @@
                     "answersOnly": true,
                     "estimate": 1,
                     "after": [
-                        "T26 Restore with the app name r2"
+                        "T26 Restore with the app name r3"
                     ],
                     "note": "1 question about the line \"PFM Endorsements\" in the result in the second window. Keep the second window open.",
                     "answers": [
@@ -597,7 +597,7 @@
                     ]
                 },
                 {
-                    "name": "T26 Close the second window r2",
+                    "name": "T26 Close the second window r3",
                     "title": "Close the second RADE window",
                     "kind": "guide",
                     "dir": "T26",
@@ -608,14 +608,14 @@
                     ],
                     "estimate": 1,
                     "after": [
-                        "T26 Answer: the Recycle Bin rows r2"
+                        "T26 Answer: the Recycle Bin rows r3"
                     ]
                 },
                 {
-                    "name": "T26 Check the restored rows r2",
+                    "name": "T26 Check the restored rows r3",
                     "title": "Check the rows that Restore put back",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Check",
                     "minutes": 10,
                     "note": "Signs in (CAC) and reads only: the 3 rows back with their old numbers, the log row with a new number, the new row still there, the pause-switch row at No, and the fresh backup.",
@@ -626,15 +626,15 @@
                         "net-site"
                     ],
                     "after": [
-                        "T26 Restore with the app name r2"
+                        "T26 Restore with the app name r3"
                     ],
                     "doing": "Checking the rows that Restore put back."
                 },
                 {
-                    "name": "T26 Remove the fake rows r2",
+                    "name": "T26 Remove the fake rows r3",
                     "title": "Remove the fake publication and its answers",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Clean",
                     "minutes": 10,
                     "note": "Signs in (CAC). Moves the fake publication, its endorsement rows (yours and the answers) and its log rows to the site Recycle Bin. Runs after any failure.",
@@ -795,10 +795,10 @@
                     ]
                 },
                 {
-                    "name": "T26 Make the fake publication after install r2",
+                    "name": "T26 Make the fake publication after install r3",
                     "title": "Make the fake publication on the new install",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Make",
                     "minutes": 10,
                     "note": "Signs in (CAC). Makes one fake publication (with OPR, level, type and 673 link) and one fake endorsement on the test site, or finds them. Puts text on the clipboard that this part does not use.",
@@ -829,14 +829,14 @@
                     ],
                     "doing": "Moving the fake publication to step 2.",
                     "after": [
-                        "T26 Make the fake publication after install r2"
+                        "T26 Make the fake publication after install r3"
                     ]
                 },
                 {
-                    "name": "T26 Remove the fake rows after install r2",
+                    "name": "T26 Remove the fake rows after install r3",
                     "title": "Remove the fake publication and its rows",
                     "dir": "T26",
-                    "file": "90161Z-T26-endorse-r2.ps1",
+                    "file": "90161Z-T26-endorse-r3.ps1",
                     "args": "-Part Clean",
                     "minutes": 10,
                     "note": "Signs in (CAC). Moves the fake publication and its rows to the site Recycle Bin. Runs after any failure.",
@@ -962,18 +962,18 @@
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-make-r2.txt",
-                    "step": "T26 Make the fake publication r2"
+                    "name": "90161Z-T26-endorse-make-r3.txt",
+                    "step": "T26 Make the fake publication r3"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-read-r2.txt",
-                    "step": "T26 Read the endorser answer r2"
+                    "name": "90161Z-T26-endorse-read-r3.txt",
+                    "step": "T26 Read the endorser answer r3"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-rows-r2.txt",
-                    "step": "T26 Make the Restore test rows r2"
+                    "name": "90161Z-T26-endorse-rows-r3.txt",
+                    "step": "T26 Make the Restore test rows r3"
                 },
                 {
                     "dir": "T22",
@@ -982,18 +982,18 @@
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-change-r2.txt",
-                    "step": "T26 Delete and add the test rows r2"
+                    "name": "90161Z-T26-endorse-change-r3.txt",
+                    "step": "T26 Delete and add the test rows r3"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-check-r2.txt",
-                    "step": "T26 Check the restored rows r2"
+                    "name": "90161Z-T26-endorse-check-r3.txt",
+                    "step": "T26 Check the restored rows r3"
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-clean-r2.txt",
-                    "step": "T26 Remove the fake rows r2"
+                    "name": "90161Z-T26-endorse-clean-r3.txt",
+                    "step": "T26 Remove the fake rows r3"
                 },
                 {
                     "dir": "T21",
@@ -1037,8 +1037,8 @@
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-make-r2.txt",
-                    "step": "T26 Make the fake publication after install r2"
+                    "name": "90161Z-T26-endorse-make-r3.txt",
+                    "step": "T26 Make the fake publication after install r3"
                 },
                 {
                     "dir": "T27",
@@ -1047,8 +1047,8 @@
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-clean-r2.txt",
-                    "step": "T26 Remove the fake rows after install r2"
+                    "name": "90161Z-T26-endorse-clean-r3.txt",
+                    "step": "T26 Remove the fake rows after install r3"
                 }
             ],
             "fetch": [],
@@ -1060,30 +1060,30 @@
                         "T21 Check the test site is clean r12",
                         "T21 Make the probe list r12",
                         "T21 Add the second person r12",
-                        "T26 Make the fake publication r2",
-                        "T26 Second person answers r2",
-                        "T26 Read the endorser answer r2",
+                        "T26 Make the fake publication r3",
+                        "T26 Second person answers r3",
+                        "T26 Read the endorser answer r3",
                         "T22 Open the 90-161.Z window r16",
                         "T22 Did the window open r16",
                         "T22 Answer: look and cards r16",
-                        "T26 Make the Restore test rows r2",
-                        "T26 Back up in a second window r2",
+                        "T26 Make the Restore test rows r3",
+                        "T26 Back up in a second window r3",
                         "T22 Check the Back up r16",
-                        "T26 Delete and add the test rows r2",
-                        "T26 Start Restore in a second window r2",
-                        "T26 Answer: the Restore dry run r2",
-                        "T26 Restore with the app name r2",
-                        "T26 Answer: the Recycle Bin rows r2",
-                        "T26 Close the second window r2",
-                        "T26 Check the restored rows r2",
-                        "T26 Remove the fake rows r2",
+                        "T26 Delete and add the test rows r3",
+                        "T26 Start Restore in a second window r3",
+                        "T26 Answer: the Restore dry run r3",
+                        "T26 Restore with the app name r3",
+                        "T26 Answer: the Recycle Bin rows r3",
+                        "T26 Close the second window r3",
+                        "T26 Check the restored rows r3",
+                        "T26 Remove the fake rows r3",
                         "T21 Remove the test list and library r12",
                         "T27 Check the lists before Uninstall r1",
                         "T27 Check Uninstall removed the lists r1",
                         "T27 Check the new install r1",
-                        "T26 Make the fake publication after install r2",
+                        "T26 Make the fake publication after install r3",
                         "T27 Move the fake publication one step r1",
-                        "T26 Remove the fake rows after install r2"
+                        "T26 Remove the fake rows after install r3"
                     ]
                 },
                 {
