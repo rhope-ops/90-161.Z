@@ -296,6 +296,20 @@ def check_walk_path():
         assert x in win, 'the window part lacks ' + x
 
 
+def check_signin_block():
+    """R43 T6: scripts/gov/src/signin-size.ps1 holds the engine's sign-in window size block (engine-v39) with its
+    start and end lines, Start-SignInSize with -SignInOnly and Stop-SignInSize, and the same text as the round
+    bundle when one is built. Takes nothing; raises AssertionError."""
+    text = (ROOT / 'scripts/gov/src/signin-size.ps1').read_text(encoding='utf-8')
+    for x in ('# ---- RADE sign-in window size (start', '# ---- RADE sign-in window size (end)', 'function Start-SignInSize',
+              'param([switch]$SignInOnly)', 'function Stop-SignInSize', '[RadeSignIn.Size2]::Stop()'):
+        assert x in text, 'the sign-in block lacks ' + x
+    assert all(ord(c) < 128 for c in text), 'the sign-in block must be ASCII'
+    block = text[text.index('# ---- RADE sign-in window size (start'):text.index('# ---- RADE sign-in window size (end)')]
+    for b in sorted((ROOT / 'scripts/gov/paste').glob('90161Z-R*-round-r*.ps1')):
+        assert block in b.read_text(encoding='utf-8'), 'the sign-in block differs from the one in ' + b.name
+
+
 def check_ui_names():
     """Each $ui.<Name> that a T22 part calls is defined in the T22 files (fleet v2, 2026-11-23: engine-v36 moved
     $ui.Meas into engine/rade_ui_text.ps1, and a window that copied only engine/rade_ui.ps1 stopped on Windows).
@@ -312,6 +326,7 @@ def check_ui_names():
 
 if __name__ == '__main__':
     check_ui_names()   # no pwsh needed
+    check_signin_block()
     need_pwsh()
     check_feedback()
     check_walk()
