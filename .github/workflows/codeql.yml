@@ -1,0 +1,35 @@
+name: codeql
+# CodeQL code scanning of the Python and JavaScript code (master plan P4b, approved 2026-11-23; rhope-ops/archimedes_lever
+# docs/reviews/2026-11-23-tool-retirement-plan.md). CodeQL has no PowerShell support: PSScriptAnalyzer covers that (scripts/lint.sh).
+# Pull requests and manual runs only, never on push (Actions minutes). Each action is pinned by its full commit SHA.
+# The workflow token reads only; the one job that uploads results gets security-events: write at job level.
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  analyze:
+    name: codeql (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934  # v4.39.5
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - name: Analyze
+        uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934  # v4.39.5
+        with:
+          category: /language:${{ matrix.language }}
