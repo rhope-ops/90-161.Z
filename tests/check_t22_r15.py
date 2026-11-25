@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""T22 r15 checks (round R41; the PFM, 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md rows 1, 3 and 4).
+"""T22 r15 checks (round R42 T1: docs/reviews/2026-11-21-r42-plan.md; the R41 checks: docs/reviews/2026-11-21-r41-plan.md rows 1, 3, 4).
 
 What it checks, on the window's text form (-PlanOnly; no window here: tests/ps/Test-T22Layout.ps1 measures the window on
 the Windows job) and on the part files:
@@ -11,12 +11,19 @@ the Windows job) and on the part files:
 - the Feedback save (review MINOR 1): a comment on a card whose site row has no marker saves the .txt only, logs
   "picture not saved" and the list names no .png; a card with marked rows saves both (a stand-in picture, no window);
 - the grid fit (row 4, R40 finding 3): the self-check line names the open, the fit runs again after the layout settles,
-  and the window notes each open for the click-through.
+  and the window notes each open for the click-through;
+- R15 (R42 T1, R41 finding 4), the grid plan: for the 3 grids (Your Work, All Actions, Wave 1 answers), with the FAKE
+  rows and with one site row, at 1920 x 1094 and 150 % (the R41 device; bar 26), at 1200 wide and 150 % and at 1280
+  wide and 100 % (bar 17), and with a normal and a 1.25 x wider stand-in font: the column minimums fit beside the
+  scroll bar and a kept Status chip ends a scroll bar's width before the grid edge, wherever the fill puts its column;
+  the grid fit changes nothing in a grid that fits and fits one whose minimums are 42 px too wide, chip kept;
+- R15, the walk path: each WALK step names a rail item, a button of the screen the step before opened (shown at every
+  window size, needing nothing) or the bar's link; steps 10 and 11 open waves and step13; the bar's fallback link.
 
 Network: none.
-Writes: one temporary folder for the Feedback case, removed at the end (it runs pwsh on the cards and feedback parts).
+Writes: one temporary folder for the Feedback case and one for the grid case, each removed at the end (it runs pwsh on the cards and feedback parts).
 Credentials: none.
-Usage: python3 tests/check_t22_r15.py   exit 0 = pass (last line T22R15 pass), 1 = a failed assertion."""
+Usage: python3 tests/check_t22_r15.py   exit 0 = pass (last line T22R15 PASS), 1 = a failed assertion."""
 import pathlib
 import re
 import shutil
@@ -106,6 +113,138 @@ def check_feedback():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# R15 (R42 T1; R41 finding 4): the column plan of the 3 grids, as arithmetic. Text widths come from a stand-in (px per
+# character of the font at the dpi; Font = 'normal' or 'wide', 1.25 x), not from Windows; the grid part's own
+# $wn.TextW and $wn.BarW are replaced, every other function is the grid part's. The grid widths follow the window
+# part's layout ($wn.ShowCols): rail, page column, side column and section padding. Lines: PLAN and FIT (see the case).
+GRID_PS = r"""
+$ErrorActionPreference = 'Stop'; $Again = $false; $lines = New-Object System.Collections.Generic.List[string]
+. $args[1]; . $args[2]   # the cards part (FAKE rows, columns, cards) and the site part (its row conversion)
+$wn = @{}; $ui = @{ Dpi = 96.0; F = @{} }; $pc = @{}
+$ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }; $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
+. $args[0]
+$wn.TextW = { param([string]$Text, $F) return [int][math]::Ceiling($Text.Length * [double]$F) }
+$script:bar = 26; $wn.BarW = { return $script:bar }
+# The width of grid $Name on card $Key at client width $Client (the window part's arithmetic, $wn.ShowCols).
+function Get-GridW([int]$Client, [string]$Key, [string]$Name) {
+  $wide = ($Client -ge (& $ui.Sc 1500)); $rail = $(if ($wide) { & $ui.Sc 220 } else { & $ui.Sc 200 })
+  $cw = [math]::Max((& $ui.Sc 900), $Client - $rail - $script:bar - 2 * (& $ui.Sc 28)); $c = $Cards[$Key]; $nc = @($c.Cols).Count
+  $side = $(if ($nc -le 1) { 0 } elseif ($Key -eq 'home') { $(if ($wide) { & $ui.Sc 420 } else { & $ui.Sc 300 }) } else { & $ui.Sc $c.Side })
+  $colW = $(if ($nc -le 1) { [math]::Min($cw, (& $ui.Sc 1000)) } else { $cw - $side - (& $ui.Sc 18) })
+  foreach ($s in @($c.Cols[0])) { foreach ($b in @($s.Blocks)) { if ($b.T -eq 'grid' -and $b.Name -eq $Name) {
+        $px = $(if ($s.Pad) { [int]$s.Pad } else { 24 }); return @{ W = $colW - 2 * (& $ui.Sc $px); B = $b } } } }
+  throw ('no grid ' + $Name + ' on ' + $Key) }
+$day = [datetime]'2026-11-20'
+$pubIt = @{ Title = '90161Z TEST publication for the window round'; PublicationNumber = '90161Z TEST 1'; ActionType = 'Review'
+  ProcessStep = '8 PFM check'; ActionStatus = 'On Track'; CoordinationSuspense = $day; Modified = $day }
+$site = ConvertTo-SitePubRow @($pubIt)
+$ans = @(ConvertTo-SiteAnswerRow @(@{ Title = '90161Z TEST Office 1'; EndorsementStatus = 'Concur With Comment'; ResponseDate = $day }))
+$grids = @(@('home', 'Who has it now', $site.Home), @('queue', 'All actions', $site.Queue), @('waves', 'Wave 1 answers', $ans))
+foreach ($case in @(@(1920, 144, 26), @(1200, 144, 26), @(1280, 96, 17))) {
+  $ui.Dpi = [double]$case[1]; $script:bar = [int]$case[2]
+  foreach ($font in 'normal', 'wide') {
+    $k = $(if ($font -eq 'wide') { 1.25 } else { 1.0 }) * $ui.Dpi / 96.0
+    $ui.F = @{ Small = 7.0 * $k; SmallB = 7.6 * $k; Link = 7.6 * $k }
+    foreach ($g in $grids) { foreach ($src in 'fake', 'site') {
+        $at = Get-GridW $case[0] $g[0] $g[1]; $rows = $(if ($src -eq 'site') { @($g[2]) } else { @($at.B.Rows) })
+        $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols @($at.B.Cols) $at.W $pw $rows
+        $p = & $wn.ColPlan $cols $at.W 0 (& $wn.PubMin $cols $pw) $rows
+        $sum = 0; foreach ($v in $p.Min.Values) { $sum += $v }; $last = @($cols)[-1]
+        $chip = 0; foreach ($r in $rows) { $chip = [math]::Max($chip, (& $wn.TextW ([string]$r.Status) $ui.F.SmallB)) }
+        # the worst place of the chip: its column at its minimum and every column before it as wide as the fill makes it
+        $end = $at.W - [int]$p.Min[[string]$last.N] + (& $ui.Sc 10) + $chip + (& $ui.Sc 20)
+        'PLAN ' + $g[0] + ' ' + $case[0] + '@' + $case[1] + ' ' + $font + ' ' + $src + ' W=' + $at.W + ' bar=' + $script:bar + ' room=' + $p.Room +
+          ' sum=' + $sum + ' last=' + $last.K + ' kept=' + $p.ChipKept + ' end=' + $end } } } }
+# FIT: the grid fit on a stand-in grid at 1920 x 1094 and 150 % (normal font, FAKE rows): "fits" is a grid whose columns
+# fill the whole grid with no bar shown (r14 took 26 px from the chip on each pass), "over" has minimums 42 px wider
+# than the room (in its widest plain column).
+$ui.Dpi = 144.0; $script:bar = 26; $ui.F = @{ Small = 10.5; SmallB = 11.4; Link = 11.4 }
+foreach ($g in $grids) { foreach ($kind in 'fits', 'over') {
+    $at = Get-GridW 1920 $g[0] $g[1]; $rows = @($at.B.Rows); $pw = & $wn.PubWidths $rows; $cols = & $wn.DropCols @($at.B.Cols) $at.W $pw $rows
+    $p = & $wn.ColPlan $cols $at.W 0 (& $wn.PubMin $cols $pw) $rows
+    $gc = @(); $kinds = @{}; foreach ($c in $cols) { $kinds[[string]$c.N] = [string]$c.K
+      $gc += [pscustomobject]@{ Name = [string]$c.N; Visible = $true; MinimumWidth = [int]$p.Min[[string]$c.N]; Width = [int]$p.Min[[string]$c.N] } }
+    $s = 0; foreach ($c in $gc) { $s += $c.Width }; $x = $at.W - 28 - $s + 42   # over: 42 px more than the room
+    if ($kind -eq 'over') { $pl = @($gc | Where-Object { $kinds[$_.Name] -eq 'plain' } | Sort-Object MinimumWidth -Descending)[0]; $pl.MinimumWidth += $x; $pl.Width += $x }
+    else { $gc[0].Width += $at.W - $s }   # fits: the fill gives the rest of the grid to the first column
+    $grid = [pscustomobject]@{ ClientSize = @{ Width = $at.W }; Width = $at.W; Columns = $gc; Tag = @{ Kind = $kinds; Cols = $cols } }
+    $chipName = [string](@($cols | Where-Object { $_.K -eq 'chip' })[0].N); $chip0 = [int](@($gc | Where-Object { $_.Name -eq $chipName })[0].MinimumWidth)
+    $changed = & $wn.FitGrid $grid; $sum = 0; foreach ($c in $gc) { $sum += $c.MinimumWidth }
+    $chip1 = [int](@($gc | Where-Object { $_.Name -eq $chipName })[0].MinimumWidth)
+    'FIT ' + $g[0] + ' ' + $kind + ' changed=' + $changed + ' sum=' + $sum + ' room=' + ($at.W - 26 - 2) + ' chip=' + $chip0 + '>' + $chip1 } }
+"""
+
+
+def check_grid_plan():
+    """R15 (R41 finding 4): the planned columns of the 3 grids end a scroll bar before the grid edge, and the grid fit
+    keeps a grid that fits as it is and fits one that does not. Takes nothing; raises AssertionError."""
+    import tempfile
+    d = tempfile.mkdtemp()
+    try:
+        ps = pathlib.Path(d, 'grid.ps1')
+        ps.write_text(GRID_PS, encoding='utf-8')
+        res = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), str(GOV / '90161Z-T22-grid-r15.ps1'),
+                              str(GOV / '90161Z-T22-cards-r15.ps1'), str(GOV / '90161Z-T22-site-r15.ps1')],
+                             capture_output=True, text=True, timeout=120)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    out = res.stdout.splitlines()
+    plan = [dict(x.split('=', 1) for x in l.split()[5:]) | {'at': l.split()[1:5]} for l in out if l.startswith('PLAN ')]
+    assert len(plan) == 36, (res.stdout, res.stderr)
+    # the R41 device: client 1920 x 1094 at 144 dpi gives the grid widths the window logged (961, 1428, 871)
+    assert sorted({(p['at'][0], p['W']) for p in plan if p['at'][1] == '1920@144'}) == [('home', '961'), ('queue', '1428'), ('waves', '871')], plan
+    for p in plan:
+        w, bar, room, s, end = (int(p[k]) for k in ('W', 'bar', 'room', 'sum', 'end'))
+        assert room == w - bar - 2 and s <= room, ('the column minimums need more than the room beside the scroll bar', p)
+        assert p['last'] == 'chip' and p['kept'] in ('True', 'False'), p
+        if p['kept'] == 'True':
+            assert end <= w - bar, ('the Status chip can end under the scroll bar', p)
+        if p['at'][1] == '1920@144' and p['at'][2] == 'normal':
+            assert p['kept'] == 'True', ('at the R41 size the Status chip must be kept whole', p)
+    fit = {tuple(l.split()[1:3]): dict(x.split('=', 1) for x in l.split()[3:]) for l in out if l.startswith('FIT ')}
+    assert len(fit) == 6, res.stdout
+    for (g, kind), f in fit.items():
+        c0, c1 = f['chip'].split('>')
+        if kind == 'fits':
+            assert f['changed'] == 'False' and c0 == c1, ('the grid fit changed a grid that fits', g, f)
+        else:
+            assert f['changed'] == 'True' and int(f['sum']) <= int(f['room']) and c0 == c1, ('the grid fit', g, f)
+
+
+def check_walk_path():
+    """R15 (R41 finding 4): each walk step names a control that is on the screen shown at that step: a rail item, a
+    button of the card the step before opened (not in a wide-only section, needing nothing), or the bar's own link.
+    Takes nothing; raises AssertionError."""
+    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r15.ps1'), '-PlanOnly'],
+                         capture_output=True, text=True, timeout=120, cwd=ROOT).stdout.splitlines()
+    rail, buttons, key, wide = {}, {}, None, False
+    for l in out:
+        if l.startswith('CARD '):
+            key = l.split(' | ')[0][5:]; buttons[key] = {}; wide = False
+        elif l.startswith('  SECTION '):
+            wide = l.endswith(' [wide only]')
+        elif l.startswith('RAIL '):
+            t, go = l[5:].rsplit(' -> ', 1); rail[t] = go
+        elif key and not wide and l.lstrip().startswith(('BUTTON ', 'LINK ')) and ' -> ' in l and '[needs' not in l:
+            t, go = l.strip().split(' ', 1)[1].rsplit(' -> ', 1)
+            buttons[key][t.replace(' (blue)', '')] = go
+    cur = 'home'
+    for l in [l for l in out if l.startswith('WALK ')]:
+        m = re.match(r'WALK (\d+) (\S+) (rail|button|link|open): Screen \d+ of 17: select (.+?)\. Pass if', l)
+        n, to, via, what = m.groups()
+        if via == 'rail':
+            assert rail.get(what[:-len(' in the list on the left')]) == to, ('no rail item opens it', l)
+        elif via == 'button':
+            name = re.match(r'"([^"]+)"', what).group(1)
+            assert buttons[cur].get(name) == to, ('the button is not on the screen of the step before (%s)' % cur, l)
+        else:
+            assert via == 'open' and what == '"Open this screen" in this bar', l
+        cur = to
+    assert ('waves', 'step13') == tuple(re.match(r'WALK \d+ (\S+) (\S+):', l).group(1) for l in out if l.startswith(('WALK 10 ', 'WALK 11 '))), out
+    bar = part('bar')
+    for x in ("[string]$Walk[$j].From -ne [string]$wn.Cur", '& $wn.OpenFail $k $_', "'NOTE the screen ' + $Key + ' did not open: '"):
+        assert x in bar, 'the bar part lacks ' + x
+
 
 def check_ui_names():
     """Each $ui.<Name> that a T22 part calls is defined in the T22 files (fleet v2, 2026-11-23: engine-v36 moved
@@ -127,5 +266,7 @@ if __name__ == '__main__':
     check_feedback()
     check_walk()
     check_parts()
-    print('T22R15 pass')
+    check_grid_plan()
+    check_walk_path()
+    print('T22R15 PASS')
     sys.exit(0)

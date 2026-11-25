@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r15 (round R41). Windows PowerShell 5.1, Windows Forms and, to read the
+  90-161.Z Task 22: the PFM window, test window r15 (round R42). Windows PowerShell 5.1, Windows Forms and, to read the
   test site, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   WHAT R14 CHANGES (round R41; PFM 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md rows 1, 3 and 4): the window reads the
@@ -11,6 +11,10 @@
   you through every screen in order, one Pass or Fail each (the bar part: 17 screens, a WALK line each; Feedback on
   every screen as before). The grid fit runs again after the layout settles, and the layout self-check line names the
   open (first, kept, rebuild, resize; R40 finding 3). The parts: 13 (R14 adds bar and site).
+  WHAT R15 CHANGES (round R42 T1; R41 finding 4): every grid keeps the room for the scroll bar and its grid fit works on
+  the column minimums, so no Status chip ends under the bar (the grid part); the click-through opens the endorsement
+  screen with "Start Endorsement" on Confirm, shows "Open this screen" on any step while the screen shown is not the one
+  the step starts on, and a screen that does not open adds a NOTE line (the cards and bar parts).
   WHAT R13 CHANGED (round R40; PFM 20 Nov 26: docs/reviews/2026-11-20-r40-plan.md, the R39 findings 1 and 2): each card
   is built once and kept; a later open shows the kept card again and a card is built again only when it must change
   (a new size, a field, an error line or a note, a color change: the keep part). CARDTIME lines add the paint time

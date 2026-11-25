@@ -12,6 +12,8 @@
   while its step is shown ($wn.WalkSeen, called by $wn.Show in the window part). A step passes when the person
   selected Pass while the card had been opened on that step; Pass on a card that was not opened is a FAIL (not
   opened). Feedback (the feedback part) stays on the bar on every screen. -Again has no click-through ($Walk is empty).
+  R15 (R42 T1; R41 finding 4: screens 10 and 11 did not open): "Open this screen" also shows while the screen shown is not
+  the one a button step starts on ($wn.OpenShow), and an open by the person that stops adds a NOTE line ($wn.OpenFail).
   Inputs: $form, $main, $ui, $wn, $pc, $Cards, $Checks, $Walk, $lines. Outputs: the $wn members below and, at the end
   of a run, the WALK lines ($wn.WalkLines; the main script adds them to the result).
   Run: not alone; 90161Z-T22-pfm-window-r15.ps1 dot-sources it from its own folder inside its try block.
@@ -27,7 +29,11 @@ $wn.StepCount = { return ($Checks.Count + $Walk.Count) }
 # The click-through step shown ($Walk index), or -1 while a check (or the closing line) is shown.
 $wn.WalkAt = { $j = [int]$wn.CheckAt - $Checks.Count; if ($j -ge 0 -and $j -lt $Walk.Count) { return $j }; return -1 }
 # R14: notes that card $Key opened while its click-through step is shown (the person opened it; $wn.Show calls this).
-$wn.WalkSeen = { param([string]$Key) $j = & $wn.WalkAt; if ($j -ge 0 -and [string]$Walk[$j].Key -eq $Key) { $wn.WalkOpen[$j] = $true } }
+$wn.WalkSeen = { param([string]$Key) $j = & $wn.WalkAt; if ($j -ge 0 -and [string]$Walk[$j].Key -eq $Key) { $wn.WalkOpen[$j] = $true }; & $wn.OpenShow }
+# R15 (R41 finding 4: one screen that did not open left the next step on a screen without its button): the link "Open
+# this screen" shows on a step that needs it, and on any step while the screen shown is not the one the step starts on.
+$wn.OpenShow = { if (-not $wn.OpenLink) { return }; $j = & $wn.WalkAt
+  $wn.OpenLink.Visible = ($j -ge 0 -and ([string]$Walk[$j].Via -eq 'open' -or ([string]$Walk[$j].Via -ne 'rail' -and $Walk[$j].From -and [string]$Walk[$j].From -ne [string]$wn.Cur))) }
 $wn.BarShow = {
   <#
   .SYNOPSIS
@@ -44,7 +50,7 @@ $wn.BarShow = {
   else {
     $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = $script:ChecksDone   # R13: names no card (the -Again check names the card closed on)
     $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false }
-  if ($wn.OpenLink) { $wn.OpenLink.Visible = ($j -ge 0 -and [string]$Walk[$j].Via -eq 'open') } }
+  & $wn.OpenShow }
 # Keeps the answer (PASS or FAIL) to the step shown and shows the next one.
 $wn.Answer = { param([string]$Result)
   if ($wn.CheckAt -ge (& $wn.StepCount)) { return }
@@ -55,7 +61,11 @@ $wn.Answer = { param([string]$Result)
 # R14: the link "Open this screen" opens the card of the click-through step shown, as a person's open.
 $wn.OpenStep = {
   $j = & $wn.WalkAt; if ($j -lt 0 -or -not (& $ui.Settled)) { return }
-  $script:presses++; $wn.Notice = ''; $wn.Err = ''; & $wn.Show ([string]$Walk[$j].Key) }
+  $script:presses++; $wn.Notice = ''; $wn.Err = ''; $k = [string]$Walk[$j].Key
+  try { & $wn.Show $k } catch { & $wn.OpenFail $k $_ } }
+# R15 (R41 finding 4: 2 screens did not open, and the result did not say why): a NOTE line when an open by the person stops.
+$wn.OpenFail = { param([string]$Key, $Err) $m = [string]$Err.Exception.Message
+  $lines.Add('NOTE the screen ' + $Key + ' did not open: ' + $m.Substring(0, [Math]::Min(160, $m.Length))) }
 $wn.BarLayout = {
   <#
   .SYNOPSIS

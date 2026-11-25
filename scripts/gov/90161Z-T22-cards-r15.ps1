@@ -423,7 +423,8 @@ function Get-CardPlan {
     if ($c.Crumb -and $c.Title) { $out += (ConvertTo-PlanText ('  CRUMB ' + $c.Crumb)) }
     foreach ($col in @($c.Cols)) {
       foreach ($s in @($col)) {
-        $out += (ConvertTo-PlanText ('  SECTION ' + $(if ($s.Cap) { $s.Cap } else { '-' })))
+        $wide = $(if ($s.WideOnly) { ' [wide only]' } else { '' })   # R15: the click-through check skips these sections
+        $out += (ConvertTo-PlanText ('  SECTION ' + $(if ($s.Cap) { $s.Cap } else { '-' }) + $wide))
         foreach ($b in @($s.Blocks)) { foreach ($l in @(Get-BlockPlan $b)) { $out += (ConvertTo-PlanText ([string]$l)) } }
       }
     }
@@ -439,9 +440,9 @@ function Get-CheckPlan {
 .SYNOPSIS
 R14 (R41 plan row 3): how a person opens card $To from card $From with one selection that only opens a screen.
 .DESCRIPTION
-In this order: a rail item that opens $To (the rail shows on every card); a button of $From that goes to $To with no
-note and no need (a button with a FAKE note does something before it opens a screen, and a button that needs a reason
-or a box needs a second action); the crumb link of $From. Sections shown only in a wide window are left out, so the
+In this order: a rail item that opens $To (the rail shows on every card); a button of $From that goes to $To with
+no need (R15, R41 finding 4: also a button with a FAKE note, such as "Start Endorsement" on Confirm: it is the real way to
+the endorsement screen; a button that needs a reason or a box needs a second action); the crumb link of $From. Sections shown only in a wide window are left out, so the
 opener is there at every window size. No opener: $null (the click-through then shows its own link "Open this screen").
 .PARAMETER From
 The card key the person is on ('' at the start: only the rail counts).
@@ -458,7 +459,7 @@ function Get-WalkOpener([string]$From, [string]$To) {
       foreach ($b in @($sec.Blocks)) {
         $btns = @(); if ($b.T -eq 'buttons') { $btns = @($b.Items | ForEach-Object { @{ B = $_; Beside = '' } }) }
         if ($b.T -eq 'list') { $btns = @($b.Rows | Where-Object { $_.Btn } | ForEach-Object { @{ B = $_.Btn; Beside = [string]$_.Title } }) }
-        foreach ($x in $btns) { if ($x.B.Go -eq $To -and -not $x.B.Note -and -not $x.B.Need) { return @{ Via = 'button'; Text = [string]$x.B.Text; Beside = $x.Beside } } } } } }
+        foreach ($x in $btns) { if ($x.B.Go -eq $To -and -not $x.B.Need) { return @{ Via = 'button'; Text = [string]$x.B.Text; Beside = $x.Beside } } } } } }
   if ($c.CrumbGo -eq $To) { return @{ Via = 'link'; Text = [string]@(([string]$c.Crumb) -split [regex]::Escape(' ' + $gt + ' '))[0]; Beside = '' } }
   return $null
 }
@@ -471,7 +472,7 @@ first card not yet walked that one rail item, button or crumb link opens (Get-Wa
 first card not yet walked, opened with the link "Open this screen" of the check bar. Each step is one action and one
 Pass or Fail, in the words of the 4 checks. Pure data: no window.
 .OUTPUTS
-An array of @{ Key; Via ('rail', 'button', 'link' or 'open'); Opener (what to select); Text (the check bar text) }.
+An array of @{ Key; Via (rail, button, link or open); Opener (what to select); Text (the bar text); From (R15: the card it starts on) }.
 #>
 function Get-WalkPlan {
   $left = New-Object System.Collections.Generic.List[string]; foreach ($k in $Cards.Keys) { $left.Add([string]$k) }
@@ -484,7 +485,7 @@ function Get-WalkPlan {
     $what = $(if ($op.Via -eq 'rail') { $op.Text + ' in the list on the left' } elseif ($op.Via -eq 'link') { 'the link "' + $op.Text + '" at the top' }
       elseif ($op.Beside) { '"' + $op.Text + '" beside "' + $op.Beside + '"' } elseif ($op.Via -eq 'open') { '"Open this screen" in this bar' } else { '"' + $op.Text + '"' })
     $text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': select ' + $what + '. Pass if ' + (Get-CardName $key) + ' opens and looks right.'
-    $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text }; $cur = $key }
+    $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text; From = $cur }; $cur = $key }
   return $out
 }
 # The click-through as -PlanOnly lines: WALK <n> <card> <via>: <text> (tests/run.sh reads them).

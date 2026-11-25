@@ -58,7 +58,8 @@ $wn.Press = {
     $go = ''; $g = $wn.Gridsel
     if ($g -and @($g.Tag.Shown).Count) { $i = 0; if ($g.SelectedRows.Count) { $i = [int]$g.SelectedRows[0].Index }; $go = [string]@($g.Tag.Shown)[$i].Go } }
   if ($go -eq 'back') { $go = $wn.Prev }
-  if ($go) { & $wn.Show $go } else { & $wn.Show $wn.Cur } }
+  if (-not $go) { $go = $wn.Cur }
+  try { & $wn.Show $go } catch { & $wn.OpenFail $go $_ } }   # R15: a NOTE line when the open stops (bar part)
 # The rail is wider when the window is wide; its items follow its width.
 $wn.RailLayout = {
   $wide = ($form.ClientSize.Width -ge (& $wn.Sc 1500)); $rw = $(if ($wide) { & $wn.Sc 220 } else { & $wn.Sc 200 }); $rail.Width = $rw
