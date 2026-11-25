@@ -307,7 +307,7 @@
                     "dir": "T22",
                     "file": "90161Z-T22-pfm-window-r16.ps1",
                     "minutes": 40,
-                    "note": "Signs in (CAC) and reads the fake rows of your test site; writes nothing. In the window \"Publications and Forms Management\", do the 21 lines of its bottom bar. Then close it with its X.",
+                    "note": "Signs in (CAC) and reads the fake rows of your test site; writes nothing. In the window \"Publications and Forms Management\", do the 22 lines of its bottom bar. Then close it with its X.",
                     "estimate": 20,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [
@@ -343,7 +343,7 @@
                     "answers": [
                         {
                             "key": "w-answer",
-                            "prompt": "At screen 10 of 17, did the grid \"Wave 1 answers\" show the second person? Use what you wrote down.",
+                            "prompt": "At screen 11 of 18, did the grid \"Wave 1 answers\" show the second person?",
                             "kind": "yesno"
                         },
                         {

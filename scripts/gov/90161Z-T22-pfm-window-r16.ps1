@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r16 (round R42). Windows PowerShell 5.1, Windows Forms and, to read the
+  90-161.Z Task 22: the PFM window, test window r16 (round R43). Windows PowerShell 5.1, Windows Forms and, to read the
   test site, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   WHAT R14 CHANGES (round R41; PFM 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md rows 1, 3 and 4): the window reads the

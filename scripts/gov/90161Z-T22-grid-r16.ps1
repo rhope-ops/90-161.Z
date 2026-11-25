@@ -258,7 +258,7 @@ $wn.FitGrid = {
   $shown = [int](& $wn.BarShown $G); $room = [int]$G.ClientSize.Width - [math]::Max($res, $shown)
   $vis = @($G.Columns | Where-Object { $_.Visible }); $mins = 0; $sum = 0
   foreach ($k in $vis) { $mins += [int]$k.MinimumWidth; $sum += [int]$k.Width }
-  $excess = $mins - $room; $stale = ($sum -gt [int]$G.ClientSize.Width + 1)   # stale: the filled widths need a new layout
+  $excess = $mins - $room; $stale = ($sum -gt [int]$G.ClientSize.Width - $shown + 1)   # stale: the filled widths end past the grid or under a bar that shows
   if ($excess -le 0 -and -not $stale) { return $false }
   $kinds = $G.Tag.Kind; $heads = @{}; foreach ($c in @($G.Tag.Cols)) { $heads[[string]$c.N] = [int](& $wn.HeadMin $c) }
   $free = @($vis | Where-Object { [string]$kinds[$_.Name] -ne 'pub' }); $gave = 0
@@ -273,18 +273,18 @@ $wn.FitGrid = {
   $G.Width = $G.Width - 1; $G.Width = $G.Width + 1   # the fill columns share the room again
   # R16 (R42 finding 2: home and queue still "columns need 979, the grid has 961" and "1442, 1428"): the minimums fitted, so the
   # excess above was 0, and the layout above gave the same widths again. The widths themselves are cut to the room here.
-  $null = & $wn.TrimWidths $vis $room $G.ClientSize.Width
+  $null = & $wn.TrimWidths $vis $room ([int]$G.ClientSize.Width - $shown)   # R16 review: a bar that shows counts, also under the grid width
   if ($shown -gt $res) {   # R15: the grid keeps the room of the bar that shows, and its widths stop following the bar
     $G.Tag.Reserve = $shown; foreach ($k in $vis) { $k.AutoSizeMode = 'None' } }   # (no fill and row layout again on each open)
   return $true }
 # R16 (R42 finding 2): after the grid laid its fill columns out, cuts their widths to $Room when they still end past the grid
-# ($Client wide, 1 px of rounding allowed): the width above its column minimum comes off, the column with the most first, and
+# (they end past $Client: the grid width less the bar that shows, 1 px of rounding allowed): the width above its column minimum comes off, the column with the most first, and
 # the columns stop filling (AutoSizeMode None), so the grid's own layout cannot give the width back. No column goes under its
 # minimum, so a kept status chip keeps its whole width ($wn.ValueMin). $Cols: the visible columns (Width, MinimumWidth,
 # AutoSizeMode). Gives back $true when it changed a width, else $false.
 $wn.TrimWidths = { param($Cols, [int]$Room, [int]$Client)
   $sum = 0; foreach ($k in $Cols) { $sum += [int]$k.Width }
-  if ($sum -le $Client + 1) { return $false }   # the layout above fixed it: nothing to cut
+  if ($sum -le $Client + 1) { return $false }   # the widths end before the bar that shows (or the grid edge): nothing to cut
   $over = $sum - $Room; foreach ($k in $Cols) { $k.AutoSizeMode = 'None' }
   foreach ($k in @($Cols | Sort-Object { [int]$_.Width - [int]$_.MinimumWidth } -Descending)) {
     if ($over -le 0) { break }

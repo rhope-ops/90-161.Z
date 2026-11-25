@@ -76,5 +76,7 @@ function Test-DeviceGrid([string]$Key, [string]$Name, [int]$W, [int]$Need) {
 Test-DeviceGrid 'home' 'Who has it now' 961 979
 Test-DeviceGrid 'empty' 'Who has it now' 961 979
 Test-DeviceGrid 'queue' 'All actions' 1428 1442
+# R16 review: a sum between the room (grid less the bar) and the grid width must be cut too (950: past 935, under 961).
+Test-DeviceGrid 'home' 'Who has it now' 961 950
 Write-Host ('T22GRIDW pass=' + $script:pass + ' fail=' + $script:fail + ' (grid part ' + $Rev + ')')
 if ($script:fail -gt 0) { exit 1 }

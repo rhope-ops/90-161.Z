@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""T22 r16 checks (round R42 T1: docs/reviews/2026-11-21-r42-plan.md; the R41 checks: docs/reviews/2026-11-21-r41-plan.md rows 1, 3, 4).
+"""T22 r16 checks (round R43 T1 to T3: docs/reviews/2026-11-25-r43-plan.md; R42 T1: docs/reviews/2026-11-21-r42-plan.md; the R41 checks: docs/reviews/2026-11-21-r41-plan.md rows 1, 3, 4).
 
 What it checks, on the window's text form (-PlanOnly; no window here: tests/ps/Test-T22Layout.ps1 measures the window on
 the Windows job) and on the part files:
-- the click-through (row 3): one WALK line per card, every card once, numbered 1 to 17 in order, each text one action
-  ("Screen n of 17: select ... Pass if ... opens and looks right.") and at most 200 characters, starting on Your Work;
+- the click-through (row 3): one WALK line per card, every card once, numbered 1 to 18 in order, each text one action
+  ("Screen n of 18: select ... Pass if ... opens and looks right.") and at most 200 characters, starting on Your Work;
 - the site read (row 1): the site part calls no command that adds, changes or removes anything on the site, reads each
   list with Get-PnPListItem, writes the WRITES=0 line and knows the repo's fake-data markers; the card pictures and the
   Feedback pictures ask for the marker check first;
