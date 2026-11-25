@@ -1,58 +1,15 @@
 # 90-161.Z: tasks for the work computer
 
-Updated: 25 Nov 26 (R42 r2 is ready).
+Updated: 25 Nov 26 (R42 results; R43 is being built).
 
 ## Open tasks
 
-### Round R42 r2: window r15, an endorser answer, a small sign-in window and Restore
-
-**For:** tests the R41 fixes: the 90-161.Z window r15 (room for the scroll bar; the screens Waves and Step 13 open), an endorser answer from a second person, a small CAC sign-in window for Back up and Restore, and RADE Restore of fake rows with the old row numbers.
-**Time:** about 40 minutes, with about 5 minutes of a second person from the office (an estimate).
-**Changes:** on the computer, the OneDrive folder RADE\90-161.Z: scripts and result files in T21, T22 and T26, 17 screen pictures, and one backup of the 12 test site lists. The old files of T21 r11, T22 r14 and T26 r1 go to the Recycle Bin. The Repair saves a new copy of RADE for the RADE shortcut. On the test site: a test list and library, the second person in the Visitors group, one fake publication and fake endorsement rows. The last steps of the round move them to the site Recycle Bin.
-**PFM:** the person who runs this task.
-**Keep:** the folder RADE\Config (it holds the sensitivity label for renders) and, in T07, the file `90161Z-T07-key-r1.txt`. Rounds do not touch them.
-**Steps:**
-1. Ask one person in the office to help with this task, and write down the e-mail address of that person.
-2. Below **Summary** on this page, click **Open the script**. The script opens as plain text.
-3. On the script page, press `Ctrl+A`, then `Ctrl+C`.
-4. From the Start menu, open **Windows PowerShell ISE** (not **Run as administrator**).
-5. In ISE, click **File** > **New**, then press `Ctrl+V`.
-6. Press `F5`. Wait until the window **RADE** opens (up to 2 minutes).
-7. If no window opens and text runs in ISE, stop and post `No RADE window` in the Teams channel **RHOPE-OPS**.
-8. In the window **RADE**, click the row **90-161.Z 0.1.0**, then the button **Maintenance**, then **Repair**.
-9. If the card **One check needs you.** shows, click the button on the card and do what the card says.
-10. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button (for example **Run checks again**).
-11. If the card **One check failed.** shows again, stop and post the first 10 words of the card in **RHOPE-OPS**.
-12. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. Wait until an end card shows (up to 5 minutes).
-13. If the end card is not **90-161.Z 0.1.0 is installed.**, stop and post the first 10 words of the card in **RHOPE-OPS**.
-14. Click **Close**. In ISE, press `F5`. Wait until the window **RADE** opens again.
-15. Click the row **90-161.Z R42**. Wait until a card shows (up to 2 minutes).
-16. If the card **One check needs you.** shows, click the button on the card and do what the card says.
-17. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button (for example **Run checks again**).
-18. If the card **One check failed.** shows again, or **Your OneDrive folder was not found.** shows, stop and post the first 10 words in **RHOPE-OPS**.
-19. On the card **Ready to run round R42.**, click **Run** (or **Resume at step**, if it shows).
-20. Each time a CAC sign-in window opens, sign in. The next cards come in any order and can repeat.
-21. Each time the card "Insert your CAC, then select Resume." shows, insert the CAC, then click **Resume**.
-22. On each card with numbered lines, do the lines, then click **Done**.
-23. If a line fails, click **It failed**, type the first line of the error, then click **Report the failure**.
-24. On each question, click the answer.
-25. On a card with a box, type one line with no names, then click **Continue**.
-26. When the small window **90-161.Z test T4** asks for an e-mail address, type the address that you wrote down, then click **OK**.
-27. If the second person cannot help today, click **Skip** on the card **Ask the second person to answer the endorsement**.
-28. On **Screen 10 of 17**, write down `Yes` if the grid **Wave 1 answers** shows the second person, else `No`.
-29. In the window **Publications and Forms Management**, do what each line of the bottom bar says, then click **Pass** or **Fail**.
-30. When a card asks about **Screen 10 of 17**, click the answer that you wrote down: **Yes** or **No**.
-31. When the bar shows "All checks done. Close this window with its X.", close the window **Publications and Forms Management**.
-32. When the round ends, wait until an Outlook draft or the results folder opens (up to 2 minutes).
-33. If a draft opened and **To** is empty, type the e-mail address of the PFM. Click **Send**.
-34. If no draft opened, the e-mail text is on the clipboard. In Outlook, start a new e-mail, click in the body, then press `Ctrl+V`.
-35. If you started a new e-mail, type the e-mail address of the PFM in **To**. Move the first line of the body to **Subject**.
-36. If you started a new e-mail, attach every file of the results folder, then click **Send**.
-
-**Report:** the e-mail of the round, with the subject `90161Z R42 PASSED` or `90161Z R42 NEEDS REVIEW` and every file of the results folder.
-**If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE, post the first 10 words in the Teams channel **RHOPE-OPS**. **Record (F2)** at the bottom of the window **RADE** shows all checks, steps and the log.
+R43 is being built. This page shows it when it is ready.
 
 ## Done
+
+- Round R42 r2 (25 Nov 26): needs review. Checks 12 of 12, Window OK, 11 of 21 steps passed. Passed: the probe list, the second person and the answer row by that person, the waves grid and screens 10 and 11, and the clean-up. Needs work: Back up and Restore did not run (the install steps were not clear), the home and queue grids, and 3 screens.
+https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-25-r42-results.md
 
 - Round R41 r1 (21 Nov 26): needs review. Checks 12 of 12, Window OK, 19 of 24 steps passed. Passed: the probe list, the second person, Back up and Restore of 4 fake rows in a second RADE window, the pause row back at No, and the clean-up. Needs work: the Recycle Bin rows got new row numbers, the window grids and 2 screens, and the answer buttons. The endorser answer was skipped.
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-21-r41-results.md
