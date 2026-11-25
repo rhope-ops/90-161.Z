@@ -68,21 +68,19 @@ Offline form: a computer with no access to github.com uses a RADE clone that has
    The value can have only letters, numbers, `.`, `_` and `-`.
 3. In the editor, save the file. You see the saved file. Go on.
 
-   If you changed only `teamsChannel`, do not change `index.html` and `go.md`.
-
-   The old address is `https://raw.githubusercontent.com/<old owner>/<old repo>/<old branch>/`, with the old values. The new address has the new value in its place. Today the address is `https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/`.
-4. In the editor, open `index.html`, and do these actions:
+   The old address is `raw.githubusercontent.com/<old owner>/<old repo>/<old branch>/`, with the old values. Do not type `https://` in front of it. The new address has the new value in its place. Today the address is `raw.githubusercontent.com/rhope-ops/90-161.Z/main/`.
+4. For a new owner, repo or branch, open `index.html` and do these actions:
    1. Replace all the old address with the new address.
    2. Find the line `<script src="go.js"`.
    3. On that line, type the new value in `data-owner`, `data-repo` or `data-branch`.
    4. Save the file.
 
    You see the new address after `connect-src`. Go on.
-5. In the editor, open `go.md`, and do these actions:
+5. For a new owner, repo or branch, open `go.md` and do these actions:
    1. Replace all the old address with the new address.
    2. Save the file.
 
-   You see the new address in each raw link. Go on.
+   You see the new raw links. Go on.
 6. In a terminal, in the repository folder, do these actions:
    1. Type `node tests/check_go_page.js`.
    2. Press **Enter**.
