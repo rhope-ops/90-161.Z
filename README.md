@@ -100,7 +100,7 @@ The design; parts marked (planned) are not built yet.
 | `scripts/` | Build, round bundles and the gov-device scripts |
 | `docs/ARCHITECTURE.md`, `docs/process-model.md` | The design; the stages and their paragraphs |
 | `ref/` | Reference copies: DAFMAN 90-161 (the rule source), ANGMAN 90-161 and the forms |
-| `site.config.json` | The account values (GitHub owner, repository, branch, Teams channel) that the scripts read; the page carries a copy on the go.js tag and in its CSP, which `tests/check_go_page.js` holds equal |
+| `site.config.json` | The account values (GitHub owner, repository, branch, Teams channel) that the scripts read; `scripts/build_go_page.py` writes the page's CSP source from it |
 | `docs/MAINTAINER_HANDOVER.md` | Where each part lives, and the steps for the common maintainer tasks |
 | `SECURITY.md`, `COMPLIANCE.md`, `docs/threat-model.md` | How to report a problem; each control and its proof; the threats and their controls |
 | [TASKS.md](TASKS.md) | Test tasks for the work computer (copied from go.md) |

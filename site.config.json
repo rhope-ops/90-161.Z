@@ -1,5 +1,5 @@
 {
-  "_doc": "The one home of this repository's live account values (fleet v2 DEC 7, 2026-11-23). Code reads them here: scripts/site_config.py (Python). The github.io page cannot fetch this file (its CSP connect-src allows only this repository's branch folder on raw.githubusercontent.com), so index.html carries owner, repo and branch on the go.js tag and in the CSP; tests/check_go_page.js fails when they differ from this file. History and docs keep their text as written. The RADE engine repository is not here: scripts/rade.lock.json \"repo\" names it (the attested release subject).",
+  "_doc": "The one home of this repository's live account values (fleet v2 DEC 7, 2026-11-23). Code reads them here: scripts/site_config.py (Python). The github.io page does not read this file: scripts/build_go_page.py builds the page from go.md and writes its CSP connect-src source from these values. History and docs keep their text as written. The RADE engine repository is not here: scripts/rade.lock.json \"repo\" names it (the attested release subject).",
   "owner": "rhope-ops",
   "repo": "90-161.Z",
   "branch": "main",
