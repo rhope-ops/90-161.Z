@@ -15,7 +15,7 @@ AGENTS.md "Agents" points here. Ask each agent for concise findings with evidenc
 | `worker` | sonnet | Read, Edit, Write, Bash, Grep, Glob; guard hook | One brief-ready task on its own branch |
 | `reviewer` | inherit (the author's tier) | Read, Grep, Glob, Bash; guard hook | Fresh review: diff and brief only |
 
-`scripts/worker_guard.py` (PreToolUse hook) blocks push to main or master, every force-push form, rebase, reset --hard, clean and branch deletes for `worker`; with `--readonly` it also blocks every git verb that changes the repo, for `reviewer`. It is a seat belt for honest mistakes, not a security boundary: it cannot see file writes or commands built at run time.
+`scripts/worker_guard.py` (PreToolUse hook) blocks push to main or master, every force-push form, rebase, reset --hard, clean and branch deletes for `worker`; with `--readonly` it also blocks every git verb that changes the repo, and rm, rmdir, unlink and shred, for `reviewer`. It is a seat belt for honest mistakes, not a security boundary: it cannot see file writes or commands built at run time.
 
 ## Model routing
 
