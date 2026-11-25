@@ -48,7 +48,7 @@ check('a round script card has no .ps1 link and no Copy link', !/<a href="[^"]*\
 check('the .txt name replaces .ps1', t.txtName('https://x/y/90161Z-R01-test.ps1') === '90161Z-R01-test.txt');
 // Fleet v2 guards: page wiring, stored state, config names and the attributes the safe DOM copy keeps.
 const page = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-check('index.html loads go.js and has no inline script', /<script src="go\.js"[^>]*><\/script>/.test(page) && !/<script>/.test(page));
+check('index.html loads go.js and no other script (any letter case)', /<script src="go\.js"[^>]*><\/script>/.test(page) && (page.match(/<script\b/gi) || []).length === 1);
 check('go.js sets no innerHTML', !/innerHTML/.test(fs.readFileSync(path.join(__dirname, '..', 'go.js'), 'utf8')));
 const vs = t.validState({ 'Round A': true, x: 'yes', y: 1, __proto__: { polluted: true }, ['z'.repeat(201)]: true });
 check('stored state keeps only short names with true/false values', Object.keys(vs).join() === 'Round A' && vs.polluted === undefined);
