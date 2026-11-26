@@ -257,7 +257,8 @@ $wn.Blocks.rows = {
     else {
       # R18 (the PFM, 26 Nov 26, R43 and R45 comment 1): every text value, one line or wrapped, starts at the left edge of the value column
       # (x = W - vw, the same for every row); a chip stays at the right. A number value such as "0" is left too: one edge for all text.
-      $v = & $wn.Txt $p $r[1] $ui.F.SmallB $ui.C.Ink 0 $vw 'Value' $null; $v.Location = [Drawing.Point]::new(($W - $vw), (& $wn.Sc 8)) }
+      # The wrap width is the column less 8 px: a text box is its wrap width + 4 px wide, or its text + 8 px on one line ($ui.TextSize), so it never ends past the panel.
+      $v = & $wn.Txt $p $r[1] $ui.F.SmallB $ui.C.Ink 0 ($vw - (& $wn.Sc 8)) 'Value' $null; $v.Location = [Drawing.Point]::new(($W - $vw), (& $wn.Sc 8)) }
     & $wn.Fit $p 8; [void]$Parent.Controls.Add($p); $first = $false } }
 $wn.ListRow = {
   <#

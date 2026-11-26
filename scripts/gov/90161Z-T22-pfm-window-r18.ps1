@@ -3,6 +3,10 @@
   90-161.Z Task 22: the PFM window, test window r18 (round R44). Windows PowerShell 5.1, Windows Forms and, to read the
   test site, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
+  WHAT R18 CHANGES (the PFM, 26 Nov 26, comments of round R45): the window title (above); a text value of the Action Status card (pairs
+  of label and value) starts at one left edge, and a chip row is only as tall as its text (the parts part); the waves card counts its head
+  line, chip and pill from the rows its grid shows and has no stray "4" under the grid (the site and grid parts); the check bar wraps its
+  sentence onto a second line and frames the part of the screen a step names (the cards part: Target; the bar part: $wn.FrameSet).
   WHAT R17 CHANGES (round R44 T4; R43 findings 3, 4 and 6; the PFM, 26 Nov 26): the look step after the waves card names the
   grid by the head line above it, a line the card shows (the cards part); the bar keeps room for its links "Open this screen"
   and "Feedback", so the step text never covers them (the bar part, tests/ps/Test-T22Bar.ps1); the first click-through step

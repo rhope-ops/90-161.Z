@@ -17,6 +17,9 @@ the Windows job) and on the part files:
   wide and 100 % (bar 17), and with a normal and a 1.25 x wider stand-in font: the column minimums fit beside the
   scroll bar and a kept Status chip ends a scroll bar's width before the grid edge, wherever the fill puts its column;
   the grid fit changes nothing in a grid that fits and fits one whose minimums are 42 px too wide, chip kept;
+- R18 (R45, the PFM, 26 Nov 26), check_r18: the waves head line, chip and pill are counted from the grid's rows; the look step has a Target;
+  the grid reads its Count key by name; the rows block has one left edge for text values; the bar wraps and frames (text checks of the code:
+  the window itself is measured only on Windows, tests/ps/Test-T22Layout.ps1);
 - R15, the walk path: each WALK step names a rail item, a button of the screen the step before opened (shown at every
   window size, needing nothing) or the bar's link; steps 10 and 11 open waves and step13; the bar's fallback link.
 
@@ -370,7 +373,7 @@ def check_r18():
     assert "[string]$b['Count']" in grid and '$b.Count' not in grid, 'the grid must read its Count key by name ($b.Count on a hash table is its key count: the stray "4")'
     assert '[Drawing.Point]::new(($W - $vw), (& $wn.Sc 8))' in parts and '($W - $v.Width), (& $wn.Sc 8)' not in parts, 'a text value must start at the left edge of the value column'
     assert '$lw = $W - $v.Width - $gap' in parts, 'a chip row gives its label the room the chip leaves'
-    for x in ('$wn.FrameSet', '$wn.FramePaint', '$wn.FrameFind', '& $wn.OpenShow; & $wn.FrameSet', '$ww = [math]::Max(1, $tw - (& $wn.Sc 4))',
+    for x in ('$wn.FrameSet', '$wn.FramePaint', '$wn.FrameFind', '& $wn.OpenShow; & $wn.FrameSet', '$ww = [math]::Max(1, $tw - 2 * (& $wn.Sc 4))',
               '& $ui.SetWrap $wn.BarText $ww', '[Drawing.Drawing2D.PenAlignment]::Inset'):
         assert x in bar, 'the bar part lacks ' + x
 

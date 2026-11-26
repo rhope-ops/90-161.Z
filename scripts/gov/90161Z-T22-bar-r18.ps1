@@ -43,8 +43,8 @@ $wn.FrameName = ''; $wn.FrameCtl = $null; $wn.FrameHooked = New-Object System.Co
 # Draws the frame on the control $s when it is the one named by $wn.FrameName. Paint event handler.
 $wn.FramePaint = { param($s, $e)
   if (-not $wn.FrameName -or [string]$s.AccessibleName -cne [string]$wn.FrameName) { return }
-  $pn = New-Object System.Drawing.Pen($pc.primary, [single](& $wn.Sc 2)); $pn.Alignment = [Drawing.Drawing2D.PenAlignment]::Inset
-  $e.Graphics.DrawRectangle($pn, 0, 0, ($s.ClientSize.Width - 1), ($s.ClientSize.Height - 1)); $pn.Dispose() }
+  try { $pn = New-Object System.Drawing.Pen($pc.primary, [single](& $wn.Sc 2)); $pn.Alignment = [Drawing.Drawing2D.PenAlignment]::Inset
+    $e.Graphics.DrawRectangle($pn, 0, 0, ($s.ClientSize.Width - 1), ($s.ClientSize.Height - 1)); $pn.Dispose() } catch { $null = $_ } }   # a paint never stops the window
 # Finds the control with accessible name $Name on the page shown. Takes the name; gives back the control or $null.
 $wn.FrameFind = { param([string]$Name)
   $st = New-Object System.Collections.Stack; $st.Push($page)
@@ -157,7 +157,7 @@ $wn.BarLayout = {
   # wrap width plus the 4 px its edit control keeps ($ui.TextSize), and $wn.BarFit cut it back to $tw, so the edit control wrapped 4 px
   # earlier than the height was measured and the last line fell out of the box. The wrap width is now $tw less those 4 px, for the
   # height and for the box, so the box is $tw wide, as the height was measured, and a long sentence takes one more line (the bar grows).
-  $ww = [math]::Max(1, $tw - (& $wn.Sc 4))
+  $ww = [math]::Max(1, $tw - 2 * (& $wn.Sc 4))   # 2 x 4 px: wrapped, the box is the wrap width + 4; on one line, its text + 8; never past $tw
   $th = 0; foreach ($c in @(@($Checks) + @($Walk))) { $m = & $ui.Meas ([string]$c.Text) $ui.F.Body $ww; $th = [math]::Max($th, [int]$m.Height) }
   $th += (& $wn.Sc 6)
   $nh = [int]$wn.BarNo.PreferredSize.Height
