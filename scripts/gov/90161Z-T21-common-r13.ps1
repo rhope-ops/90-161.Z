@@ -151,7 +151,7 @@ function Connect-ProbeSite {
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
   Write-Now 'Signing in to the site (if a sign-in window opens, sign in with your CAC)'
   # R46: the sign-in window at its real size (RADE engine-v46 block); the SIGNIN-DPI line goes to the log.
-  if (Get-Command Set-SignInDpiAware -ErrorAction SilentlyContinue) { Write-Host (Set-SignInDpiAware) }: the sign-in window at its real size (RADE engine-v46 block)
+  if (Get-Command Set-SignInDpiAware -ErrorAction SilentlyContinue) { Write-Host (Set-SignInDpiAware) }
   $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
   $script:lines.Add('ROUTE web-login PASS')
   Write-Now 'Reading the lists of the site'
