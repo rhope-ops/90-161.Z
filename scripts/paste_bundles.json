@@ -199,7 +199,7 @@
             "steps": [
                 {
                     "name": "T29 Sign-in test, size watch on r1",
-                    "title": "Sign in to the test site, with the sign-in size watch on",
+                    "title": "Sign in to the test site, size watch on",
                     "dir": "T29",
                     "file": "90161Z-T29-signin-r1.ps1",
                     "args": "-Watch on",
@@ -215,7 +215,7 @@
                 },
                 {
                     "name": "T29 Sign-in test, size watch off r1",
-                    "title": "Sign in to the test site, with the sign-in size watch off",
+                    "title": "Sign in to the test site, size watch off",
                     "dir": "T29",
                     "file": "90161Z-T29-signin-r1.ps1",
                     "args": "-Watch off",
