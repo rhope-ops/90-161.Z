@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-26 | tests/check_screen_names.py also reads card sentences that RADE builds as <name> + a fixed end (Sentence, Text, Title, Kicker), so step text quotes them exactly. Scope: the check, every round. | PFM (dialog: "Teach the check") | docs/reviews/2026-11-25-fresh-reader.md |
 | 2026-11-25 | R43 plan E4 (slow sign-in) approved, then limited to one quick look: the PFM thinks it is the Microsoft servers. Scope: R43. | PFM (chat: "i approve everything"; "don't look too hard into it") | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-26 | R43: the timed sign-in pair leaves R43 (engine-v41 reuses a passed sign-in check for 7 days; no forced sign-in); the Uninstall flows hand step ends with Done when no flows exist. Scope: R43. | PFM (question dialog) | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-25 | RADE lock moves to release engine-v41 (RADE 98fd8f1, serial 28) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |

@@ -126,3 +126,6 @@ The real sentence is `Back up is running.` (code: `Sentence = ($name + ' is runn
 
 Not run. The Orchestrator runs it with a new fresh reader.
 
+## Fix B, final (2026-11-26)
+
+The PFM chose "Teach the check" (dialog, 2026-11-26). tests/check_screen_names.py now reads a card sentence that RADE builds as `Sentence = ($name + '<fixed end>')` (also Text, Title, Kicker): the name passes when the bundle holds the head string and the fixed end. Its self-test proves that a log line of the same form does not pass. The Back up line quotes the real sentence again: `4. Click the row "Back up". The card "Back up is running." shows.`

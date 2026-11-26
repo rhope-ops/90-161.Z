@@ -411,7 +411,7 @@
                         "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
-                        "4. Click the row \"Back up\". The card says Back up is running.",
+                        "4. Click the row \"Back up\". The card \"Back up is running.\" shows.",
                         "5. If a CAC sign-in window opens, write \"Small\" (size of this card) or \"Large\" (most of the screen).",
                         "6. If the CAC sign-in window is open, sign in with your CAC.",
                         "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
