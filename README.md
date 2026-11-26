@@ -60,10 +60,10 @@ Updated: 26 Nov 26 (R44 r1).
 6. If no window opens and text runs in ISE (not from the bundle), stop. Post `No RADE window` in the Teams channel **RHOPE-OPS** (not from the bundle).
 7. In the RADE window, click the row **90-161.Z R44 sign-in test**.
 8. On the card **Ready to run round R44.**, click **Run**.
-9. Each time a sign-in window opens (2 times), sign in with your CAC. If it does not respond, do nothing: the step stops after 3 minutes.
+9. Each time a sign-in window opens (2 times now, 2 more later inside ISE), sign in with your CAC. If it does not respond, do nothing: the step stops after 3 minutes.
 10. Wait until the card **Round R44 is done.** or **The round needs review.** shows.
 11. In the Outlook draft with the subject that starts with `90161Z R44`, click **Send**.
-12. If no Outlook draft opens, send a new e-mail with the summary and the files of the results folder.
+12. If no Outlook draft opens, do the e-mail line of the end card.
 13. In the RADE window, click **Close**. The RADE window closes.
 14. In the blue ISE pane at the bottom (not from the bundle), type `$env:RADE_ISE_CHILD = '0'`, then press `Enter`.
 15. Press `F5`. Wait until the RADE window opens (up to 2 minutes).
@@ -85,10 +85,10 @@ Updated: 26 Nov 26 (R44 r1).
 31. If you did the line **What to do**, click **Run checks again** or **Sign in and check site rights**.
 32. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
 33. On the card **Ready to run round R44.**, click **Run** (or **Resume at step**, if it shows).
-34. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: the step stops after 3 minutes.
+34. Each time a sign-in window opens (the first 2 steps, then more), sign in with your CAC. If it does not respond, do nothing: the step stops after 3 minutes.
 35. Do each step that a card shows. Stop when the card **Round R44 is done.** or **The round needs review.** shows.
 36. In the Outlook draft with the subject that starts with `90161Z R44`, click **Send**.
-37. If no Outlook draft opens, send a new e-mail with the summary and the files of the results folder.
+37. If no Outlook draft opens, do the e-mail line of the end card.
 
 **Report:** 2 e-mails of the round, one after the sign-in test and one at the end, each with the subject `90161Z R44 PASSED` or `90161Z R44 NEEDS REVIEW` and every file of the results folder.\
 **If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE (not from the bundle), post the first 10 words in the Teams channel **RHOPE-OPS** (not from the bundle). **Details (F2)** at the bottom of the RADE window shows all checks, steps and the log.
