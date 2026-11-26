@@ -3,6 +3,7 @@
     "application": {
         "name": "90-161.Z",
         "displayName": "90-161.Z - Kanon",
+        "subtitle": "Kanon • Publications and Forms Management",
         "logo": "assets/logo/build/90161Z-logo-256.png",
         "folder": "90-161.Z",
         "prefix": "90161Z",
@@ -28,8 +29,12 @@
         {
             "out": "scripts/gov/paste/90161Z-R44-round-r1.ps1",
             "round": "R44",
-            "title": "Round R44 r1: a read-only count of the test site, my window r17, an optional endorser answer, and RADE Back up and Restore of fake rows",
+            "title": "Round R44 r2: a CAC sign-in test in 2 hosts with the size watch on and off, then a read-only count of the test site, my window r17, an optional endorser answer, and RADE Back up and Restore of fake rows",
             "files": [
+                {
+                    "dir": "T29",
+                    "src": "scripts/gov/90161Z-T29-signin-r1.ps1"
+                },
                 {
                     "dir": "T28",
                     "src": "scripts/gov/90161Z-T28-count-r1.ps1"
@@ -192,6 +197,38 @@
                 }
             ],
             "steps": [
+                {
+                    "name": "T29 Sign-in test, size watch on r1",
+                    "title": "Sign in to the test site, with the sign-in size watch on",
+                    "dir": "T29",
+                    "file": "90161Z-T29-signin-r1.ps1",
+                    "args": "-Watch on",
+                    "minutes": 5,
+                    "note": "Signs in (CAC), then signs out. Nothing on the site changes. It stops by itself after 3 minutes if the sign-in does not finish.",
+                    "estimate": 1,
+                    "help": "If the sign-in window does not show or does not respond, wait. The step stops after 3 minutes and keeps its result.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Signing in to the test site."
+                },
+                {
+                    "name": "T29 Sign-in test, size watch off r1",
+                    "title": "Sign in to the test site, with the sign-in size watch off",
+                    "dir": "T29",
+                    "file": "90161Z-T29-signin-r1.ps1",
+                    "args": "-Watch off",
+                    "minutes": 5,
+                    "note": "Signs in (CAC), then signs out. Nothing on the site changes. It stops by itself after 3 minutes if the sign-in does not finish.",
+                    "estimate": 1,
+                    "help": "If the sign-in window does not show or does not respond, wait. The step stops after 3 minutes and keeps its result.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Signing in to the test site."
+                },
                 {
                     "name": "T28 Count what is on the test site r1",
                     "title": "Count what the app 90-161.Z left on the test site",
@@ -985,6 +1022,16 @@
             ],
             "collect": [
                 {
+                    "dir": "T29",
+                    "name": "90161Z-T29-signin-on-r1.txt",
+                    "step": "T29 Sign-in test, size watch on r1"
+                },
+                {
+                    "dir": "T29",
+                    "name": "90161Z-T29-signin-off-r1.txt",
+                    "step": "T29 Sign-in test, size watch off r1"
+                },
+                {
                     "dir": "T28",
                     "name": "90161Z-T28-count-r1.txt",
                     "step": "T28 Count what is on the test site r1"
@@ -1193,9 +1240,19 @@
             "fetch": [],
             "apps": [
                 {
-                    "name": "90-161.Z R44",
-                    "summary": "Round R44 r1: a read-only count of the test site, window r17, an optional endorser answer, and Back up and Restore of fake rows.",
+                    "name": "90-161.Z R44 sign-in test",
+                    "summary": "Round R44 r2, part 1: 2 CAC sign-ins with RADE in its own window, the size watch on, then off. Nothing on the site changes.",
                     "steps": [
+                        "T29 Sign-in test, size watch on r1",
+                        "T29 Sign-in test, size watch off r1"
+                    ]
+                },
+                {
+                    "name": "90-161.Z R44",
+                    "summary": "Round R44 r2: the sign-in test inside ISE, then a read-only count of the test site, window r17, an optional endorser answer, and Back up and Restore of fake rows.",
+                    "steps": [
+                        "T29 Sign-in test, size watch on r1",
+                        "T29 Sign-in test, size watch off r1",
                         "T28 Count what is on the test site r1",
                         "T21 Check the test site is clean r12",
                         "T21 Make the probe list r12",

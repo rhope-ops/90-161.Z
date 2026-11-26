@@ -38,7 +38,13 @@ BLOCKS.append((UI, '# >>> rade-ui: generated from the pinned RADE shared UI file
 # cap (code standard C4); UI2 holds the second half, from the first top-level "$ui." line past the middle (ui_text).
 UI2 = 'rade-ui-2'
 BLOCKS.append((UI2, '# >>> rade-ui-2: generated from the pinned RADE shared UI file (second half) by scripts/build_task_scripts.py (do not edit)', '# <<< rade-ui-2'))
-GENERATED = (LOGO, UI, UI2)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
+# R44 r2 (the PFM, 26 Nov 26: find why the CAC sign-in froze): the RADE sign-in block (Start-SignInSize, Start-SignInReport,
+# Connect-RadeSite; engine-v43) from the pinned engine/ps/16-site-scripts.ps1, between its start and end lines, as it is.
+SIGNIN = 'rade-signin'
+BLOCKS.append((SIGNIN, '# >>> rade-signin: generated from the pinned RADE sign-in block by scripts/build_task_scripts.py (do not edit)', '# <<< rade-signin'))
+SIGNIN_START = '# ---- RADE sign-in window size (start'
+SIGNIN_END = '# ---- RADE sign-in window size (end)'
+GENERATED = (LOGO, UI, UI2, SIGNIN)   # blocks made from the logo master and the pinned RADE files (not from a .ps1 source here); written only into a script that has the markers
 _logo = []
 _ui = []
 
@@ -103,6 +109,22 @@ def split_ui(text):
     sys.exit('FAIL the RADE shared UI file has no top-level $ui. line past its middle to split at (scripts/build_task_scripts.py split_ui)')
 
 
+def signin_text():
+    """Read the RADE sign-in block from the pinned engine (engine/ps/16-site-scripts.ps1, SHA-256 checked by the fetch).
+
+    Returns:
+        The lines from SIGNIN_START to SIGNIN_END, both included, with LF line ends and a final LF.
+    """
+    sys.path.insert(0, str(ROOT / 'scripts'))
+    import build_paste_bundles as B
+    lock = json.loads(B.LOCK_FILE.read_text(encoding='utf-8'))
+    text = (B.fetch(lock) / 'engine/ps/16-site-scripts.ps1').read_text(encoding='utf-8').replace('\r\n', '\n')
+    if SIGNIN_START not in text or SIGNIN_END not in text:
+        sys.exit('FAIL the pinned RADE engine has no sign-in block (engine/ps/16-site-scripts.ps1); T29 needs engine-v43 or later')
+    a = text.index(SIGNIN_START)
+    return text[a:text.index(SIGNIN_END) + len(SIGNIN_END)] + '\n'
+
+
 def body(src=SRC):
     """Get the text that a shared block in the task scripts must hold. Takes the source (a script file, or the LOGO or UI marker); returns text."""
     if src == LOGO:
@@ -111,6 +133,8 @@ def body(src=SRC):
         return ui_text(1)
     if src == UI2:
         return ui_text(2)
+    if src == SIGNIN:
+        return signin_text()
     text = src.read_text(encoding='utf-8').replace('\r\n', '\n')
     return text[text.index('\nfunction ') + 1:].rstrip('\n') + '\n'
 
