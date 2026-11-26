@@ -8,6 +8,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-26 | Name spot L3: "KANON" over "90-161.Z • <subtitle>"; no version, no RADE logo; shortcut "Kanon". Replaces older name spot rows. | PFM | docs/reviews/2026-11-26-plan-r46.md |
+| 2026-11-26 | Build order: this session releases RADE engine-v46, then builds R46 on its tag (separate PRs). | PFM (dialog) | docs/reviews/2026-11-26-plan-r46.md |
+| 2026-11-26 | No console (ISE, shortcut); own taskbar identity; sign-in is cached: smaller window now, fewer sign-ins in R47. | PFM (dialog) | docs/reviews/2026-11-26-plan-r46.md |
+| 2026-11-26 | "Add the second person" gets a Skip choice that gives SKIP. Scope: T21 r13, R46. | PFM (request) | docs/reviews/2026-11-26-r45-results.md |
 | 2026-11-26 | R45: one T29 sign-in (r2, no watch pair) on engine-v44, then the R44 part 2 steps, from ISE; one Back up (the watch-off Back up leaves). Scope: R45. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |
 | 2026-11-26 | R45 does not wait for the name spot release; the name spot goes to R46 after the PFM approves preview pictures. Scope: R45, R46. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |
 | 2026-11-26 | RADE lock moves to release engine-v44 (RADE 58b8f1f, serial 31) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
