@@ -120,7 +120,7 @@ From audit 2: "rights work as designed" moved from medium to high (17 of 17 answ
 
 ### Approval (15 Nov 26, after this report)
 
-The PFM approved P1 to P9 on 15 Nov 26. Made: P1 (pull request 84: 13 small checks run in one `pwsh` process, tests/ps/Invoke-Batch.ps1; `pwsh` starts 21 to 8; `tests/run.sh` 27.3 s to 18.0 s; the 86 PASS lines are the same, character for character), P2 (duplicates 78 to 49, then 51 with the 2 lines the P1 helper shares with the test runner: all are hand-written, see T8), P3 (handoff detail moved unchanged to [2026-11-15-handoff-detail.md](2026-11-15-handoff-detail.md); start read 7,404 to about 7,070 tokens), P4 and P6 (one line each in AGENTS.md), P7 and P8 (DECISIONS and the handoff). P5 is a separate pull request that the PFM reads first. P9 is noted in the handoff for the RADE audit.
+The PFM approved P1 to P9 on 15 Nov 26. Made: P1 (pull request 84: 13 small checks run in one `pwsh` process, tests/ps/Invoke-Batch.ps1; `pwsh` starts 21 to 8; `tests/run.sh` 27.3 s to 18.0 s; the 86 PASS lines are the same, character for character), P2 (duplicates 78 to 49, then 51 with the 2 lines the P1 helper shares with the test runner: all are hand-written, see T8), P3 (handoff detail moved unchanged to [archive-index.md](archive-index.md); start read 7,404 to about 7,070 tokens), P4 and P6 (one line each in AGENTS.md), P7 and P8 (DECISIONS and the handoff). P5 is a separate pull request that the PFM reads first. P9 is noted in the handoff for the RADE audit.
 
 ## 6. Tech-debt register
 

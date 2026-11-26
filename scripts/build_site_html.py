@@ -241,13 +241,14 @@ def build_key_facts(markdown, indent, need_source=False):
 
 
 # A README section and a generated block on the page; NAME is lower-case letters, digits and "-". Each end mark starts
-# its own line (after the indent), so no old text can stay in front of it; the body may be empty.
-SECTION = re.compile(r'<!-- site:([a-z0-9-]+) -->\n(?:(.*?)\n)?<!-- /site:\1 -->', re.S)
+# its own line (after the indent), so no old text can stay in front of it; the body may be empty. A body stops at
+# the next open mark and a mark stops at "<", so an open mark with no end mark is scanned only that far (linear).
+SECTION = re.compile(r'<!-- site:([a-z0-9-]+) -->\n(?:((?:(?!<!-- site:).)*?)\n)?<!-- /site:\1 -->', re.S)
 BLOCK = re.compile(r'^([ \t]*)<!-- >>> site:([a-z0-9-]+): generated from README\.md by scripts/build_site\.py --write '
-                   r'\(do not edit\) -->\n(?:(.*?)\n)?[ \t]*<!-- <<< site:\2 -->', re.S | re.M)
+                   r'\(do not edit\) -->\n(?:((?:(?!<!-- >>> site:).)*?)\n)?[ \t]*<!-- <<< site:\2 -->', re.S | re.M)
 # Any site mark, also a broken one (a typo in a name or an end mark): each must be used by SECTION or BLOCK (stray_marks).
-README_MARK = re.compile(r'<!-- /?site:[^>]*-->')
-SITE_MARK = re.compile(r'<!-- (?:>>>|<<<) site:[^>]*-->')
+README_MARK = re.compile(r'<!-- /?site:[^<>]*-->')
+SITE_MARK = re.compile(r'<!-- (?:>>>|<<<) site:[^<>]*-->')
 # A quote mark at a line's start, and a GitHub alert line; both are taken off before a section is built (unquote).
 QUOTE_MARK = r'^>[ \t]?'
 ALERT_LINE = r'\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]'
