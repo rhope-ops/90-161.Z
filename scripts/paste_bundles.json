@@ -668,10 +668,9 @@
                     "guide": [
                         "1. In the second RADE window, click in the box \"Type 90-161.Z to confirm\".",
                         "2. Type: 90-161.Z",
-                        "3. Do not close the second RADE window while Restore runs.",
-                        "4. Click \"Restore\". The card \"Restore is running.\" shows.",
-                        "5. Wait until the card \"Restore put the missing rows back.\" shows.",
-                        "6. On that card, find the line that starts with \"PFM Endorsements\"."
+                        "3. Click \"Restore\". The card \"Restore is running.\" shows.",
+                        "4. Wait until the card \"Restore put the missing rows back.\" shows.",
+                        "5. On that card, find the line that starts with \"PFM Endorsements\"."
                     ],
                     "estimate": 3,
                     "after": [
@@ -691,7 +690,12 @@
                         {
                             "key": "r-pause",
                             "prompt": "Does the result say that the pause switch is back as it was?",
-                            "kind": "yesno"
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No",
+                                "There is no such line"
+                            ]
                         }
                     ],
                     "doneLog": "Confirmed by you: Restore ran in the second window."
@@ -732,7 +736,7 @@
                     "kind": "guide",
                     "dir": "T26",
                     "file": "",
-                    "note": "The Restore test in the second window is complete, or it stopped. This step shows in each case.",
+                    "note": "The Restore test in the second window is complete, or it stopped.",
                     "guide": [
                         "1. If a second RADE window is open, close it with its X. You see the first RADE window again."
                     ],
