@@ -214,7 +214,7 @@
                     "file": "90161Z-T22-maint-r17.ps1",
                     "args": "-Part Install",
                     "minutes": 5,
-                    "note": "The last step of the test install. RADE keeps an install record and saves its newest copy for the RADE shortcut. Nothing on the site changes.",
+                    "note": "The last step of the test install. RADE keeps an install record and saves its newest copy for the shortcut \"90-161.Z - Kanon - 0.1.0\". Nothing on the site changes.",
                     "estimate": 1,
                     "help": "Send the results as they are. The step can be run again.",
                     "doing": "Recording the test install."
@@ -435,15 +435,16 @@
                     "file": "",
                     "note": "This window waits. A second RADE window saves the 12 lists of your test site to this computer. Nothing on the site changes.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "4. Click the row \"Back up\". The card \"Back up is running.\" shows.",
                         "5. If a CAC sign-in window opens, write \"Small\" (size of this card) or \"Large\" (most of the screen).",
-                        "6. If the CAC sign-in window is open, sign in with your CAC.",
+                        "6. If you do not see the CAC sign-in window, press Alt+Tab. Sign in with your CAC.",
                         "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
-                        "8. Close the second RADE window with its X. You see the first RADE window again.",
-                        "9. A question then asks the size of the CAC sign-in window. Click your size, or the answer for none.",
+                        "8. Write down the number in the line \"The sign-in took\". The line ends with \"on)\".",
+                        "9. Close the second RADE window with its X. You see the first RADE window again.",
+                        "10. Questions then ask the sign-in window size, the seconds and the shortcut icon.",
                         "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",
                         "Then type that line, and click \"Report the failure\"."
@@ -462,6 +463,55 @@
                             ],
                             "key": "b-signin",
                             "prompt": "What size did you write down for the CAC sign-in window of the second RADE window?"
+                        },
+                        {
+                            "key": "b-took-on",
+                            "prompt": "Type the number of seconds of the line \"The sign-in took\". Type none if the line did not show.",
+                            "kind": "text"
+                        },
+                        {
+                            "key": "b-icon",
+                            "prompt": "Does the shortcut \"90-161.Z - Kanon - 0.1.0\" show the 90-161.Z logo (a white letter in a black and orange ring)?",
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No, another icon",
+                                "No shortcut with that name"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "T26 Back up with the size watch off r3",
+                    "title": "Back up again from ISE, with the sign-in size watch off",
+                    "kind": "guide",
+                    "dir": "T26",
+                    "file": "",
+                    "note": "This window waits. You run Back up one more time from ISE, with the sign-in size watch off. Nothing on the site changes.",
+                    "guide": [
+                        "1. Press Alt+Tab to go to Windows PowerShell ISE (not from the bundle). Click in its bottom pane.",
+                        "2. Type: $env:RADE_SIGNIN_WATCH = '0' and press Enter.",
+                        "3. Press F5. A new RADE window opens (up to 2 minutes).",
+                        "4. In the new RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
+                        "5. Click \"Maintenance\", then click the row \"Back up\".",
+                        "6. If you do not see the CAC sign-in window, press Alt+Tab. Sign in with your CAC.",
+                        "7. Wait until the card \"Back up saved the lists.\" shows.",
+                        "8. Write down the number in the line \"The sign-in took\". The line ends with \"off)\".",
+                        "9. Close the new RADE window with its X. The question shows in the first RADE window.",
+                        "10. In the ISE bottom pane, type: $env:RADE_SIGNIN_WATCH = $null and press Enter.",
+                        "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
+                        "If you wrote down a line: in the first RADE window, click \"It failed\".",
+                        "Then type that line, and click \"Report the failure\"."
+                    ],
+                    "estimate": 4,
+                    "after": [
+                        "T26 Back up in a second window r3"
+                    ],
+                    "answers": [
+                        {
+                            "key": "b-took-off",
+                            "prompt": "Type the number of seconds of the line \"The sign-in took\" (it ends with \"off)\"). Type none if the line did not show.",
+                            "kind": "text"
                         }
                     ]
                 },
@@ -507,7 +557,7 @@
                     "file": "",
                     "note": "This window waits. Restore does a dry run in the second window and writes nothing. Keep that window open. Your test site address is https://usaf.dps.mil/sites/<your-site>. Your browser shows it.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "4. Click the row \"Restore\".",
@@ -792,7 +842,7 @@
                     "file": "",
                     "note": "This window waits. A second RADE window saves a backup, then removes what the install made on the test site. Your test site address is https://usaf.dps.mil/sites/<your-site>. Your browser shows it.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Uninstall\".",
                         "4. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
@@ -836,7 +886,7 @@
                     "file": "",
                     "note": "This window waits. A second RADE window installs 90-161.Z 0.1.0 on the test site again: 12 lists, then the install record.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\".",
                         "3. If \"One check needs you.\" shows, click \"Sign in and check site rights\". Sign in with your CAC.",
                         "4. If \"One check failed.\" or \"checks failed. This is the first.\" shows, do the line \"What to do\".",
@@ -1155,6 +1205,7 @@
                         "T22 Answer: look and cards r17",
                         "T26 Make the Restore test rows r3",
                         "T26 Back up in a second window r3",
+                        "T26 Back up with the size watch off r3",
                         "T22 Check the Back up r17",
                         "T26 Delete and add the test rows r3",
                         "T26 Start Restore in a second window r3",
