@@ -43,55 +43,10 @@ The steps to run it are at the top of the script.
 
 ### 🔺 Current tasks
 
-Updated: 26 Nov 26 (R44 r2).
+Updated: 26 Nov 26 (R44 r2 results).
 
 
-#### Round R44 r2: a CAC sign-in test in 2 ways, then the R44 steps
-
-**For:** finds why the CAC sign-in froze in R44 r1. RADE signs in 4 times: 2 times in its own window, then 2 times inside ISE, each with the sign-in size watch on, then off. Each sign-in stops after 3 minutes and keeps its result, so you do not have to close a window by force. Then the R44 steps run inside ISE: the new shortcut "90-161.Z - Kanon - 0.1.0", window r17, Back up 2 times, Restore of fake rows, Uninstall and a new install. A second person is optional.\
-**Time:** about 100 minutes (an estimate).\
-**Changes:** on the computer, the OneDrive folder RADE\90-161.Z: scripts and result files in T20, T21, T22, T26, T27, T28 and T29, screen pictures, and backups of the 12 test site lists. The sign-in test changes nothing on the site. The Repair makes the shortcut "90-161.Z - Kanon - 0.1.0". On the test site, the round writes fake rows, and, if a second person helps, adds that person to the Visitors group. Restore writes fake rows. Uninstall moves the 12 own lists to the site Recycle Bin. The new install makes the 12 lists again. The round makes 1 fake publication and moves it from step 1 to step 2. The last steps of the round move the fake rows to the site Recycle Bin.\
-**Steps:**
-1. On the GitHub page github.com/rhope-ops/90-161.Z, below **Summary**, click **Open the script**. The script opens as plain text.
-2. On the script page, press `Ctrl+A`, then `Ctrl+C`.
-3. From the Start menu, open **Windows PowerShell ISE** (not from the bundle). Do not open **Run as administrator** (not from the bundle).
-4. In ISE (not from the bundle), click **File** > **New** (not from the bundle), then press `Ctrl+V`.
-5. Press `F5`. Wait until the RADE window opens (up to 2 minutes). Keep ISE open.
-6. If no window opens and text runs in ISE (not from the bundle), stop. Post `No RADE window` in the Teams channel **RHOPE-OPS** (not from the bundle).
-7. In the RADE window, click the row **90-161.Z R44 sign-in test**.
-8. On the card **Ready to run round R44.**, click **Run**.
-9. Each time a sign-in window opens (2 times now, 2 more later inside ISE), sign in with your CAC. If it does not respond, do nothing: the step stops after 3 minutes.
-10. Wait until the card **Round R44 is done.** or **The round needs review.** shows.
-11. In the Outlook draft with the subject that starts with `90161Z R44`, click **Send**.
-12. If no Outlook draft opens, do the e-mail line of the end card.
-13. In the RADE window, click **Close**. The RADE window closes.
-14. In the blue ISE pane at the bottom (not from the bundle), type `$env:RADE_ISE_CHILD = '0'`, then press `Enter`.
-15. Press `F5`. Wait until the RADE window opens (up to 2 minutes).
-16. In the RADE window, click the row **90-161.Z 0.1.0**.
-17. Do not click **Uninstall** now. If the card **Maintenance** shows, click **Maintenance**.
-18. If the card **Maintenance** shows again, with the rows **Diagnose**, **Back up** and **Restore**, click **Repair**.
-19. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-20. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
-21. If you did the line **What to do**, click **Run checks again** or **Sign in and check site rights**.
-22. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
-23. On the card **Ready to install 90-161.Z 0.1.0.**, if the box **Shortcut in** shows, keep the folder in it.
-24. Click **Install**. This button is also the one for a repair. Wait until an end card shows (up to 5 minutes).
-25. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
-26. On the end card, click **Close**. The RADE window closes.
-27. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
-28. Click the row **90-161.Z R44**. Wait until a card shows (up to 2 minutes).
-29. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-30. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
-31. If you did the line **What to do**, click **Run checks again** or **Sign in and check site rights**.
-32. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
-33. On the card **Ready to run round R44.**, click **Run** (or **Resume at step**, if it shows).
-34. Each time a sign-in window opens (the first 2 steps, then more), sign in with your CAC. If it does not respond, do nothing: the step stops after 3 minutes.
-35. Do each step that a card shows. Stop when the card **Round R44 is done.** or **The round needs review.** shows.
-36. In the Outlook draft with the subject that starts with `90161Z R44`, click **Send**.
-37. If no Outlook draft opens, do the e-mail line of the end card.
-
-**Report:** 2 e-mails of the round, one after the sign-in test and one at the end, each with the subject `90161Z R44 PASSED` or `90161Z R44 NEEDS REVIEW` and every file of the results folder.\
-**If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE (not from the bundle), post the first 10 words in the Teams channel **RHOPE-OPS** (not from the bundle). **Details (F2)** at the bottom of the RADE window shows all checks, steps and the log.
+No open task. Round R45 comes next.
 <!-- <<< tasks -->
 
 ---
