@@ -3,7 +3,7 @@
   90-161.Z Task 27 r1, module "check" (round R43; the PFM, 25 Nov 26): the read-only checks after Uninstall and after the install
   from zero (parts Gone and Install), and the process step (part Step).
 .DESCRIPTION
-  Loaded by 90161Z-T27-lifecycle-r1.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
+  Loaded by 90161Z-T27-lifecycle-r2.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
   Inputs: the values and helpers of the main file and of the modules it loads (Add-Item, $lines, $OwnLists, Get-SiteList, Find-OurList,
   Get-GroupId, Get-RoleLevel, $OwnGroup, $OwnLevel). Outputs: ITEM and RESULT lines through them.
   THE PROCESS STEP (the PFM, 25 Nov 26: "Full process step"; the PFM's later decision: step 1 to step 2 with the exit conditions of step 1
@@ -40,10 +40,10 @@
 # The step the fake publication goes to (PFM Process Steps, StepNumber), and the step it starts at (T26 Make: step 1).
 $StepFrom = 1
 $StepTo = 2
-# The title of the fake publication that T26 Make makes (scripts/gov/90161Z-T26-endorse-r3.ps1: $PubTitle; tests/ps/Test-T27.ps1 checks that they match)
+# The title of the fake publication that T26 Make makes (scripts/gov/90161Z-T26-endorse-r4.ps1: $PubTitle; tests/ps/Test-T27.ps1 checks that they match)
 # and the state file in which T26 keeps its row number (T26 folder).
 $PubTitle = '90161Z TEST R41 endorse (delete me)'
-$T26State = '90161Z-T26-endorse-state-r3.txt'
+$T26State = '90161Z-T26-endorse-state-r4.txt'
 # The columns of PFM Publications that the step reads, and those that are required (tests/ps/Test-T27.ps1 checks the second list against the schema).
 $PubFields = @('Title', 'ProcessStep', 'ActionStatus', 'ActionType', 'ProductType', 'PublicationType', 'Product', 'OPR', 'AppliesToLevel', 'MasterForm673Link')
 $PubRequired = @('Title', 'ActionType', 'ProductType', 'ProcessStep', 'ActionStatus')

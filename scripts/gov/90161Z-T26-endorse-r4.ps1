@@ -57,9 +57,9 @@
   Writes: on the site, the rows above; on this computer the T26 folder (the result file, the state file), the clipboard
           (Make) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T26-endorse-<part>[-<label>]-r3.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
+  Output: 90161Z-T26-endorse-<part>[-<label>]-r4.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
   Exit 1 only when the part could not run (sign-in, missing list or module).
-  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r3.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r4.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
@@ -72,16 +72,16 @@
   Test runs only: do not use the clipboard.
 .PARAMETER Label
   A word (lower-case letters) for the result file name, so a part that runs twice in a round keeps both files: Make with the label
-  after writes 90161Z-T26-endorse-make-after-r3.txt (the run after the new install).
+  after writes 90161Z-T26-endorse-make-after-r4.txt (the run after the new install).
 #>
 param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch,
   [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
 $task = 'T26'
-$Rev = 'r3'
+$Rev = 'r4'
 $PubTitle = '90161Z TEST R41 endorse (delete me)'   # the fake publication the answer is about
 $AnswerTitle = '90161Z TEST R41 answer'             # the Title the second person types
 $EditTitle = '90161Z TEST R41 edit me'              # the row you make that the second person tries to edit (PFM 20 Nov 26)
-$StateName = '90161Z-T26-endorse-state-r3.txt'
+$StateName = '90161Z-T26-endorse-state-r4.txt'
 $script:noLaunch = [bool]$NoLaunch   # the tests: no clipboard
 $EndorseFolder = 'PFMEndorsements'                  # the folder name of PFM Endorsements (T20 makes each list under its internal name)
 # The answers a row can hold (schemas/lists/PFMEndorsements.json, Endorsement Status), in ASCII: the dash of
@@ -211,6 +211,9 @@ function Hide-Site([string]$Text, [string]$Site) {
   return $Text
 }
 # <<< site-common
+# R46 (the PFM, 26 Nov 26, R45 finding 2): the RADE sign-in block, for Set-SignInDpiAware (a smaller sign-in window).
+# >>> rade-signin: generated from the pinned RADE sign-in block by scripts/build_task_scripts.py (do not edit)
+# <<< rade-signin
 
 $lines = New-Object System.Collections.Generic.List[string]
 $script:passed = 0; $script:failed = 0
@@ -251,6 +254,7 @@ function Connect-EndorseSite {
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
   Write-Host 'NOW Signing in to the site (if a sign-in window opens, sign in with your CAC)'
+  if (Get-Command Set-SignInDpiAware -ErrorAction SilentlyContinue) { $null = Set-SignInDpiAware }   # R46: the sign-in window at its real size (RADE engine-v46 block)
   $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
   $lines.Add('ROUTE web-login PASS')
 }
@@ -427,8 +431,8 @@ $fatal = $false; $site = ''; $secret = @(); $dir = ''
 try {
   $ErrorActionPreference = 'Stop'
   # The Restore test parts are dot-sourced here, in this script's scope, so they see the values and helpers above.
-  $restoreFile = Join-Path $PSScriptRoot '90161Z-T26-restore-r3.ps1'
-  if (-not (Test-Path -LiteralPath $restoreFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T26-restore-r3.ps1 is not in the folder of this script. Run the round again.' }
+  $restoreFile = Join-Path $PSScriptRoot '90161Z-T26-restore-r4.ps1'
+  if (-not (Test-Path -LiteralPath $restoreFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T26-restore-r4.ps1 is not in the folder of this script. Run the round again.' }
   . $restoreFile
   if (-not $Part) { throw 'PART not given: use -Part Make, Read, Clean, Rows, Change or Check.' }
   $who = Get-TaskId $Id; $secret = $who.Secret

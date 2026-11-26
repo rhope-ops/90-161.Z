@@ -15,7 +15,7 @@
   -Part Backup (round R41, the Restore test; the PFM, 21 Nov 26): reads only (3), the newest Back up folder, so the round
   knows that the Back up before the Restore test saved every list (12 from R41: the 12th is "PFM Recommendations (DAF Form
   847)", a title with parentheses that RADE engine-v31 can back up). It also needs a backup made after the T26 part
-  Rows made the fake rows (RowsAt in T26\90161Z-T26-endorse-state-r3.txt): an older backup, or no Rows time, is a FAIL.
+  Rows made the fake rows (RowsAt in T26\90161Z-T26-endorse-state-r4.txt): an older backup, or no Rows time, is a FAIL.
   Result lines: RESULT INSTALL, RESULT DIAGNOSE and RESULT BACKUP, each PASS or FAIL. Exit 1 when one is FAIL.
   A report or backup older than $FreshHours hours is from an earlier day and counts as missing.
   Run: by RADE (powershell.exe -File 90161Z-T22-maint-r18.ps1 -Part Install, Read or Backup -NoPause), or by hand in T22.
@@ -223,7 +223,7 @@ function Get-BackupResult([string]$App, $Since = $null) {
 
 # The time the T26 part Rows made the fake rows of the Restore test (RowsAt in the T26 state file), or $null. Takes the app folder.
 function Get-RowsTime([string]$App) {
-  $f = Join-Path (Join-Path $App 'T26') '90161Z-T26-endorse-state-r3.txt'
+  $f = Join-Path (Join-Path $App 'T26') '90161Z-T26-endorse-state-r4.txt'
   $l = @(Get-Content -LiteralPath $f -ErrorAction SilentlyContinue | Where-Object { ([string]$_).StartsWith('RowsAt=') }) | Select-Object -First 1
   if (-not $l) { return $null }
   try { return [datetime]::ParseExact(([string]$l).Substring(7), 'yyyy-MM-ddTHH:mm:ss', [Globalization.CultureInfo]::InvariantCulture) } catch { return $null }

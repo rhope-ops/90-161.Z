@@ -3,7 +3,7 @@
   90-161.Z Task 28 r1 (round R44; the PFM, 25 Nov 26: "a read-only list step first"): counts what the app 90-161.Z left on the
   test site, by fixed titles, and writes only counts. Windows PowerShell 5.1 (also 7), the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  WHAT IT COUNTS (fixed titles only; the titles come from the one own-name table of 90161Z-T27-made-r1.ps1, the module that Uninstall uses):
+  WHAT IT COUNTS (fixed titles only; the titles come from the one own-name table of 90161Z-T27-made-r2.ps1, the module that Uninstall uses):
     - each of the 12 PFM lists: on the site (yes or no), its items, and its rows whose Title holds "(delete me)";
     - the group "PFM Office": on the site, and its members (a number; no member name is read);
     - the library "90-161.Z": on the site, and its items;
@@ -17,9 +17,9 @@
   Lines: COUNT <thing> <facts>; NOTE flows: not counted from the site; RESULT COUNT PASS lists=<n of 12> ...; or STOPPED: <why>.
   Last line: COUNT done: counted=<n> failed=<n>. Exit 1 when the step could not run (sign-in, missing module) or a read failed.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell, read only.
-  Writes: the result file 90161Z-T28-count-r1.txt in the T28 folder (or -TestDir). Nothing on the site.
+  Writes: the result file 90161Z-T28-count-r2.txt in the T28 folder (or -TestDir). Nothing on the site.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -File 90161Z-T28-count-r1.ps1 (RADE does this). Not alone: it loads 90161Z-T27-made-r1.ps1 and
+  Run: powershell.exe -NoProfile -File 90161Z-T28-count-r2.ps1 (RADE does this). Not alone: it loads 90161Z-T27-made-r2.ps1 and
   90161Z-T20-helpers-r4.ps1 from its own folder (the round puts them there).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
@@ -30,7 +30,7 @@
 #>
 param([string]$Id, [switch]$NoPause, [string]$TestDir)
 $task = 'T28'
-$Rev = 'r1'
+$Rev = 'r2'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -151,6 +151,9 @@ function Hide-Site([string]$Text, [string]$Site) {
   return $Text
 }
 # <<< site-common
+# R46 (the PFM, 26 Nov 26, R45 finding 2): the RADE sign-in block, for Set-SignInDpiAware (a smaller sign-in window).
+# >>> rade-signin: generated from the pinned RADE sign-in block by scripts/build_task_scripts.py (do not edit)
+# <<< rade-signin
 
 $lines = New-Object System.Collections.Generic.List[string]
 $script:counted = 0; $script:failed = 0
@@ -248,7 +251,7 @@ $fatal = $false; $site = ''; $secret = @(); $dir = ''
 try {
   $ErrorActionPreference = 'Stop'
   # The modules are dot-sourced here, in this script's scope: the own-name table (the 12 titles, the group) and the SharePoint read helpers.
-  foreach ($m in '90161Z-T27-made-r1.ps1', '90161Z-T20-helpers-r4.ps1') {
+  foreach ($m in '90161Z-T27-made-r2.ps1', '90161Z-T20-helpers-r4.ps1') {
     if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $m) -PathType Leaf)) { throw ('MODULE missing: ' + $m + ' is not in the folder of this script. Run the round again.') }
     . (Join-Path $PSScriptRoot $m)
   }
@@ -262,6 +265,7 @@ try {
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
   Write-Host 'NOW Signing in to the site (if a sign-in window opens, sign in with your CAC)'
+  if (Get-Command Set-SignInDpiAware -ErrorAction SilentlyContinue) { $null = Set-SignInDpiAware }   # R46: the sign-in window at its real size (RADE engine-v46 block)
   $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
   $lines.Add('ROUTE web-login PASS')
   Invoke-CountPart

@@ -3,7 +3,7 @@
   90-161.Z Task 27 r1, module "made" (round R43; the PFM, 25 Nov 26: RADE Uninstall): the one table of what the 90-161.Z install
   can make, and the gate that reads RADE's list of what the install made (RADE_MADE).
 .DESCRIPTION
-  Loaded by 90161Z-T27-lifecycle-r1.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
+  Loaded by 90161Z-T27-lifecycle-r2.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
   The contract (RADE engine-v41; the R43 plan, "Engine facts"): RADE runs an uninstall step with RADE_MODE=uninstall and RADE_MADE = the
   path of a JSON file of schema rade-made/1: { schema, app, made: [ { step, kind, name } ] }. Each made entry comes from one line that an
   install step printed: "MADE <kind>: <name>" (T20 prints them: kind list with the display title, kind group, kind level). This file is

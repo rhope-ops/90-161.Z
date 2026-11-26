@@ -82,7 +82,7 @@ Test-That 'a large list file (about 3 MB) is counted' ($r.Out -match 'BACKUP lis
 # T26 Rows time in the T26 state file. Set-RowsTime writes that file. Takes the T22 folder and the time; returns nothing.
 function Set-RowsTime([string]$Dir, [datetime]$At) {
   $t = Join-Path (Split-Path -Parent $Dir) 'T26'; $null = New-Item -ItemType Directory -Path $t -Force
-  Set-Content -LiteralPath (Join-Path $t '90161Z-T26-endorse-state-r3.txt') -Value @('PubId=50', ('RowsAt=' + $At.ToString('yyyy-MM-ddTHH:mm:ss')))
+  Set-Content -LiteralPath (Join-Path $t '90161Z-T26-endorse-state-r4.txt') -Value @('PubId=50', ('RowsAt=' + $At.ToString('yyyy-MM-ddTHH:mm:ss')))
 }
 $d = Get-FakeRade $false $false $true; $dirs += $d; $r = Invoke-Maint $d 'Backup'
 $ok = ($r.Code -eq 1 -and $r.Out -match 'BACKUP no time of the fake rows on file' -and $r.Out -match 'RESULT BACKUP FAIL')

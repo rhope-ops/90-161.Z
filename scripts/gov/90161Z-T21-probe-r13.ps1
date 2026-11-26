@@ -244,6 +244,9 @@ function Hide-Site([string]$Text, [string]$Site) {
   return $Text
 }
 # <<< site-common
+# R46 (the PFM, 26 Nov 26, R45 finding 2): the RADE sign-in block, for Set-SignInDpiAware (a smaller sign-in window).
+# >>> rade-signin: generated from the pinned RADE sign-in block by scripts/build_task_scripts.py (do not edit)
+# <<< rade-signin
 
 $secret = @()
 $site = ''
