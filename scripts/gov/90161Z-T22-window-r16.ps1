@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r15, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r16, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   R14 (R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md rows 3 and 4): the check bar moved to the bar part (it
@@ -28,7 +28,7 @@
   The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r15.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r16.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
@@ -47,7 +47,7 @@ $wn.Press = {
   The button table: Text, Go, Note, Need.
   #>
   param($B)
-  if (-not (& $ui.Settled)) { return }
+  if (-not (& $ui.Settled)) { & $wn.IgnoreNote ('the button ' + [string]$B.Text); return }   # R16: a dropped click leaves a NOTE line (bar part)
   $script:presses++
   $need = [string]$B.Need
   if ($need -eq 'reason' -and -not ([string]$wn.Field.reason).Trim()) { $wn.Err = 'reason'; $wn.Notice = ''; $wn.Focus = 'reason'; & $wn.Show $wn.Cur; return }
@@ -59,7 +59,8 @@ $wn.Press = {
     if ($g -and @($g.Tag.Shown).Count) { $i = 0; if ($g.SelectedRows.Count) { $i = [int]$g.SelectedRows[0].Index }; $go = [string]@($g.Tag.Shown)[$i].Go } }
   if ($go -eq 'back') { $go = $wn.Prev }
   if (-not $go) { $go = $wn.Cur }
-  try { & $wn.Show $go } catch { & $wn.OpenFail $go $_ } }   # R15: a NOTE line when the open stops (bar part)
+  try { & $wn.Show $go } catch { & $wn.OpenFail $go $_ }   # R15: a NOTE line when the open stops (bar part)
+  & $wn.OpenCheck $go }   # R16: and when it returns with no error and the window stays on the old card
 # The rail is wider when the window is wide; its items follow its width.
 $wn.RailLayout = {
   $wide = ($form.ClientSize.Width -ge (& $wn.Sc 1500)); $rw = $(if ($wide) { & $wn.Sc 220 } else { & $wn.Sc 200 }); $rail.Width = $rw
@@ -120,8 +121,13 @@ $wn.BuildRail = {
     $x.FocusOn = $pc.navy; $x.BadgeFill = $pc.accentFill; $x.BadgeText = $pc.ink; $x.BackColor = $x.Back; $x.ForeColor = $x.Fore   # R11 (B10)
     if ($r.Badge) { $x.Badge = [string]$r.Badge; $x.AccessibleName = $r.Text + ', ' + $r.Badge + ' items need you' }
     $x.Size = [Drawing.Size]::new(((& $wn.Sc 200) - 2 * (& $wn.Sc 12)), (& $wn.Sc 44)); $x.Location = [Drawing.Point]::new((& $wn.Sc 12), $y); $y += (& $wn.Sc 48)
-    $x.Add_Click({ if (& $ui.Settled) { $script:presses++; $wn.Notice = ''; $wn.Err = ''; $key = [string]$this.Tag; $go = 'home'
-        foreach ($q in $RailItems) { if ($q.Key -eq $key) { $go = $q.Go } }; & $wn.Show $go } })
+    # R16 (R42 finding 5: Reviews Due sometimes needed 2 clicks): the 400 ms guard after a card changed (it stops the second click of
+    # a double-click) holds a rail click only when it opens the card that shows now; a click that opens another card is not held.
+    $x.Add_Click({ $key = [string]$this.Tag; $go = 'home'; foreach ($q in $RailItems) { if ($q.Key -eq $key) { $go = $q.Go } }
+        if (-not (& $ui.Settled) -and $go -eq $wn.Cur) { & $wn.IgnoreNote ('the list item ' + $this.Text); return }
+        $script:presses++; $wn.Notice = ''; $wn.Err = ''
+        try { & $wn.Show $go } catch { & $wn.OpenFail $go $_ }
+        & $wn.OpenCheck $go })
     [void]$rail.Controls.Add($x); $wn.RailBtn += $x }
   $src = $(if ($script:SiteSource -eq 'site') { 'Test site data' } else { 'FAKE data' })   # R14: the source of the cards (site part)
   $ft = & $ui.Label $ui.F.Small $pc.onPrimaryMuted 0; $ft.BackColor = $pc.navy; $ft.Text = $src + [Environment]::NewLine + 'Preview ' + $Rev; $ft.Visible = $true; $ft.Anchor = 'Left, Bottom'
@@ -296,7 +302,7 @@ $wn.Show = {
   The card key in $Cards; an unknown key does nothing.
   #>
   param([string]$Key)
-  $c = $Cards[$Key]; if (-not $c) { return }
+  $c = $Cards[$Key]; if (-not $c) { $lines.Add('NOTE the screen ' + $Key + ' did not open: no such screen in the window'); return }   # R16: no silent return
   $t0 = $ui.Clock.Elapsed.TotalMilliseconds   # R12 (R38 finding 3): the open time of a card the person opens
   $again = ($Key -eq $wn.Cur)
   if (-not $again) { & $wn.KeepLeave; if ($c.Modal) { $wn.Prev = $wn.Cur }; $wn.Field = @{}; $wn.Err = ''; $wn.Focus = '' }
@@ -417,9 +423,10 @@ $wn.ScrollCheck = {
   #>
   $st = New-Object System.Collections.Stack; $st.Push($page)
   while ($st.Count) { foreach ($c in $st.Pop().Controls) {
-      if ($c -is [Windows.Forms.DataGridView]) { $sum = 0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width } }
+      if ($c -is [Windows.Forms.DataGridView]) { $sum = 0; $mn = 0; foreach ($k in $c.Columns) { if ($k.Visible) { $sum += $k.Width; $mn += $k.MinimumWidth } }
+        # R14 (R41): which open it was; R16 (R43 T1): and the sum of the column minimums, to tell a fit that did not run from a fill that overflowed
         if ($sum -gt $c.ClientSize.Width + 1) { $ui.LayBad.Add('LAYOUT ' + $wn.Cur + ' grid ' + $c.AccessibleName + ' columns need ' + $sum + ', the grid has ' +
-            $c.ClientSize.Width + ' (open: ' + $wn.OpenKind + ')') }   # R14 (R41): which open it was
+            $c.ClientSize.Width + ' (column minimums ' + $mn + ')' + ' (open: ' + $wn.OpenKind + ')') }
         $edge = & $wn.EdgeCheck $c $wn.Cur   # R11 (R38): no chip or text ends closer than a scroll bar's width to the grid's right edge
         if ($edge) { $ui.LayBad.Add($edge) } }
       elseif ($c.Controls.Count) { $st.Push($c) } } }

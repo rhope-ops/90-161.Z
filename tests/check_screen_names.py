@@ -146,10 +146,48 @@ def holds(code, run):
     return False
 
 
-def check_name(code, apps, name):
-    """Gives back the fixed word runs of a name that the bundle does not hold (empty = pass)."""
+def built_ends(code):
+    """Gives back the card sentences that the bundle code builds at run time, as in Sentence = ($name + ' is running.').
+
+    R43 (the PFM, 2026-11-26): such a sentence is checked, not left unquoted.
+
+    Args:
+        code: the raw code of the round bundle (not the screen text: that drops the joins).
+
+    Returns:
+        A list of (end, heads) pairs: the fixed end and the values that the code gives the variable, longest end first.
+    """
+    # only a card field that the person reads (Sentence, Text, Title, Kicker), never a log line or an address part;
+    # each end comes with the values that the code gives its variable (review MAJOR: any screen string was a head)
+    out = []
+    for var, end in set(re.findall(r"\b(?:Sentence|Text|Title|Kicker) = \(\$(\w+) \+ '([^']+)'\)", code)):
+        vals = set(re.findall(r"\$" + var + r" = '([^']+)'", code))
+        for m in re.finditer(r"\$" + var + r" = \$\(if \([^)]*\) \{ '([^']+)' \} else \{ '([^']+)' \}\)", code):
+            vals |= {m.group(1), m.group(2)}
+        if vals:
+            out.append((end, sorted(vals)))
+    return sorted(out, key=lambda e: len(e[0]), reverse=True)
+
+
+def check_name(code, apps, name, ends=()):
+    """Gives back the fixed word runs of a name that the bundle does not hold (empty = pass).
+
+    A name built at run time passes only as one of the values the code gives that variable + the fixed end.
+
+    Args:
+        code: the screen text of the bundle (screen_text()).
+        apps: the application names of the bundle, longest first.
+        name: the bold or quoted name of a step.
+        ends: the (end, heads) pairs from built_ends() on the raw bundle code (screen_text drops that code).
+
+    Returns:
+        The list of word runs that the bundle does not hold; empty when the name passes.
+    """
     if name in OUTSIDE:
         return []
+    for end, heads in ends:
+        if name.endswith(end) and name[:-len(end)].strip() in heads:
+            return []
     return [r for r in fixed_parts(name, apps) if not holds(code, r)]
 
 
@@ -231,6 +269,14 @@ def self_test():
             errs.append('guide self-match: %s' % n)
     if check_name(scr, [], 'Zork') == [] or check_name(scr, [], 'Maintenance'):
         errs.append('authored text not left out, or screen text lost')
+    # R43 (the PFM, 2026-11-26): a sentence built as <a string> + a fixed end passes only when both parts are in the code.
+    bc = "$name = $(if ($J -eq 0) { 'Diagnose' } else { 'Back up' }); Sentence = ($name + ' is running.'); " \
+         "Write-Log ($name + ' is not on the site')"
+    be = built_ends(bc)
+    if check_name(bc, [], 'Back up is running.', be) or not check_name(bc, [], 'Repair is running.', be) \
+            or not check_name(bc, [], 'Back up is done.', be) or not check_name(bc, [], 'Back up is not on the site', be) \
+            or not check_name(bc + "; Text = 'Maintenance'", [], 'Maintenance is running.', be):
+        errs.append('built sentence: <name> + fixed end')
     if errs:
         sys.exit('SELF-TEST FAIL: %s' % errs)
     print('SCREEN NAMES SELF-TEST PASS')
@@ -280,11 +326,12 @@ def main():
     apps = app_names(raw)
     data = json.loads((ROOT / 'scripts/paste_bundles.json').read_text(encoding='utf-8'))
     code = screen_text(raw, authored_text(data))
+    ends = built_ends(raw)
     names = [('go.md:%d' % n, x) for n, x in go_names((ROOT / 'go.md').read_text(encoding='utf-8'))]
     names += [('guide "%s"' % t, x) for t, x in guide_names(data, bp.name)]
     failed = 0
     for where, x in names:
-        miss = check_name(code, apps, x)
+        miss = check_name(code, apps, x, ends)
         if miss:
             failed += 1
             print('FAIL %s: "%s" is not on a RADE screen (not in %s): %s' % (where, x, bp.name, '; '.join(miss)))

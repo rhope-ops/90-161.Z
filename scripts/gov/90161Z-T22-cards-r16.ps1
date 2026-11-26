@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r15, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
+  90-161.Z Task 22 r16, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
   R14 (R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3): the click-through of every screen in order
@@ -9,7 +9,7 @@
   (Get-AgainText; the main script gives it the saved card); the closing line of the check bar names no card.
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r15.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r16.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems, $Walk
   and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan, Get-CheckPlan,
@@ -438,6 +438,19 @@ function Get-CheckPlan {
 }
 <#
 .SYNOPSIS
+R16 (R42 finding 3: WALK 13 step12 was answered "not opened"): the name of card $Key for a click-through step; the name of the
+card, and, when another card has the same name, its step line before the dot ("step 12 of 12") so that a card that shows now
+is not taken for the card of the step.
+#>
+function Get-WalkName([string]$Key) {
+  $name = Get-CardName $Key
+  $same = @($Cards.Keys | Where-Object { [string]$_ -ne $Key -and (Get-CardName ([string]$_)) -eq $name })
+  if (-not $same.Count) { return $name }
+  $cap = ''; foreach ($col in @($Cards[$Key].Cols)) { foreach ($sec in @($col)) { foreach ($b in @($sec.Blocks)) { if (-not $cap -and $b.T -eq 'chips' -and $b.Cap) { $cap = [string]$b.Cap } } } }
+  if (-not $cap) { return $name }
+  return ($name + ', ' + ([string]@($cap -split [regex]::Escape($mid))[0]).Trim().ToLowerInvariant()) }
+<#
+.SYNOPSIS
 R14 (R41 plan row 3): how a person opens card $To from card $From with one selection that only opens a screen.
 .DESCRIPTION
 In this order: a rail item that opens $To (the rail shows on every card); a button of $From that goes to $To with
@@ -472,11 +485,12 @@ first card not yet walked that one rail item, button or crumb link opens (Get-Wa
 first card not yet walked, opened with the link "Open this screen" of the check bar. Each step is one action and one
 Pass or Fail, in the words of the 4 checks. Pure data: no window.
 .OUTPUTS
-An array of @{ Key; Via (rail, button, link or open); Opener (what to select); Text (the bar text); From (R15: the card it starts on) }.
+An array of @{ Key; Via (rail, button, link, open or, R16, look); Opener (what to select); Text (the bar text); From (R15: the card it starts on) }.
+R16: Via look is the step after the waves card: it asks about the grid Wave 1 answers on the card the person is on.
 #>
 function Get-WalkPlan {
   $left = New-Object System.Collections.Generic.List[string]; foreach ($k in $Cards.Keys) { $left.Add([string]$k) }
-  $out = @(); $cur = ''; $n = $left.Count
+  $out = @(); $cur = ''; $n = $left.Count + $(if ($left.Contains('waves')) { 1 } else { 0 })   # R16: the waves card has one more step
   while ($left.Count) {
     $key = ''; $op = $null
     foreach ($k in $left) { $o = Get-WalkOpener $cur $k; if ($o) { $key = $k; $op = $o; break } }
@@ -484,8 +498,11 @@ function Get-WalkPlan {
     [void]$left.Remove($key)
     $what = $(if ($op.Via -eq 'rail') { $op.Text + ' in the list on the left' } elseif ($op.Via -eq 'link') { 'the link "' + $op.Text + '" at the top' }
       elseif ($op.Beside) { '"' + $op.Text + '" beside "' + $op.Beside + '"' } elseif ($op.Via -eq 'open') { '"Open this screen" in this bar' } else { '"' + $op.Text + '"' })
-    $text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': select ' + $what + '. Pass if ' + (Get-CardName $key) + ' opens and looks right.'
-    $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text; From = $cur }; $cur = $key }
+    $text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': select ' + $what + '. Pass if ' + (Get-WalkName $key) + ' opens and looks right.'
+    $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text; From = $cur }; $cur = $key
+    # R16 (R42 finding 4; R43 T3): the step after the waves card asks about its grid, with its own Pass and Fail
+    if ($key -eq 'waves') { $out += @{ Key = $key; Via = 'look'; Opener = 'Wave 1 answers'; From = 'waves'
+        Text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': look at the grid Wave 1 answers. Pass if the grid Wave 1 answers shows the second person.' } } }
   return $out
 }
 # The click-through as -PlanOnly lines: WALK <n> <card> <via>: <text> (tests/run.sh reads them).

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 26 r2 (round R42; the code is the same as r1 of R41): an endorser answers through the SharePoint list form of PFM Endorsements, and the
+  90-161.Z Task 26 r3 (round R43; the code of r2 of R42, plus the 4 columns of the fake publication): an endorser answers through the SharePoint list form of PFM Endorsements, and the
   answer is read back. Windows PowerShell 5.1, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   What it is for (PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 2; the test site write of the round, approved
@@ -12,7 +12,8 @@
   Parts (-Part):
     Make   (about 1 minute, an estimate)  Signs in. Finds the fake publication "90161Z TEST R41 endorse (delete me)" on
            PFM Publications, or makes it (Action Type New, Publication, the process step with step number 1, On Track:
-           no flow routes a row at step 1). Saves its row number in the state file 90161Z-T26-endorse-state-r2.txt.
+           no flow routes a row at step 1; and, from R43 (PFM 25 Nov 26), the OPR (the first row of PFM Offices), Applies to
+           Level, Publication Type and the master 673 link, so the exit of step 1 holds; a publication found keeps its columns). Saves its row number in the state file 90161Z-T26-endorse-state-r2.txt.
            Makes one fake endorsement row on it ("90161Z TEST R41 edit me", Not Started; you are its author), or finds it.
            Puts on the clipboard the 2 form links of PFM Endorsements (the new row form, the edit form of that row) and
            the 8 steps for the second person.
@@ -47,7 +48,7 @@
   Fake data only: every row this task makes or asks for has a title that starts with "90161Z TEST" (the repo's
   fake-data marker, which the window checks before it saves a picture). Counts, answer values (the choices of
   schemas/lists/PFMEndorsements.json) and status words only: no names, no addresses, no row text from the site.
-  WHAT IT CHANGES ON THE SITE: Make adds 1 row to PFM Publications and 1 row to PFM Endorsements (once; a second run
+  WHAT IT CHANGES ON THE SITE: Make adds 1 row to PFM Publications (4 more columns filled from R43) and 1 row to PFM Endorsements (once; a second run
   reuses them); the flow F01 may log the publication in PFM Activity Log. The second person adds 1 row to PFM
   Endorsements and may change the row you made (approved by the PFM, 20 Nov 26). Read changes nothing. Clean recycles them.
   Rows: at most 1 PFM Settings row (made or set to No), 3 rows on PFM Endorsements and 1 on PFM Activity Log (once).
@@ -56,9 +57,9 @@
   Writes: on the site, the rows above; on this computer the T26 folder (the result file, the state file), the clipboard
           (Make) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T26-endorse-<part>-r2.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
+  Output: 90161Z-T26-endorse-<part>[-<label>]-r3.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
   Exit 1 only when the part could not run (sign-in, missing list or module).
-  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r2.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r3.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
@@ -69,14 +70,18 @@
   Test runs only: the folder to use instead of the T26 folder.
 .PARAMETER NoLaunch
   Test runs only: do not use the clipboard.
+.PARAMETER Label
+  A word (lower-case letters) for the result file name, so a part that runs twice in a round keeps both files: Make with the label
+  after writes 90161Z-T26-endorse-make-after-r3.txt (the run after the new install).
 #>
-param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch)
+param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch,
+  [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
 $task = 'T26'
-$Rev = 'r2'
+$Rev = 'r3'
 $PubTitle = '90161Z TEST R41 endorse (delete me)'   # the fake publication the answer is about
 $AnswerTitle = '90161Z TEST R41 answer'             # the Title the second person types
 $EditTitle = '90161Z TEST R41 edit me'              # the row you make that the second person tries to edit (PFM 20 Nov 26)
-$StateName = '90161Z-T26-endorse-state-r2.txt'
+$StateName = '90161Z-T26-endorse-state-r3.txt'
 $script:noLaunch = [bool]$NoLaunch   # the tests: no clipboard
 $EndorseFolder = 'PFMEndorsements'                  # the folder name of PFM Endorsements (T20 makes each list under its internal name)
 # The answers a row can hold (schemas/lists/PFMEndorsements.json, Endorsement Status), in ASCII: the dash of
@@ -251,6 +256,25 @@ function Connect-EndorseSite {
 }
 <#
 .SYNOPSIS
+  The columns of the fake publication (PFM 25 Nov 26): the step-1 columns, and the 4 that the exit of step 1 needs (OPR, Applies to
+  Level, Publication Type, the master DAF Form 673 link), so the T27 part Step can move it to step 2.
+.DESCRIPTION
+  The two choices are choices of schemas/lists/PFMPublications.json (tests/ps/Test-T26.ps1 checks that). The link is an address on
+  the reserved domain example.test, a comma, and a description that holds the fake-data marker (the form PnP.PowerShell takes).
+.PARAMETER StepId
+  The row number of the process step with step number 1.
+.PARAMETER OfficeId
+  The row number of the PFM Offices row used as OPR.
+.OUTPUTS
+  System.Collections.Hashtable. The values for Add-PnPListItem.
+#>
+function Get-FakePubValue([int]$StepId, [int]$OfficeId) {
+  return @{ Title = $PubTitle; ActionType = 'New'; ProductType = 'Publication'; ProcessStep = $StepId; ActionStatus = 'On Track'
+    OPR = $OfficeId; AppliesToLevel = 'Wing and Units Below'; PublicationType = 'Instruction'
+    MasterForm673Link = 'https://example.test/90161Z-TEST-673, 90161Z TEST R43 form 673 (delete me)' }
+}
+<#
+.SYNOPSIS
   The part Make: the fake publication (found or made once) and, on the clipboard, the new row form link and the steps
   for the second person.
 #>
@@ -262,10 +286,13 @@ function Invoke-MakePart {
   else {
     $step = @(Get-PnPListItem -List 'PFM Process Steps' -Fields 'Title', 'StepNumber' -ErrorAction Stop | Where-Object { [int]$_['StepNumber'] -eq 1 })
     if (-not $step.Count) { throw 'STEP not found: PFM Process Steps has no row with step number 1 (run T20 first).' }
+    # The OPR is a lookup to PFM Offices: the first seeded office row (lowest row number) is used; no row is made there.
+    # This is the worker's pick for the PFM's fake-value decision of 25 Nov 26; it is a seed row, with no fake-data marker.
+    $office = @(Get-PnPListItem -List 'PFM Offices' -Fields 'Title' -PageSize 500 -ErrorAction Stop | Sort-Object { $_.Id })
+    if (-not $office.Count) { throw 'OFFICE not found: PFM Offices has no row (run T20 first).' }
     Write-Host 'NOW Making the fake publication'
-    $pubId = [int](Add-PnPListItem -List 'PFM Publications' -Values @{ Title = $PubTitle; ActionType = 'New'; ProductType = 'Publication'
-        ProcessStep = $step[0].Id; ActionStatus = 'On Track' } -ErrorAction Stop).Id
-    $st['Made'] = 'yes'; Add-Item 'm1-publication' 'PASS' 'the fake publication was made (step 1, On Track)' }
+    $pubId = [int](Add-PnPListItem -List 'PFM Publications' -Values (Get-FakePubValue $step[0].Id $office[0].Id) -ErrorAction Stop).Id
+    $st['Made'] = 'yes'; Add-Item 'm1-publication' 'PASS' 'the fake publication was made (step 1, On Track, with OPR, level, publication type and 673 link)' }
   $st['PubId'] = [string]$pubId; if (-not $st['Made']) { $st['Made'] = 'no' }
   Save-State $script:stateFile $st   # saved before the edit row: if that write fails, Clean still finds the publication it made
   $editId = Add-EditRow $pubId; $st['EditId'] = [string]$editId
@@ -400,8 +427,8 @@ $fatal = $false; $site = ''; $secret = @(); $dir = ''
 try {
   $ErrorActionPreference = 'Stop'
   # The Restore test parts are dot-sourced here, in this script's scope, so they see the values and helpers above.
-  $restoreFile = Join-Path $PSScriptRoot '90161Z-T26-restore-r2.ps1'
-  if (-not (Test-Path -LiteralPath $restoreFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T26-restore-r2.ps1 is not in the folder of this script. Run the round again.' }
+  $restoreFile = Join-Path $PSScriptRoot '90161Z-T26-restore-r3.ps1'
+  if (-not (Test-Path -LiteralPath $restoreFile -PathType Leaf)) { throw 'MODULE missing: 90161Z-T26-restore-r3.ps1 is not in the folder of this script. Run the round again.' }
   . $restoreFile
   if (-not $Part) { throw 'PART not given: use -Part Make, Read, Clean, Rows, Change or Check.' }
   $who = Get-TaskId $Id; $secret = $who.Secret
@@ -422,7 +449,8 @@ try {
   $lines.Add('ENDORSE ' + $Part + ' done: passed=' + $script:passed + ' failed=' + $script:failed)
   # Every line is masked once more before it is shown or saved.
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir -and $Part) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + '-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  $resultName = $(if ($Part) { '90161Z-T26-endorse-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-' + $Rev + '.txt' } else { '' })
+  if ($dir -and $resultName) { try { Set-Content -LiteralPath (Join-Path $dir $resultName) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause -and -not $env:RADE_CONTRACT) { [void](Read-Host 'Press Enter to close') }
 }

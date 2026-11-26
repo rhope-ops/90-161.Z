@@ -112,6 +112,7 @@ function Grant-OfficeLevel([bool]$Write) {
       $null = Invoke-Rest 'Post' '_api/web/sitegroups' (@{ __metadata = @{ type = 'SP.Group' }; Title = $OfficeGroup; Description = $OfficeGroupText } | ConvertTo-Json -Compress)
       $gid = Get-GroupId $OfficeGroup
       if (-not $gid) { throw ('GROUP ' + $OfficeGroup + ' not on the site after the create step.') }
+      Add-MadeLine 'group' $OfficeGroup   # RADE engine-v41: this run made the group
     }
   }
   $level = Get-RoleLevel $OfficeLevel 0
@@ -127,6 +128,7 @@ function Grant-OfficeLevel([bool]$Write) {
       $null = Invoke-Rest 'Post' '_api/web/roledefinitions' ($body | ConvertTo-Json -Depth 5 -Compress)
       $level = Get-RoleLevel $OfficeLevel 0
       if (-not $level) { throw ('LEVEL ' + $OfficeLevel + ' not on the site after the create step.') }
+      Add-MadeLine 'level' $OfficeLevel   # RADE engine-v41: this run made the level
     }
   }
   if (-not $gid -or -not $level) { $made.binding = 1; return $made }

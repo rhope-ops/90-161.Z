@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r15, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
+  90-161.Z Task 22 r16, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
   every screen (round R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3).
 .DESCRIPTION
   The check bar (PFM 17 Nov 26) sits at the bottom of the window and is always visible: the checks show one at a time,
@@ -16,7 +16,7 @@
   the one a button step starts on ($wn.OpenShow), and an open by the person that stops adds a NOTE line ($wn.OpenFail).
   Inputs: $form, $main, $ui, $wn, $pc, $Cards, $Checks, $Walk, $lines. Outputs: the $wn members below and, at the end
   of a run, the WALK lines ($wn.WalkLines; the main script adds them to the result).
-  Run: not alone; 90161Z-T22-pfm-window-r15.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r16.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -52,20 +52,51 @@ $wn.BarShow = {
     $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false }
   & $wn.OpenShow }
 # Keeps the answer (PASS or FAIL) to the step shown and shows the next one.
-$wn.Answer = { param([string]$Result)
+$wn.Answer = {
+  <#
+  .SYNOPSIS
+  Keeps the answer $Result (PASS or FAIL) for the step shown, then shows the next step.
+  .DESCRIPTION
+  R16: a look step counts as opened when its card shows. A click-through step answered while its card never opened
+  adds a NOTE line, so the result says why the step has no open.
+  .PARAMETER Result
+  PASS or FAIL, from the bar buttons.
+  #>
+  param([string]$Result)
   if ($wn.CheckAt -ge (& $wn.StepCount)) { return }
   $j = & $wn.WalkAt
+  # R16: a look step asks about the card the person is on: it counts as opened when that card shows
+  if ($j -ge 0 -and [string]$Walk[$j].Via -eq 'look' -and [string]$wn.Cur -eq [string]$Walk[$j].Key) { $wn.WalkOpen[$j] = $true }
+  # R16 (R42 finding 3: step12 was answered with no click, so no open failed and no line was written): an answer on a step whose card never opened leaves a NOTE
+  if ($j -ge 0 -and -not $wn.WalkOpen[$j]) {
+    $lines.Add('NOTE screen ' + ($j + 1) + ' of ' + $Walk.Count + ' (' + [string]$Walk[$j].Key + ') was answered ' + $Result +
+      ' without an open: the window shows ' + [string]$wn.Cur) }
   if ($j -ge 0) { $wn.WalkAns[$j] = $Result } else { $wn.Answers[$wn.CheckAt] = $Result }
   $wn.CheckAt++
   & $wn.BarShow }
 # R14: the link "Open this screen" opens the card of the click-through step shown, as a person's open.
 $wn.OpenStep = {
-  $j = & $wn.WalkAt; if ($j -lt 0 -or -not (& $ui.Settled)) { return }
+  $j = & $wn.WalkAt; if ($j -lt 0) { return }
+  if (-not (& $ui.Settled)) { & $wn.IgnoreNote 'the link Open this screen'; return }
   $script:presses++; $wn.Notice = ''; $wn.Err = ''; $k = [string]$Walk[$j].Key
-  try { & $wn.Show $k } catch { & $wn.OpenFail $k $_ } }
+  try { & $wn.Show $k } catch { & $wn.OpenFail $k $_ }
+  & $wn.OpenCheck $k }
 # R15 (R41 finding 4: 2 screens did not open, and the result did not say why): a NOTE line when an open by the person stops.
 $wn.OpenFail = { param([string]$Key, $Err) $m = [string]$Err.Exception.Message
   $lines.Add('NOTE the screen ' + $Key + ' did not open: ' + $m.Substring(0, [Math]::Min(160, $m.Length))) }
+# R16 (R42 finding 3: step12 did not open and the result had no CARDTIME line and no NOTE line): every way an open can fail
+# leaves a NOTE. The guard that holds a click in the first $ui.GuardMs ms after a card changed returned with no line; it
+# writes one now ($wn.IgnoreNote, at most 12 lines), and an open that returns with no error while the window stays on the old
+# card writes one ($wn.OpenCheck). $Where names the control that was clicked; $Key the card that should show.
+$wn.IgnoreN = 0
+# Writes a NOTE for a click that the guard held ($Where: the control), at most 12 times in a run.
+$wn.IgnoreNote = { param([string]$Where)
+  if ($wn.IgnoreN -ge 12) { return }; $wn.IgnoreN++
+  $ms = [int]($ui.Clock.Elapsed.TotalMilliseconds - [double]$ui.CardAt)
+  $lines.Add('NOTE a click on ' + $Where + ' was not used: the card ' + [string]$wn.Cur + ' changed ' + $ms + ' ms before (the guard holds a click for ' + [int]$ui.GuardMs + ' ms)') }
+# Writes a NOTE when the window does not show card $Key after an open that returned with no error.
+$wn.OpenCheck = { param([string]$Key)
+  if ($Key -and [string]$wn.Cur -ne $Key) { $lines.Add('NOTE the screen ' + $Key + ' did not open: the window stayed on ' + [string]$wn.Cur) } }
 $wn.BarLayout = {
   <#
   .SYNOPSIS

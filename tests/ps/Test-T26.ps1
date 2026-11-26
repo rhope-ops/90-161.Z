@@ -1,9 +1,12 @@
-# Tests scripts/gov/90161Z-T26-endorse-r2.ps1 (round R41; the PFM, 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md row 2)
+# Tests scripts/gov/90161Z-T26-endorse-r3.ps1 (round R41; the PFM, 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md row 2)
 # against a small fake site: the PnP cmdlets the script uses are fakes in this file (an empty PnP.PowerShell 1.12.0
 # module in a temporary folder lets the script's module check pass). Proves the logic, not the real service: the gov
 # device round is that proof.
-# Cases: Make makes the fake publication and the endorsement row to edit once and keeps their numbers; a second Make
-# reuses them; Read records ENDORSE-EDIT REFUSED (no PASS or FAIL word) until another person changed that row, then PASS; Read with
+# Cases: Make makes the fake publication and the endorsement row to edit once and keeps their numbers; the publication also holds the
+# 4 columns that the exit of step 1 needs (R43; the PFM, 25 Nov 26: OPR = the first office row, Applies to Level and Publication Type =
+# choices of the schema, the master 673 link on example.test with the fake-data marker; the proof that the T27 Step exit conditions pass
+# on it is in tests/ps/Test-T27.ps1); Make stops when PFM Offices has no row; a second Make reuses them;
+# Read records ENDORSE-EDIT REFUSED (no PASS or FAIL word) until another person changed that row, then PASS; Read with
 # no answer fails; Read finds the answer of another person (not your own row), in ASCII, and counts it; an unknown
 # answer reads "other"; Clean recycles the endorsement and log rows and the publication, then the state file; no line
 # shows the site host; the script file is ASCII.
@@ -32,13 +35,15 @@ Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psd1') -Value "@{ Ro
 $env:PSModulePath = (Join-Path $work 'mods') + [IO.Path]::PathSeparator + $env:PSModulePath
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r2.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r3.ps1'
 
 # ---- the fake site and its cmdlets ----
-# Reset the fake site: the 4 lists the script reads, the process step rows 0 to 2, you are user 11. Takes nothing; returns nothing.
+# Reset the fake site: the 5 lists the script reads, the process step rows 0 to 2, 2 office rows (31, 32), you are user 11. Takes nothing; returns nothing.
 function New-Site {
   $global:F = @{ RowId = 100; Recycled = 0; Lists = @{ 'PFM Publications' = (New-Object System.Collections.ArrayList); 'PFM Endorsements' = (New-Object System.Collections.ArrayList)
-      'PFM Activity Log' = (New-Object System.Collections.ArrayList); 'PFM Process Steps' = (New-Object System.Collections.ArrayList) } }
+      'PFM Activity Log' = (New-Object System.Collections.ArrayList); 'PFM Process Steps' = (New-Object System.Collections.ArrayList)
+      'PFM Offices' = (New-Object System.Collections.ArrayList) } }
+  foreach ($n in 31, 32) { $null = $global:F.Lists['PFM Offices'].Add(@{ Id = $n; Title = ('FAKE office ' + $n) }) }   # seeded office rows: the lowest number is the OPR
   foreach ($n in 0, 1, 2) { $null = $global:F.Lists['PFM Process Steps'].Add(@{ Id = (10 + $n); Title = ('FAKE step ' + $n); StepNumber = $n }) }
 }
 # Fake Connect-PnPOnline: accepts only -UseWebLogin, as on the gov device.
@@ -97,19 +102,25 @@ function Invoke-FakeRestore {
   $null = $global:F.Lists['PFM Activity Log'].Add($log)
   $null = New-Item -ItemType Directory -Path (Join-Path (Join-Path $work 'Backups') ('fresh-' + [guid]::NewGuid().ToString('N'))) -Force }
 # Run one part against the fake site. Takes the part name; returns @{ Code; Text (the screen output); File (the result file text) }.
-function Invoke-T26([string]$Part) {
+function Invoke-T26([string]$Part, [string]$Label = '') {
   $global:LASTEXITCODE = 0
-  $out = & $script -Id 'tester01' -Part $Part -NoPause -NoLaunch -TestDir $t26 *>&1 | ForEach-Object { [string]$_ }
-  $file = Join-Path $t26 ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + '-r2.txt')
+  $sw = @{}; if ($Label) { $sw['Label'] = $Label }
+  $out = & $script -Id 'tester01' -Part $Part -NoPause -NoLaunch -TestDir $t26 @sw *>&1 | ForEach-Object { [string]$_ }
+  $file = Join-Path $t26 ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r3.txt')
   return @{ Code = $LASTEXITCODE; Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
 }
-$stateFile = Join-Path $t26 '90161Z-T26-endorse-state-r2.txt'
+$stateFile = Join-Path $t26 '90161Z-T26-endorse-state-r3.txt'
 try {
   New-Site
   $r = Invoke-T26 'Make'
   $pubs = @($global:F.Lists['PFM Publications'])
   $ok = ($r.Code -eq 0 -and $pubs.Count -eq 1 -and $pubs[0].Title -eq '90161Z TEST R41 endorse (delete me)' -and $pubs[0].ProcessStep -eq 11 -and $pubs[0].ActionStatus -eq 'On Track')
   Test-That 'Make makes 1 fake publication at step 1, On Track' $ok $r.Text
+  $schema = Get-Content -LiteralPath (Join-Path $Root 'schemas/lists/PFMPublications.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+  $ch = @{}; foreach ($fld in $schema.fields) { if ($fld.type -eq 'Choice') { $ch[[string]$fld.internalName] = @($fld.choices) } }
+  $ok = ($pubs[0].OPR -eq 31 -and $pubs[0].AppliesToLevel -cin $ch['AppliesToLevel'] -and $pubs[0].PublicationType -cin $ch['PublicationType'] -and
+      [string]$pubs[0].MasterForm673Link -match '^https://example\.test/[^,\s]+, 90161Z TEST ')
+  Test-That 'Make fills OPR (the first office row), Applies to Level and Publication Type (schema choices) and the 673 link (fake address, marker)' $ok $r.Text
   $st = Get-Content -LiteralPath $stateFile -Raw
   Test-That 'Make keeps the publication number in the state file (Made=yes)' ($st -match ('PubId=' + $pubs[0].Id) -and $st -match 'Made=yes') $r.Text
   Test-That 'Make writes its result file and the clipboard line' ($r.File -match 'ITEM m3-link INFO .+clipboard=no \(test run\)' -and $r.File -match 'ENDORSE Make done: passed=2 failed=0') $r.File
@@ -146,6 +157,10 @@ try {
   New-Site; $global:F.Lists.Remove('PFM Process Steps')
   $r = Invoke-T26 'Make'
   Test-That 'Make with no process steps: STOPPED, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED: ') $r.File
+  New-Site; $global:F.Lists['PFM Offices'].Clear()
+  $r = Invoke-T26 'Make'
+  $ok = ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED: OFFICE not found' -and @($global:F.Lists['PFM Publications']).Count -eq 0)
+  Test-That 'Make with no PFM Offices row: STOPPED, exit 1, no publication made' $ok $r.File
   New-Site; $global:FailList = 'PFM Endorsements'
   $r = Invoke-T26 'Make'; $global:FailList = $null
   $st = $(if (Test-Path -LiteralPath $stateFile) { Get-Content -LiteralPath $stateFile -Raw } else { '' })
@@ -235,6 +250,19 @@ try {
   $p = @(@($man.bundles | ForEach-Object { $_.apps } | Where-Object { $_.mode -eq 'deploy' -and $_.restore }) | ForEach-Object { $_.restore.pause })
   $ok = ($m.Success -and $p.Count -eq 1 -and $p[0].list -eq $m.Groups[1].Value -and $p[0].title -eq $m.Groups[2].Value)
   Test-That 'the pause values of the script equal the manifest restore.pause' ($ok -and $p[0].field -eq $m.Groups[3].Value -and $p[0].on -eq $m.Groups[4].Value) ''
+  # R43 review: a part that runs twice in a round keeps both result files (a label), and the round collects each file once.
+  $r = Invoke-T26 'Make' 'after'
+  $labeled = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-after-r3.txt')
+  $first = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r3.txt')
+  Test-That 'Make with -Label after writes its own result file, and the file of the first run stays' ($r.File -match 'ENDORSE Make done' -and $labeled -and $first) $r.Text
+  $r = Invoke-T26 'Clean' 'after'
+  Test-That 'Clean with -Label after writes its own result file' (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-clean-after-r3.txt')) $r.Text
+  $T26steps = @(@($man.bundles | ForEach-Object { $_.steps }) | Where-Object { $_.file -eq '90161Z-T26-endorse-r3.ps1' })
+  $partKey = @($T26steps | ForEach-Object { $a = [string]$_.args; $a -replace '\s+', ' ' })
+  Test-That 'every T26 step of the round has its own -Part/-Label pair (no 2 steps write the same result file)' (@($partKey | Sort-Object -Unique).Count -eq $partKey.Count) ($partKey -join ' | ')
+  $collectNames = @(@($man.bundles | ForEach-Object { $_.collect }) | ForEach-Object { $_.dir + '/' + $_.name })
+  $twice = @($collectNames | Group-Object | Where-Object Count -gt 1 | ForEach-Object Name) -join ','
+  Test-That 'the collect list has no file name twice (a second step must not overwrite the first result file)' (@($collectNames | Sort-Object -Unique).Count -eq $collectNames.Count) $twice
   $all = Get-ChildItem -LiteralPath $t26 -Filter '*.txt' | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }
   Test-That 'no result line shows the site host' (-not (@($all) -join "`n").Contains('fakehost')) ''
   $bytes = [IO.File]::ReadAllBytes($script); Test-That 'the script file is ASCII' (-not @($bytes | Where-Object { $_ -gt 127 }).Count) ''

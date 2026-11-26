@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r15, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r16, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
@@ -22,10 +22,15 @@
   can say where its content ends ($wn.GridEdges), so the layout self-check ($wn.EdgeCheck) fails a chip or text that
   ends closer to the grid's right edge than the vertical scroll bar is wide.
   R15 (R42 T1; R41 finding 4: at 1920 x 1094 and 150 % 3 Status chips ended under the 26 px bar): the column plan is pure
-  arithmetic ($wn.ColPlan, run by tests/check_t22_r15.py) and keeps the scroll bar room; the grid fit ($wn.FitGrid) works
+  arithmetic ($wn.ColPlan, run by tests/check_t22_r16.py) and keeps the scroll bar room; the grid fit ($wn.FitGrid) works
   on the column minimums against that room, so a grid that fits keeps its chip (r14 took the chip under the bar).
+  R16 (R43 T1; R42 finding 2: home, empty and queue still "columns need 979, the grid has 961" and "1442, 1428"): r15 made the
+  plan keep the bar room and the fit work on the column minimums; those grids' minimums already fitted (r14 kept the room
+  with a pub column), so the fit had nothing to give back if the grid's own fill laid the columns wider than the grid (what
+  the device lines suggest; not measured). The fit now also cuts the widths ($wn.TrimWidths); tests/ps/Test-T22GridWidth.ps1
+  runs it on those numbers, and the LAYOUT line names the column minimums, so R43 shows if the fit ran.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r15.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r16.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -234,15 +239,17 @@ $wn.FitGrid = {
   that shows now, the larger; the excess is the sum of the minimums of the visible columns less the room, so a grid
   that fits gives nothing back however its fill columns share the width. The excess comes off the columns that are not the pub column, the one with the most width above its head
   ($wn.HeadMin) first: the other columns above their heads, then the chip column above its head, then any column under
-  its head (never under 2 px). When the minimums changed, or the filled columns are wider than the grid, the grid lays
+  its head (never under 2 px). When the minimums changed, or the filled columns end past the grid or under a bar that shows, the grid lays
   out its columns again (a 1 px size change makes the fill columns share the room again).
+  R16 (R42 finding 2): when the columns still end past the grid, or under a bar that shows, after that layout, their widths
+  are cut to the room ($wn.TrimWidths).
   R15 (R42 ps51 keep test: a later open of the Wave 1 answers card took 114 ms, 13 before): when the fit took off a bar
   that shows beyond the plan's reserve, Tag.Reserve becomes that bar and the columns keep their widths (AutoSizeMode
   None): their fill width no longer depends on the bar, and the bar no longer on the row heights the widths give, so a
   second fit, and a later open of the kept card, find nothing to do.
   .PARAMETER G
   The grid (its Tag holds the column kinds and the column list, $wn.Grid); any object with ClientSize, Width, Columns
-  (Name, Visible, Width, MinimumWidth) and that Tag (tests/check_t22_r15.py gives one off Windows).
+  (Name, Visible, Width, MinimumWidth, AutoSizeMode) and that Tag (tests/check_t22_r16.py gives one off Windows).
   .OUTPUTS
   $true when it changed a column or laid the grid out again, else $false.
   #>
@@ -252,7 +259,7 @@ $wn.FitGrid = {
   $shown = [int](& $wn.BarShown $G); $room = [int]$G.ClientSize.Width - [math]::Max($res, $shown)
   $vis = @($G.Columns | Where-Object { $_.Visible }); $mins = 0; $sum = 0
   foreach ($k in $vis) { $mins += [int]$k.MinimumWidth; $sum += [int]$k.Width }
-  $excess = $mins - $room; $stale = ($sum -gt [int]$G.ClientSize.Width + 1)   # stale: the filled widths need a new layout
+  $excess = $mins - $room; $stale = ($sum -gt [int]$G.ClientSize.Width - $shown + 1)   # stale: the filled widths end past the grid or under a bar that shows
   if ($excess -le 0 -and -not $stale) { return $false }
   $kinds = $G.Tag.Kind; $heads = @{}; foreach ($c in @($G.Tag.Cols)) { $heads[[string]$c.N] = [int](& $wn.HeadMin $c) }
   $free = @($vis | Where-Object { [string]$kinds[$_.Name] -ne 'pub' }); $gave = 0
@@ -265,8 +272,25 @@ $wn.FitGrid = {
       $k.MinimumWidth = [int]$k.MinimumWidth - $give; $excess -= $give; $gave++ } }
   if (-not $gave -and -not $stale) { return $false }   # excess, but no column could give any width back: nothing changed
   $G.Width = $G.Width - 1; $G.Width = $G.Width + 1   # the fill columns share the room again
+  # R16 (R42 finding 2: home and queue still "columns need 979, the grid has 961" and "1442, 1428"): the minimums fitted, so the
+  # excess above was 0, and the layout above gave the same widths again. The widths themselves are cut to the room here.
+  $null = & $wn.TrimWidths $vis $room ([int]$G.ClientSize.Width - $shown)   # R16 review: a bar that shows counts, also under the grid width
   if ($shown -gt $res) {   # R15: the grid keeps the room of the bar that shows, and its widths stop following the bar
     $G.Tag.Reserve = $shown; foreach ($k in $vis) { $k.AutoSizeMode = 'None' } }   # (no fill and row layout again on each open)
+  return $true }
+# R16 (R42 finding 2): after the grid laid its fill columns out, cuts their widths to $Room when they still end past the grid
+# (they end past $Client: the grid width less the bar that shows, 1 px of rounding allowed): the width above its column minimum comes off, the column with the most first, and
+# the columns stop filling (AutoSizeMode None), so the grid's own layout cannot give the width back. No column goes under its
+# minimum, so a kept status chip keeps its whole width ($wn.ValueMin). $Cols: the visible columns (Width, MinimumWidth,
+# AutoSizeMode). Gives back $true when it changed a width, else $false.
+$wn.TrimWidths = { param($Cols, [int]$Room, [int]$Client)
+  $sum = 0; foreach ($k in $Cols) { $sum += [int]$k.Width }
+  if ($sum -le $Client + 1) { return $false }   # the widths end before the bar that shows (or the grid edge): nothing to cut
+  $over = $sum - $Room; foreach ($k in $Cols) { $k.AutoSizeMode = 'None' }
+  foreach ($k in @($Cols | Sort-Object { [int]$_.Width - [int]$_.MinimumWidth } -Descending)) {
+    if ($over -le 0) { break }
+    $give = [math]::Min($over, [int]$k.Width - [int]$k.MinimumWidth); if ($give -le 0) { continue }
+    $k.Width = [int]$k.Width - $give; $over -= $give }
   return $true }
 # The widest number (as a link) and the widest title of the pub values ("number|title") of $Rows, in pixels, measured as
 # $wn.PaintPub draws them. All rows, not only the shown ones, so a filter does not move the title column.

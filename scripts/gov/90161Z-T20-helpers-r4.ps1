@@ -5,7 +5,7 @@
 .DESCRIPTION
   Loaded by 90161Z-T20-provision-lists-r4.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
   Inputs: $site and the PnP.PowerShell connection of the main file ($script:site). Outputs: the functions Get-Plan, Invoke-Rest,
-  Get-RestValue, Get-SiteList, Find-OurList, Write-CsomMerge, Get-GroupId, Get-RoleLevel, Get-WebBinding, ConvertTo-PermissionWord, Test-LevelPermission.
+  Get-RestValue, Get-SiteList, Find-OurList, Add-MadeLine, Write-CsomMerge, Get-GroupId, Get-RoleLevel, Get-WebBinding, ConvertTo-PermissionWord, Test-LevelPermission.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection of the main file (none in Get-Plan).
   Writes: Write-CsomMerge and Invoke-Rest (Post) change the site when the main file calls them in create mode; nothing on this computer.
   Credentials: none of its own (the main file signs in).
@@ -73,10 +73,33 @@ function Get-SiteList {
 }
 
 function Find-OurList($SiteLists, [string]$Internal) {
-  # Ours = created under the internal name, so its folder has that name. A list that a person made and titled
+  # Ours = created under the internal name, so its folder has that name (case sensitive). A list that a person made and titled
   # "PFM Settings" has another folder name: it is never matched, so nothing is added to it.
-  foreach ($l in $SiteLists) { if ([string]$l.RootFolder.Name -eq $Internal) { return $l } }
+  foreach ($l in $SiteLists) { if ([string]$l.RootFolder.Name -ceq $Internal) { return $l } }
   return $null
+}
+
+# True when a name is one of the fixed names of 90-161.Z for its kind: a list title of the plan (the payload), the group $OfficeGroup or the
+# level $OfficeLevel (both from the main file and the access module, read from the scope that loaded this file). Case sensitive.
+function Test-MadeName([string]$Kind, [string]$Name) {
+  switch ($Kind) {
+    'list' { return (@($plan.Values | ForEach-Object { [string]$_.Display }) -ccontains $Name) }
+    'group' { return ($Name -ceq $OfficeGroup) }
+    'level' { return ($Name -ceq $OfficeLevel) }
+    default { return $false }
+  }
+}
+
+# Adds the line "MADE <kind>: <name>" to the output lines for one item that THIS run created (RADE engine-v41 reads it, and the Uninstall
+# of 90-161.Z gets it back in RADE_MADE). Kind is a lowercase word (list, group, level). Call it only after the item is made, never in a
+# dry run and never for an item that was already there. A MADE line is printed only for a fixed name of the app (Test-MadeName), never for
+# site data, so the final mask of the main file leaves it as it is (ConvertTo-FinalLine, which reads $script:MadeLines):
+# a site named "office" must not turn "PFM Office" into "PFM <SITE-NAME>".
+function Add-MadeLine([string]$Kind, [string]$Name) {
+  if (-not (Test-MadeName $Kind $Name)) { $lines.Add('NOTE no MADE line: a name of the kind ' + $Kind + ' is not a fixed name of 90-161.Z'); return }
+  $line = 'MADE ' + $Kind + ': ' + $Name
+  if (-not $script:MadeLines) { $script:MadeLines = @{} }
+  $lines.Add($line); $script:MadeLines[$line] = 1
 }
 
 # A MERGE of the payload, written through CSOM: every property of the body except __metadata is set, then Update.
