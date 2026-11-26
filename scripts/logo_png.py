@@ -4,7 +4,7 @@ logo drawn in code, the PFM, 2026-11-17).
 
 Two masters (MASTERS): 'fulcrum' = assets/logo/90161Z-logo-fulcrum.svg is the master of every PNG a round carries and of
 the T22 window logo in Windows light AND dark mode (the PFM, 20 Nov 26: "Fulcrum everywhere for now, as this is not an
-endorsed product"; sizes 512, 192, 128, 64, 32, 16). 'usaf' = assets/logo/90161Z-logo.svg (USAF colours) is NOT USED any
+endorsed product"; sizes 512, 256, 192, 128, 64, 32, 16; 256 is the app icon RADE reads, R44). 'usaf' = assets/logo/90161Z-logo.svg (USAF colours) is NOT USED any
 more: it stays in the repo with its record, and nothing draws it unless a script asks for master='usaf'.
 scripts/logo_draw.py draws them in pure Python, so every machine gives the same bytes (a browser render did not). Each
 master has its record (<master name>.render.json beside it) with the SHA-256 of the SVG and of each PNG size it is drawn
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # master name -> (SVG, record, the sizes it is drawn at). R11 (R38; PFM 20 Nov 26): Fulcrum is the master of every size a
 # round carries; 'usaf' is not used any more (kept with its record; draw() of its sizes only when a caller names it).
 MASTERS = {
-    'fulcrum': (ROOT / 'assets/logo/90161Z-logo-fulcrum.svg', ROOT / 'assets/logo/90161Z-logo-fulcrum.render.json', (512, 192, 128, 64, 32, 16)),
+    'fulcrum': (ROOT / 'assets/logo/90161Z-logo-fulcrum.svg', ROOT / 'assets/logo/90161Z-logo-fulcrum.render.json', (512, 256, 192, 128, 64, 32, 16)),
     'usaf': (ROOT / 'assets/logo/90161Z-logo.svg', ROOT / 'assets/logo/90161Z-logo.render.json', (512, 192, 128, 64, 32, 16)),
 }
 SVG, RECORD, SIZES = MASTERS['fulcrum']   # the names other scripts read (the master in use)
