@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r12, module "person": the parts Person (the second person for test T4), Ask (the round asks that
+  90-161.Z Task 21 probe r13, module "person": the parts Person (the second person for test T4), Ask (the round asks that
   person for a new row, R36) and Clean (removes the person, the list and the library again).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r12.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r13.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($site, $dir, $StateName, $ListTitle, $ListFolder, $LibTitle, $LibFolder,
   $TestDir, $NoLaunch) and the helpers of the module "common". Outputs: result lines through Add-Item.
   The second person's e-mail address is read in a small window and used in memory only: it is never written to a file,
@@ -14,20 +14,34 @@
           row form link); nothing on the site. Clean: removes that person from Visitors and PFM Office again, moves the probe list
           and library to the site Recycle Bin, deletes the state file.
   Credentials: none of its own (the main file signs in); no password is asked for.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r12.ps1 -Part Person (or Ask, or Clean) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r13.ps1 -Part Person (or Ask, or Clean) loads it.
 #>
 
 function Read-PersonAddress {
   # The second person's address, typed by the PFM in a small window. It is returned to the caller and used in memory only; this
   # function writes nothing. In a test run (-TestDir) a fake address may come from the test.
-  if ($TestDir -and $env:T21_TEST_ADDRESS) { return ([string]$env:T21_TEST_ADDRESS).Trim() }
-  $prompt = 'Type the e-mail address of the second person for test T4 (a person who is not you), then select OK. It is used once, stays on this computer and is not saved or sent.'
+  # r13 (the PFM, 26 Nov 26, R45: "maybe i should have the option to say skip"): the window has OK and Skip. Skip, an
+  # empty box or closing the window gives '' (the caller then gives SKIP, not FAIL). The window scales itself
+  # (AutoScaleMode Dpi): after the engine-v46 sign-in block the process is DPI-aware.
+  if ($TestDir -and $null -ne $env:T21_TEST_ADDRESS) { return ([string]$env:T21_TEST_ADDRESS).Trim() }
+  $prompt = 'Type the e-mail address of the second person for test T4 (a person who is not you), then select OK. It is used once, stays on this computer and is not saved or sent. If nobody can help today, select Skip.'
   try {
-    Add-Type -AssemblyName Microsoft.VisualBasic -ErrorAction Stop
-    return ([string][Microsoft.VisualBasic.Interaction]::InputBox($prompt, '90-161.Z test T4', '')).Trim()
+    Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop; Add-Type -AssemblyName System.Drawing -ErrorAction Stop
+    $f = New-Object System.Windows.Forms.Form
+    $f.Text = '90-161.Z test T4'; $f.FormBorderStyle = 'FixedDialog'; $f.MaximizeBox = $false; $f.MinimizeBox = $false
+    $f.StartPosition = 'CenterScreen'; $f.TopMost = $true; $f.Font = New-Object System.Drawing.Font('Segoe UI', 9)
+    $f.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96); $f.AutoScaleMode = 'Dpi'; $f.ClientSize = New-Object System.Drawing.Size(420, 170)
+    $l = New-Object System.Windows.Forms.Label; $l.Text = $prompt; $l.SetBounds(12, 12, 396, 70)
+    $t = New-Object System.Windows.Forms.TextBox; $t.SetBounds(12, 88, 396, 24)
+    $ok = New-Object System.Windows.Forms.Button; $ok.Text = 'OK'; $ok.SetBounds(232, 128, 84, 30); $ok.DialogResult = 'OK'
+    $sk = New-Object System.Windows.Forms.Button; $sk.Text = 'Skip'; $sk.SetBounds(324, 128, 84, 30); $sk.DialogResult = 'Cancel'
+    $f.Controls.AddRange(@($l, $t, $ok, $sk)); $f.AcceptButton = $ok; $f.CancelButton = $sk
+    $r = $f.ShowDialog(); $v = [string]$t.Text; $f.Dispose()
+    if ($r -ne 'OK') { return '' }   # Skip or the window's X: nobody can help today
+    return $v.Trim()
   } catch {
     if ($env:RADE_CONTRACT) { throw 'ADDRESS window not available: the window for the second person could not open on this computer.' }
-    return ([string](Read-Host 'E-mail address of the second person (it is not saved), then press Enter')).Trim()
+    return ([string](Read-Host 'E-mail address of the second person (it is not saved; press Enter with no text to skip)')).Trim()
   }
 }
 
@@ -86,8 +100,9 @@ function Add-SecondPerson([int]$VisitorId) {
   $result = @{ State = 'no'; Why = '' }
   Write-Now 'Asking for the address of the second person in a small window'
   $personAddr = Read-PersonAddress
-  $addrOk = ($personAddr -match '^[^@\s]+@[^@\s]+\.[^@\s]+$')
-  if (-not $addrOk) { Add-Item 'p2-person' 'FAIL' 'no valid address was given in the window'; $result.Why = 'no valid address was given' }
+  $addrOk = ($personAddr -match '^[^@\s]+@[^@\s]+\.[^@\s]+$'); $addrNone = -not ($personAddr -match '\S')   # r13: nothing typed (Skip)
+  if ($addrNone) { Add-Item 'p2-person' 'SKIP' 'nobody could help today (Skip, or no address)'; $result.Why = 'skipped: nobody could help today' }   # r13: Skip is not a failure
+  elseif (-not $addrOk) { Add-Item 'p2-person' 'FAIL' 'the text in the window is not an e-mail address'; $result.Why = 'the text is not an e-mail address' }
   else {
     $userId = 0; $loginName = ''
     Write-Now 'Looking for the second person on the site'

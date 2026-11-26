@@ -65,7 +65,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEFS, OUT = ROOT / "flow" / "solution" / "defs", ROOT / "flow" / "solution" / "90161Z-T24-full-flows-r5.zip"
 # R34: the probe button flow (its workflow ID goes into the T21 look script, which names it in the list view button).
 BUTTON_DEF = DEFS / "90161Z-T21-probe-button-r6.json"
-LOOK_SCRIPT = ROOT / "scripts" / "gov" / "90161Z-T21-look-r12.ps1"
+LOOK_SCRIPT = ROOT / "scripts" / "gov" / "90161Z-T21-look-r13.ps1"
 ID_BEGIN = "# >>> button-flow-id: generated from flow/solution/defs/90161Z-T21-probe-button-r6.json by scripts/build_flow_solution.py (do not edit)"
 ID_END = "# <<< button-flow-id"
 TEST_DEFS = ROOT / "flow" / "solution" / "test-defs"

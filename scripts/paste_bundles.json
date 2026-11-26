@@ -125,31 +125,31 @@
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-probe-r12.ps1"
+                    "src": "scripts/gov/90161Z-T21-probe-r13.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-common-r12.ps1"
+                    "src": "scripts/gov/90161Z-T21-common-r13.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-make-r12.ps1"
+                    "src": "scripts/gov/90161Z-T21-make-r13.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-person-r12.ps1"
+                    "src": "scripts/gov/90161Z-T21-person-r13.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-look-r12.ps1"
+                    "src": "scripts/gov/90161Z-T21-look-r13.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-read-r12.ps1"
+                    "src": "scripts/gov/90161Z-T21-read-r13.ps1"
                 },
                 {
                     "dir": "T21",
-                    "src": "scripts/gov/90161Z-T21-office-r12.ps1"
+                    "src": "scripts/gov/90161Z-T21-office-r13.ps1"
                 },
                 {
                     "dir": "T21",
@@ -240,10 +240,10 @@
                     "doing": "Recording the test install."
                 },
                 {
-                    "name": "T21 Check the test site is clean r12",
+                    "name": "T21 Check the test site is clean r13",
                     "title": "Check that the last round left nothing on the test site",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r12.ps1",
+                    "file": "90161Z-T21-probe-r13.ps1",
                     "args": "-Part Clean -Label first",
                     "minutes": 20,
                     "note": "Signs in (CAC). Removes a test list, library or Visitors member left by the last round.",
@@ -257,10 +257,10 @@
                     "doing": "Checking that the test site is clean."
                 },
                 {
-                    "name": "T21 Make the probe list r12",
+                    "name": "T21 Make the probe list r13",
                     "title": "Make the test list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r12.ps1",
+                    "file": "90161Z-T21-probe-r13.ps1",
                     "args": "-Part Make",
                     "minutes": 20,
                     "note": "Signs in (CAC). Makes the fake test list and library that the next step needs, with one fake workbook. The last step removes them again.",
@@ -274,10 +274,10 @@
                     "doing": "Making the test list and library."
                 },
                 {
-                    "name": "T21 Add the second person r12",
+                    "name": "T21 Add the second person r13",
                     "title": "Add the second person to the test site",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r12.ps1",
+                    "file": "90161Z-T21-probe-r13.ps1",
                     "args": "-Part Person",
                     "minutes": 20,
                     "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group. If nobody can help today, close the small window. This step then fails, and the other steps run.",
@@ -289,7 +289,7 @@
                         "site-rights"
                     ],
                     "after": [
-                        "T21 Make the probe list r12"
+                        "T21 Make the probe list r13"
                     ],
                     "doing": "Adding the second person to the Visitors group."
                 },
@@ -332,7 +332,7 @@
                     "estimate": 5,
                     "after": [
                         "T26 Make the fake publication r3",
-                        "T21 Add the second person r12"
+                        "T21 Add the second person r13"
                     ],
                     "answers": [
                         {
@@ -386,7 +386,7 @@
                     "dir": "T22",
                     "file": "90161Z-T22-pfm-window-r18.ps1",
                     "minutes": 40,
-                    "note": "Signs in (CAC). Writes nothing. In the window \"90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)\", do the 22 lines of its bar, then close it with its X.",
+                    "note": "Signs in (CAC). Writes nothing. In the window whose title starts with \"Kanon\" and ends with \"(FAKE data)\", do the 22 lines of its bar, then close it with its X.",
                     "estimate": 20,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [
@@ -697,10 +697,10 @@
                     "doing": "Removing the fake rows."
                 },
                 {
-                    "name": "T21 Remove the test list and library r12",
+                    "name": "T21 Remove the test list and library r13",
                     "title": "Remove the test person, list and library",
                     "dir": "T21",
-                    "file": "90161Z-T21-probe-r12.ps1",
+                    "file": "90161Z-T21-probe-r13.ps1",
                     "args": "-Part Clean -Label last",
                     "minutes": 20,
                     "note": "Signs in (CAC). Takes the second person out of Visitors and moves the test list and library to the Recycle Bin. Runs after any failure.",
@@ -1063,18 +1063,18 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-first-r12.txt",
-                    "step": "T21 Check the test site is clean r12"
+                    "name": "90161Z-T21-probe-clean-first-r13.txt",
+                    "step": "T21 Check the test site is clean r13"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-make-r12.txt",
-                    "step": "T21 Make the probe list r12"
+                    "name": "90161Z-T21-probe-make-r13.txt",
+                    "step": "T21 Make the probe list r13"
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-person-r12.txt",
-                    "step": "T21 Add the second person r12"
+                    "name": "90161Z-T21-probe-person-r13.txt",
+                    "step": "T21 Add the second person r13"
                 },
                 {
                     "dir": "T26",
@@ -1113,8 +1113,8 @@
                 },
                 {
                     "dir": "T21",
-                    "name": "90161Z-T21-probe-clean-last-r12.txt",
-                    "step": "T21 Remove the test list and library r12"
+                    "name": "90161Z-T21-probe-clean-last-r13.txt",
+                    "step": "T21 Remove the test list and library r13"
                 },
                 {
                     "dir": "T20",
@@ -1175,9 +1175,9 @@
                     "steps": [
                         "T29 Sign-in test r2",
                         "T28 Count what is on the test site r1",
-                        "T21 Check the test site is clean r12",
-                        "T21 Make the probe list r12",
-                        "T21 Add the second person r12",
+                        "T21 Check the test site is clean r13",
+                        "T21 Make the probe list r13",
+                        "T21 Add the second person r13",
                         "T26 Make the fake publication r3",
                         "T26 Second person answers r3",
                         "T26 Read the endorser answer r3",
@@ -1195,7 +1195,7 @@
                         "T26 Close the second window r3",
                         "T26 Check the restored rows r3",
                         "T26 Remove the fake rows r3",
-                        "T21 Remove the test list and library r12",
+                        "T21 Remove the test list and library r13",
                         "T27 Check the lists before Uninstall r1",
                         "T27 Uninstall in a second window r1",
                         "T27 Check Uninstall removed the lists r1",

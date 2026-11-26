@@ -128,7 +128,9 @@ function Merge-SiteGrid([string]$Card, [string]$Name, $Rows, [string]$List, $Tit
 #>
 function Sync-WaveSummary($Rows) {
   $all = @($Rows); $t = $all.Count; $n = @($all | Where-Object { $_.Status -eq 'Answered' }).Count; $w = $t - $n
-  if (-not $t) { return }   # no rows: the grid is the empty-state note; the card keeps its FAKE lines
+  if (-not $t) {   # no rows: the grid is the empty-state note; the head line says so (R46 build, worker question 2b)
+    foreach ($col in @($Cards.waves.Cols)) { foreach ($sec in @($col)) { foreach ($bl in @($sec.Blocks)) { if ($bl.T -eq 'head' -and -not $bl.Small) { $bl.Text = 'Wave 1: no office has answered yet.' } } } }
+    return }
   $hd = 'Wave 1: ' + $n + ' of ' + $t + $(if ($t -eq 1) { ' office has' } else { ' offices have' }) + ' answered.'
   $chip = $(if ($w) { @('late', ($w.ToString() + $(if ($w -eq 1) { ' office has' } else { ' offices have' }) + ' not answered')) } else { @('ok', 'Every office has answered') })
   $pill = @('Wave 1: offices the AO added', ($n.ToString() + ' of ' + $t), $(if ($w) { 'soon' } else { 'ok' }))
