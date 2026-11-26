@@ -8,6 +8,10 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-25 | App shortcut now (RADE plan step 7): one per app, "90-161.Z - Kanon - 0.1.0", app Fulcrum icon; next free engine release. Scope: RADE, R44/R45. | PFM (question dialog, 25 Nov 26 20:44) | [review](reviews/2026-11-25-kanon-scale-cleanup.md) |
+| 2026-11-25 | Titles: "RADE - engine-v41 - R44" (no build); "90-161.Z - Kanon - 0.1.0 - R44"; installed "90-161.Z - Kanon - 0.1.0"; display field. Scope: RADE, T22. | PFM (question dialog, 25 Nov 26 20:44) | [review](reviews/2026-11-25-kanon-scale-cleanup.md) |
+| 2026-11-25 | Scale: ISE RADE window runs in the shortcut's host (one scale) in the next engine release; proof 2 equal SCALE lines. Scope: RADE. | PFM (question dialog, 25 Nov 26 20:44) | [review](reviews/2026-11-25-kanon-scale-cleanup.md) |
+| 2026-11-25 | Test-site clean-up: R44 read-only list by fixed title first; Uninstall after Back up works; new deletes only on a list the PFM approves. Scope: R44. | PFM (question dialog, 25 Nov 26 20:44) | [review](reviews/2026-11-25-kanon-scale-cleanup.md) |
 | 2026-11-26 | tests/check_screen_names.py also reads card sentences that RADE builds as <name> + a fixed end (Sentence, Text, Title, Kicker), so step text quotes them exactly. Scope: the check, every round. | PFM (dialog: "Teach the check") | docs/reviews/2026-11-25-fresh-reader.md |
 | 2026-11-25 | R43 plan E4 (slow sign-in) approved, then limited to one quick look: the PFM thinks it is the Microsoft servers. Scope: R43. | PFM (chat: "i approve everything"; "don't look too hard into it") | docs/reviews/2026-11-25-r43-plan.md |
 | 2026-11-26 | R43: the timed sign-in pair leaves R43 (engine-v41 reuses a passed sign-in check for 7 days; no forced sign-in); the Uninstall flows hand step ends with Done when no flows exist. Scope: R43. | PFM (question dialog) | docs/reviews/2026-11-25-r43-plan.md |
