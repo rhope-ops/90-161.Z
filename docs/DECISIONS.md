@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-26 | RADE lock moves to release engine-v42 (RADE f3f62c7, serial 29) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-26 | RADE engine-v42 preview (PR 199, head a2c36e6) approved: titles, shortcut "90-161.Z - Kanon - 0.1.0", Kanon names, Back up hint and time limits. Scope: engine-v42. | PFM ("Approve", question dialog) | https://github.com/rhope-ops/RADE/pull/199 |
 | 2026-11-26 | RADE engine-v42: "RADE - engine-v42 - R44" on every bundle with a round; each passed install replaces that app's runner copy; the -ExecutionPolicy ban of 2026-11-23 stays. Scope: RADE. | PFM (question dialog) | docs/reviews/2026-11-25-r44-plan.md |
 | 2026-11-26 | Shortcut icon: a PNG drawn from the Fulcrum SVG at build time in R44 (the easy way now); RADE reading the SVG is the long-term way for later rounds. Scope: RADE, R44 and later. | PFM ("go with that for future rounds and whatever is easy this one") | docs/reviews/2026-11-25-r44-plan.md |
