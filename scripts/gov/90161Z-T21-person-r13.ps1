@@ -24,7 +24,8 @@ function Read-PersonAddress {
   # empty box or closing the window gives '' (the caller then gives SKIP, not FAIL). The window scales itself
   # (AutoScaleMode Dpi): after the engine-v46 sign-in block the process is DPI-aware.
   if ($TestDir -and $null -ne $env:T21_TEST_ADDRESS) { return ([string]$env:T21_TEST_ADDRESS).Trim() }
-  $prompt = 'Type the e-mail address of the second person for test T4 (a person who is not you), then select OK. It is used once, stays on this computer and is not saved or sent. If nobody can help today, select Skip.'
+  $prompt = 'Type the e-mail address of the second person for test T4 (a person who is not you), then select OK. ' +
+    'It is used once, stays on this computer and is not saved or sent. If nobody can help today, select Skip.'
   try {
     Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop; Add-Type -AssemblyName System.Drawing -ErrorAction Stop
     $f = New-Object System.Windows.Forms.Form
