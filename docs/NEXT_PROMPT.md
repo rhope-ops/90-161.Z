@@ -1,10 +1,10 @@
 # Next prompt: 90-161.Z
 
-Updated 2026-11-26 14:06 Central by the R44 results session.
+Updated 2026-11-26 15:25 Central by the R45 results session.
 
 ## Open
 
-0. R45 r1 released (engine-v44: no sign-in size watch, ISE child hidden). Wait for 1 e-mail "90161Z R45"; record with the round skill. Build 12:18 to 12:28 Central (from the engine-v44 tag); slowest step: the 2 review and fresh-reader passes.
+0. R45 recorded ([results](reviews/2026-11-26-r45-results.md)); R46 questions asked of the PFM (26 Nov 26). Build after the answers.
 1. R46: lock engine-v45 (RADE 7643769, name spot L2; the PFM approved it in the RADE session). Manifest: application.productName "Kanon", subtitle "Publications and Forms Management" (no "Kanon • "), a bundle "label" (24 characters at most); displayName stays.
 2. R45 watch list: T29 r2 sign-in time and SIGNIN-WIN lines (no hung); no blank PowerShell window; 2 equal SCALE lines (ISE start and shortcut); the shortcut "90-161.Z - Kanon - 0.1.0" and its icon (`b-icon`); Back up sign-in time (the line "The sign-in took"); stage lines live on 5.1; T28 counts; Uninstall, install from zero, the process step.
 3. Later items (not in R45): the T22 r17 window title says R44 (fix in T22 r18); T21 "Add the second person" gives FAIL, not SKIP, when nobody helps (needs a T21 revision); the shortcut icon after a sign-out and sign-in (RADE suggestion, left out); the "Also open" list in the r44 plan.
