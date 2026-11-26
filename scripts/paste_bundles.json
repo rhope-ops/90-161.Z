@@ -215,7 +215,7 @@
                 },
                 {
                     "name": "T29 Answer: the sign-in and the RADE window r1",
-                    "title": "Answer 4 questions about the sign-in window and the RADE window",
+                    "title": "Answer 4 questions about the sign-in and the window",
                     "kind": "guide",
                     "guide": [],
                     "dir": "T29",
@@ -232,12 +232,12 @@
                             "prompt": "In the step before, how big was the CAC sign-in window?",
                             "kind": "pick",
                             "choices": [
-                                "Half of the screen or less",
-                                "Most of the screen, or taller than it",
+                                "Half the screen or less",
+                                "Most of the screen or more",
                                 "No sign-in window showed"
                             ],
                             "failOn": [
-                                "Most of the screen, or taller than it"
+                                "Most of the screen or more"
                             ]
                         },
                         {
@@ -273,7 +273,7 @@
                             "prompt": "Look at the top left of this RADE window, under the title bar. What does it show?",
                             "kind": "pick",
                             "choices": [
-                                "The 90-161.Z logo and the word KANON",
+                                "The 90-161.Z logo and KANON",
                                 "The RADE logo and the word RADE",
                                 "Both logos"
                             ],
@@ -647,16 +647,16 @@
                     "answers": [
                         {
                             "key": "r-dry",
-                            "prompt": "In the second RADE window, what does the line that starts with \"Dry run:\" say?",
+                            "prompt": "In the second RADE window, does the line that starts with \"Dry run:\" say \"4 rows would come back (3 from the Recycle Bin, 1 as new rows)\"?",
                             "kind": "pick",
                             "choices": [
-                                "4 rows would come back (3 from the Recycle Bin, 1 as new rows)",
-                                "The Recycle Bin could not be read",
-                                "Something else"
+                                "Yes, exactly that",
+                                "No: the Recycle Bin was not read",
+                                "No: something else"
                             ],
                             "failOn": [
-                                "The Recycle Bin could not be read",
-                                "Something else"
+                                "No: the Recycle Bin was not read",
+                                "No: something else"
                             ]
                         }
                     ],
@@ -737,7 +737,7 @@
                     "kind": "guide",
                     "dir": "T26",
                     "file": "",
-                    "note": "The Restore test in the second window is complete, or it stopped. This step shows in each case (R45: it was skipped).",
+                    "note": "The Restore test in the second window is complete, or it stopped. This step shows in each case.",
                     "guide": [
                         "1. If a second RADE window is open, close it with its X. You see the first RADE window again."
                     ],
