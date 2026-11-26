@@ -8,6 +8,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-26 | R45: one T29 sign-in (r2, no watch pair) on engine-v44, then the R44 part 2 steps, from ISE; one Back up (the watch-off Back up leaves). Scope: R45. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |
+| 2026-11-26 | R45 does not wait for the name spot release; the name spot goes to R46 after the PFM approves preview pictures. Scope: R45, R46. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |
+| 2026-11-26 | RADE lock moves to release engine-v44 (RADE 58b8f1f, serial 31) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-26 | Round skill 6: step 7 (copy index.html to gh-pages) removed, steps renumbered; it conflicted with the 2026-11-25 Pages-off row. Scope: every round. | PFM ("i approve this suggestion") | docs/reviews/2026-11-26-r44-results.md |
 | 2026-11-26 | RADE engine-v44 deletes the sign-in window size watch; RADE keeps sizing its own window. Withdraws the 2026-11-21 R42 row "CAC sign-in window about 480 x 360". Scope: RADE, all apps. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |
 | 2026-11-26 | engine-v44 starts the ISE child window process hidden (the blank PowerShell window). Scope: RADE, all apps. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |

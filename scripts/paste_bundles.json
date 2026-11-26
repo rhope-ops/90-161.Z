@@ -27,13 +27,13 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R44-round-r2.ps1",
-            "round": "R44",
-            "title": "Round R44 r2: a CAC sign-in test in 2 hosts with the size watch on and off, then a read-only count of the test site, my window r17, an optional endorser answer, and RADE Back up and Restore of fake rows",
+            "out": "scripts/gov/paste/90161Z-R45-round-r1.ps1",
+            "round": "R45",
+            "title": "Round R45 r1: a CAC sign-in on RADE engine-v44 (no sign-in size watch), then a read-only count of the test site, my window r17, an optional endorser answer, RADE Back up and Restore of fake rows, Uninstall and a new install",
             "files": [
                 {
                     "dir": "T29",
-                    "src": "scripts/gov/90161Z-T29-signin-r1.ps1"
+                    "src": "scripts/gov/90161Z-T29-signin-r2.ps1"
                 },
                 {
                     "dir": "T28",
@@ -198,27 +198,10 @@
             ],
             "steps": [
                 {
-                    "name": "T29 Sign-in test, size watch on r1",
-                    "title": "Sign in to the test site, size watch on",
+                    "name": "T29 Sign-in test r2",
+                    "title": "Sign in to the test site",
                     "dir": "T29",
-                    "file": "90161Z-T29-signin-r1.ps1",
-                    "args": "-Watch on",
-                    "minutes": 5,
-                    "note": "Signs in (CAC), then signs out. Nothing on the site changes. It stops by itself after 3 minutes if the sign-in does not finish.",
-                    "estimate": 1,
-                    "help": "If the sign-in window does not show or does not respond, wait. The step stops after 3 minutes and keeps its result.",
-                    "needs": [
-                        "pnp",
-                        "net-site"
-                    ],
-                    "doing": "Signing in to the test site."
-                },
-                {
-                    "name": "T29 Sign-in test, size watch off r1",
-                    "title": "Sign in to the test site, size watch off",
-                    "dir": "T29",
-                    "file": "90161Z-T29-signin-r1.ps1",
-                    "args": "-Watch off",
+                    "file": "90161Z-T29-signin-r2.ps1",
                     "minutes": 5,
                     "note": "Signs in (CAC), then signs out. Nothing on the site changes. It stops by itself after 3 minutes if the sign-in does not finish.",
                     "estimate": 1,
@@ -477,11 +460,10 @@
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "4. Click the row \"Back up\". The card \"Back up is running.\" shows.",
                         "5. If \"Back up is running.\" shows for 30 seconds with no CAC sign-in window, press Alt+Tab.",
-                        "6. If a CAC sign-in window shows, write \"Small\" (size of a card) or \"Large\" (most of the screen).",
-                        "7. If a CAC sign-in window shows, sign in with your CAC.",
-                        "8. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
-                        "9. Write down the number in the line \"The sign-in took\". The line ends with \"on).\".",
-                        "10. Close the second RADE window with its X. The questions show in the first RADE window.",
+                        "6. If a CAC sign-in window shows, sign in with your CAC.",
+                        "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
+                        "8. Write down the number in the line \"The sign-in took\".",
+                        "9. Close the second RADE window with its X. The questions show in the first RADE window.",
                         "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",
                         "Then type that line, and click \"Report the failure\"."
@@ -515,43 +497,6 @@
                                 "No, another icon",
                                 "No shortcut with that name"
                             ]
-                        }
-                    ]
-                },
-                {
-                    "name": "T26 Back up with the size watch off r3",
-                    "title": "Back up again from ISE, with the sign-in size watch off",
-                    "kind": "guide",
-                    "dir": "T26",
-                    "file": "",
-                    "note": "This window waits. You run Back up one more time from ISE, with the sign-in size watch off. Nothing on the site changes. The question shows in this window.",
-                    "guide": [
-                        "1. Press Alt+Tab to go to Windows PowerShell ISE (not from the bundle). Click in its bottom pane.",
-                        "2. Type: $env:RADE_SIGNIN_WATCH = '0' and press Enter. Then press F5.",
-                        "3. Wait up to 2 minutes for a new RADE window. If it is not in front, click RADE on the taskbar.",
-                        "4. In the new RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
-                        "5. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
-                        "6. Click the row \"Back up\". If a CAC sign-in window shows, sign in with your CAC.",
-                        "7. If you did not sign in and \"Back up is running.\" shows for 30 s, press Alt+Tab and sign in.",
-                        "8. Wait until \"Back up saved the lists.\" shows. Write down the number in \"The sign-in took\".",
-                        "9. Close the RADE window that shows \"Back up saved the lists.\" with its X.",
-                        "10. On the taskbar, click ISE. In its bottom pane, type: $env:RADE_SIGNIN_WATCH = $null",
-                        "Then press Enter. The size watch is on again.",
-                        "If no new RADE window opens in 2 minutes: in the first RADE window, click \"It failed\".",
-                        "Then type: no second window, and click \"Report the failure\".",
-                        "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
-                        "If you wrote down a line: in the first RADE window, click \"It failed\".",
-                        "Then type that line, and click \"Report the failure\"."
-                    ],
-                    "estimate": 4,
-                    "after": [
-                        "T26 Back up in a second window r3"
-                    ],
-                    "answers": [
-                        {
-                            "key": "b-took-off",
-                            "prompt": "Type the number of seconds of the line \"The sign-in took\" (it ends with \"off).\"). Type none if the line did not show.",
-                            "kind": "text"
                         }
                     ]
                 },
@@ -1023,13 +968,8 @@
             "collect": [
                 {
                     "dir": "T29",
-                    "name": "90161Z-T29-signin-on-r1.txt",
-                    "step": "T29 Sign-in test, size watch on r1"
-                },
-                {
-                    "dir": "T29",
-                    "name": "90161Z-T29-signin-off-r1.txt",
-                    "step": "T29 Sign-in test, size watch off r1"
+                    "name": "90161Z-T29-signin-r2.txt",
+                    "step": "T29 Sign-in test r2"
                 },
                 {
                     "dir": "T28",
@@ -1240,11 +1180,10 @@
             "fetch": [],
             "apps": [
                 {
-                    "name": "90-161.Z R44",
-                    "summary": "Round R44 r2: the sign-in test inside ISE, then a read-only count of the test site, window r17, an optional endorser answer, and Back up and Restore of fake rows.",
+                    "name": "90-161.Z R45",
+                    "summary": "Round R45: one CAC sign-in on engine-v44, a read-only count, window r17, Back up and Restore of fake rows, Uninstall and a new install.",
                     "steps": [
-                        "T29 Sign-in test, size watch on r1",
-                        "T29 Sign-in test, size watch off r1",
+                        "T29 Sign-in test r2",
                         "T28 Count what is on the test site r1",
                         "T21 Check the test site is clean r12",
                         "T21 Make the probe list r12",
@@ -1257,7 +1196,6 @@
                         "T22 Answer: look and cards r17",
                         "T26 Make the Restore test rows r3",
                         "T26 Back up in a second window r3",
-                        "T26 Back up with the size watch off r3",
                         "T22 Check the Back up r17",
                         "T26 Delete and add the test rows r3",
                         "T26 Start Restore in a second window r3",
@@ -1276,14 +1214,6 @@
                         "T26 Make the fake publication after install r3",
                         "T27 Move the fake publication one step r1",
                         "T26 Remove the fake rows after install r3"
-                    ]
-                },
-                {
-                    "name": "90-161.Z R44 sign-in test",
-                    "summary": "Round R44 r2, part 1: 2 CAC sign-ins with RADE in its own window, the size watch on, then off. Nothing on the site changes.",
-                    "steps": [
-                        "T29 Sign-in test, size watch on r1",
-                        "T29 Sign-in test, size watch off r1"
                     ]
                 },
                 {

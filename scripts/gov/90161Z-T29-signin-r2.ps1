@@ -1,28 +1,25 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 29 r1 (round R44 r2; the PFM, 26 Nov 26: "surely there's a way to test it both ways or determine root cause
-  better"): one CAC sign-in to the test site, with the RADE sign-in size watch on or off, that always ends with a result.
+  90-161.Z Task 29 r2 (round R45; the PFM, 26 Nov 26): one CAC sign-in to the test site, the way RADE engine-v44 signs in
+  (no sign-in size watch), that always ends with a result.
   Windows PowerShell 5.1 (also 7), the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  WHY: in R44 r1 the CAC sign-in window froze in both RADE runs and the PFM had to force-close the windows, so no data came
-  back. This step signs in the way RADE does (Connect-RadeSite of the pinned RADE sign-in block below) and writes each line to
-  its result file at once, so a stop keeps the lines. The round runs it 4 times: RADE in its own window (host "child") and
-  RADE inside ISE (host "ise"), each with the size watch on and off.
+  WHY: in R44 r2 the CAC sign-in froze with the RADE sign-in size watch on (2 windows not responding at 9 s) and passed in
+  5 s with it off. RADE engine-v44 deletes the watch. This step signs in the way RADE does (Connect-RadeSite of the pinned
+  RADE sign-in block below) and writes each line to its result file at once, so a stop keeps the lines.
   WHAT IT WRITES: nothing on the site (it signs in and out only). On this computer one result file in the T29 folder:
-  90161Z-T29-signin-<on|off>-r1.txt.
-  Lines: TASK; HOST rade=<RADE_HOST> ps=<edition and version>; WATCH asked=<on|off>; STAGE signin; SIGNIN-WIN lines (the
-  windows of this process only: count, owned, minimized, size, not responding, foreground; no title and no text);
-  SIGNIN seconds=<n> watch=<on|off>; RESULT SIGNIN PASS or STOPPED: <why>.
+  90161Z-T29-signin-r2.txt.
+  Lines: TASK; HOST rade=<RADE_HOST> ps=<edition and version>; STAGE signin; SIGNIN-WIN lines (the windows of this process
+  only: count, owned, minimized, size, not responding, foreground; no title and no text); SIGNIN seconds=<n>;
+  RESULT SIGNIN PASS or STOPPED: <why>.
   Its own time limit (-Limit, 180 s): when the sign-in has not ended by then, it writes "STOPPED: the sign-in did not
   finish in <n> seconds" and the last window state, then ends this process. Exit 1 when the sign-in did not finish.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell.
   Writes: the result file in the T29 folder (or -TestDir). Nothing on the site.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Run: powershell.exe -NoProfile -File 90161Z-T29-signin-r1.ps1 -Watch on (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T29-signin-r2.ps1 (RADE does this).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
-.PARAMETER Watch
-  on = the RADE sign-in size watch runs (RADE's default); off = it does not (RADE_SIGNIN_WATCH=0).
 .PARAMETER Limit
   The time limit of the sign-in, in seconds (30 to 600).
 .PARAMETER NoPause
@@ -30,9 +27,9 @@
 .PARAMETER TestDir
   Test runs only: the folder to use instead of the T29 folder (its parent holds the Config folder of the test).
 #>
-param([string]$Id, [ValidateSet('on', 'off')][string]$Watch = 'on', [ValidateRange(30, 600)][int]$Limit = 180, [switch]$NoPause, [string]$TestDir)
+param([string]$Id, [ValidateRange(30, 600)][int]$Limit = 180, [switch]$NoPause, [string]$TestDir)
 $task = 'T29'
-$Rev = 'r1'
+$Rev = 'r2'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -155,86 +152,13 @@ function Hide-Site([string]$Text, [string]$Site) {
 # <<< site-common
 # >>> rade-signin: generated from the pinned RADE sign-in block by scripts/build_task_scripts.py (do not edit)
 # ---- RADE sign-in window size (start; engine/ps/07-checks.ps1 $signInSize; E3, the Owner, 2026-11-21)
-# The CAC sign-in window of Connect-PnPOnline -UseWebLogin (PnP.PowerShell 1.12.0) opens very large. Start-SignInSize,
-# called just before Connect-PnPOnline, starts a background timer that, for up to 2 minutes, finds each new visible window
-# of THIS process only (the windows of its own threads: no other process and no other host is read) and makes it about
-# 480 x 360 logical pixels, in the center of the work area of its screen. The window stays visible, so it can still take
-# input. Copy this block unchanged between its start and end lines (an app's task scripts may hold the same copy).
-# An app script that opens its own window calls Start-SignInSize -SignInOnly (follow-ups 2 item 10, the Maintainer,
-# 2026-11-25): the windows that already exist are left as they are, and only the first new window (the sign-in window)
-# is sized; then the watch stops. With no switch, each new window in the 2 minutes is sized (the engine's child scripts).
-# Such a script also calls Stop-SignInSize when Connect-PnPOnline returns (in a finally block): a sign-in that showed no
-# window then leaves no watch behind that could size the script's own next window.
-# Windows PowerShell 5.1, no module. When the helper cannot be compiled (Constrained Language Mode) or the calls fail,
-# nothing changes and the sign-in goes on as before.
-$SignInW = 480; $SignInH = 360; $SignInWatchMs = 120000; $SignInTickMs = 100
-function Start-SignInSize {
-  [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'None')]
-  param([switch]$SignInOnly)
-  $script:signInWatchOn = $false   # R43 E4: $true only when the watch really started (the SIGNIN line reports it)
-  if (-not $PSCmdlet.ShouldProcess('the sign-in window of this process', 'Set its size')) { return }   # -WhatIf: no timer
-  if ($env:RADE_SIGNIN_WATCH -eq '0') { return }   # R43 E4 (the PFM, 2026-11-25): the timed pair; RADE_SIGNIN_WATCH=0 turns the watch off
-  if ($env:OS -ne 'Windows_NT' -and $env:RADE_SIGNIN_TEST -ne '1') { return }   # Windows only (the cloud test sets RADE_SIGNIN_TEST to compile it)
-  try {
-    if (-not ('RadeSignIn.Size2' -as [type])) {   # Size2: Start takes signInOnly (a process that holds the old Size keeps it)
-      Add-Type -Namespace RadeSignIn -Name Size2 -ErrorAction Stop -MemberDefinition @"
-public delegate bool WinProc(System.IntPtr h, System.IntPtr l);
-[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool EnumThreadWindows(uint tid, WinProc f, System.IntPtr l);
-[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool IsWindowVisible(System.IntPtr h);
-[System.Runtime.InteropServices.DllImport("user32.dll")] static extern System.IntPtr GetWindow(System.IntPtr h, uint cmd);
-[System.Runtime.InteropServices.DllImport("user32.dll")] static extern System.IntPtr MonitorFromWindow(System.IntPtr h, uint flags);
-[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool GetMonitorInfo(System.IntPtr m, ref MonInfo i);
-[System.Runtime.InteropServices.DllImport("user32.dll")] static extern uint GetDpiForWindow(System.IntPtr h);
-[System.Runtime.InteropServices.DllImport("user32.dll")] static extern bool SetWindowPos(System.IntPtr h, System.IntPtr after, int x, int y, int cx, int cy, uint flags);
-[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-public struct MonInfo { public int Size; public int ML, MT, MR, MB; public int WL, WT, WR, WB; public uint Flags; }
-static System.Threading.Timer timer; static WinProc each = Each, mark = Mark; static int w, h, left; static bool one;
-static System.Collections.Generic.HashSet<long> seen = new System.Collections.Generic.HashSet<long>(); static object gate = new object();
-// Starts the watch: every tickMs, for watchMs, each new visible top-level window of this process gets the size w x h (logical).
-// signInOnly: every window of this process that exists now (shown or not) is marked as seen, and the watch stops after it
-// has sized one new window, so an app's own window is never sized.
-public static void Start(int width, int height, int watchMs, int tickMs, bool signInOnly) {
-  Stop();   // a watch that still runs from an earlier call ends first
-  lock (gate) { w = width; h = height; one = signInOnly; left = System.Math.Max(1, watchMs / System.Math.Max(1, tickMs));
-    if (one) { using (System.Diagnostics.Process me = System.Diagnostics.Process.GetCurrentProcess()) {
-      foreach (System.Diagnostics.ProcessThread t in me.Threads) { EnumThreadWindows((uint)t.Id, mark, System.IntPtr.Zero); } } }
-    timer = new System.Threading.Timer(Tick, null, tickMs, tickMs); } }
-// Ends the watch now (no more ticks). Safe to call when no watch runs.
-public static void Stop() { lock (gate) { left = 0; if (timer != null) { timer.Dispose(); timer = null; } } }
-// Marks one window that exists at the start (signInOnly): it is never sized.
-static bool Mark(System.IntPtr hw, System.IntPtr l) { seen.Add(hw.ToInt64()); return true; }
-// One tick: a tick that starts while the last one still runs is skipped (the timer can overlap), so seen has one writer.
-static void Tick(object state) {
-  if (!System.Threading.Monitor.TryEnter(gate)) { return; }
-  try { if (--left < 0) { if (timer != null) { timer.Dispose(); timer = null; } return; }
-    using (System.Diagnostics.Process me = System.Diagnostics.Process.GetCurrentProcess()) {
-      foreach (System.Diagnostics.ProcessThread t in me.Threads) { EnumThreadWindows((uint)t.Id, each, System.IntPtr.Zero); } } }
-  catch { }
-  finally { System.Threading.Monitor.Exit(gate); } }
-// One window of this process: a visible top-level window (no owner) not seen before is sized and centered once.
-static bool Each(System.IntPtr hw, System.IntPtr l) {
-  if (one && left <= 0) { return false; }   // signInOnly: a window is sized already (also on the other threads of this tick)
-  long k = hw.ToInt64(); if (seen.Contains(k) || !IsWindowVisible(hw) || GetWindow(hw, 4) != System.IntPtr.Zero) { return true; }
-  seen.Add(k);
-  int dpi = 96; try { dpi = (int)GetDpiForWindow(hw); } catch { } if (dpi <= 0) { dpi = 96; }
-  int cw = w * dpi / 96, ch = h * dpi / 96;
-  MonInfo mi = new MonInfo(); mi.Size = System.Runtime.InteropServices.Marshal.SizeOf(typeof(MonInfo));
-  if (!GetMonitorInfo(MonitorFromWindow(hw, 2), ref mi)) { return true; }
-  int x = mi.WL + System.Math.Max(0, (mi.WR - mi.WL - cw) / 2), y = mi.WT + System.Math.Max(0, (mi.WB - mi.WT - ch) / 2);
-  SetWindowPos(hw, System.IntPtr.Zero, x, y, cw, ch, 0x0004 | 0x0010 | 0x4000);   // no Z order change, no activate, async
-  if (one) { left = 0; return false; }   // signInOnly: one window only; the next tick ends the watch
-  return true; }
-"@
-    }
-    [RadeSignIn.Size2]::Start($SignInW, $SignInH, $SignInWatchMs, $SignInTickMs, [bool]$SignInOnly); $script:signInWatchOn = $true
-  } catch { $null = $_ }   # no helper: the sign-in window keeps its own size
-}
-function Stop-SignInSize {
-  [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'None')]
-  param()
-  if (-not $PSCmdlet.ShouldProcess('the sign-in window watch of this process', 'Stop')) { return }
-  try { if ('RadeSignIn.Size2' -as [type]) { [RadeSignIn.Size2]::Stop() } } catch { $null = $_ }   # no watch: nothing to stop
-}
+# engine-v44 (the PFM, 2026-11-26): RADE never touches the CAC sign-in window of Connect-PnPOnline -UseWebLogin; it opens
+# at its own size. The size watch of engine-v35 to engine-v43 (Start-SignInSize) is gone: it froze the sign-in
+# (90-161.Z R44 r2, one host: watch on, 2 windows not responding at 9 s; watch off, signed in after 5 s).
+# The block holds the read-only window report (Start-SignInReport, Stop-SignInReport) and the one sign-in (Connect-RadeSite).
+# Copy this block unchanged between its start and end lines (an app's task scripts may hold the same copy).
+# Windows PowerShell 5.1, no module. When the report helper cannot be compiled (Constrained Language Mode), the sign-in
+# goes on without it.
 # engine-v43 S2 (the PFM, 2026-11-26: R44 r1 froze at the sign-in with no data): while Connect-PnPOnline runs, a
 # background timer reads the windows of THIS process only, about every second, and prints one line at each change:
 # "SIGNIN-WIN t=<seconds> windows=<visible> owned=<visible with an owner> min=<minimized> size=<largest WxH>
@@ -301,14 +225,14 @@ function Stop-SignInReport {
   try { if ('RadeSignIn.Report1' -as [type]) { [RadeSignIn.Report1]::End($true) } } catch { $null = $_ }   # no report: nothing to stop
 }
 # engine-v43 S1: the one sign-in of a child script. Prints "STAGE signin" (the parent stops a stage that runs too long),
-# signs in with the CAC (PnP web login), prints "SIGNIN seconds=<n> watch=<on|off>" and "STAGE none" (no stage runs).
+# signs in with the CAC (PnP web login), prints "SIGNIN seconds=<n>" and "STAGE none" (no stage runs).
 # Throws when the sign-in fails, as Connect-PnPOnline does. Takes the site address.
 function Connect-RadeSite([string]$Site) {
   'STAGE signin'
-  $t0 = Get-Date; Start-SignInReport; Start-SignInSize   # E3: the CAC sign-in window opens at about 480 x 360, centered
+  $t0 = Get-Date; Start-SignInReport   # engine-v44: the sign-in window opens at its own size (no size watch)
   try { $null = & { Connect-PnPOnline -Url $Site -UseWebLogin -ErrorAction Stop } *>&1 }
-  finally { Stop-SignInSize; Stop-SignInReport }   # R44 E4: no watch after the sign-in
-  'SIGNIN seconds=' + [int]((Get-Date) - $t0).TotalSeconds + ' watch=' + $(if ($script:signInWatchOn) { 'on' } else { 'off' })   # what happened, not what was asked
+  finally { Stop-SignInReport }   # no report after the sign-in
+  'SIGNIN seconds=' + [int]((Get-Date) - $t0).TotalSeconds
   'STAGE none'
 }
 # ---- RADE sign-in window size (end)
@@ -356,12 +280,10 @@ try {
   foreach ($s in $secret) { [T29Guard.Tee]::Mask($s, '<DODID>') }   # the file copy never holds the DODID (also on a stop by the time limit)
   if ($TestDir) { $dir = $TestDir } else { $dir = Get-TaskDir $who.Id $task 'Task 29' -Create }
   Set-Location -LiteralPath $dir
-  $out = Join-Path $dir ('90161Z-T29-signin-' + $Watch + '-' + $Rev + '.txt')
+  $out = Join-Path $dir ('90161Z-T29-signin-' + $Rev + '.txt')
   [T29Guard.Tee]::Begin($out)
   [T29Guard.Tee]::Line('TASK T29 signin ' + $Rev + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
   [T29Guard.Tee]::Line('HOST rade=' + $(if ($env:RADE_HOST) { $env:RADE_HOST } else { 'unknown' }) + ' ps=' + $PSVersionTable.PSEdition + ' ' + $PSVersionTable.PSVersion)
-  [T29Guard.Tee]::Line('WATCH asked=' + $Watch)
-  if ($Watch -eq 'off') { $env:RADE_SIGNIN_WATCH = '0' } else { Remove-Item -LiteralPath 'Env:RADE_SIGNIN_WATCH' -ErrorAction SilentlyContinue }
   $script:site = Get-SiteAddress (Join-Path (Split-Path -Parent $dir) 'Config')
   [T29Guard.Tee]::Mask($script:site.TrimEnd('/'), '<SITE>'); try { [T29Guard.Tee]::Mask(([uri]$script:site).Host, '<SITE-HOST>') } catch { $null = $_ }   # no host: the site mask stays
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
