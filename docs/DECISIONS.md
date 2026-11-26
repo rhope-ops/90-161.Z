@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-26 | RADE lock moves to release engine-v46 (RADE da41642, serial 32) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-26 | Name spot L3: "KANON" over "90-161.Z • <subtitle>"; no version, no RADE logo; shortcut "Kanon". Replaces older name spot rows. | PFM | docs/reviews/2026-11-26-plan-r46.md |
 | 2026-11-26 | Build order: this session releases RADE engine-v46, then builds R46 on its tag (separate PRs). | PFM (dialog) | docs/reviews/2026-11-26-plan-r46.md |
 | 2026-11-26 | No console (ISE, shortcut); own taskbar identity; sign-in is cached: smaller window now, fewer sign-ins in R47. | PFM (dialog) | docs/reviews/2026-11-26-plan-r46.md |

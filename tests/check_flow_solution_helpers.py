@@ -85,7 +85,7 @@ def check_probe_flows(zz, cust_xml, zname):
         if refs != {("shared_sharepointonline", sp)}: bad(f"{zname} {n}: a probe flow must use only the SharePoint reference {sp}: {sorted(refs)}")
     names = set(re.findall(r'connectionreferencelogicalname="([^"]+)"', cust_xml))
     if names != {sp, B.conn_logical("shared_office365")}: bad(f"{zname}: connection references {sorted(names)}; an upgrade must add none")
-    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r12.ps1").read_text(encoding="utf-8")
+    look = (ROOT / "scripts" / "gov" / "90161Z-T21-look-r13.ps1").read_text(encoding="utf-8")
     bid = B.guid("workflow", "90161Z-T21-probe-button").lower()
     if f"$ButtonFlowId = '{bid}'" not in look or f'WorkflowId="{{{bid}}}"' not in cust_xml: bad(f"{zname}: the T21 look script does not name the button flow's workflow ID {bid}")
 
@@ -166,7 +166,7 @@ def check_action_description_limit():
 RUNTIME = {"name", "status", "error", "code", "message", "tags", "flowDisplayName", "environmentName", "run"}
 RUNTIME_ACTIONS = {"Failed_actions", "Failure_lines", "E-mail_the_failure"}   # only these may read them (review, 14 Nov 26)
 # R34 (fallback A, the PFM 18 Nov 26): the T21 probe flows Health and Button are flows of the solution, on the probe list that the
-# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r12.ps1 and its make module).
+# T21 Make part creates (its title and 4 columns, scripts/gov/90161Z-T21-probe-r13.ps1 and its make module).
 PROBE_DEFS = {"90161Z-T21-probe-health-r6.json", "90161Z-T21-probe-button-r6.json"}
 PROBE_LIST, PROBE_COLS = "90161Z Probe", {"Title", "ProbeTest", "ProbeWay", "ProbeResult", "ProbeDetail"}
 

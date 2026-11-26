@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T28-count-r1.ps1 (round R44 T2; the PFM, 25 Nov 26: "a read-only list step first") against a small fake site.
+# Tests scripts/gov/90161Z-T28-count-r2.ps1 (round R44 T2; the PFM, 25 Nov 26: "a read-only list step first") against a small fake site.
 # The PnP cmdlets are fakes in this file (an empty PnP.PowerShell 1.12.0 module in a temporary folder lets the script's module check pass).
 # What it proves, on the fake site:
 #  - the step counts the 12 PFM lists (on the site, items, rows marked "(delete me)"), the group PFM Office (members), the library 90-161.Z,
@@ -29,7 +29,7 @@ Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psd1') -Value $psd
 $env:PSModulePath = (Join-Path $work 'mods') + [IO.Path]::PathSeparator + $env:PSModulePath
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T28-count-r1.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T28-count-r2.ps1'
 $payload = Get-Content -LiteralPath (Join-Path $Root 'flow/provisioning-payload.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $SecretText = 'SECRET-FAKE-TEXT'   # in every fake member and every marked row: it must never reach a line
 
@@ -139,19 +139,19 @@ foreach ($w in $writers) {
 # Runs the step against the fake site. Returns @{ Code; Text (the screen output); File (the result file text) }.
 function Invoke-T28 {
   $global:LASTEXITCODE = 0; $global:S.Calls.Clear(); $global:S.Urls.Clear(); $global:S.Connects = @()
-  $file = Join-Path $t28 '90161Z-T28-count-r1.txt'; if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file }
+  $file = Join-Path $t28 '90161Z-T28-count-r2.txt'; if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file }
   $out = & $script -Id 'tester01' -NoPause -TestDir $t28 *>&1 | ForEach-Object { [string]$_ }
   $text = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' })
   return @{ Code = $LASTEXITCODE; Text = (@($out) -join "`n"); File = $text }
 }
 try {
   New-Site
-  . (Join-Path $Root 'scripts/gov/90161Z-T27-made-r1.ps1')   # the own-name table, the one home of the 12 titles
+  . (Join-Path $Root 'scripts/gov/90161Z-T27-made-r2.ps1')   # the own-name table, the one home of the 12 titles
   # ---- one home: the fixed titles ----
   $disp = @($payload.updates | Where-Object { [string]$_.uri -match "getbytitle\('[^']+'\)$" } | ForEach-Object { [string]$_.body.Title })
   $same = ((@($OwnLists.Values | Sort-Object) -join '|') -ceq (@($disp | Sort-Object) -join '|') -and $disp.Count -eq 12)
   Test-That 'the own-name table (the 12 titles that the step counts) equals the titles of the payload' $same ($disp -join ',')
-  $probe = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T21-probe-r12.ps1') -Raw
+  $probe = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T21-probe-r13.ps1') -Raw
   $src = Get-Content -LiteralPath $script -Raw
   $l1 = [regex]::Match($probe, "(?m)^\`$script:ListTitle = '([^']+)'").Groups[1].Value
   $l2 = [regex]::Match($probe, "(?m)^\`$script:LibTitle = '([^']+)'").Groups[1].Value

@@ -97,7 +97,7 @@ function New-FakeSite { & $fakeModule { New-FakeSite } }
 # The level Ids of Read and Contribute on the fake site (the fake gives them fixed numbers).
 function Get-FakeLevelId([string]$Name) { return [int]@($global:FakeSP.Levels | Where-Object { $_['Name'] -eq $Name })[0]['Id'] }
 # The own-name table of T27 (what Uninstall removes) and the line that RADE engine-v41 reads (case sensitive).
-. (Join-Path $Root 'scripts/gov/90161Z-T27-made-r1.ps1')
+. (Join-Path $Root 'scripts/gov/90161Z-T27-made-r2.ps1')
 $engineMade = '^\s*MADE\s+([a-z][a-z-]{0,30}):\s+(\S.*)$'
 # The MADE lines of one run (a result of Invoke-T20), as 'kind: name' texts in output order. Takes the result; returns an array.
 function Get-MadeText($Run) { return @($Run.Out | Where-Object { $_ -cmatch $engineMade } | ForEach-Object { $_ -replace '^\s*MADE\s+', '' }) }
