@@ -1,4 +1,4 @@
-# The PFM's 4 questions after R43: shortcut and icon, Kanon names, scale, test-site clean-up
+# The PFM's 4 questions after R43: shortcut and icon, Kanon names, scale, test-site clean-up (and the Back up stall)
 
 Written 2026-11-25 20:40 Central by the questions session. Sources: this repository at 58327ce (main), the R43 results file ([docs/reviews/2026-11-25-r43-results.md](2026-11-25-r43-results.md), on branch `claude/r43-results` until PR 255 merges), and read-only public clones of rhope-ops/RADE at 98fd8f1 (engine-v41), rhope-ops/33-332.Z at main and rhope-ops/archimedes_lever at main. The session tool `add_repo` was refused, so the clones are public `git clone` copies in the session scratchpad. Nothing was written to a site, and no gov data was read.
 
@@ -13,13 +13,13 @@ Status of each answer: a fact (with its file and line) or an assumption (with a 
 - RADE DECISIONS 2026-11-21, "Intro screens, Fulcrum palette, shortcut icon", part (4): "The shortcut belongs to the installed app: its name and icon ... one shortcut and runner copy for each app. The build waits for a preview." Scope: "the first free engine release (engine-v35 or later) and round R42". **Confidence: high.**
 - The plan: RADE [docs/reviews/2026-11-21-plan-intro-fulcrum.md](https://github.com/rhope-ops/RADE/blob/main/docs/reviews/2026-11-21-plan-intro-fulcrum.md) step 7: the shortcut name is "the app's name"; the icon is `<key>.ico` (16, 32, 48, 256 px) made from `application.logo`; each app gets its own runner copy; the old `RADE.lnk` goes to the Recycle Bin. Test T6 proves it on a work computer.
 - The plan names no version in the shortcut name. "90-161.Z - Kanon - 0.1.0" is a new request. **Confidence: high.**
-- 90-161.Z DECISIONS 2026-11-17 (line 261): "one desktop icon opens RADE". The RADE row of 2026-11-21 replaces that row "when built".
+- 90-161.Z DECISIONS 2026-11-17 (line 261): "one desktop icon opens RADE". The RADE row of 2026-11-21 replaces RADE's own "one shortcut RADE" row (engine.md "Starting the app") "when built"; the 90-161.Z row of 2026-11-17 then needs the same change.
 
 **What the install makes today (facts, engine-v41):**
 
 - `Add-DesktopIcon` in RADE [engine/ps/05-installed.ps1:301-322](https://github.com/rhope-ops/RADE/blob/main/engine/ps/05-installed.ps1#L301-L322) makes one shortcut `RADE.lnk`, description "Open RADE", target `powershell.exe` with the shared `rade-runner.ps1`. It sets no `IconLocation`, so Windows shows the PowerShell icon. **Confidence: high** (code); the icon shown on the device is an inference (medium).
 - The 90-161.Z manifest `application` block (scripts/paste_bundles.json) has no `logo` and no `intro` field. Plan step 9 says the app adds them after the engine release. The app logo exists as `assets/logo/90161Z-logo-fulcrum.svg` (DECISIONS 2026-11-20 line 93: "each app's Fulcrum logo in every place").
-- Not built: no RADE commit after the plan (8ee6329, 1c1bb4c) touches the shortcut code, and RADE has no branch for it. RADE docs/NEXT_PROMPT.md still lists "Plan: intro, Fulcrum, v35+, R42" as open. The plan waits for its preview (lane C), and engine-v35 to v41 went to the R42 and R43 items. **Confidence: high.**
+- Not built: no RADE commit after the plan (8ee6329, 1c1bb4c) adds the per-app shortcut or an icon (7a9559c and 4b92d0e only repair the `-ExecutionPolicy` setting of the old `RADE.lnk`; the engine has no `IconLocation`), and RADE has no branch for it. RADE docs/NEXT_PROMPT.md still lists "Plan: intro, Fulcrum, v35+, R42" as open. The plan waits for its preview (lane C), and engine-v35 to v41 went to the R42 and R43 items. **Confidence: high.**
 - go.md and 4 runner steps of R43 say: double-click the shortcut "RADE" (scripts/paste_bundles.json lines 411, 483, 768, 812). A rename breaks these steps; the round build must change them in the same round.
 
 **REC 1 (A):** build plan step 7 now, apart from the intro and the palette (those keep their preview): one shortcut per app, named `<display name> - <version>`, with the app's Fulcrum icon, in the next free engine release; R44 or R45 tests T6. 90-161.Z adds `application.logo` (from the Fulcrum SVG) and the display name (question 2).
@@ -66,7 +66,7 @@ B: wait for the whole intro plan (shortcut, intro cards and palette in one relea
 
 **What the plans said (facts):**
 
-- The master plan is the kit's tool retirement plan ([archimedes_lever docs/reviews/2026-11-23-tool-retirement-plan.md](https://github.com/rhope-ops/archimedes_lever/blob/main/docs/reviews/2026-11-23-tool-retirement-plan.md); 90-161.Z DECISIONS line 41). Its RADE row P4a (line 295) has "175 % DPI run (2 lines; 125, 150 and 200 % runs exist)" and "window layout: keep (already TableLayoutPanel; 42 lines of ink alignment have no standard equivalent)". Coverage row P2-6a ("TableLayoutPanel or XAML instead of manual pixel math (RADE)") ended as "keep". So the master plan counts 42 lines of ink alignment and keeps them; it counts no DPI or scale tweaks and plans no remediation of them. P4a is done (RADE PRs 179, 180). **Confidence: high** for the plan text; medium that this is the document the PFM means.
+- The master plan is the kit's tool retirement plan ([archimedes_lever docs/reviews/2026-11-23-tool-retirement-plan.md](https://github.com/rhope-ops/archimedes_lever/blob/main/docs/reviews/2026-11-23-tool-retirement-plan.md); 90-161.Z DECISIONS line 41). Its RADE row P4a (line 295) has "175 % DPI run (2 lines; 125, 150 and 200 % runs exist)" and "window layout: keep (already TableLayoutPanel; 42 lines of ink alignment have no standard equivalent)". Coverage row P2-6a ("TableLayoutPanel or XAML instead of manual pixel math (RADE)", archimedes_lever docs/reviews/2026-11-23-tool-retirement-coverage.md:84) is "in | Step 6"; the plan's P4a row then says "keep" for it. So the master plan counts 42 lines of ink alignment and keeps them; it counts no DPI or scale tweaks and plans no remediation of them. The P4a items are merged in RADE (PRs 179, 180, 182, 183); RADE docs/NEXT_PROMPT.md lists only the ISE paste proof as open. **Confidence: high** for the plan text; medium that this is the document the PFM means.
 - The scale fix that was planned: 90-161.Z DECISIONS 2026-11-21 (line 52): "R42: ISE RADE window uses the shortcut window's smaller scale, with a SCALE line per window". engine-v35 (RADE d64ea35) built only the SCALE line: "The scale itself waits for R43". R42 gave no second SCALE line (Back up did not start). The R43 plan carried only the measurement (T4: "a SCALE line for the second window"). The RADE item "E4" of R43 became a different item (sign-in window watch off, deb3241). The RADE handoff (docs/NEXT_PROMPT.md) does not list the scale fix. So the fix was not dropped by a decision; it fell out of the plan between rounds. **Confidence: high.**
 
 **The scale parts in the code today (count by this session, not from a plan):**
@@ -77,14 +77,14 @@ B: wait for the whole intro plan (shortcut, intro cards and palette in one relea
 | 2 | Thread awareness "unaware" to "system" (for ISE) | 01-setup.ps1:23-38; set back in engine/ps/10-window.ps1:18 | R34, engine-v25 |
 | 3 | `AutoScaleMode = Dpi` at 96 and `$ui.Dpi` from the form | 01-setup.ps1:59; engine/rade_ui.ps1:13 | before R28 |
 | 4 | Font correction probe (`FontScale`, `FontK`) | engine/rade_ui.ps1:62-67 | R28 |
-| 5 | `$ui.Sc` pixel helper | engine/rade_ui.ps1:14; 78 uses in the engine | before R28 |
+| 5 | `$ui.Sc` pixel helper | engine/rade_ui.ps1:14; 120 uses in the engine (`grep -o`) | before R28 |
 | 6 | Sign-in window size (480 x 360 at the window's dpi) | engine/ps/16-site-scripts.ps1:14-97 | engine-v35 |
-| 7 | 90-161.Z window: its own `AutoScaleMode = Dpi`, `$ui.Dpi`, `FontK`, `$ui.Sc` (35 uses) and the measure code | scripts/gov/90161Z-T22-*-r16.ps1 | R28 to R43 |
+| 7 | 90-161.Z window: its own `AutoScaleMode = Dpi`, `$ui.Dpi`, `FontK`, `$ui.Sc` (48 uses) and `$wn.Sc` (152 uses) and the measure code | scripts/gov/90161Z-T22-*-r16.ps1 | R28 to R43 |
 
 **Confidence: medium** (a count by search; another reader can split them in another way).
 
 **REC 3 (A):** in the next free engine release, run the ISE window in the same way as the shortcut window: from ISE, RADE starts its window in a child `powershell.exe -STA` (the host that the shortcut uses), so both windows get one dpi path; then parts 2 and 4 go if the SCALE lines prove them obsolete. Proof: two equal SCALE lines (`fontScale`, `ctlScale`, `realDpi`, `client`) in one round, and the PFM's look check. The PFM said the look can wait to near the end of testing, so the order is a PFM decision.
-B: keep the code, and only stop the font correction in ISE (part 4). It is smaller, but it does not make the ISE window sharp (Windows still stretches an unaware window).
+B: keep the code, and only stop the font correction in ISE (part 4). It is smaller, but it keeps 2 dpi paths (ISE: thread made system-aware, part 2; the shortcut: the console's own), so the 2 windows can still look different (confidence: low).
 C: wait until near the end of testing; record it as an open RADE item now, so it does not fall out again.
 
 ## 4. Test-site clean-up
@@ -112,11 +112,11 @@ Can also be there from older rounds (assumption, **confidence: low**; the PFM ca
 
 **Do you need to clean it by hand? No (REC 4).** A scripted round step is the safer path, and every delete is a data write that the PFM approves first.
 
-- **REC 4 (A):** R44 gets 2 steps. Step 1, "Show what is on the test site", reads only and lists the fixed titles above (no member names, no row content: counts only; Project rule "No reconnaissance"). Step 2 runs the existing T27 Uninstall again after the Back up works (question 5). Older items that no step removes (the library "90-161.Z", the flows) get a new clean step only after step 1 shows them, with the PFM's approval of the exact list. Do not empty the Recycle Bin before the Restore tests.
+- **REC 4 (A):** R44 gets 2 steps. Step 1, "Show what is on the test site", reads only and lists the fixed titles above (no member names, no row content: counts only; Project rule "No reconnaissance"). Step 2 runs the existing T27 Uninstall again after the Back up works (section 5). Older items that no step removes (the library "90-161.Z", the flows) get a new clean step only after step 1 shows them, with the PFM's approval of the exact list. Do not empty the Recycle Bin before the Restore tests.
 - B: the PFM removes the items by hand in the browser (more clicks, and no record in the results).
 - C: leave the 12 lists; R44 tests Restore and the endorser answer on them first, and Uninstall at the end of R44.
 
-## 5. Uninstall stopped at "Uninstall is saving a backup." and how 33-332.Z reads SharePoint
+## 5. Also asked in the R43 e-mail: Uninstall stopped at "Uninstall is saving a backup." and how 33-332.Z reads SharePoint
 
 **What RADE does (facts, engine-v41):**
 
