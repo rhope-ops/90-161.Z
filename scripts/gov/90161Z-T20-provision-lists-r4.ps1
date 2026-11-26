@@ -185,6 +185,16 @@ $OfficeGroup = 'PFM Office'
 # The texts, the level name and the bits of step 6 are in the module 90161Z-T20-access-r4.ps1 (R36).
 # Step 6 (Grant-OfficeLevel) and step 7 (Grant-WingContribute, Test-WingContribute) live in the module 90161Z-T20-access-r4.ps1.
 
+# The MADE lines of this run, each one exactly as Add-MadeLine printed it (the helpers module). Only these lines pass the final mask as they are.
+$script:MadeLines = @{}
+# The final form of one output line: a MADE line printed by Add-MadeLine stays as it is (it holds a fixed name of the app, never site data:
+# a site named "office" must not turn "PFM Office" into "PFM <SITE-NAME>"); every other line is masked (site, DODID). This function is in
+# the main file, before the first step, so the final lines are written even when a module is missing.
+function ConvertTo-FinalLine([string]$Line, [string]$Site, [string[]]$Secret) {
+  if ($script:MadeLines.ContainsKey($Line)) { return $Line }
+  return (ConvertTo-Masked (Hide-Site $Line $Site) $Secret)
+}
+
 $secret = @()
 $site = ''
 $lines = New-Object System.Collections.Generic.List[string]

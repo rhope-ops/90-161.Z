@@ -405,6 +405,13 @@ $lines = New-Object System.Collections.Generic.List[string]
 Add-MadeLine 'list' 'PFM Reviews'; Add-MadeLine 'group' 'PFM Office'; Add-MadeLine 'level' 'PFM Office Edit All Items'
 Add-MadeLine 'list' 'Budget Notes'; Add-MadeLine 'list' '<TENANT> Reviews'; Add-MadeLine 'group' 'PFM <SITE-NAME>'; Add-MadeLine 'level' 'Edit'; Add-MadeLine 'file' 'PFM Reviews'
 Test-That 'Add-MadeLine: a MADE line only for a name of the fixed table; any other name or kind prints a NOTE and no MADE line' ((@($lines | Where-Object { $_ -match '^MADE ' }) -join '|') -ceq 'MADE list: PFM Reviews|MADE group: PFM Office|MADE level: PFM Office Edit All Items' -and @($lines | Where-Object { $_ -match '^NOTE no MADE line' }).Count -eq 5) ($lines -join '|')
+# The final lines are shown even when a module is missing (the final mask is in the main file, not in the helpers module).
+$alone = Join-Path $work 'alone'; $null = New-Item -ItemType Directory -Path (Join-Path $alone 'T20') -Force
+Copy-Item -LiteralPath $script -Destination $alone
+$global:LASTEXITCODE = 0
+$out = & (Join-Path $alone '90161Z-T20-provision-lists-r4.ps1') -Id 'tester01' -NoPause -TestDir (Join-Path $alone 'T20') *>&1 | ForEach-Object { [string]$_ }
+$code = $LASTEXITCODE; $text = @($out) -join "`n"
+Test-That 'a missing module: the STOPPED line is shown and the exit code is 1 (no error about a missing function)' ($code -eq 1 -and $text -match 'STOPPED: MODULE missing' -and $text -notmatch 'not recognized' ) ($code.ToString() + ' ' + $text)
 # Find-OurList compares the folder name case sensitively.
 Test-That 'Find-OurList: the folder name is compared case sensitively' ($null -eq (Find-OurList @([pscustomobject]@{ RootFolder = [pscustomobject]@{ Name = 'pfmreviews' } }) 'PFMReviews') -and $null -ne (Find-OurList @([pscustomobject]@{ RootFolder = [pscustomobject]@{ Name = 'PFMReviews' } }) 'PFMReviews'))
 

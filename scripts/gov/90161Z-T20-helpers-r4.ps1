@@ -5,7 +5,7 @@
 .DESCRIPTION
   Loaded by 90161Z-T20-provision-lists-r4.ps1 (dot-sourced from the same folder, in its scope); it does nothing when it is run alone.
   Inputs: $site and the PnP.PowerShell connection of the main file ($script:site). Outputs: the functions Get-Plan, Invoke-Rest,
-  Get-RestValue, Get-SiteList, Find-OurList, Add-MadeLine, ConvertTo-FinalLine, Write-CsomMerge, Get-GroupId, Get-RoleLevel, Get-WebBinding, ConvertTo-PermissionWord, Test-LevelPermission.
+  Get-RestValue, Get-SiteList, Find-OurList, Add-MadeLine, Write-CsomMerge, Get-GroupId, Get-RoleLevel, Get-WebBinding, ConvertTo-PermissionWord, Test-LevelPermission.
   Network: the one SharePoint site of the main file, through the PnP.PowerShell connection of the main file (none in Get-Plan).
   Writes: Write-CsomMerge and Invoke-Rest (Post) change the site when the main file calls them in create mode; nothing on this computer.
   Credentials: none of its own (the main file signs in).
@@ -79,9 +79,6 @@ function Find-OurList($SiteLists, [string]$Internal) {
   return $null
 }
 
-# The MADE lines of this run, each one exactly as printed. They are the only lines that the final mask leaves as they are.
-$script:MadeLines = @{}
-
 # True when a name is one of the fixed names of 90-161.Z for its kind: a list title of the plan (the payload), the group $OfficeGroup or the
 # level $OfficeLevel (both from the main file and the access module, read from the scope that loaded this file). Case sensitive.
 function Test-MadeName([string]$Kind, [string]$Name) {
@@ -96,17 +93,13 @@ function Test-MadeName([string]$Kind, [string]$Name) {
 # Adds the line "MADE <kind>: <name>" to the output lines for one item that THIS run created (RADE engine-v41 reads it, and the Uninstall
 # of 90-161.Z gets it back in RADE_MADE). Kind is a lowercase word (list, group, level). Call it only after the item is made, never in a
 # dry run and never for an item that was already there. A MADE line is printed only for a fixed name of the app (Test-MadeName), never for
-# site data, so the final mask leaves it as it is (ConvertTo-FinalLine): a site named "office" must not turn "PFM Office" into "PFM <SITE-NAME>".
+# site data, so the final mask of the main file leaves it as it is (ConvertTo-FinalLine, which reads $script:MadeLines):
+# a site named "office" must not turn "PFM Office" into "PFM <SITE-NAME>".
 function Add-MadeLine([string]$Kind, [string]$Name) {
   if (-not (Test-MadeName $Kind $Name)) { $lines.Add('NOTE no MADE line: a name of the kind ' + $Kind + ' is not a fixed name of 90-161.Z'); return }
   $line = 'MADE ' + $Kind + ': ' + $Name
+  if (-not $script:MadeLines) { $script:MadeLines = @{} }
   $lines.Add($line); $script:MadeLines[$line] = 1
-}
-
-# The final form of one output line: a MADE line printed by Add-MadeLine as it is, every other line masked (site, DODID).
-function ConvertTo-FinalLine([string]$Line, [string]$Site, [string[]]$Secret) {
-  if ($script:MadeLines.ContainsKey($Line)) { return $Line }
-  return (ConvertTo-Masked (Hide-Site $Line $Site) $Secret)
 }
 
 # A MERGE of the payload, written through CSOM: every property of the body except __metadata is set, then Update.
