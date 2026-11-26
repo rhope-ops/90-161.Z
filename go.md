@@ -1,6 +1,6 @@
 # 90-161.Z: tasks for the work computer
 
-Updated: 26 Nov 26 (R44 r1).
+Updated: 26 Nov 26 (R44 r2).
 
 ## Open tasks
 

@@ -325,18 +325,27 @@ public static void Begin(string path) { lock (gate) { was = System.Console.Out; 
 // Writes one line to the console and to the file.
 public static void Line(string s) { System.Console.Out.WriteLine(s); }
 // Ends the copy and gives the console back; safe to call twice.
-public static void End() { lock (gate) { if (timer != null) { timer.Dispose(); timer = null; } if (file != null) { System.Console.SetOut(was); file.Dispose(); file = null; } } }
+public static void End() { lock (gate) { if (timer != null) { timer.Dispose(); timer = null; } 
+  if (file != null) { if (part.Length > 0) { FileLine(part.ToString()); part.Clear(); }
+    System.Console.SetOut(was); file.Dispose(); file = null; } } }
 // Starts the time limit: after seconds, the line why goes out, then this process ends with exit code 1.
 public static void Limit(int seconds, string why) { timer = new System.Threading.Timer(delegate(object o) {
   lock (gate) { try { if (file != null) { file.WriteLine(why); was.WriteLine(why); was.Flush(); } } catch { } }
   System.Environment.Exit(1); }, null, seconds * 1000, System.Threading.Timeout.Infinite); }
 // Stops the time limit (the sign-in ended in time).
 public static void Unlimit() { lock (gate) { if (timer != null) { timer.Dispose(); timer = null; } } }
+// The masks of the file copy (text, placeholder): each line is masked before it reaches the file, so a stop by the time
+// limit (no finally block runs) leaves no site address or DODID in the file.
+static System.Collections.Generic.List<string[]> masks = new System.Collections.Generic.List<string[]>(); static System.Text.StringBuilder part = new System.Text.StringBuilder();
+// Adds one mask: each later line that holds the text gets the placeholder in the file (text of 4 characters or more only).
+public static void Mask(string text, string placeholder) { lock (gate) { if (text != null && text.Length >= 4) { masks.Add(new string[] { text, placeholder }); } } }
+static void FileLine(string s) { foreach (string[] m in masks) { s = s.Replace(m[0], m[1]); } file.WriteLine(s); }
+static void FileText(string s) { foreach (char c in s) { if (c == '\n') { FileLine(part.ToString().TrimEnd('\r')); part.Clear(); } else { part.Append(c); } } }
 class Both : System.IO.TextWriter {
   public override System.Text.Encoding Encoding { get { return was.Encoding; } }
-  public override void Write(char c) { lock (gate) { was.Write(c); if (file != null) { file.Write(c); } } }
-  public override void Write(string s) { lock (gate) { was.Write(s); if (file != null) { file.Write(s); } } }
-  public override void WriteLine(string s) { lock (gate) { was.WriteLine(s); was.Flush(); if (file != null) { file.WriteLine(s); } } } }
+  public override void Write(char c) { lock (gate) { was.Write(c); if (file != null) { FileText(c.ToString()); } } }
+  public override void Write(string s) { lock (gate) { was.Write(s); if (file != null && s != null) { FileText(s); } } }
+  public override void WriteLine(string s) { lock (gate) { was.WriteLine(s); was.Flush(); if (file != null) { FileText((s ?? "") + "\n"); } } } }
 "@
 }
 
@@ -344,6 +353,7 @@ $fatal = $false; $site = ''; $secret = @(); $dir = ''; $out = ''
 try {
   $ErrorActionPreference = 'Stop'
   $who = Get-TaskId $Id; $secret = $who.Secret
+  foreach ($s in $secret) { [T29Guard.Tee]::Mask($s, '<DODID>') }   # the file copy never holds the DODID (also on a stop by the time limit)
   if ($TestDir) { $dir = $TestDir } else { $dir = Get-TaskDir $who.Id $task 'Task 29' -Create }
   Set-Location -LiteralPath $dir
   $out = Join-Path $dir ('90161Z-T29-signin-' + $Watch + '-' + $Rev + '.txt')
@@ -353,6 +363,7 @@ try {
   [T29Guard.Tee]::Line('WATCH asked=' + $Watch)
   if ($Watch -eq 'off') { $env:RADE_SIGNIN_WATCH = '0' } else { Remove-Item -LiteralPath 'Env:RADE_SIGNIN_WATCH' -ErrorAction SilentlyContinue }
   $script:site = Get-SiteAddress (Join-Path (Split-Path -Parent $dir) 'Config')
+  [T29Guard.Tee]::Mask($script:site.TrimEnd('/'), '<SITE>'); try { [T29Guard.Tee]::Mask(([uri]$script:site).Host, '<SITE-HOST>') } catch { $null = $_ }   # no host: the site mask stays
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $pin = @($mod | Where-Object { [string]$_.Version -eq '1.12.0' }); if ($pin.Count) { $mod = $pin }   # the tested version first

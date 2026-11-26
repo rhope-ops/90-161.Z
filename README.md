@@ -37,13 +37,13 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 The steps to run it are at the top of the script.
 
-**Round script:** `90161Z-R44-round-r2.txt` · **Build:** `3b29d742` (the RADE title bar shows it) · **Code:** `03d0a1d5945e...11c9`
+**Round script:** `90161Z-R44-round-r2.txt` · **Build:** `019a79df` (the RADE title bar shows it) · **Code:** `e75c5568dd28...a762`
 
 ---
 
 ### 🔺 Current tasks
 
-Updated: 26 Nov 26 (R44 r1).
+Updated: 26 Nov 26 (R44 r2).
 
 
 #### Round R44 r2: a CAC sign-in test in 2 ways, then the R44 steps
