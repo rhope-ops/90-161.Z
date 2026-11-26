@@ -151,4 +151,11 @@ Can also be there from older rounds (assumption, **confidence: low**; the PFM ca
 3. Scale: one window host for ISE and the shortcut (REC 3 A) in the next engine release, or wait to near the end of testing (C)?
 4. Test site: a read-only list step first, then scripted clean steps you approve (REC 4 A)?
 
-The PFM's answers go into docs/DECISIONS.md and to the R44 session.
+## The PFM's answers (question dialog, 2026-11-25 20:44 Central)
+
+1. Shortcut: REC 1 A, build it now, named "90-161.Z - Kanon - 0.1.0".
+2. Titles: REC 2, the titles in the table.
+3. Scale: REC 3 A, one window host in the next engine release.
+4. Test site: REC 4 A, a read-only list step first, then scripted clean steps on a list the PFM approves.
+
+Recorded in docs/DECISIONS.md (4 rows of 2026-11-25) and sent to the R44 session.
