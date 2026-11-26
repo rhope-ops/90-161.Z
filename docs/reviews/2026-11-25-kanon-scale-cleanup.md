@@ -77,9 +77,9 @@ B: wait for the whole intro plan (shortcut, intro cards and palette in one relea
 | 2 | Thread awareness "unaware" to "system" (for ISE) | 01-setup.ps1:23-38; set back in engine/ps/10-window.ps1:18 | R34, engine-v25 |
 | 3 | `AutoScaleMode = Dpi` at 96 and `$ui.Dpi` from the form | 01-setup.ps1:59; engine/rade_ui.ps1:13 | before R28 |
 | 4 | Font correction probe (`FontScale`, `FontK`) | engine/rade_ui.ps1:62-67 | R28 |
-| 5 | `$ui.Sc` pixel helper | engine/rade_ui.ps1:14; 120 uses in the engine (`grep -o`) | before R28 |
+| 5 | `$ui.Sc` pixel helper | engine/rade_ui.ps1:14; 120 uses in the engine (`grep -rho '\$ui\.Sc\b' engine`) | before R28 |
 | 6 | Sign-in window size (480 x 360 at the window's dpi) | engine/ps/16-site-scripts.ps1:14-97 | engine-v35 |
-| 7 | 90-161.Z window: its own `AutoScaleMode = Dpi`, `$ui.Dpi`, `FontK`, `$ui.Sc` (48 uses) and `$wn.Sc` (152 uses) and the measure code | scripts/gov/90161Z-T22-*-r16.ps1 | R28 to R43 |
+| 7 | 90-161.Z window: its own `AutoScaleMode = Dpi`, `$ui.Dpi`, `FontK`, `$ui.Sc` (48 uses) and `$wn.Sc` (152 uses; both counted with `\b`) and the measure code | scripts/gov/90161Z-T22-*-r16.ps1 | R28 to R43 |
 
 **Confidence: medium** (a count by search; another reader can split them in another way).
 
@@ -154,7 +154,7 @@ Can also be there from older rounds (assumption, **confidence: low**; the PFM ca
 ## The PFM's answers (question dialog, 2026-11-25 20:44 Central)
 
 1. Shortcut: REC 1 A, build it now, named "90-161.Z - Kanon - 0.1.0".
-2. Titles: REC 2, the titles in the table.
+2. Titles: "RADE - engine-v41 - R44" (no build in the title bar), "90-161.Z - Kanon - 0.1.0 - R44", installed window and shortcut "90-161.Z - Kanon - 0.1.0", and a display field "90-161.Z - Kanon". The other rows of the REC 2 table (the install title with no round, the word spot, the Maintenance row, the rail head) were not in the dialog: they stay open.
 3. Scale: REC 3 A, one window host in the next engine release.
 4. Test site: REC 4 A, a read-only list step first, then scripted clean steps on a list the PFM approves.
 
