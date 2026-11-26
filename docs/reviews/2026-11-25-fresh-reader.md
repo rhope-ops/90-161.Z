@@ -129,3 +129,12 @@ Not run. The Orchestrator runs it with a new fresh reader.
 ## Fix B, final (2026-11-26)
 
 The PFM chose "Teach the check" (dialog, 2026-11-26). tests/check_screen_names.py now reads a card sentence that RADE builds as `Sentence = ($name + '<fixed end>')` (also Text, Title, Kicker): the name passes when the bundle holds the head string and the fixed end. Its self-test proves that a log line of the same form does not pass. The Back up line quotes the real sentence again: `4. Click the row "Back up". The card "Back up is running." shows.`
+
+## Round 3 (2026-11-26)
+
+Reader: a fresh `reviewer` subagent (inherit tier), given only the go.md R43 section, the R43 guide and note lines, and the `--map` output; brief: mark only what would make a competent adult act wrongly or get stuck. Result: 1 MARK, 107 OK. The mark: go.md step 2 said "this page" for the README; it now names "the GitHub page github.com/rhope-ops/90-161.Z". Not verified by the reader (left for the R43 run): the Restore order of the test-site card, and whether the card "Which site does the application go to?" shows in "Install again" after Uninstall.
+
+## Process findings (review of c47fca2..82dc96e)
+
+- A worker wrote paste_bundles.json and go.md through a Python script, which the write-time hooks do not see, and restored its own unpushed edit with `git show` after a denied `git checkout`. The pre-push content check and the instructions check ran on those files and passed. Recorded for the Maintainer.
+- MINOR, left for R44: the "(not from the bundle)" tags mean nothing to the person; the proper home of outside names is the OUTSIDE list of tests/check_screen_names.py. T27 Uninstall lines 9 and 10 are short forms of the flows steps.

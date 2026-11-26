@@ -53,7 +53,7 @@ Updated: 26 Nov 26 (R43 r1 is ready).
 **Changes:** on the computer, the OneDrive folder RADE\90-161.Z: scripts and result files in T20, T21, T22, T26 and T27, 17 screen pictures, and backups of the 12 test site lists. The Repair saves a new copy of RADE for the RADE shortcut. R43 needs the second person for about 5 minutes (an estimate). On the test site, the round writes fake rows and the second person in the Visitors group. Back up and Restore write fake rows. Uninstall moves the 12 own lists to the site Recycle Bin. It removes the group PFM Office and its level only when RADE recorded them as made. The new install makes the 12 lists again. The round makes 1 fake publication and moves it from step 1 to step 2. A second RADE window runs Back up, Restore, Uninstall and the new install. The last steps of the round move the fake rows to the site Recycle Bin.\
 **Steps:**
 1. Ask one person in the office to help with this task. Write down the e-mail address of that person.
-2. Below **Summary** on this page, click **Open the script**. The script opens as plain text.
+2. On the GitHub page github.com/rhope-ops/90-161.Z, below **Summary**, click **Open the script**. The script opens as plain text.
 3. On the script page, press `Ctrl+A`, then `Ctrl+C`.
 4. From the Start menu, open **Windows PowerShell ISE** (not from the bundle). Do not open **Run as administrator** (not from the bundle).
 5. In ISE (not from the bundle), click **File** > **New** (not from the bundle), then press `Ctrl+V`.

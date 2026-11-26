@@ -147,32 +147,46 @@ def holds(code, run):
 
 
 def built_ends(code):
-    """Gives back the fixed ends that the bundle code adds to a variable to build a sentence at run time, as in
-    Sentence = ($name + ' is running.') (R43, the PFM 2026-11-26: such a sentence is checked, not left unquoted)."""
-    # only a card field that the person reads (Sentence, Text, Title, Kicker), never a log line or an address part
-    return sorted(set(re.findall(r"\b(?:Sentence|Text|Title|Kicker) = \(\$\w+ \+ '([^']+)'\)", code)),
-                  key=len, reverse=True)
+    """Gives back the card sentences that the bundle code builds at run time, as in Sentence = ($name + ' is running.').
+
+    R43 (the PFM, 2026-11-26): such a sentence is checked, not left unquoted.
+
+    Args:
+        code: the raw code of the round bundle (not the screen text: that drops the joins).
+
+    Returns:
+        A list of (end, heads) pairs: the fixed end and the values that the code gives the variable, longest end first.
+    """
+    # only a card field that the person reads (Sentence, Text, Title, Kicker), never a log line or an address part;
+    # each end comes with the values that the code gives its variable (review MAJOR: any screen string was a head)
+    out = []
+    for var, end in set(re.findall(r"\b(?:Sentence|Text|Title|Kicker) = \(\$(\w+) \+ '([^']+)'\)", code)):
+        vals = set(re.findall(r"\$" + var + r" = '([^']+)'", code))
+        for m in re.finditer(r"\$" + var + r" = \$\(if \([^)]*\) \{ '([^']+)' \} else \{ '([^']+)' \}\)", code):
+            vals |= {m.group(1), m.group(2)}
+        if vals:
+            out.append((end, sorted(vals)))
+    return sorted(out, key=lambda e: len(e[0]), reverse=True)
 
 
 def check_name(code, apps, name, ends=()):
     """Gives back the fixed word runs of a name that the bundle does not hold (empty = pass).
 
-    A name built at run time as <a string of the bundle> + <a fixed end> passes when the screen text holds the string.
+    A name built at run time passes only as one of the values the code gives that variable + the fixed end.
 
     Args:
         code: the screen text of the bundle (screen_text()).
         apps: the application names of the bundle, longest first.
         name: the bold or quoted name of a step.
-        ends: the fixed ends from built_ends() on the raw bundle code (screen_text drops the code that joins them).
+        ends: the (end, heads) pairs from built_ends() on the raw bundle code (screen_text drops that code).
 
     Returns:
         The list of word runs that the bundle does not hold; empty when the name passes.
     """
     if name in OUTSIDE:
         return []
-    for end in ends:
-        head = name[:-len(end)].strip() if name.endswith(end) else ''
-        if head and holds(code, head):
+    for end, heads in ends:
+        if name.endswith(end) and name[:-len(end)].strip() in heads:
             return []
     return [r for r in fixed_parts(name, apps) if not holds(code, r)]
 
@@ -260,7 +274,8 @@ def self_test():
          "Write-Log ($name + ' is not on the site')"
     be = built_ends(bc)
     if check_name(bc, [], 'Back up is running.', be) or not check_name(bc, [], 'Repair is running.', be) \
-            or not check_name(bc, [], 'Back up is done.', be) or not check_name(bc, [], 'Back up is not on the site', be):
+            or not check_name(bc, [], 'Back up is done.', be) or not check_name(bc, [], 'Back up is not on the site', be) \
+            or not check_name(bc + "; Text = 'Maintenance'", [], 'Maintenance is running.', be):
         errs.append('built sentence: <name> + fixed end')
     if errs:
         sys.exit('SELF-TEST FAIL: %s' % errs)
