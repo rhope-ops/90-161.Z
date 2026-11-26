@@ -220,7 +220,7 @@
                     "guide": [],
                     "dir": "T29",
                     "file": "",
-                    "note": "4 questions about what you saw. RADE engine-v46 changed the sign-in window size, the PowerShell window, the taskbar button and the logo at the top left.",
+                    "note": "4 questions about what you saw. Answer what you saw, also if it is not one of the first choices.",
                     "estimate": 1,
                     "after": [
                         "T29 Sign-in test r2"
@@ -229,7 +229,7 @@
                     "answers": [
                         {
                             "key": "s-size",
-                            "prompt": "In the step before, how big was the CAC sign-in window?",
+                            "prompt": "In the step \"Sign in to the test site\", how big was the CAC sign-in window?",
                             "kind": "pick",
                             "choices": [
                                 "Half the screen or less",
@@ -242,7 +242,7 @@
                         },
                         {
                             "key": "h-ps",
-                            "prompt": "When you pasted the round in ISE, did a blue PowerShell window show?",
+                            "prompt": "When you pressed F5 in ISE, did a separate blue PowerShell window show?",
                             "kind": "pick",
                             "choices": [
                                 "No",
@@ -261,11 +261,11 @@
                             "choices": [
                                 "A button with the RADE logo",
                                 "A button with the PowerShell icon",
-                                "I cannot find a button for it"
+                                "Another icon, or no button"
                             ],
                             "failOn": [
                                 "A button with the PowerShell icon",
-                                "I cannot find a button for it"
+                                "Another icon, or no button"
                             ]
                         },
                         {
@@ -275,11 +275,11 @@
                             "choices": [
                                 "The 90-161.Z logo and KANON",
                                 "The RADE logo and the word RADE",
-                                "Both logos"
+                                "Both logos, or something else"
                             ],
                             "failOn": [
                                 "The RADE logo and the word RADE",
-                                "Both logos"
+                                "Both logos, or something else"
                             ]
                         }
                     ]
@@ -352,7 +352,7 @@
                     "file": "90161Z-T21-probe-r13.ps1",
                     "args": "-Part Person",
                     "minutes": 20,
-                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group. If nobody can help today, close the small window. This step then fails, and the other steps run.",
+                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the Visitors group. If nobody can help today, click Skip.",
                     "estimate": 2,
                     "help": "Send the results as they are. The address is never written to a file; the results show only yes or no.",
                     "needs": [
@@ -527,11 +527,11 @@
                     "file": "",
                     "note": "This window waits. A second RADE window saves the 12 lists of your test site to this computer. Nothing on the site changes.",
                     "guide": [
-                        "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"Kanon\". Look for a blue PowerShell window.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "4. Click the row \"Back up\". The card \"Back up is running.\" shows.",
-                        "5. If \"Back up is running.\" shows for 30 seconds with no CAC sign-in window, press Alt+Tab.",
+                        "5. If no CAC sign-in window shows in 30 seconds, press Alt+Tab to find it.",
                         "6. If a CAC sign-in window shows, sign in with your CAC.",
                         "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
                         "8. Write down the number in the line \"The sign-in took\".",
@@ -621,8 +621,7 @@
                         "5. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
                         "6. On the card \"Which backup does Restore use?\", click the row marked \"Newest\".",
                         "7. If a CAC sign-in window opens, sign in with your CAC.",
-                        "8. Wait until a card shows a line that starts with \"Dry run:\".",
-                        "9. Keep the second RADE window open."
+                        "8. Wait until a card shows a line that starts with \"Dry run:\"."
                     ],
                     "estimate": 3,
                     "after": [
@@ -672,8 +671,7 @@
                         "3. Do not close the second RADE window while Restore runs.",
                         "4. Click \"Restore\". The card \"Restore is running.\" shows.",
                         "5. Wait until the card \"Restore put the missing rows back.\" shows.",
-                        "6. On that card, find the line that starts with \"PFM Endorsements\".",
-                        "7. Keep the second window open for 2 questions, then 1 more."
+                        "6. On that card, find the line that starts with \"PFM Endorsements\"."
                     ],
                     "estimate": 3,
                     "after": [
@@ -682,12 +680,12 @@
                     "answers": [
                         {
                             "key": "r-result",
-                            "prompt": "In the second RADE window, what does the first line of the result say?",
+                            "prompt": "In the second RADE window, what does the line that starts with \"Restore put back\" say?",
                             "kind": "pick",
                             "choices": [
                                 "Restore put back 4 of 4 rows",
                                 "Another number",
-                                "Restore wrote no rows"
+                                "There is no such line"
                             ]
                         },
                         {
