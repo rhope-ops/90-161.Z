@@ -126,7 +126,14 @@ def signin_text():
 
 
 def body(src=SRC):
-    """Get the text that a shared block in the task scripts must hold. Takes the source (a script file, or the LOGO or UI marker); returns text."""
+    """Get the text that a shared block in the task scripts must hold.
+
+    Args:
+        src: the source: a script file, or the LOGO, UI, UI2 or SIGNIN marker.
+
+    Returns:
+        The text of the block.
+    """
     if src == LOGO:
         return logo_text()
     if src == UI:
