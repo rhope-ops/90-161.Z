@@ -260,7 +260,7 @@
                     "file": "90161Z-T21-probe-r12.ps1",
                     "args": "-Part Person",
                     "minutes": 20,
-                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group.",
+                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group. If nobody can help today, close the small window. This step then fails, and the other steps run.",
                     "estimate": 2,
                     "help": "Send the results as they are. The address is never written to a file; the results show only yes or no.",
                     "needs": [
@@ -439,10 +439,10 @@
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "4. Click the row \"Back up\". The card \"Back up is running.\" shows.",
-                        "5. If no CAC sign-in window shows in 30 seconds, press Alt+Tab one time.",
-                        "6. Write the size of the sign-in window: \"Small\" or \"Large\". Then sign in with your CAC.",
+                        "5. If \"Back up is running.\" shows for 30 seconds with no CAC sign-in window, press Alt+Tab.",
+                        "6. If a CAC sign-in window shows, write its size: \"Small\" or \"Large\". Sign in with your CAC.",
                         "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
-                        "8. Write down the number in the line \"The sign-in took\". The line ends with \"on)\".",
+                        "8. Write down the number in the line \"The sign-in took\". The line ends with \"on).\".",
                         "9. Close the second RADE window with its X. You see the first RADE window again.",
                         "10. Questions then ask the sign-in window size, the seconds and the shortcut icon.",
                         "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
@@ -494,9 +494,9 @@
                         "3. Wait until a new RADE window opens in front. Click its row \"90-161.Z 0.1.0\".",
                         "4. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "5. Click the row \"Back up\". If a CAC sign-in window opens, sign in with your CAC.",
-                        "6. If no CAC sign-in window shows in 30 seconds, press Alt+Tab one time.",
+                        "6. If \"Back up is running.\" shows for 30 seconds with no CAC sign-in window, press Alt+Tab.",
                         "7. Wait until the card \"Back up saved the lists.\" shows.",
-                        "8. Write down the number in the line \"The sign-in took\". The line ends with \"off)\".",
+                        "8. Write down the number in the line \"The sign-in took\". The line ends with \"off).\".",
                         "9. Close the RADE window that shows \"Back up saved the lists.\" with its X.",
                         "10. In ISE (Alt+Tab), type in the bottom pane: $env:RADE_SIGNIN_WATCH = $null and press Enter.",
                         "If F5 opens no new RADE window, click \"It failed\" in the first RADE window. Type: no second window",
@@ -511,7 +511,7 @@
                     "answers": [
                         {
                             "key": "b-took-off",
-                            "prompt": "Type the number of seconds of the line \"The sign-in took\" (it ends with \"off)\"). Type none if the line did not show.",
+                            "prompt": "Type the number of seconds of the line \"The sign-in took\" (it ends with \"off).\"). Type none if the line did not show.",
                             "kind": "text"
                         }
                     ]
