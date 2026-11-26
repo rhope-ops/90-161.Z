@@ -8,7 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-26 | R44 adds the 3 title items to the RADE release: "RADE - engine-vNN" for an install with no round, " (FAKE data)" ending the test window title, "Kanon" in word spot, Maintenance row, rail head. Scope: R44. | PFM (chat: "add those 3 optional things to it") | docs/reviews/2026-11-25-r44-plan.md |
+| 2026-11-26 | R44 adds 3 title items to the RADE release: "RADE - engine-vNN" for an install with no round; " (FAKE data)" ending the test window title; "Kanon" in word spot, Maintenance row, rail head. Scope: R44. | PFM (chat: "add those 3 optional things to it") | docs/reviews/2026-11-25-r44-plan.md |
 | 2026-11-25 | R44: all in one round (engine items and R43 carry-overs); the second person optional, no other skips; 3 title items noted for a later RADE sweep. Scope: R44. | PFM (question dialog) | docs/reviews/2026-11-25-r44-plan.md |
 | 2026-11-25 | App shortcut now (RADE plan step 7): one per app, "90-161.Z - Kanon - 0.1.0", app Fulcrum icon; next free engine release. Scope: RADE, R44/R45. | PFM (question dialog, 25 Nov 26 20:44) | [review](reviews/2026-11-25-kanon-scale-cleanup.md) |
 | 2026-11-25 | Titles: "RADE - engine-v41 - R44" (no build); "90-161.Z - Kanon - 0.1.0 - R44"; installed "90-161.Z - Kanon - 0.1.0"; display field. Scope: RADE, T22. | PFM (question dialog, 25 Nov 26 20:44) | [review](reviews/2026-11-25-kanon-scale-cleanup.md) |
