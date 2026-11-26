@@ -310,8 +310,20 @@ def check_ui_names():
             used |= set(re.findall(r'&\s*\$ui\.(\w+)', t))
     assert not used - defined, 'T22 calls $ui names that no T22 file defines: ' + ', '.join(sorted(used - defined))
 
+
+def check_t26_state_name():
+    """R43 review MAJOR: the Back up check (T22 maint) reads the T26 state file by the exact name that T26 writes
+    ($StateName), so a T26 revision change cannot leave it reading an old file. Takes nothing; raises AssertionError."""
+    t26 = sorted(GOV.glob('90161Z-T26-endorse-r*.ps1'))
+    assert len(t26) == 1, 'expected one T26 endorse script, found ' + ', '.join(x.name for x in t26)
+    m = re.search(r"^\$StateName = '([^']+)'", t26[0].read_text(encoding='utf-8'), re.M)
+    assert m, 'T26 has no $StateName line'
+    maint = (GOV / '90161Z-T22-maint-r16.ps1').read_text(encoding='utf-8')
+    assert "'" + m.group(1) + "'" in maint, 'T22 maint does not read the T26 state file ' + m.group(1)
+
 if __name__ == '__main__':
     check_ui_names()   # no pwsh needed
+    check_t26_state_name()
     need_pwsh()
     check_feedback()
     check_walk()
