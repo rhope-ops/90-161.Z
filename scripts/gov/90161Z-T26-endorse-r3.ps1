@@ -449,7 +449,8 @@ try {
   $lines.Add('ENDORSE ' + $Part + ' done: passed=' + $script:passed + ' failed=' + $script:failed)
   # Every line is masked once more before it is shown or saved.
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir -and $Part) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  $resultName = $(if ($Part) { '90161Z-T26-endorse-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-' + $Rev + '.txt' } else { '' })
+  if ($dir -and $resultName) { try { Set-Content -LiteralPath (Join-Path $dir $resultName) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause -and -not $env:RADE_CONTRACT) { [void](Read-Host 'Press Enter to close') }
 }

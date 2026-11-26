@@ -252,14 +252,17 @@ try {
   Test-That 'the pause values of the script equal the manifest restore.pause' ($ok -and $p[0].field -eq $m.Groups[3].Value -and $p[0].on -eq $m.Groups[4].Value) ''
   # R43 review: a part that runs twice in a round keeps both result files (a label), and the round collects each file once.
   $r = Invoke-T26 'Make' 'after'
-  Test-That 'Make with -Label after writes its own result file, and the file of the first run stays' ($r.File -match 'ENDORSE Make done' -and (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-after-r3.txt')) -and (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r3.txt'))) $r.Text
+  $labeled = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-after-r3.txt')
+  $first = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r3.txt')
+  Test-That 'Make with -Label after writes its own result file, and the file of the first run stays' ($r.File -match 'ENDORSE Make done' -and $labeled -and $first) $r.Text
   $r = Invoke-T26 'Clean' 'after'
   Test-That 'Clean with -Label after writes its own result file' (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-clean-after-r3.txt')) $r.Text
   $T26steps = @(@($man.bundles | ForEach-Object { $_.steps }) | Where-Object { $_.file -eq '90161Z-T26-endorse-r3.ps1' })
   $partKey = @($T26steps | ForEach-Object { $a = [string]$_.args; $a -replace '\s+', ' ' })
   Test-That 'every T26 step of the round has its own -Part/-Label pair (no 2 steps write the same result file)' (@($partKey | Sort-Object -Unique).Count -eq $partKey.Count) ($partKey -join ' | ')
   $collectNames = @(@($man.bundles | ForEach-Object { $_.collect }) | ForEach-Object { $_.dir + '/' + $_.name })
-  Test-That 'the collect list has no file name twice (a second step must not overwrite the first result file)' (@($collectNames | Sort-Object -Unique).Count -eq $collectNames.Count) (@($collectNames | Group-Object | Where-Object Count -gt 1 | ForEach-Object Name) -join ',')
+  $twice = @($collectNames | Group-Object | Where-Object Count -gt 1 | ForEach-Object Name) -join ','
+  Test-That 'the collect list has no file name twice (a second step must not overwrite the first result file)' (@($collectNames | Sort-Object -Unique).Count -eq $collectNames.Count) $twice
   $all = Get-ChildItem -LiteralPath $t26 -Filter '*.txt' | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }
   Test-That 'no result line shows the site host' (-not (@($all) -join "`n").Contains('fakehost')) ''
   $bytes = [IO.File]::ReadAllBytes($script); Test-That 'the script file is ASCII' (-not @($bytes | Where-Object { $_ -gt 127 }).Count) ''

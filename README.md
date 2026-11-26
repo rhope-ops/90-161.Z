@@ -37,7 +37,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 The steps to run it are at the top of the script.
 
-**Round script:** `90161Z-R43-round-r1.txt` · **Build:** `4d08bed3` (the RADE title bar shows it) · **Code:** `ffc0bd16cb08...7016`
+**Round script:** `90161Z-R43-round-r1.txt` · **Build:** `8f193d8d` (the RADE title bar shows it) · **Code:** `dc36c4c3a0ec...adf4`
 
 ---
 
