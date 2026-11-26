@@ -1,13 +1,17 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r17 (round R44). Windows PowerShell 5.1, Windows Forms and, to read the
+  90-161.Z Task 22: the PFM window, test window r18 (round R44). Windows PowerShell 5.1, Windows Forms and, to read the
   test site, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
+  WHAT R18 CHANGES (the PFM, 26 Nov 26, comments of round R45): the window title (above); a text value of the Action Status card (pairs
+  of label and value) starts at one left edge, and a chip row is only as tall as its text (the parts part); the waves card counts its head
+  line, chip and pill from the rows its grid shows and has no stray "4" under the grid (the site and grid parts); the check bar wraps its
+  sentence onto a second line and frames the part of the screen a step names (the cards part: Target; the bar part: $wn.FrameSet).
   WHAT R17 CHANGES (round R44 T4; R43 findings 3, 4 and 6; the PFM, 26 Nov 26): the look step after the waves card names the
   grid by the head line above it, a line the card shows (the cards part); the bar keeps room for its links "Open this screen"
   and "Feedback", so the step text never covers them (the bar part, tests/ps/Test-T22Bar.ps1); the first click-through step
   counts the card that shows at the start as opened (the bar part). Names: the window title is always
-  "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)" (the test window shows only fake rows), and the rail head
+  "Kanon <bullet> 0.1.0 (FAKE data)" (R18, the PFM, 26 Nov 26, R45: was "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)"), and the rail head
   reads "Kanon" (the window part). The RADE window's own title, word spot and Maintenance row belong to the RADE engine.
   WHAT R14 CHANGES (round R41; PFM 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md rows 1, 3 and 4): the window reads the
   PFM lists of the test site, read-only, and fills Your Work, All Actions and the endorsement answers from them (the
@@ -51,8 +55,8 @@
   line; PFM 19 Nov 26). A grid whose columns are wider than it gives the excess back ($wn.FitGrids; R36 finding 3: the
   home grid was 9 px short). Feedback (UI standard B13, PFM 19 Nov 26): a link on the check bar, in the same place on
   every card, opens a small box "What does not look right?"; Save writes the comment and a picture of the window into
-  the T22 folder as 90161Z-T22-feedback-<card>-r17.txt and .png and adds a FEEDBACK line; at the close
-  90161Z-T22-feedback-r17.txt lists them (or none).
+  the T22 folder as 90161Z-T22-feedback-<card>-r18.txt and .png and adds a FEEDBACK line; at the close
+  90161Z-T22-feedback-r18.txt lists them (or none).
   WHAT R8 CHANGED (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
   in 2 system colors, and in its own colors again when it goes off ($wn.LogoImage, Pfm.Logo); every rail build checks
   the logo's colors (a LOGO line; a W7 LAYOUT line when they are wrong). No column head of a grid is shortened with
@@ -67,30 +71,30 @@
   the first line of its text (D3); the publication titles of a grid start in one column (D4). The layout self-check
   writes a LAYOUT line for each of the 4 ($ui.Measure, measure part) and the check bar has 2 more checks (chip, pubcol).
   R5 (R31): rail head, high contrast, card pictures. R4 (R30) split the script into parts: this file loads its parts
-  from its own folder, 90161Z-T22-<part>-r17.ps1 (cards, types, ui, ui2, parts, grid, logo, window, keep, feedback,
+  from its own folder, 90161Z-T22-<part>-r18.ps1 (cards, types, ui, ui2, parts, grid, logo, window, keep, feedback,
   measure; R10 adds logo and feedback, R11 ui2, R13 keep, R14 bar and site).
   Inputs: the 13 part files and the font files (90161Z-SofiaSans*.ttf) next to this file; with -Again, the saved card
   (90161Z-T22-window-lastcard.txt).
   Parameters: -Id, -NoPause (RADE), -Again (R12: the reopen check only). -PlanOnly prints the cards and the 4 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r17.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r18.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r17.txt (with -Again: 90161Z-T22-window-again-r17.txt) (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
-  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r17.png (one per
-  card) and the feedback files (90161Z-T22-feedback-r17.txt, and a .txt and a .png per comment) in the T22 folder.
+  Outputs: 90161Z-T22-window-r18.txt (with -Again: 90161Z-T22-window-again-r18.txt) (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r18.png (one per
+  card) and the feedback files (90161Z-T22-feedback-r18.txt, and a .txt and a .png per comment) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r17.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r18.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell, read
   only (the site part; none with -PlanOnly, -Measure or -Opened).
-  Writes: nothing on the site. 90161Z-T22-window-r17.txt (or -again-r17.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
+  Writes: nothing on the site. 90161Z-T22-window-r18.txt (or -again-r18.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
   folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
   with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
   Credentials: your own CAC sign-in through the PnP web login window (the site part); nothing is stored.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened, [switch]$Again)
 $task = 'T22'
-$Rev = 'r17'
+$Rev = 'r18'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }
@@ -242,7 +246,7 @@ function Get-ErrorPlace($Err) { return ([string](Split-Path -Leaf ([string]$Err.
 # The parts of this task, in load order. They are siblings of this file with fixed names (round skill section 2:
 # scripts that load each other by file name stay in one folder).
 $Parts = @('cards', 'types', 'ui', 'ui2', 'parts', 'grid', 'logo', 'window', 'bar', 'keep', 'feedback', 'measure', 'site')
-# The full path of part $Name: 90161Z-T22-<name>-r17.ps1 in this file's folder.
+# The full path of part $Name: 90161Z-T22-<name>-r18.ps1 in this file's folder.
 function Get-PartPath([string]$Name) { return (Join-Path $PSScriptRoot ('90161Z-T22-' + $Name + '-' + $Rev + '.ps1')) }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add('TASK T22 PFM window preview ' + $Rev + $(if ($Again) { ' (again: the reopen check)' } else { '' }) + ', ' + (Get-Date -Format 'yyyy-MM-dd HH:mm'))
@@ -285,9 +289,10 @@ try {
   foreach ($k in $PalHex.Keys) { $pc[$k] = [Drawing.ColorTranslator]::FromHtml('#' + $PalHex[$k]) }
   $ui = @{}
   $form = New-Object System.Windows.Forms.Form
-  # R17 (the PFM, 26 Nov 26): the test window title is "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)". The test window shows only fake
-  # rows (the built-in ones, or the marked fake rows of the test site), so the suffix is always there (R44 review MAJOR).
-  $form.Text = '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)'
+  # R18 (the PFM, 26 Nov 26, R45): the test window title is "Kanon <bullet> 0.1.0 (FAKE data)"; the bullet is U+2022, built with [char]0x2022
+  # so this file stays ASCII. The test window shows only fake rows (the built-in ones, or the marked fake rows of the test site),
+  # so the suffix is always there (R44 review MAJOR).
+  $form.Text = 'Kanon ' + [char]0x2022 + ' 0.1.0 (FAKE data)'
   $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96); $form.AutoScaleMode = 'Dpi'
   $form.ClientSize = [Drawing.Size]::new(1280, 720)
   $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true; $form.ShowInTaskbar = $true

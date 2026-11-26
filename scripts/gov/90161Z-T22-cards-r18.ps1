@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r17, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
+  90-161.Z Task 22 r18, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
   R17 (round R44 T4; R43 finding 3): the look step after the waves card names the grid by the head line above it
@@ -12,7 +12,7 @@
   (Get-AgainText; the main script gives it the saved card); the closing line of the check bar names no card.
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r17.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r18.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems, $Walk
   and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan, Get-CheckPlan,
@@ -493,7 +493,8 @@ first card not yet walked that one rail item, button or crumb link opens (Get-Wa
 first card not yet walked, opened with the link "Open this screen" of the check bar. Each step is one action and one
 Pass or Fail, in the words of the 4 checks. Pure data: no window.
 .OUTPUTS
-An array of @{ Key; Via (rail, button, link, open or, R16, look); Opener (what to select); Text (the bar text); From (R15: the card it starts on) }.
+An array of @{ Key; Via (rail, button, link, open or, R16, look); Opener (what to select); Text (the bar text); From (R15: the card it starts on);
+R18: Target, only on a step that names one part of the screen (the accessible name of its control; the bar frames it) }.
 R16: Via look is the step after the waves card: it asks about the grid on the card the person is on.
 R17 (R43 finding 3): the grid is named by the head line above it (Get-WaveHead), not by its accessible name.
 #>
@@ -511,7 +512,9 @@ function Get-WalkPlan {
     $out += @{ Key = $key; Via = $op.Via; Opener = $op.Text; Text = $text; From = $cur }; $cur = $key
     # R16 (R42 finding 4; R43 T3): the step after the waves card asks about its grid, with its own Pass and Fail
     # R17 (R43 finding 3: the card shows no grid named "Wave 1 answers"): the step names the grid by the head line above it
-    if ($key -eq 'waves') { $head = Get-WaveHead; $out += @{ Key = $key; Via = 'look'; Opener = $head; From = 'waves'
+    # R18 (the PFM, 26 Nov 26, R45 comment 6b): a step that names one part of the screen has Target, the accessible name of that
+    # control; the bar draws a 2 px frame around it while the step shows (the bar part, $wn.FrameSet).
+    if ($key -eq 'waves') { $head = Get-WaveHead; $out += @{ Key = $key; Via = 'look'; Opener = $head; From = 'waves'; Target = 'Wave 1 answers'
         Text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': look at the grid under the line "' + $head + '" Pass if the grid shows the second person, or if no one helped.' } } }
   return $out
 }

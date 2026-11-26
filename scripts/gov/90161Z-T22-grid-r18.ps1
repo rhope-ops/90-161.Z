@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r17, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r18, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
@@ -22,7 +22,7 @@
   can say where its content ends ($wn.GridEdges), so the layout self-check ($wn.EdgeCheck) fails a chip or text that
   ends closer to the grid's right edge than the vertical scroll bar is wide.
   R15 (R42 T1; R41 finding 4: at 1920 x 1094 and 150 % 3 Status chips ended under the 26 px bar): the column plan is pure
-  arithmetic ($wn.ColPlan, run by tests/check_t22_r17.py) and keeps the scroll bar room; the grid fit ($wn.FitGrid) works
+  arithmetic ($wn.ColPlan, run by tests/check_t22_r18.py) and keeps the scroll bar room; the grid fit ($wn.FitGrid) works
   on the column minimums against that room, so a grid that fits keeps its chip (r14 took the chip under the bar).
   R16 (R43 T1; R42 finding 2: home, empty and queue still "columns need 979, the grid has 961" and "1442, 1428"): r15 made the
   plan keep the bar room and the fit work on the column minimums; those grids' minimums already fitted (r14 kept the room
@@ -30,7 +30,7 @@
   the device lines suggest; not measured). The fit now also cuts the widths ($wn.TrimWidths); tests/ps/Test-T22GridWidth.ps1
   runs it on those numbers, and the LAYOUT line names the column minimums, so R43 shows if the fit ran.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r17.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -219,7 +219,10 @@ $wn.Grid = {
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
   $g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled = $true; $e.SuppressKeyPress = $true; if ($s.CurrentRow) { & $wn.Later $s $s.CurrentRow.Index } } })
   [void]$Parent.Controls.Add($g); $g.ClearSelection(); $wn.Gridsel = $g
-  if ($b.Count) { $wn.CountText = [string]$b.Count; $wn.CountBox = & $wn.Txt $Parent ($b.Count -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq = $g } }
+  # R18 (the PFM, 26 Nov 26, R45 comment 4: a stray label "4" under the waves grid): the Count property of a hash table is its number of keys (the 4 keys
+  # of the waves block), never "no Count key", so the line under the grid showed that number. The key is read by name, with an index.
+  $cnt = [string]$b['Count']
+  if ($cnt) { $wn.CountText = $cnt; $wn.CountBox = & $wn.Txt $Parent ($cnt -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq = $g } }
 # R10 (R37; R36 finding 3: the home grid "Who has it now" columns needed 810 px, the grid had 801): after a card is laid
 # out, each grid on the page whose column minimums are wider than its room gives the excess back ($wn.FitGrid). The
 # layout self-check ($wn.ScrollCheck) still measures the result, so a grid that does not fit stays a defect. Gives back
@@ -249,7 +252,7 @@ $wn.FitGrid = {
   second fit, and a later open of the kept card, find nothing to do.
   .PARAMETER G
   The grid (its Tag holds the column kinds and the column list, $wn.Grid); any object with ClientSize, Width, Columns
-  (Name, Visible, Width, MinimumWidth, AutoSizeMode) and that Tag (tests/check_t22_r17.py gives one off Windows).
+  (Name, Visible, Width, MinimumWidth, AutoSizeMode) and that Tag (tests/check_t22_r18.py gives one off Windows).
   .OUTPUTS
   $true when it changed a column or laid the grid out again, else $false.
   #>

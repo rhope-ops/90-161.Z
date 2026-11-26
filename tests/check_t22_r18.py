@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""T22 r17 checks (round R43 T1 to T3: docs/reviews/2026-11-25-r43-plan.md; R42 T1: docs/reviews/2026-11-21-r42-plan.md; the R41 checks: docs/reviews/2026-11-21-r41-plan.md rows 1, 3, 4).
+"""T22 r18 checks (round R43 T1 to T3: docs/reviews/2026-11-25-r43-plan.md; R42 T1: docs/reviews/2026-11-21-r42-plan.md; the R41 checks: docs/reviews/2026-11-21-r41-plan.md rows 1, 3, 4).
 
 What it checks, on the window's text form (-PlanOnly; no window here: tests/ps/Test-T22Layout.ps1 measures the window on
 the Windows job) and on the part files:
@@ -17,13 +17,16 @@ the Windows job) and on the part files:
   wide and 100 % (bar 17), and with a normal and a 1.25 x wider stand-in font: the column minimums fit beside the
   scroll bar and a kept Status chip ends a scroll bar's width before the grid edge, wherever the fill puts its column;
   the grid fit changes nothing in a grid that fits and fits one whose minimums are 42 px too wide, chip kept;
+- R18 (R45, the PFM, 26 Nov 26), check_r18: the waves head line, chip and pill are counted from the grid's rows; the look step has a Target;
+  the grid reads its Count key by name; the rows block has one left edge for text values; the bar wraps and frames (text checks of the code:
+  the window itself is measured only on Windows, tests/ps/Test-T22Layout.ps1);
 - R15, the walk path: each WALK step names a rail item, a button of the screen the step before opened (shown at every
   window size, needing nothing) or the bar's link; steps 10 and 11 open waves and step13; the bar's fallback link.
 
 Network: none.
 Writes: one temporary folder for the Feedback case and one for the grid case, each removed at the end (it runs pwsh on the cards and feedback parts).
 Credentials: none.
-Usage: python3 tests/check_t22_r17.py   exit 0 = pass (last line T22R17 PASS), 1 = a failed assertion."""
+Usage: python3 tests/check_t22_r18.py   exit 0 = pass (last line T22R18 PASS), 1 = a failed assertion."""
 import pathlib
 import re
 import shutil
@@ -40,18 +43,18 @@ def need_pwsh():
     Takes nothing; returns nothing; exits 1 with the install pointer when pwsh is not on the PATH.
     """
     if not shutil.which('pwsh'):
-        sys.exit('FAIL tests/check_t22_r17.py needs pwsh (PowerShell 7) for the walk and feedback cases; '
+        sys.exit('FAIL tests/check_t22_r18.py needs pwsh (PowerShell 7) for the walk and feedback cases; '
                  'install it (docs/dev-setup.md), then run again.')
 
 
 def part(name):
-    """The text of T22 part <name> r17. Takes the part name; returns the file text."""
-    return (GOV / ('90161Z-T22-%s-r17.ps1' % name)).read_text(encoding='utf-8')
+    """The text of T22 part <name> r18. Takes the part name; returns the file text."""
+    return (GOV / ('90161Z-T22-%s-r18.ps1' % name)).read_text(encoding='utf-8')
 
 
 def check_walk():
     """The click-through plan of -PlanOnly. Takes nothing; raises AssertionError on a bad plan."""
-    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r17.ps1'), '-PlanOnly'],
+    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r18.ps1'), '-PlanOnly'],
                          capture_output=True, text=True, timeout=120, cwd=ROOT).stdout.splitlines()
     cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
     # R16 (R43 T3): 17 screens and, after the waves card, one look step with its own Pass and Fail: 18 steps in all
@@ -81,18 +84,18 @@ def check_parts():
     for x in ("' (open: ' + $wn.OpenKind + ')'", '& $wn.FitSettled', '$wn.FitTries -lt 3', '& $wn.WalkSeen $Key'):
         assert x in w, 'the window part lacks ' + x
     # R17 (R44 T4; the PFM, 26 Nov 26): the test window title and the name in the rail head
-    main_text = (GOV / '90161Z-T22-pfm-window-r17.ps1').read_text(encoding='utf-8')
-    assert "$form.Text = '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)'" in main_text, 'the window title (always with the suffix: the test window shows fake rows only)'
+    main_text = (GOV / '90161Z-T22-pfm-window-r18.ps1').read_text(encoding='utf-8')
+    assert "$form.Text = 'Kanon ' + [char]0x2022 + ' 0.1.0 (FAKE data)'" in main_text, 'the window title (always with the suffix: the test window shows fake rows only)'
     assert "$nm.Text = 'Kanon'" in w and "$nm.Text = '90-161.Z'" not in w, 'the rail head name'
     bar = part('bar')
     assert '$fb.BringToFront(); if ($wn.OpenLink) { $wn.OpenLink.BringToFront() }' in bar, 'the bar links are not in front of the step text'
     assert 'Max((& $wn.Sc 200)' not in bar, 'the bar text has a least width again'
-    main =(GOV / '90161Z-T22-pfm-window-r17.ps1').read_text(encoding='utf-8')
+    main =(GOV / '90161Z-T22-pfm-window-r18.ps1').read_text(encoding='utf-8')
     assert "foreach ($l in @(& $wn.WalkLines)) { $lines.Add($l) }" in main and 'Invoke-SiteRead $siteAt' in main, 'main script'
 
 
 FEEDBACK_PS = r"""
-$ErrorActionPreference = 'Stop'; $Rev = 'r17'; $dir = $args[0]; $who = $null; $lines = New-Object System.Collections.Generic.List[string]
+$ErrorActionPreference = 'Stop'; $Rev = 'r18'; $dir = $args[0]; $who = $null; $lines = New-Object System.Collections.Generic.List[string]
 $wn = @{ PngDir = '' }; $form = $null; $ui = @{}
 function Hide-Site([string]$Text, [string]$Site) { return $Text }
 function ConvertTo-Masked([string]$Text, $Secret) { return $Text }
@@ -102,7 +105,7 @@ $wn.PngSave = { param($Shot, [string]$Path) Set-Content -LiteralPath $Path -Valu
 $a = & $wn.FeedbackSave 'home' 'FAKE comment one' $shot; $b = & $wn.FeedbackSave 'queue' 'FAKE comment two' $shot; & $wn.FeedbackList
 $lines | ForEach-Object { 'LINE ' + $_ }
 Get-ChildItem -LiteralPath $dir -Name | Sort-Object | ForEach-Object { 'FILE ' + $_ }
-Get-Content -LiteralPath (Join-Path $dir '90161Z-T22-feedback-r17.txt') | ForEach-Object { 'LIST ' + $_ }
+Get-Content -LiteralPath (Join-Path $dir '90161Z-T22-feedback-r18.txt') | ForEach-Object { 'LIST ' + $_ }
 """
 
 
@@ -113,16 +116,16 @@ def check_feedback():
     try:
         ps = pathlib.Path(d, 'case.ps1')
         ps.write_text(FEEDBACK_PS, encoding='utf-8')
-        out = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), d, str(GOV / '90161Z-T22-feedback-r17.ps1')],
+        out = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), d, str(GOV / '90161Z-T22-feedback-r18.ps1')],
                              capture_output=True, text=True, timeout=60).stdout.splitlines()
         files = [l[5:] for l in out if l.startswith('FILE ')]
         lines = [l[5:] for l in out if l.startswith('LINE ')]
         lst = [l[5:] for l in out if l.startswith('LIST ')]
-        assert 'FEEDBACK home: 90161Z-T22-feedback-home-r17.txt' in lines and 'FEEDBACK home: picture not saved (2 site rows without a fake-data marker)' in lines, out
-        assert 'FEEDBACK queue: 90161Z-T22-feedback-queue-r17.txt and 90161Z-T22-feedback-queue-r17.png' in lines, out
-        assert '90161Z-T22-feedback-home-r17.png' not in files and '90161Z-T22-feedback-queue-r17.png' in files and '90161Z-T22-feedback-home-r17.txt' in files, files
-        assert '  90161Z-T22-feedback-home-r17.txt (picture not saved)' in lst and not any('home-r17.png' in l for l in lst + lines), lst
-        assert '  90161Z-T22-feedback-queue-r17.txt and 90161Z-T22-feedback-queue-r17.png' in lst, lst
+        assert 'FEEDBACK home: 90161Z-T22-feedback-home-r18.txt' in lines and 'FEEDBACK home: picture not saved (2 site rows without a fake-data marker)' in lines, out
+        assert 'FEEDBACK queue: 90161Z-T22-feedback-queue-r18.txt and 90161Z-T22-feedback-queue-r18.png' in lines, out
+        assert '90161Z-T22-feedback-home-r18.png' not in files and '90161Z-T22-feedback-queue-r18.png' in files and '90161Z-T22-feedback-home-r18.txt' in files, files
+        assert '  90161Z-T22-feedback-home-r18.txt (picture not saved)' in lst and not any('home-r18.png' in l for l in lst + lines), lst
+        assert '  90161Z-T22-feedback-queue-r18.txt and 90161Z-T22-feedback-queue-r18.png' in lst, lst
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -221,8 +224,8 @@ def check_grid_plan():
     try:
         ps = pathlib.Path(d, 'grid.ps1')
         ps.write_text(GRID_PS, encoding='utf-8')
-        res = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), str(GOV / '90161Z-T22-grid-r17.ps1'),
-                              str(GOV / '90161Z-T22-cards-r17.ps1'), str(GOV / '90161Z-T22-site-r17.ps1')],
+        res = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), str(GOV / '90161Z-T22-grid-r18.ps1'),
+                              str(GOV / '90161Z-T22-cards-r18.ps1'), str(GOV / '90161Z-T22-site-r18.ps1')],
                              capture_output=True, text=True, timeout=120)
     finally:
         shutil.rmtree(d, ignore_errors=True)
@@ -267,7 +270,7 @@ def check_walk_path():
     """R15 (R41 finding 4): each walk step names a control that is on the screen shown at that step: a rail item, a
     button of the card the step before opened (not in a wide-only section, needing nothing), or the bar's own link.
     Takes nothing; raises AssertionError."""
-    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r17.ps1'), '-PlanOnly'],
+    out = subprocess.run(['pwsh', '-NoProfile', '-File', str(GOV / '90161Z-T22-pfm-window-r18.ps1'), '-PlanOnly'],
                          capture_output=True, text=True, timeout=120, cwd=ROOT).stdout.splitlines()
     rail, buttons, key, wide = {}, {}, None, False
     for l in out:
@@ -312,10 +315,10 @@ def check_ui_names():
     Takes nothing; raises AssertionError with the missing names.
     """
     defined, used = set(), set()
-    for f in sorted(GOV.glob('90161Z-T22-*-r17.ps1')):
+    for f in sorted(GOV.glob('90161Z-T22-*-r18.ps1')):
         t = f.read_text(encoding='utf-8')
         defined |= set(re.findall(r'^\s*\$ui\.(\w+)\s*=', t, re.M))
-        if not re.search(r'-ui2?-r17\.ps1$', f.name):
+        if not re.search(r'-ui2?-r18\.ps1$', f.name):
             used |= set(re.findall(r'&\s*\$ui\.(\w+)', t))
     assert not used - defined, 'T22 calls $ui names that no T22 file defines: ' + ', '.join(sorted(used - defined))
 
@@ -327,8 +330,53 @@ def check_t26_state_name():
     assert len(t26) == 1, 'expected one T26 endorse script, found ' + ', '.join(x.name for x in t26)
     m = re.search(r"^\$StateName = '([^']+)'", t26[0].read_text(encoding='utf-8'), re.M)
     assert m, 'T26 has no $StateName line'
-    maint = (GOV / '90161Z-T22-maint-r17.ps1').read_text(encoding='utf-8')
+    maint = (GOV / '90161Z-T22-maint-r18.ps1').read_text(encoding='utf-8')
     assert "'" + m.group(1) + "'" in maint, 'T22 maint does not read the T26 state file ' + m.group(1)
+
+R18_PS = r"""
+$ErrorActionPreference = 'Stop'; $Again = $false; $lines = New-Object System.Collections.Generic.List[string]
+$mid = [string][char]0xB7; $gt = [string][char]0x203A
+. $args[0]; . $args[1]   # the cards part and the site part
+function Get-WaveInfo {
+  $o = @{}; foreach ($col in @($Cards.waves.Cols)) { foreach ($sec in @($col)) { foreach ($b in @($sec.Blocks)) {
+        if ($b.T -eq 'head' -and -not $b.Small) { $o.Head = $b.Text }; if ($b.T -eq 'chips') { $o.Chip = $b.Items[0][1] }
+        if ($b.T -eq 'rows') { foreach ($r in $b.Rows) { if ($r[0] -like 'Wave 1:*') { $o.Pill = $r[1] } } } } } }
+  return $o }
+$f = Get-WaveInfo; 'FAKE ' + $f.Head + ' | ' + $f.Chip + ' | ' + $f.Pill
+Sync-WaveSummary @(@{ Status = 'Answered' }); $a = Get-WaveInfo; 'ONE ' + $a.Head + ' | ' + $a.Chip + ' | ' + $a.Pill
+Sync-WaveSummary @(@{ Status = 'Answered' }, @{ Status = 'Waiting' }, @{ Status = 'Waiting' }); $c = Get-WaveInfo; 'THREE ' + $c.Head + ' | ' + $c.Chip + ' | ' + $c.Pill
+$w = @(Get-WalkPlan | Where-Object { $_.Via -eq 'look' }); 'LOOK ' + $w.Count + ' ' + $w[0].Target + ' | ' + $w[0].Text
+@(Get-WalkPlan | Where-Object { $_.Via -ne 'look' -and $_.Target }).Count.ToString() | ForEach-Object { 'OTHERTARGETS ' + $_ }
+"""
+
+
+def check_r18():
+    """R18 (R45, the PFM, 26 Nov 26): the waves card counts its head line, chip and pill from the rows its grid shows; the look step
+    names its target; the grid reads its Count key by name; the rows block puts every text value on one edge; the bar wraps and frames.
+    Takes nothing; raises AssertionError."""
+    import tempfile
+    d = tempfile.mkdtemp()
+    try:
+        ps = pathlib.Path(d, 'case.ps1'); ps.write_text(R18_PS, encoding='utf-8')
+        out = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), str(GOV / '90161Z-T22-cards-r18.ps1'), str(GOV / '90161Z-T22-site-r18.ps1')],
+                             capture_output=True, text=True, timeout=60)
+        o = out.stdout.splitlines(); assert out.returncode == 0, out.stderr + out.stdout
+        assert any(l.startswith('FAKE Wave 1: two of three offices have answered. | 1 office has not answered | 2 of 3') for l in o), o
+        assert 'ONE Wave 1: 1 of 1 office has answered. | Every office has answered | 1 of 1' in o, o
+        assert 'THREE Wave 1: 1 of 3 offices have answered. | 2 offices have not answered | 1 of 3' in o, o
+        look = [l for l in o if l.startswith('LOOK ')]
+        assert look and look[0].startswith('LOOK 1 Wave 1 answers | Screen ') and 'under the line "Wave 1: 1 of 3 offices have answered."' in look[0], look
+        assert 'OTHERTARGETS 0' in o, o
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    grid = part('grid'); parts = part('parts'); bar = part('bar')
+    assert "[string]$b['Count']" in grid and '$b.Count' not in grid, 'the grid must read its Count key by name ($b.Count on a hash table is its key count: the stray "4")'
+    assert '[Drawing.Point]::new(($W - $vw), (& $wn.Sc 8))' in parts and '($W - $v.Width), (& $wn.Sc 8)' not in parts, 'a text value must start at the left edge of the value column'
+    assert '$lw = $W - $v.Width - $gap' in parts, 'a chip row gives its label the room the chip leaves'
+    for x in ('$wn.FrameSet', '$wn.FramePaint', '$wn.FrameFind', '& $wn.OpenShow; & $wn.FrameSet', '$ww = [math]::Max(1, $tw - 2 * (& $wn.Sc 4))',
+              '& $ui.SetWrap $wn.BarText $ww', '[Drawing.Drawing2D.PenAlignment]::Inset'):
+        assert x in bar, 'the bar part lacks ' + x
+
 
 if __name__ == '__main__':
     check_ui_names()   # no pwsh needed
@@ -338,6 +386,7 @@ if __name__ == '__main__':
     check_walk()
     check_parts()
     check_grid_plan()
+    check_r18()
     check_walk_path()
-    print('T22R17 PASS')
+    print('T22R18 PASS')
     sys.exit(0)
