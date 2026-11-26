@@ -21,20 +21,20 @@ Updated: 26 Nov 26 (R45 r1).
 9. If the card **Maintenance** shows again, with the rows **Diagnose**, **Back up** and **Restore**, click **Repair**.
 10. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
 11. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
-12. If you did the line **What to do**, click **Run checks again** or **Sign in and check site rights**.
+12. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
 13. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
-14. On the card **Ready to install 90-161.Z 0.1.0.**, if the box **Shortcut in** shows, keep the folder in it.
-15. Click **Install**. This button is also the one for a repair. Wait until an end card shows (up to 5 minutes).
+14. On the card **Ready to install 90-161.Z 0.1.0.**, if the box **Shortcut in** shows, do not change the folder in it.
+15. Click **Install**. Wait until an end card shows (up to 5 minutes).
 16. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
 17. On the end card, click **Close**. The RADE window closes.
 18. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
 19. Click the row **90-161.Z R45**. Wait until a card shows (up to 2 minutes).
 20. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
 21. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
-22. If you did the line **What to do**, click **Run checks again** or **Sign in and check site rights**.
+22. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
 23. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
 24. On the card **Ready to run round R45.**, click **Run** (or **Resume at step**, if it shows).
-25. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: the step stops after 3 minutes.
+25. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: after 3 minutes the step stops and the round goes on.
 26. Do each step that a card shows. Stop when the card **Round R45 is done.** or **The round needs review.** shows.
 27. In the Outlook draft with the subject that starts with `90161Z R45`, click **Send**.
 28. If no Outlook draft opens, do the e-mail line of the end card.

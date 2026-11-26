@@ -474,17 +474,7 @@
                     ],
                     "answers": [
                         {
-                            "kind": "pick",
-                            "choices": [
-                                "Small",
-                                "Large",
-                                "No sign-in window opened"
-                            ],
-                            "key": "b-signin",
-                            "prompt": "What size did you write down for the CAC sign-in window of the second RADE window?"
-                        },
-                        {
-                            "key": "b-took-on",
+                            "key": "b-took",
                             "prompt": "Type the number of seconds of the line \"The sign-in took\". Type none if the line did not show.",
                             "kind": "text"
                         },
