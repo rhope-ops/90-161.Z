@@ -8,7 +8,7 @@ R44 is being built. This page shows it when it is ready.
 
 ## Done
 
-- Round R43 r1 (25 Nov 26): needs review. Checks 12 of 12, Window OK, 8 of 29 steps passed. Passed: the window grids (0 layout defects), all 4 window checks, the 12 lists on the test site, and the clean-up. Needs work: Uninstall stopped while it saved a backup, the steps skipped without the second person, and 4 window screens.
+- Round R43 r1 (25 Nov 26): needs review. Checks 12 of 12, Window OK, 8 of 29 steps passed. Passed: the window grids (0 layout defects), all 4 window checks, the 12 lists on the test site, and the clean-up. Needs work: Uninstall stopped while it saved a backup, 13 steps skipped without the second person, and 4 window screens (1 of them by a walk count rule).
 https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/docs/reviews/2026-11-25-r43-results.md
 
 - Round R42 r2 (25 Nov 26): needs review. Checks 12 of 12, Window OK, 11 of 21 steps passed. Passed: the probe list, the second person and the answer row by that person, the waves grid and screens 10 and 11, and the clean-up. Needs work: Back up and Restore did not run (the install steps were not clear), the home and queue grids, and 3 screens.
