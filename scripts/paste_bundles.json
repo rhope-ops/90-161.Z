@@ -220,7 +220,7 @@
                     "guide": [],
                     "dir": "T29",
                     "file": "",
-                    "note": "4 questions about what you saw. Answer what you saw, also if it is not one of the first choices.",
+                    "note": "4 questions about what you saw. Pick the choice that agrees with what you saw.",
                     "estimate": 1,
                     "after": [
                         "T29 Sign-in test r2"
@@ -567,7 +567,7 @@
                             "choices": [
                                 "No",
                                 "Yes, for a moment",
-                                "Yes, and it stayed"
+                                "Yes, and it stayed open"
                             ]
                         }
                     ]

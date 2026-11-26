@@ -130,7 +130,9 @@ function Sync-WaveSummary($Rows) {
   $all = @($Rows); $t = $all.Count; $n = @($all | Where-Object { $_.Status -eq 'Answered' }).Count; $w = $t - $n
   if (-not $t) {   # no rows: the grid is the empty-state note; the head line says so (R46 build, worker question 2b)
     foreach ($col in @($Cards.waves.Cols)) { foreach ($sec in @($col)) { foreach ($bl in @($sec.Blocks)) {
-          if ($bl.T -eq 'head' -and -not $bl.Small) { $bl.Text = 'Wave 1: no office has answered yet.' } } } }
+          if ($bl.T -eq 'chips' -and $bl.Cap -match '^STEPS 9 AND 10') { $bl.Items = @(, @('late', 'No answers yet')) }
+          elseif ($bl.T -eq 'head' -and -not $bl.Small) { $bl.Text = 'Wave 1: no office has answered yet.' }
+          elseif ($bl.T -eq 'rows') { $bl.Rows = @($bl.Rows | ForEach-Object { if ([string]$_[0] -like 'Wave 1:*') { , @('Wave 1: offices the AO added', '0 of 0', 'soon') } else { , $_ } }) } } } }
     return }
   $hd = 'Wave 1: ' + $n + ' of ' + $t + $(if ($t -eq 1) { ' office has' } else { ' offices have' }) + ' answered.'
   $chip = $(if ($w) { @('late', ($w.ToString() + $(if ($w -eq 1) { ' office has' } else { ' offices have' }) + ' not answered')) } else { @('ok', 'Every office has answered') })

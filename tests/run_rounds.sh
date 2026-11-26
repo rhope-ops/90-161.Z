@@ -142,7 +142,7 @@ if [ "${on[t22]}" = 1 ]; then
 python3 - <<'PYT22' && python3 tests/check_t22_r18.py && ok "T22 window preview cards (r18; R42: grid room for the scroll bar, walk path)" || bad "T22 window preview cards (r18)"
 import json, re, subprocess, pathlib
 f = 'scripts/gov/90161Z-T22-pfm-window-r18.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r18.ps1' % n)
-assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[0123456].ps1')], 'an older revision is still there'
+assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[01234567].ps1')], 'an older revision is still there'
 parts = [x.strip().strip("'") for x in re.search(r"\$Parts = @\(([^)]*)\)", pathlib.Path(f).read_text()).group(1).split(',')]
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
