@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r17, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
+  90-161.Z Task 22 r18, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
   every screen (round R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3).
 .DESCRIPTION
   The check bar (PFM 17 Nov 26) sits at the bottom of the window and is always visible: the checks show one at a time,
@@ -20,7 +20,7 @@
   starts counts as opened for walk step 1 ($wn.BarShow).
   Inputs: $form, $main, $ui, $wn, $pc, $Cards, $Checks, $Walk, $lines. Outputs: the $wn members below and, at the end
   of a run, the WALK lines ($wn.WalkLines; the main script adds them to the result).
-  Run: not alone; 90161Z-T22-pfm-window-r17.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.

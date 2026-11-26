@@ -4,7 +4,7 @@
 #  (b) finding 4: for the longest step text, the text box never reaches the links "Open this screen" and "Feedback", at the
 #      smallest window (800 wide at 100 %), at 1280 and at 1920, at 96 and 144 dpi, also with links wider than usual;
 #  (c) finding 6: the window opens on the card of walk step 1, so that step counts as opened with no click.
-# Usage: pwsh -NoProfile -File tests/ps/Test-T22Bar.ps1 [-Rev r17] [-Root <repo folder>]
+# Usage: pwsh -NoProfile -File tests/ps/Test-T22Bar.ps1 [-Rev r18] [-Root <repo folder>]
 # Last line: "T22BAR pass=N fail=M"; exit 1 when M is above 0.
 # Stand-ins: the controls (position, size, preferred size), the text measure (7 px a character at 96 dpi, 20 px a line) and the scale.
 # The cards part and the bar part are the real files; no System.Windows.Forms is used.
@@ -12,7 +12,7 @@
 # Writes: none.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7).
-param([string]$Rev = 'r17', [string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
+param([string]$Rev = 'r18', [string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
 $gov = Join-Path $Root 'scripts/gov'
