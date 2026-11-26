@@ -6,8 +6,8 @@
   WHAT R17 CHANGES (round R44 T4; R43 findings 3, 4 and 6; the PFM, 26 Nov 26): the look step after the waves card names the
   grid by the head line above it, a line the card shows (the cards part); the bar keeps room for its links "Open this screen"
   and "Feedback", so the step text never covers them (the bar part, tests/ps/Test-T22Bar.ps1); the first click-through step
-  counts the card that shows at the start as opened (the bar part). Names: the window title is "90-161.Z - Kanon - 0.1.0 - R44",
-  with " (FAKE data)" at its end while it shows fake rows (it shows the test site's rows with no suffix), and the rail head
+  counts the card that shows at the start as opened (the bar part). Names: the window title is always
+  "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)" (the test window shows only fake rows), and the rail head
   reads "Kanon" (the window part). The RADE window's own title, word spot and Maintenance row belong to the RADE engine.
   WHAT R14 CHANGES (round R41; PFM 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md rows 1, 3 and 4): the window reads the
   PFM lists of the test site, read-only, and fills Your Work, All Actions and the endorsement answers from them (the

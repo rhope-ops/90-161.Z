@@ -512,7 +512,7 @@ function Get-WalkPlan {
     # R16 (R42 finding 4; R43 T3): the step after the waves card asks about its grid, with its own Pass and Fail
     # R17 (R43 finding 3: the card shows no grid named "Wave 1 answers"): the step names the grid by the head line above it
     if ($key -eq 'waves') { $head = Get-WaveHead; $out += @{ Key = $key; Via = 'look'; Opener = $head; From = 'waves'
-        Text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': look at the grid under the line "' + $head + '" Pass if it shows the second person, or if no one helped.' } } }
+        Text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': look at the grid under the line "' + $head + '" Pass if the grid shows the second person, or if no one helped.' } } }
   return $out
 }
 # The click-through as -PlanOnly lines: WALK <n> <card> <via>: <text> (tests/run.sh reads them).

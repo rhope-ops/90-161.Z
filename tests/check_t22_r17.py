@@ -57,7 +57,8 @@ def check_walk():
     # R16 (R43 T3): 17 screens and, after the waves card, one look step with its own Pass and Fail: 18 steps in all
     pat = r'WALK (\d+) (\S+) (rail|button|link|open): (Screen (\d+) of (\d+): select .+\. Pass if .+ opens and looks right\.)$'
     # R17 (R44 T4, R43 finding 3): the look step names the grid by the head line that the waves card shows (not its accessible name)
-    look = r'WALK (\d+) waves look: (Screen (\d+) of (\d+): look at the grid under the line "Wave 1: two of three offices have answered\." Pass if it shows the second person, or if no one helped\.)$'
+    look = (r'WALK (\d+) waves look: (Screen (\d+) of (\d+): look at the grid under the line '
+            r'"Wave 1: two of three offices have answered\." Pass if the grid shows the second person, or if no one helped\.)$')
     lines = [l for l in out if l.startswith('WALK ')]
     wk = [re.match(pat, l) for l in lines if ' waves look: ' not in l]; lk = [re.match(look, l) for l in lines if ' waves look: ' in l]
     assert len(cards) == 17 and len(wk) == 17 and all(wk) and len(lk) == 1 and all(lk), lines
