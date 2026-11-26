@@ -7,7 +7,9 @@ through its "after" chain, so a round without that person still runs the fake pu
 the new install and the process step.
 
 Usage: python3 tests/check_round_deps.py    exit 0 = pass (last line ROUNDDEPS PASS), 1 = a step chains to the person step.
-Reads: scripts/paste_bundles.json. Writes: nothing. Network: none. Credentials: none.
+Network: none.
+Writes: nothing.
+Credentials: none.
 """
 import json
 import sys
@@ -62,7 +64,11 @@ def offenders(bundle):
 
 
 def main():
-    """Check every bundle of the manifest and print one line for each step that chains to the person step."""
+    """Check every bundle of the manifest and print one line for each step that chains to the person step.
+
+    Returns:
+        0 when no step chains to the person step except the endorser answer steps, else 1.
+    """
     data = json.loads((ROOT / "scripts" / "paste_bundles.json").read_text(encoding="utf-8"))
     fails = 0
     for b in data["bundles"]:

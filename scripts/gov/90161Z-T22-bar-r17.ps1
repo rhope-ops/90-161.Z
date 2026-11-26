@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r16, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
+  90-161.Z Task 22 r17, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
   every screen (round R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3).
 .DESCRIPTION
   The check bar (PFM 17 Nov 26) sits at the bottom of the window and is always visible: the checks show one at a time,
@@ -14,9 +14,13 @@
   opened). Feedback (the feedback part) stays on the bar on every screen. -Again has no click-through ($Walk is empty).
   R15 (R42 T1; R41 finding 4: screens 10 and 11 did not open): "Open this screen" also shows while the screen shown is not
   the one a button step starts on ($wn.OpenShow), and an open by the person that stops adds a NOTE line ($wn.OpenFail).
+  R17 (round R44 T4; R43 findings 4 and 6): the step text never reaches the links "Open this screen" and "Feedback": the text
+  has the room that is left (no least width that can push it onto a link), the links are in front of it, and a text box that
+  is wider than its room is cut back after each step ($wn.BarLayout, $wn.BarFit); the card that shows when the click-through
+  starts counts as opened for walk step 1 ($wn.BarShow).
   Inputs: $form, $main, $ui, $wn, $pc, $Cards, $Checks, $Walk, $lines. Outputs: the $wn members below and, at the end
   of a run, the WALK lines ($wn.WalkLines; the main script adds them to the result).
-  Run: not alone; 90161Z-T22-pfm-window-r16.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r17.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -46,11 +50,19 @@ $wn.BarShow = {
     $wn.BarPass.Visible = $true; $wn.BarFail.Visible = $true }
   elseif ($j -ge 0) {
     $wn.BarNo.Text = 'Screen ' + ($j + 1) + ' of ' + $Walk.Count; $wn.BarText.Text = [string]$Walk[$j].Text
-    $wn.BarPass.Visible = $true; $wn.BarFail.Visible = $true }
+    $wn.BarPass.Visible = $true; $wn.BarFail.Visible = $true
+    # R17 (R43 finding 6: the window opens on the card of step 1, so the person cannot open it on that step and the walk counted
+    # a Pass as "not opened"): the card that shows when step 1 shows counts as opened.
+    if ($j -eq 0 -and [string]$wn.Cur -eq [string]$Walk[0].Key) { $wn.WalkOpen[0] = $true } }
   else {
     $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = $script:ChecksDone   # R13: names no card (the -Again check names the card closed on)
     $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false }
-  & $wn.OpenShow }
+  & $wn.BarFit; & $wn.OpenShow }
+# R17 (R43 finding 4): the room of the step text, set by $wn.BarLayout (0 until the first layout).
+$wn.BarTw = 0
+# R17: cuts the step text box back to its room. A text box takes its size from its text when the text changes (the UI part,
+# a few pixels past the wrap width), so this runs after each step and after the layout.
+$wn.BarFit = { if ($wn.BarTw -gt 0 -and $wn.BarText -and $wn.BarText.Width -gt $wn.BarTw) { $wn.BarText.Size = [Drawing.Size]::new($wn.BarTw, $wn.BarText.Height) } }
 # Keeps the answer (PASS or FAIL) to the step shown and shows the next one.
 $wn.Answer = {
   <#
@@ -113,7 +125,9 @@ $wn.BarLayout = {
   $bh = [math]::Max($wn.BarPass.Height, $wn.BarFail.Height)
   $kw = $(if ($wn.FbLink) { [math]::Max($wn.FbLink.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.FbLink.MinimumSize.Width) + 2 * $gap } else { 0 })
   $ow = $(if ($wn.OpenLink) { [math]::Max($wn.OpenLink.GetPreferredSize(([Drawing.Size]::new(0, 0))).Width, $wn.OpenLink.MinimumSize.Width) + $gap } else { 0 })
-  $tw = [math]::Max((& $wn.Sc 200), $w - 2 * $pad - $pw - $fw - 2 * $gap - $kw - $ow)
+  # R17 (R43 finding 4: the text covered the link "Open this screen"): the text has the room that is left and no more. R16 gave it
+  # at least 200 px, which pushed it onto the links when the window was small or the links were wide; the bar gets taller instead.
+  $tw = [math]::Max(1, $w - 2 * $pad - $pw - $fw - 2 * $gap - $kw - $ow); $wn.BarTw = $tw
   $th = 0; foreach ($c in @(@($Checks) + @($Walk))) { $m = & $ui.Meas ([string]$c.Text) $ui.F.Body $tw; $th = [math]::Max($th, [int]$m.Height) }
   $th += (& $wn.Sc 6)
   $nh = [int]$wn.BarNo.PreferredSize.Height
@@ -147,6 +161,8 @@ $wn.BuildBar = {
     $op = & $ui.LinkBtn 'Open this screen'; $op.AccessibleName = 'Open this screen'; $op.Visible = $false
     $op.Add_Click({ & $wn.OpenStep }); [void]$bar.Controls.Add($op); $wn.OpenLink = $op }
   $wn.Bar = $bar; $wn.BarNo = $no; $wn.BarText = $tx
+  # R17 (R43 finding 4): the links are in front of the step text, so a text that is too wide can never cover them.
+  $fb.BringToFront(); if ($wn.OpenLink) { $wn.OpenLink.BringToFront() }
   $form.Controls.Add($bar); $main.BringToFront()
   & $wn.BarShow; & $wn.BarLayout }
 $wn.WalkLines = {
