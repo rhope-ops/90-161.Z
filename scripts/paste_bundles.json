@@ -258,9 +258,6 @@
                         "pnp",
                         "net-site"
                     ],
-                    "after": [
-                        "T21 Add the second person r12"
-                    ],
                     "doing": "Making the fake publication."
                 },
                 {
@@ -285,7 +282,8 @@
                     "marker": "90161Z-T26-answer-asked.txt",
                     "estimate": 5,
                     "after": [
-                        "T26 Make the fake publication r3"
+                        "T26 Make the fake publication r3",
+                        "T21 Add the second person r12"
                     ],
                     "answers": [
                         {
