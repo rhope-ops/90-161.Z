@@ -1,10 +1,39 @@
 # 90-161.Z: tasks for the work computer
 
-Updated: 25 Nov 26 (R42 results; R43 is being built).
+Updated: 26 Nov 26 (R43 r1 is ready).
 
 ## Open tasks
 
-R43 is being built. This page shows it when it is ready.
+### Round R43 r1: window r16, an endorser answer, Back up and Restore, Uninstall and a new install
+
+**For:** tests the 90-161.Z window r16 (grids beside the scroll bar), an endorser answer from a second person, and a small CAC sign-in window. Also Back up and Restore of fake rows, RADE Uninstall of 90-161.Z 0.1.0, a new install of it, and 1 fake publication from step 1 to step 2.
+**Time:** about 90 minutes (an estimate).
+**Changes:** on the computer, the OneDrive folder RADE\90-161.Z: scripts and result files in T20, T21, T22, T26 and T27, 17 screen pictures, and backups of the 12 test site lists. The Repair saves a new copy of RADE for the RADE shortcut. R43 needs the second person for about 5 minutes (an estimate). On the test site, the round writes fake rows and the second person in the Visitors group. Back up and Restore write fake rows. Uninstall moves the 12 own lists to the site Recycle Bin. It removes the group PFM Office and its level only when RADE recorded them as made. The new install makes the 12 lists again. The round makes 1 fake publication and moves it from step 1 to step 2. A second RADE window runs Back up, Restore, Uninstall and the new install. The last steps of the round move the fake rows to the site Recycle Bin.
+**Steps:**
+1. Ask one person in the office to help with this task. Write down the e-mail address of that person.
+2. Below **Summary** on this page, click **Open the script**. The script opens as plain text.
+3. On the script page, press `Ctrl+A`, then `Ctrl+C`.
+4. From the Start menu, open **Windows PowerShell ISE** (not **Run as administrator**).
+5. In ISE, click **File** > **New**, then press `Ctrl+V`.
+6. Press `F5`. Wait until the window **RADE** opens (up to 2 minutes).
+7. If no window opens and text runs in ISE, stop and post `No RADE window` in the Teams channel **RHOPE-OPS**.
+8. In the window **RADE**, click the row **90-161.Z 0.1.0**.
+9. Do not click **Uninstall** now. If the card **Maintenance** shows, click **Maintenance**, then click **Repair**.
+10. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
+11. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button.
+12. If the card **One check failed.** shows again, stop and post the first 10 words of the card in **RHOPE-OPS**.
+13. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. Wait until an end card shows (up to 5 minutes).
+14. If the end card is not **90-161.Z 0.1.0 is installed.**, stop and post the first 10 words of the card in **RHOPE-OPS**.
+15. Click **Close**. In ISE, press `F5`. Wait until the window **RADE** opens again.
+16. Click the row **90-161.Z R43**. Wait until a card shows (up to 2 minutes).
+17. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
+18. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button.
+19. If the card **One check failed.** shows again, or **Your OneDrive folder was not found.** shows, stop and post the first 10 words in **RHOPE-OPS**.
+20. On the card **Ready to run round R43.**, click **Run** (or **Resume at step**, if it shows).
+21. Do each step that a card shows. Stop when the card **Round R43 is done.** or **The round needs review.** shows.
+
+**Report:** the e-mail of the round, with the subject `90161Z R43 PASSED` or `90161Z R43 NEEDS REVIEW` and every file of the results folder.
+**If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE, post the first 10 words in the Teams channel **RHOPE-OPS**. **Details (F2)** at the bottom of the window **RADE** shows all checks, steps and the log.
 
 ## Done
 

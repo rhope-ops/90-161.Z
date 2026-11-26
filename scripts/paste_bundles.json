@@ -735,7 +735,7 @@
                     "guide": [
                         "1. Open the Power Automate site for your environment.",
                         "2. On the left, click \"Solutions\" (not from the bundle). You see the solutions.",
-                        "3. Find the solution \"90-161.Z flows\". If it is not there, click \"Skip\".",
+                        "3. Find the solution \"90-161.Z flows\". If it is not there, click \"Done\".",
                         "4. Click the 3 dots next to \"90-161.Z flows\" (not from the bundle).",
                         "5. Click \"Delete\", then click \"Delete\" again in the question (not from the bundle).",
                         "6. Wait until \"90-161.Z flows\" is not in the list of solutions.",
@@ -760,6 +760,32 @@
                     "doing": "Reading the lists of the site."
                 },
                 {
+                    "name": "T27 Uninstall in a second window r1",
+                    "title": "Uninstall 90-161.Z in a second RADE window",
+                    "kind": "guide",
+                    "dir": "T27",
+                    "file": "",
+                    "note": "This window waits. A second RADE window saves a backup, then removes what the install made on the test site.",
+                    "guide": [
+                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "2. In the second RADE window, click \"90-161.Z 0.1.0\". You see \"90-161.Z 0.1.0\" at the top.",
+                        "3. On the card \"Maintenance\", click \"Uninstall\".",
+                        "4. If the card \"Is the saved site a test site?\" shows, type the site name in the box \"Site name\".",
+                        "5. If you typed the site name, click \"Mark as test site\".",
+                        "6. In the box \"Type 90-161.Z to confirm\", type: 90-161.Z",
+                        "7. Click \"Uninstall\". If a CAC sign-in window opens, sign in with your CAC.",
+                        "8. If \"Remove the flows of 90-161.Z in Power Automate\" shows, do its lines, then click \"Done\".",
+                        "9. Wait until the card \"90-161.Z is uninstalled.\" shows. Do not close the second window before then.",
+                        "10. Click \"Done\". Close the second RADE window with its X. You see this window again.",
+                        "If \"Uninstall did not finish.\" shows: click \"It failed\" and type the first line of the card."
+                    ],
+                    "estimate": 5,
+                    "after": [
+                        "T27 Check the lists before Uninstall r1"
+                    ],
+                    "doneLog": "Confirmed by you: Uninstall ran in the second window."
+                },
+                {
                     "name": "T27 Check Uninstall removed the lists r1",
                     "title": "Check that Uninstall removed the 12 lists",
                     "dir": "T27",
@@ -774,6 +800,30 @@
                         "net-site"
                     ],
                     "doing": "Reading the lists of the site."
+                },
+                {
+                    "name": "T27 Install again in a second window r1",
+                    "title": "Install 90-161.Z again in a second RADE window",
+                    "kind": "guide",
+                    "dir": "T27",
+                    "file": "",
+                    "note": "This window waits. A second RADE window installs 90-161.Z 0.1.0 on the test site again: 12 lists, then the install record.",
+                    "guide": [
+                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "2. In the second RADE window, click \"90-161.Z 0.1.0\".",
+                        "3. If \"One check needs you.\" shows, click \"Sign in and check site rights\". Sign in with your CAC.",
+                        "4. If \"One check failed.\" shows, do the line that starts with \"What to do\". Click the first button.",
+                        "5. On the card \"Ready to install 90-161.Z 0.1.0.\", click \"Install\".",
+                        "6. If a CAC sign-in window opens, sign in with your CAC.",
+                        "7. Wait until \"90-161.Z 0.1.0 is installed.\" shows. Do not close the second window before then.",
+                        "8. Click \"Close\". You see this window again.",
+                        "If \"The install is not complete.\" shows: click \"It failed\" and type the first line of the card."
+                    ],
+                    "estimate": 5,
+                    "after": [
+                        "T27 Check Uninstall removed the lists r1"
+                    ],
+                    "doneLog": "Confirmed by you: the install ran in the second window."
                 },
                 {
                     "name": "T27 Check the new install r1",
@@ -791,7 +841,7 @@
                     ],
                     "doing": "Reading the lists of the site.",
                     "after": [
-                        "T27 Check Uninstall removed the lists r1"
+                        "T27 Install again in a second window r1"
                     ]
                 },
                 {
@@ -1079,7 +1129,9 @@
                         "T26 Remove the fake rows r3",
                         "T21 Remove the test list and library r12",
                         "T27 Check the lists before Uninstall r1",
+                        "T27 Uninstall in a second window r1",
                         "T27 Check Uninstall removed the lists r1",
+                        "T27 Install again in a second window r1",
                         "T27 Check the new install r1",
                         "T26 Make the fake publication after install r3",
                         "T27 Move the fake publication one step r1",
