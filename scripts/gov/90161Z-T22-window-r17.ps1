@@ -1,8 +1,10 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r16, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r17, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
+  R17 (round R44 T4; the PFM, 26 Nov 26): the name in the rail head, at the logo, is "Kanon" ($wn.HeadParts). The line
+  under it keeps its text. The RADE engine sets the titles and name of the RADE window; this part sets only this window's.
   R14 (R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md rows 3 and 4): the check bar moved to the bar part (it
   holds the click-through too); the layout self-check line names the open (first, kept, rebuild, resize: $wn.OpenKind),
   and the check waits for the layout to settle and fits the grids again when a fit changed one (R40 finding 3).
@@ -28,7 +30,7 @@
   The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $RailItems, $Rev, $dir, $lines.
   Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r16.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r17.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
@@ -89,7 +91,7 @@ $wn.HeadParts = {
     $logo.AccessibleName = '90-161.Z logo'; $logo.Location = [Drawing.Point]::new((& $wn.Sc 16), $top)
     $logo.Image = & $wn.LogoImage ([bool]$ui.High); [void]$Into.Controls.Add($logo); $out.Logo = $logo
   } catch { $lines.Add('NOTE logo not shown: ' + $_.Exception.Message) }
-  $nm = & $ui.Label $WordFont $ui.C.White 0; $nm.BackColor = $pc.navy; $nm.Text = '90-161.Z'; $nm.Visible = $true
+  $nm = & $ui.Label $WordFont $ui.C.White 0; $nm.BackColor = $pc.navy; $nm.Text = 'Kanon'; $nm.Visible = $true
   $nh = [int]$nm.PreferredSize.Height
   $nm.Location = [Drawing.Point]::new((& $wn.Sc 64), ($top + [int][math]::Round(($side - $nh) / 2.0)))
   [void]$Into.Controls.Add($nm); $out.Name = $nm

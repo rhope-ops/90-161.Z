@@ -2,6 +2,8 @@
     "_doc": "RADE manifest (contract: rhope-ops/RADE schemas/rade-manifest.schema.json). Built by the RADE engine through scripts/build_paste_bundles.py (a pinned shim, see scripts/rade.lock.json). Each bundle is one round: a self-contained PowerShell text the PFM copies from its raw page and pastes into Windows PowerShell ISE (F5). It writes the files, then opens RADE, the Redacted Application Deployment Engine (a window; text prompts if no window can open): steps run one by one with a live log and PASS/FAIL counts, then one results folder (Rounds\\\\<round>: a report file plus copies of the PDFs, to attach to one e-mail; zips do not cross the boundary) and a summary for the clipboard. It runs only the steps inside it (PFM 3A). A step's \"default\" may be {passed, paths}: the step is ticked only when those files changed since the round that passed it; after a round passes it, set passed to the new hash (PFM 14 Nov 26). Never hand-edit scripts/gov/paste/*.ps1: change this file or the sources and rebuild. A step may list \"needs\" (check ids in the engine's $checkDefs) and \"estimate\" (minutes, used until a real run time exists). \"apps\" is the embedded catalog the Choose screen lists (name, plain-English summary, step names); without it, one application has every step. A guide step may set \"doneText\" (its Done button) and \"doneLog\" (the log line on Done).",
     "application": {
         "name": "90-161.Z",
+        "displayName": "90-161.Z - Kanon",
+        "logo": "assets/logo/build/90161Z-logo-256.png",
         "folder": "90-161.Z",
         "prefix": "90161Z",
         "repo": "rhope-ops/90-161.Z",
@@ -24,69 +26,81 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R43-round-r1.ps1",
-            "round": "R43",
-            "title": "Round R43 r1: my window r16 with grids beside the scroll bar, an endorser answer, a small CAC sign-in window, and RADE Back up and Restore of fake rows",
+            "out": "scripts/gov/paste/90161Z-R44-round-r1.ps1",
+            "round": "R44",
+            "title": "Round R44 r1: a read-only count of the test site, my window r17, an optional endorser answer, and RADE Back up and Restore of fake rows",
             "files": [
                 {
-                    "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-pfm-window-r16.ps1"
+                    "dir": "T28",
+                    "src": "scripts/gov/90161Z-T28-count-r1.ps1"
+                },
+                {
+                    "dir": "T28",
+                    "src": "scripts/gov/90161Z-T27-made-r1.ps1"
+                },
+                {
+                    "dir": "T28",
+                    "src": "scripts/gov/90161Z-T20-helpers-r4.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-maint-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-pfm-window-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-cards-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-maint-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-types-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-cards-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-types-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui2-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-parts-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui2-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-grid-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-parts-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-logo-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-grid-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-window-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-logo-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-bar-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-window-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-keep-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-bar-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-feedback-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-keep-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-measure-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-feedback-r17.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-site-r16.ps1"
+                    "src": "scripts/gov/90161Z-T22-measure-r17.ps1"
+                },
+                {
+                    "dir": "T22",
+                    "src": "scripts/gov/90161Z-T22-site-r17.ps1"
                 },
                 {
                     "dir": "T22",
@@ -179,13 +193,28 @@
             ],
             "steps": [
                 {
-                    "name": "T22 Record the test install r16",
+                    "name": "T28 Count what is on the test site r1",
+                    "title": "Count what the app 90-161.Z left on the test site",
+                    "dir": "T28",
+                    "file": "90161Z-T28-count-r1.ps1",
+                    "minutes": 5,
+                    "note": "Signs in (CAC) and reads only. Counts the 12 lists, the group PFM Office, the library 90-161.Z and the test list and library. Writes only counts. It does not count flows.",
+                    "estimate": 1,
+                    "help": "Send the results as they are. The step can be run again.",
+                    "needs": [
+                        "pnp",
+                        "net-site"
+                    ],
+                    "doing": "Counting what is on the test site."
+                },
+                {
+                    "name": "T22 Record the test install r17",
                     "title": "Record the test install of 90-161.Z 0.1",
                     "dir": "T22",
-                    "file": "90161Z-T22-maint-r16.ps1",
+                    "file": "90161Z-T22-maint-r17.ps1",
                     "args": "-Part Install",
                     "minutes": 5,
-                    "note": "The last step of the test install. RADE keeps an install record and saves its newest copy for the RADE shortcut. Nothing on the site changes.",
+                    "note": "The last step of the test install. RADE keeps an install record and saves its newest copy for the shortcut \"90-161.Z - Kanon - 0.1.0\". Nothing on the site changes.",
                     "estimate": 1,
                     "help": "Send the results as they are. The step can be run again.",
                     "doing": "Recording the test install."
@@ -231,7 +260,7 @@
                     "file": "90161Z-T21-probe-r12.ps1",
                     "args": "-Part Person",
                     "minutes": 20,
-                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group.",
+                    "note": "A small window asks for the e-mail address of the second person. It stays on this computer. Adds that person to the site's Visitors group. If nobody can help today, close the small window. This step then fails, and the other steps run.",
                     "estimate": 2,
                     "help": "Send the results as they are. The address is never written to a file; the results show only yes or no.",
                     "needs": [
@@ -258,9 +287,6 @@
                         "pnp",
                         "net-site"
                     ],
-                    "after": [
-                        "T21 Add the second person r12"
-                    ],
                     "doing": "Making the fake publication."
                 },
                 {
@@ -275,7 +301,7 @@
                         "2. Open Teams (not from the bundle). You see the Teams window.",
                         "3. In Teams, click \"Chat\" (not from the bundle). You see your chats.",
                         "4. Click \"New chat\" (not from the bundle). You see the box \"To\" (not from the bundle).",
-                        "5. In the box \"To\" (not from the bundle), type the e-mail address that you wrote down.",
+                        "5. In the box \"To\" (not from the bundle), type the e-mail address of the second person.",
                         "6. Click in the chat box at the bottom (not from the bundle). You see the cursor in the box.",
                         "7. Press Ctrl+V. You see the 2 form links and 8 steps that RADE put on the clipboard.",
                         "8. Press Enter. You see your message in the chat.",
@@ -285,7 +311,8 @@
                     "marker": "90161Z-T26-answer-asked.txt",
                     "estimate": 5,
                     "after": [
-                        "T26 Make the fake publication r3"
+                        "T26 Make the fake publication r3",
+                        "T21 Add the second person r12"
                     ],
                     "answers": [
                         {
@@ -334,12 +361,12 @@
                     "doing": "Reading the answer of the second person."
                 },
                 {
-                    "name": "T22 Open the 90-161.Z window r16",
+                    "name": "T22 Open the 90-161.Z window r17",
                     "title": "Open the 90-161.Z window and walk every screen",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r16.ps1",
+                    "file": "90161Z-T22-pfm-window-r17.ps1",
                     "minutes": 40,
-                    "note": "Signs in (CAC). Writes nothing. In the window \"Publications and Forms Management\", do the 22 lines of its bar. The Pass or Fail for the grid \"Wave 1 answers\" is the record. Then close it with its X.",
+                    "note": "Signs in (CAC). Writes nothing. In the window \"90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)\", do the 22 lines of its bar, then close it with its X.",
                     "estimate": 20,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [
@@ -349,10 +376,10 @@
                     "doing": "Opening the 90-161.Z window."
                 },
                 {
-                    "name": "T22 Did the window open r16",
+                    "name": "T22 Did the window open r17",
                     "title": "Check that the window opened",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r16.ps1",
+                    "file": "90161Z-T22-pfm-window-r17.ps1",
                     "args": "-Opened",
                     "minutes": 2,
                     "note": "Reads the result of the window step and opens nothing. Passes when the window opened, so the look questions run even when a check failed.",
@@ -361,7 +388,7 @@
                     "doing": "Reading the result of the window step."
                 },
                 {
-                    "name": "T22 Answer: look and cards r16",
+                    "name": "T22 Answer: look and cards r17",
                     "title": "Answer 1 question about the window",
                     "kind": "guide",
                     "guide": [],
@@ -370,7 +397,7 @@
                     "note": "1 question. Type one line, no names, to say what you would change first in the window. About 1 minute.",
                     "estimate": 1,
                     "after": [
-                        "T22 Did the window open r16"
+                        "T22 Did the window open r17"
                     ],
                     "answers": [
                         {
@@ -408,15 +435,16 @@
                     "file": "",
                     "note": "This window waits. A second RADE window saves the 12 lists of your test site to this computer. Nothing on the site changes.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "4. Click the row \"Back up\". The card \"Back up is running.\" shows.",
-                        "5. If a CAC sign-in window opens, write \"Small\" (size of this card) or \"Large\" (most of the screen).",
-                        "6. If the CAC sign-in window is open, sign in with your CAC.",
-                        "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
-                        "8. Close the second RADE window with its X. You see the first RADE window again.",
-                        "9. A question then asks the size of the CAC sign-in window. Click your size, or the answer for none.",
+                        "5. If \"Back up is running.\" shows for 30 seconds with no CAC sign-in window, press Alt+Tab.",
+                        "6. If a CAC sign-in window shows, write \"Small\" (size of a card) or \"Large\" (most of the screen).",
+                        "7. If a CAC sign-in window shows, sign in with your CAC.",
+                        "8. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
+                        "9. Write down the number in the line \"The sign-in took\". The line ends with \"on).\".",
+                        "10. Close the second RADE window with its X. The questions show in the first RADE window.",
                         "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",
                         "Then type that line, and click \"Report the failure\"."
@@ -435,14 +463,66 @@
                             ],
                             "key": "b-signin",
                             "prompt": "What size did you write down for the CAC sign-in window of the second RADE window?"
+                        },
+                        {
+                            "key": "b-took-on",
+                            "prompt": "Type the number of seconds of the line \"The sign-in took\". Type none if the line did not show.",
+                            "kind": "text"
+                        },
+                        {
+                            "key": "b-icon",
+                            "prompt": "Does the shortcut \"90-161.Z - Kanon - 0.1.0\" show the 90-161.Z logo (a white letter in a black and orange ring)?",
+                            "kind": "pick",
+                            "choices": [
+                                "Yes",
+                                "No, another icon",
+                                "No shortcut with that name"
+                            ]
                         }
                     ]
                 },
                 {
-                    "name": "T22 Check the Back up r16",
+                    "name": "T26 Back up with the size watch off r3",
+                    "title": "Back up again from ISE, with the sign-in size watch off",
+                    "kind": "guide",
+                    "dir": "T26",
+                    "file": "",
+                    "note": "This window waits. You run Back up one more time from ISE, with the sign-in size watch off. Nothing on the site changes. The question shows in this window.",
+                    "guide": [
+                        "1. Press Alt+Tab to go to Windows PowerShell ISE (not from the bundle). Click in its bottom pane.",
+                        "2. Type: $env:RADE_SIGNIN_WATCH = '0' and press Enter. Then press F5.",
+                        "3. Wait up to 2 minutes for a new RADE window. If it is not in front, click RADE on the taskbar.",
+                        "4. In the new RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
+                        "5. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
+                        "6. Click the row \"Back up\". If a CAC sign-in window shows, sign in with your CAC.",
+                        "7. If you did not sign in and \"Back up is running.\" shows for 30 s, press Alt+Tab and sign in.",
+                        "8. Wait until \"Back up saved the lists.\" shows. Write down the number in \"The sign-in took\".",
+                        "9. Close the RADE window that shows \"Back up saved the lists.\" with its X.",
+                        "10. On the taskbar, click ISE. In its bottom pane, type: $env:RADE_SIGNIN_WATCH = $null",
+                        "Then press Enter. The size watch is on again.",
+                        "If no new RADE window opens in 2 minutes: in the first RADE window, click \"It failed\".",
+                        "Then type: no second window, and click \"Report the failure\".",
+                        "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
+                        "If you wrote down a line: in the first RADE window, click \"It failed\".",
+                        "Then type that line, and click \"Report the failure\"."
+                    ],
+                    "estimate": 4,
+                    "after": [
+                        "T26 Back up in a second window r3"
+                    ],
+                    "answers": [
+                        {
+                            "key": "b-took-off",
+                            "prompt": "Type the number of seconds of the line \"The sign-in took\" (it ends with \"off).\"). Type none if the line did not show.",
+                            "kind": "text"
+                        }
+                    ]
+                },
+                {
+                    "name": "T22 Check the Back up r17",
                     "title": "Check that the Back up saved all 12 lists",
                     "dir": "T22",
-                    "file": "90161Z-T22-maint-r16.ps1",
+                    "file": "90161Z-T22-maint-r17.ps1",
                     "args": "-Part Backup",
                     "minutes": 2,
                     "note": "Reads the newest backup folder on this computer: for each list, its 2 files and its row count. It reads no row values and changes nothing.",
@@ -468,7 +548,7 @@
                         "net-site"
                     ],
                     "after": [
-                        "T22 Check the Back up r16"
+                        "T22 Check the Back up r17"
                     ],
                     "doing": "Deleting 4 fake rows and adding 1."
                 },
@@ -480,7 +560,7 @@
                     "file": "",
                     "note": "This window waits. Restore does a dry run in the second window and writes nothing. Keep that window open. Your test site address is https://usaf.dps.mil/sites/<your-site>. Your browser shows it.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
                         "4. Click the row \"Restore\".",
@@ -765,7 +845,7 @@
                     "file": "",
                     "note": "This window waits. A second RADE window saves a backup, then removes what the install made on the test site. Your test site address is https://usaf.dps.mil/sites/<your-site>. Your browser shows it.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
                         "3. Click \"Uninstall\".",
                         "4. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
@@ -809,7 +889,7 @@
                     "file": "",
                     "note": "This window waits. A second RADE window installs 90-161.Z 0.1.0 on the test site again: 12 lists, then the install record.",
                     "guide": [
-                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"90-161.Z - Kanon - 0.1.0\". A second RADE window opens.",
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\".",
                         "3. If \"One check needs you.\" shows, click \"Sign in and check site rights\". Sign in with your CAC.",
                         "4. If \"One check failed.\" or \"checks failed. This is the first.\" shows, do the line \"What to do\".",
@@ -905,99 +985,104 @@
             ],
             "collect": [
                 {
+                    "dir": "T28",
+                    "name": "90161Z-T28-count-r1.txt",
+                    "step": "T28 Count what is on the test site r1"
+                },
+                {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-r16.txt",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-window-r17.txt",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
                     "name": "90161Z-T22-feedback-*.txt;90161Z-T22-feedback-*.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-home-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-home-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-empty-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-empty-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-queue-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-queue-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-reviews-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-reviews-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step8-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-step8-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-confirm-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-confirm-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-sendback-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-sendback-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-waves-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-waves-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step11-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-step11-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step12-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-step12-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step13-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-step13-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-pub-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-pub-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-settings-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-settings-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-loading-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-loading-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-failed-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-failed-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-noperm-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-noperm-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-remindall-r16.png",
-                    "step": "T22 Open the 90-161.Z window r16"
+                    "name": "90161Z-T22-card-remindall-r17.png",
+                    "step": "T22 Open the 90-161.Z window r17"
                 },
                 {
                     "dir": "T21",
@@ -1031,8 +1116,8 @@
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-backup-r16.txt",
-                    "step": "T22 Check the Back up r16"
+                    "name": "90161Z-T22-backup-r17.txt",
+                    "step": "T22 Check the Back up r17"
                 },
                 {
                     "dir": "T26",
@@ -1108,21 +1193,23 @@
             "fetch": [],
             "apps": [
                 {
-                    "name": "90-161.Z R43",
-                    "summary": "Round R43 r1: window r16 with grids beside the scroll bar, an endorser answer, a small sign-in window, and Back up and Restore of fake rows.",
+                    "name": "90-161.Z R44",
+                    "summary": "Round R44 r1: a read-only count of the test site, window r17, an optional endorser answer, and Back up and Restore of fake rows.",
                     "steps": [
+                        "T28 Count what is on the test site r1",
                         "T21 Check the test site is clean r12",
                         "T21 Make the probe list r12",
                         "T21 Add the second person r12",
                         "T26 Make the fake publication r3",
                         "T26 Second person answers r3",
                         "T26 Read the endorser answer r3",
-                        "T22 Open the 90-161.Z window r16",
-                        "T22 Did the window open r16",
-                        "T22 Answer: look and cards r16",
+                        "T22 Open the 90-161.Z window r17",
+                        "T22 Did the window open r17",
+                        "T22 Answer: look and cards r17",
                         "T26 Make the Restore test rows r3",
                         "T26 Back up in a second window r3",
-                        "T22 Check the Back up r16",
+                        "T26 Back up with the size watch off r3",
+                        "T22 Check the Back up r17",
                         "T26 Delete and add the test rows r3",
                         "T26 Start Restore in a second window r3",
                         "T26 Answer: the Restore dry run r3",
@@ -1149,7 +1236,7 @@
                     "version": "0.1.0",
                     "steps": [
                         "T20 Make the 12 lists r4",
-                        "T22 Record the test install r16"
+                        "T22 Record the test install r17"
                     ],
                     "backup": [
                         "PFM Activity Log",

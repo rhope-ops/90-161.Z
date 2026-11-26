@@ -411,18 +411,18 @@ try {
       ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 2) $r.File
 
   # ---- Uninstall, Local ----
-  foreach ($f in '90161Z-T22-install-r16.txt', '90161Z-T22-maint-r16.txt', 'keep.txt') { Set-Content -LiteralPath (Join-Path $t22 $f) -Value 'x' }
-  New-Site; Set-Made @(@{ kind = 'file'; name = '90161Z-T22-install-r16.txt' })
+  foreach ($f in '90161Z-T22-install-r17.txt', '90161Z-T22-maint-r17.txt', 'keep.txt') { Set-Content -LiteralPath (Join-Path $t22 $f) -Value 'x' }
+  New-Site; Set-Made @(@{ kind = 'file'; name = '90161Z-T22-install-r17.txt' })
   $r = Invoke-T27 'Local'
   $left = @(Get-ChildItem -LiteralPath $t22 | ForEach-Object { $_.Name } | Sort-Object)
   Test-That 'Local removes only the install note named in the made file, with no sign-in' ($r.Code -eq 0 -and $global:S.Connects -eq 0 -and
-      ($left -join ',') -ceq '90161Z-T22-maint-r16.txt,keep.txt' -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1') $r.File
+      ($left -join ',') -ceq '90161Z-T22-maint-r17.txt,keep.txt' -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1') $r.File
   $r = Invoke-T27 'Local'
   Test-That 'a second Local run prints SKIP' ($r.Code -eq 0 -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL SKIP removed=0' -and $r.File -match '(?m)^ITEM f01-note SKIP') $r.File
-  Set-Made @(@{ kind = 'file'; name = 'keep.txt' }, @{ kind = 'file'; name = '..\T26\90161Z-T22-install-r1.txt' }, @{ kind = 'file'; name = '90161Z-T22-maint-r16.txt' })
+  Set-Made @(@{ kind = 'file'; name = 'keep.txt' }, @{ kind = 'file'; name = '..\T26\90161Z-T22-install-r1.txt' }, @{ kind = 'file'; name = '90161Z-T22-maint-r17.txt' })
   $r = Invoke-T27 'Local'
   $left = @(Get-ChildItem -LiteralPath $t22 | ForEach-Object { $_.Name } | Sort-Object)
-  Test-That 'Local refuses any other file and any path: nothing else is removed' ($r.Code -eq 0 -and ($left -join ',') -ceq '90161Z-T22-maint-r16.txt,keep.txt' -and
+  Test-That 'Local refuses any other file and any path: nothing else is removed' ($r.Code -eq 0 -and ($left -join ',') -ceq '90161Z-T22-maint-r17.txt,keep.txt' -and
       ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 3) $r.File
 
   # ---- the checks and the step ----
