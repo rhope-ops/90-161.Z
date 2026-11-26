@@ -32,7 +32,7 @@
        section 7). A list that inherits its permissions from the site gets its own first, with the site's role assignments
        copied; "edit own rows" stays as it is. The site itself stays Read for Visitors. A list that has the role already is
        not touched.
-  A second run skips what is there, so a run that stopped can be run again. RADE engine-v40: one output line "MADE <kind>: <name>"
+  A second run skips what is there, so a run that stopped can be run again. RADE engine-v41: one output line "MADE <kind>: <name>"
   (kind list, group or level; name = the display title) for each item THIS run made, none for an item that was there, none in -DryRun.
   r3 (R34 plan, open point 12): the read-back also checks that each of the 12 lists inherits its permissions from the site or,
   with its own, gives the group PFM Office the level. The read-backs of the level and the lists are in 90161Z-T20-access-r4.ps1
@@ -292,7 +292,7 @@ try {
       $name = [string]$l.body.Title
       if ($found.ContainsKey($name)) { $skip.lists++; continue }
       if ($write) { Write-Host ('  Creating the list ' + $name + ' ...'); $null = Invoke-Rest 'Post' ([string]$l.uri) ($l.body | ConvertTo-Json -Depth 20 -Compress) }
-      if ($write) { Add-MadeLine 'list' $plan[$name].Display }   # RADE engine-v40: one MADE line for each list this run made
+      if ($write) { Add-MadeLine 'list' $plan[$name].Display }   # RADE engine-v41: one MADE line for each list this run made
       $made.lists++
     }
     if ($write) {
@@ -437,7 +437,7 @@ try {
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(400, $m.Length)) + ' (a run that stopped can be run again: it skips what is there)')
 } finally {
   if (-not $PlanOnly) {
-    $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
+    $masked = @($lines | ForEach-Object { ConvertTo-FinalLine $_ $site $secret })
     if ($dir) { try { Set-Content -LiteralPath (Join-Path $dir $resultName) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
     $masked | ForEach-Object { Write-Host $_ }
     if (-not $NoPause) { [void](Read-Host 'Press Enter to close') }

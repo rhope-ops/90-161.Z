@@ -1,7 +1,7 @@
 # Tests scripts/gov/90161Z-T27-lifecycle-r1.ps1 and its 2 modules (round R43 plan item T5; the PFM, 25 Nov 26: RADE Uninstall, install from
 # zero, 1 fake publication through 1 full process step) against a small fake site. The PnP cmdlets the script uses are fakes in this file
 # (an empty PnP.PowerShell 1.12.0 module in a temporary folder lets the script's module check pass). Proves the logic, not the real
-# service and not RADE engine-v40 (not released): the gov device round is that proof.
+# service and not RADE engine-v41 (not released): the gov device round is that proof.
 # Cases: the Uninstall parts (Lists, Access, Local). Lists removes each own list BY ITS FIXED TITLE (the PFM, 25 Nov 26), also on a site where
 # the fake RADE_MADE file is empty or names other things (the 12 lists were made before RADE installs). Access (the PFM, 25 Nov 26: a group
 # cannot go to a Recycle Bin) removes the group PFM Office and the level PFM Office Edit All Items only when RADE_MADE names them: with an
@@ -95,6 +95,8 @@ function Disconnect-PnPOnline { [CmdletBinding()] param() }
 function Invoke-PnPSPRestMethod {
   [CmdletBinding()] param([string]$Method, [string]$Url, [string]$Content, [string]$ContentType, [switch]$Raw)
   if ($Method -ne 'Get') { throw 'FAKE: GET only' }
+  # A test hook: a read that fails once a given remove call has happened (the read-back after a removal), as a dropped connection does.
+  if ($global:S.FailReadUrl -and $Url -match $global:S.FailReadUrl -and @($global:S.Calls) -contains $global:S.FailReadAfter) { throw 'FAKE 500: the read-back failed' }
   if ($Url -match '/_api/web/lists\?') {
     $v = @($global:S.Lists | ForEach-Object {
         @{ Id = $_.Id; Title = $_.Title; ItemCount = 1; EnableVersioning = $true; BaseTemplate = 100; Hidden = $false
@@ -323,6 +325,23 @@ try {
   Test-That 'Lists run again after that failure removes the list that is left' ($r.Code -eq 0 -and $global:S.Calls.Count -eq 1 -and
       $r.File -match '(?m)^RESULT UNINSTALL LISTS PASS removed=1') $r.File
 
+
+  # A throw after a removal (the read-back, the level lookup) is a FAIL with a RESULT line, and counts as failed (R43 review).
+  New-Site; Set-Made @()
+  $global:S.FailReadUrl = '/_api/web/lists\?'; $global:S.FailReadAfter = 'list:PFMReviews'
+  $r = Invoke-T27 'Lists'; $global:S.FailReadUrl = $null
+  $ok = ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED:' -and $r.File -match '(?m)^RESULT UNINSTALL LISTS FAIL removed=\d+' -and $r.File -match '(?m)^LIFECYCLE Lists done: .*failed=[1-9]')
+  Test-That 'Lists: the read-back of the site fails after a removal: STOPPED, RESULT UNINSTALL LISTS FAIL, failed is not 0, exit 1' $ok $r.File
+  New-Site; Set-Made @(@{ kind = 'group'; name = 'PFM Office' }, @{ kind = 'level'; name = 'PFM Office Edit All Items' })
+  $global:S.FailReadUrl = '/_api/web/sitegroups'; $global:S.FailReadAfter = 'group:PFM Office'
+  $r = Invoke-T27 'Access'; $global:S.FailReadUrl = $null
+  $ok = ($r.Code -eq 1 -and $r.File -match '(?m)^STOPPED:' -and $r.File -match '(?m)^RESULT UNINSTALL ACCESS FAIL removed=\d+' -and $r.File -match '(?m)^LIFECYCLE Access done: .*failed=[1-9]')
+  Test-That 'Access: the group read-back fails after the group is removed: RESULT UNINSTALL ACCESS FAIL, failed is not 0, exit 1' $ok $r.File
+  New-Site; Set-Made @(@{ kind = 'level'; name = 'PFM Office Edit All Items' })
+  $global:S.FailReadUrl = '/_api/web/roledefinitions'; $global:S.FailReadAfter = 'level:PFM Office Edit All Items'
+  $r = Invoke-T27 'Access'; $global:S.FailReadUrl = $null
+  $ok = ($r.Code -eq 1 -and $r.File -match '(?m)^RESULT UNINSTALL ACCESS FAIL removed=\d+' -and $r.File -match '(?m)^LIFECYCLE Access done: .*failed=[1-9]')
+  Test-That 'Access: the level lookup fails after the level is removed: RESULT UNINSTALL ACCESS FAIL, failed is not 0, exit 1' $ok $r.File
 
   # ---- the gate: nothing is removed and nobody signs in ----
   New-Site

@@ -849,7 +849,7 @@
                     "title": "Make the fake publication on the new install",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r3.ps1",
-                    "args": "-Part Make",
+                    "args": "-Part Make -Label after",
                     "minutes": 10,
                     "note": "Signs in (CAC). Makes one fake publication (with OPR, level, type and 673 link) and one fake endorsement on the test site, or finds them. Puts text on the clipboard that this part does not use.",
                     "estimate": 1,
@@ -887,7 +887,7 @@
                     "title": "Remove the fake publication and its rows",
                     "dir": "T26",
                     "file": "90161Z-T26-endorse-r3.ps1",
-                    "args": "-Part Clean",
+                    "args": "-Part Clean -Label after",
                     "minutes": 10,
                     "note": "Signs in (CAC). Moves the fake publication and its rows to the site Recycle Bin. Runs after any failure.",
                     "estimate": 1,
@@ -1087,7 +1087,7 @@
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-make-r3.txt",
+                    "name": "90161Z-T26-endorse-make-after-r3.txt",
                     "step": "T26 Make the fake publication after install r3"
                 },
                 {
@@ -1097,7 +1097,7 @@
                 },
                 {
                     "dir": "T26",
-                    "name": "90161Z-T26-endorse-clean-r3.txt",
+                    "name": "90161Z-T26-endorse-clean-after-r3.txt",
                     "step": "T26 Remove the fake rows after install r3"
                 }
             ],

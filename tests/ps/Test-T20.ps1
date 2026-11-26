@@ -1,6 +1,6 @@
 # Tests scripts/gov/90161Z-T20-provision-lists-r4.ps1 (with its part 90161Z-T20-access-r4.ps1) and scripts/gov/90161Z-T19-list-update-r6.ps1 against the strict fake in
 # tests/fake-pnp (pwsh 7, cloud only). Proves the logic: order, list ids, lookup ids, skip-what-exists, the PFM Office level
-# (F2 A), the per-list access read-back (R34 plan, open point 12), Contribute for the Visitors group on the intake lists (r4, PFM 19 Nov 26), the T19 choices (S3 A: T-0) and the suspense setting (15), the MADE lines (RADE engine-v40: one for each item that a run made, none otherwise), the checks and the masking. The real service is proved only by a gov device round.
+# (F2 A), the per-list access read-back (R34 plan, open point 12), Contribute for the Visitors group on the intake lists (r4, PFM 19 Nov 26), the T19 choices (S3 A: T-0) and the suspense setting (15), the MADE lines (RADE engine-v41: one for each item that a run made, none otherwise), the checks and the masking. The real service is proved only by a gov device round.
 # Last line: "T20 pass=N fail=0".
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
@@ -96,7 +96,7 @@ function New-FakeSite { & $fakeModule { New-FakeSite } }
 }
 # The level Ids of Read and Contribute on the fake site (the fake gives them fixed numbers).
 function Get-FakeLevelId([string]$Name) { return [int]@($global:FakeSP.Levels | Where-Object { $_['Name'] -eq $Name })[0]['Id'] }
-# The own-name table of T27 (what Uninstall removes) and the line that RADE engine-v40 reads (case sensitive).
+# The own-name table of T27 (what Uninstall removes) and the line that RADE engine-v41 reads (case sensitive).
 . (Join-Path $Root 'scripts/gov/90161Z-T27-made-r1.ps1')
 $engineMade = '^\s*MADE\s+([a-z][a-z-]{0,30}):\s+(\S.*)$'
 # The MADE lines of one run (a result of Invoke-T20), as 'kind: name' texts in output order. Takes the result; returns an array.
@@ -385,6 +385,28 @@ New-FakeSite
 $noContribute = @($global:FakeSP.Levels | Where-Object { [int]$_['RoleTypeKind'] -eq 3 })[0]; $global:FakeSP.Levels.Remove($noContribute)
 $r = Invoke-T20 ''
 Test-That 'r4: no Contribute level on the site: W01 to W03 FAIL with the reason, nothing changed' ($r.Code -eq 1 -and @($r.Out | Where-Object { $_ -match '^ITEM W0[1-3]-\S+ FAIL the site has no Contribute level' }).Count -eq 3 -and @(Get-IntakeLists | Where-Object { $_.HasUniqueRoleAssignments }).Count -eq 0) $r.Text
+
+# R43 review: a MADE line names only a fixed name of the app and passes the final mask as it is. A site named "office" and a tenant "pfm"
+# must not turn "PFM Office" into "PFM <SITE-NAME>" or "PFM Reviews" into "<TENANT> Reviews" (Uninstall would then skip the group).
+New-FakeSite
+$keepSite = $env:RADE_SITE
+$env:RADE_SITE = 'https://pfm.example.test/sites/office'
+try { $r = Invoke-T20 '' } finally { $env:RADE_SITE = $keepSite }
+$mt = Get-MadeText $r
+Test-That 'masking: a site named office on the tenant pfm: the 14 MADE lines keep their names (no <SITE-NAME>, no <TENANT>)' ($mt.Count -eq 14 -and (($mt | Sort-Object) -join '|') -ceq (($wantMade | Sort-Object) -join '|') -and @($r.Out | Where-Object { $_ -match '^MADE .*<' }).Count -eq 0) ($mt -join '|')
+Test-That 'masking: the same run still masks the site in every other line (the ITEM lines show the masks)' ($r.Text -notmatch 'pfm\.example|sites/office|fakehost' -and $r.Text -match '(?m)^ITEM P01-<TENANT>-<SITE-NAME> PASS') $r.Text
+# Add-MadeLine prints a MADE line only for a name of the fixed table (the plan titles, the group, the level).
+$helperFile = Join-Path $Root 'scripts/gov/90161Z-T20-helpers-r4.ps1'
+$tp = Get-Content -LiteralPath (Join-Path $t20 'provisioning-payload.json') -Raw | ConvertFrom-Json
+$OfficeGroup = 'PFM Office'; $OfficeLevel = 'PFM Office Edit All Items'
+. $helperFile
+$plan = Get-Plan $tp
+$lines = New-Object System.Collections.Generic.List[string]
+Add-MadeLine 'list' 'PFM Reviews'; Add-MadeLine 'group' 'PFM Office'; Add-MadeLine 'level' 'PFM Office Edit All Items'
+Add-MadeLine 'list' 'Budget Notes'; Add-MadeLine 'list' '<TENANT> Reviews'; Add-MadeLine 'group' 'PFM <SITE-NAME>'; Add-MadeLine 'level' 'Edit'; Add-MadeLine 'file' 'PFM Reviews'
+Test-That 'Add-MadeLine: a MADE line only for a name of the fixed table; any other name or kind prints a NOTE and no MADE line' ((@($lines | Where-Object { $_ -match '^MADE ' }) -join '|') -ceq 'MADE list: PFM Reviews|MADE group: PFM Office|MADE level: PFM Office Edit All Items' -and @($lines | Where-Object { $_ -match '^NOTE no MADE line' }).Count -eq 5) ($lines -join '|')
+# Find-OurList compares the folder name case sensitively.
+Test-That 'Find-OurList: the folder name is compared case sensitively' ($null -eq (Find-OurList @([pscustomobject]@{ RootFolder = [pscustomobject]@{ Name = 'pfmreviews' } }) 'PFMReviews') -and $null -ne (Find-OurList @([pscustomobject]@{ RootFolder = [pscustomobject]@{ Name = 'PFMReviews' } }) 'PFMReviews'))
 
 Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host ('T20 pass=' + $script:pass + ' fail=' + $script:fail)

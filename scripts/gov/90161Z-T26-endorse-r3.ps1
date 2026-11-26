@@ -57,7 +57,7 @@
   Writes: on the site, the rows above; on this computer the T26 folder (the result file, the state file), the clipboard
           (Make) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T26-endorse-<part>-r3.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
+  Output: 90161Z-T26-endorse-<part>[-<label>]-r3.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
   Exit 1 only when the part could not run (sign-in, missing list or module).
   Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r3.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
@@ -70,8 +70,12 @@
   Test runs only: the folder to use instead of the T26 folder.
 .PARAMETER NoLaunch
   Test runs only: do not use the clipboard.
+.PARAMETER Label
+  A word (lower-case letters) for the result file name, so a part that runs twice in a round keeps both files: Make with the label
+  after writes 90161Z-T26-endorse-make-after-r3.txt (the run after the new install).
 #>
-param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch)
+param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch,
+  [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
 $task = 'T26'
 $Rev = 'r3'
 $PubTitle = '90161Z TEST R41 endorse (delete me)'   # the fake publication the answer is about
@@ -445,7 +449,7 @@ try {
   $lines.Add('ENDORSE ' + $Part + ' done: passed=' + $script:passed + ' failed=' + $script:failed)
   # Every line is masked once more before it is shown or saved.
   $masked = @($lines | ForEach-Object { ConvertTo-Masked (Hide-Site $_ $site) $secret })
-  if ($dir -and $Part) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + '-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
+  if ($dir -and $Part) { try { Set-Content -LiteralPath (Join-Path $dir ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-' + $Rev + '.txt')) -Value $masked -Encoding UTF8 } catch { $null = $_ } }
   $masked | ForEach-Object { Write-Host $_ }
   if (-not $NoPause -and -not $env:RADE_CONTRACT) { [void](Read-Host 'Press Enter to close') }
 }

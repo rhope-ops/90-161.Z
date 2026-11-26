@@ -4,7 +4,7 @@
   (a move from step 1 to step 2; see the module check); test site only): the Uninstall steps of the app 90-161.Z, and the read-only checks and the process step that follow
   them. Windows PowerShell 5.1 (also 7), the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
-  Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v40: a Back up first, then these steps). The lists are removed
+  Parts (-Part). The first 3 run in RADE's Uninstall mode (RADE engine-v41: a Back up first, then these steps). The lists are removed
   BY THEIR FIXED TITLES (the PFM, 25 Nov 26: the 12 lists of the test site were made before RADE installs, so RADE has no record of them):
   the own-name table of the module 90161Z-T27-made-r1.ps1, whether or not RADE_MADE names them. The group and the level are different
   (the PFM, 25 Nov 26): a group cannot go to a Recycle Bin, so its removal cannot be undone; they go only when RADE_MADE names them.
@@ -176,6 +176,8 @@ function Hide-Site([string]$Text, [string]$Site) {
 
 $lines = New-Object System.Collections.Generic.List[string]
 $script:passed = 0; $script:failed = 0; $script:skipped = 0
+# The number of things this run removed so far; the stop handler prints it when a part stops after a removal.
+$script:removedSoFar = 0
 # Adds one "ITEM <name> <status> <text>" line and counts a PASS, a SKIP or a FAIL.
 function Add-Item([string]$Name, [string]$Status, [string]$Text) {
   $lines.Add('ITEM ' + $Name + ' ' + $Status + ' ' + $Text)
@@ -224,7 +226,7 @@ function Invoke-ListsPart($Made) {
     try {
       Write-Host ('NOW Removing the list ' + $OwnLists[$k])
       $null = Remove-PnPList -Identity ([string]$l.Id) -Recycle -Force -ErrorAction Stop
-      $removed += $k
+      $removed += $k; $script:removedSoFar++
     } catch { Add-Item $tag 'FAIL' ('the list could not be removed: ' + (Get-ShortError $_) + ' (run this step again)') }
   }
   $after = @(Get-SiteList)
@@ -280,6 +282,7 @@ function Invoke-OwnAccessRemoval([string]$Tag, [string]$Name, [bool]$Named, [scr
   if (-not (& $Find)) { Add-Item $Tag 'SKIP' ('not on the site: nothing left to remove: ' + $Name); return 0 }
   try { Write-Host ('NOW Removing ' + $Name); $null = & $Remove }
   catch { Add-Item $Tag 'FAIL' ('could not be removed: ' + (Get-ShortError $_) + ' (run this step again)'); return 0 }
+  $script:removedSoFar++
   if (& $Find) { Add-Item $Tag 'FAIL' ('still on the site after the remove: ' + $Name + ' (run this step again)'); return 0 }
   Add-Item $Tag 'PASS' ('removed: ' + $Name)
   return 1
@@ -303,13 +306,14 @@ function Invoke-LocalPart($Made, [string]$Dir) {
     $path = Join-Path (Join-Path (Split-Path -Parent $Dir) 'T22') $name
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Add-Item $tag 'SKIP' 'the install note is not on this computer: nothing left to remove'; continue }
     try { Remove-Item -LiteralPath $path -ErrorAction Stop } catch { Add-Item $tag 'FAIL' ('the install note could not be removed: ' + (Get-ShortError $_)); continue }
+    $script:removedSoFar++
     if (Test-Path -LiteralPath $path) { Add-Item $tag 'FAIL' 'the install note is still there after the remove'; continue }
     Add-Item $tag 'PASS' 'the install note is removed'; $removed++
   }
   Add-UninstallResult $removed
 }
 
-$fatal = $false; $site = ''; $secret = @(); $dir = ''
+$fatal = $false; $site = ''; $secret = @(); $dir = ''; $uninstall = $false
 try {
   $ErrorActionPreference = 'Stop'
   # The modules are dot-sourced here, in this script's scope, so they see the values and helpers above (the T20 helpers give
@@ -338,6 +342,12 @@ try {
   if ($Part -notin 'Local') { try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ } }
 } catch {
   $fatal = $true
+  # A part that throws after a removal (a read-back, a lookup) still prints its FAIL item and its RESULT line, and counts as failed
+  # (R43 review). A part that printed its RESULT line already (the gate, or a normal end) is not counted twice.
+  if ($uninstall -and -not @($lines | Where-Object { $_ -cmatch '^RESULT UNINSTALL ' }).Count) {
+    Add-Item 's-stopped' 'FAIL' 'the part stopped before it finished (see STOPPED); what was removed stays removed (run this step again)'
+    Add-UninstallResult $script:removedSoFar
+  }
   if ($script:site) { $site = $script:site }
   $m = ConvertTo-Masked (Hide-Site ([string]$_) $site) $secret
   $lines.Add('STOPPED: ' + $m.Substring(0, [Math]::Min(300, $m.Length)) + ' (the part can be run again)')
