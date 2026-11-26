@@ -8,9 +8,9 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
-| 2026-11-26 | Name spot (replaces the engine-v45 L2 version text): the word in capitals ("KANON"), under it "90-161.Z • Publications and Forms Management"; no version or round beside it; no RADE logo once an app is chosen; the title bar keeps the RADE icon, name and engine number. Maintenance shows "Kanon • 0.1.0". The shortcut is "Kanon". Scope: RADE engine-v46, R46 on. Preview pictures before the RADE merge. | PFM (request) | docs/reviews/2026-11-26-plan-r46.md |
+| 2026-11-26 | Name spot L3: "KANON", under it "90-161.Z • Publications and Forms Management"; no version, no RADE logo; shortcut "Kanon". Replaces the name spot and shortcut rows of 25 and 26 Nov. | PFM (request) | docs/reviews/2026-11-26-plan-r46.md |
 | 2026-11-26 | Build order: this session releases RADE engine-v46 first, then builds R46 on its tag (one repo at a time, separate PRs). Scope: engine-v46, R46. | PFM (question dialog) | docs/reviews/2026-11-26-plan-r46.md |
-| 2026-11-26 | Fix both PowerShell console sources (ISE start and shortcut); give RADE its own taskbar identity (the taskbar showed a PowerShell icon); the CAC sign-in is cached (the window closes by itself), so the fix is a smaller window now and fewer sign-ins in R47. Scope: engine-v46, R46, R47. | PFM (question dialog) | docs/reviews/2026-11-26-plan-r46.md |
+| 2026-11-26 | No console from ISE or the shortcut; own taskbar identity; sign-in cached, so a smaller window now and fewer sign-ins in R47. Scope: v46, R46, R47. | PFM (question dialog) | docs/reviews/2026-11-26-plan-r46.md |
 | 2026-11-26 | "Add the second person" gets a Skip choice that gives SKIP. Scope: T21 r13, R46. | PFM (request) | docs/reviews/2026-11-26-r45-results.md |
 | 2026-11-26 | R45: one T29 sign-in (r2, no watch pair) on engine-v44, then the R44 part 2 steps, from ISE; one Back up (the watch-off Back up leaves). Scope: R45. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |
 | 2026-11-26 | R45 does not wait for the name spot release; the name spot goes to R46 after the PFM approves preview pictures. Scope: R45, R46. | PFM (question dialog) | docs/reviews/2026-11-26-r44-results.md |
