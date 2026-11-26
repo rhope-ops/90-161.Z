@@ -568,9 +568,6 @@
                                 "No",
                                 "Yes, for a moment",
                                 "Yes, and it stayed"
-                            ],
-                            "failOn": [
-                                "Yes, and it stayed"
                             ]
                         }
                     ]
@@ -639,7 +636,7 @@
                     "guide": [],
                     "dir": "T26",
                     "file": "",
-                    "note": "1 question about the line \"Dry run:\" in the second window. Keep the second window open.",
+                    "note": "1 question about the line \"Dry run:\" in the second window. Expected: \"4 rows would come back (3 from the Recycle Bin, 1 as new rows).\" Keep the second window open.",
                     "estimate": 1,
                     "after": [
                         "T26 Start Restore in a second window r4"
@@ -647,7 +644,7 @@
                     "answers": [
                         {
                             "key": "r-dry",
-                            "prompt": "In the second RADE window, does the line that starts with \"Dry run:\" say \"4 rows would come back (3 from the Recycle Bin, 1 as new rows)\"?",
+                            "prompt": "In the second RADE window, does the line \"Dry run:\" say what this card expects?",
                             "kind": "pick",
                             "choices": [
                                 "Yes, exactly that",

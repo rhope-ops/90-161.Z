@@ -217,7 +217,8 @@ function Hide-Site([string]$Text, [string]$Site) {
 # engine-v44 (the PFM, 2026-11-26): RADE never touches the CAC sign-in window of Connect-PnPOnline -UseWebLogin; it opens
 # at its own size. The size watch of engine-v35 to engine-v43 (Start-SignInSize) is gone: it froze the sign-in
 # (90-161.Z R44 r2, one host: watch on, 2 windows not responding at 9 s; watch off, signed in after 5 s).
-# The block holds the read-only window report (Start-SignInReport, Stop-SignInReport) and the one sign-in (Connect-RadeSite).
+# The block holds the read-only window report (Start-SignInReport, Stop-SignInReport), the DPI setting of engine-v46
+# (Set-SignInDpiAware) and the one sign-in (Connect-RadeSite).
 # Copy this block unchanged between its start and end lines (an app's task scripts may hold the same copy).
 # Windows PowerShell 5.1, no module. When the report helper cannot be compiled (Constrained Language Mode), the sign-in
 # goes on without it.
@@ -286,12 +287,40 @@ function Stop-SignInReport {
   if (-not $PSCmdlet.ShouldProcess('the window report of this process', 'Stop')) { return }
   try { if ('RadeSignIn.Report1' -as [type]) { [RadeSignIn.Report1]::End($true) } } catch { $null = $_ }   # no report: nothing to stop
 }
+# engine-v46 (90-161.Z R45 finding 2; the PFM, 2026-11-26: "I want the window to be small when it appears"): before the
+# sign-in, the child process becomes DPI-aware (SetProcessDPIAware). Windows then draws the PnP sign-in window at its
+# own 1024 x 768 pixels; in a process that is not DPI-aware Windows stretches it 1.5 times at 150 % (1536 x 1152, taller
+# than a 1920 x 1128 work area). R45 T22 signed in this way (its window is DPI-aware) and the PFM saw the small window.
+# RADE does not move, size or watch the window (engine-v44). PnP draws the window on its own thread, so a per-thread
+# setting would not reach it; the setting is for the whole process, and it holds for the rest of the step (a form the
+# step shows later is drawn at real pixels too: it must scale itself, AutoScaleMode Dpi or Font). $env:RADE_SIGNIN_DPI
+# = '0' turns it off. Prints "SIGNIN-DPI aware=<yes|was|no|off>": yes (now aware), was (already aware), no (Windows did
+# not take it, or not Windows), off (turned off). Takes nothing.
+function Set-SignInDpiAware {
+  [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'None')]
+  param()
+  if ($env:RADE_SIGNIN_DPI -eq '0') { return 'SIGNIN-DPI aware=off' }
+  if (-not $PSCmdlet.ShouldProcess('this process', 'Make DPI-aware')) { return 'SIGNIN-DPI aware=no' }
+  if ($env:OS -ne 'Windows_NT') { return 'SIGNIN-DPI aware=no' }
+  try {
+    if (-not ('RadeSignIn.Dpi1' -as [type])) {
+      Add-Type -Namespace RadeSignIn -Name Dpi1 -ErrorAction Stop -MemberDefinition @"
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool IsProcessDPIAware();
+"@
+    }
+    if ([RadeSignIn.Dpi1]::IsProcessDPIAware()) { return 'SIGNIN-DPI aware=was' }
+    if ([RadeSignIn.Dpi1]::SetProcessDPIAware()) { return 'SIGNIN-DPI aware=yes' }
+  } catch { $null = $_ }   # no helper (Constrained Language Mode): the sign-in goes on at Windows' size
+  return 'SIGNIN-DPI aware=no'
+}
 # engine-v43 S1: the one sign-in of a child script. Prints "STAGE signin" (the parent stops a stage that runs too long),
 # signs in with the CAC (PnP web login), prints "SIGNIN seconds=<n>" and "STAGE none" (no stage runs).
 # Throws when the sign-in fails, as Connect-PnPOnline does. Takes the site address.
 function Connect-RadeSite([string]$Site) {
   'STAGE signin'
-  $t0 = Get-Date; Start-SignInReport   # engine-v44: the sign-in window opens at its own size (no size watch)
+  Set-SignInDpiAware   # engine-v46: the sign-in window at its real pixels (R45 finding 2)
+  $t0 = Get-Date; Start-SignInReport   # engine-v44: no size watch
   try { $null = & { Connect-PnPOnline -Url $Site -UseWebLogin -ErrorAction Stop } *>&1 }
   finally { Stop-SignInReport }   # no report after the sign-in
   'SIGNIN seconds=' + [int]((Get-Date) - $t0).TotalSeconds
