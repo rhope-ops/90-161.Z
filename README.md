@@ -1,4 +1,4 @@
-![90-161.Z: Kanon · Publications and Forms Management](docs/assets/90-161.Z-social-preview.png)
+![Kanon: 90-161.Z · Publications and Forms Management](docs/assets/90-161.Z-social-preview.png)
 
 # Kanon
 <p><b>Publications and Forms Management</b></p>
