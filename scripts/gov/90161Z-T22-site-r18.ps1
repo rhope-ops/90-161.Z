@@ -117,6 +117,28 @@ function Merge-SiteGrid([string]$Card, [string]$Name, $Rows, [string]$List, $Tit
 }
 <#
 .SYNOPSIS
+  Makes the waves card say what its grid shows: the head line, the chip over it and the "Wave 1" pill are counted from the same rows.
+.DESCRIPTION
+  R18 (the PFM, 26 Nov 26, R45 comment 4b: the head line said "two of three offices have answered" over a grid of 1 row). Called after the
+  site rows are in the grid. Counts the rows with Status "Answered" and all rows, then sets the first chips block, the first head block
+  and the "Wave 1: ..." pill row of the Action Status card. The FAKE sentences of the card are the 3-row design (2 of 3); the site rows
+  win. Candidate B (keep 3 FAKE rows in the grid and mark them) was not built: it would mix FAKE rows into site data.
+.PARAMETER Rows
+  The answer rows of the grid (Status "Answered" or "Waiting").
+#>
+function Sync-WaveSummary($Rows) {
+  $all = @($Rows); $t = $all.Count; $n = @($all | Where-Object { $_.Status -eq 'Answered' }).Count; $w = $t - $n
+  if (-not $t) { return }   # no rows: the grid is the empty-state note; the card keeps its FAKE lines
+  $hd = 'Wave 1: ' + $n + ' of ' + $t + $(if ($t -eq 1) { ' office has' } else { ' offices have' }) + ' answered.'
+  $chip = $(if ($w) { @('late', ($w.ToString() + $(if ($w -eq 1) { ' office has' } else { ' offices have' }) + ' not answered')) } else { @('ok', 'Every office has answered') })
+  $pill = @('Wave 1: offices the AO added', ($n.ToString() + ' of ' + $t), $(if ($w) { 'soon' } else { 'ok' }))
+  foreach ($col in @($Cards.waves.Cols)) { foreach ($sec in @($col)) { foreach ($bl in @($sec.Blocks)) {
+        if ($bl.T -eq 'chips' -and $bl.Cap -match '^STEPS 9 AND 10') { $bl.Items = @(, $chip) }
+        elseif ($bl.T -eq 'head' -and -not $bl.Small) { $bl.Text = $hd }
+        elseif ($bl.T -eq 'rows') { $bl.Rows = @($bl.Rows | ForEach-Object { if ([string]$_[0] -like 'Wave 1:*') { , $pill } else { , $_ } }) } } } }
+}
+<#
+.SYNOPSIS
   Reads the PFM lists of the site and fills the cards (the window's source is then "site"); on any failure the cards
   keep their FAKE data (source "fake") and the reason is one SOURCE line.
 .DESCRIPTION
@@ -150,6 +172,8 @@ function Invoke-SiteRead([string]$Site) {
   Merge-SiteGrid 'empty' 'Who has it now' $ok 'PFM Publications' @($ok | ForEach-Object { ([string]$_.Publication -split '\|', 2)[1] })
   Merge-SiteGrid 'queue' 'All actions' $pub.Queue 'PFM Publications' $pub.Titles
   Merge-SiteGrid 'waves' 'Wave 1 answers' $ans 'PFM Endorsements' @($ans | ForEach-Object { $_.Office })
+  Sync-WaveSummary $ans   # R18: the head line, chip and pill are counted from the rows the grid shows
+  if ($Walk.Count) { $script:Walk = @(Get-WalkPlan) }   # R18: the look step names the head line, which the site rows may have changed
   $script:GridQueue = @($pub.Queue)   # the All Actions filter ($wn.Refilter) reads it
   foreach ($b in @($Cards.queue.Cols[0][0].Blocks)) { if ($b.T -eq 'grid') { $b.Count = 'Showing {0} of ' + @($pub.Queue).Count + ' actions, as the site lists them' } }
   $script:SiteSource = 'site'

@@ -82,7 +82,7 @@ def check_parts():
         assert x in w, 'the window part lacks ' + x
     # R17 (R44 T4; the PFM, 26 Nov 26): the test window title and the name in the rail head
     main_text = (GOV / '90161Z-T22-pfm-window-r18.ps1').read_text(encoding='utf-8')
-    assert "$form.Text = '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)'" in main_text, 'the window title (always with the suffix: the test window shows fake rows only)'
+    assert "$form.Text = 'Kanon ' + [char]0x2022 + ' 0.1.0 (FAKE data)'" in main_text, 'the window title (always with the suffix: the test window shows fake rows only)'
     assert "$nm.Text = 'Kanon'" in w and "$nm.Text = '90-161.Z'" not in w, 'the rail head name'
     bar = part('bar')
     assert '$fb.BringToFront(); if ($wn.OpenLink) { $wn.OpenLink.BringToFront() }' in bar, 'the bar links are not in front of the step text'
@@ -330,6 +330,51 @@ def check_t26_state_name():
     maint = (GOV / '90161Z-T22-maint-r18.ps1').read_text(encoding='utf-8')
     assert "'" + m.group(1) + "'" in maint, 'T22 maint does not read the T26 state file ' + m.group(1)
 
+R18_PS = r"""
+$ErrorActionPreference = 'Stop'; $Again = $false; $lines = New-Object System.Collections.Generic.List[string]
+$mid = [string][char]0xB7; $gt = [string][char]0x203A
+. $args[0]; . $args[1]   # the cards part and the site part
+function Get-WaveInfo {
+  $o = @{}; foreach ($col in @($Cards.waves.Cols)) { foreach ($sec in @($col)) { foreach ($b in @($sec.Blocks)) {
+        if ($b.T -eq 'head' -and -not $b.Small) { $o.Head = $b.Text }; if ($b.T -eq 'chips') { $o.Chip = $b.Items[0][1] }
+        if ($b.T -eq 'rows') { foreach ($r in $b.Rows) { if ($r[0] -like 'Wave 1:*') { $o.Pill = $r[1] } } } } } }
+  return $o }
+$f = Get-WaveInfo; 'FAKE ' + $f.Head + ' | ' + $f.Chip + ' | ' + $f.Pill
+Sync-WaveSummary @(@{ Status = 'Answered' }); $a = Get-WaveInfo; 'ONE ' + $a.Head + ' | ' + $a.Chip + ' | ' + $a.Pill
+Sync-WaveSummary @(@{ Status = 'Answered' }, @{ Status = 'Waiting' }, @{ Status = 'Waiting' }); $c = Get-WaveInfo; 'THREE ' + $c.Head + ' | ' + $c.Chip + ' | ' + $c.Pill
+$w = @(Get-WalkPlan | Where-Object { $_.Via -eq 'look' }); 'LOOK ' + $w.Count + ' ' + $w[0].Target + ' | ' + $w[0].Text
+@(Get-WalkPlan | Where-Object { $_.Via -ne 'look' -and $_.Target }).Count.ToString() | ForEach-Object { 'OTHERTARGETS ' + $_ }
+"""
+
+
+def check_r18():
+    """R18 (R45, the PFM, 26 Nov 26): the waves card counts its head line, chip and pill from the rows its grid shows; the look step
+    names its target; the grid reads its Count key by name; the rows block puts every text value on one edge; the bar wraps and frames.
+    Takes nothing; raises AssertionError."""
+    import tempfile
+    d = tempfile.mkdtemp()
+    try:
+        ps = pathlib.Path(d, 'case.ps1'); ps.write_text(R18_PS, encoding='utf-8')
+        out = subprocess.run(['pwsh', '-NoProfile', '-File', str(ps), str(GOV / '90161Z-T22-cards-r18.ps1'), str(GOV / '90161Z-T22-site-r18.ps1')],
+                             capture_output=True, text=True, timeout=60)
+        o = out.stdout.splitlines(); assert out.returncode == 0, out.stderr + out.stdout
+        assert any(l.startswith('FAKE Wave 1: two of three offices have answered. | 1 office has not answered | 2 of 3') for l in o), o
+        assert 'ONE Wave 1: 1 of 1 office has answered. | Every office has answered | 1 of 1' in o, o
+        assert 'THREE Wave 1: 1 of 3 offices have answered. | 2 offices have not answered | 1 of 3' in o, o
+        look = [l for l in o if l.startswith('LOOK ')]
+        assert look and look[0].startswith('LOOK 1 Wave 1 answers | Screen ') and 'under the line "Wave 1: 1 of 3 offices have answered."' in look[0], look
+        assert 'OTHERTARGETS 0' in o, o
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    grid = part('grid'); parts = part('parts'); bar = part('bar')
+    assert "[string]$b['Count']" in grid and '$b.Count' not in grid, 'the grid must read its Count key by name ($b.Count on a hash table is its key count: the stray "4")'
+    assert '[Drawing.Point]::new(($W - $vw), (& $wn.Sc 8))' in parts and '($W - $v.Width), (& $wn.Sc 8)' not in parts, 'a text value must start at the left edge of the value column'
+    assert '$lw = $W - $v.Width - $gap' in parts, 'a chip row gives its label the room the chip leaves'
+    for x in ('$wn.FrameSet', '$wn.FramePaint', '$wn.FrameFind', '& $wn.OpenShow; & $wn.FrameSet', '$ww = [math]::Max(1, $tw - (& $wn.Sc 4))',
+              '& $ui.SetWrap $wn.BarText $ww', '[Drawing.Drawing2D.PenAlignment]::Inset'):
+        assert x in bar, 'the bar part lacks ' + x
+
+
 if __name__ == '__main__':
     check_ui_names()   # no pwsh needed
     check_t26_state_name()
@@ -338,6 +383,7 @@ if __name__ == '__main__':
     check_walk()
     check_parts()
     check_grid_plan()
+    check_r18()
     check_walk_path()
     print('T22R18 PASS')
     sys.exit(0)

@@ -33,7 +33,32 @@ $wn.StepCount = { return ($Checks.Count + $Walk.Count) }
 # The click-through step shown ($Walk index), or -1 while a check (or the closing line) is shown.
 $wn.WalkAt = { $j = [int]$wn.CheckAt - $Checks.Count; if ($j -ge 0 -and $j -lt $Walk.Count) { return $j }; return -1 }
 # R14: notes that card $Key opened while its click-through step is shown (the person opened it; $wn.Show calls this).
-$wn.WalkSeen = { param([string]$Key) $j = & $wn.WalkAt; if ($j -ge 0 -and [string]$Walk[$j].Key -eq $Key) { $wn.WalkOpen[$j] = $true }; & $wn.OpenShow }
+$wn.WalkSeen = { param([string]$Key) $j = & $wn.WalkAt; if ($j -ge 0 -and [string]$Walk[$j].Key -eq $Key) { $wn.WalkOpen[$j] = $true }; & $wn.OpenShow; & $wn.FrameSet }
+# R18 (the PFM, 26 Nov 26, R45 comment 6b): a step that names one part of the screen has Target (the accessible name of its control; the
+# cards part, Get-WalkPlan). While that step and its card show, the control has a 2 px frame in the primary blue (docs/palette.json).
+# The frame is drawn by the control's own Paint event, on its edge, so it follows the layout, the scroll and a resize and needs no extra
+# control; it works for a control that paints itself through Paint (a grid, a panel), not for a text box. $wn.FrameName is the name
+# framed now ('' for none); $wn.FrameCtl the control; $wn.FrameHooked the controls that already have the Paint handler.
+$wn.FrameName = ''; $wn.FrameCtl = $null; $wn.FrameHooked = New-Object System.Collections.ArrayList
+# Draws the frame on the control $s when it is the one named by $wn.FrameName. Paint event handler.
+$wn.FramePaint = { param($s, $e)
+  if (-not $wn.FrameName -or [string]$s.AccessibleName -cne [string]$wn.FrameName) { return }
+  $pn = New-Object System.Drawing.Pen($pc.primary, [single](& $wn.Sc 2)); $pn.Alignment = [Drawing.Drawing2D.PenAlignment]::Inset
+  $e.Graphics.DrawRectangle($pn, 0, 0, ($s.ClientSize.Width - 1), ($s.ClientSize.Height - 1)); $pn.Dispose() }
+# Finds the control with accessible name $Name on the page shown. Takes the name; gives back the control or $null.
+$wn.FrameFind = { param([string]$Name)
+  $st = New-Object System.Collections.Stack; $st.Push($page)
+  while ($st.Count) { foreach ($c in $st.Pop().Controls) { if ([string]$c.AccessibleName -ceq $Name) { return $c }; if ($c.Controls.Count) { $st.Push($c) } } }
+  return $null }
+# Sets the frame for the step and the card shown: on the target of the click-through step when its card shows, else off. Called
+# when a step shows ($wn.BarShow) and when a card shows ($wn.WalkSeen). The frame leaves when the walk moves on.
+$wn.FrameSet = {
+  $j = & $wn.WalkAt; $name = ''
+  if ($j -ge 0 -and $Walk[$j].Target -and [string]$Walk[$j].Key -eq [string]$wn.Cur) { $name = [string]$Walk[$j].Target }
+  $wn.FrameName = $name; $new = $(if ($name) { & $wn.FrameFind $name } else { $null })
+  if ($new -and -not $wn.FrameHooked.Contains($new)) { $new.Add_Paint($wn.FramePaint); [void]$wn.FrameHooked.Add($new) }
+  foreach ($c in @($wn.FrameCtl, $new)) { if ($c) { $c.Invalidate() } }
+  $wn.FrameCtl = $new }
 # R15 (R41 finding 4: one screen that did not open left the next step on a screen without its button): the link "Open
 # this screen" shows on a step that needs it, and on any step while the screen shown is not the one the step starts on.
 $wn.OpenShow = { if (-not $wn.OpenLink) { return }; $j = & $wn.WalkAt
@@ -57,7 +82,7 @@ $wn.BarShow = {
   else {
     $wn.BarNo.Text = 'Checks'; $wn.BarText.Text = $script:ChecksDone   # R13: names no card (the -Again check names the card closed on)
     $wn.BarPass.Visible = $false; $wn.BarFail.Visible = $false }
-  & $wn.BarFit; & $wn.OpenShow }
+  & $wn.BarFit; & $wn.OpenShow; & $wn.FrameSet }
 # R17 (R43 finding 4): the room of the step text, set by $wn.BarLayout (0 until the first layout).
 $wn.BarTw = 0
 # R17: cuts the step text box back to its room. A text box takes its size from its text when the text changes (the UI part,
@@ -128,12 +153,17 @@ $wn.BarLayout = {
   # R17 (R43 finding 4: the text covered the link "Open this screen"): the text has the room that is left and no more. R16 gave it
   # at least 200 px, which pushed it onto the links when the window was small or the links were wide; the bar gets taller instead.
   $tw = [math]::Max(1, $w - 2 * $pad - $pw - $fw - 2 * $gap - $kw - $ow); $wn.BarTw = $tw
-  $th = 0; foreach ($c in @(@($Checks) + @($Walk))) { $m = & $ui.Meas ([string]$c.Text) $ui.F.Body $tw; $th = [math]::Max($th, [int]$m.Height) }
+  # R18 (the PFM, 26 Nov 26, R45 comment 6a: the sentence ended "...opens and" when "Open this screen" showed): a text box is as wide as its
+  # wrap width plus the 4 px its edit control keeps ($ui.TextSize), and $wn.BarFit cut it back to $tw, so the edit control wrapped 4 px
+  # earlier than the height was measured and the last line fell out of the box. The wrap width is now $tw less those 4 px, for the
+  # height and for the box, so the box is $tw wide, as the height was measured, and a long sentence takes one more line (the bar grows).
+  $ww = [math]::Max(1, $tw - (& $wn.Sc 4))
+  $th = 0; foreach ($c in @(@($Checks) + @($Walk))) { $m = & $ui.Meas ([string]$c.Text) $ui.F.Body $ww; $th = [math]::Max($th, [int]$m.Height) }
   $th += (& $wn.Sc 6)
   $nh = [int]$wn.BarNo.PreferredSize.Height
   $wn.Bar.Height = [math]::Max($bh + 2 * $pad, $pad + $nh + (& $wn.Sc 2) + $th + $pad)
   $wn.BarNo.Location = [Drawing.Point]::new($pad, $pad)
-  $wn.BarText.Location = [Drawing.Point]::new($pad, ($pad + $nh + (& $wn.Sc 2))); & $ui.SetWrap $wn.BarText $tw; $wn.BarText.Size = [Drawing.Size]::new($tw, $th)
+  $wn.BarText.Location = [Drawing.Point]::new($pad, ($pad + $nh + (& $wn.Sc 2))); & $ui.SetWrap $wn.BarText $ww; $wn.BarText.Size = [Drawing.Size]::new($tw, $th)
   $by = [int](($wn.Bar.Height - $bh) / 2)
   $wn.BarPass.Location = [Drawing.Point]::new(($w - $pad - $fw - $gap - $pw), $by); $wn.BarFail.Location = [Drawing.Point]::new(($w - $pad - $fw), $by)
   if ($wn.FbLink) { $wn.FbLink.Location = [Drawing.Point]::new(($wn.BarPass.Left - $kw + $gap), [int](($wn.Bar.Height - $wn.FbLink.Height) / 2)) }

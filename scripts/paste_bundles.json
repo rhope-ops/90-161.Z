@@ -386,7 +386,7 @@
                     "dir": "T22",
                     "file": "90161Z-T22-pfm-window-r18.ps1",
                     "minutes": 40,
-                    "note": "Signs in (CAC). Writes nothing. In the window \"90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)\", do the 22 lines of its bar, then close it with its X.",
+                    "note": "Signs in (CAC). Writes nothing. In the window with \"Kanon\" and \"FAKE data\" in its title, do the 22 lines of its bar, then close it with its X.",
                     "estimate": 20,
                     "help": "Send the results as they are. The step can be run again.",
                     "needs": [

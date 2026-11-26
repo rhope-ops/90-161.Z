@@ -219,7 +219,10 @@ $wn.Grid = {
   $g.Add_CellDoubleClick({ param($s, $e) if ($e.RowIndex -ge 0) { & $wn.Later $s $e.RowIndex } })
   $g.Add_KeyDown({ param($s, $e) if ($e.KeyCode -eq 'Return') { $e.Handled = $true; $e.SuppressKeyPress = $true; if ($s.CurrentRow) { & $wn.Later $s $s.CurrentRow.Index } } })
   [void]$Parent.Controls.Add($g); $g.ClearSelection(); $wn.Gridsel = $g
-  if ($b.Count) { $wn.CountText = [string]$b.Count; $wn.CountBox = & $wn.Txt $Parent ($b.Count -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq = $g } }
+  # R18 (the PFM, 26 Nov 26, R45 comment 4: a stray label "4" under the waves grid): the Count property of a hash table is its number of keys (the 4 keys
+  # of the waves block), never "no Count key", so the line under the grid showed that number. The key is read by name, with an index.
+  $cnt = [string]$b['Count']
+  if ($cnt) { $wn.CountText = $cnt; $wn.CountBox = & $wn.Txt $Parent ($cnt -f $rows.Count) $ui.F.Small $ui.C.Gray 8 $W 'Count' $null; $wn.Gridq = $g } }
 # R10 (R37; R36 finding 3: the home grid "Who has it now" columns needed 810 px, the grid had 801): after a card is laid
 # out, each grid on the page whose column minimums are wider than its room gives the excess back ($wn.FitGrid). The
 # layout self-check ($wn.ScrollCheck) still measures the result, so a grid that does not fit stays a defect. Gives back

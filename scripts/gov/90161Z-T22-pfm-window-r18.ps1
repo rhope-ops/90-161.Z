@@ -7,7 +7,7 @@
   grid by the head line above it, a line the card shows (the cards part); the bar keeps room for its links "Open this screen"
   and "Feedback", so the step text never covers them (the bar part, tests/ps/Test-T22Bar.ps1); the first click-through step
   counts the card that shows at the start as opened (the bar part). Names: the window title is always
-  "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)" (the test window shows only fake rows), and the rail head
+  "Kanon <bullet> 0.1.0 (FAKE data)" (R18, the PFM, 26 Nov 26, R45: was "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)"), and the rail head
   reads "Kanon" (the window part). The RADE window's own title, word spot and Maintenance row belong to the RADE engine.
   WHAT R14 CHANGES (round R41; PFM 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md rows 1, 3 and 4): the window reads the
   PFM lists of the test site, read-only, and fills Your Work, All Actions and the endorsement answers from them (the
@@ -285,9 +285,10 @@ try {
   foreach ($k in $PalHex.Keys) { $pc[$k] = [Drawing.ColorTranslator]::FromHtml('#' + $PalHex[$k]) }
   $ui = @{}
   $form = New-Object System.Windows.Forms.Form
-  # R17 (the PFM, 26 Nov 26): the test window title is "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)". The test window shows only fake
-  # rows (the built-in ones, or the marked fake rows of the test site), so the suffix is always there (R44 review MAJOR).
-  $form.Text = '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)'
+  # R18 (the PFM, 26 Nov 26, R45): the test window title is "Kanon <bullet> 0.1.0 (FAKE data)"; the bullet is U+2022, built with [char]0x2022
+  # so this file stays ASCII. The test window shows only fake rows (the built-in ones, or the marked fake rows of the test site),
+  # so the suffix is always there (R44 review MAJOR).
+  $form.Text = 'Kanon ' + [char]0x2022 + ' 0.1.0 (FAKE data)'
   $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96); $form.AutoScaleMode = 'Dpi'
   $form.ClientSize = [Drawing.Size]::new(1280, 720)
   $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true; $form.ShowInTaskbar = $true
