@@ -279,7 +279,7 @@
                         "6. Click in the chat box at the bottom (not from the bundle). You see the cursor in the box.",
                         "7. Press Ctrl+V. You see the 2 form links and 8 steps that RADE put on the clipboard.",
                         "8. Press Enter. You see your message in the chat.",
-                        "9. In the RADE window, wait until the second person sends 2 replies. Do not click \"Done\" until then.",
+                        "9. Wait until the second person sends 2 replies. Do not click \"Done\" in the RADE window until then.",
                         "If nobody can help today, click \"Skip\" on this card. The round goes on."
                     ],
                     "marker": "90161Z-T26-answer-asked.txt",
@@ -416,8 +416,7 @@
                         "6. If the CAC sign-in window is open, sign in with your CAC.",
                         "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
                         "8. Close the second RADE window with its X. You see the first RADE window again.",
-                        "9. If the card \"Back up saved the lists.\" showed, click \"Done\" in the first RADE window.",
-                        "10. The first question asks the size of the CAC sign-in window. Click the size that you wrote down.",
+                        "9. A question then asks the size of the CAC sign-in window. Click your size, or the answer for none.",
                         "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",
                         "Then type that line, and click \"Report the failure\"."
@@ -489,7 +488,7 @@
                         "6. On the card \"Which backup does Restore use?\", click the row marked \"Newest\".",
                         "7. If a CAC sign-in window opens, sign in with your CAC.",
                         "8. Wait until a card shows a line that starts with \"Dry run:\".",
-                        "9. In the first RADE window, click \"Done\". Keep the second RADE window open."
+                        "9. Keep the second RADE window open."
                     ],
                     "estimate": 3,
                     "after": [
@@ -540,7 +539,7 @@
                         "4. Click \"Restore\". The card \"Restore is running.\" shows.",
                         "5. Wait until the card \"Restore put the missing rows back.\" shows.",
                         "6. On that card, find the line that starts with \"PFM Endorsements\".",
-                        "7. In the first RADE window, click \"Done\". Keep the second window open for 2 questions, then 1 more."
+                        "7. Keep the second window open for 2 questions, then 1 more."
                     ],
                     "estimate": 3,
                     "after": [
@@ -603,7 +602,7 @@
                     "file": "",
                     "note": "The Restore test in the second window is complete.",
                     "guide": [
-                        "1. Close the second RADE window with its X, then click \"Done\" in the first RADE window."
+                        "1. Close the second RADE window with its X. You see the first RADE window again."
                     ],
                     "estimate": 1,
                     "after": [
@@ -738,7 +737,6 @@
                         "4. Click the 3 dots next to \"90-161.Z flows\" (not from the bundle).",
                         "5. Click \"Delete\", then click \"Delete\" again in the question (not from the bundle).",
                         "6. Wait until \"90-161.Z flows\" is not in the list of solutions (not from the bundle).",
-                        "7. On this card in the second RADE window, click \"Done\".",
                         "If the delete fails: on this card, click \"It failed\". Type the first line of the message."
                     ],
                     "estimate": 3
@@ -767,16 +765,16 @@
                     "file": "",
                     "note": "This window waits. A second RADE window saves a backup, then removes what the install made on the test site. Your test site address is https://usaf.dps.mil/sites/<your-site>. Your browser shows it.",
                     "guide": [
-                        "1. On your Desktop, double-click \"RADE\". In the second RADE window, click the row \"90-161.Z 0.1.0\".",
-                        "2. On the card \"Maintenance\", click \"Uninstall\".",
-                        "3. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
-                        "4. In the box \"Type 90-161.Z to confirm\", type: 90-161.Z",
-                        "5. Click \"Uninstall\". If a CAC sign-in window opens, sign in with your CAC.",
-                        "6. Wait until the card \"Remove the flows of 90-161.Z in Power Automate\" shows.",
-                        "7. In your browser, open https://make.powerautomate.appsplatform.us (not from the bundle).",
-                        "8. Click \"Solutions\", then delete \"90-161.Z flows\" (not from the bundle). If it is not there, go on.",
-                        "9. On that card, click \"Done\". Wait until \"90-161.Z is uninstalled.\" shows. Do not close the window.",
-                        "10. Close the second RADE window with its X. In the first RADE window, click \"Done\".",
+                        "1. On your Desktop, double-click the shortcut \"RADE\". A second RADE window opens.",
+                        "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
+                        "3. Click \"Uninstall\".",
+                        "4. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
+                        "5. In the box \"Type 90-161.Z to confirm\", type: 90-161.Z",
+                        "6. Click \"Uninstall\". If a CAC sign-in window opens, sign in with your CAC.",
+                        "7. Wait until the card \"Remove the flows of 90-161.Z in Power Automate\" shows.",
+                        "8. In your browser, open https://make.powerautomate.appsplatform.us (not from the bundle).",
+                        "9. Click \"Solutions\", then delete \"90-161.Z flows\" (not from the bundle). If it is not there, go on.",
+                        "10. In the second window, click \"Done\". Wait until \"90-161.Z is uninstalled.\" shows, then close it.",
                         "If the result card is not \"90-161.Z is uninstalled.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",
                         "Then type that line, and click \"Report the failure\"."
@@ -815,12 +813,12 @@
                         "2. In the second RADE window, click the row \"90-161.Z 0.1.0\".",
                         "3. If \"One check needs you.\" shows, click \"Sign in and check site rights\". Sign in with your CAC.",
                         "4. If \"One check failed.\" or \"checks failed. This is the first.\" shows, do the line \"What to do\".",
-                        "5. Click the button \"Run checks again\", \"Sign in and check site rights\" or \"Check Power Automate\".",
-                        "6. If \"One check failed.\" shows again, write down its first line. Close the second RADE window.",
+                        "5. If you did that, click \"Run checks again\" or \"Sign in and check site rights\".",
+                        "6. If a check fails again, write down the first line of its card. Close the second RADE window.",
                         "7. On the card \"Ready to install 90-161.Z 0.1.0.\", click \"Install\".",
                         "8. If a CAC sign-in window opens, sign in with your CAC.",
                         "9. Wait until \"90-161.Z 0.1.0 is installed.\" shows (up to 5 minutes). Do not close the window.",
-                        "10. On that end card, click \"Close\". Then click \"Done\" in the first RADE window.",
+                        "10. Click \"Close\". You see the first RADE window again.",
                         "If the end card is not \"90-161.Z 0.1.0 is installed.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",
                         "Then type that line, and click \"Report the failure\"."

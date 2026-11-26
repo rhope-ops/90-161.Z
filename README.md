@@ -37,7 +37,7 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 
 The steps to run it are at the top of the script.
 
-**Round script:** `90161Z-R43-round-r1.txt` · **Build:** `bcc96479` (the RADE title bar shows it) · **Code:** `55ebd7fb42a6...240a`
+**Round script:** `90161Z-R43-round-r1.txt` · **Build:** `8d11437a` (the RADE title bar shows it) · **Code:** `8ee2496487c6...e095`
 
 ---
 
@@ -63,18 +63,18 @@ Updated: 26 Nov 26 (R43 r1 is ready).
 9. Do not click **Uninstall** now. If the card **Maintenance** shows, click **Maintenance**.
 10. If the card **Maintenance** shows again, with the rows **Diagnose**, **Back up** and **Restore**, click **Repair**.
 11. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-12. If the card **One check failed.** or a card with **checks failed. This is the first.** shows, do the line that starts with **What to do**.
-13. Click the button **Run checks again**, **Sign in and check site rights** or **Check Power Automate**.
-14. If the card **One check failed.** shows again, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
+12. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
+13. If you did the line **What to do**, click **Run checks again** or **Sign in and check site rights**.
+14. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
 15. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. This button is also the one for a repair. Wait until an end card shows (up to 5 minutes).
 16. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
 17. On the end card, click **Close**. The window **RADE** closes.
 18. In ISE (not from the bundle), press `F5`. Wait until the window **RADE** opens again.
 19. Click the row **90-161.Z R43**. Wait until a card shows (up to 2 minutes).
 20. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-21. If the card **One check failed.** or a card with **checks failed. This is the first.** shows, do the line that starts with **What to do**.
-22. Click the button **Run checks again**, **Sign in and check site rights** or **Check Power Automate**.
-23. If the card **One check failed.** shows again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
+21. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
+22. If you did the line **What to do**, click **Run checks again** or **Sign in and check site rights**.
+23. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
 24. On the card **Ready to run round R43.**, click **Run** (or **Resume at step**, if it shows).
 25. Do each step that a card shows. Stop when the card **Round R43 is done.** or **The round needs review.** shows.
 
