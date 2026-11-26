@@ -285,8 +285,9 @@ try {
   foreach ($k in $PalHex.Keys) { $pc[$k] = [Drawing.ColorTranslator]::FromHtml('#' + $PalHex[$k]) }
   $ui = @{}
   $form = New-Object System.Windows.Forms.Form
-  # R17 (the PFM, 26 Nov 26): the test window title is "90-161.Z - Kanon - 0.1.0 - R44", with " (FAKE data)" at its end while the window shows fake rows.
-  $form.Text = $(if ($script:SiteSource -eq 'site') { '90-161.Z - Kanon - 0.1.0 - R44' } else { '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)' })
+  # R17 (the PFM, 26 Nov 26): the test window title is "90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)". The test window shows only fake
+  # rows (the built-in ones, or the marked fake rows of the test site), so the suffix is always there (R44 review MAJOR).
+  $form.Text = '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)'
   $form.AutoScaleDimensions = New-Object System.Drawing.SizeF(96, 96); $form.AutoScaleMode = 'Dpi'
   $form.ClientSize = [Drawing.Size]::new(1280, 720)
   $form.StartPosition = 'CenterScreen'; $form.KeyPreview = $true; $form.ShowInTaskbar = $true

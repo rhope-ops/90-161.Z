@@ -57,7 +57,7 @@ def check_walk():
     # R16 (R43 T3): 17 screens and, after the waves card, one look step with its own Pass and Fail: 18 steps in all
     pat = r'WALK (\d+) (\S+) (rail|button|link|open): (Screen (\d+) of (\d+): select .+\. Pass if .+ opens and looks right\.)$'
     # R17 (R44 T4, R43 finding 3): the look step names the grid by the head line that the waves card shows (not its accessible name)
-    look = r'WALK (\d+) waves look: (Screen (\d+) of (\d+): look at the grid under the line "Wave 1: two of three offices have answered\." Pass if that grid shows the second person\.)$'
+    look = r'WALK (\d+) waves look: (Screen (\d+) of (\d+): look at the grid under the line "Wave 1: two of three offices have answered\." Pass if it shows the second person, or if no one helped\.)$'
     lines = [l for l in out if l.startswith('WALK ')]
     wk = [re.match(pat, l) for l in lines if ' waves look: ' not in l]; lk = [re.match(look, l) for l in lines if ' waves look: ' in l]
     assert len(cards) == 17 and len(wk) == 17 and all(wk) and len(lk) == 1 and all(lk), lines
@@ -81,7 +81,7 @@ def check_parts():
         assert x in w, 'the window part lacks ' + x
     # R17 (R44 T4; the PFM, 26 Nov 26): the test window title and the name in the rail head
     main_text = (GOV / '90161Z-T22-pfm-window-r17.ps1').read_text(encoding='utf-8')
-    assert "'90-161.Z - Kanon - 0.1.0 - R44' } else { '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)' }" in main_text, 'the window title'
+    assert "$form.Text = '90-161.Z - Kanon - 0.1.0 - R44 (FAKE data)'" in main_text, 'the window title (always with the suffix: the test window shows fake rows only)'
     assert "$nm.Text = 'Kanon'" in w and "$nm.Text = '90-161.Z'" not in w, 'the rail head name'
     bar = part('bar')
     assert '$fb.BringToFront(); if ($wn.OpenLink) { $wn.OpenLink.BringToFront() }' in bar, 'the bar links are not in front of the step text'
