@@ -75,6 +75,5 @@ Also:
 4. Fresh review of the code diff (AGENTS.md "Delegation"); start it while the hosted check runs.
 5. One pull request for the round (one docs commit), then merge it under Project rule "Delivery".
 6. Verify that origin/main has the commit.
-7. If index.html changed on main: copy it to the gh-pages branch as one commit.
-8. Write the NEXT_PROMPT state and the DECISIONS rows. Each round's handoff records the time from start to release and the slowest step, so the next audit has data (the PFM, 2026-11-26).
-9. Tell the PFM the round is ready, with the link https://github.com/rhope-ops/90-161.Z (the README; never a github.io page or a .ps1 file).
+7. Write the NEXT_PROMPT state and the DECISIONS rows. Each round's handoff records the time from start to release and the slowest step, so the next audit has data (the PFM, 2026-11-26).
+8. Tell the PFM the round is ready, with the link https://github.com/rhope-ops/90-161.Z (the README; never a github.io page or a .ps1 file).
