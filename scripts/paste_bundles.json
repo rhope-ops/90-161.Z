@@ -27,7 +27,7 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R44-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R44-round-r2.ps1",
             "round": "R44",
             "title": "Round R44 r2: a CAC sign-in test in 2 hosts with the size watch on and off, then a read-only count of the test site, my window r17, an optional endorser answer, and RADE Back up and Restore of fake rows",
             "files": [
@@ -1240,14 +1240,6 @@
             "fetch": [],
             "apps": [
                 {
-                    "name": "90-161.Z R44 sign-in test",
-                    "summary": "Round R44 r2, part 1: 2 CAC sign-ins with RADE in its own window, the size watch on, then off. Nothing on the site changes.",
-                    "steps": [
-                        "T29 Sign-in test, size watch on r1",
-                        "T29 Sign-in test, size watch off r1"
-                    ]
-                },
-                {
                     "name": "90-161.Z R44",
                     "summary": "Round R44 r2: the sign-in test inside ISE, then a read-only count of the test site, window r17, an optional endorser answer, and Back up and Restore of fake rows.",
                     "steps": [
@@ -1284,6 +1276,14 @@
                         "T26 Make the fake publication after install r3",
                         "T27 Move the fake publication one step r1",
                         "T26 Remove the fake rows after install r3"
+                    ]
+                },
+                {
+                    "name": "90-161.Z R44 sign-in test",
+                    "summary": "Round R44 r2, part 1: 2 CAC sign-ins with RADE in its own window, the size watch on, then off. Nothing on the site changes.",
+                    "steps": [
+                        "T29 Sign-in test, size watch on r1",
+                        "T29 Sign-in test, size watch off r1"
                     ]
                 },
                 {
