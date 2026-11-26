@@ -13,29 +13,31 @@ Updated: 26 Nov 26 (R43 r1 is ready).
 1. Ask one person in the office to help with this task. Write down the e-mail address of that person.
 2. Below **Summary** on this page, click **Open the script**. The script opens as plain text.
 3. On the script page, press `Ctrl+A`, then `Ctrl+C`.
-4. From the Start menu, open **Windows PowerShell ISE** (not **Run as administrator**).
-5. In ISE, click **File** > **New**, then press `Ctrl+V`.
+4. From the Start menu, open **Windows PowerShell ISE** (not from the bundle). Do not open **Run as administrator** (not from the bundle).
+5. In ISE (not from the bundle), click **File** > **New** (not from the bundle), then press `Ctrl+V`.
 6. Press `F5`. Wait until the window **RADE** opens (up to 2 minutes).
-7. If no window opens and text runs in ISE, stop and post `No RADE window` in the Teams channel **RHOPE-OPS**.
+7. If no window opens and text runs in ISE (not from the bundle), stop. Post `No RADE window` in the Teams channel **RHOPE-OPS** (not from the bundle).
 8. In the window **RADE**, click the row **90-161.Z 0.1.0**.
 9. Do not click **Uninstall** now. If the card **Maintenance** shows, click **Maintenance**.
 10. If the card **Maintenance** shows again, with the rows **Diagnose**, **Back up** and **Restore**, click **Repair**.
 11. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-12. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button.
-13. If the card **One check failed.** shows again, stop and post the first 10 words of the card in **RHOPE-OPS**.
-14. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. This button is also the one for a repair. Wait until an end card shows (up to 5 minutes).
-15. If the end card is not **90-161.Z 0.1.0 is installed.**, stop and post the first 10 words of the card in **RHOPE-OPS**.
-16. On the end card, click **Close**. The window **RADE** closes.
-17. In ISE, press `F5`. Wait until the window **RADE** opens again.
-18. Click the row **90-161.Z R43**. Wait until a card shows (up to 2 minutes).
-19. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-20. If the card **One check failed.** shows, do the line that starts with **What to do**, then click the first button.
-21. If the card **One check failed.** shows again, or **Your OneDrive folder was not found.** shows, stop and post the first 10 words in **RHOPE-OPS**.
-22. On the card **Ready to run round R43.**, click **Run** (or **Resume at step**, if it shows).
-23. Do each step that a card shows. Stop when the card **Round R43 is done.** or **The round needs review.** shows.
+12. If the card **One check failed.** or a card with **checks failed. This is the first.** shows, do the line that starts with **What to do**.
+13. Click the button **Run checks again**, **Sign in and check site rights** or **Check Power Automate**.
+14. If the card **One check failed.** shows again, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
+15. On the card **Ready to install 90-161.Z 0.1.0.**, click **Install**. This button is also the one for a repair. Wait until an end card shows (up to 5 minutes).
+16. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
+17. On the end card, click **Close**. The window **RADE** closes.
+18. In ISE (not from the bundle), press `F5`. Wait until the window **RADE** opens again.
+19. Click the row **90-161.Z R43**. Wait until a card shows (up to 2 minutes).
+20. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
+21. If the card **One check failed.** or a card with **checks failed. This is the first.** shows, do the line that starts with **What to do**.
+22. Click the button **Run checks again**, **Sign in and check site rights** or **Check Power Automate**.
+23. If the card **One check failed.** shows again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
+24. On the card **Ready to run round R43.**, click **Run** (or **Resume at step**, if it shows).
+25. Do each step that a card shows. Stop when the card **Round R43 is done.** or **The round needs review.** shows.
 
 **Report:** the e-mail of the round, with the subject `90161Z R43 PASSED` or `90161Z R43 NEEDS REVIEW` and every file of the results folder.
-**If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE, post the first 10 words in the Teams channel **RHOPE-OPS**. **Details (F2)** at the bottom of the window **RADE** shows all checks, steps and the log.
+**If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE (not from the bundle), post the first 10 words in the Teams channel **RHOPE-OPS** (not from the bundle). **Details (F2)** at the bottom of the window **RADE** shows all checks, steps and the log.
 
 ## Done
 

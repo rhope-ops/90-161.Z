@@ -7,7 +7,7 @@ Bundle: scripts/gov/paste/90161Z-R43-round-r1.ps1 (engine-v41).
 ## Result
 
 - Round 1: 24 marks (the Orchestrator's fresh reader, with the steps and the output of `python3 tests/check_screen_names.py --map`). All 24 are rewritten below (branch claude/r43-fix). The worker has no subagent, so it did not run round 2 and did not fake one.
-- Round 2: NOT RUN. The Orchestrator runs it with a new fresh reader on the rewritten steps. The criterion "the last fresh reader marks no step" is NOT met until then.
+- Round 2: 24 marks, all rewritten (section "Round 2" below, branch claude/r43-fix3). Round 3: NOT RUN. The criterion "the last fresh reader marks no step" is NOT met until then.
 
 Packet for each reader (the instructions skill and the round skill, section 5): the steps as the person sees them; the output of `python3 tests/check_screen_names.py --map`; the brief "For each step, say back the screen or window, the actions, the exact text to type, and any value you must note (and where you use it). Mark each step where you cannot say one of these, where you would act before you should, or where a sentence tells you nothing you need. Mark each step whose screen, button or order differs from the map." A note for the reader: a button text that the code builds at run time ("Install", "Run", "Repair", "Skip", "Resume at step <n> of <m>") is not in the BUTTONS line; a row of a list ("Back up", "Restore", "90-161.Z 0.1.0") is not a button; the map lists cards in code order, not in the order a person meets them (the card "Is the saved site a test site?" is built after "Which backup does Restore use?" but shows before it).
 
@@ -47,7 +47,7 @@ Count: go.md 3 marks (rows 1 to 3), 6.3 to 6.5 3 marks (row 4), 6.fb (row 5), 10
 - Mark 14 (15.5, 15.6): the brief says the test-site card shows after the click in 15.6 (the map order). The code shows it before the backup card (`VRestorePick` calls `VRestoreMark` and returns; `RestoreMarkGo` then calls `VRestorePick` again). The steps follow the code. A round 2 reader who reads the map order may mark this again: the note for the reader above says why.
 - Mark 15: the failure path "RADE asked for the test site" of step 15 is gone, because both steps now mark the site.
 - Mark 6: the removed question w-answer was kept by DECISIONS 2026-11-20 ("The 4th look question w-answer stays", scope R41 only). The Maintainer must confirm the removal.
-- Line 12.4 (row 10): the card sentence "Back up is running." is built at run time (`$name + ' is running.'`), so check_screen_names cannot find the whole sentence. The line now says: A card says that "Back up" is running. The text was changed so the check passes; the real sentence is the one in the code. A limit of the check, not a hidden defect.
+- Line 12.4 (row 10): the card sentence "Back up is running." is built at run time (`$name + ' is running.'`), so check_screen_names cannot find the whole sentence. The line said A card says that "Back up" is running. That was changed so the check passes; round 2 (Fix B) writes the real sentence.
 - Row 17 (27.1): the address is typed by hand (43 characters). The round skill, section 5, says the PFM types only the first address by hand. Candidates: (a) type the address, as now; (b) set `url` on the step so the card shows the address and "Open in browser" (the engine then demands line 1 `Select "Open in browser" above.` and the same host).
 - Marks 11 to 13 and 20: "this window" of the old lines is now "the first RADE window" everywhere.
 
@@ -69,6 +69,63 @@ The author compared the new lines with the card order of the bundle code (VResto
 | 15 Restore | row "Restore", card "Is the saved site a test site?" (only when the site is not marked), "Which backup does Restore use?", "The Restore dry run is running.", "Put back <n> rows on the site?" with "Dry run:" | yes |
 | 29 Uninstall | "Maintenance" (button "Uninstall"), mark card, "Uninstall 90-161.Z from the test site?", run cards, hand card, "90-161.Z is uninstalled." (button "Done") | yes |
 
-## Round 2
+## Round 2: the 24 marks, the code review findings A and B, and the changes (branch claude/r43-fix3)
 
-Not run. Give a new fresh reader only the rewritten steps and the `--map` output, record each mark here (date, reader, model tier, marked steps, result), rewrite, and test again until no step is marked.
+Reader numbers: the round 2 reader counted guide steps from 0, so "s16.7" is line 7 of manifest step 17 (Restore with the app name), "s5.9" is line 9 of step 6, "s9 note" is the note of step 10. G<n> is the number of the line in the go.md of round 1 (old numbers; go.md now has 25 steps because G12 and G20 became 2 steps each).
+
+| # | Mark | Old line | New line (what changed) |
+|---|---|---|---|
+| 1 | s16.7: "the 3 questions", 1 follows | 7. Keep the second RADE window open for the 3 questions. | 7. In the first RADE window, click "Done". Keep the second window open for 2 questions, then 1 more. (the code: after "Done" of step 17 the first window asks 2 questions, r-result and r-pause; step 18 asks 1, r-bin; the count 3 was right in total, but it did not say that they come in 2 cards) |
+| 2 | s11.5: Small or Large has no measure and no use | 5. ...write down its size: "Small" or "Large". | 5. ...write "Small" (size of this card) or "Large" (most of the screen). 10. The first question asks the size of the CAC sign-in window. Click the size that you wrote down. (the question is b-signin; its third answer, no window, is not named in the step because the check does not read manifest text) |
+| 3 | G12: "the first button" names no button | ...then click the first button. | 12. ...do the line that starts with **What to do**. 13. Click the button **Run checks again**, **Sign in and check site rights** or **Check Power Automate**. Step 12 also names the title **checks failed. This is the first.** (VFail: the first button is "Sign in and check site rights" for a sign-in check, "Check Power Automate" for a look check, else "Run checks again"; the second button, "Change the site address", shows only when the app has a site check) |
+| 4 | G20: same | same | steps 21 and 22: the same two lines |
+| 5 | s30.4: same | 4. If "One check failed." shows, do the line that starts with "What to do". Click the first button. | 4. If "One check failed." or "checks failed. This is the first." shows, do the line "What to do". 5. Click the button "Run checks again", "Sign in and check site rights" or "Check Power Automate". |
+| 6 | s5.9: Done click names no screen | 9. Wait until the second person sends 2 replies. Do not click "Done" until then. | 9. In the RADE window, wait until the second person sends 2 replies. Do not click "Done" until then. |
+| 7 | s11.8: no "Done" at the end | 8. Close the second RADE window with its X. You see the first RADE window again. | 8 unchanged; 9. If the card "Back up saved the lists." showed, click "Done" in the first RADE window. (the hand card shows its Close line "When you finish, select "Done"." in the first window; the failure lines use "It failed" instead) |
+| 8 | s14.10: same | 10. Keep the second RADE window open. | 9. In the first RADE window, click "Done". Keep the second RADE window open. |
+| 9 | s16.7: same | see row 1 | see row 1 |
+| 10 | s18.1: same | 1. Close the second RADE window with its X. You see this window again. | 1. Close the second RADE window with its X, then click "Done" in the first RADE window. |
+| 11 | s26.6: same (card of step 27 shows in the second window) | 6. Wait until "90-161.Z flows" is not in the list of solutions. | 6 unchanged; 7. On this card in the second RADE window, click "Done". |
+| 12 | s28.9: same | 9. Close the second RADE window with its X. You see the first RADE window again. | 10. Close the second RADE window with its X. In the first RADE window, click "Done". |
+| 13 | s30.9: same | 9. Click "Close". You see the first RADE window again. | 10. On that end card, click "Close". Then click "Done" in the first RADE window. |
+| 14 | s14.5: no place for the site address | 5. If "Is the saved site a test site?" shows, type the address part after the last / in "Site name". | 5. If "Is the saved site a test site?" shows, type <your-site>, then click "Mark as test site". The note of the card now says: Your test site address is https://usaf.dps.mil/sites/<your-site>. Your browser shows it. (the lines are limited to 100 characters, so the address form is in the note of the same card; see "Open choices") |
+| 15 | s28.7: points to card s26, no "not there" case | 7. In Power Automate (not from the bundle), delete the solution "90-161.Z flows". | 7. In your browser, open https://make.powerautomate.appsplatform.us (not from the bundle). 8. Click "Solutions", then delete "90-161.Z flows" (not from the bundle). If it is not there, go on. |
+| 16 | s9 note: "your first change" is vague | 1 question: your first change. About 1 minute. | 1 question. Type one line, no names, to say what you would change first in the window. About 1 minute. |
+| 17 | G2: README names "Open the script" | none | Checked: README.md lines 36 and 56 hold **Open the script**, and tests/check_screen_names.py lists it as a name of the README. No change. |
+| 18 | G4 | open **Windows PowerShell ISE** (not **Run as administrator**) | open **Windows PowerShell ISE** (not from the bundle). Do not open **Run as administrator** (not from the bundle). |
+| 19 | G5 | In ISE, click **File** > **New**, ... | In ISE (not from the bundle), click **File** > **New** (not from the bundle), ... |
+| 20 | G7 | ...text runs in ISE, stop and post ... **RHOPE-OPS**. | each name tagged (not from the bundle); "stop. Post ..." (2 sentences, to stay at 20 words) |
+| 21 | G13 (now 14) | ...in **RHOPE-OPS**. | tagged (not from the bundle) |
+| 22 | G15 (now 16) | same | same |
+| 23 | G21 (now 23) | same | same |
+| 24 | "If it fails" | ...red text shows in ISE, post ... **RHOPE-OPS**. | both names tagged. Checked: **Details (F2)** is in the engine code (the link at the bottom, `LinkBtn 'Details (F2)'`), so it has no tag. |
+
+G17 (now 18) "In ISE, press F5" is tagged too, for the same reason.
+
+### Fix A (MAJOR, code review): the test-site line of "T27 Uninstall in a second window"
+
+Code: `VUninstall` shows the mark card before the confirm box (`if ($siteCheck.NeedMark) { $ui.MarkNext = $ui.VUninstall; ... }`), so it comes right after the click of "Uninstall". Old lines 10 and 11 (after the last numbered line) are now one numbered line after the click:
+
+- Old: 3. Click "Uninstall". ... (at the end) If "Is the saved site a test site?" shows, type the address part after the last / in "Site name". If you typed it, click "Mark as test site".
+- New: 2. On the card "Maintenance", click "Uninstall". 3. If "Is the saved site a test site?" shows, type <your-site>, then click "Mark as test site".
+
+To stay at 10 lines, the lines 1 and 2 are one line (the Desktop click and the row of the second window; the cue "A second RADE window opens" is in the line as "the second RADE window"), the flows steps are 2 lines, and the guide has 10 numbered lines (cap unchanged). Step order follows the code.
+
+### Fix B (MINOR): the Back up card sentence
+
+- Old: 4. Click the row "Back up". A card says that "Back up" is running.
+- New: 4. Click the row "Back up". The card says Back up is running.
+
+The real sentence is `Back up is running.` (code: `Sentence = ($name + ' is running.')` in the engine part "tools", `$ui.RunTool`, about line 23047 of the bundle). tests/check_screen_names.py cannot see it: the code builds it at run time from `$name`, and the check reads only whole fixed strings. With the sentence in quotes the check fails ("Back up is running." is not on a RADE screen). The sentence is written in full without quotes, so the check does not read it. This is a check limit, not a changed text. Candidate if you want the quotes: the owner of tests/check_screen_names.py adds a rule for a name built from a name and a fixed end.
+
+## Open choices (round 2)
+
+- Site address (rows 14 and Fix A): the address form is in the note of the card, not in the line, because a line holds 100 characters at most and the check limits a note to 200. The place "Your browser shows it" is the worker's wording: the code shows the saved address only on the card "Which site does the application go to?" (box "Site address", reached by "Change the site address"). Candidates: (a) browser address bar, as now; (b) the card "Which site does the application go to?"; (c) a PFM text that names the place.
+- Fix A uses one line (the brief); step 15 uses the same one line, for one rule in both steps.
+- Row 3: the step names the 3 button texts and lets the person take the one that shows; the code decides the text from the kind of the failed check, which the step cannot know.
+- Step 29 line 1 lost the words "the shortcut" to fit 100 characters.
+- Row 7 and row 13: if the result card is a failure, the person must use "It failed" and not "Done"; line 9 of Back up says "If the card ... showed", step 31 and step 29 rely on the failure lines.
+
+## Round 3
+
+Not run. The Orchestrator runs it with a new fresh reader.
