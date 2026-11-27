@@ -22,7 +22,7 @@
   -Measure: $wn.MeasureKeep opens every card again after the first build and records whether the kept card was used
   and how long the open took (tests/ps/Test-T22Layout.ps1 checks it).
   Inputs: $form, $main, $page, $ui, $wn, $Cards, $lines. Outputs: the $wn members below.
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.

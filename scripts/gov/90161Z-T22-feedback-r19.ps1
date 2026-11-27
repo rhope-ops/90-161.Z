@@ -9,10 +9,10 @@
   a click and $wn.FeedbackList at the close; the -Measure run calls $wn.MeasureFeedback (below), which saves one FAKE
   comment through $wn.FeedbackSave.
   Inputs: $form, $ui, $wn, $who, $dir, $Rev, $lines. Outputs: the $wn members below.
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: per saved comment 90161Z-T22-feedback-<card>-r18.txt and .png, or the .txt only when a shown row has no fake-data
-  marker (a name already in the folder: <card>-2, and so on), and at the close it adds this run's lines to 90161Z-T22-feedback-r18.txt, in the T22 folder (or -TestDir); with
+  marker (a name already in the folder: <card>-2, and so on), and at the close it adds this run's lines to 90161Z-T22-feedback-r19.txt, in the T22 folder (or -TestDir); with
   -Measure in the folder of the measure file. Nothing that is already there is overwritten.
   Credentials: none.
 #>
@@ -20,7 +20,7 @@
 # comment and a picture of the window as it was when the link was selected, into the T22 folder (the round sends them):
 # 90161Z-T22-feedback-<card>-r18.txt and .png (the .txt only when a shown row has no fake-data marker; a second comment on the same card, in this run or an earlier window run of
 # the same round: <card>-2, and so on). Each save adds a FEEDBACK line to the result file; at the close each run adds its
-# lines to 90161Z-T22-feedback-r18.txt (every comment file, or none), so the round always finds one feedback file and a
+# lines to 90161Z-T22-feedback-r19.txt (every comment file, or none), so the round always finds one feedback file and a
 # second run keeps the first run's lines. With -Measure the files go to the folder of the measure file.
 $wn.FeedbackN = @{}; $wn.FeedbackAll = New-Object System.Collections.Generic.List[string]
 $wn.FeedbackPng = @{}   # R14: base name -> $true when its picture was saved (the marker check can block it)
@@ -108,7 +108,7 @@ $wn.FeedbackAsk = {
       $null = & $wn.FeedbackSave $Key $tb.Text $shot }   # the save also shows the new count on the link
   } catch { $lines.Add('NOTE the feedback box did not open: ' + ([string]$_.Exception.Message)) }
   finally { if ($dlg) { $dlg.Dispose() }; if ($shot) { $shot.Dispose() } } }
-# At the close: adds this run's lines to 90161Z-T22-feedback-r18.txt (every comment of this run, or none); the lines of
+# At the close: adds this run's lines to 90161Z-T22-feedback-r19.txt (every comment of this run, or none); the lines of
 # an earlier window run of the round stay.
 $wn.FeedbackList = {
   $into = & $wn.FeedbackDir; if (-not $into) { return }

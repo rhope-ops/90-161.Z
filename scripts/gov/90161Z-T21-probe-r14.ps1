@@ -79,7 +79,7 @@
   "RESULT <test> FAIL", so the RADE step counts what the part read (R28 finding 7). Last line of each part: PROBE <part>
   done: passed=<n> failed=<n>. Exit code 0 when the part ran to its end (a FAILED test is a result); exit 1 only when the
   part could not run (sign-in, missing list, missing module file).
-  Run: powershell.exe -NoProfile -File 90161Z-T21-probe-r13.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T21-probe-r14.ps1 -Part <part> (RADE does this).
   Parameters (used by RADE, the Redacted Application Deployment Engine): -Id, -Part, -Label, -WaitMinutes, -NoPause.
   -PollSeconds, -TestDir and -NoLaunch are for the tests in tests/run.sh (tests/ps/Test-T21.ps1).
 .PARAMETER Id
@@ -121,7 +121,7 @@ $script:OfficeLevel = 'PFM Office Edit All Items'
 $script:OfficeStateName = '90161Z-T21-office-state-r8.txt'   # keeps r8: same format, so a person an r8 run left is found
 $script:ViewTitle = 'ProbeButton'
 $script:HeaderText = '90-161.Z test header'
-$Rev = 'r13'
+$Rev = 'r14'
 # The modules this file loads from its own folder (round skill section 2: scripts that load each other keep fixed names).
 $ModuleNames = @('common', 'make', 'person', 'office', 'look', 'read')
 

@@ -59,7 +59,7 @@
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
   Output: 90161Z-T26-endorse-<part>[-<label>]-r4.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
   Exit 1 only when the part could not run (sign-in, missing list or module).
-  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r4.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r5.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
@@ -77,7 +77,7 @@
 param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch,
   [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
 $task = 'T26'
-$Rev = 'r4'
+$Rev = 'r5'
 $PubTitle = '90161Z TEST R41 endorse (delete me)'   # the fake publication the answer is about
 $AnswerTitle = '90161Z TEST R41 answer'             # the Title the second person types
 $EditTitle = '90161Z TEST R41 edit me'              # the row you make that the second person tries to edit (PFM 20 Nov 26)

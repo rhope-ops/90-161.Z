@@ -56,7 +56,7 @@
   home grid was 9 px short). Feedback (UI standard B13, PFM 19 Nov 26): a link on the check bar, in the same place on
   every card, opens a small box "What does not look right?"; Save writes the comment and a picture of the window into
   the T22 folder as 90161Z-T22-feedback-<card>-r18.txt and .png and adds a FEEDBACK line; at the close
-  90161Z-T22-feedback-r18.txt lists them (or none).
+  90161Z-T22-feedback-r19.txt lists them (or none).
   WHAT R8 CHANGED (R35 plan W7: R34 finding 7 and open point 5): with Windows high contrast on, the rail logo is drawn
   in 2 system colors, and in its own colors again when it goes off ($wn.LogoImage, Pfm.Logo); every rail build checks
   the logo's colors (a LOGO line; a W7 LAYOUT line when they are wrong). No column head of a grid is shortened with
@@ -78,23 +78,23 @@
   Parameters: -Id, -NoPause (RADE), -Again (R12: the reopen check only). -PlanOnly prints the cards and the 4 checks as
   text and opens no window; -TestDir writes the files elsewhere; -Measure <file> builds the window off-screen, writes what it
   measured to <file> as JSON (tests/ps/Test-T22Layout.ps1) and the card pictures next to it, and closes, with no question.
-  -Opened opens no window: it reads 90161Z-T22-window-r18.txt of the last run and prints one line, PASS the window opened
+  -Opened opens no window: it reads 90161Z-T22-window-r19.txt of the last run and prints one line, PASS the window opened
   (N of M cards) or FAIL the window did not open (the round's look questions run only after a PASS).
-  Outputs: 90161Z-T22-window-r18.txt (with -Again: 90161Z-T22-window-again-r18.txt) (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
+  Outputs: 90161Z-T22-window-r19.txt (with -Again: 90161Z-T22-window-again-r19.txt) (state, size, scale, cards opened, layout self-check, accessible names, card pictures,
   feedback, check answers), 90161Z-T22-window-bounds.json (last size and place), 90161Z-T22-card-<card>-r18.png (one per
-  card) and the feedback files (90161Z-T22-feedback-r18.txt, and a .txt and a .png per comment) in the T22 folder.
+  card) and the feedback files (90161Z-T22-feedback-r19.txt, and a .txt and a .png per comment) in the T22 folder.
   Last line: WINDOW done: cards=<opened> buttons=<selected> defects=<n> checks failed=<n>. Exit 1 when no window can open.
-  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r18.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
+  Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r19.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell, read
   only (the site part; none with -PlanOnly, -Measure or -Opened).
-  Writes: nothing on the site. 90161Z-T22-window-r18.txt (or -again-r18.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
+  Writes: nothing on the site. 90161Z-T22-window-r19.txt (or -again-r18.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
   folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
   with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
   Credentials: your own CAC sign-in through the PnP web login window (the site part); nothing is stored.
 #>
 param([string]$Id, [switch]$NoPause, [switch]$PlanOnly, [string]$TestDir, [string]$Measure, [switch]$Opened, [switch]$Again)
 $task = 'T22'
-$Rev = 'r18'
+$Rev = 'r19'
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
   foreach ($x in $Secret) { $Text = $Text -replace [regex]::Escape($x), '<DODID>' }

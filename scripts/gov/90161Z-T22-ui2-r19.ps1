@@ -10,7 +10,7 @@
   and $ui.UseColors (the window part applies them: $wn.Recolor).
   Inputs: $ui (filled by part "ui"), $pc. Outputs: the $ui members of the second half of the shared UI file, $ui.HcRole,
   $ui.OwnPc, $ui.OwnC, $ui.High, $ui.UseColors and the function Select-T22Color.
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.

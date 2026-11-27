@@ -33,11 +33,11 @@ Track and manage DAF publications through the DAFMAN 90-161 publishing process a
 ---
 
 <!-- >>> tasks: generated from go.md and the round bundle by scripts/build_readme.py (do not edit) -->
-[**Open the script**](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R46-round-r1.txt)
+[**Open the script**](https://raw.githubusercontent.com/rhope-ops/90-161.Z/main/scripts/gov/paste/90161Z-R47-round-r1.txt)
 
 The steps to run it are at the top of the script.
 
-**Round script:** `90161Z-R46-round-r1.txt` · **Build:** `85aec182` (the RADE title bar shows it) · **Code:** `fd1d5a3c929f...26ba`
+**Round script:** `90161Z-R47-round-r1.txt` · **Build:** `5160e2cf` (the RADE title bar shows it) · **Code:** `cc65ae83b9e7...c4c4`
 
 ---
 

@@ -21,7 +21,7 @@
   without a marker=<n>. Counts only: no row text, no address.
   Inputs: $Cards, $GridQueue, $lines, $dir (the cards part and the main script). Outputs: the functions below and
   $script:SiteSource, $script:SiteShown (card key -> the titles of the site rows it shows).
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell; read only.
   Writes: none on the site; on this computer only, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window; nothing is stored.

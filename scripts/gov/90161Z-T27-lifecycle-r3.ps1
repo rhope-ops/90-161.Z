@@ -36,7 +36,7 @@
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
   Output: 90161Z-T27-<part>[-<label>]-r2.txt in the T27 folder. Last line: LIFECYCLE <part> done: passed=<n> skipped=<n> failed=<n>.
   Exit 1 when a part has a FAIL item or could not run (sign-in, missing list or module, made list not accepted).
-  Run: powershell.exe -NoProfile -File 90161Z-T27-lifecycle-r2.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T27-lifecycle-r3.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
@@ -52,7 +52,7 @@
 param([string]$Id, [Parameter(Mandatory = $true)][ValidateSet('Lists', 'Access', 'Local', 'Gone', 'Install', 'Step')][string]$Part,
   [switch]$NoPause, [string]$TestDir, [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
 $task = 'T27'
-$Rev = 'r2'
+$Rev = 'r3'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {

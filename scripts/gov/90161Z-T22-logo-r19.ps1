@@ -11,7 +11,7 @@
   ($wn.AppsLight), for the THEME line only.
   Inputs: $wn, $ui. Outputs: $AppLogoPng and the $wn members below (the window part builds the rail
   head with them; the -Measure run calls $wn.MeasureTheme, below).
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Reads: the value AppsUseLightTheme under HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize (read only).
   Writes: nothing.

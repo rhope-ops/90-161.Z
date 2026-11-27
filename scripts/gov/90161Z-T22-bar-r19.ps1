@@ -20,7 +20,7 @@
   starts counts as opened for walk step 1 ($wn.BarShow).
   Inputs: $form, $main, $ui, $wn, $pc, $Cards, $Checks, $Walk, $lines. Outputs: the $wn members below and, at the end
   of a run, the WALK lines ($wn.WalkLines; the main script adds them to the result).
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.

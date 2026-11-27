@@ -30,7 +30,7 @@
   the device lines suggest; not measured). The fit now also cuts the widths ($wn.TrimWidths); tests/ps/Test-T22GridWidth.ps1
   runs it on those numbers, and the LAYOUT line names the column minimums, so R43 shows if the fit ran.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.

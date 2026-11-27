@@ -11,7 +11,7 @@
   ($apps moved here from part "ui2" with engine-v36: the layout self-check line is in this half now). Part "ui2" chooses the colors for Windows
   high contrast (R31 W2).
   Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the first half of the shared UI file.
-  Run: not alone; 90161Z-T22-pfm-window-r18.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.

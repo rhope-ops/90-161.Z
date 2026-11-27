@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T26-endorse-r4.ps1 (round R41; the PFM, 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md row 2)
+# Tests scripts/gov/90161Z-T26-endorse-r5.ps1 (round R41; the PFM, 20 Nov 26: docs/reviews/2026-11-21-r41-plan.md row 2)
 # against a small fake site: the PnP cmdlets the script uses are fakes in this file (an empty PnP.PowerShell 1.12.0
 # module in a temporary folder lets the script's module check pass). Proves the logic, not the real service: the gov
 # device round is that proof.
@@ -35,7 +35,7 @@ Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psd1') -Value "@{ Ro
 $env:PSModulePath = (Join-Path $work 'mods') + [IO.Path]::PathSeparator + $env:PSModulePath
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r4.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r5.ps1'
 
 # ---- the fake site and its cmdlets ----
 # Reset the fake site: the 5 lists the script reads, the process step rows 0 to 2, 2 office rows (31, 32), you are user 11. Takes nothing; returns nothing.
@@ -106,7 +106,7 @@ function Invoke-T26([string]$Part, [string]$Label = '') {
   $global:LASTEXITCODE = 0
   $sw = @{}; if ($Label) { $sw['Label'] = $Label }
   $out = & $script -Id 'tester01' -Part $Part -NoPause -NoLaunch -TestDir $t26 @sw *>&1 | ForEach-Object { [string]$_ }
-  $file = Join-Path $t26 ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r4.txt')
+  $file = Join-Path $t26 ('90161Z-T26-endorse-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r5.txt')
   return @{ Code = $LASTEXITCODE; Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
 }
 $stateFile = Join-Path $t26 '90161Z-T26-endorse-state-r4.txt'
@@ -252,12 +252,12 @@ try {
   Test-That 'the pause values of the script equal the manifest restore.pause' ($ok -and $p[0].field -eq $m.Groups[3].Value -and $p[0].on -eq $m.Groups[4].Value) ''
   # R43 review: a part that runs twice in a round keeps both result files (a label), and the round collects each file once.
   $r = Invoke-T26 'Make' 'after'
-  $labeled = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-after-r4.txt')
-  $first = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r4.txt')
+  $labeled = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-after-r5.txt')
+  $first = Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r5.txt')
   Test-That 'Make with -Label after writes its own result file, and the file of the first run stays' ($r.File -match 'ENDORSE Make done' -and $labeled -and $first) $r.Text
   $r = Invoke-T26 'Clean' 'after'
-  Test-That 'Clean with -Label after writes its own result file' (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-clean-after-r4.txt')) $r.Text
-  $T26steps = @(@($man.bundles | ForEach-Object { $_.steps }) | Where-Object { $_.file -eq '90161Z-T26-endorse-r4.ps1' })
+  Test-That 'Clean with -Label after writes its own result file' (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-clean-after-r5.txt')) $r.Text
+  $T26steps = @(@($man.bundles | ForEach-Object { $_.steps }) | Where-Object { $_.file -eq '90161Z-T26-endorse-r5.ps1' })
   $partKey = @($T26steps | ForEach-Object { $a = [string]$_.args; $a -replace '\s+', ' ' })
   Test-That 'every T26 step of the round has its own -Part/-Label pair (no 2 steps write the same result file)' (@($partKey | Sort-Object -Unique).Count -eq $partKey.Count) ($partKey -join ' | ')
   $collectNames = @(@($man.bundles | ForEach-Object { $_.collect }) | ForEach-Object { $_.dir + '/' + $_.name })
