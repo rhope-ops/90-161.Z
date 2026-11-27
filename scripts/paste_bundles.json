@@ -28,9 +28,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R47-round-r1.ps1",
+            "out": "scripts/gov/paste/90161Z-R47-round-r2.ps1",
             "round": "R47",
-            "title": "Round R47 r1: fewer CAC sign-ins (one for each batch step), no DPI call, the engine-v47 look, my window r19 (screen step 12 only), Back up and Restore of fake rows, Uninstall with no flows, and a new install",
+            "title": "Round R47 r2: fewer CAC sign-ins (one for each batch step), no DPI call, the engine-v47 look, my window r19 (screen step 12 only), Back up and Restore of fake rows, Uninstall with no flows, and a new install",
             "files": [
                 {
                     "dir": "T30",
