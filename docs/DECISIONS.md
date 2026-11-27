@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-27 | R49 scope: the Kanon (90-161.Z) window gets the RADE engine-v48 treatment: a polish pass and light/dark mode (USAF light, Fulcrum dark). Previews first. | the PFM ("for round 49 I'd like to see the Kanon pubs and forms gui given the same attention to detail and light/dark mode like we just did for RADE.", own message, 2026-11-27) | - |
 | 2026-11-26 | RADE lock moves to release engine-v47 (RADE fc26200, serial 33) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-26 | R47 scope: Uninstall no-flows answer, fewer sign-ins, Back up and Restore write, cut prompt, walk step12 only, endorser steps kept with Skip, 4 engine-v47 look questions | PFM | docs/reviews/2026-11-26-plan-r47.md |
 | 2026-11-26 | Repeated tasks: a 'Why again:' line on each repeated task; no passed, unchanged task; the walk opens only changed or failed screens (R47 on) | PFM | Round skill section 2; the PFM approved the exact text (question dialog in the RADE session, 2026-11-26: "Approve as written") |
