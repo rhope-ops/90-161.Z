@@ -52,9 +52,11 @@ else sk "NIPR-only start check"; sk "round bundle text mode"; sk "RADE cleanup";
 
 
 # Enter starts the run (PFM 2026-11-13): in the window Enter is the card's primary button (on "Ready" that is Install or Run;
-# never on a hand step: RADE "One thing" window, 14 Nov 26); text mode shows the plan, Enter runs, N stops with nothing written.
+# engine-v48: Enter = the main button on every card that does not say NoAccept, and the main button's text ends with
+# "(Enter)" when it fits); text mode shows the plan, Enter runs, N stops with nothing written.
 if [ "${on[bundle]}" = 1 ]; then
-ab=$(grep -L 'AcceptButton = \$(if (\$c.NoAccept) { \$null } else { \$accept })' scripts/gov/paste/*.ps1 | wc -l)
+ab=$(grep -L 'AcceptButton = \$(if (\$C.NoAccept) { \$null } else { \$ui.Accept })' scripts/gov/paste/*.ps1 | wc -l)
+ab=$((ab + $(grep -LF "\$main = ([string]\$bs[\$k].Kind -eq 'primary'); \$key = \$(if (\$main -and -not \$C.NoAccept" scripts/gov/paste/*.ps1 | wc -l)))
 # ... and on "Ready" the primary button is Install or Run and starts the run.
 # engine-v8 on (dates "d MMM yy" in the saved-checks line): Run is primary unless RADE's Start button is ($startPrimary: the app has app.start and that version
 # is installed). 90-161.Z has no app.start, so Run stays the primary button on Ready in every round.
@@ -179,7 +181,8 @@ assert "if ($Again) { $Checks[0].Text = Get-AgainText (& $wn.LastKey) }" in src 
 assert all(x in src for x in ("' paint-first='", "' paint-later-max='", "' kept='", '$wn.KeepFind $Key $sig', '& $wn.KeepClear')), 'keep part or CARDTIME'
 # R13: reopen names the saved card; kept cards; paint times
 # the rade-ui block is not empty, and the colors painted here are the palette tokens
-assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
+assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n[^\n]*\$ui\.C = @\{\}', src), 'rade-ui block missing'   # engine-v48: "$ui.Dark = [bool]$ui.Dark; $ui.C = @{}" (dark is opt-in)
+assert re.findall(r'\$ui\.Dark\s*=(?!=)[^;\n]*', src) == ['$ui.Dark = [bool]$ui.Dark'], 'the Kanon window stays light until R49 (DECISIONS 2026-11-27): only the engine line writes $ui.Dark'
 after = src.split('# <<< rade-ui', 1)[1]
 assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
 assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
