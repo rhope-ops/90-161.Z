@@ -105,8 +105,9 @@ def authored_text(bundles):
 
 
 def app_names(code):
-    """Gives back the application names of the bundle ($apps += @{ Name = '...' }), longest first."""
-    names = set(re.findall(r"\$apps \+= @\{ Name = '([^']+)'", code))
+    """Gives back the application names of the bundle ($apps += @{ Name = '...' }) and its product word ($appProduct =
+    '...': engine-v47 and later build card sentences with it, as in 'Installing ' + (Get-AppWord)), longest first."""
+    names = set(re.findall(r"\$apps \+= @\{ Name = '([^']+)'", code)) | set(re.findall(r"^\$appProduct = '([^']+)'", code, re.M))
     return sorted(names, key=len, reverse=True)
 
 
@@ -169,6 +170,26 @@ def built_ends(code):
     return sorted(out, key=lambda e: len(e[0]), reverse=True)
 
 
+# The texts of the buttons that the code can make the main one (a Text with 'primary' in its Kind), from the raw bundle
+# code: main() and the self-test set it (review of R48: " (Enter)" passes only on these).
+MAINS = set()
+
+
+def main_buttons(raw):
+    """Return the texts of the buttons that the raw code can make the main one.
+
+    Args:
+        raw: the raw bundle code (not screen_text: that drops the Kind).
+    Returns:
+        The set of button texts, stripped.
+    """
+    out = set()
+    for text, kind in re.findall(r"Text = ([^;]{1,200}?); Kind = ([^;]{1,200})", raw):
+        if "'primary'" in kind:   # a Kind that can be 'primary' (also inside an if)
+            out.update(t.strip() for t in re.findall(r"'([^']+)'", text))
+    return out
+
+
 def check_name(code, apps, name, ends=()):
     """Gives back the fixed word runs of a name that the bundle does not hold (empty = pass).
 
@@ -185,6 +206,15 @@ def check_name(code, apps, name, ends=()):
     """
     if name in OUTSIDE:
         return []
+    # engine-v48: the main button shows its key, its own text + " (Enter)" when it fits (window part 03-card, $ui.KeyFits);
+    # the name passes when its own text does and the code holds that key text. The --map order shows which button is main.
+    if name.endswith(' (Enter)') and holds(code, '(Enter)'):
+        base = name[:-len(' (Enter)')]
+        # review of R48: only a button that the code can make the main one shows the key; "Close (Enter)" or
+        # "Back (Enter)" stay wrong names. A main button is a Text = '...' with 'primary' in its Kind.
+        if not any(base == m or base.startswith(m + ' ') for m in MAINS):
+            return [name]
+        name = base
     for end, heads in ends:
         if name.endswith(end) and name[:-len(end)].strip() in heads:
             return []
@@ -277,6 +307,13 @@ def self_test():
             or not check_name(bc, [], 'Back up is done.', be) or not check_name(bc, [], 'Back up is not on the site', be) \
             or not check_name(bc + "; Text = 'Maintenance'", [], 'Maintenance is running.', be):
         errs.append('built sentence: <name> + fixed end')
+    # engine-v48: a main button with its key text ("Install (Enter)") and a sentence built with the product word.
+    kc = "$appProduct = 'Kanon'\nText = 'Install'; Kind = 'primary'; $key = ' (Enter)'; Text = 'Close'; Kind = ''; Sentence = ('Installing ' + (Get-AppWord) + ' ' + $v + '.')"
+    ka, ks = app_names(kc), screen_text(kc)
+    MAINS.clear(); MAINS.update(main_buttons(kc))
+    if check_name(ks, ka, 'Install (Enter)') or check_name(ks, ka, 'Installing Kanon 0.1.0.') \
+            or not check_name(ks, ka, 'Repair (Enter)') or not check_name(ks, ka, 'Close (Enter)') or not check_name(screen_text("Text = 'Install'"), [], 'Install (Enter)'):
+        errs.append('key text or product word')
     if errs:
         sys.exit('SELF-TEST FAIL: %s' % errs)
     print('SCREEN NAMES SELF-TEST PASS')
@@ -327,6 +364,7 @@ def main():
     data = json.loads((ROOT / 'scripts/paste_bundles.json').read_text(encoding='utf-8'))
     code = screen_text(raw, authored_text(data))
     ends = built_ends(raw)
+    MAINS.update(main_buttons(raw))
     names = [('go.md:%d' % n, x) for n, x in go_names((ROOT / 'go.md').read_text(encoding='utf-8'))]
     names += [('guide "%s"' % t, x) for t, x in guide_names(data, bp.name)]
     failed = 0

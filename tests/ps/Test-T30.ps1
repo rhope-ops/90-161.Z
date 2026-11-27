@@ -7,7 +7,7 @@
 # batch signs out once; the batch's own lines hold no PASS, FAIL or SKIP word. The real connect functions of T21 and T26 sign in
 # once, then a second call on the same site reuses the connection ("SIGNIN reused"), and a connection to another site does not
 # count; they have no DPI call. Every disconnect of T21, T26 and T27 waits for the batch's signal. Each script of the batch table
-# is in scripts/gov and in the files of the R47 bundle. The T21 second person prompt fits its box (120 characters at most).
+# is in scripts/gov and in the files of the round bundle. The T21 second person prompt fits its box (120 characters at most).
 # Network: none.
 # Writes: one temporary folder (the stub app folder and an empty PnP.PowerShell module); removed at the end.
 # Credentials: none.
@@ -91,12 +91,12 @@ try {
   Test-That 'a script that is not in its folder stops the batch before any part runs' ($r.Code -eq 1 -and $r.Calls.Count -eq 0 -and
       ($r.Out -join '|') -match 'SCRIPT missing: T26\\90161Z-T26-endorse-r5\.ps1') ($r.Out -join '|')
 
-  # ---- the batch table: each script is in scripts/gov and in the files of the R47 bundle ----
+  # ---- the batch table: each script is in scripts/gov and in the files of the round bundle (R48: the one bundle) ----
   $tab = [regex]::Matches((Get-Content -LiteralPath $batchSrc -Raw), "File = '(90161Z-T\d\d-[a-z]+-r\d+\.ps1)'") | ForEach-Object { $_.Groups[1].Value }
   $man = Get-Content -LiteralPath (Join-Path $Root 'scripts/paste_bundles.json') -Raw | ConvertFrom-Json
-  $r47 = @($man.bundles | Where-Object { $_.round -eq 'R47' })
-  $src = @($r47 | ForEach-Object { $_.files } | ForEach-Object { Split-Path -Leaf ([string]$_.src) })
-  Test-That 'each script of the batch table is in scripts/gov and in the R47 bundle, and so is the batch' ($tab.Count -eq 3 -and $r47.Count -eq 1 -and
+  $rb = @($man.bundles)
+  $src = @($rb | ForEach-Object { $_.files } | ForEach-Object { Split-Path -Leaf ([string]$_.src) })
+  Test-That 'each script of the batch table is in scripts/gov and in the round bundle, and so is the batch' ($tab.Count -eq 3 -and $rb.Count -eq 1 -and
       -not @($tab | Where-Object { -not (Test-Path -LiteralPath (Join-Path $gov $_)) -or $src -notcontains $_ }).Count -and $src -contains '90161Z-T30-batch-r1.ps1') ($tab -join ',')
 
   # ---- the connect functions of T21 and T26: the real code, taken out of each script by the parser ----

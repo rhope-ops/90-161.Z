@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r19, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r20, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   R13 (R40): the measure file has Keep (each card opened again from its kept page, $wn.MeasureKeep in the keep part).
@@ -24,14 +24,14 @@
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r19.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r20.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold FAKE data or (R14) fake rows of the test site; a card with a site row that
   has no fake-data marker gets no picture. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -42,7 +42,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r19.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r20.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -229,7 +229,9 @@ $wn.LevelFacts = {
     $crumb['LinkMid'] = (& $wn.TextMid $l); $crumb['RestMid'] = (& $wn.TextMid $t) }
   $chips = @(foreach ($r in @($wn.ChipRows)) {
       $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['Kind'] = [string]$r.Kind; $c['ChipMid'] = (& $wn.TextMid $r.Chip)
-      $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
+      # R48: a list or rows chip is compared with the middle of its row (Ref 'row'); every other chip with its text's first line.
+      $c['Ref'] = $(if ($r.Row) { 'row' } else { 'first line' }); $c['Line'] = [string]$r.Text.Text
+      $c['LineMid'] = $(if ($r.Row) { (& $wn.PageTop $r.Row) + $r.Row.Height / 2.0 } else { (& $wn.TextMid $r.Text) }); $c })
   $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs); $f['Heads'] = @(& $wn.LevelHeads); $f['Edges'] = @(& $wn.LevelEdges)
   return $f }
 # R7 (W1): the cut cells of one measured pub grid $P ($wn.LevelPubs), one short text per row: "row <n> number 120>96"
@@ -272,7 +274,7 @@ $wn.LevelBad = {
   if ($k -and ($k.LinkSize -ne $k.RestSize -or [math]::Abs($k.LinkMid - $k.RestMid) -gt $Tol)) {
     $out += ('LAYOUT ' + $Card + ' D2 crumb: link ' + $k.LinkSize + ' pt middle ' + $k.LinkMid + ', rest ' + $k.RestSize + ' pt middle ' + $k.RestMid) }
   foreach ($c in @($F.Chips)) { if ([math]::Abs($c.ChipMid - $c.LineMid) -gt $Tol) {
-      $out += ('LAYOUT ' + $Card + ' W3 chip "' + $c.Chip + '" (' + $c.Kind + ') middle ' + $c.ChipMid + ', its first text line ' + $c.LineMid) } }
+      $out += ('LAYOUT ' + $Card + ' W3 chip "' + $c.Chip + '" (' + $c.Kind + ') middle ' + $c.ChipMid + ', its ' + $c.Ref + ' middle ' + $c.LineMid) } }
   foreach ($p in @($F.Pubs)) {
     if ($p.Head -and [int]$p.HeadW -gt [int]$p.HeadHave) {
       $out += ('LAYOUT ' + $Card + ' W1 grid ' + $p.Grid + ': the head "' + $p.Head + '" needs ' + $p.HeadW + ' px, has ' + $p.HeadHave) }

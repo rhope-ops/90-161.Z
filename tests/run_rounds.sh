@@ -52,9 +52,11 @@ else sk "NIPR-only start check"; sk "round bundle text mode"; sk "RADE cleanup";
 
 
 # Enter starts the run (PFM 2026-11-13): in the window Enter is the card's primary button (on "Ready" that is Install or Run;
-# never on a hand step: RADE "One thing" window, 14 Nov 26); text mode shows the plan, Enter runs, N stops with nothing written.
+# engine-v48: Enter = the main button on every card that does not say NoAccept, and the main button's text ends with
+# "(Enter)" when it fits); text mode shows the plan, Enter runs, N stops with nothing written.
 if [ "${on[bundle]}" = 1 ]; then
-ab=$(grep -L 'AcceptButton = \$(if (\$c.NoAccept) { \$null } else { \$accept })' scripts/gov/paste/*.ps1 | wc -l)
+ab=$(grep -L 'AcceptButton = \$(if (\$C.NoAccept) { \$null } else { \$ui.Accept })' scripts/gov/paste/*.ps1 | wc -l)
+ab=$((ab + $(grep -LF "\$main = ([string]\$bs[\$k].Kind -eq 'primary'); \$key = \$(if (\$main -and -not \$C.NoAccept" scripts/gov/paste/*.ps1 | wc -l)))
 # ... and on "Ready" the primary button is Install or Run and starts the run.
 # engine-v8 on (dates "d MMM yy" in the saved-checks line): Run is primary unless RADE's Start button is ($startPrimary: the app has app.start and that version
 # is installed). 90-161.Z has no app.start, so Run stays the primary button on Ready in every round.
@@ -134,15 +136,15 @@ assert [(a, b) for a, b, _ in got] == [('PFM Publications', 'ActionStatus'), ('P
 for title, name, ch in got:
     assert [c.strip().strip("'") for c in ch.split(',')] == [x for x in by_title[title]['fields'] if x['internalName'] == name][0]['choices'], ch
 PYEOF
-# T22 PFM window test r19 (R44 T4; R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and
+# T22 PFM window test r20 (R44 T4; R40: the reopen check names the saved card, kept cards, paint times; R39: 4 checks, -Again 1, font files; R38; R35 W7; R34 W1; R32 defects W1 to W3): the cards and
 # the 4 checks as text (-PlanOnly; no window here; the window: tests/ps/Test-T22Layout.ps1).
-# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r19 gone, r19 and its
+# Every button, link and grid row goes to a card that exists (or 'back', '@grid', '@note'), one blue button a card, ASCII and FAKE text (R11: XXX XXX names); r1 to r19 gone, r20 and its
 # parts only, no '0 findings' link (V3), UI block current, palette tokens.
 if [ "${on[t22]}" = 1 ]; then
-python3 - <<'PYT22' && python3 tests/check_t22_r19.py && ok "T22 window preview cards (r19; R42: grid room for the scroll bar, walk path)" || bad "T22 window preview cards (r19)"
+python3 - <<'PYT22' && python3 tests/check_t22_r20.py && ok "T22 window preview cards (r20; R42: grid room for the scroll bar, walk path)" || bad "T22 window preview cards (r20)"
 import json, re, subprocess, pathlib
-f = 'scripts/gov/90161Z-T22-pfm-window-r19.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r19.ps1' % n)
-assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[012345678].ps1')], 'an older revision is still there'
+f = 'scripts/gov/90161Z-T22-pfm-window-r20.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r20.ps1' % n)
+assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[0-9].ps1')], 'an older revision is still there'
 parts = [x.strip().strip("'") for x in re.search(r"\$Parts = @\(([^)]*)\)", pathlib.Path(f).read_text()).group(1).split(',')]
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
@@ -179,18 +181,19 @@ assert "if ($Again) { $Checks[0].Text = Get-AgainText (& $wn.LastKey) }" in src 
 assert all(x in src for x in ("' paint-first='", "' paint-later-max='", "' kept='", '$wn.KeepFind $Key $sig', '& $wn.KeepClear')), 'keep part or CARDTIME'
 # R13: reopen names the saved card; kept cards; paint times
 # the rade-ui block is not empty, and the colors painted here are the palette tokens
-assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n\$ui\.C = ', src), 'rade-ui block missing'
+assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n[^\n]*\$ui\.C = @\{\}', src), 'rade-ui block missing'   # engine-v48: "$ui.Dark = [bool]$ui.Dark; $ui.C = @{}" (dark is opt-in)
+assert re.findall(r'\$ui\.Dark\s*=(?!=)[^;\n]*', src) == ['$ui.Dark = [bool]$ui.Dark'], 'the Kanon window stays light until R49 (DECISIONS 2026-11-27): only the engine line writes $ui.Dark'
 after = src.split('# <<< rade-ui', 1)[1]
 assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
 assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
-assert "$Rev = 'r19'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r19.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
+assert "$Rev = 'r20'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r20.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
 grids = len(re.findall(r'New-Object System.Windows.Forms.DataGridView\b(?!\w)', src))
 assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and src.count("$dc.AutoSizeMode='Fill'") >= 1, 'every grid fills its columns'
 pal = json.loads(pathlib.Path('docs/palette.json').read_text())['tokens']
 hexes = dict(re.findall(r"(\w+)\s*=\s*'([0-9A-F]{6})'", re.search(r'\$PalHex\s*=\s*@\{(.*?)\}', src, re.S).group(1)))
 for k, v in hexes.items(): assert pal[k.replace('white', 'white')] == v, (k, v, pal.get(k))
 # -Opened (the look questions' gate in the round): fake result files opened / not opened / STOPPED / 4 hours old; one line, no other file
-import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r19.txt'); got = {}
+import tempfile, os, time; d = tempfile.mkdtemp(); w = pathlib.Path(d, '90161Z-T22-window-r20.txt'); got = {}
 for k, body in {'open': 'CARDS opened: home, step8 (17 of 17)\nPASS layout',
              'none': 'CARDS opened: none (0 of 17)', 'stop': 'CARDS opened: home (1 of 17)\nSTOPPED: no window (x)',
              'old': 'CARDS opened: home, step8 (17 of 17)'}.items():
@@ -210,7 +213,7 @@ out=$(pwsh -NoProfile -File tests/ps/Test-T22GridWidth.ps1 2>&1); rc=$?
 out=$(pwsh -NoProfile -File tests/ps/Test-T22Bar.ps1 2>&1); rc=$?
 [ $rc -eq 0 ] && ok "T22 check bar: look step, links kept clear of the step text, first step opened ($(echo "$out" | tail -1))" ||
   { echo "$out" | grep FAIL; bad "T22 check bar: look step, links or first step"; }
-else sk "T22 window preview cards (r19)"; fi
+else sk "T22 window preview cards (r20)"; fi
 # R44 T2: the read-only count step on a fake site (no write call, one sign-in, no name or row text in the lines).
 if [ "${on[t28]}" = 1 ]; then
 out=$(pwsh -NoProfile -File tests/ps/Test-T28.ps1 2>&1); rc=$?

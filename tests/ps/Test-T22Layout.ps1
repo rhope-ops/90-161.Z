@@ -1,12 +1,12 @@
 # R13 (R40; PFM 20 Nov 26): Test-Keep: every card opened again shows its kept card, in under 100 ms.
 # R11 (R38; PFM 20 Nov 26): Test-EdgeBar: no grid chip or text ends closer to the grid's right edge than a scroll bar is wide.
-# Tests the look of the T22 PFM window r19 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
+# Tests the look of the T22 PFM window r20 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
 # round R31: the rail head W1, the high-contrast colors W2 and the card pictures W4).
 # Network: none.
 # Writes: one temporary folder with the measure file and the card pictures of the window; removed at the end.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Windows only: elsewhere the one line "T22LAYOUT SKIP ..." and exit 0.
-# Runs scripts/gov/90161Z-T22-pfm-window-r19.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
+# Runs scripts/gov/90161Z-T22-pfm-window-r20.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
 # off-screen, measured and closed; no question) and checks what it wrote: each crumb's link and rest have one font and size
 # (V2), the ink gap after the link is at most 8 px at 100 % (V2), step 8 has no "See the 0 findings" link (V3), step 8's
 # Action Status card ends within 2 px of the main card (V4), Full History is drawn like the other white secondary
@@ -180,7 +180,7 @@ function Test-Keep($M) {
 }
 <#
 .SYNOPSIS
-Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r19.png, saved in the folder of
+Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r20.png, saved in the folder of
 the measure file, and the first one is not blank (at least 3 colors in a 20 x 20 grid of its pixels).
 .PARAMETER M
 The measure file (Cards, Pngs).
@@ -209,15 +209,15 @@ $levelPubs = @('home', 'empty', 'queue')
 # R8 (W7): the cards whose grids must have their column heads measured (the 3 pub grids and the Wave 1 answers).
 $levelHeads = @('home', 'empty', 'queue', 'waves')
 # R7 (W3): the kinds of chip beside text each card must have measured ("Needs You Today" is the list of Your Work).
-$chipKinds = @{ home = @('list'); step8 = @('check', 'rows', 'chips'); waves = @('rows', 'chips'); step11 = @('rows', 'chips'); settings = @('rows') }
+$chipKinds = @{ home = @('list'); step8 = @('check', 'rows', 'chips'); waves = @('rows', 'chips'); step11 = @('rows', 'chips'); step12 = @('rows', 'chips'); settings = @('rows') }
 <#
 .SYNOPSIS
 Checks the chips beside text of one card at one scale (D3 of R6; R7 W3: every kind): each chip's middle is within the
-tolerance of its first text line's middle, and the card has each kind of $chipKinds it must have.
+tolerance of its first text line's middle (R48: a list or rows chip: of its row's middle; the measured Ref says which), and the card has each kind of $chipKinds it must have.
 .PARAMETER Key
 The card key.
 .PARAMETER Chips
-The measured chips (Chip, Kind, ChipMid, Line, LineMid).
+The measured chips (Chip, Kind, ChipMid, Ref, Line, LineMid).
 .PARAMETER Tol
 The tolerance in pixels.
 .PARAMETER At
@@ -228,8 +228,8 @@ function Test-ChipLevel([string]$Key, $Chips, [double]$Tol, [string]$At) {
     $n = @($Chips | Where-Object { [string]$_.Kind -eq $want }).Count
     Test-That ($At + ' W3 ' + $Key + ': ' + $want + ' chips measured') ($n -gt 0) ('chips of this kind: ' + $n + '; all chips: ' + @($Chips).Count) }
   foreach ($x in $Chips) { $d = [math]::Abs([double]$x.ChipMid - [double]$x.LineMid)
-    $nums = 'chip middle ' + $x.ChipMid + '; first line "' + $x.Line + '" middle ' + $x.LineMid + '; difference ' + $d + ' px'
-    Test-That ($At + ' D3/W3 ' + $Key + ': chip "' + $x.Chip + '" (' + $x.Kind + ') level with its first text line (+-' + $Tol + ' px)') ($d -le $Tol) $nums }
+    $nums = 'chip middle ' + $x.ChipMid + '; ' + $x.Ref + ' of "' + $x.Line + '" middle ' + $x.LineMid + '; difference ' + $d + ' px'
+    Test-That ($At + ' D3/W3 ' + $Key + ': chip "' + $x.Chip + '" (' + $x.Kind + ') level with its ' + $x.Ref + ' (+-' + $Tol + ' px)') ($d -le $Tol) $nums }
 }
 <#
 .SYNOPSIS
@@ -376,7 +376,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGu
 try {
   $file = Join-Path $tmp 'measure.json'
   $engine = (Get-Process -Id $PID).Path
-  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r19.ps1'
+  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r20.ps1'
   $ErrorActionPreference = 'Continue'   # the child's error output is shown below, not thrown here
   $log = @(& $engine -NoProfile -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'
