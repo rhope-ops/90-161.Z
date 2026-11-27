@@ -105,8 +105,9 @@ def authored_text(bundles):
 
 
 def app_names(code):
-    """Gives back the application names of the bundle ($apps += @{ Name = '...' }), longest first."""
-    names = set(re.findall(r"\$apps \+= @\{ Name = '([^']+)'", code))
+    """Gives back the application names of the bundle ($apps += @{ Name = '...' }) and its product word ($appProduct =
+    '...': engine-v47 and later build card sentences with it, as in 'Installing ' + (Get-AppWord)), longest first."""
+    names = set(re.findall(r"\$apps \+= @\{ Name = '([^']+)'", code)) | set(re.findall(r"^\$appProduct = '([^']+)'", code, re.M))
     return sorted(names, key=len, reverse=True)
 
 
@@ -185,6 +186,10 @@ def check_name(code, apps, name, ends=()):
     """
     if name in OUTSIDE:
         return []
+    # engine-v48: the main button shows its key, its own text + " (Enter)" when it fits (window part 03-card, $ui.KeyFits);
+    # the name passes when its own text does and the code holds that key text. The --map order shows which button is main.
+    if name.endswith(' (Enter)') and holds(code, '(Enter)'):
+        name = name[:-len(' (Enter)')]
     for end, heads in ends:
         if name.endswith(end) and name[:-len(end)].strip() in heads:
             return []
@@ -277,6 +282,12 @@ def self_test():
             or not check_name(bc, [], 'Back up is done.', be) or not check_name(bc, [], 'Back up is not on the site', be) \
             or not check_name(bc + "; Text = 'Maintenance'", [], 'Maintenance is running.', be):
         errs.append('built sentence: <name> + fixed end')
+    # engine-v48: a main button with its key text ("Install (Enter)") and a sentence built with the product word.
+    kc = "$appProduct = 'Kanon'\nText = 'Install'; $key = ' (Enter)'; Sentence = ('Installing ' + (Get-AppWord) + ' ' + $v + '.')"
+    ka, ks = app_names(kc), screen_text(kc)
+    if check_name(ks, ka, 'Install (Enter)') or check_name(ks, ka, 'Installing Kanon 0.1.0.') \
+            or not check_name(ks, ka, 'Repair (Enter)') or not check_name(screen_text("Text = 'Install'"), [], 'Install (Enter)'):
+        errs.append('key text or product word')
     if errs:
         sys.exit('SELF-TEST FAIL: %s' % errs)
     print('SCREEN NAMES SELF-TEST PASS')

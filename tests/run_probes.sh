@@ -150,9 +150,10 @@ PYCOL
 # Every written file must equal its source (text: BOM and CR removed); each step must start as a child process (on Linux
 # the runner stops at Unblock-File, so its step reads CHECK); the results folder must hold the report (summary + full
 # log) with no DODID. The window path (Windows Forms) cannot run here: lint only.
-# needs <bundle>: the check ids the bundle's steps list in the manifest, space-separated.
-needs() { python3 -c "import json,sys;print(' '.join(sorted({n for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']==sys.argv[1] \
-  for s in b['steps'] for n in s.get('needs',[])})))" "$1"; }
+# needs <bundle>: the check ids the bundle's steps list in the manifest, space-separated. R48: with a second (deploy)
+# application, only the steps of the first one (the test round that text mode runs): its checks are the ones it shows.
+needs() { python3 -c "import json,sys;b=[b for b in json.load(open('scripts/paste_bundles.json'))['bundles'] if b['out']==sys.argv[1]][0];a=b.get('apps') or [] \
+;f=set(a[0]['steps']) if len(a)>1 else None;print(' '.join(sorted({n for s in b['steps'] if f is None or s['name'] in f for n in s.get('needs',[])})))" "$1"; }
 if [ "${on[bundle]}" = 1 ]; then
 pf=0; pr=0; pc=0
 # R06 cleanup fixture: finished folders with our files and one file 90-161.Z did not make (must stay). R29 (two bundles):

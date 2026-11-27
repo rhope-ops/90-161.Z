@@ -4,7 +4,7 @@
 The second person is optional (the PFM, 2026-11-25: "Optional, no skips"). Only the 2 endorser answer steps may need the
 step "T21 Add the second person": "Second person answers" and "Read the endorser answer". Every other step must not reach it
 through its "after" chain, so a round without that person still runs the fake publication, Back up, Restore, Uninstall,
-the new install and the process step.
+the new install and the process step. R48: a round may have no person step; then it has no endorser step.
 
 Usage: python3 tests/check_round_deps.py    exit 0 = pass (last line ROUNDDEPS PASS), 1 = a step chains to the person step.
 Network: none.
@@ -87,7 +87,11 @@ def main():
     for b in data["bundles"]:
         steps = b["steps"]
         names = [s["name"] for s in steps]
-        assert sum(is_person(s) for s in steps) == 1, "the round needs exactly one person step"
+        persons = sum(is_person(s) for s in steps)
+        assert persons in (0, 1), "the round has more than one person step"
+        if not persons:   # R48: a round with no second person has no endorser step either (nothing can wait for the person)
+            assert not [s for s in steps if s["name"].startswith(ENDORSER)], "an endorser step with no person step"
+            continue
         for e in ENDORSER:   # the endorser steps do wait for the person: the test must see them
             hit = [s for s in steps if s["name"].startswith(e)]
             by_name = {s["name"]: s for s in steps}
