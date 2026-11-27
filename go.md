@@ -28,7 +28,7 @@ Updated: 27 Nov 26 (R47 r1).
 15. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
 16. On the end card, click **Close**. The RADE window closes.
 17. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
-18. On the screen **What version of Kanon do you want to install?**, read the text under each choice.
+18. On the screen with the choices, read the text under each choice.
 19. Press `Windows logo key+Left arrow` (not from the bundle). The RADE window fills the left half of the screen.
 20. Read the text under each choice again, then double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
 21. Click the row **Kanon R47**. Wait until a card shows (up to 2 minutes).

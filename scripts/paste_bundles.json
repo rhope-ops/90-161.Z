@@ -417,7 +417,7 @@
                     "note": "Why again: in round 46 Back up took 31 minutes (cause not proved; the DPI sign-in is likely); engine-v47 turns the DPI call off. A second RADE window saves the 12 lists. Nothing on the site changes.",
                     "guide": [
                         "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
-                        "2. In the second RADE window, click the row \"Kanon 0.1.0\". The card \"Kanon 0.1.0 is installed.\" shows.",
+                        "2. In the second RADE window, click the row \"Kanon 0.1.0\".",
                         "3. Click the row \"Back up\". The card \"Back up is running.\" shows.",
                         "4. If no CAC sign-in window shows in 30 seconds, press Alt+Tab to find it.",
                         "5. If a CAC sign-in window shows, sign in with your CAC.",
@@ -526,7 +526,7 @@
                     "note": "Why again: Restore never wrote (rounds 43 to 46). The dry run in the second window writes nothing. Keep that window open. Your test site address is https://usaf.dps.mil/sites/<your-site>.",
                     "guide": [
                         "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
-                        "2. In the second RADE window, click the row \"Kanon 0.1.0\". The card \"Kanon 0.1.0 is installed.\" shows.",
+                        "2. In the second RADE window, click the row \"Kanon 0.1.0\".",
                         "3. Click the row \"Restore\".",
                         "4. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
                         "5. On the card \"Which backup does Restore use?\", click the row marked \"Newest\".",
@@ -697,7 +697,7 @@
                     "note": "Why again: round 46 stopped at the flow step (no flows), so the 12 lists stayed; that card has \"Done, or no flows there\" now. Your test site address is https://usaf.dps.mil/sites/<your-site>.",
                     "guide": [
                         "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
-                        "2. In the second RADE window, click the row \"Kanon 0.1.0\". The card \"Kanon 0.1.0 is installed.\" shows.",
+                        "2. In the second RADE window, click the row \"Kanon 0.1.0\".",
                         "3. Click the row \"Uninstall\".",
                         "4. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
                         "5. In the box \"Type 90-161.Z to confirm\", type: 90-161.Z",
