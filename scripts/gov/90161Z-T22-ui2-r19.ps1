@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "ui2": the second half of the RADE shared UI file, generated into this file, and the colors
+  90-161.Z Task 22 r19, part "ui2": the second half of the RADE shared UI file, generated into this file, and the colors
   for Windows high contrast.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): new part. engine-v29's shared UI file (599 lines) is split in 2 so each part stays under the

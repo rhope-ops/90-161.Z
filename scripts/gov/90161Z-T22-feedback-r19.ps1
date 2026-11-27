@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "feedback": Feedback on every card of the PFM window (UI standard B13, PFM 19 Nov 26).
+  90-161.Z Task 22 r19, part "feedback": Feedback on every card of the PFM window (UI standard B13, PFM 19 Nov 26).
 .DESCRIPTION
   R14 (R41; PFM 20 Nov 26): Feedback stays on every screen of the click-through; the picture of a comment is not saved
   when the card shows a site row without a fake-data marker (Get-SiteUnmarked in the site part).
@@ -11,14 +11,14 @@
   Inputs: $form, $ui, $wn, $who, $dir, $Rev, $lines. Outputs: the $wn members below.
   Run: not alone; 90161Z-T22-pfm-window-r19.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: per saved comment 90161Z-T22-feedback-<card>-r18.txt and .png, or the .txt only when a shown row has no fake-data
+  Writes: per saved comment 90161Z-T22-feedback-<card>-r19.txt and .png, or the .txt only when a shown row has no fake-data
   marker (a name already in the folder: <card>-2, and so on), and at the close it adds this run's lines to 90161Z-T22-feedback-r19.txt, in the T22 folder (or -TestDir); with
   -Measure in the folder of the measure file. Nothing that is already there is overwritten.
   Credentials: none.
 #>
 # R10 (R37; PFM 19 Nov 26, UI standard B13): Feedback on every card. The link opens a small comment box; Save writes the
 # comment and a picture of the window as it was when the link was selected, into the T22 folder (the round sends them):
-# 90161Z-T22-feedback-<card>-r18.txt and .png (the .txt only when a shown row has no fake-data marker; a second comment on the same card, in this run or an earlier window run of
+# 90161Z-T22-feedback-<card>-r19.txt and .png (the .txt only when a shown row has no fake-data marker; a second comment on the same card, in this run or an earlier window run of
 # the same round: <card>-2, and so on). Each save adds a FEEDBACK line to the result file; at the close each run adds its
 # lines to 90161Z-T22-feedback-r19.txt (every comment file, or none), so the round always finds one feedback file and a
 # second run keeps the first run's lines. With -Measure the files go to the folder of the measure file.
@@ -30,7 +30,7 @@ $wn.PngSave = { param($Shot, [string]$Path) $Shot.Save($Path, [System.Drawing.Im
 $wn.FeedbackText = { if ($wn.FeedbackAll.Count) { return ('Feedback (' + $wn.FeedbackAll.Count + ' saved)') }; return 'Feedback' }
 # The folder the feedback files go to: the T22 folder, or the measure folder.
 $wn.FeedbackDir = { if ($dir) { return $dir }; return [string]$wn.PngDir }
-# The base name of comment $N on card $Key: 90161Z-T22-feedback-<card>-r18, or <card>-<N> from the second one on.
+# The base name of comment $N on card $Key: 90161Z-T22-feedback-<card>-r19, or <card>-<N> from the second one on.
 # $wn.FeedbackSave raises $N past every name whose .txt or .png is already in the folder (an earlier window run).
 $wn.FeedbackName = { param([string]$Key, [int]$N)
   return ('90161Z-T22-feedback-' + $Key + $(if ($N -gt 1) { '-' + $N } else { '' }) + '-' + $Rev) }

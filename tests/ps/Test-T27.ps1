@@ -72,10 +72,12 @@ function Add-FakeList([string]$Folder, [string]$Title) {
 function Remove-FakeList([scriptblock]$Which) { foreach ($l in @($global:S.Lists | Where-Object $Which)) { $global:S.Lists.Remove($l) } }
 # Remove the fake process step row with a step number. Returns nothing.
 function Remove-FakeStepRow([int]$Number) { foreach ($r in @($global:S.Rows['PFM Process Steps'] | Where-Object { $_.StepNumber -eq $Number })) { $global:S.Rows['PFM Process Steps'].Remove($r) } }
-# Fake Connect-PnPOnline: accepts only -UseWebLogin, as on the gov device; counts the sign-ins.
-function Connect-PnPOnline { [CmdletBinding()] param([string]$Url, [switch]$UseWebLogin) if (-not $UseWebLogin) { throw 'FAKE: -UseWebLogin only' }; $global:S.Connects++ }
-# Fake Disconnect-PnPOnline: does nothing.
-function Disconnect-PnPOnline { [CmdletBinding()] param() }
+# Fake Connect-PnPOnline: accepts only -UseWebLogin, as on the gov device; counts the sign-ins and keeps the address (R47).
+function Connect-PnPOnline { [CmdletBinding()] param([string]$Url, [switch]$UseWebLogin) if (-not $UseWebLogin) { throw 'FAKE: -UseWebLogin only' }; $global:S.Connects++; $global:SignedInTo = $Url }
+# Fake Disconnect-PnPOnline: ends the fake connection and counts the sign-outs (R47).
+function Disconnect-PnPOnline { [CmdletBinding()] param() $global:SignedInTo = ''; $global:SignOuts++ }
+# Fake Get-PnPConnection (R47, the T30 batch): the connection of this process, or an error when there is none, as PnP.PowerShell 1.12.0 does.
+function Get-PnPConnection { [CmdletBinding()] param() if (-not $global:SignedInTo) { throw 'FAKE: no connection' }; return [pscustomobject]@{ Url = $global:SignedInTo } }
 <#
 .SYNOPSIS
   Fake Invoke-PnPSPRestMethod: GET of the lists, groups and permission levels of the fake site, as the REST service answers.
@@ -207,7 +209,7 @@ function Set-PnPListItem {
 }
 # Run one part against the fake site. Takes the part name; returns @{ Code; Text (the screen output); File (the result file text) }.
 function Invoke-T27([string]$Part) {
-  $global:LASTEXITCODE = 0; $global:S.Calls.Clear(); $global:S.Connects = 0
+  $global:LASTEXITCODE = 0; $global:S.Calls.Clear(); $global:S.Connects = 0; $global:SignedInTo = ''   # each RADE step is a new process: no connection
   $out = & $script -Id 'tester01' -Part $Part -NoPause -TestDir $t27 *>&1 | ForEach-Object { [string]$_ }
   $file = Join-Path $t27 ('90161Z-T27-' + $Part.ToLowerInvariant() + '-r3.txt')
   return @{ Code = $LASTEXITCODE; Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
@@ -519,6 +521,28 @@ try {
   Remove-FakeStepRow 2
   $r = Invoke-T27 'Step'
   Test-That 'Step with no step 2 row (the install did not seed it): FAIL, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^RESULT STEP FAIL no step rows') $r.File
+
+  # ---- R47: the Uninstall parts Lists, Access and Local in one T30 batch step: one sign-in, then "SIGNIN reused", one sign-out ----
+  Set-Content -LiteralPath (Join-Path $t22 '90161Z-T22-install-r19.txt') -Value 'x'
+  $extra = @(@{ kind = 'group'; name = 'PFM Office' }, @{ kind = 'level'; name = 'PFM Office Edit All Items' }, @{ kind = 'file'; name = '90161Z-T22-install-r19.txt' })
+  New-Site; Set-Made (@(Get-ListEntry $internal) + $extra)
+  $global:S.Calls.Clear(); $global:S.Connects = 0; $global:SignedInTo = ''; $global:SignOuts = 0; $global:LASTEXITCODE = 0
+  $batch = Join-Path $Root 'scripts/gov/90161Z-T30-batch-r1.ps1'
+  $out = @(& $batch -Id 'tester01' -NoPause -Run 'T27:Lists;T27:Access;T27:Local' -ScriptRoot (Join-Path $Root 'scripts/gov') -TestRoot $work *>&1 | ForEach-Object { [string]$_ })
+  $code = $LASTEXITCODE; $txt = $out -join "`n"
+  $ok = ($code -eq 0 -and $global:S.Connects -eq 1 -and $global:SignOuts -eq 1 -and ([regex]::Matches($txt, '(?m)^SIGNIN reused')).Count -eq 1 -and
+      (Get-OwnLeft).Count -eq 0 -and $global:S.Groups -notcontains 'PFM Office' -and -not (Test-Path -LiteralPath (Join-Path $t22 '90161Z-T22-install-r19.txt')) -and
+      $txt -match '(?m)^RESULT UNINSTALL LISTS PASS removed=12' -and $txt -match '(?m)^RESULT UNINSTALL ACCESS PASS removed=2' -and
+      $txt -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1' -and $txt -match '(?m)^BATCH done: parts=3 exit-not-zero=0' -and -not $env:KANON_KEEP_SIGNIN)
+  Test-That 'T30 batch Lists, Access, Local in Uninstall mode: 1 sign-in, the second part reuses it, 1 sign-out at the end, all 3 parts done, exit 0' $ok $txt
+  # A part that fails does not stop the parts after it, and the batch ends with exit code 1 (the made list is refused for Lists and Access).
+  New-Site; Set-Made (Get-ListEntry $internal) -Mode 'install'; $global:S.Connects = 0; $global:SignedInTo = ''; $global:SignOuts = 0; $global:LASTEXITCODE = 0
+  $out = @(& $batch -Id 'tester01' -NoPause -Run 'T27:Lists;T27:Install:before' -ScriptRoot (Join-Path $Root 'scripts/gov') -TestRoot $work *>&1 | ForEach-Object { [string]$_ })
+  $code = $LASTEXITCODE; $txt = $out -join "`n"
+  Test-That 'T30 batch: a failed part (the gate) is followed by the next part, and the batch exits 1' ($code -eq 1 -and $txt -match '(?m)^RESULT UNINSTALL LISTS FAIL' -and
+      $txt -match '(?m)^BATCH part 2 of 2: T27 Install before, exit code 0' -and $txt -match '(?m)^BATCH done: parts=2 exit-not-zero=1' -and $global:S.Connects -eq 1 -and
+      (Test-Path -LiteralPath (Join-Path $t27 '90161Z-T27-install-before-r3.txt'))) $txt
+  $env:RADE_MADE = $null; $env:RADE_MODE = $null
 
   # ---- every result file ----
   $all = Get-ChildItem -LiteralPath $t27 -Filter '*.txt' | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }

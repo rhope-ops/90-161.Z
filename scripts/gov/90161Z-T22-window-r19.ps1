@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r19, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   R17 (round R44 T4; the PFM, 26 Nov 26): the name in the rail head, at the logo, is "Kanon" ($wn.HeadParts). The line

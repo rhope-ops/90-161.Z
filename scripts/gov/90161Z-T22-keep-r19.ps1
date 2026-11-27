@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "keep": each card of the PFM window is built once and kept; a later open shows the kept
+  90-161.Z Task 22 r19, part "keep": each card of the PFM window is built once and kept; a later open shows the kept
   card again instead of building it again (round R40; PFM 20 Nov 26, R39 finding 2).
 .DESCRIPTION
   Why: in R39 every open of a card built all its controls again, 123 to 293 ms before any paint (CARDTIME), and later

@@ -23,6 +23,7 @@ $ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }
 # Stand-in: the window's scale, the same as $ui.Sc.
 $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
 . (Join-Path $gov ('90161Z-T22-cards-' + $Rev + '.ps1'))   # $Cards, $Checks, $Walk (the real plan)
+$Walk = @(Get-WalkPlan)   # r19: the bar is tested on the whole plan of every card (the round walks only step12: tests/check_t22_r19.py)
 # Stand-in text measure: 7 px a character and 20 px a line at 96 dpi; the text wraps at the width given.
 $ui.Meas = { param([string]$Text, $Font, [int]$W)
   $cw = 7.0 * $ui.Dpi / 96.0; $lh = [int][math]::Round(20 * $ui.Dpi / 96.0); $per = [math]::Max(1, [int][math]::Floor($W / $cw))

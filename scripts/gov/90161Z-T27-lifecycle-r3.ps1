@@ -311,13 +311,24 @@ function Import-PnPNewest {
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
 }
-# Signs in to the one site with the web login (CAC), after the module is loaded.
+<#
+.SYNOPSIS
+  Signs in to the one site with the web login (CAC), after the module is loaded, or (R47, a T30 batch) reuses the sign-in
+  of this process to the same site. Adds the line ROUTE web-login PASS (and SIGNIN reused when it reuses).
+.OUTPUTS
+  None.
+#>
 function Connect-LifecycleSite {
   Import-PnPNewest
-  Write-Host 'NOW Signing in to the site (if a sign-in window opens, sign in with your CAC)'
-  # R46: the sign-in window at its real size (RADE engine-v46 block); the SIGNIN-DPI line goes to the log.
-  if (Get-Command Set-SignInDpiAware -ErrorAction SilentlyContinue) { Write-Host (Set-SignInDpiAware) }
-  $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
+  # R47 (R46 finding 1): no DPI call here any more (RADE engine-v47 turns the DPI sign-in off).
+  # R47 (fewer CAC sign-ins): in a T30 batch an earlier part of this process signed in to this site; that sign-in is used
+  # again (Get-PnPConnection), with no second sign-in window. Outside a batch no connection is there, so it signs in.
+  $now = $null; try { $now = Get-PnPConnection -ErrorAction Stop } catch { $now = $null }   # no connection: sign in below
+  if ($now -and ([string]$now.Url).TrimEnd('/') -eq ([string]$script:site).TrimEnd('/')) { $lines.Add('SIGNIN reused: this process is signed in to the site already') }
+  else {
+    Write-Host 'NOW Signing in to the site (if a sign-in window opens, sign in with your CAC)'
+    $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
+  }
   $lines.Add('ROUTE web-login PASS')
 }
 # Cuts an error message to 120 characters, so no long site text reaches a line.
@@ -458,7 +469,8 @@ try {
     'Gone' { Connect-LifecycleSite; Invoke-GonePart } 'Install' { Connect-LifecycleSite; Invoke-InstallPart }
     default { Connect-LifecycleSite; Invoke-StepPart $dir }
   }
-  if ($Part -notin 'Local') { try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ } }
+  # R47: a T30 batch sets KANON_KEEP_SIGNIN=1, so the next part of the batch uses this sign-in again; the batch signs out at its end.
+  if ($Part -notin 'Local' -and $env:KANON_KEEP_SIGNIN -ne '1') { try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ } }
 } catch {
   $fatal = $true
   # A part that throws after a removal (a read-back, a lookup) still prints its FAIL item and its RESULT line, and counts as failed

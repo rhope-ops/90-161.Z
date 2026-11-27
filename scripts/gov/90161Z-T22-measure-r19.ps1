@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r19, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   R13 (R40): the measure file has Keep (each card opened again from its kept page, $wn.MeasureKeep in the keep part).
@@ -24,7 +24,7 @@
   $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r18.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r19.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold FAKE data or (R14) fake rows of the test site; a card with a site row that
   has no fake-data marker gets no picture. A picture that cannot be saved is a NOTE line.
@@ -42,7 +42,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r18.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r19.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.

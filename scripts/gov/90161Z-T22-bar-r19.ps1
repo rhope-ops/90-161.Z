@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
+  90-161.Z Task 22 r19, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
   every screen (round R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3).
 .DESCRIPTION
   The check bar (PFM 17 Nov 26) sits at the bottom of the window and is always visible: the checks show one at a time,

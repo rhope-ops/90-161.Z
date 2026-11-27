@@ -28,8 +28,9 @@ else sk "T21 probe script on the fake site"; fi
 if [ "${on[mask]}" = 1 ]; then
 wait "$mask_pid"; maskrc=$?; out=$(tail -1 "$bg/mask.out")
 case "$maskrc $out" in "0 MASK pass="*" fail=0")
-  ok "Hide-Site masking test, T22 maint read-back and T26 endorser answer ($(grep '^T22MAINT pass' "$bg/mask.out"); $(grep '^T26 pass' "$bg/mask.out"); $out)";;
-  *) grep -E "MASKTEST FAIL|T22MAINT FAIL|T26TEST FAIL" "$bg/mask.out" |
+  sums="$(grep '^T22MAINT pass' "$bg/mask.out"); $(grep '^T26 pass' "$bg/mask.out"); $(grep '^T30 pass' "$bg/mask.out")"
+  ok "Hide-Site masking test, T22 maint read-back, T26 endorser answer and T30 batch ($sums; $out)";;
+  *) grep -E "MASKTEST FAIL|T22MAINT FAIL|T26TEST FAIL|T27TEST FAIL|T30TEST FAIL" "$bg/mask.out" |
   cut -c1-300; bad "Hide-Site masking, T22 maint or T26 test (exit $maskrc): $out";; esac
 else sk "Hide-Site masking test"; fi
 
@@ -134,6 +135,10 @@ for r in b:
     by = {s['name']: s for s in r['steps']}
     for c in r['collect']:
         s = by.get(c['step']); src = files.get(s.get('file', '')) if s else None
+        if src and pathlib.Path(src).name.startswith('90161Z-T30-batch'):   # R47: a batch step: the part script of the file's task (the batch table)
+            t = re.match(r'90161Z-(T\d\d)-', c['name']); row = t and re.search(t.group(1) + r" = @\{ Dir = '[^']*'; File = '([^']+)'", pathlib.Path(src).read_text())
+            src = files.get(row.group(1)) if row else None
+            if not src: bad.append((c['name'], 'no part script of the batch table')); continue
         if not src or not src.endswith('.ps1'): continue
         m = re.search(r"^\$Rev = '(r\d+)'", pathlib.Path(src).read_text(), re.M)
         n = re.search(r'-(r\d+)\.txt$', c['name'])
@@ -210,7 +215,8 @@ if bundle.get('apps'):   # text mode runs the first application (the test round)
 kind = {s['name']: s.get('kind', 'script') for s in steps}
 want = set()
 for s in steps:   # in order: a later step may depend on an earlier skipped one
-    if any(kind[a] == 'script' or a in want for a in s.get('after', [])): want.add(s['name'])
+    # R47: text mode also skips a step with questions only (answersOnly)
+    if any(kind[a] == 'script' or a in want for a in s.get('after', [])) or s.get('answersOnly'): want.add(s['name'])
 got, ran, name = set(), set(), None
 for line in open(sys.argv[2], encoding='utf-8', errors='replace'):
     m = re.match(r'^Step \d+ of \d+: (.+?)\s*$', line)

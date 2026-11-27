@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "logo": the rail logo of the PFM window: the two logo pictures and which one shows.
+  90-161.Z Task 22 r19, part "logo": the rail logo of the PFM window: the two logo pictures and which one shows.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): one logo, the Fulcrum one, in Windows light and dark mode (high contrast keeps the system colors).
   R11 (R38; PFM 20 Nov 26: "Fulcrum everywhere for now, as this is not an endorsed product"): one logo, the Fulcrum one, in

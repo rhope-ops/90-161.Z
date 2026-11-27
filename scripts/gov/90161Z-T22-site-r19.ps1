@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "site": the PFM window reads the PFM lists of the test site, read-only, and fills its cards
+  90-161.Z Task 22 r19, part "site": the PFM window reads the PFM lists of the test site, read-only, and fills its cards
   from them (round R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 1).
 .DESCRIPTION
   What it reads: the rows of 2 PFM lists, PFM Publications (the grids Who Has It Now of Your Work and of the "nothing
@@ -178,7 +178,7 @@ function Invoke-SiteRead([string]$Site) {
   Merge-SiteGrid 'queue' 'All actions' $pub.Queue 'PFM Publications' $pub.Titles
   Merge-SiteGrid 'waves' 'Wave 1 answers' $ans 'PFM Endorsements' @($ans | ForEach-Object { $_.Office })
   Sync-WaveSummary $ans   # R18: the head line, chip and pill are counted from the rows the grid shows
-  if ($Walk.Count) { $script:Walk = @(Get-WalkPlan) }   # R18: the look step names the head line, which the site rows may have changed
+  if ($Walk.Count) { $script:Walk = @(Get-RoundWalk) }   # R18: the look step names the head line, which the site rows may have changed (r19: this round's walk)
   $script:GridQueue = @($pub.Queue)   # the All Actions filter ($wn.Refilter) reads it
   foreach ($b in @($Cards.queue.Cols[0][0].Blocks)) { if ($b.T -eq 'grid') { $b.Count = 'Showing {0} of ' + @($pub.Queue).Count + ' actions, as the site lists them' } }
   $script:SiteSource = 'site'

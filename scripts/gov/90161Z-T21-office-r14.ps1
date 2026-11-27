@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r13, module "office": the part Office, the device test of the PFM Office level (PFM 19 Nov 26,
+  90-161.Z Task 21 probe r14, module "office": the part Office, the device test of the PFM Office level (PFM 19 Nov 26,
   F2 B): a PFM Office member who is not a row's author can edit that row on a list set to "edit own rows".
 .DESCRIPTION
   Loaded by 90161Z-T21-probe-r14.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.

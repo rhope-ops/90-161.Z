@@ -18,6 +18,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PERSON = "T21 Add the second person"            # the start of the step name (the revision follows)
 ENDORSER = ("T26 Second person answers", "T26 Read the endorser answer")   # the only steps that may need the person
+PERSON_PART = "T21:Person"   # R47: the person is a part of a T30 batch step ("args": "-Run ...;T21:Person")
+
+
+def is_person(step):
+    """Return True when the step adds the second person: its name, or (R47) a T30 batch step with the part T21:Person.
+
+    Args:
+        step: a step of the manifest (a dict with "name" and, maybe, "args"), or None.
+
+    Returns:
+        True or False.
+    """
+    return bool(step) and (step["name"].startswith(PERSON) or PERSON_PART in str(step.get("args", "")).split("-Run ", 1)[-1].split(";"))
 
 
 def closure(step, by_name):
@@ -56,9 +69,9 @@ def offenders(bundle):
         for n in s.get("after", []):
             if n not in by_name:
                 bad.append(s["name"] + " (after: no step " + n + ")")
-        if s["name"].startswith(PERSON) or s["name"].startswith(ENDORSER):
+        if is_person(s) or s["name"].startswith(ENDORSER):
             continue
-        if any(n.startswith(PERSON) for n in closure(s, by_name)):
+        if any(is_person(by_name.get(n)) for n in closure(s, by_name)):
             bad.append(s["name"])
     return bad
 
@@ -74,10 +87,11 @@ def main():
     for b in data["bundles"]:
         steps = b["steps"]
         names = [s["name"] for s in steps]
-        assert sum(n.startswith(PERSON) for n in names) == 1, "the round needs exactly one person step"
+        assert sum(is_person(s) for s in steps) == 1, "the round needs exactly one person step"
         for e in ENDORSER:   # the endorser steps do wait for the person: the test must see them
             hit = [s for s in steps if s["name"].startswith(e)]
-            assert len(hit) == 1 and any(n.startswith(PERSON) for n in closure(hit[0], {s["name"]: s for s in steps})), \
+            by_name = {s["name"]: s for s in steps}
+            assert len(hit) == 1 and any(is_person(by_name.get(n)) for n in closure(hit[0], by_name)), \
                 "the endorser step " + e + " must wait for the person step"
         for n in offenders(b):
             print("FAIL " + b["round"] + ": " + n + " waits for the second person")

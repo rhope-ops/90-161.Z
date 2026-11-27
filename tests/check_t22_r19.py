@@ -58,11 +58,15 @@ def check_walk():
                          capture_output=True, text=True, timeout=120, cwd=ROOT).stdout.splitlines()
     cards = [l.split(' | ')[0][5:] for l in out if l.startswith('CARD ')]
     # R16 (R43 T3): 17 screens and, after the waves card, one look step with its own Pass and Fail: 18 steps in all
-    pat = r'WALK (\d+) (\S+) (rail|button|link|open): (Screen (\d+) of (\d+): select .+\. Pass if .+ opens and looks right\.)$'
+    pat = r'WALKALL (\d+) (\S+) (rail|button|link|open): (Screen (\d+) of (\d+): select .+\. Pass if .+ opens and looks right\.)$'
     # R17 (R44 T4, R43 finding 3): the look step names the grid by the head line that the waves card shows (not its accessible name)
-    look = (r'WALK (\d+) waves look: (Screen (\d+) of (\d+): look at the grid under the line '
+    look = (r'WALKALL (\d+) waves look: (Screen (\d+) of (\d+): look at the grid under the line '
             r'"Wave 1: two of three offices have answered\." Pass if the grid shows the second person, or if no one helped\.)$')
-    lines = [l for l in out if l.startswith('WALK ')]
+    lines = [l for l in out if l.startswith('WALKALL ')]
+    # r19 (the round skill, "Repeated tasks"): the window walks only step12 (R46: Fail), with its reason, from the start card
+    now = [l for l in out if l.startswith('WALK ')]
+    assert now == ['WALK 1 step12 open: Screen 1 of 1: select "Open this screen" in this bar. Pass if XXX XXX OI 21-14, step 12 of 12 '
+                   'opens and looks right. Why again: R46 Fail, no comment; no change since.'] and len(now[0].split(': ', 1)[1]) <= 200, now
     wk = [re.match(pat, l) for l in lines if ' waves look: ' not in l]; lk = [re.match(look, l) for l in lines if ' waves look: ' in l]
     assert len(cards) == 17 and len(wk) == 17 and all(wk) and len(lk) == 1 and all(lk), lines
     assert sorted(m.group(2) for m in wk) == sorted(cards), wk
@@ -284,11 +288,11 @@ def check_walk_path():
             t, go = l.strip().split(' ', 1)[1].rsplit(' -> ', 1)
             buttons[key][t.replace(' (blue)', '')] = go
     cur = 'home'
-    for l in [l for l in out if l.startswith('WALK ')]:
+    for l in [l for l in out if l.startswith('WALKALL ')]:
         if ' waves look: ' in l:   # R16: the look step asks about the card the step before opened
             assert cur == 'waves', l
             continue
-        m = re.match(r'WALK (\d+) (\S+) (rail|button|link|open): Screen \d+ of 18: select (.+?)\. Pass if', l)
+        m = re.match(r'WALKALL (\d+) (\S+) (rail|button|link|open): Screen \d+ of 18: select (.+?)\. Pass if', l)
         n, to, via, what = m.groups()
         if via == 'rail':
             assert rail.get(what[:-len(' in the list on the left')]) == to, ('no rail item opens it', l)
@@ -298,7 +302,7 @@ def check_walk_path():
         else:
             assert via == 'open' and what == '"Open this screen" in this bar', l
         cur = to
-    assert ('waves', 'waves', 'step13') == tuple(re.match(r'WALK \d+ (\S+) (\S+):', l).group(1) for l in out if l.startswith(('WALK 10 ', 'WALK 11 ', 'WALK 12 '))), out
+    assert ('waves', 'waves', 'step13') == tuple(re.match(r'WALKALL \d+ (\S+) (\S+):', l).group(1) for l in out if l.startswith(('WALKALL 10 ', 'WALKALL 11 ', 'WALKALL 12 '))), out
     bar = part('bar')
     for x in ("[string]$Walk[$j].From -ne [string]$wn.Cur", '& $wn.OpenFail $k $_', "'NOTE the screen ' + $Key + ' did not open: '",
               '& $wn.OpenCheck $k', '& $wn.IgnoreNote'):   # R16: no open fails without a NOTE line

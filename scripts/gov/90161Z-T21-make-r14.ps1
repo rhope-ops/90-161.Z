@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r13, module "make": the parts Make and Open (the probe list and library, the fake workbook, the
+  90-161.Z Task 21 probe r14, module "make": the parts Make and Open (the probe list and library, the fake workbook, the
   test page).
 .DESCRIPTION
   Loaded by 90161Z-T21-probe-r14.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
