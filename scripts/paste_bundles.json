@@ -203,21 +203,21 @@
                     "answers": [
                         {
                             "key": "v-band",
-                            "prompt": "Look at the dark blue band at the top of this window. What does it show at its left end?",
+                            "prompt": "Look at the band at the top of this window. What does it show at its left end?",
                             "kind": "pick",
                             "choices": [
                                 "The Kanon logo, KANON, in RADE",
                                 "The RADE logo",
-                                "There is no dark blue band"
+                                "There is no band"
                             ],
                             "failOn": [
                                 "The RADE logo",
-                                "There is no dark blue band"
+                                "There is no band"
                             ]
                         },
                         {
                             "key": "v-line",
-                            "prompt": "Look at the line under the dark blue band. What color is it now?",
+                            "prompt": "Look at the line under the band. What color is it now?",
                             "kind": "pick",
                             "choices": [
                                 "Yellow",
@@ -265,7 +265,7 @@
                     "guide": [],
                     "dir": "T29",
                     "file": "",
-                    "note": "Why again: round 47 passed the engine-v47 look; engine-v48 changes the Maintenance cards, Esc on the Run card and the end card. Pick the choice that agrees with what you saw.",
+                    "note": "Why again: round 47 passed the engine-v47 look; engine-v48 changes the Maintenance cards, Cancel on the Run card and the end card. Pick the choice that agrees with what you saw.",
                     "estimate": 1,
                     "answersOnly": true,
                     "answers": [
@@ -297,7 +297,7 @@
                         },
                         {
                             "key": "v-cancel",
-                            "prompt": "When you pressed Esc during the install, what did you see?",
+                            "prompt": "When you clicked Cancel (Esc) during the install, what did you see?",
                             "kind": "pick",
                             "choices": [
                                 "The card Stop the install?",
@@ -326,7 +326,7 @@
                 },
                 {
                     "name": "T29 Answer: the RADE buttons r3",
-                    "title": "Answer 3 questions about the buttons",
+                    "title": "Answer 4 questions about the buttons",
                     "kind": "guide",
                     "guide": [],
                     "dir": "T29",
@@ -347,6 +347,20 @@
                             "failOn": [
                                 "Run",
                                 "Other text"
+                            ]
+                        },
+                        {
+                            "key": "v-start",
+                            "prompt": "When you pressed Enter on the card Ready to run round R48., what happened?",
+                            "kind": "pick",
+                            "choices": [
+                                "The round started",
+                                "Nothing, I clicked the button",
+                                "Other"
+                            ],
+                            "failOn": [
+                                "Nothing, I clicked the button",
+                                "Other"
                             ]
                         },
                         {
@@ -490,6 +504,16 @@
                     ],
                     "answers": [
                         {
+                            "key": "r-end",
+                            "prompt": "Which 6 numbers does the line \"PFM Endorsements\" show? Type them in their order, with a space between them.",
+                            "kind": "text"
+                        },
+                        {
+                            "key": "r-log",
+                            "prompt": "Which 6 numbers does the line \"PFM Activity Log\" show? Type them in their order, with a space between them.",
+                            "kind": "text"
+                        },
+                        {
                             "key": "r-dry",
                             "prompt": "Is this line there: \"Dry run: 4 rows would come back (3 from the Recycle Bin, 1 as new rows). Nothing was written.\"",
                             "kind": "pick",
@@ -502,16 +526,6 @@
                                 "Yes, with other numbers",
                                 "No line starts with Dry run:"
                             ]
-                        },
-                        {
-                            "key": "r-end",
-                            "prompt": "Which 6 numbers does the line \"PFM Endorsements\" show? Type them in their order, with a space between them.",
-                            "kind": "text"
-                        },
-                        {
-                            "key": "r-log",
-                            "prompt": "Which 6 numbers does the line \"PFM Activity Log\" show? Type them in their order, with a space between them.",
-                            "kind": "text"
                         }
                     ],
                     "answersOnly": true
