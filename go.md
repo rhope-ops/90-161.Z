@@ -17,36 +17,36 @@ Updated: 27 Nov 26 (R48 r1).
 4. In ISE (not from the bundle), click **File** > **New** (not from the bundle), then press `Ctrl+V`.
 5. Press `F5`. Wait until the RADE window opens (up to 2 minutes). Keep ISE open.
 6. If no RADE window opens in 2 minutes, stop. Post `No RADE window` in the Teams channel **RHOPE-OPS** (not from the bundle).
-7. In the RADE window, click the row **Kanon 0.1.0**. Write down which card opens: **Kanon 0.1.0 is installed.** or **Kanon is not installed.**
+7. In the RADE window, click the row **Kanon 0.1.0**. Write down which card opens: **Kanon 0.1.0 is installed.** or **Kanon is not installed.** The round asks for each note later.
 8. If the card **Kanon 0.1.0 is installed.** shows, write down if the row **Install 0.1.0** is gray. Then click the row **Repair**. Do not click **Uninstall**.
 9. If the card **Kanon is not installed.** shows, click **Install 0.1.0 (Enter)**.
 10. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
 11. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
 12. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
 13. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
-14. On the card **Ready to install 90-161.Z 0.1.0.**, if the box **Shortcut in** shows, do not change the folder in it.
+14. On the card that starts with **Ready to install**, if the box **Shortcut in** shows, do not change the folder in it.
 15. Click **Install (Enter)**. The card **Installing Kanon 0.1.0.** shows.
 16. Each time a CAC sign-in window opens during the install, sign in with your CAC.
 17. On the card **Installing Kanon 0.1.0.**, click **Cancel (Esc)**. Write down if the card **Stop the install?** opens.
 18. If the card **Stop the install?** shows, click **Keep installing**. Do not click **Stop the install**.
 19. Write down the color of the line under the band at the top of the RADE window.
-20. When the step **Make the 12 lists of 90-161.Z on the site** runs, write down where the line **Making list 1 of 12** shows.
+20. When the step **Make the 12 lists of 90-161.Z on the site** runs, write down where the line **Making list 1 of 12** shows. It can be under the bar of the step or in the band.
 21. Wait until an end card shows (up to 5 minutes).
 22. If the end card is not **Kanon 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
-23. On the card **Kanon 0.1.0 is installed.**, write down if a button **Back** shows. Then click **Close (Enter)**.
-24. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
+23. On the card **Kanon 0.1.0 is installed.**, write down if a button **Back** shows. Then click **Close**.
+24. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again (up to 2 minutes).
 25. Click the row **Kanon R48**. Wait until a card shows (up to 2 minutes).
 26. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
 27. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
 28. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
 29. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
 30. On the card **Ready to run round R48.**, write down the text of the main button.
-31. Press `Windows logo key+Left arrow` (not from the bundle). Write down if the buttons are one on top of the other, or side by side.
+31. In the RADE window, press `Windows logo key+Left arrow` (not from the bundle). Write down if the buttons are one on top of the other, or side by side.
 32. Double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
 33. Press `Enter`. Write down if the card **Running round R48.** shows.
-34. If the card **Running round R48.** does not show, click **Run (Enter)** or **Resume at step**.
+34. If the card **Running round R48.** does not show, click the main button of the card.
 35. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: after 3 minutes the step stops and the round goes on.
-36. Do each step that a card shows. Stop when the card **Round R48 is done.** or **The round needs review.** shows.
+36. Do each step that a card shows. Stop when the card **Round R48 is done.**, **The round needs review.** or **The round stopped.** shows.
 37. In the Outlook draft with the subject that starts with `90161Z R48`, click **Send** (not from the bundle).
 38. If no Outlook draft opens, do the e-mail line of the end card.
 
