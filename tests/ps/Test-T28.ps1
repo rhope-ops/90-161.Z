@@ -151,7 +151,7 @@ try {
   $disp = @($payload.updates | Where-Object { [string]$_.uri -match "getbytitle\('[^']+'\)$" } | ForEach-Object { [string]$_.body.Title })
   $same = ((@($OwnLists.Values | Sort-Object) -join '|') -ceq (@($disp | Sort-Object) -join '|') -and $disp.Count -eq 12)
   Test-That 'the own-name table (the 12 titles that the step counts) equals the titles of the payload' $same ($disp -join ',')
-  $probe = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T21-probe-r13.ps1') -Raw
+  $probe = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T21-probe-r14.ps1') -Raw
   $src = Get-Content -LiteralPath $script -Raw
   $l1 = [regex]::Match($probe, "(?m)^\`$script:ListTitle = '([^']+)'").Groups[1].Value
   $l2 = [regex]::Match($probe, "(?m)^\`$script:LibTitle = '([^']+)'").Groups[1].Value

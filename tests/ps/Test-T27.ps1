@@ -1,4 +1,4 @@
-# Tests scripts/gov/90161Z-T27-lifecycle-r2.ps1 and its 2 modules (round R43 plan item T5; the PFM, 25 Nov 26: RADE Uninstall, install from
+# Tests scripts/gov/90161Z-T27-lifecycle-r3.ps1 and its 2 modules (round R43 plan item T5; the PFM, 25 Nov 26: RADE Uninstall, install from
 # zero, 1 fake publication through 1 full process step) against a small fake site. The PnP cmdlets the script uses are fakes in this file
 # (an empty PnP.PowerShell 1.12.0 module in a temporary folder lets the script's module check pass). Proves the logic, not the real
 # service and not RADE engine-v41 (not released): the gov device round is that proof.
@@ -34,7 +34,7 @@ Set-Content -LiteralPath (Join-Path $modDir 'PnP.PowerShell.psd1') -Value "@{ Ro
 $env:PSModulePath = (Join-Path $work 'mods') + [IO.Path]::PathSeparator + $env:PSModulePath
 $env:RADE_SITE = 'https://fakehost.example.test/sites/FakeWing'
 $env:RADE_CONTRACT = '1'
-$script = Join-Path $Root 'scripts/gov/90161Z-T27-lifecycle-r2.ps1'
+$script = Join-Path $Root 'scripts/gov/90161Z-T27-lifecycle-r3.ps1'
 # The fake site's helper script files live in the real scripts/gov folder: the script loads its modules from its own folder.
 $global:PubSchema = Get-Content -LiteralPath (Join-Path $Root 'schemas/lists/PFMPublications.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $payload = Get-Content -LiteralPath (Join-Path $Root 'flow/provisioning-payload.json') -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -72,10 +72,12 @@ function Add-FakeList([string]$Folder, [string]$Title) {
 function Remove-FakeList([scriptblock]$Which) { foreach ($l in @($global:S.Lists | Where-Object $Which)) { $global:S.Lists.Remove($l) } }
 # Remove the fake process step row with a step number. Returns nothing.
 function Remove-FakeStepRow([int]$Number) { foreach ($r in @($global:S.Rows['PFM Process Steps'] | Where-Object { $_.StepNumber -eq $Number })) { $global:S.Rows['PFM Process Steps'].Remove($r) } }
-# Fake Connect-PnPOnline: accepts only -UseWebLogin, as on the gov device; counts the sign-ins.
-function Connect-PnPOnline { [CmdletBinding()] param([string]$Url, [switch]$UseWebLogin) if (-not $UseWebLogin) { throw 'FAKE: -UseWebLogin only' }; $global:S.Connects++ }
-# Fake Disconnect-PnPOnline: does nothing.
-function Disconnect-PnPOnline { [CmdletBinding()] param() }
+# Fake Connect-PnPOnline: accepts only -UseWebLogin, as on the gov device; counts the sign-ins and keeps the address (R47).
+function Connect-PnPOnline { [CmdletBinding()] param([string]$Url, [switch]$UseWebLogin) if (-not $UseWebLogin) { throw 'FAKE: -UseWebLogin only' }; $global:S.Connects++; $global:SignedInTo = $Url }
+# Fake Disconnect-PnPOnline: ends the fake connection and counts the sign-outs (R47).
+function Disconnect-PnPOnline { [CmdletBinding()] param() $global:SignedInTo = ''; $global:SignOuts++ }
+# Fake Get-PnPConnection (R47, the T30 batch): the connection of this process, or an error when there is none, as PnP.PowerShell 1.12.0 does.
+function Get-PnPConnection { [CmdletBinding()] param() if (-not $global:SignedInTo) { throw 'FAKE: no connection' }; return [pscustomobject]@{ Url = $global:SignedInTo } }
 <#
 .SYNOPSIS
   Fake Invoke-PnPSPRestMethod: GET of the lists, groups and permission levels of the fake site, as the REST service answers.
@@ -207,9 +209,9 @@ function Set-PnPListItem {
 }
 # Run one part against the fake site. Takes the part name; returns @{ Code; Text (the screen output); File (the result file text) }.
 function Invoke-T27([string]$Part) {
-  $global:LASTEXITCODE = 0; $global:S.Calls.Clear(); $global:S.Connects = 0
+  $global:LASTEXITCODE = 0; $global:S.Calls.Clear(); $global:S.Connects = 0; $global:SignedInTo = ''   # each RADE step is a new process: no connection
   $out = & $script -Id 'tester01' -Part $Part -NoPause -TestDir $t27 *>&1 | ForEach-Object { [string]$_ }
-  $file = Join-Path $t27 ('90161Z-T27-' + $Part.ToLowerInvariant() + '-r2.txt')
+  $file = Join-Path $t27 ('90161Z-T27-' + $Part.ToLowerInvariant() + '-r3.txt')
   return @{ Code = $LASTEXITCODE; Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
 }
 # Write a fake RADE_MADE file and point the environment at it. Takes the entries (hashtables with kind and name; step is added) and options
@@ -250,7 +252,7 @@ try {
   $man = Get-Content -LiteralPath (Join-Path $Root 'scripts/paste_bundles.json') -Raw | ConvertFrom-Json
   $back = @(@($man.bundles | ForEach-Object { $_.apps } | Where-Object { $_.mode -eq 'deploy' }) | ForEach-Object { $_.backup })
   Test-That 'the own-list titles equal the "backup" lists of the deploy app in the manifest' ((@($OwnLists.Values | Sort-Object) -join '|') -ceq (@($back | Sort-Object) -join '|')) ''
-  $t26txt = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r4.ps1') -Raw
+  $t26txt = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r5.ps1') -Raw
   $chk = Get-Content -LiteralPath (Join-Path $Root 'scripts/gov/90161Z-T27-check-r2.ps1') -Raw
   $a = [regex]::Match($t26txt, "(?m)^\`$PubTitle = '([^']+)'").Groups[1].Value; $b = [regex]::Match($chk, "(?m)^\`$PubTitle = '([^']+)'").Groups[1].Value
   $c = [regex]::Match($t26txt, "(?m)^\`$StateName = '([^']+)'").Groups[1].Value; $d = [regex]::Match($chk, "(?m)^\`$T26State = '([^']+)'").Groups[1].Value
@@ -411,18 +413,18 @@ try {
       ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 2) $r.File
 
   # ---- Uninstall, Local ----
-  foreach ($f in '90161Z-T22-install-r18.txt', '90161Z-T22-maint-r18.txt', 'keep.txt') { Set-Content -LiteralPath (Join-Path $t22 $f) -Value 'x' }
-  New-Site; Set-Made @(@{ kind = 'file'; name = '90161Z-T22-install-r18.txt' })
+  foreach ($f in '90161Z-T22-install-r19.txt', '90161Z-T22-maint-r19.txt', 'keep.txt') { Set-Content -LiteralPath (Join-Path $t22 $f) -Value 'x' }
+  New-Site; Set-Made @(@{ kind = 'file'; name = '90161Z-T22-install-r19.txt' })
   $r = Invoke-T27 'Local'
   $left = @(Get-ChildItem -LiteralPath $t22 | ForEach-Object { $_.Name } | Sort-Object)
   Test-That 'Local removes only the install note named in the made file, with no sign-in' ($r.Code -eq 0 -and $global:S.Connects -eq 0 -and
-      ($left -join ',') -ceq '90161Z-T22-maint-r18.txt,keep.txt' -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1') $r.File
+      ($left -join ',') -ceq '90161Z-T22-maint-r19.txt,keep.txt' -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1') $r.File
   $r = Invoke-T27 'Local'
   Test-That 'a second Local run prints SKIP' ($r.Code -eq 0 -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL SKIP removed=0' -and $r.File -match '(?m)^ITEM f01-note SKIP') $r.File
-  Set-Made @(@{ kind = 'file'; name = 'keep.txt' }, @{ kind = 'file'; name = '..\T26\90161Z-T22-install-r1.txt' }, @{ kind = 'file'; name = '90161Z-T22-maint-r18.txt' })
+  Set-Made @(@{ kind = 'file'; name = 'keep.txt' }, @{ kind = 'file'; name = '..\T26\90161Z-T22-install-r1.txt' }, @{ kind = 'file'; name = '90161Z-T22-maint-r19.txt' })
   $r = Invoke-T27 'Local'
   $left = @(Get-ChildItem -LiteralPath $t22 | ForEach-Object { $_.Name } | Sort-Object)
-  Test-That 'Local refuses any other file and any path: nothing else is removed' ($r.Code -eq 0 -and ($left -join ',') -ceq '90161Z-T22-maint-r18.txt,keep.txt' -and
+  Test-That 'Local refuses any other file and any path: nothing else is removed' ($r.Code -eq 0 -and ($left -join ',') -ceq '90161Z-T22-maint-r19.txt,keep.txt' -and
       ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 3) $r.File
 
   # ---- the checks and the step ----
@@ -502,10 +504,10 @@ try {
   Test-That 'Step reads only the columns it names in -Fields (the fake item throws for any other column): no STOPPED line' ($r.Code -eq 0 -and $r.File -notmatch '(?m)^STOPPED') $r.File
   # The fake publication of T26 Make (R43; the PFM, 25 Nov 26): the exit conditions of step 1 hold on what T26 Make really writes.
   New-Site
-  $t26script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r4.ps1'
+  $t26script = Join-Path $Root 'scripts/gov/90161Z-T26-endorse-r5.ps1'
   $global:LASTEXITCODE = 0; $null = & $t26script -Id 'tester01' -Part 'Make' -NoPause -NoLaunch -TestDir $t26 *>&1
   $made = @($global:S.Rows['PFM Publications'] | Where-Object { $_.Title -ceq $PubTitle })
-  $r26 = $(if (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r4.txt')) { Get-Content -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r4.txt') -Raw } else { '' })
+  $r26 = $(if (Test-Path -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r5.txt')) { Get-Content -LiteralPath (Join-Path $t26 '90161Z-T26-endorse-make-r5.txt') -Raw } else { '' })
   Test-That 'T26 Make makes the fake publication on the strict fake site (the 4 columns are accepted by the schema rules)' ($LASTEXITCODE -eq 0 -and $made.Count -eq 1 -and
       $made[0].OPR.LookupId -eq 301 -and $made[0].MasterForm673Link.Url -ceq 'https://example.test/90161Z-TEST-673') $r26
   $r = Invoke-T27 'Step'
@@ -520,12 +522,34 @@ try {
   $r = Invoke-T27 'Step'
   Test-That 'Step with no step 2 row (the install did not seed it): FAIL, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^RESULT STEP FAIL no step rows') $r.File
 
+  # ---- R47: the Uninstall parts Lists, Access and Local in one T30 batch step: one sign-in, then "SIGNIN reused", one sign-out ----
+  Set-Content -LiteralPath (Join-Path $t22 '90161Z-T22-install-r19.txt') -Value 'x'
+  $extra = @(@{ kind = 'group'; name = 'PFM Office' }, @{ kind = 'level'; name = 'PFM Office Edit All Items' }, @{ kind = 'file'; name = '90161Z-T22-install-r19.txt' })
+  New-Site; Set-Made (@(Get-ListEntry $internal) + $extra)
+  $global:S.Calls.Clear(); $global:S.Connects = 0; $global:SignedInTo = ''; $global:SignOuts = 0; $global:LASTEXITCODE = 0
+  $batch = Join-Path $Root 'scripts/gov/90161Z-T30-batch-r1.ps1'
+  $out = @(& $batch -Id 'tester01' -NoPause -Run 'T27:Lists;T27:Access;T27:Local' -ScriptRoot (Join-Path $Root 'scripts/gov') -TestRoot $work *>&1 | ForEach-Object { [string]$_ })
+  $code = $LASTEXITCODE; $txt = $out -join "`n"
+  $ok = ($code -eq 0 -and $global:S.Connects -eq 1 -and $global:SignOuts -eq 1 -and ([regex]::Matches($txt, '(?m)^SIGNIN reused')).Count -eq 1 -and
+      (Get-OwnLeft).Count -eq 0 -and $global:S.Groups -notcontains 'PFM Office' -and -not (Test-Path -LiteralPath (Join-Path $t22 '90161Z-T22-install-r19.txt')) -and
+      $txt -match '(?m)^RESULT UNINSTALL LISTS PASS removed=12' -and $txt -match '(?m)^RESULT UNINSTALL ACCESS PASS removed=2' -and
+      $txt -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1' -and $txt -match '(?m)^BATCH done: parts=3 exit-not-zero=0' -and -not $env:KANON_KEEP_SIGNIN)
+  Test-That 'T30 batch Lists, Access, Local in Uninstall mode: 1 sign-in, the second part reuses it, 1 sign-out at the end, all 3 parts done, exit 0' $ok $txt
+  # A part that fails does not stop the parts after it, and the batch ends with exit code 1 (the made list is refused for Lists and Access).
+  New-Site; Set-Made (Get-ListEntry $internal) -Mode 'install'; $global:S.Connects = 0; $global:SignedInTo = ''; $global:SignOuts = 0; $global:LASTEXITCODE = 0
+  $out = @(& $batch -Id 'tester01' -NoPause -Run 'T27:Lists;T27:Install:before' -ScriptRoot (Join-Path $Root 'scripts/gov') -TestRoot $work *>&1 | ForEach-Object { [string]$_ })
+  $code = $LASTEXITCODE; $txt = $out -join "`n"
+  Test-That 'T30 batch: a failed part (the gate) is followed by the next part, and the batch exits 1' ($code -eq 1 -and $txt -match '(?m)^RESULT UNINSTALL LISTS FAIL' -and
+      $txt -match '(?m)^BATCH part 2 of 2: T27 Install before, exit code 0' -and $txt -match '(?m)^BATCH done: parts=2 exit-not-zero=1' -and $global:S.Connects -eq 1 -and
+      (Test-Path -LiteralPath (Join-Path $t27 '90161Z-T27-install-before-r3.txt'))) $txt
+  $env:RADE_MADE = $null; $env:RADE_MODE = $null
+
   # ---- every result file ----
   $all = Get-ChildItem -LiteralPath $t27 -Filter '*.txt' | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }
   Test-That 'no result line shows the site host' (-not (@($all) -join "`n").Contains('fakehost')) ''
-  foreach ($f in 'lifecycle', 'made', 'check') {
-    $bytes = [IO.File]::ReadAllBytes((Join-Path $Root ('scripts/gov/90161Z-T27-' + $f + '-r2.ps1')))
-    Test-That ('the file 90161Z-T27-' + $f + '-r2.ps1 is ASCII') (-not @($bytes | Where-Object { $_ -gt 127 }).Count) ''
+  foreach ($f in 'lifecycle-r3', 'made-r2', 'check-r2') {
+    $bytes = [IO.File]::ReadAllBytes((Join-Path $Root ('scripts/gov/90161Z-T27-' + $f + '.ps1')))
+    Test-That ('the file 90161Z-T27-' + $f + '.ps1 is ASCII') (-not @($bytes | Where-Object { $_ -gt 127 }).Count) ''
   }
 } finally {
   Set-Location -LiteralPath $Root

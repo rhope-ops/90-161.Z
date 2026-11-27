@@ -289,7 +289,7 @@ function Invoke-T21([string]$Part, [hashtable]$Extra = @{}, [string]$Label = '')
   $Extra2 = @{} + $Extra; if ($Label) { $Extra2['Label'] = $Label }
   $global:LASTEXITCODE = 0
   $out = & $script -Id 'tester01' -Part $Part -NoPause -NoLaunch -TestDir $t21 @Extra2 *>&1 | ForEach-Object { [string]$_ }
-  $file = Join-Path $t21 ('90161Z-T21-probe-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r13.txt')
+  $file = Join-Path $t21 ('90161Z-T21-probe-' + $Part.ToLowerInvariant() + $(if ($Label) { '-' + $Label } else { '' }) + '-r14.txt')
   $r = @{ Code = $LASTEXITCODE; Out = @($out); Text = (@($out) -join "`n"); File = $(if (Test-Path -LiteralPath $file) { Get-Content -LiteralPath $file -Raw } else { '' }) }
   if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file }
   return $r
@@ -300,7 +300,7 @@ $nowParts = New-Object System.Collections.Generic.List[string]; $nowInFile = New
 # and a result file that holds one (it must hold none). Takes the run hashtable; returns nothing.
 function Note([hashtable]$R) {
   [void]$allText.AppendLine($R.Text); [void]$allText.AppendLine($R.File)
-  $p = @($R.Out | Where-Object { $_ -match '^TASK T21 probe r13, part (\w+)' } | ForEach-Object { $Matches[1] })
+  $p = @($R.Out | Where-Object { $_ -match '^TASK T21 probe r14, part (\w+)' } | ForEach-Object { $Matches[1] })
   if (@($R.Out | Where-Object { $_ -match '^NOW \S' }).Count -and $p.Count) { $nowParts.Add($p[0]) }
   if ($R.File -match '(?m)^NOW ') { $nowInFile.Add([string]$p) }
 }

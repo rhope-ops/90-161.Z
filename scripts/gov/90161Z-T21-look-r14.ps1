@@ -1,10 +1,10 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r13, module "look": the parts Form (a header on the list form) and View (a list view with a
+  90-161.Z Task 21 probe r14, module "look": the parts Form (a header on the list form) and View (a list view with a
   button that starts the button flow "90161Z T21 Probe Button r6" of the solution "90-161.Z flows"). The part Look runs
   both.
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r13.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r14.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($ListTitle, $ListFolder, $ViewTitle, $HeaderText) and the helpers of the module
   "common"; View takes the button flow's ID from the button-flow-id block below, which scripts/build_flow_solution.py
   writes at build time (the flow's workflow ID in the solution, the same on every build; R34: no export file). Outputs:
@@ -15,7 +15,7 @@
   Writes: Form: the form formatting (ClientFormCustomFormatter) of the probe list's content type. View: the view
           "ProbeButton" on the probe list and its formatting (CustomFormatter). Nothing on this computer.
   Credentials: none of its own (the main file signs in).
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r13.ps1 -Part Form, View or Look loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r14.ps1 -Part Form, View or Look loads it.
 #>
 
 # >>> button-flow-id: generated from flow/solution/defs/90161Z-T21-probe-button-r6.json by scripts/build_flow_solution.py (do not edit)

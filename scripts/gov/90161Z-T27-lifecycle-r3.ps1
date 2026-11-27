@@ -34,9 +34,9 @@
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell (none for Local).
   Writes: on the site, the above; on this computer the T27 folder (the result file) and, for Local, 1 note file in the T22 folder.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T27-<part>[-<label>]-r2.txt in the T27 folder. Last line: LIFECYCLE <part> done: passed=<n> skipped=<n> failed=<n>.
+  Output: 90161Z-T27-<part>[-<label>]-r3.txt in the T27 folder. Last line: LIFECYCLE <part> done: passed=<n> skipped=<n> failed=<n>.
   Exit 1 when a part has a FAIL item or could not run (sign-in, missing list or module, made list not accepted).
-  Run: powershell.exe -NoProfile -File 90161Z-T27-lifecycle-r2.ps1 -Part <part> (RADE does this).
+  Run: powershell.exe -NoProfile -File 90161Z-T27-lifecycle-r3.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
   The DODID (the profile folder name); empty = the profile folder of this computer.
 .PARAMETER Part
@@ -47,12 +47,12 @@
   Test runs only: the folder to use instead of the T27 folder (its parent holds the T22 and T26 folders of the test).
 .PARAMETER Label
   A word (lower-case letters) for the result file name, so a part that runs twice in a round keeps both files: Install with the label
-  before writes 90161Z-T27-install-before-r2.txt.
+  before writes 90161Z-T27-install-before-r3.txt.
 #>
 param([string]$Id, [Parameter(Mandatory = $true)][ValidateSet('Lists', 'Access', 'Local', 'Gone', 'Install', 'Step')][string]$Part,
   [switch]$NoPause, [string]$TestDir, [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
 $task = 'T27'
-$Rev = 'r2'
+$Rev = 'r3'
 
 # >>> task-common: generated from scripts/gov/src/task-common.ps1 by scripts/build_task_scripts.py (do not edit)
 function ConvertTo-Masked([string]$Text, [string[]]$Secret) {
@@ -249,19 +249,17 @@ function Stop-SignInReport {
   if (-not $PSCmdlet.ShouldProcess('the window report of this process', 'Stop')) { return }
   try { if ('RadeSignIn.Report1' -as [type]) { [RadeSignIn.Report1]::End($true) } } catch { $null = $_ }   # no report: nothing to stop
 }
-# engine-v46 (90-161.Z R45 finding 2; the PFM, 2026-11-26: "I want the window to be small when it appears"): before the
-# sign-in, the child process becomes DPI-aware (SetProcessDPIAware). Windows then draws the PnP sign-in window at its
-# own 1024 x 768 pixels; in a process that is not DPI-aware Windows stretches it 1.5 times at 150 % (1536 x 1152, taller
-# than a 1920 x 1128 work area). R45 T22 signed in this way (its window is DPI-aware) and the PFM saw the small window.
-# RADE does not move, size or watch the window (engine-v44). PnP draws the window on its own thread, so a per-thread
-# setting would not reach it; the setting is for the whole process, and it holds for the rest of the step (a form the
-# step shows later is drawn at real pixels too: it must scale itself, AutoScaleMode Dpi or Font). $env:RADE_SIGNIN_DPI
-# = '0' turns it off. Prints "SIGNIN-DPI aware=<yes|was|no|off>": yes (now aware), was (already aware), no (Windows did
-# not take it, or not Windows), off (turned off). Takes nothing.
+# engine-v47 (the PFM, 2026-11-26, from the R46 run: "SIGNIN-DPI aware=yes", then the sign-in window opened only after
+# about 90 s and 100 s; "dpiaware is clearly the culprit"): the DPI setting of engine-v46 is OFF unless
+# $env:RADE_SIGNIN_DPI = '1'. The RADE window sets '0' for its children (part 09), so an app's older copy of this block,
+# which turns it off only on '0', is off too. With it on, the child becomes DPI-aware (SetProcessDPIAware) before the
+# sign-in, so Windows draws the PnP window at its own pixels, not stretched (90-161.Z R45 finding 2); RADE does not move,
+# size or watch the window (engine-v44). Prints "SIGNIN-DPI aware=<yes|was|no|off>": yes (now aware), was (already
+# aware), no (Windows did not take it, or not Windows), off (not turned on). Takes nothing.
 function Set-SignInDpiAware {
   [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'None')]
   param()
-  if ($env:RADE_SIGNIN_DPI -eq '0') { return 'SIGNIN-DPI aware=off' }
+  if ($env:RADE_SIGNIN_DPI -ne '1') { return 'SIGNIN-DPI aware=off' }   # engine-v47: off unless turned on
   if (-not $PSCmdlet.ShouldProcess('this process', 'Make DPI-aware')) { return 'SIGNIN-DPI aware=no' }
   if ($env:OS -ne 'Windows_NT') { return 'SIGNIN-DPI aware=no' }
   try {
@@ -281,7 +279,7 @@ function Set-SignInDpiAware {
 # Throws when the sign-in fails, as Connect-PnPOnline does. Takes the site address.
 function Connect-RadeSite([string]$Site) {
   'STAGE signin'
-  Set-SignInDpiAware   # engine-v46: the sign-in window at its real pixels (R45 finding 2)
+  Set-SignInDpiAware   # engine-v47: prints aware=off unless RADE_SIGNIN_DPI=1 (the DPI sign-in of engine-v46 opened its window after about 90 s)
   $t0 = Get-Date; Start-SignInReport   # engine-v44: no size watch
   try { $null = & { Connect-PnPOnline -Url $Site -UseWebLogin -ErrorAction Stop } *>&1 }
   finally { Stop-SignInReport }   # no report after the sign-in
@@ -311,13 +309,24 @@ function Import-PnPNewest {
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
 }
-# Signs in to the one site with the web login (CAC), after the module is loaded.
+<#
+.SYNOPSIS
+  Signs in to the one site with the web login (CAC), after the module is loaded, or (R47, a T30 batch) reuses the sign-in
+  of this process to the same site. Adds the line ROUTE web-login PASS (and SIGNIN reused when it reuses).
+.OUTPUTS
+  None.
+#>
 function Connect-LifecycleSite {
   Import-PnPNewest
-  Write-Host 'NOW Signing in to the site (if a sign-in window opens, sign in with your CAC)'
-  # R46: the sign-in window at its real size (RADE engine-v46 block); the SIGNIN-DPI line goes to the log.
-  if (Get-Command Set-SignInDpiAware -ErrorAction SilentlyContinue) { Write-Host (Set-SignInDpiAware) }
-  $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
+  # R47 (R46 finding 1): no DPI call here any more (RADE engine-v47 turns the DPI sign-in off).
+  # R47 (fewer CAC sign-ins): in a T30 batch an earlier part of this process signed in to this site; that sign-in is used
+  # again (Get-PnPConnection), with no second sign-in window. Outside a batch no connection is there, so it signs in.
+  $now = $null; try { $now = Get-PnPConnection -ErrorAction Stop } catch { $now = $null }   # no connection: sign in below
+  if ($now -and ([string]$now.Url).TrimEnd('/') -eq ([string]$script:site).TrimEnd('/')) { $lines.Add('SIGNIN reused: this process is signed in to the site already') }
+  else {
+    Write-Host 'NOW Signing in to the site (if a sign-in window opens, sign in with your CAC)'
+    $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
+  }
   $lines.Add('ROUTE web-login PASS')
 }
 # Cuts an error message to 120 characters, so no long site text reaches a line.
@@ -458,7 +467,8 @@ try {
     'Gone' { Connect-LifecycleSite; Invoke-GonePart } 'Install' { Connect-LifecycleSite; Invoke-InstallPart }
     default { Connect-LifecycleSite; Invoke-StepPart $dir }
   }
-  if ($Part -notin 'Local') { try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ } }
+  # R47: a T30 batch sets KANON_KEEP_SIGNIN=1, so the next part of the batch uses this sign-in again; the batch signs out at its end.
+  if ($Part -notin 'Local' -and $env:KANON_KEEP_SIGNIN -ne '1') { try { $null = & { Disconnect-PnPOnline -ErrorAction SilentlyContinue } *>&1 } catch { $null = $_ } }
 } catch {
   $fatal = $true
   # A part that throws after a removal (a read-back, a lookup) still prints its FAIL item and its RESULT line, and counts as failed

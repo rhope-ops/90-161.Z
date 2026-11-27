@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r18, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
+  90-161.Z Task 22 r19, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
   R17 (round R44 T4; R43 finding 3): the look step after the waves card names the grid by the head line above it
@@ -12,7 +12,7 @@
   (Get-AgainText; the main script gives it the saved card); the closing line of the check bar names no card.
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r18.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r19.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems, $Walk
   and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan, Get-CheckPlan,
@@ -497,9 +497,12 @@ An array of @{ Key; Via (rail, button, link, open or, R16, look); Opener (what t
 R18: Target, only on a step that names one part of the screen (the accessible name of its control; the bar frames it) }.
 R16: Via look is the step after the waves card: it asks about the grid on the card the person is on.
 R17 (R43 finding 3): the grid is named by the head line above it (Get-WaveHead), not by its accessible name.
+.PARAMETER Only
+r19: the card keys to walk (the round's walk, Get-RoundWalk); empty = every card.
 #>
-function Get-WalkPlan {
-  $left = New-Object System.Collections.Generic.List[string]; foreach ($k in $Cards.Keys) { $left.Add([string]$k) }
+function Get-WalkPlan([string[]]$Only = @()) {
+  # r19: with $Only, only those cards are walked (in the order of $Cards), from the card the window opens on.
+  $left = New-Object System.Collections.Generic.List[string]; foreach ($k in $Cards.Keys) { if (-not $Only.Count -or $Only -contains [string]$k) { $left.Add([string]$k) } }
   $out = @(); $cur = ''; $n = $left.Count + $(if ($left.Contains('waves')) { 1 } else { 0 })   # R16: the waves card has one more step
   while ($left.Count) {
     $key = ''; $op = $null
@@ -518,7 +521,26 @@ function Get-WalkPlan {
         Text = 'Screen ' + ($out.Count + 1) + ' of ' + $n + ': look at the grid under the line "' + $head + '" Pass if the grid shows the second person, or if no one helped.' } } }
   return $out
 }
-# The click-through as -PlanOnly lines: WALK <n> <card> <via>: <text> (tests/run.sh reads them).
-function Get-WalkPlanText { for ($i = 0; $i -lt $Walk.Count; $i++) { ConvertTo-PlanText ('WALK ' + ($i + 1) + ' ' + $Walk[$i].Key + ' ' + $Walk[$i].Via + ': ' + $Walk[$i].Text) } }
+# r19 (the round skill, "Repeated tasks"; the PFM, 2026-11-26): the window walk opens only the screens that changed or failed
+# since the last round that passed them, each with its reason. R46 passed 17 of 18 steps with no change since; step12 failed.
+$WalkOnly = [ordered]@{ step12 = 'Why again: round 46 gave Fail, no comment; no change since (cause not proved).' }
+<#
+.SYNOPSIS
+r19: the click-through of this round: Get-WalkPlan for the cards of $WalkOnly only, each step text followed by the reason
+that $WalkOnly gives for that card. Takes nothing.
+.OUTPUTS
+The steps, as Get-WalkPlan gives them.
+#>
+function Get-RoundWalk {
+  $plan = @(Get-WalkPlan @($WalkOnly.Keys | ForEach-Object { [string]$_ }))
+  foreach ($s in $plan) { if ($s.Via -ne 'look' -and $WalkOnly.Contains([string]$s.Key)) { $s.Text = [string]$s.Text + ' ' + [string]$WalkOnly[[string]$s.Key] } }
+  return $plan
+}
+# The click-through as -PlanOnly lines (tests/run.sh reads them): WALK <n> <card> <via>: <text> for the steps this round
+# walks, then (r19) WALKALL <n> <card> <via>: <text> for the whole plan of every card, which the path checks still read.
+function Get-WalkPlanText {
+  for ($i = 0; $i -lt $Walk.Count; $i++) { ConvertTo-PlanText ('WALK ' + ($i + 1) + ' ' + $Walk[$i].Key + ' ' + $Walk[$i].Via + ': ' + $Walk[$i].Text) }
+  $all = @(Get-WalkPlan); for ($i = 0; $i -lt $all.Count; $i++) { ConvertTo-PlanText ('WALKALL ' + ($i + 1) + ' ' + $all[$i].Key + ' ' + $all[$i].Via + ': ' + $all[$i].Text) }
+}
 # R14: the click-through of this run; none with -Again (the second run of the round has its one reopen check only).
-$Walk = $(if ($Again) { @() } else { @(Get-WalkPlan) })
+$Walk = @($(if ($Again) { @() } else { Get-RoundWalk }))   # r19: @() keeps a walk of one step an array

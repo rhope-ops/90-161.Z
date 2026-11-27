@@ -227,19 +227,17 @@ function Stop-SignInReport {
   if (-not $PSCmdlet.ShouldProcess('the window report of this process', 'Stop')) { return }
   try { if ('RadeSignIn.Report1' -as [type]) { [RadeSignIn.Report1]::End($true) } } catch { $null = $_ }   # no report: nothing to stop
 }
-# engine-v46 (90-161.Z R45 finding 2; the PFM, 2026-11-26: "I want the window to be small when it appears"): before the
-# sign-in, the child process becomes DPI-aware (SetProcessDPIAware). Windows then draws the PnP sign-in window at its
-# own 1024 x 768 pixels; in a process that is not DPI-aware Windows stretches it 1.5 times at 150 % (1536 x 1152, taller
-# than a 1920 x 1128 work area). R45 T22 signed in this way (its window is DPI-aware) and the PFM saw the small window.
-# RADE does not move, size or watch the window (engine-v44). PnP draws the window on its own thread, so a per-thread
-# setting would not reach it; the setting is for the whole process, and it holds for the rest of the step (a form the
-# step shows later is drawn at real pixels too: it must scale itself, AutoScaleMode Dpi or Font). $env:RADE_SIGNIN_DPI
-# = '0' turns it off. Prints "SIGNIN-DPI aware=<yes|was|no|off>": yes (now aware), was (already aware), no (Windows did
-# not take it, or not Windows), off (turned off). Takes nothing.
+# engine-v47 (the PFM, 2026-11-26, from the R46 run: "SIGNIN-DPI aware=yes", then the sign-in window opened only after
+# about 90 s and 100 s; "dpiaware is clearly the culprit"): the DPI setting of engine-v46 is OFF unless
+# $env:RADE_SIGNIN_DPI = '1'. The RADE window sets '0' for its children (part 09), so an app's older copy of this block,
+# which turns it off only on '0', is off too. With it on, the child becomes DPI-aware (SetProcessDPIAware) before the
+# sign-in, so Windows draws the PnP window at its own pixels, not stretched (90-161.Z R45 finding 2); RADE does not move,
+# size or watch the window (engine-v44). Prints "SIGNIN-DPI aware=<yes|was|no|off>": yes (now aware), was (already
+# aware), no (Windows did not take it, or not Windows), off (not turned on). Takes nothing.
 function Set-SignInDpiAware {
   [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'None')]
   param()
-  if ($env:RADE_SIGNIN_DPI -eq '0') { return 'SIGNIN-DPI aware=off' }
+  if ($env:RADE_SIGNIN_DPI -ne '1') { return 'SIGNIN-DPI aware=off' }   # engine-v47: off unless turned on
   if (-not $PSCmdlet.ShouldProcess('this process', 'Make DPI-aware')) { return 'SIGNIN-DPI aware=no' }
   if ($env:OS -ne 'Windows_NT') { return 'SIGNIN-DPI aware=no' }
   try {
@@ -259,7 +257,7 @@ function Set-SignInDpiAware {
 # Throws when the sign-in fails, as Connect-PnPOnline does. Takes the site address.
 function Connect-RadeSite([string]$Site) {
   'STAGE signin'
-  Set-SignInDpiAware   # engine-v46: the sign-in window at its real pixels (R45 finding 2)
+  Set-SignInDpiAware   # engine-v47: prints aware=off unless RADE_SIGNIN_DPI=1 (the DPI sign-in of engine-v46 opened its window after about 90 s)
   $t0 = Get-Date; Start-SignInReport   # engine-v44: no size watch
   try { $null = & { Connect-PnPOnline -Url $Site -UseWebLogin -ErrorAction Stop } *>&1 }
   finally { Stop-SignInReport }   # no report after the sign-in

@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r13, module "person": the parts Person (the second person for test T4), Ask (the round asks that
+  90-161.Z Task 21 probe r14, module "person": the parts Person (the second person for test T4), Ask (the round asks that
   person for a new row, R36) and Clean (removes the person, the list and the library again).
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r13.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r14.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets ($site, $dir, $StateName, $ListTitle, $ListFolder, $LibTitle, $LibFolder,
   $TestDir, $NoLaunch) and the helpers of the module "common". Outputs: result lines through Add-Item.
   The second person's e-mail address is read in a small window and used in memory only: it is never written to a file,
@@ -14,7 +14,7 @@
           row form link); nothing on the site. Clean: removes that person from Visitors and PFM Office again, moves the probe list
           and library to the site Recycle Bin, deletes the state file.
   Credentials: none of its own (the main file signs in); no password is asked for.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r13.ps1 -Part Person (or Ask, or Clean) loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r14.ps1 -Part Person (or Ask, or Clean) loads it.
 #>
 
 function Read-PersonAddress {
@@ -22,10 +22,11 @@ function Read-PersonAddress {
   # function writes nothing. In a test run (-TestDir) a fake address may come from the test.
   # r13 (the PFM, 26 Nov 26, R45: "maybe i should have the option to say skip"): the window has OK and Skip. Skip, an
   # empty box or closing the window gives '' (the caller then gives SKIP, not FAIL). The window scales itself
-  # (AutoScaleMode Dpi): after the engine-v46 sign-in block the process is DPI-aware.
+  # (AutoScaleMode Dpi), so it draws right in a DPI-aware process too.
+  # r14 (R46 finding 4: the box cut the prompt at "stays on this comput"): a prompt of 2 short lines, at most 120 characters
+  # (tests/ps/Test-T30.ps1 checks it). The RADE step card says that the address stays on this computer.
   if ($TestDir -and $null -ne $env:T21_TEST_ADDRESS) { return ([string]$env:T21_TEST_ADDRESS).Trim() }
-  $prompt = 'Type the e-mail address of the second person for test T4 (a person who is not you), then select OK. ' +
-    'It is used once, stays on this computer and is not saved or sent. If nobody can help today, select Skip.'
+  $prompt = 'Type the e-mail address of the second person (not you), then select OK. If nobody can help today, select Skip.'
   try {
     Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop; Add-Type -AssemblyName System.Drawing -ErrorAction Stop
     $f = New-Object System.Windows.Forms.Form

@@ -1,15 +1,15 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 21 probe r13, module "common": the helpers every part of the probe uses.
+  90-161.Z Task 21 probe r14, module "common": the helpers every part of the probe uses.
 .DESCRIPTION
-  Loaded by 90161Z-T21-probe-r13.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
+  Loaded by 90161Z-T21-probe-r14.ps1 (dot-sourced from the same folder); it does nothing when it is run alone.
   Inputs: the values the main file sets in its own scope ($site, $dir, $lines, $passed, $failed, $WaitMinutes, $pollEvery,
   $StateName). Outputs: functions for the SharePoint REST calls, the result lines, the NOW lines, the wait loop, the
   second person's saved numbers and the sign-in.
   Network: the one SharePoint site of the main file ($site), through the PnP.PowerShell connection.
   Writes: none on the site by itself (Invoke-Rest sends what a part asks for); the result lines in memory.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-ProbeSite); nothing is stored.
-  Run: not alone; powershell.exe -File 90161Z-T21-probe-r13.ps1 -Part <part> loads it.
+  Run: not alone; powershell.exe -File 90161Z-T21-probe-r14.ps1 -Part <part> loads it.
 #>
 
 <#
@@ -149,10 +149,15 @@ function Connect-ProbeSite {
   $mod = @(Get-Module -ListAvailable -Name PnP.PowerShell | Sort-Object Version -Descending)
   if (-not $mod.Count) { throw 'PNP not installed: PnP.PowerShell is not on this computer.' }
   $null = & { Import-Module PnP.PowerShell -RequiredVersion $mod[0].Version -DisableNameChecking } *>&1
-  Write-Now 'Signing in to the site (if a sign-in window opens, sign in with your CAC)'
-  # R46: the sign-in window at its real size (RADE engine-v46 block); the SIGNIN-DPI line goes to the log.
-  if (Get-Command Set-SignInDpiAware -ErrorAction SilentlyContinue) { Write-Host (Set-SignInDpiAware) }
-  $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
+  # r14 (R47 plan; R46 finding 1): no DPI call here any more (RADE engine-v47 turns the DPI sign-in off).
+  # r14 (R47: fewer CAC sign-ins): in a T30 batch an earlier part of this process signed in to this site; that sign-in is
+  # used again (Get-PnPConnection), with no second sign-in window. Outside a batch no connection is there, so it signs in.
+  $now = $null; try { $now = Get-PnPConnection -ErrorAction Stop } catch { $now = $null }   # no connection: sign in below
+  if ($now -and ([string]$now.Url).TrimEnd('/') -eq ([string]$script:site).TrimEnd('/')) { $script:lines.Add('SIGNIN reused: this process is signed in to the site already') }
+  else {
+    Write-Now 'Signing in to the site (if a sign-in window opens, sign in with your CAC)'
+    $null = & { Connect-PnPOnline -Url $script:site -UseWebLogin -ErrorAction Stop } *>&1
+  }
   $script:lines.Add('ROUTE web-login PASS')
   Write-Now 'Reading the lists of the site'
   $siteLists = Get-SiteList
