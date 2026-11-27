@@ -11,7 +11,7 @@ Updated: 27 Nov 26 (R48 r1).
 **Time:** about 45 minutes (an estimate).
 **Changes:** on the computer, the OneDrive folder RADE\90-161.Z: scripts in T20, T21, T22, T26, T27, T29 and T30, result files in T20, T22 and T26, 1 screen picture per card, and backups of the 12 test site lists. The install (Repair) adds what is missing on the test site and writes the desktop shortcut Kanon again. On the test site, the round writes fake rows. Restore writes fake rows. The last step of the round moves the fake rows to the site Recycle Bin.
 **Steps:**
-1. On the GitHub page github.com/rhope-ops/90-161.Z, below **Summary**, click **Open the script**. The script opens as plain text.
+1. On github.com/rhope-ops/90-161.Z, below **Summary** (not from the bundle), click **Open the script** (not from the bundle). The script opens as plain text.
 2. On the script page, press `Ctrl+A`, then `Ctrl+C`.
 3. From the Start menu, open **Windows PowerShell ISE** (not from the bundle). Do not open **Run as administrator** (not from the bundle).
 4. In ISE (not from the bundle), click **File** > **New** (not from the bundle), then press `Ctrl+V`.
@@ -25,9 +25,9 @@ Updated: 27 Nov 26 (R48 r1).
 12. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
 13. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
 14. On the card that starts with **Ready to install**, if the box **Shortcut in** shows, do not change the folder in it.
-15. Click **Install (Enter)**. The card **Installing Kanon 0.1.0.** shows.
+15. Click the button that starts with **Install**. The card **Installing Kanon 0.1.0.** shows.
 16. Each time a CAC sign-in window opens during the install, sign in with your CAC.
-17. On the card **Installing Kanon 0.1.0.**, click **Cancel (Esc)**. Write down if the card **Stop the install?** opens.
+17. When the card **Installing Kanon 0.1.0.** shows, click **Cancel (Esc)** at once. Write down if the card **Stop the install?** opens.
 18. If the card **Stop the install?** shows, click **Keep installing**. Do not click **Stop the install**.
 19. Write down the color of the line under the band at the top of the RADE window.
 20. When the step **Make the 12 lists of 90-161.Z on the site** runs, write down where the line **Making list 1 of 12** shows. It can be under the bar of the step or in the band.
@@ -41,12 +41,12 @@ Updated: 27 Nov 26 (R48 r1).
 28. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
 29. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
 30. On the card **Ready to run round R48.**, write down the text of the main button.
-31. In the RADE window, press `Windows logo key+Left arrow` (not from the bundle). Write down if the buttons are one on top of the other, or side by side.
+31. In the RADE window, press `Windows logo key+Left arrow` (not from the bundle). Write down if the buttons of the card are one on top of the other, or side by side.
 32. Double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
 33. Press `Enter`. Write down if the card **Running round R48.** shows.
-34. If the card **Running round R48.** does not show, click the main button of the card.
-35. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: after 3 minutes the step stops and the round goes on.
-36. Do each step that a card shows. Stop when the card **Round R48 is done.**, **The round needs review.** or **The round stopped.** shows.
+34. If the card **Running round R48.** does not show, click **Run** or the button that starts with **Resume**.
+35. Each time a sign-in window opens, sign in with your CAC. If the sign-in window does not respond, do nothing: after 3 minutes the step stops and the round goes on.
+36. Do each step that a card shows. Stop when the card **Round R48 is done.**, **The round needs review.**, **The round stopped.** or a card that starts with **A step failed:** shows.
 37. In the Outlook draft with the subject that starts with `90161Z R48`, click **Send** (not from the bundle).
 38. If no Outlook draft opens, do the e-mail line of the end card.
 
