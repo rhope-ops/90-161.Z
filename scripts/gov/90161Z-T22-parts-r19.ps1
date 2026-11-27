@@ -53,7 +53,23 @@ $wn.ChipTops = {
   return @{ Chip = $c; Text = $t } }
 # Keeps chip $Chip and the text box $Text beside it for the measure part and the layout self-check (R7 W3); $Kind
 # names the block (check, list, rows, chips, notice).
-$wn.KeepChip = { param($Chip, $Text, [string]$Kind) $wn.ChipRows += @{ Chip = $Chip; Text = $Text; Kind = $Kind } }
+# $Row (R48): the row panel when the chip is level with the row's middle (list and rows chips), else $null (level with the text's first line).
+$wn.KeepChip = { param($Chip, $Text, [string]$Kind, $Row = $null) $wn.ChipRows += @{ Chip = $Chip; Text = $Text; Kind = $Kind; Row = $Row } }
+$wn.CenterChip = {
+  <#
+  .SYNOPSIS
+  R48 (R47 finding 2, the PFM: "aligned in the midpoint of the row itself, like the Open button"): puts a status chip on the vertical middle of its row.
+  .DESCRIPTION
+  Call it after the row panel is fitted. The row grows when it is shorter than the chip and 4 px at 100 % above and below it; then the chip's top
+  is half of the row's height less half of the chip's, rounded to a pixel, so the two middles differ by half a pixel at most, at any scale.
+  .PARAMETER Chip
+  The chip (a child of the row panel).
+  .PARAMETER Row
+  The row panel (fitted).
+  #>
+  param($Chip, $Row)
+  $Row.Height = [math]::Max($Row.Height, $Chip.Height + 2 * (& $wn.Sc 4))
+  $Chip.Top = [int][math]::Round(($Row.Height - $Chip.Height) / 2.0) }
 # Adds a card text box (selectable, read-only, no tab stop) with its text, font, color, top gap, wrap width and
 # accessible name to $Parent; $Back is its background when it is not white. Gives back the box.
 $wn.Txt = { param($Parent, [string]$Text, $Font, $Color, [int]$Top, [int]$W, [string]$Name, $Back)
@@ -253,13 +269,14 @@ $wn.Blocks.rows = {
     $a = & $wn.Txt $p $r[0] $ui.F.Small $ui.C.Ink 0 $lw 'Label' $null; $a.Location = [Drawing.Point]::new(0, (& $wn.Sc 8))
     # R16 (R42 finding 3: a status chip sat too near the line above it): the chip has the same gap above it as a text row (8 px at 100 %); the label goes down level with the chip
     if ($v) { $tops = & $wn.ChipTops $v.Height $a.Font ((& $wn.Sc 8) + [int][math]::Round(($v.Height - (& $wn.LineH $a.Font)) / 2.0))
-      $a.Location = [Drawing.Point]::new(0, $tops.Text); $v.Location = [Drawing.Point]::new(($W - $v.Width), $tops.Chip); [void]$p.Controls.Add($v); & $wn.KeepChip $v $a 'rows' }
+      $a.Location = [Drawing.Point]::new(0, $tops.Text); $v.Location = [Drawing.Point]::new(($W - $v.Width), $tops.Chip); [void]$p.Controls.Add($v); & $wn.KeepChip $v $a 'rows' $p }
     else {
       # R18 (the PFM, 26 Nov 26, R43 and R45 comment 1): every text value, one line or wrapped, starts at the left edge of the value column
       # (x = W - vw, the same for every row); a chip stays at the right. A number value such as "0" is left too: one edge for all text.
       # The wrap width is the column less 8 px: a text box is its wrap width + 4 px wide, or its text + 8 px on one line ($ui.TextSize), so it never ends past the panel.
       $v = & $wn.Txt $p $r[1] $ui.F.SmallB $ui.C.Ink 0 ($vw - (& $wn.Sc 8)) 'Value' $null; $v.Location = [Drawing.Point]::new(($W - $vw), (& $wn.Sc 8)) }
-    & $wn.Fit $p 8; [void]$Parent.Controls.Add($p); $first = $false } }
+    & $wn.Fit $p 8; if ($r[2]) { & $wn.CenterChip $v $p }   # R48: a chip is on the row's vertical middle
+    [void]$Parent.Controls.Add($p); $first = $false } }
 $wn.ListRow = {
   <#
   .SYNOPSIS
@@ -281,15 +298,15 @@ $wn.ListRow = {
   $tw = $W - $Tx - $bw - (& $wn.Sc 16) - (& $wn.Sc 8)
   $y = & $wn.Sc 8
   $t1 = & $wn.Txt $p $It.Title $ui.F.SmallB $ui.C.Ink 0 $tw 'Item' $null
-  if ($It.Chip) {   # R7 (W3): the chip's middle is the title's first-line middle ($wn.ChipTops), not 7 px lower
-    $cp = & $wn.Chip $It.Chip[0] $It.Chip[1] $ui.C.White; $tops = & $wn.ChipTops $cp.Height $t1.Font $y; $y = $tops.Text
-    $cp.Location = [Drawing.Point]::new(0, $tops.Chip); [void]$p.Controls.Add($cp); & $wn.KeepChip $cp $t1 'list' }
+  if ($It.Chip) {   # R48 (R47 finding 2): the chip is placed on the row's vertical middle after the row is fitted ($wn.CenterChip); the title keeps its top
+    $cp = & $wn.Chip $It.Chip[0] $It.Chip[1] $ui.C.White; $cp.Location = [Drawing.Point]::new(0, 0); [void]$p.Controls.Add($cp); & $wn.KeepChip $cp $t1 'list' $p }
   $t1.Location = [Drawing.Point]::new($Tx, $y); $y = $t1.Bottom + (& $wn.Sc 2)
   if ($It.Sub) { $t2 = & $wn.Txt $p $It.Sub $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t2.Location = [Drawing.Point]::new($Tx, $y); $y = $t2.Bottom + (& $wn.Sc 2) }
   if ($It.Detail) { $t3 = & $wn.Txt $p $It.Detail $ui.F.Small $ui.C.Gray 0 $tw 'Item detail' $null; $t3.Location = [Drawing.Point]::new($Tx, $y); $y = $t3.Bottom }
   if ($btn) {
     $btn.Location = [Drawing.Point]::new(($W - $bw - (& $wn.Sc 4)), [math]::Max((& $wn.Sc 6), [int](($y + (& $wn.Sc 8) - $btn.Height) / 2))); [void]$p.Controls.Add($btn) }
-  & $wn.Fit $p 8; [void]$Parent.Controls.Add($p) }
+  & $wn.Fit $p 8; if ($It.Chip) { & $wn.CenterChip $cp $p }
+  [void]$Parent.Controls.Add($p) }
 # A list of rows with a line between them; the texts of all rows start after the widest chip.
 $wn.Blocks.list = { param($Parent, $b, [int]$W)
   $first = $true

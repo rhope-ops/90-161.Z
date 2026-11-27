@@ -209,15 +209,15 @@ $levelPubs = @('home', 'empty', 'queue')
 # R8 (W7): the cards whose grids must have their column heads measured (the 3 pub grids and the Wave 1 answers).
 $levelHeads = @('home', 'empty', 'queue', 'waves')
 # R7 (W3): the kinds of chip beside text each card must have measured ("Needs You Today" is the list of Your Work).
-$chipKinds = @{ home = @('list'); step8 = @('check', 'rows', 'chips'); waves = @('rows', 'chips'); step11 = @('rows', 'chips'); settings = @('rows') }
+$chipKinds = @{ home = @('list'); step8 = @('check', 'rows', 'chips'); waves = @('rows', 'chips'); step11 = @('rows', 'chips'); step12 = @('rows', 'chips'); settings = @('rows') }
 <#
 .SYNOPSIS
 Checks the chips beside text of one card at one scale (D3 of R6; R7 W3: every kind): each chip's middle is within the
-tolerance of its first text line's middle, and the card has each kind of $chipKinds it must have.
+tolerance of its first text line's middle (R48: a list or rows chip: of its row's middle; the measured Ref says which), and the card has each kind of $chipKinds it must have.
 .PARAMETER Key
 The card key.
 .PARAMETER Chips
-The measured chips (Chip, Kind, ChipMid, Line, LineMid).
+The measured chips (Chip, Kind, ChipMid, Ref, Line, LineMid).
 .PARAMETER Tol
 The tolerance in pixels.
 .PARAMETER At
@@ -228,8 +228,8 @@ function Test-ChipLevel([string]$Key, $Chips, [double]$Tol, [string]$At) {
     $n = @($Chips | Where-Object { [string]$_.Kind -eq $want }).Count
     Test-That ($At + ' W3 ' + $Key + ': ' + $want + ' chips measured') ($n -gt 0) ('chips of this kind: ' + $n + '; all chips: ' + @($Chips).Count) }
   foreach ($x in $Chips) { $d = [math]::Abs([double]$x.ChipMid - [double]$x.LineMid)
-    $nums = 'chip middle ' + $x.ChipMid + '; first line "' + $x.Line + '" middle ' + $x.LineMid + '; difference ' + $d + ' px'
-    Test-That ($At + ' D3/W3 ' + $Key + ': chip "' + $x.Chip + '" (' + $x.Kind + ') level with its first text line (+-' + $Tol + ' px)') ($d -le $Tol) $nums }
+    $nums = 'chip middle ' + $x.ChipMid + '; ' + $x.Ref + ' of "' + $x.Line + '" middle ' + $x.LineMid + '; difference ' + $d + ' px'
+    Test-That ($At + ' D3/W3 ' + $Key + ': chip "' + $x.Chip + '" (' + $x.Kind + ') level with its ' + $x.Ref + ' (+-' + $Tol + ' px)') ($d -le $Tol) $nums }
 }
 <#
 .SYNOPSIS

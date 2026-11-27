@@ -229,7 +229,9 @@ $wn.LevelFacts = {
     $crumb['LinkMid'] = (& $wn.TextMid $l); $crumb['RestMid'] = (& $wn.TextMid $t) }
   $chips = @(foreach ($r in @($wn.ChipRows)) {
       $c = [ordered]@{}; $c['Chip'] = [string]$r.Chip.Text; $c['Kind'] = [string]$r.Kind; $c['ChipMid'] = (& $wn.TextMid $r.Chip)
-      $c['Line'] = [string]$r.Text.Text; $c['LineMid'] = (& $wn.TextMid $r.Text); $c })
+      # R48: a list or rows chip is compared with the middle of its row (Ref 'row'); every other chip with its text's first line.
+      $c['Ref'] = $(if ($r.Row) { 'row' } else { 'first line' }); $c['Line'] = [string]$r.Text.Text
+      $c['LineMid'] = $(if ($r.Row) { (& $wn.PageTop $r.Row) + $r.Row.Height / 2.0 } else { (& $wn.TextMid $r.Text) }); $c })
   $f = [ordered]@{}; $f['Caps'] = $caps; $f['Crumb'] = $crumb; $f['Chips'] = $chips; $f['Pubs'] = @(& $wn.LevelPubs); $f['Heads'] = @(& $wn.LevelHeads); $f['Edges'] = @(& $wn.LevelEdges)
   return $f }
 # R7 (W1): the cut cells of one measured pub grid $P ($wn.LevelPubs), one short text per row: "row <n> number 120>96"
@@ -272,7 +274,7 @@ $wn.LevelBad = {
   if ($k -and ($k.LinkSize -ne $k.RestSize -or [math]::Abs($k.LinkMid - $k.RestMid) -gt $Tol)) {
     $out += ('LAYOUT ' + $Card + ' D2 crumb: link ' + $k.LinkSize + ' pt middle ' + $k.LinkMid + ', rest ' + $k.RestSize + ' pt middle ' + $k.RestMid) }
   foreach ($c in @($F.Chips)) { if ([math]::Abs($c.ChipMid - $c.LineMid) -gt $Tol) {
-      $out += ('LAYOUT ' + $Card + ' W3 chip "' + $c.Chip + '" (' + $c.Kind + ') middle ' + $c.ChipMid + ', its first text line ' + $c.LineMid) } }
+      $out += ('LAYOUT ' + $Card + ' W3 chip "' + $c.Chip + '" (' + $c.Kind + ') middle ' + $c.ChipMid + ', its ' + $c.Ref + ' middle ' + $c.LineMid) } }
   foreach ($p in @($F.Pubs)) {
     if ($p.Head -and [int]$p.HeadW -gt [int]$p.HeadHave) {
       $out += ('LAYOUT ' + $Card + ' W1 grid ' + $p.Grid + ': the head "' + $p.Head + '" needs ' + $p.HeadW + ' px, has ' + $p.HeadHave) }
