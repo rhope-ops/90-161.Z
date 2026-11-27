@@ -247,8 +247,9 @@ $wn.Blocks.rows = {
   .DESCRIPTION
   R7 (R32 W3): a chip's middle is the middle of its label's first line ($wn.ChipTops; it was about 2 px lower), and
   the chip is kept with its label in $wn.ChipRows ($wn.KeepChip).
-  R18 (R45, the PFM, 26 Nov 26): a text value starts at the left edge of the value column (one edge for every row); a chip stays at the
-  right; a chip row's label has the room the chip leaves, so its row is only as tall as its own text.
+  R18 (R45, the PFM, 26 Nov 26): a text value starts at the left edge of the value column (one edge for every row).
+  R48 (R47 finding 2, the PFM, 27 Nov 26: "move the label to the same left edge as the date ... yes that's the idea"): a chip
+  starts at that edge too, so every value of the block, text or chip, starts on one edge; a long label can wrap to 2 lines.
   .PARAMETER Parent
   The card that gets the rows.
   .PARAMETER b
@@ -261,15 +262,15 @@ $wn.Blocks.rows = {
   foreach ($r in @($b.Rows)) {
     if (-not $first) { & $wn.Rule $Parent $W 0 }
     $p = & $wn.Panel $W 0
-    # R18 (the PFM, 26 Nov 26, R45 comment 2): a row with a chip gives its label all the room the chip leaves (a label of 25 to 28
-    # letters measured as 2 lines in half the width, and the row kept an empty second line); a row with a text value splits the width in half.
+    # R48 (the PFM, 27 Nov 26): every row splits the width in half, a chip row too, so a chip starts on the value edge with the dates.
     $v = $null
-    if ($r[2]) { $v = & $wn.Chip $r[2] $r[1] $ui.C.White; $lw = $W - $v.Width - $gap } else { $lw = [int]($W * 0.5) }
+    if ($r[2]) { $v = & $wn.Chip $r[2] $r[1] $ui.C.White }
+    $lw = [int]($W * 0.5)
     $vw = $W - $lw - $gap
     $a = & $wn.Txt $p $r[0] $ui.F.Small $ui.C.Ink 0 $lw 'Label' $null; $a.Location = [Drawing.Point]::new(0, (& $wn.Sc 8))
     # R16 (R42 finding 3: a status chip sat too near the line above it): the chip has the same gap above it as a text row (8 px at 100 %); the label goes down level with the chip
     if ($v) { $tops = & $wn.ChipTops $v.Height $a.Font ((& $wn.Sc 8) + [int][math]::Round(($v.Height - (& $wn.LineH $a.Font)) / 2.0))
-      $a.Location = [Drawing.Point]::new(0, $tops.Text); $v.Location = [Drawing.Point]::new(($W - $v.Width), $tops.Chip); [void]$p.Controls.Add($v); & $wn.KeepChip $v $a 'rows' $p }
+      $a.Location = [Drawing.Point]::new(0, $tops.Text); $v.Location = [Drawing.Point]::new(($lw + $gap), $tops.Chip); [void]$p.Controls.Add($v); & $wn.KeepChip $v $a 'rows' $p }
     else {
       # R18 (the PFM, 26 Nov 26, R43 and R45 comment 1): every text value, one line or wrapped, starts at the left edge of the value column
       # (x = W - vw, the same for every row); a chip stays at the right. A number value such as "0" is left too: one edge for all text.
