@@ -347,12 +347,13 @@ Sync-WaveSummary @(@{ Status = 'Answered' }); $a = Get-WaveInfo; 'ONE ' + $a.Hea
 Sync-WaveSummary @(@{ Status = 'Answered' }, @{ Status = 'Waiting' }, @{ Status = 'Waiting' }); $c = Get-WaveInfo; 'THREE ' + $c.Head + ' | ' + $c.Chip + ' | ' + $c.Pill
 $w = @(Get-WalkPlan | Where-Object { $_.Via -eq 'look' }); 'LOOK ' + $w.Count + ' ' + $w[0].Target + ' | ' + $w[0].Text
 @(Get-WalkPlan | Where-Object { $_.Via -ne 'look' -and $_.Target }).Count.ToString() | ForEach-Object { 'OTHERTARGETS ' + $_ }
+Sync-WaveSummary @(); $z = Get-WaveInfo; 'ZERO ' + $z.Head + ' | ' + $z.Chip + ' | ' + $z.Pill   # R46 review: the 0-row card (last: it changes the head line)
 """
 
 
 def check_r18():
     """R18 (R45, the PFM, 26 Nov 26): the waves card counts its head line, chip and pill from the rows its grid shows; the look step
-    names its target; the grid reads its Count key by name; the rows block puts every text value on one edge; the bar wraps and frames.
+    names its target; with no rows they say so (R46 review); the grid reads its Count key by name; the rows block puts every text value on one edge; the bar wraps and frames.
     Takes nothing; raises AssertionError."""
     import tempfile
     d = tempfile.mkdtemp()
@@ -367,6 +368,8 @@ def check_r18():
         look = [l for l in o if l.startswith('LOOK ')]
         assert look and look[0].startswith('LOOK 1 Wave 1 answers | Screen ') and 'under the line "Wave 1: 1 of 3 offices have answered."' in look[0], look
         assert 'OTHERTARGETS 0' in o, o
+        # R46 review fix (dd3384c): with no rows, the head line, the chip and the pill say so; none keeps a fake count.
+        assert 'ZERO Wave 1: no office has answered yet. | No answers yet | 0 of 0' in o, o
     finally:
         shutil.rmtree(d, ignore_errors=True)
     grid = part('grid'); parts = part('parts'); bar = part('bar')
