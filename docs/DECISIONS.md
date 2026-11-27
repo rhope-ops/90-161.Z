@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-26 | R47 scope: Uninstall no-flows answer, fewer sign-ins, Back up and Restore write, cut prompt, walk step12 only, endorser steps kept with Skip, 4 engine-v47 look questions | PFM | docs/reviews/2026-11-26-plan-r47.md |
 | 2026-11-26 | Repeated tasks: a 'Why again:' line on each repeated task; no passed, unchanged task; the walk opens only changed or failed screens (R47 on) | PFM | Round skill section 2; question dialog in the RADE session, 2026-11-26 |
 | 2026-11-26 | RADE lock moves to release engine-v46 (RADE da41642, serial 32) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-26 | Name spot L3: "KANON" over "90-161.Z • <subtitle>"; no version, no RADE logo; shortcut "Kanon". Replaces older name spot rows. | PFM | docs/reviews/2026-11-26-plan-r46.md |
