@@ -32,6 +32,7 @@ AGENTS.md "Project rules" (Gov device, What people see, Round results) point her
 - Target: Windows PowerShell 5.1 (also runs on 7), Word 16 COM, PnP.PowerShell 1.12.0; no other modules. No elevated credentials (ISSM ruling, 2026-11-13); passwords only through Get-Credential at run time.
 - No reconnaissance: fixed hosts, the one site given, own flows only (Project rule).
 - Lint: `scripts/lint.sh <file>`; the pre-push hook lints changed files.
+- Repeated tasks (the PFM, 2026-11-26, rounds R47 and later): Each go.md task and each runner step card that repeats a task from an earlier round shows the line 'Why again: <the last round that ran it and its result>; <what changed since: a fixed finding, a changed file, a new engine, or a part not proved yet>.' A task that passed, with no change since, is not in the round. The window walk opens only the screens that changed or failed since the last round that passed them, and names the change for each screen.
 
 ## 3. Round definition
 
