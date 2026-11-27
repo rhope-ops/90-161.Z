@@ -212,7 +212,8 @@ function Invoke-BatchPart($Step, $Who, [string]$PartTestRoot) {
   if ($Step.Label) { $partArgs.Label = $Step.Label }
   if ($PartTestRoot) { $partArgs.TestDir = Join-Path $PartTestRoot $Step.Entry.Dir; if ($Step.Entry.NoLaunch) { $partArgs.NoLaunch = $true } }
   $global:LASTEXITCODE = 0
-  try { & $Step.File @partArgs; return [int]$LASTEXITCODE }
+  # A line that a part leaves on the output stream goes to the screen too, so this function gives back only the exit code.
+  try { & $Step.File @partArgs | ForEach-Object { Write-Host ([string]$_) }; return [int]$LASTEXITCODE }
   catch {
     $why = ConvertTo-Masked (Hide-Site ([string]$_) ([string]$env:RADE_SITE)) $Who.Secret
     Write-Host ('STOPPED: the part ' + $Step.Name + ' did not run to its end: ' + $why.Substring(0, [Math]::Min(300, $why.Length)))

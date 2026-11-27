@@ -41,6 +41,7 @@ $app = Split-Path -Parent $PSScriptRoot
 $call = (Split-Path -Leaf $PSScriptRoot) + ' ' + $Part + ' ' + $Label + ' id=' + $Id + ' nopause=' + [bool]$NoPause + ' keep=' + $env:KANON_KEEP_SIGNIN
 Add-Content -LiteralPath (Join-Path $app 'calls.txt') -Value $call
 if ($Part -eq 'Rows') { throw 'stub part threw' }
+'OUT stub ' + $Part   # a line on the output stream (not Write-Host): the batch must show it and still read exit code 0
 Write-Host ('ITEM stub ' + $Part + ' PASS')
 $f = Join-Path $app ('exit-' + $Part + '.txt'); if (Test-Path -LiteralPath $f) { exit ([int](Get-Content -LiteralPath $f)) }
 exit 0
@@ -70,6 +71,7 @@ try {
     'T26 Make  id=tester01 nopause=True keep=1', 'T27 Install before id=tester01 nopause=True keep=1')
   Test-That 'the parts run in order, in their task folders, with -Id, -NoPause, -Part, -Label and the keep signal' ($r.Code -eq 0 -and
       ($r.Calls -join '|') -ceq ($want -join '|')) (($r.Calls -join '|') + ' / ' + ($r.Out -join '|'))
+  Test-That 'a line a part leaves on the output stream is shown, and the exit code stays 0' ($r.Code -eq 0 -and $r.Out -contains 'OUT stub Person') ($r.Out -join '|')
   Test-That 'the keep signal is gone after the batch; the batch signs out once' (-not $env:KANON_KEEP_SIGNIN -and $global:SignOuts -eq 1) ('signouts=' + $global:SignOuts)
   $own = @($r.Out | Where-Object { $_ -match '^(TASK T30|NOW Part|BATCH )' })
   Test-That 'the batch prints TASK, a NOW and a BATCH line per part and BATCH done; its own lines hold no PASS, FAIL or SKIP word' ($own.Count -eq 12 -and

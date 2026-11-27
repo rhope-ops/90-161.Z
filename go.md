@@ -31,7 +31,7 @@ Updated: 27 Nov 26 (R47 r1).
 18. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
 19. On the screen **Which application do you want to run?**, read the text under each choice.
 20. Press `Windows logo key+Left arrow` (not from the bundle). The RADE window fills the left half of the screen.
-21. Read the text under each choice again, then press `Windows logo key+Up arrow` (not from the bundle).
+21. Read the text under each choice again, then double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
 22. Click the row **90-161.Z R47**. Wait until a card shows (up to 2 minutes).
 23. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
 24. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.

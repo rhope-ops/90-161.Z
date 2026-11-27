@@ -34,7 +34,7 @@
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell (none for Local).
   Writes: on the site, the above; on this computer the T27 folder (the result file) and, for Local, 1 note file in the T22 folder.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T27-<part>[-<label>]-r2.txt in the T27 folder. Last line: LIFECYCLE <part> done: passed=<n> skipped=<n> failed=<n>.
+  Output: 90161Z-T27-<part>[-<label>]-r3.txt in the T27 folder. Last line: LIFECYCLE <part> done: passed=<n> skipped=<n> failed=<n>.
   Exit 1 when a part has a FAIL item or could not run (sign-in, missing list or module, made list not accepted).
   Run: powershell.exe -NoProfile -File 90161Z-T27-lifecycle-r3.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
@@ -47,7 +47,7 @@
   Test runs only: the folder to use instead of the T27 folder (its parent holds the T22 and T26 folders of the test).
 .PARAMETER Label
   A word (lower-case letters) for the result file name, so a part that runs twice in a round keeps both files: Install with the label
-  before writes 90161Z-T27-install-before-r2.txt.
+  before writes 90161Z-T27-install-before-r3.txt.
 #>
 param([string]$Id, [Parameter(Mandatory = $true)][ValidateSet('Lists', 'Access', 'Local', 'Gone', 'Install', 'Step')][string]$Part,
   [switch]$NoPause, [string]$TestDir, [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')

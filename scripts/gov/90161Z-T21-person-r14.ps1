@@ -22,7 +22,7 @@ function Read-PersonAddress {
   # function writes nothing. In a test run (-TestDir) a fake address may come from the test.
   # r13 (the PFM, 26 Nov 26, R45: "maybe i should have the option to say skip"): the window has OK and Skip. Skip, an
   # empty box or closing the window gives '' (the caller then gives SKIP, not FAIL). The window scales itself
-  # (AutoScaleMode Dpi): after the engine-v46 sign-in block the process is DPI-aware.
+  # (AutoScaleMode Dpi), so it draws right in a DPI-aware process too.
   # r14 (R46 finding 4: the box cut the prompt at "stays on this comput"): a prompt of 2 short lines, at most 120 characters
   # (tests/ps/Test-T30.ps1 checks it). The RADE step card says that the address stays on this computer.
   if ($TestDir -and $null -ne $env:T21_TEST_ADDRESS) { return ([string]$env:T21_TEST_ADDRESS).Trim() }

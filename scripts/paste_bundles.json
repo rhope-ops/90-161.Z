@@ -705,7 +705,7 @@
                         "5. In the box \"Type 90-161.Z to confirm\", type: 90-161.Z",
                         "6. Click \"Uninstall\". If a CAC sign-in window opens, sign in with your CAC.",
                         "7. Wait until the card \"Remove the flows of 90-161.Z in Power Automate\" shows.",
-                        "8. On that card, delete the flows, or click \"Done, or no flows there\" if there are none.",
+                        "8. On that card, do its lines, click \"Done, or no flows there\", then answer its question.",
                         "9. Wait until \"90-161.Z is uninstalled.\" shows.",
                         "10. Close the second RADE window.",
                         "If the result card is not \"90-161.Z is uninstalled.\", write down its first line. Close that window.",

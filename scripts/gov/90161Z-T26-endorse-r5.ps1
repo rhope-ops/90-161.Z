@@ -57,7 +57,7 @@
   Writes: on the site, the rows above; on this computer the T26 folder (the result file, the state file), the clipboard
           (Make) and, once, Config\90161Z-site.txt when the site address is typed outside RADE.
   Credentials: your own CAC sign-in through the PnP web login window (Connect-PnPOnline -UseWebLogin); nothing is stored.
-  Output: 90161Z-T26-endorse-<part>[-<label>]-r4.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
+  Output: 90161Z-T26-endorse-<part>[-<label>]-r5.txt in the T26 folder. Last line: ENDORSE <part> done: passed=<n> failed=<n>.
   Exit 1 only when the part could not run (sign-in, missing list or module).
   Run: powershell.exe -NoProfile -File 90161Z-T26-endorse-r5.ps1 -Part <part> (RADE does this).
 .PARAMETER Id
@@ -72,7 +72,7 @@
   Test runs only: do not use the clipboard.
 .PARAMETER Label
   A word (lower-case letters) for the result file name, so a part that runs twice in a round keeps both files: Make with the label
-  after writes 90161Z-T26-endorse-make-after-r4.txt (the run after the new install).
+  after writes 90161Z-T26-endorse-make-after-r5.txt (the run after the new install).
 #>
 param([string]$Id, [ValidateSet('Make', 'Read', 'Clean', 'Rows', 'Change', 'Check')][string]$Part, [switch]$NoPause, [string]$TestDir, [switch]$NoLaunch,
   [ValidatePattern('^[a-z]{0,12}$')][string]$Label = '')
