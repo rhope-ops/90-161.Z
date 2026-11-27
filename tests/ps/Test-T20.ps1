@@ -127,6 +127,10 @@ Test-That 'create: the MADE names are the own-name table of T27 (the 12 titles, 
 Test-That 'create: the MADE lines name the titles the site shows (every list of the site has a MADE line)' (@($ours | Where-Object { $mt -cnotcontains ('list: ' + $_.Title) }).Count -eq 0) ($mt -join '|')
 Test-That 'create: exit 0 and no problems' ($r.Code -eq 0 -and $r.Text -match 'PROVISION done, items with problems=0') $r.Text
 Test-That 'create: 12 list lines pass' (@($r.Out | Where-Object { $_ -match '^ITEM L\d\d-PFM\w+ PASS' }).Count -eq 12)
+# R48 (R47 finding 1): one NOW line before each list, N from 1 to the real count, the title the site shows, in payload order; the engine reads a line that starts with "NOW ".
+$nowLines = @($r.Out | Where-Object { $_ -match '^NOW Making list ' })
+$nowWant = @(1..12 | ForEach-Object { 'NOW Making list ' + $_ + ' of 12: ' })
+Test-That 'create: 12 NOW lines "Making list N of 12: <title>", N from 1 to 12, each title once and a title the site shows' ($nowLines.Count -eq 12 -and @(for ($i = 0; $i -lt 12; $i++) { $nowLines[$i].StartsWith($nowWant[$i]) -and (@($ours | Where-Object { $nowLines[$i] -ceq ($nowWant[$i] + $_.Title) }).Count -eq 1) }) -notcontains $false) ($nowLines -join '|')
 Test-That 'create: counts line' ($r.Text -match 'CREATED lists=12 fields=200 views=18 view-column requests=115 rows=93')
 Test-That 'site: 12 lists with display titles' ($ours.Count -eq 12 -and @($ours | Where-Object { $_.Title -like 'PFM *' }).Count -eq 12)
 Test-That 'site: 200 columns' ((($ours | ForEach-Object { $_.FieldList.Count - 6 }) | Measure-Object -Sum).Sum -eq 200)

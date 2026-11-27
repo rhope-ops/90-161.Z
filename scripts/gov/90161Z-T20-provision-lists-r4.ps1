@@ -322,12 +322,13 @@ try {
         $haveViews[$k] = @(Get-RestValue ($base + '/views?$select=Title&$top=500') | ForEach-Object { [string]$_.Title })
       }
     }
-    $lastList = ''
+    $lastList = ''; $listNo = 0
     foreach ($op in $p.fields) {
       $uri = [string]$op.uri
       if ($uri -notmatch "^_api/web/lists/getbytitle\('([^']+)'\)/(.+)$") { throw 'PAYLOAD column or view request not understood' }
       $k = $Matches[1]; $rest = $Matches[2]
-      if ($write -and $k -ne $lastList) { Write-Host ('  Columns and views of ' + $k + ' ...'); $lastList = $k }
+      # R48 (R47 finding 1): one NOW line before the columns and views of each list (the long part of the step); RADE shows "Making list N of 12: <title>".
+      if ($write -and $k -ne $lastList) { $listNo++; Write-Host ('NOW Making list ' + $listNo + ' of ' + $plan.Count + ': ' + $plan[$k].Display); $lastList = $k }
       $target = ''
       if ($found.ContainsKey($k)) { $target = "_api/web/lists(guid'" + $found[$k].Id + "')/" + $rest }
       if ($rest -eq 'fields/createfieldasxml') {
