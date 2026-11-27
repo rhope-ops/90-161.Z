@@ -59,31 +59,30 @@ Updated: 27 Nov 26 (R47 r1).
 4. In ISE (not from the bundle), click **File** > **New** (not from the bundle), then press `Ctrl+V`.
 5. Press `F5`. Wait until the RADE window opens (up to 2 minutes). Keep ISE open.
 6. If no RADE window opens in 2 minutes, stop. Post `No RADE window` in the Teams channel **RHOPE-OPS** (not from the bundle).
-7. In the RADE window, click the row **90-161.Z 0.1.0**.
-8. Do not click **Uninstall** now. If the card **Maintenance** shows, click **Maintenance**.
-9. If the card **Maintenance** shows again, with the rows **Diagnose**, **Back up** and **Restore**, click **Repair**.
-10. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-11. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
-12. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
-13. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
-14. On the card **Ready to install 90-161.Z 0.1.0.**, if the box **Shortcut in** shows, do not change the folder in it.
-15. Click **Install**. Wait until an end card shows (up to 5 minutes).
-16. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
-17. On the end card, click **Close**. The RADE window closes.
-18. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
-19. On the screen **Which application do you want to run?**, read the text under each choice.
-20. Press `Windows logo key+Left arrow` (not from the bundle). The RADE window fills the left half of the screen.
-21. Read the text under each choice again, then double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
-22. Click the row **90-161.Z R47**. Wait until a card shows (up to 2 minutes).
-23. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
-24. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
-25. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
-26. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
-27. On the card **Ready to run round R47.**, click **Run** (or **Resume at step**, if it shows).
-28. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: after 3 minutes the step stops and the round goes on.
-29. Do each step that a card shows. Stop when the card **Round R47 is done.** or **The round needs review.** shows.
-30. In the Outlook draft with the subject that starts with `90161Z R47`, click **Send**.
-31. If no Outlook draft opens, do the e-mail line of the end card.
+7. In the RADE window, click the row **Kanon 0.1.0**.
+8. If the card **Kanon 0.1.0 is installed.** shows, click the row **Repair**. Do not click **Uninstall**.
+9. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
+10. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
+11. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
+12. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
+13. On the card **Ready to install 90-161.Z 0.1.0.**, if the box **Shortcut in** shows, do not change the folder in it.
+14. Click **Install**. Wait until an end card shows (up to 5 minutes).
+15. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
+16. On the end card, click **Close**. The RADE window closes.
+17. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
+18. On the screen **What version of Kanon do you want to install?**, read the text under each choice.
+19. Press `Windows logo key+Left arrow` (not from the bundle). The RADE window fills the left half of the screen.
+20. Read the text under each choice again, then double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
+21. Click the row **Kanon R47**. Wait until a card shows (up to 2 minutes).
+22. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
+23. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
+24. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
+25. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
+26. On the card **Ready to run round R47.**, click **Run** (or **Resume at step**, if it shows).
+27. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: after 3 minutes the step stops and the round goes on.
+28. Do each step that a card shows. Stop when the card **Round R47 is done.** or **The round needs review.** shows.
+29. In the Outlook draft with the subject that starts with `90161Z R47`, click **Send**.
+30. If no Outlook draft opens, do the e-mail line of the end card.
 
 **Report:** 1 e-mail with the subject `90161Z R47 PASSED` or `90161Z R47 NEEDS REVIEW` and every file of the results folder.\
 **If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE (not from the bundle), post the first 10 words in the Teams channel **RHOPE-OPS** (not from the bundle). **Details (F2)** at the bottom of the RADE window shows all checks, steps and the log.
