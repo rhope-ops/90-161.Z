@@ -196,7 +196,7 @@
                     "dir": "T29",
                     "file": "90161Z-T29-signin-r2.ps1",
                     "minutes": 5,
-                    "note": "Why again: round 46 passed, but its window opened after 100 s (the engine-v46 DPI call); engine-v47 turns that call off. Signs in (CAC), then signs out. It stops by itself after 3 minutes.",
+                    "note": "Why again: this step passed in round 46, but its window opened after 100 s (the engine-v46 DPI call); engine-v47 turns that call off. Signs in (CAC), then signs out. It stops by itself after 3 minutes.",
                     "estimate": 1,
                     "help": "If the sign-in window does not show or does not respond, wait. The step stops after 3 minutes and keeps its result.",
                     "needs": [
@@ -212,7 +212,7 @@
                     "guide": [],
                     "dir": "T29",
                     "file": "",
-                    "note": "Why again: round 46 passed on engine-v46; engine-v47 changes the taskbar button, the title, the choices text and the card Maintenance. Pick the choice that agrees with what you saw.",
+                    "note": "Why again: this step passed in round 46 on engine-v46; engine-v47 changes the taskbar button, the title, the choices text and the card Maintenance. Pick the choice that agrees with what you saw.",
                     "estimate": 1,
                     "after": [
                         "T29 Sign-in test r2"
@@ -403,7 +403,7 @@
                     "file": "90161Z-T22-pfm-window-r19.ps1",
                     "args": "-Opened",
                     "minutes": 2,
-                    "note": "Why again: part of the window test (round 46 passed); the window walks one screen now. Reads the result of the window step and opens nothing.",
+                    "note": "Why again: part of the window test (this step passed in round 46); the window walks one screen now. Reads the result of the window step and opens nothing.",
                     "estimate": 1,
                     "help": "Send the results as they are.",
                     "doing": "Reading the result of the window step."
@@ -416,7 +416,7 @@
                     "file": "",
                     "note": "Why again: in round 46 Back up took 31 minutes (cause not proved; the DPI sign-in is likely); engine-v47 turns the DPI call off. A second RADE window saves the 12 lists. Nothing on the site changes.",
                     "guide": [
-                        "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
+                        "1. Double-click the desktop shortcut \"Kanon\". Count the seconds until a second RADE window opens.",
                         "2. In the second RADE window, click the row \"Kanon 0.1.0\".",
                         "3. Click the row \"Back up\". The card \"Back up is running.\" shows.",
                         "4. If no CAC sign-in window shows in 30 seconds, press Alt+Tab to find it.",
@@ -703,7 +703,7 @@
                         "5. In the box \"Type 90-161.Z to confirm\", type: 90-161.Z",
                         "6. Click \"Uninstall\". If a CAC sign-in window opens, sign in with your CAC.",
                         "7. Wait until the card \"Remove the flows of 90-161.Z in Power Automate\" shows.",
-                        "8. On that card, do its lines, click \"Done, or no flows there\", then answer its question.",
+                        "8. On that card, do its lines, then click \"Done, or no flows there\". Answer the question.",
                         "9. Wait until \"90-161.Z is uninstalled.\" shows.",
                         "10. Close the second RADE window.",
                         "If the result card is not \"90-161.Z is uninstalled.\", write down its first line. Close that window.",
@@ -742,10 +742,10 @@
                         "3. If \"One check needs you.\" shows, click \"Sign in and check site rights\". Sign in with your CAC.",
                         "4. If \"One check failed.\" or \"checks failed. This is the first.\" shows, do the line \"What to do\".",
                         "5. If you did that, click \"Run checks again\" or \"Sign in and check site rights\".",
-                        "6. If a check fails again, write down the first line of its card. Close the second RADE window.",
+                        "6. If a check fails again, write down the first line of its card. Close it, then do the lines below.",
                         "7. On the card \"Ready to install 90-161.Z 0.1.0.\", click \"Install\".",
                         "8. If a CAC sign-in window opens, sign in with your CAC.",
-                        "9. Wait until \"90-161.Z 0.1.0 is installed.\" shows (up to 5 minutes). Do not close the window.",
+                        "9. Wait until \"90-161.Z 0.1.0 is installed.\" shows (up to 5 minutes).",
                         "10. Click \"Close\". You see the first RADE window again.",
                         "If the end card is not \"90-161.Z 0.1.0 is installed.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",

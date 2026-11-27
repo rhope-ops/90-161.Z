@@ -28,9 +28,9 @@ Updated: 27 Nov 26 (R47 r1).
 15. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
 16. On the end card, click **Close**. The RADE window closes.
 17. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
-18. On the screen with the choices, read the text under each choice.
+18. On the screen with the choices, look at the text under each choice. Write down Yes if it shows to its end.
 19. Press `Windows logo key+Left arrow` (not from the bundle). The RADE window fills the left half of the screen.
-20. Read the text under each choice again, then double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
+20. Write down Yes or No for this width. Then double-click the title bar of the RADE window (not from the bundle). The window fills the screen.
 21. Click the row **Kanon R47**. Wait until a card shows (up to 2 minutes).
 22. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
 23. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
@@ -39,7 +39,7 @@ Updated: 27 Nov 26 (R47 r1).
 26. On the card **Ready to run round R47.**, click **Run** (or **Resume at step**, if it shows).
 27. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: after 3 minutes the step stops and the round goes on.
 28. Do each step that a card shows. Stop when the card **Round R47 is done.** or **The round needs review.** shows.
-29. In the Outlook draft with the subject that starts with `90161Z R47`, click **Send**.
+29. In the Outlook draft with the subject that starts with `90161Z R47`, click **Send** (not from the bundle).
 30. If no Outlook draft opens, do the e-mail line of the end card.
 
 **Report:** 1 e-mail with the subject `90161Z R47 PASSED` or `90161Z R47 NEEDS REVIEW` and every file of the results folder.
