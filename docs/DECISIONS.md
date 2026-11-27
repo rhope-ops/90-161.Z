@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-27 | R48: in a rows block of the Kanon window (step12 dates), a status chip starts on the value edge with the dates; every row splits in half, so a long label can wrap to 2 lines. Replaces R18 (chip at the right). | the PFM ("yes that's the idea", own message, 2026-11-27, on the REC: move the label to the same left edge as the date) | R18 (R45, 2026-11-26) |
 | 2026-11-27 | R49: the Kanon window reads its colors from the RADE engine tokens (engine/ui-tokens.json, light and dark sets) shipped in the bundle; no own copy of the colors. | the PFM ("i agree with your gap recommendation.", own message, 2026-11-27, on the REC: one source of the colors) | - |
 | 2026-11-27 | R49 scope: the Kanon (90-161.Z) window gets the RADE engine-v48 treatment: a polish pass and light/dark mode (USAF light, Fulcrum dark). Previews first. | the PFM ("for round 49 I'd like to see the Kanon pubs and forms gui given the same attention to detail and light/dark mode like we just did for RADE.", own message, 2026-11-27) | - |
 | 2026-11-26 | RADE lock moves to release engine-v47 (RADE fc26200, serial 33) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
