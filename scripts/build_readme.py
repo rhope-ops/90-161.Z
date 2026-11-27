@@ -113,7 +113,7 @@ def script_lines():
             '',
             'The steps to run it are at the top of the script.',
             '',
-            '**Round script:** `%s` · **Build:** `%s` (the RADE title bar shows it) · **Code:** `%s`' % (txt.name, build, code)]
+            '**Round script:** `%s` · **Build:** `%s` (Details (F2) in the RADE window shows it) · **Code:** `%s`' % (txt.name, build, code)]
 
 
 def tasks(text):
