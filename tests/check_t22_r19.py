@@ -379,7 +379,9 @@ def check_r18():
     grid = part('grid'); parts = part('parts'); bar = part('bar')
     assert "[string]$b['Count']" in grid and '$b.Count' not in grid, 'the grid must read its Count key by name ($b.Count on a hash table is its key count: the stray "4")'
     assert '[Drawing.Point]::new(($W - $vw), (& $wn.Sc 8))' in parts and '($W - $v.Width), (& $wn.Sc 8)' not in parts, 'a text value must start at the left edge of the value column'
-    assert '$lw = $W - $v.Width - $gap' in parts, 'a chip row gives its label the room the chip leaves'
+    # R48 (the PFM, 2026-11-27): a chip starts on the value edge with the dates: every row splits in half, and the chip's x is the text value's x ($W - $vw = $lw + $gap).
+    assert '$lw = [int]($W * 0.5)' in parts and '$lw = $W - $v.Width - $gap' not in parts, 'every rows-block row, a chip row too, splits the width in half'
+    assert '[Drawing.Point]::new(($lw + $gap), $tops.Chip)' in parts and '($W - $v.Width), $tops.Chip' not in parts, 'a chip must start on the value edge, with the text values'
     for x in ('$wn.FrameSet', '$wn.FramePaint', '$wn.FrameFind', '& $wn.OpenShow; & $wn.FrameSet', '$ww = [math]::Max(1, $tw - 2 * (& $wn.Sc 4))',
               '& $ui.SetWrap $wn.BarText $ww', '[Drawing.Drawing2D.PenAlignment]::Inset'):
         assert x in bar, 'the bar part lacks ' + x
