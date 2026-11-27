@@ -1,10 +1,50 @@
 # 90-161.Z: tasks for the work computer
 
-Updated: 26 Nov 26 (R46 r1 results).
+Updated: 27 Nov 26 (R47 r1).
 
 ## Open tasks
 
-No open task. The next round is R47.
+### Round R47 r1: fewer CAC sign-ins, the engine-v47 look, then Back up, Restore, Uninstall and a new install
+
+**Why again:** R46 needs review: Uninstall stopped at its flow step (the test install has no flows), Back up took 31 minutes, the sign-in window waited about 100 s, 1 prompt cut its text and screen step 12 failed. Since then: one CAC sign-in for each group of site steps, no DPI call, an answer for "no flows", a shorter prompt and a walk of screen step 12 only.
+**For:** proves fewer CAC sign-ins, the engine-v47 look (taskbar button, title, text of the choices, one card Maintenance), screen step 12, Back up, Restore with its write, Uninstall with no flows and a new install. A second person is optional: in the small window, click **Skip** if nobody can help.
+**Time:** about 75 minutes (an estimate).
+**Changes:** on the computer, the OneDrive folder RADE\90-161.Z: scripts and result files in T20, T21, T22, T26, T27, T29 and T30, 1 screen picture per card, and backups of the 12 test site lists. On the test site, the round writes fake rows, and, if a second person helps, adds that person to the Visitors group. Restore writes fake rows. Uninstall moves the 12 own lists to the site Recycle Bin. The new install makes the 12 lists again. The round makes 1 fake publication and moves it from step 1 to step 2. The last steps of the round move the fake rows to the site Recycle Bin.
+**Steps:**
+1. On the GitHub page github.com/rhope-ops/90-161.Z, below **Summary**, click **Open the script**. The script opens as plain text.
+2. On the script page, press `Ctrl+A`, then `Ctrl+C`.
+3. From the Start menu, open **Windows PowerShell ISE** (not from the bundle). Do not open **Run as administrator** (not from the bundle).
+4. In ISE (not from the bundle), click **File** > **New** (not from the bundle), then press `Ctrl+V`.
+5. Press `F5`. Wait until the RADE window opens (up to 2 minutes). Keep ISE open.
+6. If no RADE window opens in 2 minutes, stop. Post `No RADE window` in the Teams channel **RHOPE-OPS** (not from the bundle).
+7. In the RADE window, click the row **90-161.Z 0.1.0**.
+8. Do not click **Uninstall** now. If the card **Maintenance** shows, click **Maintenance**.
+9. If the card **Maintenance** shows again, with the rows **Diagnose**, **Back up** and **Restore**, click **Repair**.
+10. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
+11. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
+12. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
+13. If a check fails again, stop. Post the first 10 words of its card in **RHOPE-OPS** (not from the bundle).
+14. On the card **Ready to install 90-161.Z 0.1.0.**, if the box **Shortcut in** shows, do not change the folder in it.
+15. Click **Install**. Wait until an end card shows (up to 5 minutes).
+16. If the end card is not **90-161.Z 0.1.0 is installed.**, stop. Post the first 10 words of the card in **RHOPE-OPS** (not from the bundle).
+17. On the end card, click **Close**. The RADE window closes.
+18. In ISE (not from the bundle), press `F5`. Wait until the RADE window opens again.
+19. On the screen **Which application do you want to run?**, read the text under each choice.
+20. Press `Windows logo key+Left arrow` (not from the bundle). The RADE window fills the left half of the screen.
+21. Read the text under each choice again, then press `Windows logo key+Up arrow` (not from the bundle).
+22. Click the row **90-161.Z R47**. Wait until a card shows (up to 2 minutes).
+23. If the card **One check needs you.** shows, click **Sign in and check site rights**, then sign in with your CAC.
+24. If the card **One check failed.** or **checks failed. This is the first.** shows, do its line **What to do**.
+25. If you did the line **What to do**, click the button it names: **Run checks again** or **Sign in and check site rights**.
+26. If a check fails again, or **Your OneDrive folder was not found.** shows, stop. Post the first 10 words in **RHOPE-OPS** (not from the bundle).
+27. On the card **Ready to run round R47.**, click **Run** (or **Resume at step**, if it shows).
+28. Each time a sign-in window opens, sign in with your CAC. If it does not respond, do nothing: after 3 minutes the step stops and the round goes on.
+29. Do each step that a card shows. Stop when the card **Round R47 is done.** or **The round needs review.** shows.
+30. In the Outlook draft with the subject that starts with `90161Z R47`, click **Send**.
+31. If no Outlook draft opens, do the e-mail line of the end card.
+
+**Report:** 1 e-mail with the subject `90161Z R47 PASSED` or `90161Z R47 NEEDS REVIEW` and every file of the results folder.
+**If it fails:** on the card, do the line that starts with **What to do**. If the card **The round stopped.** shows, or red text shows in ISE (not from the bundle), post the first 10 words in the Teams channel **RHOPE-OPS** (not from the bundle). **Details (F2)** at the bottom of the RADE window shows all checks, steps and the log.
 
 ## Done
 
