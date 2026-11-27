@@ -42,63 +42,63 @@
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-pfm-window-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-pfm-window-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-maint-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-maint-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-cards-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-cards-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-types-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-types-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-ui2-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-ui2-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-parts-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-parts-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-grid-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-grid-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-logo-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-logo-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-window-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-window-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-bar-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-bar-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-keep-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-keep-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-feedback-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-feedback-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-measure-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-measure-r20.ps1"
                 },
                 {
                     "dir": "T22",
-                    "src": "scripts/gov/90161Z-T22-site-r19.ps1"
+                    "src": "scripts/gov/90161Z-T22-site-r20.ps1"
                 },
                 {
                     "dir": "T22",
@@ -382,10 +382,10 @@
                     "doing": "Reading the answer of the second person."
                 },
                 {
-                    "name": "T22 Open the 90-161.Z window r19",
+                    "name": "T22 Open the 90-161.Z window r20",
                     "title": "Open the 90-161.Z window and check screen 12",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r19.ps1",
+                    "file": "90161Z-T22-pfm-window-r20.ps1",
                     "minutes": 40,
                     "note": "Why again: in round 46 the screen step 12 failed; the other 17 screens passed and leave the walk. Signs in (CAC). In the window \"Kanon\", do the 5 lines of its bar, then close it with its X.",
                     "estimate": 8,
@@ -397,10 +397,10 @@
                     "doing": "Opening the 90-161.Z window."
                 },
                 {
-                    "name": "T22 Did the window open r19",
+                    "name": "T22 Did the window open r20",
                     "title": "Check that the window opened",
                     "dir": "T22",
-                    "file": "90161Z-T22-pfm-window-r19.ps1",
+                    "file": "90161Z-T22-pfm-window-r20.ps1",
                     "args": "-Opened",
                     "minutes": 2,
                     "note": "Why again: part of the window test (this step passed in round 46); the window walks one screen now. Reads the result of the window step and opens nothing.",
@@ -484,10 +484,10 @@
                     ]
                 },
                 {
-                    "name": "T22 Check the Back up r19",
+                    "name": "T22 Check the Back up r20",
                     "title": "Check that the Back up saved all 12 lists",
                     "dir": "T22",
-                    "file": "90161Z-T22-maint-r19.ps1",
+                    "file": "90161Z-T22-maint-r20.ps1",
                     "args": "-Part Backup",
                     "minutes": 2,
                     "note": "Why again: round 46 skipped it (Back up failed). Reads the newest backup folder: for each list, its 2 files and its row count. It changes nothing.",
@@ -513,7 +513,7 @@
                         "net-site"
                     ],
                     "after": [
-                        "T22 Check the Back up r19"
+                        "T22 Check the Back up r20"
                     ],
                     "doing": "Deleting 4 fake rows and adding 1."
                 },
@@ -793,10 +793,10 @@
                     "doing": "Making the 12 lists."
                 },
                 {
-                    "name": "T22 Record the test install r19",
+                    "name": "T22 Record the test install r20",
                     "title": "Record the test install of 90-161.Z 0.1",
                     "dir": "T22",
-                    "file": "90161Z-T22-maint-r19.ps1",
+                    "file": "90161Z-T22-maint-r20.ps1",
                     "args": "-Part Install",
                     "minutes": 5,
                     "note": "Why again: setup for Back up, Restore and Uninstall; not a test. RADE keeps an install record and a copy for the shortcut \"Kanon\". Nothing on the site changes.",
@@ -862,98 +862,98 @@
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-window-r19.txt",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-window-r20.txt",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
                     "name": "90161Z-T22-feedback-*.txt;90161Z-T22-feedback-*.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-home-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-home-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-empty-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-empty-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-queue-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-queue-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-reviews-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-reviews-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step8-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-step8-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-confirm-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-confirm-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-sendback-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-sendback-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-waves-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-waves-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step11-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-step11-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step12-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-step12-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-step13-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-step13-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-pub-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-pub-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-settings-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-settings-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-loading-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-loading-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-failed-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-failed-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-noperm-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-noperm-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-card-remindall-r19.png",
-                    "step": "T22 Open the 90-161.Z window r19"
+                    "name": "90161Z-T22-card-remindall-r20.png",
+                    "step": "T22 Open the 90-161.Z window r20"
                 },
                 {
                     "dir": "T21",
@@ -987,8 +987,8 @@
                 },
                 {
                     "dir": "T22",
-                    "name": "90161Z-T22-backup-r19.txt",
-                    "step": "T22 Check the Back up r19"
+                    "name": "90161Z-T22-backup-r20.txt",
+                    "step": "T22 Check the Back up r20"
                 },
                 {
                     "dir": "T26",
@@ -1073,11 +1073,11 @@
                         "T30 Make the fake publication and rows r1",
                         "T26 Second person answers r5",
                         "T26 Read the endorser answer r5",
-                        "T22 Open the 90-161.Z window r19",
-                        "T22 Did the window open r19",
+                        "T22 Open the 90-161.Z window r20",
+                        "T22 Did the window open r20",
                         "T26 Back up in a second window r5",
                         "T26 Answer: the time to open the second window r1",
-                        "T22 Check the Back up r19",
+                        "T22 Check the Back up r20",
                         "T26 Delete and add the test rows r5",
                         "T26 Start Restore in a second window r5",
                         "T26 Answer: the Restore dry run r5",
@@ -1099,7 +1099,7 @@
                     "version": "0.1.0",
                     "steps": [
                         "T20 Make the 12 lists r4",
-                        "T22 Record the test install r19"
+                        "T22 Record the test install r20"
                     ],
                     "backup": [
                         "PFM Activity Log",
