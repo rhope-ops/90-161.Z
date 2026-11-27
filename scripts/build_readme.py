@@ -5,7 +5,7 @@ README.md is the one page the PFM opens on the work computer (github.io and .ps1
 2026-11-25). Between two marker lines it holds, as the 33-332.Z (Ion) README does:
   - one "Open the script" link to the .txt copy of the round bundle in scripts/gov/paste/ (RADE engine-v34 or later),
     the sentence "The steps to run it are at the top of the script.", the round script name, its build id (the
-    "buildId" of its .sha256.json, which the RADE title bar shows) and its code (the "short" value). The build fails unless exactly one .txt bundle is there;
+    "buildId" of its .sha256.json, which the run log and Details (F2) show once a run starts) and its code (the "short" value). The build fails unless exactly one .txt bundle is there;
   - the current tasks: go.md from its "Updated" line to its "## Done" heading, with no "## Open tasks" heading and
     the other headings one level lower, bare
     raw.githubusercontent.com URLs as links, and a backslash at the end of a text line before another text line, so
@@ -108,12 +108,12 @@ def script_lines():
     if not meta.is_file():
         sys.exit('FAIL %s has no %s: the code of the round is unknown' % (txt.name, meta.name))
     info = json.loads(meta.read_text(encoding='utf-8'))
-    code, build = info.get('short', ''), info.get('buildId', '')   # build: the id the RADE title bar shows
+    code, build = info.get('short', ''), info.get('buildId', '')   # build: the id the run log and Details (F2) show once a run starts
     return ['[**Open the script**](%s%s/%s)' % (RAW, PASTE, txt.name),
             '',
             'The steps to run it are at the top of the script.',
             '',
-            '**Round script:** `%s` · **Build:** `%s` (the RADE title bar shows it) · **Code:** `%s`' % (txt.name, build, code)]
+            '**Round script:** `%s` · **Build:** `%s` (Details (F2) shows it after a run starts) · **Code:** `%s`' % (txt.name, build, code)]
 
 
 def tasks(text):
