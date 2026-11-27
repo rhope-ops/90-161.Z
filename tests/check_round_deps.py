@@ -91,8 +91,7 @@ def main():
         assert persons in (0, 1), "the round has more than one person step"
         if not persons:   # R48: a round with no second person has no endorser step either (nothing can wait for the person)
             assert not [s for s in steps if s["name"].startswith(ENDORSER)], "an endorser step with no person step"
-            continue
-        for e in ENDORSER:   # the endorser steps do wait for the person: the test must see them
+        for e in (ENDORSER if persons else ()):   # the endorser steps do wait for the person: the test must see them
             hit = [s for s in steps if s["name"].startswith(e)]
             by_name = {s["name"]: s for s in steps}
             assert len(hit) == 1 and any(is_person(by_name.get(n)) for n in closure(hit[0], by_name)), \

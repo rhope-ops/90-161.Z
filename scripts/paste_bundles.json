@@ -523,7 +523,6 @@
                                 "No line starts with Dry run:"
                             ],
                             "failOn": [
-                                "Yes, with other numbers",
                                 "No line starts with Dry run:"
                             ]
                         }

@@ -132,7 +132,7 @@ def check_feedback():
         assert 'FEEDBACK home: 90161Z-T22-feedback-home-r20.txt' in lines and 'FEEDBACK home: picture not saved (2 site rows without a fake-data marker)' in lines, out
         assert 'FEEDBACK queue: 90161Z-T22-feedback-queue-r20.txt and 90161Z-T22-feedback-queue-r20.png' in lines, out
         assert '90161Z-T22-feedback-home-r20.png' not in files and '90161Z-T22-feedback-queue-r20.png' in files and '90161Z-T22-feedback-home-r20.txt' in files, files
-        assert '  90161Z-T22-feedback-home-r20.txt (picture not saved)' in lst and not any('home-r19.png' in l for l in lst + lines), lst
+        assert '  90161Z-T22-feedback-home-r20.txt (picture not saved)' in lst and not any('home-r20.png' in l for l in lst + lines), lst
         assert '  90161Z-T22-feedback-queue-r20.txt and 90161Z-T22-feedback-queue-r20.png' in lst, lst
     finally:
         shutil.rmtree(d, ignore_errors=True)

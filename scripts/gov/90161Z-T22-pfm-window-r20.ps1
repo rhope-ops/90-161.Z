@@ -93,7 +93,7 @@
   Run: by RADE in the round (powershell.exe -File 90161Z-T22-pfm-window-r20.ps1 -Id <DODID> -NoPause), or by hand in the T22 folder.
   Network: the one SharePoint site given in RADE (RADE_SITE) or in Config\90161Z-site.txt, through PnP.PowerShell, read
   only (the site part; none with -PlanOnly, -Measure or -Opened).
-  Writes: nothing on the site. 90161Z-T22-window-r20.txt (or -again-r19.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
+  Writes: nothing on the site. 90161Z-T22-window-r20.txt (or -again-r20.txt), 90161Z-T22-window-bounds.json, 90161Z-T22-window-lastcard.txt, the card PNG files and the feedback files in the T22
   folder (or -TestDir); with -Measure only the file given, the card PNG files and one FAKE feedback comment in its folder;
   with -Opened nothing. Reads (R10): the Windows app mode value in the registry (HKCU, read only).
   Credentials: your own CAC sign-in through the PnP web login window (the site part); nothing is stored.
