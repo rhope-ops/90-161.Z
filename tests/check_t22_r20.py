@@ -63,10 +63,14 @@ def check_walk():
     look = (r'WALKALL (\d+) waves look: (Screen (\d+) of (\d+): look at the grid under the line '
             r'"Wave 1: two of three offices have answered\." Pass if the grid shows the second person, or if no one helped\.)$')
     lines = [l for l in out if l.startswith('WALKALL ')]
-    # r19 (the round skill, "Repeated tasks"): the window walks only step12 (R46: Fail), with its reason, from the start card
+    # r20 (the round skill, "Repeated tasks"): the window walks only home and step12 (R47: Fail, both changed since), each with
+    # its reason, from the start card
     now = [l for l in out if l.startswith('WALK ')]
-    assert now == ['WALK 1 step12 open: Screen 1 of 1: select "Open this screen" in this bar. Pass if XXX XXX OI 21-14, step 12 of 12 '
-                   'opens and looks right. Why again: round 46 gave Fail, no comment; no change since (cause not proved).'] and len(now[0].split(': ', 1)[1]) <= 200, now
+    assert now == ['WALK 1 home rail: Screen 1 of 2: select Your Work in the list on the left. Pass if Your Work opens and looks right. '
+                   'Why again: round 47 gave Fail; each pill is now on the middle of its row.',
+                   'WALK 2 step12 open: Screen 2 of 2: select "Open this screen" in this bar. Pass if XXX XXX OI 21-14, step 12 of 12 '
+                   'opens and looks right. Why again: round 47 gave Fail; the pill now starts on the edge of the dates.'] \
+        and all(len(l.split(': ', 1)[1]) <= 200 for l in now), now
     wk = [re.match(pat, l) for l in lines if ' waves look: ' not in l]; lk = [re.match(look, l) for l in lines if ' waves look: ' in l]
     assert len(cards) == 17 and len(wk) == 17 and all(wk) and len(lk) == 1 and all(lk), lines
     assert sorted(m.group(2) for m in wk) == sorted(cards), wk

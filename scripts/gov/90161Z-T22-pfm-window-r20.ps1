@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22: the PFM window, test window r19 (round R47). Windows PowerShell 5.1, Windows Forms and, to read the
+  90-161.Z Task 22: the PFM window, test window r20 (round R48). Windows PowerShell 5.1, Windows Forms and, to read the
   test site, the installed PnP.PowerShell 1.12.0 (no other module).
 .DESCRIPTION
   WHAT R18 CHANGES (the PFM, 26 Nov 26, comments of round R45): the window title (above); a text value of the Action Status card (pairs
@@ -24,6 +24,9 @@
   WHAT R19 CHANGES (round R47; the round skill, "Repeated tasks", the PFM, 2026-11-26): the check bar walks only the
   screens that changed or failed since the last round that passed them, each with its reason ($WalkOnly in the cards
   part): in R47 only step12 (R46: Fail, no comment), 1 WALK line. The other checks stay.
+  WHAT R20 CHANGES (round R48; R47 findings 2): a status pill sits on the vertical middle of its row (home list rows) and a
+  chip in a rows block starts on the value edge with the dates (step12; the parts part); the engine-v48 shared UI file (the
+  window stays light: dark is opt-in, R49). The walk opens only home and step12 (R47: Fail), 2 WALK lines.
   WHAT R16 CHANGES (round R43 T1 to T3; R42 findings 2 to 5): a grid whose columns still end past it after the fit is cut to its
   room (the grid part, tests/ps/Test-T22GridWidth.ps1); the box next to "Find a publication" is level with the list beside
   it, a status chip in a row has the gap above it that text has, and a check box is level with its text (the parts part); a

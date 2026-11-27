@@ -522,8 +522,10 @@ function Get-WalkPlan([string[]]$Only = @()) {
   return $out
 }
 # r19 (the round skill, "Repeated tasks"; the PFM, 2026-11-26): the window walk opens only the screens that changed or failed
-# since the last round that passed them, each with its reason. R46 passed 17 of 18 steps with no change since; step12 failed.
-$WalkOnly = [ordered]@{ step12 = 'Why again: round 46 gave Fail, no comment; no change since (cause not proved).' }
+# since the last round that passed them, each with its reason. r20 (R48): R47 failed home and step12 (the PFM's notes: the
+# pills not on the row's middle; the Waiting pill not in line with the dates); both changed since (R47 findings 2).
+$WalkOnly = [ordered]@{ home = 'Why again: round 47 gave Fail; each pill is now on the middle of its row.'
+  step12 = 'Why again: round 47 gave Fail; the pill now starts on the edge of the dates.' }
 <#
 .SYNOPSIS
 r19: the click-through of this round: Get-WalkPlan for the cards of $WalkOnly only, each step text followed by the reason
