@@ -416,15 +416,14 @@
                     "file": "",
                     "note": "Why again: in round 46 Back up took 31 minutes (cause not proved; the DPI sign-in is likely); engine-v47 turns the DPI call off. A second RADE window saves the 12 lists. Nothing on the site changes.",
                     "guide": [
-                        "1. Double-click the desktop shortcut \"Kanon\". Look for a blue PowerShell window.",
-                        "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
-                        "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
-                        "4. Click the row \"Back up\". The card \"Back up is running.\" shows.",
-                        "5. If no CAC sign-in window shows in 30 seconds, press Alt+Tab to find it.",
-                        "6. If a CAC sign-in window shows, sign in with your CAC.",
-                        "7. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
-                        "8. Write down the number in the line \"The sign-in took\".",
-                        "9. Close the second RADE window with its X. The questions show in the first RADE window.",
+                        "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
+                        "2. In the second RADE window, click the row \"Kanon 0.1.0\". The card \"Kanon 0.1.0 is installed.\" shows.",
+                        "3. Click the row \"Back up\". The card \"Back up is running.\" shows.",
+                        "4. If no CAC sign-in window shows in 30 seconds, press Alt+Tab to find it.",
+                        "5. If a CAC sign-in window shows, sign in with your CAC.",
+                        "6. Wait until the card \"Back up saved the lists.\" shows the line \"All 12 lists were saved.\"",
+                        "7. Write down the number in the line \"The sign-in took\".",
+                        "8. Close the second RADE window with its X. The questions show in the first RADE window.",
                         "If the result card is not \"Back up saved the lists.\", write down its first line. Close that window.",
                         "If you wrote down a line: in the first RADE window, click \"It failed\".",
                         "Then type that line, and click \"Report the failure\"."
@@ -527,13 +526,12 @@
                     "note": "Why again: Restore never wrote (rounds 43 to 46). The dry run in the second window writes nothing. Keep that window open. Your test site address is https://usaf.dps.mil/sites/<your-site>.",
                     "guide": [
                         "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
-                        "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
-                        "3. Click \"Maintenance\". You see the rows \"Diagnose\", \"Back up\" and \"Restore\".",
-                        "4. Click the row \"Restore\".",
-                        "5. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
-                        "6. On the card \"Which backup does Restore use?\", click the row marked \"Newest\".",
-                        "7. If a CAC sign-in window opens, sign in with your CAC.",
-                        "8. Wait until a card shows a line that starts with \"Dry run:\"."
+                        "2. In the second RADE window, click the row \"Kanon 0.1.0\". The card \"Kanon 0.1.0 is installed.\" shows.",
+                        "3. Click the row \"Restore\".",
+                        "4. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
+                        "5. On the card \"Which backup does Restore use?\", click the row marked \"Newest\".",
+                        "6. If a CAC sign-in window opens, sign in with your CAC.",
+                        "7. Wait until a card shows a line that starts with \"Dry run:\"."
                     ],
                     "estimate": 3,
                     "after": [
@@ -699,8 +697,8 @@
                     "note": "Why again: round 46 stopped at the flow step (no flows), so the 12 lists stayed; that card has \"Done, or no flows there\" now. Your test site address is https://usaf.dps.mil/sites/<your-site>.",
                     "guide": [
                         "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
-                        "2. In the second RADE window, click the row \"90-161.Z 0.1.0\". The card \"Maintenance\" shows.",
-                        "3. Click \"Uninstall\".",
+                        "2. In the second RADE window, click the row \"Kanon 0.1.0\". The card \"Kanon 0.1.0 is installed.\" shows.",
+                        "3. Click the row \"Uninstall\".",
                         "4. If \"Is the saved site a test site?\" shows, type <your-site>, then click \"Mark as test site\".",
                         "5. In the box \"Type 90-161.Z to confirm\", type: 90-161.Z",
                         "6. Click \"Uninstall\". If a CAC sign-in window opens, sign in with your CAC.",
@@ -740,7 +738,7 @@
                     "note": "Why again: round 46 skipped it; setup for the checks after it. This window waits. A second RADE window installs 90-161.Z 0.1.0 on the test site again.",
                     "guide": [
                         "1. Double-click the desktop shortcut \"Kanon\". A second RADE window opens.",
-                        "2. In the second RADE window, click the row \"90-161.Z 0.1.0\".",
+                        "2. In the second RADE window, click the row \"Kanon 0.1.0\".",
                         "3. If \"One check needs you.\" shows, click \"Sign in and check site rights\". Sign in with your CAC.",
                         "4. If \"One check failed.\" or \"checks failed. This is the first.\" shows, do the line \"What to do\".",
                         "5. If you did that, click \"Run checks again\" or \"Sign in and check site rights\".",
