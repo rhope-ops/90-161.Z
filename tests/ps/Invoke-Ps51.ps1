@@ -7,7 +7,8 @@
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Pure ASCII.
 # Tests run: Test-Mask.ps1 ("MASK pass=N fail=0"), Test-T20.ps1 ("T20 pass=N fail=0", uses the fake PnP module in tests/fake-pnp),
 # Test-T21.ps1 ("T21 pass=N fail=0", fake cmdlets inside the test), Test-T24.ps1 ("T24 pass=N fail=0", part 0 of T24 r6 on the fake PnP module),
-# Test-T22Layout.ps1 ("T22LAYOUT pass=N fail=0"; SKIP off Windows), Test-T26.ps1 ("T26 pass=N fail=0", fake cmdlets inside the test; R41).
+# Test-T22Layout.ps1 ("T22LAYOUT pass=N fail=0"; SKIP off Windows), Test-T26.ps1 ("T26 pass=N fail=0", fake cmdlets inside the test; R41),
+# Test-PsClass.ps1 ("PSCLASS pass=N fail=0"; SKIP off Windows; fleet F6 spike: PowerShell classes in place of inline C#).
 # A passed test's lines "<NAME> REPORT ..." are printed too (numbers a round report needs, such as the window's rows per size).
 # Tests left out of the 5.1 list, with the reason:
 #   Invoke-Validations.ps1  needs an input list that tests/run.sh builds with bash and python; no pass line of its own.
@@ -34,7 +35,8 @@ $tests = @(
   @{ Name = 'Test-T24'; File = 'tests/ps/Test-T24.ps1'; Pattern = '^T24 pass=\d+ fail=0$' },
   @{ Name = 'Test-T22Maint'; File = 'tests/ps/Test-T22Maint.ps1'; Pattern = '^T22MAINT pass=\d+ fail=0$' },
   @{ Name = 'Test-T26'; File = 'tests/ps/Test-T26.ps1'; Pattern = '^T26 pass=\d+ fail=0$' },
-  @{ Name = 'Test-T22Layout'; File = 'tests/ps/Test-T22Layout.ps1'; Pattern = '^T22LAYOUT (pass=\d+ fail=0|SKIP .+)$' }
+  @{ Name = 'Test-T22Layout'; File = 'tests/ps/Test-T22Layout.ps1'; Pattern = '^T22LAYOUT (pass=\d+ fail=0|SKIP .+)$' },
+  @{ Name = 'Test-PsClass'; File = 'tests/ps/Test-PsClass.ps1'; Pattern = '^PSCLASS (pass=\d+ fail=0|SKIP .+)$' }
 )
 
 <#
