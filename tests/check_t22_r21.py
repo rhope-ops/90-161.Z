@@ -26,7 +26,7 @@ the Windows job) and on the part files:
 Network: none.
 Writes: one temporary folder for the Feedback case and one for the grid case, each removed at the end (it runs pwsh on the cards and feedback parts).
 Credentials: none.
-Usage: python3 tests/check_t22_r21.py   exit 0 = pass (last line T22R20 PASS), 1 = a failed assertion."""
+Usage: python3 tests/check_t22_r21.py   exit 0 = pass (last line T22R21 PASS), 1 = a failed assertion."""
 import pathlib
 import re
 import shutil
@@ -401,5 +401,5 @@ if __name__ == '__main__':
     check_grid_plan()
     check_r18()
     check_walk_path()
-    print('T22R20 PASS')
+    print('T22R21 PASS')
     sys.exit(0)

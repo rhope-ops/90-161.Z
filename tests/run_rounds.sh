@@ -144,7 +144,8 @@ if [ "${on[t22]}" = 1 ]; then
 python3 - <<'PYT22' && python3 tests/check_t22_r21.py && ok "T22 window preview cards (r21; R42: grid room for the scroll bar, walk path)" || bad "T22 window preview cards (r21)"
 import json, re, subprocess, pathlib
 f = 'scripts/gov/90161Z-T22-pfm-window-r21.ps1'; g = pathlib.Path('scripts/gov'); pp = lambda n: g / ('90161Z-T22-%s-r21.ps1' % n)
-assert not [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[0-9].ps1')], 'an older revision is still there'
+old = [x.name for x in g.glob('90161Z-T22-*-r[1-9].ps1')] + [x.name for x in g.glob('90161Z-T22-*-r1[0-9].ps1')]
+assert not old + [x.name for x in g.glob('90161Z-T22-*-r20.ps1')], 'an older revision is still there'
 parts = [x.strip().strip("'") for x in re.search(r"\$Parts = @\(([^)]*)\)", pathlib.Path(f).read_text()).group(1).split(',')]
 out = subprocess.run(['pwsh', '-NoProfile', '-File', f, '-PlanOnly'], capture_output=True, text=True, timeout=120).stdout.splitlines()
 m = re.match(r'PLAN cards=(\d+)$', out[-1] if out else ''); assert m, out[-3:]
@@ -185,7 +186,12 @@ assert re.search(r'# >>> rade-ui:[^\n]*\n# RADE shared UI file[\s\S]*\n[^\n]*\$u
 assert re.findall(r'\$ui\.Dark\s*=(?!=)[^;\n]*', src) == ['$ui.Dark = [bool]$ui.Dark'], 'the Kanon window stays light until R49 (DECISIONS 2026-11-27): only the engine line writes $ui.Dark'
 after = src.split('# <<< rade-ui', 1)[1]
 assert re.search(r'\$ui\.B\s*=\s*@\(\)', after) and re.search(r'\$ui\.P\s*=\s*@\(\)', after), '$ui.B and $ui.P must be set outside the rade-ui block'
-assert 'SetProcessDPIAware' in src, 'the window is not DPI aware'
+assert 'SetProcessDPIAware' not in src and "$form.AutoScaleMode = 'Dpi'" in src, 'F6 T22: no DPI call (Windows scales the window); the form scales by AutoScaleMode Dpi'
+# F6 T22 (DEC-NIPR invariant 2): no inline C# outside the generated blocks (their C# goes with the RADE engine); no Pfm.* or Rade.Native type left
+own = re.sub(r'# >>> [^\n]*\n[\s\S]*?\n# <<< [^\n]*', '', src)
+bad_cs = r'Add-Type\b[^\n]*-(TypeDefinition|MemberDefinition)|Add-Type @|csc\.exe|CodeDomProvider'
+bad_cs += r'|\[Pfm\.|New-Object Pfm\.|\[Rade\.Native|\[T22\.Native'
+assert not re.findall(bad_cs, own), 'inline C# or a C# type is left in the T22 parts'
 assert "$Rev = 'r21'" in src and sorted(x.name for x in g.glob('90161Z-T22-*-r21.ps1')) == sorted(pp(n).name for n in parts + ['pfm-window', 'maint']), parts
 grids = len(re.findall(r'New-Object System.Windows.Forms.DataGridView\b(?!\w)', src))
 assert grids >= 1 and src.count("$g.AutoSizeColumnsMode='Fill'") == grids and src.count("$dc.AutoSizeMode='Fill'") >= 1, 'every grid fills its columns'

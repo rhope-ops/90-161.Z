@@ -358,7 +358,7 @@ The scale, as text (it starts each line).
 function Test-Wheel($M, [string]$At) {
   $w = $M.Wheel
   if (-not $w) { Test-That ($At + ' wheel: measured') $false ('no wheel facts' + $(if ($M.WheelError) { '; error: ' + $M.WheelError } else { '' })); return }
-  foreach ($way in @(@{ K = 'Route'; T = 'routing function on the control tree' }, @{ K = 'Filter'; T = 'window filter, message as Windows sends it' })) {
+  foreach ($way in @(@{ K = 'Route'; T = 'routing function on the control tree' }, @{ K = 'Filter'; T = 'window wheel handlers, MouseWheel event as Windows sends it' })) {
     $c = $w.($way.K)
     if (-not $c) { Test-That ($At + ' wheel (' + $way.T + '): measured') $false 'no facts'; continue }
     $onCard = ([string]$c.Under -and [string]$c.Under -notmatch '"Main column"$' -and [string]$c.Under -notmatch '^Form ')

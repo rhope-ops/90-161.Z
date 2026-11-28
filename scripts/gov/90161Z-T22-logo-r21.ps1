@@ -5,7 +5,7 @@
   R11 (R38; PFM 20 Nov 26): one logo, the Fulcrum one, in Windows light and dark mode (high contrast keeps the system colors).
   R11 (R38; PFM 20 Nov 26: "Fulcrum everywhere for now, as this is not an endorsed product"): one logo, the Fulcrum one, in
   Windows light and dark mode ($wn.LogoOwn); with Windows high contrast on it keeps the 2 system colors, as in r8
-  ($wn.LogoImage, Pfm.Logo in the types part). The picture is the app-logo block below, written by
+  ($wn.LogoImage, ConvertTo-PfmTwoTone in the types part). The picture is the app-logo block below, written by
   scripts/build_task_scripts.py from the master assets/logo/90161Z-logo-fulcrum.svg; never edit it here. (R10 had the USAF
   logo in dark mode; the USAF master assets/logo/90161Z-logo.svg is not used any more.) The Windows app mode is still read
   ($wn.AppsLight), for the THEME line only.
@@ -139,12 +139,12 @@ $wn.AppsLight = {
 $wn.LogoOwn = {
   return [Drawing.Image]::FromStream((New-Object System.IO.MemoryStream(, [System.Convert]::FromBase64String($AppLogoPng)))) }
 # R8 (R35 W7): the logo picture for high contrast $High: its own colors when off (R11: the Fulcrum logo, $wn.LogoOwn);
-# when on, a copy of it in the 2 system colors of $wn.LogoRole (Pfm.Logo.TwoTone; each pixel keeps its cover), as in r8.
+# when on, a copy of it in the 2 system colors of $wn.LogoRole (ConvertTo-PfmTwoTone; each pixel keeps its cover), as in r8.
 $wn.LogoImage = { param([bool]$High)
   if (-not $High) { return (& $wn.LogoOwn) }
   $img = & $wn.LogoOwn
   $d = [string]$wn.LogoRole.Dark; $l = [string]$wn.LogoRole.Light
-  try { return [Pfm.Logo]::TwoTone($img, [Drawing.SystemColors]::$d, [Drawing.SystemColors]::$l) } finally { $img.Dispose() } }
+  try { return (ConvertTo-PfmTwoTone $img ([Drawing.SystemColors]::$d) ([Drawing.SystemColors]::$l)) } finally { $img.Dispose() } }
 $wn.MeasureTheme = {
   <#
   .SYNOPSIS
@@ -157,6 +157,6 @@ $wn.MeasureTheme = {
   $f = [ordered]@{}; $f['Light'] = [bool](& $wn.AppsLight)
   $fu = & $wn.LogoOwn
   try { $f['Fulcrum'] = ([string]$fu.Width + 'x' + $fu.Height)
-    $f['ShownDiff'] = $(if ($wn.Logo -and $wn.Logo.Image -and -not $ui.High) { [Pfm.Logo]::Diff($wn.Logo.Image, $fu) } else { -1 }) }
+    $f['ShownDiff'] = $(if ($wn.Logo -and $wn.Logo.Image -and -not $ui.High) { (Get-PfmPixelDiff $wn.Logo.Image $fu) } else { -1 }) }
   finally { $fu.Dispose() }
   return $f }

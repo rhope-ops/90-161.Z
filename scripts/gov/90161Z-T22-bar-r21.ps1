@@ -177,7 +177,7 @@ $wn.BuildBar = {
   $bar = New-Object System.Windows.Forms.Panel; $bar.Dock = 'Bottom'; $bar.BackColor = $ui.C.White; $bar.AccessibleName = 'Check bar'
   $bar.Add_Paint({ try { $pn = New-Object System.Drawing.Pen($pc.line, 1); $_.Graphics.DrawLine($pn, 0, 0, $this.ClientSize.Width, 0); $pn.Dispose() } catch { $null = $_ } })
   $no = & $ui.Label $ui.F.SmallB $ui.C.Gray 0; $no.Visible = $true; $no.AccessibleName = 'Check number'; [void]$bar.Controls.Add($no)
-  $tx = & $ui.Text $ui.F.Body $ui.C.Ink 0 'Check'; $tx.Visible = $true; [void]$bar.Controls.Add($tx)
+  $tx = & $ui.Text $ui.F.Body $ui.C.Ink 0 'Check'; & $wn.NoCaret $tx; $tx.Visible = $true; [void]$bar.Controls.Add($tx)
   foreach ($n in 'Pass', 'Fail') {
     $x = & $ui.Btn 'action'; $x.Text = $n; & $ui.Style $x ''; $x.AccessibleName = $n; $x.Tag = $n
     $x.Add_SizeChanged({ & $wn.Round $this 4 })
