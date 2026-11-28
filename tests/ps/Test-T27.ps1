@@ -413,18 +413,18 @@ try {
       ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 2) $r.File
 
   # ---- Uninstall, Local ----
-  foreach ($f in '90161Z-T22-install-r20.txt', '90161Z-T22-maint-r20.txt', 'keep.txt') { Set-Content -LiteralPath (Join-Path $t22 $f) -Value 'x' }
-  New-Site; Set-Made @(@{ kind = 'file'; name = '90161Z-T22-install-r20.txt' })
+  foreach ($f in '90161Z-T22-install-r21.txt', '90161Z-T22-maint-r21.txt', 'keep.txt') { Set-Content -LiteralPath (Join-Path $t22 $f) -Value 'x' }
+  New-Site; Set-Made @(@{ kind = 'file'; name = '90161Z-T22-install-r21.txt' })
   $r = Invoke-T27 'Local'
   $left = @(Get-ChildItem -LiteralPath $t22 | ForEach-Object { $_.Name } | Sort-Object)
   Test-That 'Local removes only the install note named in the made file, with no sign-in' ($r.Code -eq 0 -and $global:S.Connects -eq 0 -and
-      ($left -join ',') -ceq '90161Z-T22-maint-r20.txt,keep.txt' -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1') $r.File
+      ($left -join ',') -ceq '90161Z-T22-maint-r21.txt,keep.txt' -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1') $r.File
   $r = Invoke-T27 'Local'
   Test-That 'a second Local run prints SKIP' ($r.Code -eq 0 -and $r.File -match '(?m)^RESULT UNINSTALL LOCAL SKIP removed=0' -and $r.File -match '(?m)^ITEM f01-note SKIP') $r.File
-  Set-Made @(@{ kind = 'file'; name = 'keep.txt' }, @{ kind = 'file'; name = '..\T26\90161Z-T22-install-r1.txt' }, @{ kind = 'file'; name = '90161Z-T22-maint-r20.txt' })
+  Set-Made @(@{ kind = 'file'; name = 'keep.txt' }, @{ kind = 'file'; name = '..\T26\90161Z-T22-install-r1.txt' }, @{ kind = 'file'; name = '90161Z-T22-maint-r21.txt' })
   $r = Invoke-T27 'Local'
   $left = @(Get-ChildItem -LiteralPath $t22 | ForEach-Object { $_.Name } | Sort-Object)
-  Test-That 'Local refuses any other file and any path: nothing else is removed' ($r.Code -eq 0 -and ($left -join ',') -ceq '90161Z-T22-maint-r20.txt,keep.txt' -and
+  Test-That 'Local refuses any other file and any path: nothing else is removed' ($r.Code -eq 0 -and ($left -join ',') -ceq '90161Z-T22-maint-r21.txt,keep.txt' -and
       ([regex]::Matches($r.File, '(?m)^NOTE refused')).Count -eq 3) $r.File
 
   # ---- the checks and the step ----
@@ -523,15 +523,15 @@ try {
   Test-That 'Step with no step 2 row (the install did not seed it): FAIL, exit 1' ($r.Code -eq 1 -and $r.File -match '(?m)^RESULT STEP FAIL no step rows') $r.File
 
   # ---- R47: the Uninstall parts Lists, Access and Local in one T30 batch step: one sign-in, then "SIGNIN reused", one sign-out ----
-  Set-Content -LiteralPath (Join-Path $t22 '90161Z-T22-install-r20.txt') -Value 'x'
-  $extra = @(@{ kind = 'group'; name = 'PFM Office' }, @{ kind = 'level'; name = 'PFM Office Edit All Items' }, @{ kind = 'file'; name = '90161Z-T22-install-r20.txt' })
+  Set-Content -LiteralPath (Join-Path $t22 '90161Z-T22-install-r21.txt') -Value 'x'
+  $extra = @(@{ kind = 'group'; name = 'PFM Office' }, @{ kind = 'level'; name = 'PFM Office Edit All Items' }, @{ kind = 'file'; name = '90161Z-T22-install-r21.txt' })
   New-Site; Set-Made (@(Get-ListEntry $internal) + $extra)
   $global:S.Calls.Clear(); $global:S.Connects = 0; $global:SignedInTo = ''; $global:SignOuts = 0; $global:LASTEXITCODE = 0
   $batch = Join-Path $Root 'scripts/gov/90161Z-T30-batch-r1.ps1'
   $out = @(& $batch -Id 'tester01' -NoPause -Run 'T27:Lists;T27:Access;T27:Local' -ScriptRoot (Join-Path $Root 'scripts/gov') -TestRoot $work *>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $txt = $out -join "`n"
   $ok = ($code -eq 0 -and $global:S.Connects -eq 1 -and $global:SignOuts -eq 1 -and ([regex]::Matches($txt, '(?m)^SIGNIN reused')).Count -eq 1 -and
-      (Get-OwnLeft).Count -eq 0 -and $global:S.Groups -notcontains 'PFM Office' -and -not (Test-Path -LiteralPath (Join-Path $t22 '90161Z-T22-install-r20.txt')) -and
+      (Get-OwnLeft).Count -eq 0 -and $global:S.Groups -notcontains 'PFM Office' -and -not (Test-Path -LiteralPath (Join-Path $t22 '90161Z-T22-install-r21.txt')) -and
       $txt -match '(?m)^RESULT UNINSTALL LISTS PASS removed=12' -and $txt -match '(?m)^RESULT UNINSTALL ACCESS PASS removed=2' -and
       $txt -match '(?m)^RESULT UNINSTALL LOCAL PASS removed=1' -and $txt -match '(?m)^BATCH done: parts=3 exit-not-zero=0' -and -not $env:KANON_KEEP_SIGNIN)
   Test-That 'T30 batch Lists, Access, Local in Uninstall mode: 1 sign-in, the second part reuses it, 1 sign-out at the end, all 3 parts done, exit 0' $ok $txt

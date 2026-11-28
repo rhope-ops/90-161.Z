@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "ui2": the second half of the RADE shared UI file, generated into this file, and the colors
+  90-161.Z Task 22 r21, part "ui2": the second half of the RADE shared UI file, generated into this file, and the colors
   for Windows high contrast.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): new part. engine-v29's shared UI file (599 lines) is split in 2 so each part stays under the
@@ -10,7 +10,7 @@
   and $ui.UseColors (the window part applies them: $wn.Recolor).
   Inputs: $ui (filled by part "ui"), $pc. Outputs: the $ui members of the second half of the shared UI file, $ui.HcRole,
   $ui.OwnPc, $ui.OwnC, $ui.High, $ui.UseColors and the function Select-T22Color.
-  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.

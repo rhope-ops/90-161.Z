@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
+  90-161.Z Task 22 r21, part "parts": the builders of a card's parts (text, buttons, links, chips, panels, the card
   frame) and of each block type of the card data (chips, headline, text, steps, checks, boxes, rows, lists, filter,
   input, choices, error, progress, buttons).
 .DESCRIPTION
@@ -13,7 +13,7 @@
   "Needs You Today", the rows blocks, the chips row with its step line, the notice) is placed by one rule,
   $wn.ChipTops, and kept in $wn.ChipRows with its text.
   Inputs: $ui, $wn, $pc and the card data. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -70,14 +70,19 @@ $wn.CenterChip = {
   param($Chip, $Row)
   $Row.Height = [math]::Max($Row.Height, $Chip.Height + 2 * (& $wn.Sc 4))
   $Chip.Top = [int][math]::Round(($Row.Height - $Chip.Height) / 2.0) }
+# R21: no HideCaret (it needed compiled code), so a click on a read-only box of $ui.Text that selects nothing gives the focus
+# away again on mouse up (no caret stays in the text); a click that selects text (a drag, a double-click) keeps the focus,
+# so the text can be copied. Takes the box.
+$wn.NoCaret = { param($Box) $Box.Add_MouseUp({ if ($this.SelectionLength -eq 0) { try { $ui.Form.ActiveControl = $null } catch { $null = $_ } } }) }
 # Adds a card text box (selectable, read-only, no tab stop) with its text, font, color, top gap, wrap width and
 # accessible name to $Parent; $Back is its background when it is not white. Gives back the box.
 $wn.Txt = { param($Parent, [string]$Text, $Font, $Color, [int]$Top, [int]$W, [string]$Name, $Back)
   $t = & $ui.Text $Font $Color (& $wn.Sc $Top) $Name
+  & $wn.NoCaret $t
   if ($Back) { $t.BackColor = $Back }
   $t.Text = $Text; & $ui.SetWrap $t $W; $t.Visible = $true; [void]$Parent.Controls.Add($t); return $t }
 # Rounds the corners of a control ($Rad pixels).
-$wn.Round = { param($C, [int]$Rad) try { [Pfm.Gfx]::RoundRegion($C, $Rad) } catch { $null = $_ }; return $null }
+$wn.Round = { param($C, [int]$Rad) try { Add-PfmRoundRegion $C $Rad } catch { $null = $_ }; return $null }
 # A card button: the RADE action or compact button, blue for the main one, white for the others. $B: Text, Kind, Go, Note, Need.
 $wn.Button = { param($B, [string]$Kind)
   $x = & $ui.Btn $Kind
@@ -96,7 +101,7 @@ $wn.FillsOf = { return @{ turn = $pc.accentFill; late = $pc.redTint; soon = $pc.
 $wn.Fills = & $wn.FillsOf
 # A status chip of kind $Kind with $Text, on background $Back. Gives back the chip.
 $wn.Chip = { param($Kind, [string]$Text, $Back)
-  $c = New-Object Pfm.Chip; $c.Text = $Text; $c.Font = $ui.F.SmallB; $c.ForeColor = $pc.ink; $c.Fill = $wn.Fills[$Kind]; $c.BackColor = $Back; $c.AccessibleName = $Text
+  $c = Build-PfmChip; $c.Text = $Text; $c.Font = $ui.F.SmallB; $c.ForeColor = $pc.ink; $c.Fill = $wn.Fills[$Kind]; $c.BackColor = $Back; $c.AccessibleName = $Text
   $w = [Windows.Forms.TextRenderer]::MeasureText($Text, $c.Font).Width + (& $wn.Sc 22)
   $c.Size = [Drawing.Size]::new($w, (& $wn.Sc 26)); $c.Margin = & $ui.Pad 0 0 (& $wn.Sc 8) 0
   return $c }
@@ -130,10 +135,10 @@ $wn.Card = {
   .PARAMETER Back
   The color around the rounded corners (the page behind the card).
   .OUTPUTS
-  The card (Pfm.Card).
+  The card (Build-PfmCard in the types part).
   #>
   param([int]$W, $Cap, $Top, [int]$PadX, $Back)
-  $c = New-Object Pfm.Card; $c.FlowDirection = 'TopDown'; $c.WrapContents = $false; $c.AutoSize = $true; $c.AutoSizeMode = 'GrowAndShrink'
+  $c = Build-PfmCard; $c.FlowDirection = 'TopDown'; $c.WrapContents = $false; $c.AutoSize = $true; $c.AutoSizeMode = 'GrowAndShrink'
   $c.BackColor = $ui.C.White; $c.Outer = $Back; $c.Line = $pc.line; $c.MinimumSize = [Drawing.Size]::new($W, 0)
   $tp = $(if ($Top) { 4 } else { 0 }); if ($Top) { $c.TopFill = $pc.primary; $c.TopH = (& $wn.Sc 4) }
   $c.Padding = & $ui.Pad (& $wn.Sc $PadX) (& $wn.Sc (18 + $tp)) (& $wn.Sc $PadX) (& $wn.Sc 18); $c.Margin = & $ui.Pad 0 0 0 (& $wn.Sc 14)
@@ -183,7 +188,7 @@ $wn.Blocks.steps = {
   if (-not $wn.StepFonts) {
     $wn.StepFonts = @{ A = @((& $ui.Font 'Segoe UI' 9 $null), (& $ui.Font 'Segoe UI' 8.25 $null), (& $ui.Font 'Segoe UI' 7.5 $null))
       B = @((& $ui.Font 'Segoe UI Semibold' 9 $null), (& $ui.Font 'Segoe UI Semibold' 8.25 $null), (& $ui.Font 'Segoe UI Semibold' 7.5 $null)) } }
-  $s = New-Object Pfm.Steps; $s.BackColor = $ui.C.White; $s.Labels = [string[]]$StepNames; $s.Current = [int]$b.N; $s.Dot = & $wn.Sc 26
+  $s = Build-PfmStepBar; $s.BackColor = $ui.C.White; $s.Labels = [string[]]$StepNames; $s.Current = [int]$b.N; $s.Dot = & $wn.Sc 26
   $s.DoneFill = $pc.primary; $s.DoneText = $ui.C.White; $s.NowFill = $pc.accentFill; $s.NowLine = $pc.navy; $s.NowText = $pc.ink
   $s.TodoFill = $ui.C.White; $s.TodoLine = $pc.muted; $s.TodoText = $pc.ink; $s.ConnDone = $pc.primary; $s.ConnTodo = $pc.track
   $s.LabelDone = $pc.ink; $s.LabelNow = $pc.navy; $s.LabelTodo = $pc.muted

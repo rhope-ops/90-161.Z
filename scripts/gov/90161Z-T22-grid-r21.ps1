@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
+  90-161.Z Task 22 r21, part "grid": the grids of the PFM window (Who Has It Now, All Actions, Wave 1 answers): their
   size, their columns that always fit the grid's width, their painted cells, the filter and the row that opens a card.
 .DESCRIPTION
   A grid is a read-only DataGridView with no lines but a thin rule under each row. Each cell is painted here by its
@@ -30,7 +30,7 @@
   the device lines suggest; not measured). The fit now also cuts the widths ($wn.TrimWidths); tests/ps/Test-T22GridWidth.ps1
   runs it on those numbers, and the LAYOUT line names the column minimums, so R43 shows if the fit ran.
   Inputs: $ui, $wn, $pc, $mid, $GridQueue. Outputs: the $wn members below; nothing is read or saved.
-  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -429,7 +429,7 @@ $wn.PaintPub = {
 $wn.PaintChip = { param($Gr, [string]$Text, [string]$Kind, $Bd, [int]$Pd)
   $cwid = [Windows.Forms.TextRenderer]::MeasureText($Text, $ui.F.SmallB, ([Drawing.Size]::new(100000, 0)), [Windows.Forms.TextFormatFlags]'NoPadding, NoPrefix').Width + (& $ui.Sc 20)
   $chh = & $ui.Sc 26; $cy = $Bd.Y + [int](($Bd.Height - 1 - $chh) / 2); $rc = New-Object System.Drawing.RectangleF(($Bd.X + $Pd), $cy, $cwid, $chh)
-  $Gr.SmoothingMode = 'AntiAlias'; $path = [Pfm.Gfx]::Round($rc, ($chh / 2.0)); $br = New-Object System.Drawing.SolidBrush($wn.Fills[$Kind]); $Gr.FillPath($br, $path); $br.Dispose(); $path.Dispose()
+  $Gr.SmoothingMode = 'AntiAlias'; $path = Get-PfmRoundPath $rc ($chh / 2.0); $br = New-Object System.Drawing.SolidBrush($wn.Fills[$Kind]); $Gr.FillPath($br, $path); $br.Dispose(); $path.Dispose()
   $Gr.SmoothingMode = 'Default'
   $tf = [Windows.Forms.TextFormatFlags]'HorizontalCenter, VerticalCenter, SingleLine, NoPadding, NoPrefix'
   [Windows.Forms.TextRenderer]::DrawText($Gr, $Text, $ui.F.SmallB, (New-Object System.Drawing.Rectangle(($Bd.X + $Pd), $cy, [int]$cwid, $chh)), $pc.ink, $tf) }

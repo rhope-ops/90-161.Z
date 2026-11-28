@@ -4,7 +4,7 @@
 #  (b) finding 4: for the longest step text, the text box never reaches the links "Open this screen" and "Feedback", at the
 #      smallest window (800 wide at 100 %), at 1280 and at 1920, at 96 and 144 dpi, also with links wider than usual;
 #  (c) finding 6: the window opens on the card of walk step 1, so that step counts as opened with no click.
-# Usage: pwsh -NoProfile -File tests/ps/Test-T22Bar.ps1 [-Rev r20] [-Root <repo folder>]
+# Usage: pwsh -NoProfile -File tests/ps/Test-T22Bar.ps1 [-Rev r21] [-Root <repo folder>]
 # Last line: "T22BAR pass=N fail=M"; exit 1 when M is above 0.
 # Stand-ins: the controls (position, size, preferred size), the text measure (7 px a character at 96 dpi, 20 px a line) and the scale.
 # The cards part and the bar part are the real files; no System.Windows.Forms is used.
@@ -12,7 +12,7 @@
 # Writes: none.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7).
-param([string]$Rev = 'r20', [string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
+param([string]$Rev = 'r21', [string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
 $gov = Join-Path $Root 'scripts/gov'
@@ -23,7 +23,7 @@ $ui.Sc = { param([double]$Px) [int][math]::Round($Px * $ui.Dpi / 96.0) }
 # Stand-in: the window's scale, the same as $ui.Sc.
 $wn.Sc = { param([double]$Px) & $ui.Sc $Px }
 . (Join-Path $gov ('90161Z-T22-cards-' + $Rev + '.ps1'))   # $Cards, $Checks, $Walk (the real plan)
-$Walk = @(Get-WalkPlan)   # r19: the bar is tested on the whole plan of every card (the round walks only home and step12: tests/check_t22_r20.py)
+$Walk = @(Get-WalkPlan)   # r19: the bar is tested on the whole plan of every card (the round walks only home and step12: tests/check_t22_r21.py)
 # Stand-in text measure: 7 px a character and 20 px a line at 96 dpi; the text wraps at the width given.
 $ui.Meas = { param([string]$Text, $Font, [int]$W)
   $cw = 7.0 * $ui.Dpi / 96.0; $lh = [int][math]::Round(20 * $ui.Dpi / 96.0); $per = [math]::Max(1, [int][math]::Floor($W / $cw))
