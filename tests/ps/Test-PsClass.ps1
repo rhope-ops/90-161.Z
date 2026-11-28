@@ -123,7 +123,7 @@ $inner.Add_MouseWheel({
   })
 $ev = New-Object System.Windows.Forms.HandledMouseEventArgs ([System.Windows.Forms.MouseButtons]::None), 0, 10, 10, -120
 $m = $inner.GetType().GetMethod('OnMouseWheel', [System.Reflection.BindingFlags]'NonPublic,Instance')
-$null = $m.Invoke($inner, @($ev))
+$null = $m.Invoke($inner, [object[]]@($ev.psobject.BaseObject))   # the bare .NET object: reflection cannot take a PowerShell wrapper
 Test-One 'a wheel step down scrolls the parent' ((- $host1.AutoScrollPosition.Y) -gt 0)
 Test-One 'the wheel event is marked handled' ($ev.Handled)
 $host1.Dispose()
