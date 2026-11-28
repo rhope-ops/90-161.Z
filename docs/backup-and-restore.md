@@ -1,6 +1,6 @@
 # Backup and restore ("chapters"): design r1 (13 Nov 26)
 
-Status: design after PFM 20A (12 Nov) and 22A 23A (13 Nov): weekly automatic backup, browsable in the app, with a way to roll back. PFM 13 Nov: keep backups very small and have the app encourage deleting old ones (section 5). Items marked **REC:** are open until the PFM approves; **Test** = not proven on the tenant.
+Status: design after Administrator 20A (12 Nov) and 22A 23A (13 Nov): weekly automatic backup, browsable in the app, with a way to roll back. Administrator 13 Nov: keep backups very small and have the app encourage deleting old ones (section 5). Items marked **REC:** are open until the Administrator approves; **Test** = not proven on the tenant.
 
 ## 1. Three layers, smallest first
 
@@ -13,13 +13,13 @@ Status: design after PFM 20A (12 Nov) and 22A 23A (13 Nov): weekly automatic bac
 ## 2. Chapters
 
 - Flow "90-161.Z - Weekly Backup": every Sunday 0300 (time zone from PFM Settings). For each PFM list it writes one JSON file (all columns, IDs and lookup IDs: the restore source) to Record Sets/Backups/<yyyy-mm-dd>/. No CSV copy: the Chapters screen shows the rows, and an "Export to CSV" button makes one on request. PFM Activity Log is saved only as the rows added since the last chapter (it is append-only). It writes one PFM Activity Log row with the counts.
-- Retention (PFM 23A): the last 8 weekly chapters plus the first chapter of each month for 12 months (20 folders at most).
+- Retention (Administrator 23A): the last 8 weekly chapters plus the first chapter of each month for 12 months (20 folders at most).
 - Chapters screen (PFM Office only): pick a chapter, see per list "rows then / rows now / changed / deleted since", open a row as it was.
 
 ## 3. Rollback from a chapter
 
-- **Selective (REC default):** the PFM picks rows or fields in a chapter; a flow writes those values back onto the same rows. Deleted rows come back from the recycle bin first (same ID); only past 93 days is a row created new.
-- **Whole list (PFM Office, confirm twice):** before it starts, the flow takes a fresh chapter, so the rollback itself can be undone. Then it sets every row to its chapter values and lists rows created since the chapter for the PFM to keep or delete.
+- **Selective (REC default):** the Administrator picks rows or fields in a chapter; a flow writes those values back onto the same rows. Deleted rows come back from the recycle bin first (same ID); only past 93 days is a row created new.
+- **Whole list (PFM Office, confirm twice):** before it starts, the flow takes a fresh chapter, so the rollback itself can be undone. Then it sets every row to its chapter values and lists rows created since the chapter for the Administrator to keep or delete.
 - Limit (high confidence): SharePoint gives a re-created row a new ID; it cannot reuse the old one. Rows in other lists that pointed to it (Endorsements to Publications, forms to their prescribing publication) are re-pointed by the flow through the IDs stored in the JSON. **Test:** re-pointing on the test site before the pilot.
 - Every restore is logged (who, which chapter, which rows).
 
@@ -30,7 +30,7 @@ Status: design after PFM 20A (12 Nov) and 22A 23A (13 Nov): weekly automatic bac
 | Q22 | Rollback scope | A: all three layers; whole-list rollback by PFM Office only, with an automatic chapter first. B: row history and recycle bin only; chapters are read-only | A |
 | Q23 | Chapter retention | A: 8 weekly + 12 monthly. B: 8 weekly only | A (a yearly review often looks back more than 2 months) |
 
-## 5. Small, and old ones deleted (PFM 13 Nov)
+## 5. Small, and old ones deleted (Administrator 13 Nov)
 
 Size estimate (not measured; about 1.5 KB of JSON per row; files are not in chapters, they keep their own version history):
 

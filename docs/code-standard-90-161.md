@@ -1,6 +1,6 @@
 # Code standard: what 90-161.Z adds
 
-Decided by the PFM, 2026-11-17 (docs/DECISIONS.md): all code in this repo is modular, clearly commented and human inspectable, and stays so as work continues. Why: a person must be able to read any script and know what it does before they run it on the gov device; a pasted round bundle runs with that person's rights.
+Decided by the Administrator, 2026-11-17 (docs/DECISIONS.md): all code in this repo is modular, clearly commented and human inspectable, and stays so as work continues. Why: a person must be able to read any script and know what it does before they run it on the gov device; a pasted round bundle runs with that person's rights.
 
 The core rules and the check are the kit's: [docs/code-standard.md](code-standard.md) (a kit file; a sync replaces it). The extras are RADE's: [the RADE code standard](https://github.com/rhope-ops/RADE/blob/main/docs/code-standard.md) (after RADE takes kit 2026.11.20.1, its extras move to RADE's docs/code-standard-rade.md). This file holds only what is different for this repo.
 

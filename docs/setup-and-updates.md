@@ -1,13 +1,13 @@
 # Setup and updates (r2, 19 Nov 26)
 
-Status: Part 0 and section 5 describe how a person installs and updates today, through RADE. The other parts are still design (12 Nov): items marked **Rec:** are agent recommendations, not decisions; items marked **Test** are not proven on the DoD tenant. Anything marked "not decided yet" has no source yet. PFM decisions: docs/DECISIONS.md (2026-11-14 "One preflight" and "Updates").
+Status: Part 0 and section 5 describe how a person installs and updates today, through RADE. The other parts are still design (12 Nov): items marked **Rec:** are agent recommendations, not decisions; items marked **Test** are not proven on the DoD tenant. Anything marked "not decided yet" has no source yet. Administrator decisions: docs/DECISIONS.md (2026-11-14 "One preflight" and "Updates").
 
-## 1. Goals (PFM, 12 Nov)
+## 1. Goals (Administrator, 12 Nov)
 
 1. One person with the needed rights sets up 90-161.Z end to end.
 2. Setup checks each right first. For each missing right it says whom to ask, what to ask for, and the fallback.
-3. RADE checks the installed version at each run (PFM, 14 Nov 26). The app shows its installed version only: section 5.
-4. Every step works for a wing PFM with less access than this PFM (AGENTS.md "Deployable package").
+3. RADE checks the installed version at each run (Administrator, 14 Nov 26). The app shows its installed version only: section 5.
+4. Every step works for a wing PFM with less access than this Administrator (AGENTS.md "Deployable package").
 
 ## 2. Setup sequence
 
@@ -22,7 +22,7 @@ The app cannot check rights before it exists, so setup has 4 parts. Each part st
 
 ## 2a. Part 0: install through RADE
 
-RADE is the Redacted Application Deployment Engine: https://github.com/rhope-ops/RADE. It replaces the setup-check flow (PFM, 14 Nov 26 "One preflight"). Sources: the README "Open the script" and the open task in go.md; docs/dev-setup.md "RADE engine".
+RADE is the Redacted Application Deployment Engine: https://github.com/rhope-ops/RADE. It replaces the setup-check flow (Administrator, 14 Nov 26 "One preflight"). Sources: the README "Open the script" and the open task in go.md; docs/dev-setup.md "RADE engine".
 
 What you do:
 1. Open https://github.com/rhope-ops/90-161.Z (the README). Every file a task needs comes inside the round.
@@ -42,7 +42,7 @@ What RADE checks: the window runs its checks first and reports each as passed or
 
 What RADE writes: only into your OneDrive folder RADE\90-161.Z (task folders, Config and the results folder Rounds\<round>). It never sends the e-mail itself.
 
-What is not a RADE check: the connector data policy and Send As (R7, R9). A small probe flow stays for these (PFM, 14 Nov 26). Its build: not decided yet.
+What is not a RADE check: the connector data policy and Send As (R7, R9). A small probe flow stays for these (Administrator, 14 Nov 26). Its build: not decided yet.
 
 ## 3. Rights matrix
 
@@ -60,7 +60,7 @@ Each row: what setup needs, how Part 0 detects it, and what to do if it is missi
 | R8 | The group that gives wing members access (type differs by wing: section 4a) | Site access and app sharing | Installer picks the type and the group; Part 0 resolves it with SharePoint `ensureuser` and reports its type (probe R13) | Communications squadron for an AD group; the site owner for a SharePoint group | Section 4a fallbacks |
 | R9 | Send As or Send on Behalf for the PFM office mailbox | Office-mailbox e-mails | **Test**: Part 0 sends a test from the shared mailbox; failure = missing | Exchange admins through the help desk | Send from the installer, office box on CC and Reply-To (Settings switch) |
 | R10 | A second person (co-owner, alternate PFM) | Continuity | Installer enters the person; Part 0 checks the account resolves | Wing leadership names an alternate | Setup completes with a warning that stays on the PFM screen |
-| R11 | (dropped, PFM 14 Nov 26: no central Releases list) | - | - | - | - |
+| R11 | (dropped, Administrator 14 Nov 26: no central Releases list) | - | - | - | - |
 | R12 | Gov computer with Windows PowerShell 5.1 and Word 16 | Renderer | Gov-device task script (scripts/gov/Test-Environment.ps1) | Communications squadron | Format by hand with the DAFMAN template |
 | R13 | GenAI.mil access | Draft cleanup | Manual check | Unit GenAI.mil access process | Draft cleanup by hand |
 
@@ -71,16 +71,16 @@ Values the installer enters, each checked before save:
 | Value | Check |
 |---|---|
 | Wing display name (subtitle) | Not empty |
-| PFM, alternate PFM (Person) | Both resolve; not the same person |
+| Administrator, alternate Administrator (Person) | Both resolve; not the same person |
 | PFM office mailbox | Valid address; R9 result decides the send mode |
 | Access group type and group (section 4a) | Resolves (R8); type matches the choice |
 | Time zone | One of the Windows time zones; used by every date-only flow step |
 
 Self-test at the end: create a fake TEST publication, run one flow round trip, read back the Activity Log row, delete the test rows. Pass = Setup Complete = Yes.
 
-## 4a. Access group (PFM P6, 12 Nov)
+## 4a. Access group (Administrator P6, 12 Nov)
 
-Wings give members access in different ways: one AD (Entra) security group for read; SharePoint-only groups; AD groups only. Setup asks which one this wing uses and explains the best fit. The PFM can change it later on the app's Settings screen.
+Wings give members access in different ways: one AD (Entra) security group for read; SharePoint-only groups; AD groups only. Setup asks which one this wing uses and explains the best fit. The Administrator can change it later on the app's Settings screen.
 
 Two separate things, often confused:
 - **Data access** = SharePoint permissions on the site and lists. This is what protects the data.
@@ -97,14 +97,14 @@ Text the setup screen shows (plain words): "Pick the group your wing already use
 
 Settings rows (PFM Settings): Access Group Type (AD Security Group, M365 Group, SharePoint Group, Nested), Access Group (sign-in name or group ID), App Share Mode (Group, Everyone, Named People).
 
-Change later (Settings screen, PFM and alternate only): the app calls a flow on the PFM's connection that adds the new group to the site role and removes the old one (needs Manage Permissions: rights S4, S7). App sharing changes are a manual step the screen walks through, unless the Power Apps for Makers connector is allowed (rights P3); then a flow does it.
+Change later (Settings screen, Administrator and alternate only): the app calls a flow on the Administrator's connection that adds the new group to the site role and removes the old one (needs Manage Permissions: rights S4, S7). App sharing changes are a manual step the screen walks through, unless the Power Apps for Makers connector is allowed (rights P3); then a flow does it.
 
-## 5. Updates (PFM, 14 Nov 26: installed version only)
+## 5. Updates (Administrator, 14 Nov 26: installed version only)
 
 | Item | Today |
 |---|---|
 | Installed version | The app shows its installed version only. There is no "Check for updates" button and no central Releases list |
-| Who compares | RADE compares versions at each run (PFM, 14 Nov 26). How the window shows the result: not decided yet |
+| Who compares | RADE compares versions at each run (Administrator, 14 Nov 26). How the window shows the result: not decided yet |
 | How you update | Paste the current round again (Part 0 above). The window lists each file as New, Replace or Recycle before you press Run. Importing the solution "90-161.Z flows" over the older copy is an upgrade: the flows keep their connections (docs/power-automate-provisioning.md section 5) |
 | Is the script the right one | Compare the build code in the window title bar with the README value after **Build:**. They must match |
 | Lists | A run of T20 skips what exists. It does not change an existing column. How a list change reaches a wing that has the old list: not decided yet |

@@ -1,20 +1,20 @@
 # Rights test plan r2 (14 Nov 26)
 
-PFM decision (12 Nov): every assumption about rights is tested on the tenant before the design relies on it, with a fallback for each. This file lists each right the design needs, who is expected to have it, how it is tested, and the fallback. "Expected" comes from Microsoft documentation or this project's earlier tests; confidence is marked H (high), M (medium) or L (low). A row counts as proven only after a test on the DoD tenant. Results are gov-network test details, so they go in the private project log, never in this public repo (AGENTS.md Project rules); the repo records only the design rule that follows.
+Administrator decision (12 Nov): every assumption about rights is tested on the tenant before the design relies on it, with a fallback for each. This file lists each right the design needs, who is expected to have it, how it is tested, and the fallback. "Expected" comes from Microsoft documentation or this project's earlier tests; confidence is marked H (high), M (medium) or L (low). A row counts as proven only after a test on the DoD tenant. Results are gov-network test details, so they go in the private project log, never in this public repo (AGENTS.md Project rules); the repo records only the design rule that follows.
 
 How it is tested:
-- **Probe flow** (go.md Task 11): flow/packages/90161Z-T11-rights-probe-r3.zip, built from scripts/build_rights_probe.py. 43 SharePoint checks (R = read, W = write on TEST objects, X = cleanup) and 7 mail and people checks (U = Office 365 Users, E = Outlook; r2, PFM 14 Nov 26; E05 added in r3). It runs as the PFM and also asks SharePoint what a named coworker could do (R11, R12), so one person can test the regular-user view. E01, E03 and E04 send one test mail each to the PFM only (approved 14 Nov 26).
-- **How the test mails arrived** (E05, probe r3): the Outlook COM check stopped at the Outlook address prompt (R11), so the flow does it: after a 2-minute delay it reads the test mails in the PFM's mailbox (Graph: subject, from, sender) and records for E01, E03 and E04 whether each arrived and how (from-me, sent-as-office, on-behalf-of-office, other), by comparing the from and sender addresses to the PFM's and the office address in lower case. No address is written.
+- **Probe flow** (go.md Task 11): flow/packages/90161Z-T11-rights-probe-r3.zip, built from scripts/build_rights_probe.py. 43 SharePoint checks (R = read, W = write on TEST objects, X = cleanup) and 7 mail and people checks (U = Office 365 Users, E = Outlook; r2, Administrator 14 Nov 26; E05 added in r3). It runs as the Administrator and also asks SharePoint what a named coworker could do (R11, R12), so one person can test the regular-user view. E01, E03 and E04 send one test mail each to the Administrator only (approved 14 Nov 26).
+- **How the test mails arrived** (E05, probe r3): the Outlook COM check stopped at the Outlook address prompt (R11), so the flow does it: after a 2-minute delay it reads the test mails in the Administrator's mailbox (Graph: subject, from, sender) and records for E01, E03 and E04 whether each arrived and how (from-me, sent-as-office, on-behalf-of-office, other), by comparing the from and sender addresses to the Administrator's and the office address in lower case. No address is written.
 - **Manual checks** (M rows): steps in Power Apps, Power Automate and the browser that the probe cannot do (they need Dataverse, the share dialogs or the browser). Each says what to click and what to write down; nothing is created that stays, and nothing is shared with Everyone.
 
-Roles: **U** regular site member · **O** site owner (Full Control) · **A** site collection admin (the PFM) · **K** maker in the Default environment (any licensed user, by default) · **MB** rights on the office mailbox · admin roles (tenant SharePoint, Power Platform, Exchange) are outside a PFM's reach.
+Roles: **U** regular site member · **O** site owner (Full Control) · **A** site collection admin (the Administrator) · **K** maker in the Default environment (any licensed user, by default) · **MB** rights on the office mailbox · admin roles (tenant SharePoint, Power Platform, Exchange) are outside a PFM's reach.
 
 ## 1. SharePoint site
 
 | # | Right | Needed for | Expected | Conf | Test | Fallback |
 |---|---|---|---|---|---|---|
 | S1 | Read items | Everyone using the app | U, O, A | H | R11, R12 | - |
-| S2 | Add and edit own items | Requests, coordinator answers; the app (wing users have Read on the site, PFM 14 Nov 26) | U after the list gives the user (r5) or their group Contribute, with item-level "own items" | H | R11, R12, C01, W11, R12b (r5: W11 grants the user ID from C01; r4 found no group) | Changes through a flow on the PFM's connection |
+| S2 | Add and edit own items | Requests, coordinator answers; the app (wing users have Read on the site, Administrator 14 Nov 26) | U after the list gives the user (r5) or their group Contribute, with item-level "own items" | H | R11, R12, C01, W11, R12b (r5: W11 grants the user ID from C01; r4 found no group) | Changes through a flow on the Administrator's connection |
 | S3 | Create lists, columns, views | Setup part 1, upgrades | O, A; also U when Members have "Edit" (Edit includes Manage Lists) | M | R06, R07b, R11, W01-W02 | A site owner runs setup part 1 |
 | S4 | Give a list its own permissions | Settings and log read-only for members (P2) | O, A | H | W04, W05 | A site owner follows a checklist |
 | S5 | Item-level permissions on a list | Edit own rows (DECISIONS 12 Nov) | O, A (Manage Lists) | H | W03, R09a, R09b | Changes through flows only |
@@ -26,7 +26,7 @@ Roles: **U** regular site member · **O** site owner (Full Control) · **A** sit
 | S11 | Site time zone | Date-only columns | O can change | H | R08 (read) | Time zone row in PFM Settings |
 | S12 | Site is group-connected (M365 group) | M365 group option (P6) | depends on site | H | R03 | - |
 | S13 | Create a new site | A wing without a PFM site | Tenant setting | L | M18 | Request a site through the base process |
-| S15 | Download several library files at once as one zip | Publication package download (docs/roles-and-permissions.md 6.4; PFM 12 Nov) | U | M | M20 | Download files one at a time from the app |
+| S15 | Download several library files at once as one zip | Publication package download (docs/roles-and-permissions.md 6.4; Administrator 12 Nov) | U | M | M20 | Download files one at a time from the app |
 | S14 | Restore from the second-stage recycle bin | Recovery | A | H | Not tested (destructive) | Scheduled export (risk R17 in docs/brief/risks.json) |
 
 ## 2. Power Platform
@@ -59,9 +59,9 @@ Roles: **U** regular site member · **O** site owner (Full Control) · **A** sit
 |---|---|---|---|---|---|---|
 | E1 | Send from own mailbox in a flow | All notices | K | H | E01, E05 | - |
 | E2 | Open the office mailbox (Full Access) | Reading 847s, replies | MB | M | E02 | Forwarding rule set by the mailbox owner |
-| E3 | Send as the office mailbox from a flow | Notices from the office (P4A) | MB Send As (Exchange admins grant) | M | E03, E05 | Send from the PFM, office box on copy and as Reply-To |
+| E3 | Send as the office mailbox from a flow | Notices from the office (P4A) | MB Send As (Exchange admins grant) | M | E03, E05 | Send from the Administrator, office box on copy and as Reply-To |
 | E4 | Send on behalf of the office mailbox | Same | MB Send on Behalf | M | E04, E05 | Same as E3 |
-| E5 | Start a flow when mail arrives in the office mailbox | 847 intake, result capture | MB Full Access | M | E02 (rights), M16 (trigger) | PFM forwards by hand |
+| E5 | Start a flow when mail arrives in the office mailbox | 847 intake, result capture | MB Full Access | M | E02 (rights), M16 (trigger) | Administrator forwards by hand |
 
 ## 4. Directory and groups
 
@@ -70,7 +70,7 @@ Roles: **U** regular site member · **O** site owner (Full Control) · **A** sit
 | D1 | Look up people (Office 365 Users) | Person pickers, AO lookup | K, data policy | M | U01 | SharePoint person fields only |
 | D2 | Create an M365 group | M365 group option | Tenant setting | L | M17 (look only) | Use an existing group |
 | D3 | Create or change an AD security group | AD group option | Communications squadron only | H | Not testable | Ask the squadron |
-| D4 | See a group's type when picking it | Setup explanation | K | M | R13, M07; G01-G06 (r4, r5) | Setup asks the PFM |
+| D4 | See a group's type when picking it | Setup explanation | K | M | R13, M07; G01-G06 (r4, r5) | Setup asks the Administrator |
 
 ## 5. Gov computer
 
@@ -105,7 +105,7 @@ Write down only what each check shows (allowed, blocked, error text without name
 
 ## 7. Capability inventory (future projects)
 
-PFM 14 Nov 26: the probes also record what later projects can use. All read-only; results go to the private log like the rows above.
+Administrator 14 Nov 26: the probes also record what later projects can use. All read-only; results go to the private log like the rows above.
 
 | Where | What it records |
 |---|---|
