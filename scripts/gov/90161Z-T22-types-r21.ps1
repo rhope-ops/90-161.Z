@@ -318,10 +318,19 @@ function Build-PfmRailItem {
   control between its MinimumSize and its MaximumSize. The caller sets the Text, Font and MinimumSize first (and AutoSize
   on), then calls this; the layout self-check then finds the preferred size equal to the size. Call it again when the text
   or the font changes.
+.PARAMETER Link
+  The link button that Build-PfmLinkText made, with its Text, Font and MinimumSize set.
+.OUTPUTS
+  None. It sets the link's MaximumSize and Size.
 #>
 function Resize-PfmLinkText($Link) {
-  $t = [System.Windows.Forms.TextRenderer]::MeasureText($Link.Text, $Link.Font, [System.Drawing.Size]::new(100000, 0),
-    [System.Windows.Forms.TextFormatFlags]'Left, VerticalCenter, SingleLine, NoPrefix, NoPadding')
+  # Measure with a screen Graphics, as the C# did: the MeasureText overload with no device context does not apply
+  # NoPadding, and the link then gets about 8 px of padding after its text (ps51 run 46105124709: crumb gap 13 px).
+  $g = [System.Drawing.Graphics]::FromHwnd([IntPtr]::Zero)
+  try {
+    $t = [System.Windows.Forms.TextRenderer]::MeasureText($g, $Link.Text, $Link.Font, [System.Drawing.Size]::new(100000, 0),
+      [System.Windows.Forms.TextFormatFlags]'Left, VerticalCenter, SingleLine, NoPrefix, NoPadding')
+  } finally { $g.Dispose() }
   $fit = [System.Drawing.Size]::new(($t.Width + 1), [math]::Max($Link.MinimumSize.Height, $t.Height))
   $Link.MaximumSize = $fit; $Link.Size = $fit
 }
