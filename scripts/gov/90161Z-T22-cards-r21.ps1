@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
+  90-161.Z Task 22 r21, part "cards": the FAKE data of the PFM window (the 17 cards, the rail, the in-window checks)
   and the plan text that -PlanOnly prints.
 .DESCRIPTION
   R17 (round R44 T4; R43 finding 3): the look step after the waves card names the grid by the head line above it
@@ -12,7 +12,7 @@
   (Get-AgainText; the main script gives it the saved card); the closing line of the check bar names no card.
   R11 (R38; PFM 20 Nov 26): the fake names start with "XXX XXX " (wide letters, to test spacing); the check bar has 3 checks
   (status chips and names on All Actions and Your Work); the Weekdays head may wrap (HW).
-  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r20.ps1 dot-sources this file
+  Pure data and text: no window, no Windows Forms. The main script 90161Z-T22-pfm-window-r21.ps1 dot-sources this file
   from its own folder before it does anything else, so the cards exist for -PlanOnly, for -Measure and for the window.
   Inputs: none. Outputs: the variables $mid, $gt, $StepNames, $GridHome, $GridQueue, $Checks, $Cards, $RailItems, $Walk
   and the functions Get-SideStatus, Test-CheckLink, Get-CardName, Get-AgainText, Get-CardPlan, Get-CheckPlan,
@@ -522,7 +522,7 @@ function Get-WalkPlan([string[]]$Only = @()) {
   return $out
 }
 # r19 (the round skill, "Repeated tasks"; the PFM, 2026-11-26): the window walk opens only the screens that changed or failed
-# since the last round that passed them, each with its reason. r20 (R48): R47 failed home and step12 (the PFM's notes: the
+# since the last round that passed them, each with its reason. r21 (R48): R47 failed home and step12 (the PFM's notes: the
 # pills not on the row's middle; the Waiting pill not in line with the dates); both changed since (R47 findings 2).
 $WalkOnly = [ordered]@{ home = 'Why again: round 47 gave Fail; each pill is now on the middle of its row.'
   step12 = 'Why again: round 47 gave Fail; the pill now starts on the edge of the dates.' }

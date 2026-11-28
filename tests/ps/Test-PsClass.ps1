@@ -1,4 +1,4 @@
-# Spike for fleet batch F6 item 6 (docs/reviews/2026-11-27-plan-f6.md): can the Kanon window (scripts/gov/90161Z-T22-types-r20.ps1)
+# Spike for fleet batch F6 item 6 (docs/reviews/2026-11-27-plan-f6.md): can the Kanon window (scripts/gov/90161Z-T22-types-r21.ps1)
 # draw its rounded cards and route the mouse wheel with no inline C# (DEC-NIPR invariant 2: no Add-Type)?
 # First finding (2026-11-27): PowerShell classes that inherit a WinForms type do not parse where WinForms is missing (the Linux
 # lint of the pre-push hook: "Cannot load assembly 'System.Windows.Forms'"), so this spike tests the other way: standard
@@ -81,7 +81,7 @@ function Get-RoundCard($Fill) {
 }
 
 # 0. The file this spike would replace is where the plan says.
-Test-One 'the T22 types file exists' (Test-Path (Join-Path $Root 'scripts/gov/90161Z-T22-types-r20.ps1'))
+Test-One 'the T22 types file exists' (Test-Path (Join-Path $Root 'scripts/gov/90161Z-T22-types-r21.ps1'))
 
 # 1. Paint handler: draw the card into a bitmap and read 2 pixels.
 $card = Get-RoundCard ([System.Drawing.Color]::FromArgb(255, 34, 38, 49))
