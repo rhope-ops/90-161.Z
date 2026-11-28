@@ -8,6 +8,7 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-27 | F6 archive list: T23, T15, T10, T13 and T28 leave (git rm plus a row in docs/reviews/archive-index.md); T01, T06, T11, T21, T26, T27, T29, T30 stay. | Administrator ("1a", own message, 2026-11-27 20:10) | docs/reviews/2026-11-27-plan-f6.md |
 | 2026-11-27 | F6 T22: remove all inline C#, DPI call included (as RADE F3); cards, chips, step bar and wheel become PowerShell classes with the same look; text may look soft at 125 % or more. | Administrator ("Accept soft text", question dialog, 2026-11-27 20:00) | docs/reviews/2026-11-27-plan-f6.md |
 | 2026-11-27 | F6 archive: the agent checks the callers of each old task script and shows a list with reasons; nothing moves before the Administrator approves it. | Administrator ("I check, you approve", question dialog, 2026-11-27 20:00) | docs/reviews/2026-11-27-plan-f6.md |
 | 2026-11-27 | F6: add step 3B.2 (kanon scripts pass nipr_guard.py); merged T22/T20 files keep the 90161Z-T<NN>-<part>-r<N>.ps1 names; start the parts that need neither Kit 16 nor engine-v50 now; no merge before F6 is complete. | Administrator ("proceed with A", own message, 2026-11-27 19:50) | docs/reviews/2026-11-27-plan-f6.md |
