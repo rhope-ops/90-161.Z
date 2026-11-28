@@ -1,0 +1,12 @@
+message_id,timestamp,turn,session_id,repo,model,source,agent,agent_id,input_tokens,cache_creation_input_tokens,cache_read_input_tokens,output_tokens,cache_write_1h_tokens,speed,web_search_requests,inference_geo,skill_use
+msg_011ChUUBa9PFrVXC8VEZutSD,2026-11-28T01:36:53.800Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,32575,63280,327,32575,standard,0,global,
+msg_011ChUUC14LYQgtZwtgQoSgo,2026-11-28T01:36:58.474Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,7470,95855,126,7470,standard,0,global,
+msg_011ChUUCCviUyV8FpJQjBwvG,2026-11-28T01:37:00.856Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,2016,103325,91,2016,standard,0,global,
+msg_011ChUUCNXgEjXmbL5XVwdP7,2026-11-28T01:37:06.948Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,16410,105341,675,16410,standard,0,global,
+msg_011ChUUD7mgeD7KbXhM1A4zF,2026-11-28T01:37:14.981Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,2369,121751,305,2369,standard,0,global,
+msg_011ChUUDWcs5goRF4JrTcuD6,2026-11-28T01:37:24.205Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,934,124120,790,934,standard,0,global,
+msg_011ChUUEAhq5vwCr1WYqLbYR,2026-11-28T01:37:28.156Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,4,3348,252250,625,2142,standard,0,global,
+msg_011ChUUKVTqZaWLHq27pXBgj,2026-11-28T01:38:42.555Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,1,2777,127196,545,2777,standard,0,global,
+msg_011ChUUKwGMvQw3eKhTua1jQ,2026-11-28T01:38:46.612Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,1428,129973,177,1428,standard,0,global,
+msg_011ChUULD4P319vXFioy4xnk,2026-11-28T01:38:49.655Z,1,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,2,1304,131401,290,1304,standard,0,global,
+msg_011ChUUMGayn6oY66KDYFBtx,2026-11-28T01:39:13.632Z,2,4d170155-548a-5b9d-82b2-001abd811dca,kanon,claude-opus-5-5,main,main,,4,38,134124,1834,38,standard,0,global,
