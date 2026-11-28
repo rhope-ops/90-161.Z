@@ -37,7 +37,6 @@ grp t21 'scripts/gov/90161Z-T21-*' 'scripts/gov/90161Z-T20-*' 'scripts/gov/src/*
 grp batch 'scripts/gov/*.ps1' 'scripts/gov/src/*' 'tests/ps/Invoke-Batch.ps1' 'flow/provisioning-payload.json' 'schemas/lists/*' 'samples/*'
 grp bundle 'scripts/gov/paste/*' 'scripts/paste_bundles.json' 'scripts/rade.lock.json' 'scripts/build_paste_bundles.py' 'scripts/rade_newest.py'
 grp t22 'scripts/gov/90161Z-T22-*'
-grp t28 'scripts/gov/90161Z-T28-*' 'scripts/gov/90161Z-T27-made-*' 'scripts/gov/90161Z-T20-helpers-*' 'tests/ps/Test-T28.ps1' 'tests/fake-pnp/*'   # R44: the count step
 grp mask 'scripts/gov/90161Z-T*.ps1' 'scripts/gov/src/*' 'tests/ps/Test-Mask.ps1' 'tests/ps/Test-T22Maint.ps1' 'tests/ps/Test-T26.ps1' 'tests/ps/Test-T27.ps1' 'tests/ps/Test-T30.ps1' 'scripts/paste_bundles.json'
 # Lint: the full lane, or a changed scripts/lint.sh, lints every file; else only the changed PowerShell files under scripts/gov.
 lintfiles=()

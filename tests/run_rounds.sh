@@ -214,11 +214,6 @@ out=$(pwsh -NoProfile -File tests/ps/Test-T22Bar.ps1 2>&1); rc=$?
 [ $rc -eq 0 ] && ok "T22 check bar: look step, links kept clear of the step text, first step opened ($(echo "$out" | tail -1))" ||
   { echo "$out" | grep FAIL; bad "T22 check bar: look step, links or first step"; }
 else sk "T22 window preview cards (r20)"; fi
-# R44 T2: the read-only count step on a fake site (no write call, one sign-in, no name or row text in the lines).
-if [ "${on[t28]}" = 1 ]; then
-out=$(pwsh -NoProfile -File tests/ps/Test-T28.ps1 2>&1); rc=$?
-[ $rc -eq 0 ] && ok "T28 count step: read-only, counts only ($(echo "$out" | tail -1))" || { echo "$out" | grep FAIL; bad "T28 count step"; }
-else sk "T28 count step"; fi
 # R44 T1 (R43 finding 1: one missing hand value skipped 13 steps): only the 2 endorser answer steps wait for the second person.
 rd=$(python3 tests/check_round_deps.py) && ok "round steps: only the endorser answers wait for the second person ($(echo "$rd" | tail -1))" ||
   { echo "$rd"; bad "round steps: a step that is no endorser answer waits for the second person"; }

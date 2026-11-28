@@ -38,11 +38,9 @@ GRAPH = {
     'flow_solution': ([PY, 'scripts/build_flow_solution.py'], [PY, 'scripts/build_flow_solution.py', '--check'],
                       ['flow_package', 'flow_payload']),
     'probe_samples': ([PY, 'scripts/build_probe_samples.py'], [PY, 'scripts/build_probe_samples.py', '--check'], []),
-    # The T23 app write needs the pac tool (PAC=<dir>/pac); without it the write step runs the check (see write_cmd).
-    'test_app': ([PY, 'scripts/build_test_app.py'], [PY, 'scripts/build_test_app.py', '--check'], []),
     # Task scripts get the shared blocks after the generators that write other blocks into them.
     'task_scripts': ([PY, 'scripts/build_task_scripts.py'], [PY, 'scripts/build_task_scripts.py', '--check'],
-                     ['probe_samples', 'test_app', 'rights_rows']),
+                     ['probe_samples', 'rights_rows']),
     # Round bundles embed the task scripts and samples; the build also rewrites the README task part (build_readme.py) at its end.
     'paste_bundles': ([PY, 'scripts/build_paste_bundles.py'], [PY, 'scripts/build_paste_bundles.py', '--check'],
                       ['task_scripts', 'messy_draft', 'test_seals', 'flow_package', 'flow_solution']),
@@ -66,9 +64,7 @@ def order():
 
 
 def write_cmd(name):
-    """Return the write command of a generator; for the T23 app without PAC, its check (the pack needs the pac tool)."""
-    if name == 'test_app' and not os.environ.get('PAC'):
-        return GRAPH[name][1]
+    """Return the write command of a generator."""
     return GRAPH[name][0]
 
 
