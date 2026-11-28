@@ -28,9 +28,9 @@
     },
     "bundles": [
         {
-            "out": "scripts/gov/paste/90161Z-R48-round-r1.ps1",
-            "round": "R48",
-            "title": "Round R48 r1: the engine-v48 RADE window (band, light line, Run card, buttons, Enter, Cancel question, Maintenance cards), my window r20 (screens Your Work and step 12), and the Restore dry run with its numbers",
+            "out": "scripts/gov/paste/90161Z-R49-round-r1.ps1",
+            "round": "R49",
+            "title": "Round R49 r1: the Kanon window after fleet batch F6 (no inline C#, new colors), and the R48 tests: the engine RADE window, screens Your Work and step 12, and the Restore dry run with its numbers",
             "files": [
                 {
                     "dir": "T30",
