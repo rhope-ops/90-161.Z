@@ -13,7 +13,7 @@ Each control below names the rule it meets and the check or record that proves i
 | Python and JavaScript code is scanned for security defects | Master plan P4b (2026-11-23) | `.github/workflows/codeql.yml` (CodeQL v4.39.5, pinned by commit; pull requests and manual runs). No PowerShell support: PSScriptAnalyzer in `scripts/lint.sh`. |
 | Code is modular, commented and readable as plain text | AGENTS.md "Project rules", code standard | `scripts/code_standard.py` and `docs/code-standard-90-161.md` |
 | Hand-written source files stay at 450 lines or fewer; generated files and user-paste scripts at 600 | Fleet v2 DEC 6 | `wc -l` by hand: `scripts/code_standard.py` C4 enforces 600 until the kit 11.0.0 sync. Open: `scripts/build_flow_solution.py` (482) and `scripts/logo_svg.py` (458). |
-| PowerShell execution policy is not turned off by a script | Fleet v2 DEC 3; Group Policy governs | `grep -rn "ExecutionPolicy Bypass"` = only `.github/workflows/ps51.yml` (after the engine-v36 rebuild) |
+| PowerShell execution policy is not turned off by a script | DEC-EXEC (fleet v3, 2026-11-27); Group Policy governs | No file passes the value Bypass to `-ExecutionPolicy`, CI included (`.github/workflows/ps51.yml` runs under the runner policy). Check: `python3 scripts/nipr_guard.py` (from Kit 16.0.0) |
 | The RADE engine is pinned and attested | AGENTS.md "Project rules", deployable package | `scripts/rade.lock.json`; `python3 scripts/bump_lock.py --test` |
 | Generated files are never stale | AGENTS.md "Defaults", one home | `python3 scripts/rebuild_all.py --check` |
 | No app looks like network reconnaissance | AGENTS.md "Project rules", no reconnaissance | Fixed hosts only (`site.config.json`, the one site the person types) |
