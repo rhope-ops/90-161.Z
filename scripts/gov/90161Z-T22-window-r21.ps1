@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "window": the rail, the cards, the check bar, the window size and place, and the window's
+  90-161.Z Task 22 r21, part "window": the rail, the cards, the check bar, the window size and place, and the window's
   events of the PFM window.
 .DESCRIPTION
   R17 (round R44 T4; the PFM, 26 Nov 26): the name in the rail head, at the logo, is "Kanon" ($wn.HeadParts). The line
@@ -14,7 +14,7 @@
   R11 (R38; PFM 20 Nov 26): the layout self-check tests the grid edges against the scroll bar (R11 LAYOUT line); the logo and
   THEME lines name Fulcrum in both modes; the checks are the 3 of the cards part.
   $wn.ShowBuild builds one card: the head (notice, crumb, title), then its columns of sections. R4 (R30): the crumb is one
-  line in one font (V2: its link is a Pfm.LinkText in the crumb's font, underlined, with no padding); the last cards of
+  line in one font (V2: its link is a Build-PfmLinkText button in the crumb's font, underlined, with no padding); the last cards of
   the columns end on one line when the card has an Action Status card (V4). $wn.Build builds every card once (layout
   self-check, grid check, the accessible-name check of the measure part) and $wn.Hook adds the window's events.
   R5 (R31): the rail logo sits on the rail's navy and the app name is centered on the logo's middle (W1, $wn.HeadParts);
@@ -22,17 +22,17 @@
   $wn.Recolor); $wn.Build saves a picture of each card through the measure part (W4).
   R6 (R31b): the caption "ACTION STATUS" is level with the first line of the main card (D1, $wn.LevelCaps); the rest of
   the crumb has the link's text middle (D2, $wn.Crumb).
-  R7 (R32): the mouse wheel scrolls a card from anywhere on it (W2, $wn.WheelOn, Pfm.Wheel in the types part); the
+  R7 (R32): the mouse wheel scrolls a card from anywhere on it (W2, $wn.WheelOn, Add-PfmWheel in the types part); the
   NOTICE chip is level with its note (W3, $wn.ShowNotice).
   R8 (R35 W7, R34 finding 7): with high contrast on, the rail logo is drawn in 2 system colors and back in its own
   colors when it goes off ($wn.LogoImage); each rail build checks the logo it shows ($wn.LogoFacts and $wn.LogoBad in
   the measure part: a LOGO line, and a LAYOUT line when the logo has the wrong colors).
   The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $RailItems, $Rev, $dir, $lines.
-  Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
-  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder inside its try block.
+  Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds-r21.json in the task folder.
+  Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
+  Writes: 90161Z-T22-window-bounds-r21.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
   app mode (the logo part); a grid wider than its room gives the excess back ($wn.FitGrids in the grid part).
   Credentials: none.
@@ -118,7 +118,7 @@ $wn.BuildRail = {
   & $wn.RailHead
   $y = & $wn.Sc 108
   foreach ($r in $RailItems) {
-    $x = New-Object Pfm.RailItem; $x.Text = $r.Text; $x.AccessibleName = $r.Text; $x.Tag = $r.Key; $x.Font = $ui.F.Body; $x.BoldFont = $ui.F.SmallB
+    $x = Build-PfmRailItem; $x.Text = $r.Text; $x.AccessibleName = $r.Text; $x.Tag = $r.Key; $x.Font = $ui.F.Body; $x.BoldFont = $ui.F.SmallB
     $x.Back = $pc.navy; $x.OnBack = $ui.C.White; $x.Fore = $pc.onPrimaryMuted; $x.OnFore = $pc.navy; $x.HotLine = $pc.onPrimaryMuted; $x.FocusLine = $pc.accentFill
     $x.FocusOn = $pc.navy; $x.BadgeFill = $pc.accentFill; $x.BadgeText = $pc.ink; $x.BackColor = $x.Back; $x.ForeColor = $x.Fore   # R11 (B10)
     if ($r.Badge) { $x.Badge = [string]$r.Badge; $x.AccessibleName = $r.Text + ', ' + $r.Badge + ' items need you' }
@@ -140,7 +140,7 @@ $wn.Crumb = {
   .SYNOPSIS
   The crumb line of a card: its first part as a link, the rest as text, in one font and size (R30 V2).
   .DESCRIPTION
-  The link is a Pfm.LinkText: the crumb's own font (the small text font) underlined, the link blue, no padding, so its
+  The link is a Build-PfmLinkText button: the crumb's own font (the small text font) underlined, the link blue, no padding, so its
   size is its text. The rest starts with the arrow, a small gap after the link (3 px at 100 %, room for the focus ring),
   so the gap from the link's text to the arrow stays under 8 px at 100 %. A crumb with no link is one text.
   R6 (R31b D2): the link draws its text in its vertical middle; the rest's top gap is set so that the middle of its
@@ -156,9 +156,10 @@ $wn.Crumb = {
   $cf = & $wn.Flow $page $pc.surface; $cf.Margin = & $ui.Pad 0 0 0 (& $wn.Sc 8)
   $parts = @(([string]$C.Crumb) -split [regex]::Escape(' ' + $gt + ' '))
   if (-not ($C.CrumbGo -and $parts.Count -gt 1)) { return (& $wn.Txt $cf $C.Crumb $ui.F.Small $ui.C.Gray 0 $Cw 'Where you are' $pc.surface) }
-  $l = New-Object Pfm.LinkText; $l.Text = $parts[0]; $l.Font = $wn.CrumbFont; $l.ForeColor = $ui.C.Blue; $l.BackColor = $pc.surface
+  $l = Build-PfmLinkText; $l.Text = $parts[0]; $l.Font = $wn.CrumbFont; $l.ForeColor = $ui.C.Blue; $l.BackColor = $pc.surface
   $l.AutoSize = $true; $l.AutoSizeMode = 'GrowAndShrink'
-  $l.MinimumSize = [Drawing.Size]::new(0, (& $wn.Sc $ui.Z.LinkH)); $l.Margin = & $ui.Pad (& $wn.Sc $ui.Z.M) (& $wn.Sc $ui.Z.M) 0 (& $wn.Sc $ui.Z.M)
+  $l.MinimumSize = [Drawing.Size]::new(0, (& $wn.Sc $ui.Z.LinkH)); Resize-PfmLinkText $l   # R21: the maximum size makes the preferred size the text's
+  $l.Margin = & $ui.Pad (& $wn.Sc $ui.Z.M) (& $wn.Sc $ui.Z.M) 0 (& $wn.Sc $ui.Z.M)
   $l.AccessibleName = $parts[0]; $l.AccessibleRole = 'Link'; $l.Tag = @{ Text = $parts[0]; Go = $C.CrumbGo }
   $l.Add_Click({ & $wn.Press $this.Tag }); & $ui.Cue $l; [void]$cf.Controls.Add($l); $wn.CrumbLink = $l
   $rest = $gt + ' ' + ((@($parts | Select-Object -Skip 1)) -join (' ' + $gt + ' '))
@@ -335,7 +336,8 @@ $wn.Show = {
   if ($wn.Focus -eq 'reason' -and $wn.Reason) { [void]$wn.Reason.Focus(); $wn.Focus = '' } elseif ($wn.Primary) { [void]$wn.Primary.Focus() }
   if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start(); & $wn.KeepTime $Key $t0; & $wn.WalkSeen $Key } }   # R14: the click-through notes the open
 # Where the window place is kept between runs (none with -Measure: no task folder).
-$wn.BoundsFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-bounds.json' } else { '' })
+# r21 (F6): new file name, so a place saved by r20 (DPI aware, physical pixels) is not read as logical pixels now.
+$wn.BoundsFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-bounds-r21.json' } else { '' })
 # R12 (R39; docs/phases.md): the card the window was closed on, opened again at the next start (none with -Measure).
 $wn.LastFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-lastcard.txt' } else { '' })
 # R13 (R40): the card key saved at the last close, or '' when there is none ($wn.OpenLast; the -Again check names it).
@@ -494,15 +496,12 @@ $wn.Recolor = {
   $form.ResumeLayout($true)
   & $wn.KeepClear   # R13: every kept card has the old colors; each builds again at its next open
   & $wn.Show $wn.Cur; $form.Invalidate($true) }
-# R7 (R32 W2): a new mouse-wheel filter for this window (Pfm.Wheel): a wheel turn anywhere on the main column scrolls
-# the grid under the pointer while that grid can still scroll, else the main column; keys and focus are not touched.
-$wn.WheelNew = { $w = New-Object Pfm.Wheel; $w.Owner = $form; $w.Stop = $main; return $w }
-# Starts the filter for the window's message loop ($wn.Wheel); a filter that cannot start is a NOTE line, not a stop.
+# R7 (R32 W2; R21: MouseWheel handlers, no message filter): a wheel turn anywhere on the main column scrolls the grid under
+# the pointer while that grid can still scroll, else the main column; keys and focus are not touched (Add-PfmWheel).
+# Puts the handlers on the window and its controls, also on those added later; a failure is a NOTE line, not a stop.
 $wn.WheelOn = {
-  try { $wn.Wheel = & $wn.WheelNew; [Windows.Forms.Application]::AddMessageFilter($wn.Wheel); $lines.Add('WHEEL on: the mouse wheel scrolls what is under the pointer') }
-  catch { $wn.Wheel = $null; $lines.Add('NOTE the mouse-wheel filter did not start: ' + ([string]$_.Exception.Message)) } }
-# Stops the filter when the window has closed.
-$wn.WheelOff = { if ($wn.Wheel) { try { [Windows.Forms.Application]::RemoveMessageFilter($wn.Wheel) } catch { $null = $_ }; $wn.Wheel = $null } }
+  try { Add-PfmWheel $form $main; $lines.Add('WHEEL on: the mouse wheel scrolls what is under the pointer') }
+  catch { $lines.Add('NOTE the mouse-wheel handlers did not start: ' + ([string]$_.Exception.Message)) } }
 $wn.Start = {
   <#
   .SYNOPSIS
@@ -511,7 +510,7 @@ $wn.Start = {
   .DESCRIPTION
   R31 W2: a change of the Windows high-contrast setting while the window is open runs $wn.Recolor; the handler is added
   here, on the window's own thread (so the event comes back on it), and removed when the window closes ($wn.Hook).
-  R7 (R32 W2): the mouse-wheel filter starts here ($wn.WheelOn) and stops when the window closes.
+  R7 (R32 W2): the mouse-wheel handlers start here ($wn.WheelOn); they go with the window when it closes.
   #>
   & $wn.LoadBounds
   & $ui.FormDpi; $ui.Scaled = $true   # R11 (UI standard v1): the form has its scale now, as RADE's window sets it; button sizes follow it
@@ -531,7 +530,7 @@ $wn.Hook = {
   <#
   .SYNOPSIS
   Adds the window's events: start when shown, re-layout on a new size, Esc and Ctrl+1 to Ctrl+5, save the place on close,
-  and remove the high-contrast handler and the mouse-wheel filter of $wn.Start when the window has closed.
+  and remove the high-contrast handler of $wn.Start when the window has closed.
   .DESCRIPTION
   Esc opens the card's Up card (back: the card before a modal one); Ctrl+1 to Ctrl+5 open the rail items in order.
   A window that cannot be built adds a STOPPED line, sets exit code 1 and closes.
@@ -547,5 +546,4 @@ $wn.Hook = {
       elseif ($_.Control -and $_.KeyCode -ge [Windows.Forms.Keys]::D1 -and $_.KeyCode -le [Windows.Forms.Keys]::D5) {
         $n = [int]$_.KeyCode - [int][Windows.Forms.Keys]::D1; $wn.Notice = ''; $wn.Err = ''; & $wn.Show ([string]$RailItems[$n].Go); $_.Handled = $true; $_.SuppressKeyPress = $true } })
   $form.Add_FormClosing({ & $wn.State 'close'; & $wn.SaveBounds; & $wn.SaveLast; & $wn.TimeLines; & $wn.FeedbackList })
-  $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null }
-      & $wn.WheelOff }) }
+  $form.Add_FormClosed({ if ($wn.Pref) { try { [Microsoft.Win32.SystemEvents]::remove_UserPreferenceChanged($wn.Pref) } catch { $null = $_ }; $wn.Pref = $null } }) }

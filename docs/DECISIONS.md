@@ -1,6 +1,6 @@
 # Decisions: 90-161.Z
 
-Newest first. "By" = PFM for a decision. "By" = Agent for a recommendation that PFM has not approved yet.
+Newest first. "By" = Administrator (before 2026-11-27: PFM) for a decision. "By" = Agent for a recommendation that PFM has not approved yet.
 A record that agents read on demand, not at the start of a session (the PFM, 2026-11-16): a row binds the task or thing it names; only a line in AGENTS.md binds every session (AGENTS.md "Rules and decisions").
 One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one line per decision, 200 characters or fewer; detail lives in the linked doc. Rows from before 13 Nov 26 15:30 have full text in docs/decisions-archive.md "Full text of current rows"; read it before you act on them.
 
@@ -8,6 +8,13 @@ One table (PFM C, 2026-11-13; replaces the B2A short index + archive pair): one 
 
 | Date | Decision | By | Detail |
 |---|---|---|---|
+| 2026-11-27 | Skip R48: R49 replaces it and carries the R48 open tests plus all F6 changes; the R49 build starts on the F6 branch now. | Administrator ("Skip R48, R49 replaces it", question dialog, 2026-11-27 21:00) | docs/reviews/2026-11-27-plan-f6.md |
+| 2026-11-27 | F6 archive list: T23, T15, T10, T13 and T28 leave (git rm plus a row in docs/reviews/archive-index.md); T01, T06, T11, T21, T26, T27, T29, T30 stay. | Administrator ("1a", own message, 2026-11-27 20:10) | docs/reviews/2026-11-27-plan-f6.md |
+| 2026-11-27 | F6 T22: remove all inline C#, DPI call included (as RADE F3); cards, chips, step bar and wheel become PowerShell classes with the same look; text may look soft at 125 % or more. | Administrator ("Accept soft text", question dialog, 2026-11-27 20:00) | docs/reviews/2026-11-27-plan-f6.md |
+| 2026-11-27 | F6 archive: the agent checks the callers of each old task script and shows a list with reasons; nothing moves before the Administrator approves it. | Administrator ("I check, you approve", question dialog, 2026-11-27 20:00) | docs/reviews/2026-11-27-plan-f6.md |
+| 2026-11-27 | F6: add step 3B.2 (kanon scripts pass nipr_guard.py); merged T22/T20 files keep the 90161Z-T<NN>-<part>-r<N>.ps1 names; start the parts that need neither Kit 16 nor engine-v50 now; no merge before F6 is complete. | Administrator ("proceed with A", own message, 2026-11-27 19:50) | docs/reviews/2026-11-27-plan-f6.md |
+| 2026-11-27 | Role name 1A: "Administrator" for the person who runs or decides, in every project; keep DAFMAN 90-161 quotes and paragraph citations, and list, field, flow and file names. | Administrator (own message, "1a") | docs/reviews/2026-11-27-plan-f6.md |
+| 2026-11-27 | DEC-EXEC: no -ExecutionPolicy Bypass in any file, CI included (fleet plan v3). | Administrator (fleet plan v3 DEC-EXEC; "proceed with A", own message, 2026-11-27 19:50) | docs/reviews/2026-11-27-plan-f6.md |
 | 2026-11-27 | RADE lock moves to release engine-v48 (RADE 9b9b158, serial 34) by scripts/bump_lock.py; bundles rebuilt and checked. Not verified on a device. | scripts/bump_lock.py (run at the PFM's request) | scripts/rade.lock.json |
 | 2026-11-27 | R48 scope: lock engine-v48; engine-v48 RADE window look questions; Uninstall (keep Backups), Install again; window r20 walks home and step12; Restore dry run with its plan lines; R47 passes leave. | the PFM ("take every step needed to get this pushed, merged, and so i can do the next round soon", own message, 2026-11-27, on the RADE plan engine-v48 and R48) | [plan](reviews/2026-11-27-plan-r48.md) |
 | 2026-11-27 | R48: in a rows block of the Kanon window (step12 dates), a status chip starts on the value edge with the dates; every row splits in half, so a long label can wrap to 2 lines. Replaces R18 (chip at the right). | the PFM ("yes that's the idea", own message, 2026-11-27, on the REC: move the label to the same left edge as the date) | R18 (R45, 2026-11-26) |

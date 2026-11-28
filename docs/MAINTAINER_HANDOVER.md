@@ -1,4 +1,4 @@
-# Maintainer handover
+# Administrator handover
 
 This page is for the person who takes over this repository. It names where each thing lives and gives the steps for the 4 common tasks. Written 2026-11-23 (fleet v2 Stage 3A).
 

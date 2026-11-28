@@ -3,7 +3,7 @@
 # the grid has 961"; queue "All actions" "columns need 1442, the grid has 1428". On those grids the plan's minimums fitted
 # (r15 fixed only grids whose minimums were too wide, as Wave 1 answers), but the grid's own fill laid the columns out wider than
 # the grid. This test gives $wn.FitGrid a stand-in grid with those widths and checks what is left; it needs no window.
-# Usage: pwsh -NoProfile -File tests/ps/Test-T22GridWidth.ps1 [-Rev r20]   (the revision of the T22 grid part to test; r15 fails)
+# Usage: pwsh -NoProfile -File tests/ps/Test-T22GridWidth.ps1 [-Rev r21]   (the revision of the T22 grid part to test; r15 fails)
 # Last line: "T22GRIDW pass=N fail=M"; exit 1 when M is above 0.
 # Stand-in text widths (px per character), the plan and the fit are the grid part's own; only the text measure and the scroll bar
 # width are replaced (no System.Windows.Forms off Windows).
@@ -11,7 +11,7 @@
 # Writes: none.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7).
-param([string]$Rev = 'r20', [string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
+param([string]$Rev = 'r21', [string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
 $script:pass = 0; $script:fail = 0
 $gov = Join-Path $Root 'scripts/gov'

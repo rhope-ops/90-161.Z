@@ -2,7 +2,7 @@
 
 For a publications manager who takes over the 6 flows of the solution "90-161.Z flows" when the person who imported them leaves or moves. The list of flows is in [power-automate-provisioning.md](power-automate-provisioning.md) section 5. The roles are in [roles-and-permissions.md](roles-and-permissions.md). This page adds no publishing rule; DAFMAN 90-161 stays the only rule source.
 
-Decision: the PFM chose "S9 A" on 19 Nov 26 (a handover runbook and a co-owner on each flow now; see [DECISIONS.md](DECISIONS.md) and [the S9 text](reviews/2026-11-13-sweep-decisions.md)).
+Decision: the Administrator chose "S9 A" on 19 Nov 26 (a handover runbook and a co-owner on each flow now; see [DECISIONS.md](DECISIONS.md) and [the S9 text](reviews/2026-11-13-sweep-decisions.md)).
 
 ## 1. What "owner" and "co-owner" mean
 
@@ -56,7 +56,7 @@ Steps for the new person (you must be a co-owner first; if you are not, ask the 
 7. Turn on any flow that reads Off.
 8. Tell the other co-owners that the flows now run under your account.
 
-If a step fails, write down only the line that starts with "Error" (no names, no session ID) and ask the PFM.
+If a step fails, write down only the line that starts with "Error" (no names, no session ID) and ask the Administrator.
 
 ## 4. After the swap: check
 

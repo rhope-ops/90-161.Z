@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "ui": the first half of the RADE shared UI file (colors, fonts, buttons, card text boxes,
+  90-161.Z Task 22 r21, part "ui": the first half of the RADE shared UI file (colors, fonts, buttons, card text boxes,
   layout self-check), generated into this file, and the few names it needs from the window. Part "ui2" holds the rest.
 .DESCRIPTION
   R11 (R38; PFM 20 Nov 26): engine-v29's shared UI file is split into this part and "ui2" (600-line file cap); the high
@@ -11,7 +11,7 @@
   ($apps moved here from part "ui2" with engine-v36; engine-v48 moves the line that reads it back to "ui2"). Part "ui2" chooses the colors for Windows
   high contrast (R31 W2).
   Inputs: $ui with $ui.Form (made by the main script), $pc. Outputs: the $ui members of the first half of the shared UI file.
-  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder.
+  Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder.
   Network: none.
   Writes: none.
   Credentials: none.

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
+  90-161.Z Task 22 r21, part "bar": the check bar of the PFM window, with the in-window checks and the click-through of
   every screen (round R41; PFM 20 Nov 26, docs/reviews/2026-11-21-r41-plan.md row 3).
 .DESCRIPTION
   The check bar (PFM 17 Nov 26) sits at the bottom of the window and is always visible: the checks show one at a time,
@@ -20,7 +20,7 @@
   starts counts as opened for walk step 1 ($wn.BarShow).
   Inputs: $form, $main, $ui, $wn, $pc, $Cards, $Checks, $Walk, $lines. Outputs: the $wn members below and, at the end
   of a run, the WALK lines ($wn.WalkLines; the main script adds them to the result).
-  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: none.
   Credentials: none.
@@ -177,7 +177,7 @@ $wn.BuildBar = {
   $bar = New-Object System.Windows.Forms.Panel; $bar.Dock = 'Bottom'; $bar.BackColor = $ui.C.White; $bar.AccessibleName = 'Check bar'
   $bar.Add_Paint({ try { $pn = New-Object System.Drawing.Pen($pc.line, 1); $_.Graphics.DrawLine($pn, 0, 0, $this.ClientSize.Width, 0); $pn.Dispose() } catch { $null = $_ } })
   $no = & $ui.Label $ui.F.SmallB $ui.C.Gray 0; $no.Visible = $true; $no.AccessibleName = 'Check number'; [void]$bar.Controls.Add($no)
-  $tx = & $ui.Text $ui.F.Body $ui.C.Ink 0 'Check'; $tx.Visible = $true; [void]$bar.Controls.Add($tx)
+  $tx = & $ui.Text $ui.F.Body $ui.C.Ink 0 'Check'; & $wn.NoCaret $tx; $tx.Visible = $true; [void]$bar.Controls.Add($tx)
   foreach ($n in 'Pass', 'Fail') {
     $x = & $ui.Btn 'action'; $x.Text = $n; & $ui.Style $x ''; $x.AccessibleName = $n; $x.Tag = $n
     $x.Add_SizeChanged({ & $wn.Round $this 4 })

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  90-161.Z Task 22 r20, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
+  90-161.Z Task 22 r21, part "measure": the script's own accessible-name check (the RESULT NAMES line) and the -Measure
   run, which builds every card off-screen and writes what it measured as JSON for tests/ps/Test-T22Layout.ps1.
 .DESCRIPTION
   R13 (R40): the measure file has Keep (each card opened again from its kept page, $wn.MeasureKeep in the keep part).
@@ -21,17 +21,17 @@
   ($ui.Measure, $wn.LevelBad), so the window flags the 4 defects on the device too.
   R7 (R32 W1 to W3): the level facts also hold every chip beside text with its kind (W3) and, for each pub grid, what
   its head and each cell needed and had (W1); the self-check writes a W1 or W3 LAYOUT line for each one out of line.
-  $wn.MeasureWheel turns the mouse wheel through the window's own filter with no real pointer (W2).
+  $wn.MeasureWheel turns the mouse wheel through the window's own wheel handlers with no real pointer (W2).
   R8 (R35 W7): $wn.LogoFacts and $wn.LogoBad check the rail logo's colors each time the rail is built (the window
   part calls them); $wn.MeasureLogo rebuilds the window with high contrast on and off and records the logo facts.
-  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r20.png, in
+  Card pictures (R31 W4): $wn.SavePng saves the window as it shows a card, 90161Z-T22-card-<card>-r21.png, in
   $wn.PngDir (the T22 folder in a normal run, the folder of the measure file with -Measure); $wn.PngLines adds the
   CARDPNG lines to the result. The cards hold FAKE data or (R14) fake rows of the test site; a card with a site row that
   has no fake-data marker gets no picture. A picture that cannot be saved is a NOTE line.
   Inputs: $form, $page, $rail, $pc, $ui, $wn, $Cards, $Rev, $lines. Outputs: $wn.NoName, $wn.NamesLine, $wn.SavePng,
   $wn.PngLines, $wn.LevelFacts, $wn.LevelBad, $wn.PubCut, $ui.Measure, $wn.MeasureWheel, $wn.LogoFacts, $wn.LogoBad,
   $wn.MeasureLogo, $wn.MeasureRun and its helpers.
-  Run: not alone; 90161Z-T22-pfm-window-r20.ps1 dot-sources it from its own folder inside its try block.
+  Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
   Writes: the card PNG files in $wn.PngDir (the T22 folder, or -TestDir); with -Measure: the JSON file given and the
   card PNG files in its folder (the test gives a file in its own temporary folder).
@@ -42,7 +42,7 @@ $wn.PngDir = ''; $wn.Pngs = New-Object System.Collections.Generic.List[string]
 $wn.SavePng = {
   <#
   .SYNOPSIS
-  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r20.png in $wn.PngDir.
+  Saves a picture of the window as it shows card $Key (R31 W4): 90161Z-T22-card-<key>-r21.png in $wn.PngDir.
   .DESCRIPTION
   Control.DrawToBitmap at the window's current size; nothing when $wn.PngDir is empty. A picture that cannot be
   saved is a NOTE line in the result, not a stop. The file name is kept in $wn.Pngs.
@@ -378,7 +378,7 @@ $wn.LogoFacts = {
   $f = [ordered]@{}; $f['High'] = [bool]$ui.High; $f['Shown'] = $false; $f['Other'] = -1; $f['Diff'] = -1
   $lg = $wn.Logo; if (-not $lg -or -not $lg.Image) { return $f }
   $own = & $wn.LogoImage $false; $d = [string]$wn.LogoRole.Dark; $l = [string]$wn.LogoRole.Light
-  try { $f['Shown'] = $true; $f['Other'] = [Pfm.Logo]::Other($lg.Image, [Drawing.SystemColors]::$d, [Drawing.SystemColors]::$l); $f['Diff'] = [Pfm.Logo]::Diff($lg.Image, $own) }
+  try { $f['Shown'] = $true; $f['Other'] = (Get-PfmOtherCount $lg.Image ([Drawing.SystemColors]::$d) ([Drawing.SystemColors]::$l)); $f['Diff'] = (Get-PfmPixelDiff $lg.Image $own) }
   finally { $own.Dispose() }
   return $f }
 # R8 (R35 W7): the LAYOUT line for logo facts $F ($wn.LogoFacts) with the wrong colors, or none: with high contrast on,
@@ -468,23 +468,21 @@ $wn.WheelTry = {
   <#
   .SYNOPSIS
   R7 (R32 W2): turns the mouse wheel once towards you (delta -120) at point $Pt of the window, in 2 ways: through the
-  window's own filter (Pfm.Wheel.PreFilterMessage, as Windows calls it, with the message sent to the control that has
-  the focus and the pointer in screen pixels), or straight through the routing function on the control tree.
-  .PARAMETER Filter
-  The filter ($wn.WheelNew).
+  window's own handlers (Add-PfmWheel: the MouseWheel event of the control that has the focus, with the pointer in its
+  pixels, as Windows sends it), or straight through the routing function on the control tree.
   .PARAMETER Pt
   The pointer, in client pixels of the window ($wn.ViewMid).
   .PARAMETER Focus
   The control the message is for (Windows sends the wheel to the control with the focus).
   .PARAMETER Direct
-  When set, the routing function Pfm.Wheel.Route is called with $Pt; no message, no screen pixels.
+  When set, the routing function Invoke-PfmWheelRoute is called with $Pt; no event, no screen pixels.
   .OUTPUTS
   @{ Handled (the turn was taken); Under (the control under the pointer: its type and accessible name) }.
   #>
-  param($Filter, $Pt, $Focus, [switch]$Direct)
-  $u = [Pfm.Wheel]::Under($form, $Pt)
-  if ($Direct) { $ok = ($null -ne [Pfm.Wheel]::Route($form, $main, $Pt, -120)) }
-  else { $m = [Pfm.Wheel]::Make($Focus.Handle, $form.PointToScreen($Pt), -120); $ok = $Filter.PreFilterMessage([ref]$m) }
+  param($Pt, $Focus, [switch]$Direct)
+  $u = Get-PfmWheelUnder $form $Pt
+  if ($Direct) { $ok = ($null -ne (Invoke-PfmWheelRoute $form $main $Pt -120)) }
+  else { $ok = Send-PfmWheel $Focus $form.PointToScreen($Pt) -120 }
   return @{ Handled = [bool]$ok; Under = ($u.GetType().Name + ' "' + [string]$u.AccessibleName + '"') } }
 $wn.WheelCase = {
   <#
@@ -493,7 +491,7 @@ $wn.WheelCase = {
   then, when a grid of the card has rows out of view, the card is scrolled to the grid and one turn goes to the middle
   of the grid's part in view ($wn.WheelTry; a button has the focus).
   .PARAMETER Direct
-  When set, the turns go straight to the routing function; else through the window's filter.
+  When set, the turns go straight to the routing function; else through the window's handlers (the Filter key of the result).
   .OUTPUTS
   A table: Scrolls, Point (the pointer, window pixels), PageTop, Under, Handled, Before, After (the main column's
   scroll position) and, when a grid can scroll,
@@ -502,17 +500,17 @@ $wn.WheelCase = {
   param([switch]$Direct)
   $res = [ordered]@{}; $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'
   [Windows.Forms.Application]::DoEvents(); $main.AutoScrollPosition = [Drawing.Point]::new(0, 0)
-  $flt = & $wn.WheelNew; $focus = $(if ($wn.Primary) { $wn.Primary } else { $form })
+  Add-PfmWheel $form $main; $focus = $(if ($wn.Primary) { $wn.Primary } else { $form })   # the handlers of a normal run ($wn.WheelOn); a new card gets them by ControlAdded
   $sec = @($wn.Secs | Where-Object { $_.Col -eq 0 }) | Select-Object -First 1
   $res['Scrolls'] = [bool]$main.VerticalScroll.Visible; $res['Before'] = -$main.AutoScrollPosition.Y
   $pt = & $wn.ViewMid $sec.Card; $res['Point'] = [string]$pt; $res['PageTop'] = $page.Top
-  $t = & $wn.WheelTry $flt $pt $focus -Direct:$Direct
+  $t = & $wn.WheelTry $pt $focus -Direct:$Direct
   $res['Under'] = $t.Under; $res['Handled'] = $t.Handled; $res['After'] = -$main.AutoScrollPosition.Y
-  $g = @(& $wn.Grids | Where-Object { [Pfm.Wheel]::GridCan($_, -120) }) | Select-Object -First 1
+  $g = @(& $wn.Grids | Where-Object { (Test-PfmGridCanScroll $_ -120) }) | Select-Object -First 1
   if ($g) {
     $main.ScrollControlIntoView($g); [Windows.Forms.Application]::DoEvents()
     $res['MainBefore'] = -$main.AutoScrollPosition.Y; $res['GridBefore'] = $g.FirstDisplayedScrollingRowIndex
-    $t = & $wn.WheelTry $flt (& $wn.ViewMid $g) $focus -Direct:$Direct
+    $t = & $wn.WheelTry (& $wn.ViewMid $g) $focus -Direct:$Direct
     $res['GridUnder'] = $t.Under; $res['GridHandled'] = $t.Handled; $res['GridAfter'] = $g.FirstDisplayedScrollingRowIndex; $res['MainAfter'] = -$main.AutoScrollPosition.Y }
   return $res }
 $wn.MeasureWheel = {
@@ -523,7 +521,7 @@ $wn.MeasureWheel = {
   .DESCRIPTION
   The window is made 60 % as high so that Your Work scrolls; $wn.WheelCase runs twice: straight through the routing
   function on the control tree (Route: no screen pixels, so it holds for this window off the screen), then through the
-  window's own filter as Windows calls it (Filter). Then the size comes back and Your Work is shown again. No real
+  window's own handlers as Windows calls them (Filter). Then the size comes back and Your Work is shown again. No real
   pointer is moved.
   .OUTPUTS
   A table: Card, Route and Filter (each a $wn.WheelCase table).
@@ -535,10 +533,10 @@ $wn.MeasureWheel = {
   } finally { $form.ClientSize = $keep; $wn.Notice = ''; $wn.Err = ''; & $wn.Show 'home'; [Windows.Forms.Application]::DoEvents() }
   return $res }
 # The middle of the part of control $C that the main column shows, in client pixels of the window, from the control
-# tree (Pfm.Wheel.ClientOf; no screen pixels, so it holds for a window off the screen too). It stops with the places
+# tree (Get-PfmClientOrigin; no screen pixels, so it holds for a window off the screen too). It stops with the places
 # when no part shows (R7: an empty overlap gave the point 0,0, on the rail, and hid the cause).
 $wn.ViewMid = { param($C)
-  $o = [Pfm.Wheel]::ClientOf($C, $form); $mo = [Pfm.Wheel]::ClientOf($main, $form)
+  $o = Get-PfmClientOrigin $C $form; $mo = Get-PfmClientOrigin $main $form
   $v = [Drawing.Rectangle]::Intersect((New-Object Drawing.Rectangle($o, $C.Size)), (New-Object Drawing.Rectangle($mo, $main.ClientSize)))
   if ($v.Width -lt 1 -or $v.Height -lt 1) { throw ('no part of ' + $C.GetType().Name + ' at ' + $o + ' ' + $C.Size + ' shows in the main column at ' + $mo + ' ' + $main.ClientSize) }
   return [Drawing.Point]::new(($v.Left + [int]($v.Width / 2)), ($v.Top + [int]($v.Height / 2))) }
@@ -584,7 +582,7 @@ $wn.MeasureRun = {
   # D1 to D4 at 1.25 x and 1.5 x (R6; the PFM works at 150 %): every card again; a pass that cannot run is kept as its error.
   try { $res['Scaled'] = @(foreach ($k in 1.25, 1.5) { & $wn.MeasureScaled $k }) }
   catch { $res['Scaled'] = @(); $res['ScaledError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
-  # R7 (W2): one wheel turn on the card body and one on a grid, through the window's own filter.
+  # R7 (W2): one wheel turn on the card body and one on a grid, through the window's own handlers.
   try { $res['Wheel'] = (& $wn.MeasureWheel) } catch { $res['Wheel'] = $null; $res['WheelError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }
   # The rail head and the color choice: a step that cannot be measured is kept as its error (the test names it).
   try { $res['Head'] = @(& $wn.MeasureHead) } catch { $res['Head'] = @(); $res['HeadError'] = ([string]$_.Exception.Message + ' at ' + (Get-ErrorPlace $_)) }

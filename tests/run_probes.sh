@@ -19,7 +19,6 @@ else sk "T20 list provisioning on the fake site"; fi
 
 # R26 probe (T21): the 2 fake sample files and the fake PDF block in the script are built by code and match byte for byte; the device script runs on a small fake site.
 python3 scripts/build_probe_samples.py --check && ok "T21 probe samples up to date" || bad "T21 probe samples stale (run python3 scripts/build_probe_samples.py)"
-python3 scripts/build_test_app.py --check >/dev/null && ok "T23 app file parts match their SHA-256" || bad "T23 app file parts differ from their SHA-256 (run scripts/build_test_app.py)"
 if [ "${on[t21]}" = 1 ]; then
 wait "$t21_pid"; t21rc=$?; out=$(tail -1 "$bg/t21.out")
 case "$t21rc $out" in "0 T21 pass="*" fail=0") ok "T21 probe script on the fake site ($out)";; *) grep "T21TEST FAIL" "$bg/t21.out" | cut -c1-300; bad "T21 probe script (exit $t21rc): $out";; esac

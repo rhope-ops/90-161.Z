@@ -1,8 +1,8 @@
 # How the 90-161.Z lists are made, and what Power Automate still does
 
-Status (19 Nov 26): the 12 lists are made by a script (task T20), not by a flow. Round R25 proved it on a clean site (docs/reviews/2026-11-15-r25-results.md, finding 1; PFM decision of 14 Nov 26 "Lists by PnP" in docs/DECISIONS.md). The provisioning flow of task T02 is retired. Power Automate still runs the 6 flows of the app (section 5).
+Status (19 Nov 26): the 12 lists are made by a script (task T20), not by a flow. Round R25 proved it on a clean site (docs/reviews/2026-11-15-r25-results.md, finding 1; Administrator decision of 14 Nov 26 "Lists by PnP" in docs/DECISIONS.md). The provisioning flow of task T02 is retired. Power Automate still runs the 6 flows of the app (section 5).
 
-Names (PFM, 2026-11-11, docs/DECISIONS.md): every list has the prefix PFM. Each list is created under its URL name without spaces, then gets its display title.
+Names (Administrator, 2026-11-11, docs/DECISIONS.md): every list has the prefix PFM. Each list is created under its URL name without spaces, then gets its display title.
 
 ## 1. What the script creates
 
@@ -58,7 +58,7 @@ If a run stops part way, send the result file (the script writes it into the T20
 
 ## 4. Permissions and site settings
 
-Decided (PFM, 2026-11-12, 10A): all site members read all rows. On PFM Publications and PFM Endorsements, members edit only rows they created. Read access stays "Read all items", so the AO, endorsers and flows still see every row. A row a flow creates is "created by" the flow's connection owner, so customers and endorsers change those rows through the app, which runs a flow (endorser results). SharePoint lets a person edit every row of such a list only with the permission Override List Behaviors, which the Edit level does not have (sweep F2, docs/reviews/2026-11-13-sweep-decisions.md). So the group PFM Office (the PFM, the Alternate and the Acting PFM) gets the permission level "PFM Office Edit All Items": the site's Edit level plus Override List Behaviors (PFM, 2026-11-19, F2 A; T20 r2 step 6). A device test with a second person proves it (F2 B: T21 r8, part Office and test EDITALL).
+Decided (Administrator, 2026-11-12, 10A): all site members read all rows. On PFM Publications and PFM Endorsements, members edit only rows they created. Read access stays "Read all items", so the AO, endorsers and flows still see every row. A row a flow creates is "created by" the flow's connection owner, so customers and endorsers change those rows through the app, which runs a flow (endorser results). SharePoint lets a person edit every row of such a list only with the permission Override List Behaviors, which the Edit level does not have (sweep F2, docs/reviews/2026-11-13-sweep-decisions.md). So the group PFM Office (the PFM, the Alternate and the Acting PFM) gets the permission level "PFM Office Edit All Items": the site's Edit level plus Override List Behaviors (Administrator, 2026-11-19, F2 A; T20 r2 step 6). A device test with a second person proves it (F2 B: T21 r8, part Office and test EDITALL).
 
 1. Leave each PFM list on the site's permissions (no unique permissions).
 2. Set by the T20 script. By hand only if the script reports it did not set it: PFM Publications and PFM Endorsements only: List settings > Advanced settings > Item-level Permissions. Read access: Read all items. Create and Edit access: Create items and edit items that were created by the user. OK. Other lists: no change.
@@ -71,7 +71,7 @@ Power Automate runs the 6 flows of the solution "90-161.Z flows" (F01 activity l
 - Source: `flow/solution/defs/*.json`. `python3 scripts/build_flow_solution.py` builds the solution zip from them (`flow/solution/90161Z-T24-full-flows-r2.zip`). Never hand-edit the zip.
 - Import: a round has you import the solution (task T24). Importing it again over an older copy works as an upgrade: the flows keep their connections and the new versions replace the old. The page's message "The original workflow definition has been deactivated and replaced" is the normal upgrade message (docs/reviews/2026-11-18-r32-results.md, findings 1 and 2).
 - After the import, all 6 flows read On with no connection warning (R32, finding 1).
-- Not yet working: a flow made by hand and a solution that the environment has never held fail with "The connections could not be loaded" (R32, finding 3). The PFM decided on 18 Nov 26 to put the two probe flows into the solution instead (finding 4, option A).
+- Not yet working: a flow made by hand and a solution that the environment has never held fail with "The connections could not be loaded" (R32, finding 3). The Administrator decided on 18 Nov 26 to put the two probe flows into the solution instead (finding 4, option A).
 
 See also: [flow-handover.md](flow-handover.md) (co-owners, connection swap and checks when the person who imported the flows leaves).
 

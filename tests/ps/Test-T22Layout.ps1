@@ -1,12 +1,12 @@
 # R13 (R40; PFM 20 Nov 26): Test-Keep: every card opened again shows its kept card, in under 100 ms.
 # R11 (R38; PFM 20 Nov 26): Test-EdgeBar: no grid chip or text ends closer to the grid's right edge than a scroll bar is wide.
-# Tests the look of the T22 PFM window r20 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
+# Tests the look of the T22 PFM window r21 by measurement (round R30: the R29b defects V2 to V4 and the accessible names;
 # round R31: the rail head W1, the high-contrast colors W2 and the card pictures W4).
 # Network: none.
 # Writes: one temporary folder with the measure file and the card pictures of the window; removed at the end.
 # Credentials: none.
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Windows only: elsewhere the one line "T22LAYOUT SKIP ..." and exit 0.
-# Runs scripts/gov/90161Z-T22-pfm-window-r20.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
+# Runs scripts/gov/90161Z-T22-pfm-window-r21.ps1 -Measure <file> -NoPause in a child of the same engine (the window is built
 # off-screen, measured and closed; no question) and checks what it wrote: each crumb's link and rest have one font and size
 # (V2), the ink gap after the link is at most 8 px at 100 % (V2), step 8 has no "See the 0 findings" link (V3), step 8's
 # Action Status card ends within 2 px of the main card (V4), Full History is drawn like the other white secondary
@@ -180,7 +180,7 @@ function Test-Keep($M) {
 }
 <#
 .SYNOPSIS
-Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r20.png, saved in the folder of
+Checks the card pictures (R31 W4): one PNG file per card, named 90161Z-T22-card-<card>-r21.png, saved in the folder of
 the measure file, and the first one is not blank (at least 3 colors in a 20 x 20 grid of its pixels).
 .PARAMETER M
 The measure file (Cards, Pngs).
@@ -358,7 +358,7 @@ The scale, as text (it starts each line).
 function Test-Wheel($M, [string]$At) {
   $w = $M.Wheel
   if (-not $w) { Test-That ($At + ' wheel: measured') $false ('no wheel facts' + $(if ($M.WheelError) { '; error: ' + $M.WheelError } else { '' })); return }
-  foreach ($way in @(@{ K = 'Route'; T = 'routing function on the control tree' }, @{ K = 'Filter'; T = 'window filter, message as Windows sends it' })) {
+  foreach ($way in @(@{ K = 'Route'; T = 'routing function on the control tree' }, @{ K = 'Filter'; T = 'window wheel handlers, MouseWheel event as Windows sends it' })) {
     $c = $w.($way.K)
     if (-not $c) { Test-That ($At + ' wheel (' + $way.T + '): measured') $false 'no facts'; continue }
     $onCard = ([string]$c.Under -and [string]$c.Under -notmatch '"Main column"$' -and [string]$c.Under -notmatch '^Form ')
@@ -376,7 +376,7 @@ $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('t22layout-' + [guid]::NewGu
 try {
   $file = Join-Path $tmp 'measure.json'
   $engine = (Get-Process -Id $PID).Path
-  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r20.ps1'
+  $window = Join-Path $Root 'scripts/gov/90161Z-T22-pfm-window-r21.ps1'
   $ErrorActionPreference = 'Continue'   # the child's error output is shown below, not thrown here
   $log = @(& $engine -NoProfile -File $window -Measure $file -NoPause 2>&1 | ForEach-Object { [string]$_ })
   $code = $LASTEXITCODE; $ErrorActionPreference = 'Stop'

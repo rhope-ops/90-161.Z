@@ -1,7 +1,0 @@
-{
-  "FormatVersion": "0.24",
-  "Header": { "AnalysisOptions": { "DataflowAnalysisEnabled": true, "DataflowAnalysisFlagStateToggledByUser": false }, "DocVersion": "1.336", "MinVersionToLoad": "1.331", "MSAppStructureVersion": "2.0" },
-  "Properties": { "AppPreviewFlagsMap": {}, "Author": "", "ContainsThirdPartyPcfControls": false, "DocumentAppType": "DesktopOrTablet", "DocumentLayoutHeight": 768, "DocumentLayoutLockOrientation": false, "DocumentLayoutMaintainAspectRatio": true, "DocumentLayoutOrientation": "landscape", "DocumentLayoutScaleToFit": true, "DocumentLayoutWidth": 1366, "DocumentType": "App", "EnableInstrumentation": false, "FileID": "00000000-0000-0000-0000-000000000027", "Id": "00000000-0000-0000-0000-000000000027", "Name": "90161Z-T23-app-file-r1.msapp", "ParserErrorCount": 0, "ShowStatusBar": false },
-  "PublishInfo": { "AppName": "90161Z-T23-app-file-r1", "BackgroundColor": "RGBA(0,176,240,1)", "IconColor": "RGBA(255,255,255,1)", "IconName": "Edit", "LogoFileName": "", "PublishTarget": "player", "UserLocale": "en-US" },
-  "ScreenOrder": [ "Screen1" ]
-}
