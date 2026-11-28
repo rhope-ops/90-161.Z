@@ -29,10 +29,10 @@
   the measure part: a LOGO line, and a LAYOUT line when the logo has the wrong colors).
   The rail logo pictures and their choice are in the logo part (R10: $wn.LogoImage, $wn.LogoRole, $wn.AppsLight; R11: one Fulcrum logo).
   Inputs: $form, $main, $page, $rail, $ui, $wn, $pc, $Cards, $RailItems, $Rev, $dir, $lines.
-  Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds.json in the task folder.
+  Outputs: the $wn members below. The window place is saved in 90161Z-T22-window-bounds-r21.json in the task folder.
   Run: not alone; 90161Z-T22-pfm-window-r21.ps1 dot-sources it from its own folder inside its try block.
   Network: none.
-  Writes: 90161Z-T22-window-bounds.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
+  Writes: 90161Z-T22-window-bounds-r21.json in the T22 folder (or -TestDir), when the window closes; nothing with -Measure.
   R10 (R37): the Feedback link on the check bar (its box and files: the feedback part); the rail logo follows the Windows
   app mode (the logo part); a grid wider than its room gives the excess back ($wn.FitGrids in the grid part).
   Credentials: none.
@@ -336,7 +336,8 @@ $wn.Show = {
   if ($wn.Focus -eq 'reason' -and $wn.Reason) { [void]$wn.Reason.Focus(); $wn.Focus = '' } elseif ($wn.Primary) { [void]$wn.Primary.Focus() }
   if ($wn.Ready) { $wn.CheckTimer.Stop(); $wn.CheckTimer.Start(); & $wn.KeepTime $Key $t0; & $wn.WalkSeen $Key } }   # R14: the click-through notes the open
 # Where the window place is kept between runs (none with -Measure: no task folder).
-$wn.BoundsFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-bounds.json' } else { '' })
+# r21 (F6): new file name, so a place saved by r20 (DPI aware, physical pixels) is not read as logical pixels now.
+$wn.BoundsFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-bounds-r21.json' } else { '' })
 # R12 (R39; docs/phases.md): the card the window was closed on, opened again at the next start (none with -Measure).
 $wn.LastFile = $(if ($dir) { Join-Path $dir '90161Z-T22-window-lastcard.txt' } else { '' })
 # R13 (R40): the card key saved at the last close, or '' when there is none ($wn.OpenLast; the -Again check names it).
