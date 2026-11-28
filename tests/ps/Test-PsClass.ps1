@@ -10,7 +10,7 @@
 # Windows PowerShell 5.1 syntax (also runs on PowerShell 7). Pure ASCII. No Add-Type with code, no Invoke-Expression.
 param([string]$Root = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $ErrorActionPreference = 'Stop'
-$script:pass = 0; $script:fail = 0
+$script:pass = 0; $script:fail = 0; $script:first = ''
 
 <#
 .SYNOPSIS
@@ -26,6 +26,12 @@ function Test-One([string]$Name, [bool]$Ok) {
 
 if ($env:OS -ne 'Windows_NT') { Write-Output 'PSCLASS SKIP not Windows (WinForms needs Windows)'; exit 0 }
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing   # loads the .NET assemblies only; no code is compiled
+# An error in a part counts as one failed check; the first error text and line go on the last line, so the CI log shows it.
+trap {
+  $script:fail++
+  if (-not $script:first) { $script:first = ' first=' + $_.Exception.GetType().Name + ' line ' + $_.InvocationInfo.ScriptLineNumber + ': ' + $_.Exception.Message }
+  continue
+}
 
 <#
 .SYNOPSIS
@@ -122,5 +128,5 @@ Test-One 'a wheel step down scrolls the parent' ((- $host1.AutoScrollPosition.Y)
 Test-One 'the wheel event is marked handled' ($ev.Handled)
 $host1.Dispose()
 
-Write-Output ('PSCLASS pass=' + $script:pass + ' fail=' + $script:fail)
+Write-Output ('PSCLASS pass=' + $script:pass + ' fail=' + $script:fail + $script:first)
 if ($script:fail -gt 0) { exit 1 }
